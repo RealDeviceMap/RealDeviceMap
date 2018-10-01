@@ -76,8 +76,8 @@ let pokemonDir = Dir("resources/webroot/static/img/pokemon/")
 if !raidDir.exists {
     try! raidDir.create()
 }
-let firstImg = File(raidDir.path + "done.lock")
-if !firstImg.exists {
+let doneLock = File(raidDir.path + "done.lock")
+if !doneLock.exists && raidDir.exists && gymDir.exists && eggDir.exists && unkownEggDir.exists && pokemonDir.exists {
     
     let thread = Threading.getQueue(type: .serial)
     thread.dispatch {
@@ -130,8 +130,8 @@ if !firstImg.exists {
         }
         
         Log.info(message: "[Main] Raid images created.")
-        try! firstImg.open(.readWrite)
-        try! firstImg.write(string: "done")
+        try! doneLock.open(.readWrite)
+        try! doneLock.write(string: "done")
         Threading.destroyQueue(thread)
     }
 }
