@@ -1,0 +1,42 @@
+{{> header}}
+<body>
+    <br>
+    <div class="alert alert-success w-75 {{^show_success}}d-none{{/show_success}}" style="float: none; margin: 0 auto;">
+        <strong>Success!</strong> The settings have been updated.</a>
+    </div>
+    {{#show_success}}<br>{{/show_success}}
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> Please try again later.</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Configure {{title}}!</h1>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <br>
+            <h4>General</h4>
+            <div class="form-group">
+                Page Name
+                <input type="text" class="form-control" name="title" value="{{title}}">
+            </div>
+            <br>
+            <h4>Map</h4>
+            <div class="form-group">
+                Start Latitude
+                <input type="number" class="form-control" name="start_lat" value="{{start_lat}}" step=any required>
+            </div>
+            <div class="form-group">
+                Start Longitude
+                <input type="number" class="form-control" name="start_lon" value="{{start_lon}}" step=any required>
+            </div>
+            <div class="form-group">
+                Start Zoom
+                <input type="number" class="form-control" name="start_zoom" value="{{start_zoom}}" step=1 required>
+            </div>
+            <br>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+    <br>
+</body>

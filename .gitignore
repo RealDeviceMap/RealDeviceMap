@@ -1,0 +1,11 @@
+# MacOS
+.DS_Store
+
+# Swift
+.build/
+.build_lin/
+.packages_lin/
+Package.resolved
+
+# Xcode
+RealDeviceMap.xcodeproj/

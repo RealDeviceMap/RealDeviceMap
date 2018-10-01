@@ -1,0 +1,172 @@
+//
+//  Device.swift
+//  RealDeviceMap
+//
+//  Created by Florian Kostenzer on 29.09.18.
+//
+
+import Foundation
+import PerfectLib
+import PerfectMySQL
+
+class Device {
+    
+    var uuid: String
+    var instanceName: String?
+    var lastHost: String?
+    var lastSeen: UInt32
+
+    init(uuid: String, instanceName: String?, lastHost: String?, lastSeen: UInt32) {
+        self.uuid = uuid
+        self.instanceName = instanceName
+        self.lastHost = lastHost
+        self.lastSeen = lastSeen
+    }
+    
+    public static func touch(uuid: String, host: String, seen: Int) throws {
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[DEVICE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                UPDATE device
+                SET last_host = ?, last_seen = ?
+                WHERE uuid = ?
+            """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(host)
+        mysqlStmt.bindParam(seen)
+        mysqlStmt.bindParam(uuid)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+    
+    public func save(oldUUID: String) throws {
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[DEVICE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                UPDATE device
+                SET uuid = ?, instance_name = ?, last_host = ?, last_seen = ?
+                WHERE uuid = ?
+            """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(uuid)
+        mysqlStmt.bindParam(instanceName)
+        mysqlStmt.bindParam(lastHost)
+        mysqlStmt.bindParam(lastSeen)
+        mysqlStmt.bindParam(oldUUID)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+    
+    public func create() throws {
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[DEVICE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+            INSERT INTO device (uuid, instance_name, last_host, last_seen)
+            VALUES (?, ?, ?, ?)
+        """
+        
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(uuid)
+        mysqlStmt.bindParam(instanceName)
+        mysqlStmt.bindParam(lastHost)
+        mysqlStmt.bindParam(lastSeen)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+    
+    public static func getAll() throws -> [Device] {
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[DEVICE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT uuid, instance_name, last_host, last_seen
+            FROM device
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var devices = [Device]()
+        while let result = results.next() {
+            let uuid = result[0] as! String
+            let instanceName = result[1] as? String
+            let lastHost = result[2] as? String
+            let lastSeen = result[3] as! UInt32
+            
+            devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen))
+        }
+        return devices
+        
+    }
+    
+    public static func getById(id: String) throws -> Device? {
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[DEVICE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT instance_name, last_host, last_seen
+            FROM device
+            WHERE uuid = ?
+            LIMIT 1
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return nil
+        }
+        
+        let result = results.next()!
+        let instanceName = result[0] as? String
+        let lastHost = result[1] as? String
+        let lastSeen = result[2] as! UInt32
+        
+        return Device(uuid: id, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen)
+        
+    }
+    
+    
+}

@@ -1,0 +1,60 @@
+{{> header}}
+
+<style>
+    table.dataTable tbody td {
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+	$(document).ready(function() {
+		$('#table').DataTable( {
+			"ajax": {
+				"url": "/api/get_data?show_devices=true&formatted=true",
+				"dataSrc": "data.devices"
+			},
+			"paging":   true,
+			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+			"columns": [
+				{ "data": "uuid" },
+				{ "data": "instance" },
+				{ "data": "host" },
+                { data: {
+                    _:    "last_seen.formatted",
+                    sort: "last_seen.timestamp"
+                } },
+				{ "data": "buttons" }
+			],
+			"info":     false,
+			"order": [[ 0, "asc" ]],
+			"search.caseInsensitive": true,
+			"columnDefs": [ {
+				"targets": [4],
+				"orderable": false
+			}]
+		});
+	} );
+</script>
+
+<body>
+
+    <br>
+    <h1 align="center">Configure {{title}}'s Devices!</h1>
+    <br>
+    <div style="width:90%; margin-left:calc(5%);">
+        <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
+            <thead>
+            <tr>
+                <th>UUID</th>
+                <th>Instance</th>
+                <th>Host</th>
+                <th>Last Seen</th>
+                <th width="5%"></th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <br>
+</body>

@@ -1,0 +1,29 @@
+{{> header}}
+<body>
+<br>
+<h1 align="center">Manage {{title}}!</h1>
+<div class="w-75" style="float: none; margin: 0 auto;">
+    <br>
+    {{#show_setting}}
+    <h4>General</h4>
+    <div class="list-group">
+        <a href="/dashboard/settings" class="list-group-item">Settings</a>
+    </div>
+    <br>
+    <h4>Scanning</h4>
+    <div class="list-group">
+        <a href="/dashboard/devices" class="list-group-item">Devices</a>
+        <a href="/dashboard/instances" class="list-group-item">Instances</a>
+    </div>
+    <br>
+    {{/show_setting}}
+    {{#show_user}}
+    <h4>User Management</h4>
+    <div class="list-group">
+        <a href="/dashboard/users" class="list-group-item">Users</a>
+        <a href="/dashboard/groups" class="list-group-item">Groups</a>
+    </div>
+    {{/show_user}}
+</div>
+<br>
+</body>
