@@ -41,7 +41,7 @@ class Pokemon: JSONConvertibleObject {
         ]
     }
     
-    var id: UInt64
+    var id: String
     var pokemonId: UInt16
     var lat: Double
     var lon: Double
@@ -63,8 +63,8 @@ class Pokemon: JSONConvertibleObject {
     var pokestopId: String?
     var firstSeenTimestamp: UInt32
     var updated: UInt32
-
-    init(id: UInt64, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt8?, move2: UInt8?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32, updated: UInt32) {
+    
+    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt8?, move2: UInt8?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32, updated: UInt32) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -132,10 +132,10 @@ class Pokemon: JSONConvertibleObject {
         
         guard
             let pokemonId = json["pokemon_id"] as? Int,
-            let id = (json["encounter_id"] as? String ??
+            let id = json["encounter_id"] as? String ??
                 (json["encounter_id"] as? Int)?.toString() ??
                 json["id"] as? String ??
-                (json["id"] as? Int)?.toString())?.toUInt64()
+                (json["id"] as? Int)?.toString()
             else {
                 throw ParsingError()
         }
@@ -164,7 +164,7 @@ class Pokemon: JSONConvertibleObject {
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
         self.updated = UInt32(Date().timeIntervalSince1970)
     }
-
+    
     public func save() throws {
         
         guard let mysql = DBController.global.mysql else {
@@ -265,8 +265,8 @@ class Pokemon: JSONConvertibleObject {
         
         var pokemons = [Pokemon]()
         while let result = results.next() {
-
-            let id = result[0] as! UInt64
+            
+            let id = result[0] as! String
             let pokemonId = result[1] as! UInt16
             let lat = result[2] as! Double
             let lon = result[3] as! Double
@@ -296,7 +296,7 @@ class Pokemon: JSONConvertibleObject {
         
     }
     
-    public static func getWithId(id: UInt64) throws -> Pokemon? {
+    public static func getWithId(id: String) throws -> Pokemon? {
         
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
@@ -324,7 +324,7 @@ class Pokemon: JSONConvertibleObject {
         
         let result = results.next()!
         
-        let id = result[0] as! UInt64
+        let id = result[0] as! String
         let pokemonId = result[1] as! UInt16
         let lat = result[2] as! Double
         let lon = result[3] as! Double

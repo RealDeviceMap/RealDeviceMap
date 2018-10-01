@@ -1,4 +1,4 @@
-ALTER TABLE pokemon MODIFY id bigint(20) unsigned NOT NULL;
+ALTER TABLE pokemon MODIFY id varchar(25) NOT NULL;
 UPDATE pokemon p1
 INNER JOIN pokemon p2 ON p1.id = p2.id
 SET p1.spawn_id = CONV(p1.spawn_id,16,10);
