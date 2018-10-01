@@ -9,3 +9,6 @@ Package.resolved
 
 # Xcode
 RealDeviceMap.xcodeproj/
+
+# PHPStom
+.idea

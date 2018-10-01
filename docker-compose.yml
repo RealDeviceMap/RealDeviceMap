@@ -1,0 +1,44 @@
+version: '3.1'
+services:
+  rdm:
+    image: 0815flo/realdevicemap:latest
+    container_name: realdevicemap
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - db
+    volumes:
+      - images:/perfect-deployed/realdevicemap/resources/webroot/static/img
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      DB_DATABASE: rdmdb
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: rdmuser
+      DB_PASSWORD: YourStrongPassw0rd!
+      WEB_SERVER_ADDRESS: 0.0.0.0
+      WEB_SERVER_PORT: 9000
+      WEBHOOK_SERVER_ADDRESS: 0.0.0.0
+      WEBHOOK_SERVER_PORT: 9001
+  db:
+    image: mariadb
+    container_name: realdevicemap-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: YourStrongRootPassw0rd!
+      MYSQL_DATABASE: rdmdb
+      MYSQL_USER: rdmuser
+      MYSQL_PASSWORD: YourStrongPassw0rd!
+    ports:
+      - 3306:3306
+    volumes:
+     - data:/var/lib/mysql
+volumes:
+  images:
+    driver: local
+  data:
+    driver: local
+
+
