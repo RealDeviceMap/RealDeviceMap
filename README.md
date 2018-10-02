@@ -1,10 +1,8 @@
 # RealDeviceMap
 
-RealDeviceMap is a Scanner thats uses real devices to scan for Raids, Gym, Pokestops and even Pokemon.
-Check the Wiki on how to get started and for a list of currently available RDM-API device controllers.
-Check the Wiki for first steps.
+<strong>The contents of this repo is a proof of concept and is for educational use only!</strong>
 
-This Project has been created for educational purpouse only and should only be used for educational porpouses.
-The usage of this project might violate Niantics Terms of Service.
+RealDeviceMap is a Leaflet/OSM based Frontend with backend features. It includes a JSON and Protobuf parser for Pokemon Go Data Objects.
+It also includes a basic proof of concept Instance and Device Manager.
 
 Questions? Ask as in Discord: https://discord.gg/q2aXaGP
