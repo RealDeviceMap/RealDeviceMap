@@ -12,3 +12,5 @@ RealDeviceMap.xcodeproj/
 
 # PHPStom
 .idea
+
+resources/webroot/static/img/

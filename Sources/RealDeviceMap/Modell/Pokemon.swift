@@ -143,7 +143,14 @@ class Pokemon: JSONConvertibleObject {
         // FIXME: - Temp solution
         let expireTimestamp = Int(Date().timeIntervalSince1970) + 600
         
-        let spawnId  = (json["spawn_id"] as? String)?.toUInt64()
+        let spawnIdString  = (json["spawn_id"] as? String)
+        let spawnId: UInt64?
+        if spawnIdString != nil {
+            spawnId = UInt64(spawnIdString!, radix: 16)
+        } else {
+            spawnId = nil
+        }
+        
         let weather = json["weather"] as? Int
         let costume = json["costume"] as? Int
         let gender = json["gender"] as? Int
@@ -164,6 +171,93 @@ class Pokemon: JSONConvertibleObject {
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
         self.updated = UInt32(Date().timeIntervalSince1970)
     }
+    
+    init(wildPokemon: POGOProtos_Map_Pokemon_WildPokemon) {
+        
+        let id = wildPokemon.encounterID.description
+        let pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
+        let lat = wildPokemon.latitude
+        let lon = wildPokemon.longitude
+        let spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
+        let gender = wildPokemon.pokemonData.pokemonDisplay.gender.rawValue.toUInt8()
+        let form = wildPokemon.pokemonData.pokemonDisplay.form.rawValue.toUInt8()
+        let costume = wildPokemon.pokemonData.pokemonDisplay.costume.rawValue.toUInt8()
+        let weather = wildPokemon.pokemonData.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        
+        self.id = id
+        self.lat = lat
+        self.lon = lon
+        self.pokemonId = pokemonId
+        self.spawnId = spawnId
+        self.weather = weather
+        self.costume = costume
+        self.gender = gender
+        self.form = form
+        
+        self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+        self.expireTimestamp = (Int(Date().timeIntervalSince1970) + 600).toUInt32()
+
+    }
+    
+    init(nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon) throws {
+        
+        let id = nearbyPokemon.encounterID.description
+        let pokemonId = nearbyPokemon.pokemonID.rawValue.toUInt16()
+        let pokestopId = nearbyPokemon.fortID
+        let gender = nearbyPokemon.pokemonDisplay.gender.rawValue.toUInt8()
+        let form = nearbyPokemon.pokemonDisplay.form.rawValue.toUInt8()
+        let costume = nearbyPokemon.pokemonDisplay.costume.rawValue.toUInt8()
+        let weather = nearbyPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        
+        let sql = """
+                SELECT lat, lon
+                FROM pokestop
+                WHERE id = ?;
+            """
+        
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[POKEMON] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        mysqlStmt.bindParam(pokestopId)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let results = mysqlStmt.results()
+        
+        if results.numRows == 0 {
+            throw ParsingError()
+        }
+        
+        let result = results.next()
+        let lat = result![0] as! Double
+        let lon = result![1] as! Double
+        
+        self.id = id
+        self.lat = lat
+        self.lon = lon
+        self.pokemonId = pokemonId
+        self.weather = weather
+        self.costume = costume
+        self.gender = gender
+        self.form = form
+        
+        self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+        self.expireTimestamp = (Int(Date().timeIntervalSince1970) + 600).toUInt32()
+        
+    }
+
     
     public func save() throws {
         

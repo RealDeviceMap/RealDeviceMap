@@ -84,6 +84,19 @@ class Pokestop: JSONConvertibleObject {
         self.updated = UInt32(Date().timeIntervalSince1970)
     }
     
+    init(fortData: POGOProtos_Map_Fort_FortData) {
+        
+        self.id = fortData.id
+        self.lat = fortData.latitude
+        self.lon = fortData.longitude
+        self.enabled = fortData.enabled
+        self.lureExpireTimestamp = UInt32(fortData.lureInfo.lureExpiresTimestampMs / 1000)
+        self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+    }
+    
     public func save() throws {
         
         guard let mysql = DBController.global.mysql else {

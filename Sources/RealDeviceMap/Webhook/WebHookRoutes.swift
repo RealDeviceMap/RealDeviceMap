@@ -17,6 +17,9 @@ class WebHookRoutes {
             Route(method: .post, uri: "/json", handler: { (request, response) in
                 WebHookRequestHandler.handle(request: request, response: response, type: .json)
             }),
+            Route(method: .post, uri: "/raw", handler: { (request, response) in
+                WebHookRequestHandler.handle(request: request, response: response, type: .raw)
+            }),
             Route(method: .post, uri: "/controler", handler: { (request, response) in
                 WebHookRequestHandler.handle(request: request, response: response, type: .controler)
             })

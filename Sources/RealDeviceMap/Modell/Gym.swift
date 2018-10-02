@@ -134,6 +134,29 @@ class Gym: JSONConvertibleObject {
         
     }
     
+    init(fortData: POGOProtos_Map_Fort_FortData) {
+        
+        self.id = fortData.id
+        self.lat = fortData.latitude
+        self.lon = fortData.longitude
+        self.enabled = fortData.enabled
+        self.guardPokemonId = fortData.guardPokemonID.rawValue.toUInt16()
+        self.teamId = fortData.ownedByTeam.rawValue.toUInt8()
+        self.availbleSlots = UInt16(fortData.gymDisplay.slotsAvailable)
+        self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+        
+        if fortData.hasRaidInfo {
+            self.raidEndTimestamp = UInt32(fortData.raidInfo.raidEndMs / 1000)
+            self.raidSpawnTimestamp = UInt32(fortData.raidInfo.raidSpawnMs / 1000)
+            self.raidBattleTimestamp = UInt32(fortData.raidInfo.raidBattleMs / 1000)
+            self.raidLevel = UInt8(fortData.raidInfo.raidLevel.rawValue)
+            self.raidPokemonId = UInt16(fortData.raidInfo.raidPokemon.pokemonID.rawValue)
+        }
+        
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+    }
+    
     public func save() throws {
         
         guard let mysql = DBController.global.mysql else {

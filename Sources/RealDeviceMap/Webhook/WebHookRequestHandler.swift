@@ -11,6 +11,8 @@ import PerfectHTTP
 import PerfectMustache
 import PerfectSession
 import PerfectThread
+import Foundation
+import SwiftProtobuf
 
 class WebHookRequestHandler {
     
@@ -21,9 +23,12 @@ class WebHookRequestHandler {
             jsonHandler(request: request, response: response)
         case .controler:
             controlerHandler(request: request, response: response)
+        case .raw:
+            rawHandler(request: request, response: response)
         }
         
     }
+    
     
     static func jsonHandler(request: HTTPRequest, response: HTTPResponse) {
         
@@ -90,6 +95,74 @@ class WebHookRequestHandler {
         
     }
     
+    static func rawHandler(request: HTTPRequest, response: HTTPResponse) {
+        
+        let json: [String: Any]
+        do {
+            json = try (request.postBodyString ?? "").jsonDecode() as! [String : Any]
+        } catch {
+            response.respondWithError(status: .badRequest)
+            return
+        }
+        
+        let gmos = json["gmo"] as! [[String: Any]]
+        
+        var wildPokemonsCount = 0
+        var nearbyPokemonsCount = 0
+        var fortsCount = 0
+        
+        var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
+        var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
+        var forts = [POGOProtos_Map_Fort_FortData]()
+        
+        for gmoData in gmos {
+            let data = Data(base64Encoded: gmoData["data"] as! String)!
+            
+            if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
+                for mapCell in gmo.mapCells {
+                    wildPokemons += mapCell.wildPokemons
+                    nearbyPokemons += mapCell.nearbyPokemons
+                    forts += mapCell.forts
+                    wildPokemonsCount += mapCell.wildPokemons.count
+                    nearbyPokemonsCount += mapCell.nearbyPokemons.count
+                    fortsCount += mapCell.forts.count
+                }
+            }
+            
+        }
+
+        do {
+            try response.respondWithData(data: ["nearby": nearbyPokemonsCount, "wild": wildPokemonsCount, "forts": fortsCount])
+        } catch {
+            response.respondWithError(status: .internalServerError)
+        }
+        
+        let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
+        queue.dispatch {
+            
+            for wildPokemon in wildPokemons {
+                let pokemon = Pokemon(wildPokemon: wildPokemon)
+                try? pokemon.save()
+            }
+            for nearbyPokemon in nearbyPokemons {
+                let pokemon = try? Pokemon(nearbyPokemon: nearbyPokemon)
+                try? pokemon?.save()
+            }
+            for fort in forts {
+                if fort.type == .gym {
+                    let gym = Gym(fortData: fort)
+                    try? gym.save()
+                } else if fort.type == .checkpoint {
+                    let pokestop = Pokestop(fortData: fort)
+                    try? pokestop.save()
+                }
+            }
+            
+            Threading.destroyQueue(queue)
+        }
+        
+    }
+
     static func controlerHandler(request: HTTPRequest, response: HTTPResponse) {
         
         let jsonO: [String: Any]?
