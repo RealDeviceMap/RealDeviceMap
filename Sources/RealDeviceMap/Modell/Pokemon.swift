@@ -246,6 +246,7 @@ class Pokemon: JSONConvertibleObject {
         self.lat = lat
         self.lon = lon
         self.pokemonId = pokemonId
+        self.pokestopId = pokestopId
         self.weather = weather
         self.costume = costume
         self.gender = gender
