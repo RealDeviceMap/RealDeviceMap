@@ -8,8 +8,9 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import POGOProtos
 
-class Gym: JSONConvertibleObject {
+class Gym: JSONConvertibleObject, WebHookEvent {
     
     class ParsingError: Error {}
     
@@ -18,19 +19,40 @@ class Gym: JSONConvertibleObject {
             "id":id,
             "lat":lat,
             "lon":lon,
-            "name":name ?? "null",
-            "url":url ?? "null",
-            "guard_pokemon_id": guardPokemonId ?? "null",
-            "enabled": enabled ?? "null",
-            "last_modified_timestamp": lastModifiedTimestamp ?? "null",
-            "team_id": teamId ?? "null",
-            "raid_end_timestamp": raidEndTimestamp ?? "null",
-            "raid_spawn_timestamp": raidSpawnTimestamp ?? "null",
-            "raid_battle_timestamp": raidBattleTimestamp ?? "null",
-            "raid_pokemon_id": raidPokemonId ?? "null",
-            "raid_level": raidLevel ?? "null",
-            "availble_slots": availbleSlots ?? "null",
+            "name":name as Any,
+            "url":url as Any,
+            "guard_pokemon_id": guardPokemonId as Any,
+            "enabled": enabled as Any,
+            "last_modified_timestamp": lastModifiedTimestamp as Any,
+            "team_id": teamId as Any,
+            "raid_end_timestamp": raidEndTimestamp as Any,
+            "raid_spawn_timestamp": raidSpawnTimestamp as Any,
+            "raid_battle_timestamp": raidBattleTimestamp as Any,
+            "raid_pokemon_id": raidPokemonId as Any,
+            "raid_level": raidLevel as Any,
+            "availble_slots": availbleSlots as Any,
             "updated": updated
+        ]
+    }
+    
+    func getWebhookValues() -> [String : Any] {
+        return [
+            "gym_id":id,
+            "latitude":lat,
+            "longitude":lon,
+            "name":name as Any,
+            "url":url as Any,
+            "guard_pokemon_id": guardPokemonId as Any,
+            "enabled": enabled as Any,
+            "last_modified": lastModifiedTimestamp as Any,
+            "team_id": teamId as Any,
+            "slots_available": availbleSlots as Any,
+            "updated": updated,
+            "end": raidEndTimestamp as Any,
+            "spawn": raidSpawnTimestamp as Any,
+            "start": raidBattleTimestamp as Any,
+            "pokemon_id": raidPokemonId as Any,
+            "level": raidLevel as Any,
         ]
     }
     
@@ -173,6 +195,20 @@ class Gym: JSONConvertibleObject {
         let mysqlStmt = MySQLStmt(mysql)
         
         if oldGym == nil {
+            WebHookController.global.addGymEvent(gym: self)
+            WebHookController.global.addGymInfoEvent(gym: self)
+            let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+            let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+            let now = Date()
+            
+            
+            if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                WebHookController.global.addEggEvent(gym: self)
+            } else if raidBattleTime < now && raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                WebHookController.global.addRaidEvent(gym: self)
+            }
+
+            
             let sql = """
                 INSERT INTO gym (id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -185,6 +221,30 @@ class Gym: JSONConvertibleObject {
             }
             if oldGym!.url != nil && self.url == nil {
                 self.url = oldGym!.url
+            }
+            
+            if oldGym!.availbleSlots != self.availbleSlots || oldGym!.teamId != self.teamId {
+                WebHookController.global.addGymInfoEvent(gym: self)
+            }
+            
+            if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 &&
+                (
+                    oldGym!.raidLevel != self.raidLevel ||
+                    oldGym!.raidPokemonId != self.raidPokemonId ||
+                    oldGym!.raidSpawnTimestamp != self.raidSpawnTimestamp
+                ) {
+                
+                let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+                let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+                let now = Date()
+                
+                
+                if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                    WebHookController.global.addEggEvent(gym: self)
+                } else if raidBattleTime < now && raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                    WebHookController.global.addRaidEvent(gym: self)
+                }
+                
             }
             
             let sql = """

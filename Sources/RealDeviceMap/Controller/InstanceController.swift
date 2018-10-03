@@ -33,14 +33,17 @@ class InstanceController {
     private init() { }
     
     private var instancesByInstanceName = [String: InstanceControllerProto]()
-    private var instancesByDeviceUUID = [String: InstanceControllerProto]()
+    private var devicesByDeviceUUID = [String: Device]()
 
     public func getInstanceController(instanceName: String) -> InstanceControllerProto? {
         return instancesByInstanceName[instanceName]
     }
     
     public func getInstanceController(deviceUUID: String) -> InstanceControllerProto? {
-        return instancesByDeviceUUID[deviceUUID]
+        guard let device = devicesByDeviceUUID[deviceUUID], let instanceName = device.instanceName else {
+            return nil
+        }
+        return instancesByInstanceName[instanceName]
     }
     
     public func addInstance(instance: Instance) {
@@ -69,56 +72,52 @@ class InstanceController {
     
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
         let oldInstance = instancesByInstanceName[oldInstanceName]
-        var removedDeviceUUIDs = [String]()
         if oldInstance != nil {
-            for row in instancesByDeviceUUID {
-                if row.value.name == oldInstance!.name {
-                    removedDeviceUUIDs.append(row.key)
+            for row in devicesByDeviceUUID {
+                if row.value.instanceName == oldInstance!.name {
+                    row.value.instanceName = newInstance.name
                 }
             }
             instancesByInstanceName[oldInstanceName] = nil
         }
         addInstance(instance: newInstance)
-        for removedDeviceUUID in removedDeviceUUIDs {
-            instancesByDeviceUUID[removedDeviceUUID] = instancesByInstanceName[newInstance.name]
-        }
     }
     
     public func removeInstance(instance: Instance) {
         instancesByInstanceName[instance.name] = nil
-        for deviceInstance in instancesByDeviceUUID {
-            if deviceInstance.value.name == instance.name {
-                instancesByDeviceUUID[deviceInstance.key] = nil
+        for device in devicesByDeviceUUID {
+            if device.value.instanceName == instance.name {
+                devicesByDeviceUUID[device.key] = nil
             }
         }
     }
     
     public func removeInstance(instanceName: String) {
         instancesByInstanceName[instanceName] = nil
-        for deviceInstance in instancesByDeviceUUID {
-            if deviceInstance.value.name == instanceName {
-                instancesByDeviceUUID[deviceInstance.key] = nil
+        for device in devicesByDeviceUUID {
+            if device.value.instanceName == instanceName {
+                devicesByDeviceUUID[device.key] = nil
             }
         }
     }
     
     public func addDevice(device: Device) {
         if device.instanceName != nil && instancesByInstanceName[device.instanceName!] != nil {
-            instancesByDeviceUUID[device.uuid] = instancesByInstanceName[device.instanceName!]
+            devicesByDeviceUUID[device.uuid] = device
         }
     }
     
     public func reloadDevice(newDevice: Device, oldDeviceUUID: String) {
-        instancesByDeviceUUID[oldDeviceUUID] = nil
+        removeDevice(deviceUUID: oldDeviceUUID)
         addDevice(device: newDevice)
     }
     
     public func removeDevice(device: Device) {
-        instancesByDeviceUUID[device.uuid] = nil
+        devicesByDeviceUUID[device.uuid] = nil
     }
     
     public func removeDevice(deviceUUID: String) {
-        instancesByDeviceUUID[deviceUUID] = nil
+        devicesByDeviceUUID[deviceUUID] = nil
     }
         
 }

@@ -8,8 +8,9 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import POGOProtos
 
-class Pokestop: JSONConvertibleObject {
+class Pokestop: JSONConvertibleObject, WebHookEvent {
     
     class ParsingError: Error {}
     
@@ -18,11 +19,25 @@ class Pokestop: JSONConvertibleObject {
             "id":id,
             "lat":lat,
             "lon":lon,
-            "name":name ?? "null",
-            "url":url ?? "null",
-            "lure_expire_timestamp":lureExpireTimestamp ?? "null",
-            "last_modified_timestamp":lastModifiedTimestamp ?? "null",
-            "enabled":enabled ?? "null",
+            "name":name as Any,
+            "url":url as Any,
+            "lure_expire_timestamp":lureExpireTimestamp as Any,
+            "last_modified_timestamp":lastModifiedTimestamp as Any,
+            "enabled":enabled as Any,
+            "updated": updated
+        ]
+    }
+    
+    func getWebhookValues() -> [String : Any] {
+        return [
+            "pokestop_id":id,
+            "latitude":lat,
+            "longitude":lon,
+            "name":name as Any,
+            "url":url as Any,
+            "lure_expiration":lureExpireTimestamp as Any,
+            "last_modified":lastModifiedTimestamp as Any,
+            "enabled":enabled as Any,
             "updated": updated
         ]
     }
@@ -113,6 +128,7 @@ class Pokestop: JSONConvertibleObject {
         let mysqlStmt = MySQLStmt(mysql)
         
         if oldPokestop == nil {
+            WebHookController.global.addPokestopEvent(pokestop: self)
             let sql = """
                 INSERT INTO pokestop (id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -125,6 +141,10 @@ class Pokestop: JSONConvertibleObject {
             }
             if oldPokestop!.url != nil && self.url == nil {
                 self.url = oldPokestop!.url
+            }
+            
+            if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
+                WebHookController.global.addLureEvent(pokestop: self)
             }
             
             let sql = """

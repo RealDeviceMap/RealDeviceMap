@@ -155,6 +155,8 @@ class WebReqeustHandler {
             data["start_lat"] = startLat
             data["start_lon"] = startLon
             data["start_zoom"] = startZoom
+            data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
+            data["webhook_delay"] = WebHookController.global.webhookSendDelay
         case .dashboardDevices:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
@@ -472,11 +474,17 @@ class WebReqeustHandler {
             return data
         }
         
+        let webhookDelay = request.param(name: "webhook_delay")?.toDouble() ?? 5.0
+        let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
+        let webhookUrls = webhookUrlsString.components(separatedBy: ";")
+        
         do {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
             try DBController.global.setValueForKey(key: "MAP_START_LON", value: startLon.description)
             try DBController.global.setValueForKey(key: "MAP_START_ZOOM", value: startZoom.description)
             try DBController.global.setValueForKey(key: "TITLE", value: title)
+            try DBController.global.setValueForKey(key: "WEBHOOK_DELAY", value: webhookDelay.description)
+            try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
         } catch {
             data["show_error"] = true
             return data
@@ -486,6 +494,8 @@ class WebReqeustHandler {
         WebReqeustHandler.startLon = startLon
         WebReqeustHandler.startZoom = startZoom
         WebReqeustHandler.title = title
+        WebHookController.global.webhookSendDelay = webhookDelay
+        WebHookController.global.webhookURLStrings = webhookUrls
 
         data["title"] = title
         data["show_success"] = true

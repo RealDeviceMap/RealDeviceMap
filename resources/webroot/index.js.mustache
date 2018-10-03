@@ -337,7 +337,7 @@ function loadData() {
 						return gym.id === value.id;
 					});
 
-					if (gym.team_id === "null") {
+					if (gym.team_id === null) {
 						gym.team_id = 0;
 					}
 
@@ -406,7 +406,7 @@ function loadData() {
 					var pokestopMarker;
 					var ts = Math.round((new Date()).getTime() / 1000);
 
-					if (pokestop.lure_expire_timestamp == "null") {
+					if (pokestop.lure_expire_timestamp === null) {
 						pokestop.lure_expire_timestamp = 0;
 					}
 					if (pokestop.lure_expire_timestamp < ts) {
@@ -462,7 +462,7 @@ function loadData() {
 					});
 
 					if (oldPokemon === undefined) {
-						if (pokemon.pokestop_id !== "null") {
+						if (pokemon.pokestop_id !== null) {
 							var latOffset = Math.random() * 0.0003 - 0.00015;
 							if (latOffset >= 0) {
 								latOffset += 0.0001;
@@ -521,7 +521,7 @@ function getGymMarkerIcon(gym, ts) {
 	}
 
 	if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && showRaids && parseInt(gym.raid_level) > 0) {
-		if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== 'null') {
+		if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
 			raidStr = '_' + gym.raid_pokemon_id;
 		} else {
 			raidStr = '_ue' + gym.raid_level;
@@ -676,7 +676,7 @@ function getPokemonPopupContent(pokemon) {
         var firstSeenDate = new Date(pokemon.first_seen_timestamp * 1000);
         content += 'First Seen at: ' + firstSeenDate.toLocaleTimeString() + '<br>';
     }
-    if (pokemon.updated !== 0 && pokemon.updated !== undefined) {
+    if (pokemon.updated !== 0 && pokemon.updated !== null) {
         var updatedDate = new Date(pokemon.updated * 1000);
         content += 'Latest Seen at: ' + updatedDate.toLocaleTimeString() + '<br>';
     }
@@ -689,7 +689,7 @@ function getPokestopPopupContent(pokestop) {
 	var lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000);
 
 	var content = '';
-	if (pokestop.name === 'null' || pokestop.name === undefined) {
+	if (pokestop.name === null) {
 		content += '<b>Unknown Pokestop Name</b><br>';
 	} else {
 		content += '<b>'+pokestop.name+'</b><br>';
@@ -709,7 +709,7 @@ function getGymPopupContent(gym) {
 	const raidEndDate = new Date(gym.raid_end_timestamp*1000);
 
 	var content = '';
-	if (gym.name === 'null' || gym.name === undefined) {
+	if (gym.name === null) {
 		content += '<b>Unknown Gym Name</b><br>';
 	} else {
 		content += '<b>'+gym.name+'</b><br>';
@@ -718,7 +718,7 @@ function getGymPopupContent(gym) {
 	var isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0;
 	var isRaidBattle = raidBattleDate <= now && isRaid;
 
-	if (isRaid && gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== 'null' && gym.raid_pokemon_id !== undefined) {
+	if (isRaid && gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
 		content += "Raid Boss: " + getPokemonName(gym.raid_pokemon_id) + '<br>';
 	} else if (isRaidBattle) {
 		content += "Raid Boss: Unkonwn Raid Boss<br>";

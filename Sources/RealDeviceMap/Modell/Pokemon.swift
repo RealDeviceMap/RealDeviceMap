@@ -8,8 +8,9 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import POGOProtos
 
-class Pokemon: JSONConvertibleObject {
+class Pokemon: JSONConvertibleObject, WebHookEvent {
     
     class ParsingError: Error {}
     
@@ -19,25 +20,51 @@ class Pokemon: JSONConvertibleObject {
             "pokemon_id": pokemonId,
             "lat": lat,
             "lon": lon,
-            "spawn_id": spawnId ?? "null",
-            "expire_timestamp": expireTimestamp ?? "null",
+            "spawn_id": spawnId as Any,
+            "expire_timestamp": expireTimestamp as Any,
             "expire_timestamp_true": false, // FIXME: - Temp solution
             "first_seen_timestamp": firstSeenTimestamp,
-            "atk_iv": atkIv ?? "null",
-            "def_iv": defIv ?? "null",
-            "sta_iv": staIv ?? "null",
-            "move_1": move1 ?? "null",
-            "move_2": move2 ?? "null",
-            "gender": gender ?? "null",
-            "form": form ?? "null",
-            "cp": cp ?? "null",
-            "level": level ?? "null",
-            "weight": weight ?? "null",
-            "size": size ?? "null",
-            "weather": weather ?? "null",
-            "pokestop_id": pokestopId ?? "null",
-            "costume": costume ?? "null",
+            "atk_iv": atkIv as Any,
+            "def_iv": defIv as Any,
+            "sta_iv": staIv as Any,
+            "move_1": move1 as Any,
+            "move_2": move2 as Any,
+            "gender": gender as Any,
+            "form": form as Any,
+            "cp": cp as Any,
+            "level": level as Any,
+            "weight": weight as Any,
+            "size": size as Any,
+            "weather": weather as Any,
+            "pokestop_id": pokestopId as Any,
+            "costume": costume as Any,
             "updated": updated
+        ]
+    }
+    
+    func getWebhookValues() -> [String : Any] {
+        return [
+            "spawnpoint_id": spawnId as Any,
+            "pokestop_id": pokestopId as Any,
+            "encounter_id": id,
+            "pokemon_id": pokemonId,
+            "latitude": lat,
+            "longitude": lon,
+            "disappear_time": expireTimestamp as Any,
+            "first_seen": firstSeenTimestamp,
+            "verified": false,
+            "last_modified_time": updated,
+            "gender": gender as Any,
+            "cp": cp as Any,
+            "form": form as Any,
+            "costume": costume as Any,
+            "individual_attack": atkIv as Any,
+            "individual_defense": defIv as Any,
+            "individual_stamina": staIv as Any,
+            "move_1": move1 as Any,
+            "move_2": move2 as Any,
+            "weight": weight as Any,
+            "height": size as Any,
         ]
     }
     
@@ -276,6 +303,7 @@ class Pokemon: JSONConvertibleObject {
         let mysqlStmt = MySQLStmt(mysql)
         
         if oldPokemon == nil {
+            WebHookController.global.addPokemonEvent(pokemon: self)
             let sql = """
                 INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -290,6 +318,21 @@ class Pokemon: JSONConvertibleObject {
                 self.lat = oldPokemon!.lat
                 self.lon = oldPokemon!.lon
             }
+            
+            if oldPokemon!.atkIv != nil && self.atkIv == nil {
+                self.atkIv = oldPokemon!.atkIv
+                self.defIv = oldPokemon!.defIv
+                self.staIv = oldPokemon!.staIv
+                self.cp = oldPokemon!.cp
+                self.weight = oldPokemon!.weight
+                self.size = oldPokemon!.size
+            }
+            
+            if oldPokemon!.atkIv != self.atkIv {
+                WebHookController.global.addPokemonEvent(pokemon: self)
+            }
+            
+            // Resend?
             
             let sql = """
                 UPDATE pokemon

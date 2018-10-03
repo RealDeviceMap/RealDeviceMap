@@ -13,6 +13,7 @@ import PerfectSession
 import PerfectThread
 import Foundation
 import SwiftProtobuf
+import POGOProtos
 
 class WebHookRequestHandler {
     
@@ -140,14 +141,21 @@ class WebHookRequestHandler {
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
             
+            let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
                 let pokemon = Pokemon(wildPokemon: wildPokemon)
                 try? pokemon.save()
             }
+            Log.info(message: "[WebHookRequestHandler] NearbyPokemn Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+            
+            let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
                 let pokemon = try? Pokemon(nearbyPokemon: nearbyPokemon)
                 try? pokemon?.save()
             }
+            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+
+            let startForts = Date()
             for fort in forts {
                 if fort.type == .gym {
                     let gym = Gym(fortData: fort)
@@ -157,6 +165,8 @@ class WebHookRequestHandler {
                     try? pokestop.save()
                 }
             }
+            Log.info(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            
             
             Threading.destroyQueue(queue)
         }

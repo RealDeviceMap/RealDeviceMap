@@ -21,6 +21,7 @@ class DBController {
         let mysql = MySQL()
         let connected = mysql.connect(host: host, user: username, password: password, db: database)
         if connected {
+            mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8")
             return mysql
         } else {
             Log.error(message: "Failed to connect to Database: (\(mysql.errorMessage())")
@@ -177,19 +178,16 @@ class DBController {
         if fromVersion < toVersion {
             Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
             
+            
             var migrateSQL: String
             do {
                 let sqlFile = File(Dir.workingDir.path + "/resources/migrations/\(fromVersion + 1).sql")
                 try sqlFile.open(.read)
                 try migrateSQL = """
-                    SET autocommit=0;
-                    START TRANSACTION;
                     \(sqlFile.readString());
                     INSERT INTO metadata (`key`, `value`)
                     VALUES("DB_VERSION", \(fromVersion + 1))
                     ON DUPLICATE KEY UPDATE `value` = \(fromVersion + 1);
-                    COMMIT;
-                    SET autocommit=1;
                 """
                 sqlFile.close()
             } catch {
@@ -199,14 +197,12 @@ class DBController {
             }
             
             // TODO: - clear perms in web_session;
-            
+        
             for sql in migrateSQL.components(separatedBy: ";") {
                 if sql.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     guard mysql.query(statement: sql) else {
                         let message = "Migration Failed: (\(mysql.errorMessage()))"
                         Log.critical(message: "[DBController] " + message)
-                        Log.info(message: "[DBController] Rolling back migration")
-                        _ = mysql.rollback()
                         fatalError(message)
                     }
                 }

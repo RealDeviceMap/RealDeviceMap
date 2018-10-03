@@ -41,6 +41,8 @@ do {
     fatalError(message)
 }
 
+// Start WebHookController
+WebHookController.global.start()
 
 // Load Settings
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
@@ -48,6 +50,13 @@ WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_S
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
+
+let webhookDelayString = try! DBController.global.getValueForKey(key: "WEBHOOK_DELAY") ?? "5.0"
+let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_URLS") ?? ""
+if let webhookDelay = Double(webhookDelayString) {
+    WebHookController.global.webhookSendDelay = webhookDelay
+}
+WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
 // Check if is setup
 let isSetup: String?
