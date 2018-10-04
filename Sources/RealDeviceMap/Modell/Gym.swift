@@ -251,7 +251,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             
             if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
                 WebHookController.global.addEggEvent(gym: self)
-            } else if raidBattleTime < now && raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+            } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
                 WebHookController.global.addRaidEvent(gym: self)
             }
 
@@ -304,7 +304,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
                 
                 if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
                     WebHookController.global.addEggEvent(gym: self)
-                } else if raidBattleTime < now && raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
                     WebHookController.global.addRaidEvent(gym: self)
                 }
                 
