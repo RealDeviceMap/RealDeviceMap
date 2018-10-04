@@ -84,7 +84,7 @@ function initMap() {
 			container.innerHTML = '<a href="#"><img src="/static/svg/location.svg" style="width: 21px; height: 21px; class="center-block;"/></a>';
 
 			container.onclick = function(){
-                L.map('map').locate({setView: true, maxZoom: 16});
+                map.locate({setView: true, maxZoom: 16});
 			};
 			return container;
 		}
