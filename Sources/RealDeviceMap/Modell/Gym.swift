@@ -31,7 +31,9 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             "raid_pokemon_id": raidPokemonId as Any,
             "raid_level": raidLevel as Any,
             "availble_slots": availbleSlots as Any,
-            "updated": updated
+            "updated": updated,
+            "ex_raid_eligible": exRaidEligible as Any,
+            "in_battle": inBattle as Any
         ]
     }
     
@@ -53,6 +55,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             "start": raidBattleTimestamp as Any,
             "pokemon_id": raidPokemonId as Any,
             "level": raidLevel as Any,
+            "ex_raid_eligible": exRaidEligible as Any,
+            "in_battle": inBattle as Any
         ]
     }
     
@@ -73,8 +77,10 @@ class Gym: JSONConvertibleObject, WebHookEvent {
     var raidLevel: UInt8?
     var availbleSlots: UInt16?
     var updated: UInt32
+    var exRaidEligible: Bool?
+    var inBattle: Bool?
     
-    init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?, lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?, raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots:UInt16?, updated:UInt32) {
+    init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?, lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?, raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots:UInt16?, updated:UInt32, exRaidEligible: Bool?, inBattle: Bool?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -91,6 +97,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         self.raidLevel = raidLevel
         self.availbleSlots = availbleSlots
         self.updated = updated
+        self.exRaidEligible = exRaidEligible
+        self.inBattle = inBattle
     }
     
     init(json: [String: Any]) throws {
@@ -108,6 +116,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         let teamId = json["team"] as? Int
         var raidPokemonId = json["raidPokemon"] as? Int
         let raidLevel = json["raidLevel"] as? Int
+        let exRaidEligible = json["isExRaidEligible"] as? Bool
+        let inBattle = json["isInBattle"] as? Bool
         
         if raidPokemonId == 0 {
             raidPokemonId = nil
@@ -149,6 +159,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         self.guardPokemonId = guardPokemonId?.toUInt16()
         self.availbleSlots = availbleSlots?.toUInt16()
         self.teamId = teamId?.toUInt8()
+        self.exRaidEligible = exRaidEligible
+        self.inBattle = inBattle
         if url != "" {
             self.url = url
         }
@@ -166,6 +178,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         self.teamId = fortData.ownedByTeam.rawValue.toUInt8()
         self.availbleSlots = UInt16(fortData.gymDisplay.slotsAvailable)
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+        self.exRaidEligible = fortData.isExRaidEligible
+        self.inBattle = fortData.isInBattle
         
         if fortData.hasRaidInfo {
             self.raidEndTimestamp = UInt32(fortData.raidInfo.raidEndMs / 1000)
@@ -210,8 +224,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
 
             
             let sql = """
-                INSERT INTO gym (id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO gym (id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
@@ -221,6 +235,12 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             }
             if oldGym!.url != nil && self.url == nil {
                 self.url = oldGym!.url
+            }
+            if oldGym!.exRaidEligible != nil && self.exRaidEligible == nil {
+                self.exRaidEligible = oldGym!.exRaidEligible
+            }
+            if oldGym!.inBattle != nil && self.inBattle == nil {
+                self.inBattle = oldGym!.inBattle
             }
             
             if oldGym!.availbleSlots != self.availbleSlots || oldGym!.teamId != self.teamId {
@@ -249,7 +269,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             
             let sql = """
                 UPDATE gym
-                SET lat = ?, lon = ? , name = ? , url = ? , guarding_pokemon_id = ? , last_modified_timestamp = ? , team_id = ? , raid_end_timestamp = ? , raid_spawn_timestamp = ? , raid_battle_timestamp = ? , raid_pokemon_id = ? , enabled = ? , availble_slots = ? , updated = ? , raid_level = ?
+                SET lat = ?, lon = ? , name = ? , url = ? , guarding_pokemon_id = ? , last_modified_timestamp = ? , team_id = ? , raid_end_timestamp = ? , raid_spawn_timestamp = ? , raid_battle_timestamp = ? , raid_pokemon_id = ? , enabled = ? , availble_slots = ? , updated = ? , raid_level = ?, ex_raid_eligible = ?, in_battle = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -270,6 +290,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         mysqlStmt.bindParam(availbleSlots)
         mysqlStmt.bindParam(updated)
         mysqlStmt.bindParam(raidLevel)
+        mysqlStmt.bindParam(exRaidEligible)
+        mysqlStmt.bindParam(inBattle)
         
         if oldGym != nil {
             mysqlStmt.bindParam(id)
@@ -289,7 +311,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         }
         
         var sql = """
-            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level
+            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
         """
@@ -342,8 +364,10 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             let availbleSlots = result[13] as? UInt16
             let updated = result[14] as! UInt32
             let raidLevel = result[15] as? UInt8
+            let exRaidEligible = (result[16] as? UInt8)?.toBool()
+            let inBattle = (result[17] as? UInt8)?.toBool()
 
-            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated))
+            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle))
         }
         return gyms
         
@@ -357,7 +381,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         }
         
         let sql = """
-            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level
+            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle
             FROM gym
             WHERE id = ?
         """
@@ -392,7 +416,9 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         let availbleSlots = result[13] as? UInt16
         let updated = result[14] as! UInt32
         let raidLevel = result[15] as? UInt8
+        let exRaidEligible = (result[16] as? UInt8)?.toBool()
+        let inBattle = (result[17] as? UInt8)?.toBool()
         
-        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated)
+        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle)
     }
 }

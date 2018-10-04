@@ -715,6 +715,13 @@ function getGymPopupContent(gym) {
 		content += '<b>'+gym.name+'</b><br>';
 	}
 
+    if (gym.ex_raid_eligible === true) {
+        content += 'Gym is EX-Raid eligible<br>';
+    }
+    if (gym.in_battle === true) {
+        content += 'Gym is under attack!<br>';
+    }
+
 	var isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0;
 	var isRaidBattle = raidBattleDate <= now && isRaid;
 
