@@ -65,6 +65,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             "move_2": move2 as Any,
             "weight": weight as Any,
             "height": size as Any,
+            "weather": weather as Any,
         ]
     }
     
@@ -77,8 +78,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
     var atkIv: UInt8?
     var defIv: UInt8?
     var staIv: UInt8?
-    var move1: UInt8?
-    var move2: UInt8?
+    var move1: UInt16?
+    var move2: UInt16?
     var gender: UInt8?
     var form: UInt8?
     var costume: UInt8?
@@ -91,7 +92,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
     var firstSeenTimestamp: UInt32
     var updated: UInt32
     
-    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt8?, move2: UInt8?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32, updated: UInt32) {
+    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32, updated: UInt32) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -413,8 +414,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             let atkIv = result[6] as? UInt8
             let defIv = result[7] as? UInt8
             let staIv = result[8] as? UInt8
-            let move1 = result[9] as? UInt8
-            let move2 = result[10] as? UInt8
+            let move1 = result[9] as? UInt16
+            let move2 = result[10] as? UInt16
             let gender = result[11] as? UInt8
             let form = result[12] as? UInt8
             let cp = result[13] as? UInt16
@@ -471,8 +472,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         let atkIv = result[6] as? UInt8
         let defIv = result[7] as? UInt8
         let staIv = result[8] as? UInt8
-        let move1 = result[9] as? UInt8
-        let move2 = result[10] as? UInt8
+        let move1 = result[9] as? UInt16
+        let move2 = result[10] as? UInt16
         let gender = result[11] as? UInt8
         let form = result[12] as? UInt8
         let cp = result[13] as? UInt16

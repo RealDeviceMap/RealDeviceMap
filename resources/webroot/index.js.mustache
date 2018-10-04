@@ -672,6 +672,12 @@ function getPokemonPopupContent(pokemon) {
 		content += 'Aprox. Despawn Time: '
 	}
     content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>';
+
+
+    if (pokemon.weather !== 0 && pokemon.weather !== null) {
+        content += 'Weather: ' + getWeatherName(pokemon.weather) + '<br>';
+    }
+
     if (pokemon.first_seen_timestamp !== 0 && pokemon.first_seen_timestamp !== undefined) {
         var firstSeenDate = new Date(pokemon.first_seen_timestamp * 1000);
         content += 'First Seen at: ' + firstSeenDate.toLocaleTimeString() + '<br>';
@@ -730,6 +736,13 @@ function getGymPopupContent(gym) {
 	} else if (isRaidBattle) {
 		content += "Raid Boss: Unkonwn Raid Boss<br>";
 	}
+    if (isRaid && gym.raid_pokemon_move_1 !== 0 && gym.raid_pokemon_move_1 !== null && isRaid &&
+        gym.raid_pokemon_move_2 !== 0 && gym.raid_pokemon_move_2 !== null) {
+        content += "Raid Moves: " + getMoveName(gym.raid_pokemon_move_1) + ' | ' + getMoveName(gym.raid_pokemon_move_2) + '<br>';
+    }
+    if (isRaid && gym.raid_pokemon_cp !== 0 && gym.raid_pokemon_cp !== null) {
+        content += "Raid CP: " + gym.raid_pokemon_cp + '<br>';
+    }
 	if (isRaid) {
 		content += "Raid Level: " + gym.raid_level + '<br>';
 	}
@@ -763,4 +776,12 @@ function getTimeUntill(date) {
 
 function getPokemonName(pokemonId) {
 	return i18n('poke_'+pokemonId) + ' (' + pokemonId + ')';
+}
+
+function getMoveName(move_id) {
+    return i18n('move_'+move_id);
+}
+
+function getWeatherName(weather_id) {
+    return i18n('weather_'+weather_id);
 }

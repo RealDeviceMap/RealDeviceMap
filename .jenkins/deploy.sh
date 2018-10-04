@@ -1,8 +1,7 @@
 #!/bin/bash
 
-
 echo "Building build image..."
-docker image build -f PADockerfile_build -t 0815flo/realdevicemap-build:latest ${PWD}
+docker image build -f .jenkins/Dockerfile_build -t 0815flo/realdevicemap-build:latest ${PWD}
 echo "Building build image sucessfull"
 
 echo "Running swift build..."
@@ -25,7 +24,7 @@ else
 fi
 
 echo "Building deploy build..."
-docker image build -f PADockerfile_deploy -t 0815flo/realdevicemap:$1 -t 0815flo/realdevicemap:$2 -t 0815flo/realdevicemap:latest ${PWD}
+docker image build -f .jenkins/Dockerfile_deploy -t 0815flo/realdevicemap:$1 -t 0815flo/realdevicemap:$2 -t 0815flo/realdevicemap:latest ${PWD}
 echo "Building deploy image sucessfull"
 
 echo "Pushing image..."

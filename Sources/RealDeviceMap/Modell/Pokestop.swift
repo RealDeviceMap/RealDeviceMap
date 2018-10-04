@@ -107,7 +107,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent {
         self.enabled = fortData.enabled
         self.lureExpireTimestamp = UInt32(fortData.lureInfo.lureExpiresTimestampMs / 1000)
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
-
+        if fortData.imageURL != "" {
+            self.url = fortData.imageURL
+        }
+        
         self.updated = UInt32(Date().timeIntervalSince1970)
         
     }
