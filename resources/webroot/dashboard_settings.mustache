@@ -34,6 +34,16 @@
                 <input type="number" class="form-control" name="start_zoom" value="{{start_zoom}}" step=1 required>
             </div>
             <br>
+            <h4>Pokemon</h4>
+            <div class="form-group">
+                Default time left on new pokemon (in seconds)
+                <input type="number" class="form-control" name="pokemon_time_new" value="{{pokemon_time_new}}" step=1 min="60" max="3600" required>
+            </div>
+            <div class="form-group">
+                Default time left on re-seen pokemon (in seconds)
+                <input type="number" class="form-control" name="pokemon_time_old" value="{{pokemon_time_old}}" step=1 min="60" max="3600" required>
+            </div>
+            <br>
             <h4>Webhook</h4>
             <div class="form-group">
                 URLs (separated by ";")

@@ -76,7 +76,7 @@ class WebHookRequestHandler {
                     }
                     try? pokemon.save()
                 }
-                Log.info(message: "[WebHookRequestHandler] NearbyPokemn Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
             if let pokemons = json["pokemon"] as? [[String: Any]] {
                 let start = Date()
@@ -146,14 +146,14 @@ class WebHookRequestHandler {
                 let pokemon = Pokemon(wildPokemon: wildPokemon)
                 try? pokemon.save()
             }
-            Log.info(message: "[WebHookRequestHandler] NearbyPokemn Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
                 let pokemon = try? Pokemon(nearbyPokemon: nearbyPokemon)
                 try? pokemon?.save()
             }
-            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+            Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 
             let startForts = Date()
             for fort in forts {

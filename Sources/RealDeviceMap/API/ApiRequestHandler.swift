@@ -90,7 +90,7 @@ class ApiRequestHandler {
                             formattedDate = formatter.string(from: date)
                         }
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]
-                        deviceData["buttons"] = "<a href=\"/dashboard/device/asign/\(device.uuid.stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Asign Instance</a>"
+                        deviceData["buttons"] = "<a href=\"/dashboard/device/asign/\(device.uuid.stringByEncodingURL.replacingOccurrences(of: "/", with: "%2F"))\" role=\"button\" class=\"btn btn-primary\">Asign Instance</a>"
                     } else {
                         deviceData["last_seen"] = device.lastSeen
                     }
@@ -118,7 +118,7 @@ class ApiRequestHandler {
                     }
                     
                     if formatted {
-                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.stringByEncodingURL.replacingOccurrences(of: "/", with: "%2F"))\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
                     jsonArray.append(instanceData)
                 }

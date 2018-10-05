@@ -8,5 +8,5 @@
 import Foundation
 
 protocol WebHookEvent {
-    func getWebhookValues() -> [String : Any]
+    func getWebhookValues(type: String) -> [String : Any]
 }

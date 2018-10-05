@@ -105,49 +105,49 @@ class WebHookController {
                         
                         self.pokemonEventLock.lock()
                         for pokemonEvent in self.pokemonEvents {
-                            events.append(["type": "pokemon", "message": pokemonEvent.value.getWebhookValues()])
+                            events.append(pokemonEvent.value.getWebhookValues(type: "pokemon"))
                         }
                         self.pokemonEvents = [String: Pokemon]()
                         self.pokemonEventLock.unlock()
                         
                         self.pokestopEventLock.lock()
                         for pokestopEvent in self.pokestopEvents {
-                            events.append(["type": "pokestop", "message": pokestopEvent.value.getWebhookValues()])
+                            events.append(pokestopEvent.value.getWebhookValues(type: "pokestop"))
                         }
                         self.pokestopEvents = [String: Pokestop]()
                         self.pokestopEventLock.unlock()
                         
                         self.lureEventLock.lock()
                         for lureEvent in self.lureEvents {
-                            events.append(["type": "lure", "message": lureEvent.value.getWebhookValues()])
+                            events.append(lureEvent.value.getWebhookValues(type: "lure"))
                         }
                         self.lureEvents = [String: Pokestop]()
                         self.lureEventLock.unlock()
                         
                         self.gymEventLock.lock()
                         for gymEvent in self.gymEvents {
-                            events.append(["type": "gym", "message": gymEvent.value.getWebhookValues()])
+                            events.append(gymEvent.value.getWebhookValues(type: "gym"))
                         }
                         self.gymEvents = [String: Gym]()
                         self.gymEventLock.unlock()
                         
                         self.gymInfoEventLock.lock()
                         for gymInfoEvent in self.gymInfoEvents {
-                            events.append(["type": "gym-info", "message": gymInfoEvent.value.getWebhookValues()])
+                            events.append(gymInfoEvent.value.getWebhookValues(type: "gym-info"))
                         }
                         self.gymInfoEvents = [String: Gym]()
                         self.gymInfoEventLock.unlock()
                         
                         self.raidEventLock.lock()
                         for raidEvent in self.raidEvents {
-                            events.append(["type": "raid", "message": raidEvent.value.getWebhookValues()])
+                            events.append(raidEvent.value.getWebhookValues(type: "raid"))
                         }
                         self.raidEvents = [String: Gym]()
                         self.raidEventLock.unlock()
                         
                         self.eggEventLock.lock()
                         for eggEvent in self.eggEvents {
-                            events.append(["type": "egg", "message": eggEvent.value.getWebhookValues()])
+                            events.append(eggEvent.value.getWebhookValues(type: "egg"))
                         }
                         self.eggEvents = [String: Gym]()
                         self.eggEventLock.unlock()

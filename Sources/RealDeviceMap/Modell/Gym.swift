@@ -41,30 +41,58 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         ]
     }
     
-    func getWebhookValues() -> [String : Any] {
+    func getWebhookValues(type: String) -> [String : Any] {
+        
+        let realType: String
+        let message: [String: Any]
+        if type == "gym" {
+            realType = "gym"
+            message = [
+                "gym_id": id,
+                "gym_name":name as Any,
+                "latitude":lat,
+                "longitude":lon,
+                "url":url as Any,
+                "enabled": enabled ?? true,
+                "team_id": teamId ?? 0,
+                "last_modified": lastModifiedTimestamp ?? 0,
+                "guard_pokemon_id": guardPokemonId ?? 0,
+                "slots_available": availbleSlots ?? 6,
+                "raid_active_until": raidEndTimestamp ?? 0
+            ]
+        } else if type == "gym-info" {
+            realType = "gym-info"
+            message = [
+                "id": id,
+                "name":name as Any,
+                "url":url as Any,
+                "latitude":lat,
+                "longitude":lon,
+                "team": teamId ?? 0,
+            ]
+        } else if type == "egg" || type == "raid" {
+            realType = "raid"
+            message = [
+                "gym_id": id,
+                "gym_name":name as Any,
+                "latitude":lat,
+                "longitude":lon,
+                "spawn": raidSpawnTimestamp ?? 0,
+                "start": raidBattleTimestamp ?? 0,
+                "end": raidEndTimestamp ?? 0,
+                "level": raidLevel ?? 0,
+                "pokemon_id": raidPokemonId as Any,
+                "cp": raidPokemonCp as Any,
+                "move_1": raidPokemonMove1 as Any,
+                "move_2": raidPokemonMove2 as Any
+            ]
+        } else {
+            realType = "unkown"
+            message = [String: Any]()
+        }
         return [
-            "gym_id":id,
-            "latitude":lat,
-            "longitude":lon,
-            "name":name as Any,
-            "url":url as Any,
-            "guard_pokemon_id": guardPokemonId as Any,
-            "enabled": enabled as Any,
-            "last_modified": lastModifiedTimestamp as Any,
-            "team_id": teamId as Any,
-            "slots_available": availbleSlots as Any,
-            "updated": updated,
-            "end": raidEndTimestamp as Any,
-            "spawn": raidSpawnTimestamp as Any,
-            "start": raidBattleTimestamp as Any,
-            "pokemon_id": raidPokemonId as Any,
-            "level": raidLevel as Any,
-            "ex_raid_eligible": exRaidEligible as Any,
-            "in_battle": inBattle as Any,
-            "form": raidPokemonForm as Any,
-            "move_1": raidPokemonMove1 as Any,
-            "move_2": raidPokemonMove2 as Any,
-            "cp": raidPokemonCp as Any
+            "type": realType,
+            "message": message
         ]
     }
     

@@ -28,17 +28,21 @@ class Pokestop: JSONConvertibleObject, WebHookEvent {
         ]
     }
     
-    func getWebhookValues() -> [String : Any] {
-        return [
+    func getWebhookValues(type: String) -> [String : Any] {
+        let message: [String: Any] = [
             "pokestop_id":id,
             "latitude":lat,
             "longitude":lon,
             "name":name as Any,
             "url":url as Any,
-            "lure_expiration":lureExpireTimestamp as Any,
-            "last_modified":lastModifiedTimestamp as Any,
-            "enabled":enabled as Any,
+            "lure_expiration":lureExpireTimestamp ?? 0,
+            "last_modified":lastModifiedTimestamp ?? 0,
+            "enabled":enabled ?? true,
             "updated": updated
+        ]
+        return [
+            "type": "pokestop",
+            "message": message
         ]
     }
     

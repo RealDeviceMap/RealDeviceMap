@@ -157,6 +157,8 @@ class WebReqeustHandler {
             data["start_zoom"] = startZoom
             data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
+            data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
+            data["pokemon_time_old"] = Pokemon.defaultTimeReseen
         case .dashboardDevices:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
@@ -468,7 +470,9 @@ class WebReqeustHandler {
             let startLat = request.param(name: "start_lat")?.toDouble(),
             let startLon = request.param(name: "start_lon")?.toDouble(),
             let startZoom = request.param(name: "start_zoom")?.toInt(),
-            let title = request.param(name: "title")
+            let title = request.param(name: "title"),
+            let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
+            let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32()
         else {
             data["show_error"] = true
             return data
@@ -485,6 +489,8 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "TITLE", value: title)
             try DBController.global.setValueForKey(key: "WEBHOOK_DELAY", value: webhookDelay.description)
             try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
+            try DBController.global.setValueForKey(key: "POKEMON_TIME_UNSEEN", value: defaultTimeUnseen.description)
+            try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
         } catch {
             data["show_error"] = true
             return data
@@ -496,7 +502,9 @@ class WebReqeustHandler {
         WebReqeustHandler.title = title
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
-
+        Pokemon.defaultTimeUnseen = defaultTimeUnseen
+        Pokemon.defaultTimeReseen = defaultTimeReseen
+        
         data["title"] = title
         data["show_success"] = true
         

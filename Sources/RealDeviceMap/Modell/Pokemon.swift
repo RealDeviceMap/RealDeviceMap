@@ -12,6 +12,9 @@ import POGOProtos
 
 class Pokemon: JSONConvertibleObject, WebHookEvent {
     
+    static var defaultTimeUnseen: UInt32 = 1200
+    static var defaultTimeReseen: UInt32 = 600
+    
     class ParsingError: Error {}
     
     override func getJSONValues() -> [String : Any] {
@@ -42,30 +45,34 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         ]
     }
     
-    func getWebhookValues() -> [String : Any] {
-        return [
-            "spawnpoint_id": spawnId as Any,
-            "pokestop_id": pokestopId as Any,
+    func getWebhookValues(type: String) -> [String : Any] {
+        let message: [String: Any] = [
+            "spawnpoint_id": spawnId?.toHexString() ?? "None",
+            "pokestop_id": pokestopId ?? "None",
             "encounter_id": id,
             "pokemon_id": pokemonId,
             "latitude": lat,
             "longitude": lon,
-            "disappear_time": expireTimestamp as Any,
+            "disappear_time": expireTimestamp ?? 0,
             "first_seen": firstSeenTimestamp,
             "verified": false,
             "last_modified_time": updated,
-            "gender": gender as Any,
-            "cp": cp as Any,
-            "form": form as Any,
-            "costume": costume as Any,
-            "individual_attack": atkIv as Any,
-            "individual_defense": defIv as Any,
-            "individual_stamina": staIv as Any,
-            "move_1": move1 as Any,
-            "move_2": move2 as Any,
-            "weight": weight as Any,
-            "height": size as Any,
-            "weather": weather as Any,
+            "gender": gender ?? 0,
+            "cp": cp ?? 0,
+            "form": form ?? 0,
+            "costume": costume ?? 0,
+            "individual_attack": atkIv ?? 0,
+            "individual_defense": defIv ?? 0,
+            "individual_stamina": staIv ?? 0,
+            "move_1": move1 ?? 0,
+            "move_2": move2 ?? 0,
+            "weight": weight ?? 0,
+            "height": size ?? 0,
+            "weather": weather ?? 0
+        ]
+        return [
+            "type": "pokemon",
+            "message": message
         ]
     }
     
@@ -168,9 +175,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
                 throw ParsingError()
         }
         
-        // FIXME: - Temp solution
-        let expireTimestamp = Int(Date().timeIntervalSince1970) + 600
-        
         let spawnIdString  = (json["spawn_id"] as? String)
         let spawnId: UInt64?
         if spawnIdString != nil {
@@ -188,7 +192,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         self.lat = lat!
         self.lon = lon!
         self.pokemonId = pokemonId.toUInt16()
-        self.expireTimestamp = expireTimestamp.toUInt32()
         self.spawnId = spawnId
         self.weather = weather?.toUInt8()
         self.costume = costume?.toUInt8()
@@ -225,8 +228,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
         self.updated = UInt32(Date().timeIntervalSince1970)
         
-        self.expireTimestamp = (Int(Date().timeIntervalSince1970) + 600).toUInt32()
-
     }
     
     init(nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon) throws {
@@ -282,9 +283,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
         self.updated = UInt32(Date().timeIntervalSince1970)
-        
-        self.expireTimestamp = (Int(Date().timeIntervalSince1970) + 600).toUInt32()
-        
+
     }
 
     
@@ -304,6 +303,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         let mysqlStmt = MySQLStmt(mysql)
         
         if oldPokemon == nil {
+            if self.expireTimestamp == nil {
+                self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeUnseen
+            }
+            
             WebHookController.global.addPokemonEvent(pokemon: self)
             let sql = """
                 INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp)
@@ -312,6 +315,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
+            if self.expireTimestamp == nil {
+                let now = Date() // 0
+                let oldExpireDate = Date(timeIntervalSince1970: Double(oldPokemon!.expireTimestamp ?? 0)) // 300
+                if Int(oldExpireDate.timeIntervalSince(now)) < Int(Pokemon.defaultTimeReseen) {
+                    self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeReseen
+                }
+            }
+            
             if oldPokemon!.spawnId != nil && self.pokestopId != nil {
                 self.firstSeenTimestamp = oldPokemon!.firstSeenTimestamp
                 self.spawnId = oldPokemon!.spawnId
