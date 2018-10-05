@@ -49,10 +49,10 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             realType = "gym"
             message = [
                 "gym_id": id,
-                "gym_name":name as Any,
+                "gym_name":name ?? "Unknown",
                 "latitude":lat,
                 "longitude":lon,
-                "url":url as Any,
+                "url":url ?? "",
                 "enabled": enabled ?? true,
                 "team_id": teamId ?? 0,
                 "last_modified": lastModifiedTimestamp ?? 0,
@@ -64,8 +64,8 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             realType = "gym-info"
             message = [
                 "id": id,
-                "name":name as Any,
-                "url":url as Any,
+                "name":name ?? "Unknown",
+                "url":url ?? "",
                 "latitude":lat,
                 "longitude":lon,
                 "team": teamId ?? 0,
@@ -74,17 +74,17 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             realType = "raid"
             message = [
                 "gym_id": id,
-                "gym_name":name as Any,
+                "gym_name":name ?? "Unknown",
                 "latitude":lat,
                 "longitude":lon,
                 "spawn": raidSpawnTimestamp ?? 0,
                 "start": raidBattleTimestamp ?? 0,
                 "end": raidEndTimestamp ?? 0,
                 "level": raidLevel ?? 0,
-                "pokemon_id": raidPokemonId as Any,
-                "cp": raidPokemonCp as Any,
-                "move_1": raidPokemonMove1 as Any,
-                "move_2": raidPokemonMove2 as Any
+                "pokemon_id": raidPokemonId ?? 0,
+                "cp": raidPokemonCp ?? 0,
+                "move_1": raidPokemonMove1 ?? 0,
+                "move_2": raidPokemonMove2 ?? 0
             ]
         } else {
             realType = "unkown"
