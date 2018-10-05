@@ -193,11 +193,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         self.lon = lon!
         self.pokemonId = pokemonId.toUInt16()
         self.spawnId = spawnId
-        self.weather = weather?.toUInt8()
-        self.costume = costume?.toUInt8()
+        self.weather = weather?.toUInt8Checked()
+        self.costume = costume?.toUInt8Checked()
         self.pokestopId = pokestopId
-        self.gender = gender?.toUInt8()
-        self.form = form?.toUInt8()
+        self.gender = gender?.toUInt8Checked()
+        self.form = form?.toUInt8Checked()
         
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
         self.updated = UInt32(Date().timeIntervalSince1970)

@@ -30,5 +30,10 @@ extension Int {
     func toString() -> String {
         return String(self)
     }
-    
+    func toUInt8Checked() -> UInt8? {
+        if self >= UInt8.min && self <= UInt8.max {
+            return UInt8(self)
+        }
+        return nil
+    }
 }
