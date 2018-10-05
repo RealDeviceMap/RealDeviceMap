@@ -44,8 +44,8 @@ class WebRoutes {
             Route(method: .get, uri: "/dashboard/devices", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardDevices, requiredPerms: [.adminSetting])
             }),
-            Route(methods: [.get, .post], uri: "/dashboard/device/asign/{device_uuid}", handler: { (request, response) in
-                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDeviceAsign, requiredPerms: [.adminSetting])
+            Route(methods: [.get, .post], uri: "/dashboard/device/assign/{device_uuid}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDeviceAssign, requiredPerms: [.adminSetting])
             }),
             Route(method: .get, uri: "/dashboard/instances", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardInstances, requiredPerms: [.adminSetting])

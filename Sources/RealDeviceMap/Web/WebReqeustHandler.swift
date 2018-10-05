@@ -162,21 +162,21 @@ class WebReqeustHandler {
         case .dashboardDevices:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
-        case .dashboardDeviceAsign:
+        case .dashboardDeviceAssign:
             data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Asign Device"
+            data["page"] = "Dashboard - Assign Device"
             let deviceUUID = request.urlVariables["device_uuid"] ?? ""
 
             data["device_uuid"] = deviceUUID
             if request.method == .post {
                 do {
-                    data = try asignDevicePost(data: data, request: request, response: response, deviceUUID: deviceUUID)
+                    data = try assignDevicePost(data: data, request: request, response: response, deviceUUID: deviceUUID)
                 } catch {
                     return
                 }
             } else {
                 do {
-                    data = try asignDeviceGet(data: data, request: request, response: response, deviceUUID: deviceUUID)
+                    data = try assignDeviceGet(data: data, request: request, response: response, deviceUUID: deviceUUID)
                 } catch {
                     return
                 }
@@ -678,7 +678,7 @@ class WebReqeustHandler {
         }
     }
     
-    static func asignDevicePost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, deviceUUID: String) throws -> MustacheEvaluationContext.MapType {
+    static func assignDevicePost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, deviceUUID: String) throws -> MustacheEvaluationContext.MapType {
 
         var data = data
         guard let instanceName = request.param(name: "instance") else {
@@ -694,7 +694,7 @@ class WebReqeustHandler {
             instances = try Instance.getAll()
         } catch {
             data["show_error"] = true
-            data["error"] = "Failed to asign Device."
+            data["error"] = "Failed to assign Device."
             return data
         }
         if device == nil {
@@ -715,7 +715,7 @@ class WebReqeustHandler {
             InstanceController.global.reloadDevice(newDevice: device!, oldDeviceUUID: deviceUUID)
         } catch {
             data["show_error"] = true
-            data["error"] = "Failed to asign Device."
+            data["error"] = "Failed to assign Device."
             return data
         }
         response.redirect(path: "/dashboard/devices")
@@ -725,7 +725,7 @@ class WebReqeustHandler {
         
     }
 
-    static func asignDeviceGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, deviceUUID: String) throws -> MustacheEvaluationContext.MapType {
+    static func assignDeviceGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, deviceUUID: String) throws -> MustacheEvaluationContext.MapType {
         
         var data = data
         let instances: [Instance]

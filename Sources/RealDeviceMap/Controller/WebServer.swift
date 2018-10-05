@@ -24,7 +24,7 @@ class WebServer {
         case dashboard = "dashboard.mustache"
         case dashboardSettings = "dashboard_settings.mustache"
         case dashboardDevices = "dashboard_devices.mustache"
-        case dashboardDeviceAsign = "dashboard_device_asign.mustache"
+        case dashboardDeviceAssign = "dashboard_device_assign.mustache"
         case dashboardInstances = "dashboard_instances.mustache"
         case dashboardInstanceAdd = "dashboard_instance_add.mustache"
         case dashboardInstanceEdit = "dashboard_instance_edit.mustache"

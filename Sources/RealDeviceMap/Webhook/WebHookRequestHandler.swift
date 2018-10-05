@@ -198,12 +198,12 @@ class WebHookRequestHandler {
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0)
                     try newDevice.create()
-                    try response.respondWithData(data: ["asigned": false])
+                    try response.respondWithData(data: ["assigned": false])
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(data: ["asigned": false])
+                        try response.respondWithData(data: ["assigned": false])
                     } else {
-                        try response.respondWithData(data: ["asigned": true])
+                        try response.respondWithData(data: ["assigned": true])
                     }
                 }
             } catch {

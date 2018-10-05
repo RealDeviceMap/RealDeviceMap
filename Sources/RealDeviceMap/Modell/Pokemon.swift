@@ -316,10 +316,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             mysqlStmt.bindParam(id)
         } else {
             if self.expireTimestamp == nil {
-                let now = Date() // 0
-                let oldExpireDate = Date(timeIntervalSince1970: Double(oldPokemon!.expireTimestamp ?? 0)) // 300
+                let now = Date()
+                let oldExpireDate = Date(timeIntervalSince1970: Double(oldPokemon!.expireTimestamp ?? 0))
                 if Int(oldExpireDate.timeIntervalSince(now)) < Int(Pokemon.defaultTimeReseen) {
                     self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeReseen
+                } else {
+                    self.expireTimestamp = oldPokemon!.expireTimestamp
                 }
             }
             
