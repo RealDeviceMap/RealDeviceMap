@@ -19,9 +19,9 @@ class DBController {
 
     public var mysql: MySQL? {
         let mysql = MySQL()
+        mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8mb4")
         let connected = mysql.connect(host: host, user: username, password: password, db: database)
         if connected {
-            mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8")
             return mysql
         } else {
             Log.error(message: "Failed to connect to Database: (\(mysql.errorMessage())")
@@ -208,8 +208,75 @@ class DBController {
                 }
             }
             
+            clearPerms()
+            
             Log.info(message: "[DBController] Migration successful")
             migrate(mysql: mysql, fromVersion: fromVersion + 1, toVersion: toVersion)
+        }
+    }
+ 
+    private func clearPerms() {
+        let sessions = try? getAllSessionData()
+        if sessions != nil {
+            for session in sessions! {
+                var dataJson = try! session.value.jsonDecode() as! [String: Any]
+                dataJson["perms"] = nil
+                try? setSessionData(token: session.key, data: try! dataJson.jsonEncodedString())
+            }
+        }
+        
+    }
+    
+    private func getAllSessionData() throws -> [String: String] {
+        
+        guard let mysql = mysql else {
+            Log.error(message: "[DBController] Failed to connect to database.")
+            throw DBError()
+        }
+        
+        let sql = """
+            SELECT token, data
+            FROM `web_session`
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DBController] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBError()
+        }
+        let results = mysqlStmt.results()
+    
+        var sessions = [String: String]()
+        while let result = results.next() {
+            let token = result[0] as! String
+            let data = result[1] as! String
+            sessions[token] = data
+        }
+        return sessions
+    }
+    
+    private func setSessionData(token: String, data: String) throws {
+        guard let mysql = mysql else {
+            Log.error(message: "[DBController] Failed to connect to database.")
+            throw DBError()
+        }
+        
+        let sql = """
+            UPDATE `web_session`
+            SET data = ?
+            WHERE token = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(data)
+        mysqlStmt.bindParam(token)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DBController] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBError()
         }
     }
     

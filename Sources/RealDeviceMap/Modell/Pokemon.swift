@@ -125,8 +125,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
     }
     
     init(json: [String: Any]) throws {
-        
-        
+                
         var lat = json["lat"] as? Double
         var lon = json["lon"] as? Double
         let pokestopId = json["fort_id"] as? String
@@ -286,12 +285,16 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
 
     }
 
-    
     public func save() throws {
         
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
+        }
+        
+        if self.spawnId != nil {
+            let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated)
+            try? spawnPoint.save()
         }
         
         let oldPokemon: Pokemon?
@@ -315,6 +318,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
+            self.firstSeenTimestamp = oldPokemon!.firstSeenTimestamp
+            
             if self.expireTimestamp == nil {
                 let now = Date()
                 let oldExpireDate = Date(timeIntervalSince1970: Double(oldPokemon!.expireTimestamp ?? 0))
@@ -325,12 +330,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
                 }
             }
             
-            if oldPokemon!.spawnId != nil && self.pokestopId != nil {
-                self.firstSeenTimestamp = oldPokemon!.firstSeenTimestamp
+            if oldPokemon!.spawnId != nil && self.spawnId == nil {
                 self.spawnId = oldPokemon!.spawnId
-                self.pokestopId = nil
                 self.lat = oldPokemon!.lat
                 self.lon = oldPokemon!.lon
+            }
+            
+            if oldPokemon!.pokestopId != nil && self.pokestopId == nil {
+                self.pokestopId = oldPokemon!.pokestopId
             }
             
             if oldPokemon!.atkIv != nil && self.atkIv == nil {
@@ -388,17 +395,28 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         }
     }
     
-    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [Pokemon] {
+    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
         
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let sqlExclude: String
+        if pokemonFilterExclude == nil || pokemonFilterExclude!.isEmpty {
+            sqlExclude = ""
+        } else {
+            var sqlExcludeCreate = "AND pokemon_id NOT IN ("
+            for _ in 1..<pokemonFilterExclude!.count {
+                sqlExcludeCreate += "?, "
+            }
+            sqlExcludeCreate += "?)"
+            sqlExclude = sqlExcludeCreate
+        }
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp
             FROM pokemon
-            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
+            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlExclude)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -408,6 +426,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
+        if pokemonFilterExclude != nil {
+            for id in pokemonFilterExclude! {
+                mysqlStmt.bindParam(id)
+            }
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")

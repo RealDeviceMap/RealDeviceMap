@@ -31,6 +31,7 @@ class WebReqeustHandler {
         let documentRoot = Dir.workingDir.path + "/resources/webroot"
         var data = MustacheEvaluationContext.MapType()
         data["csrf"] = request.session?.data["csrf"]
+        data["timestamp"] = UInt32(Date().timeIntervalSince1970)
         
         // Get User
         var username = request.session?.userid
@@ -137,6 +138,7 @@ class WebReqeustHandler {
             data["hide_pokestops"] = !perms.contains(.viewMapPokestop)
             data["hide_raids"] = !perms.contains(.viewMapRaid)
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
+            data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
         case .dashboard:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"

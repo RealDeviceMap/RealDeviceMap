@@ -61,7 +61,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
                 "raid_active_until": raidEndTimestamp ?? 0
             ]
         } else if type == "gym-info" {
-            realType = "gym-info"
+            realType = "gym_details"
             message = [
                 "id": id,
                 "name":name ?? "Unknown",
@@ -77,6 +77,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
                 "gym_name":name ?? "Unknown",
                 "latitude":lat,
                 "longitude":lon,
+                "team_id": teamId ?? 0,
                 "spawn": raidSpawnTimestamp ?? 0,
                 "start": raidBattleTimestamp ?? 0,
                 "end": raidEndTimestamp ?? 0,
@@ -163,10 +164,10 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         let exRaidEligible = json["isExRaidEligible"] as? Bool
         let inBattle = json["isInBattle"] as? Bool
         
-        let raidPokemonMove1 = json["raidPokemonMove1"] as? Int
-        let raidPokemonMove2 = json["raidPokemonMove2"] as? Int
-        let raidPokemonForm = json["raidPokemonForm"] as? Int
-        let raidPokemonCp = json["raidPokemonCp"] as? Int
+        let raidPokemonMove1 = json["move1"] as? Int
+        let raidPokemonMove2 = json["move2"] as? Int
+        let raidPokemonForm = json["form"] as? Int
+        let raidPokemonCp = json["cp"] as? Int
         
         if raidPokemonId == 0 {
             raidPokemonId = nil

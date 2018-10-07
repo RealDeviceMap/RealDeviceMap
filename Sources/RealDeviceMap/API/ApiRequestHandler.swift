@@ -33,8 +33,11 @@ class ApiRequestHandler {
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
+        let pokemonFilterExclude = (try? (request.param(name: "pokemon_filter_exclude") ?? "")?.jsonDecode() as? [Int]) ?? nil
+        let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
+        let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         
@@ -65,8 +68,55 @@ class ApiRequestHandler {
             data["pokestops"] = try? Pokestop.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
         }
         if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
-            data["pokemon"] = try? Pokemon.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+            data["pokemon"] = try? Pokemon.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude)
         }
+        if permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
+            data["spawnpoints"] = try? SpawnPoint.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+        }
+        if permViewMap && showPokemonFilter {
+            var pokemonData = [[String: Any]]()
+            for i in 1...WebReqeustHandler.maxPokemonId {
+                
+                let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-off select-button-new" data-id="\(i)" data-type="pokemon" data-info="hide">
+                            <input type="radio" name="options" id="hide" autocomplete="off">Hide
+                        </label>
+                        <label class="btn btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
+                            <input type="radio" name="options" id="show" autocomplete="off">Show
+                        </label>
+                    </div>
+                """
+                
+                let size = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="small">
+                            <input type="radio" name="options" id="hide" autocomplete="off">Small
+                        </label>
+                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="normal">
+                            <input type="radio" name="options" id="show" autocomplete="off">Normal
+                        </label>
+                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="large">
+                            <input type="radio" name="options" id="show" autocomplete="off">Large
+                        </label>
+                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="huge">
+                            <input type="radio" name="options" id="show" autocomplete="off">Huge
+                        </label>
+                    </div>
+                """
+                
+                pokemonData.append([
+                    "pokemon_id": String(format: "%03d", i),
+                    "pokemon_name": Localizer.global.get(value: "poke_\(i)") ?? "?",
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size
+                ])
+            }
+            data["pokemon_filters"] = pokemonData
+        }
+
+        
         if showDevices && perms.contains(.adminSetting) {
             
             let devices = try? Device.getAll()

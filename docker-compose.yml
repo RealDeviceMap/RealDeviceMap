@@ -24,6 +24,7 @@ services:
       WEBHOOK_SERVER_PORT: 9001
   db:
     image: mariadb
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     container_name: realdevicemap-db
     restart: unless-stopped
     environment:

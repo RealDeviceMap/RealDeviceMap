@@ -30,7 +30,6 @@ class WebHookRequestHandler {
         
     }
     
-    
     static func jsonHandler(request: HTTPRequest, response: HTTPResponse) {
         
         let json: [String: Any]
@@ -88,8 +87,6 @@ class WebHookRequestHandler {
                     try? pokemon.save()
                 }
                 Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(pokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
-                
-                
             }
             Threading.destroyQueue(queue)
         }
@@ -108,14 +105,10 @@ class WebHookRequestHandler {
         
         let gmos = json["gmo"] as! [[String: Any]]
         
-        var wildPokemonsCount = 0
-        var nearbyPokemonsCount = 0
-        var fortsCount = 0
-        
         var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
         var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
         var forts = [POGOProtos_Map_Fort_FortData]()
-        
+
         for gmoData in gmos {
             let data = Data(base64Encoded: gmoData["data"] as! String)!
             
@@ -124,16 +117,13 @@ class WebHookRequestHandler {
                     wildPokemons += mapCell.wildPokemons
                     nearbyPokemons += mapCell.nearbyPokemons
                     forts += mapCell.forts
-                    wildPokemonsCount += mapCell.wildPokemons.count
-                    nearbyPokemonsCount += mapCell.nearbyPokemons.count
-                    fortsCount += mapCell.forts.count
                 }
             }
             
         }
-
+        
         do {
-            try response.respondWithData(data: ["nearby": nearbyPokemonsCount, "wild": wildPokemonsCount, "forts": fortsCount])
+            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count])
         } catch {
             response.respondWithError(status: .internalServerError)
         }
@@ -166,7 +156,6 @@ class WebHookRequestHandler {
                 }
             }
             Log.info(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
-            
             
             Threading.destroyQueue(queue)
         }
