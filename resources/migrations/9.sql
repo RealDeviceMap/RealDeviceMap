@@ -1,6 +1,3 @@
-SET FOREIGN_KEY_CHECKS=0;
-DROP TABLE spawnpoint;
-SET FOREIGN_KEY_CHECKS=1;
 CREATE TABLE `spawnpoint` (
 	`id` bigint(15) unsigned NOT NULL,
     `lat` double(18,14) NOT NULL,
