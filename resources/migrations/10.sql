@@ -36,8 +36,7 @@ CREATE TABLE `raid_stats` (
   PRIMARY KEY (`date`, `pokemon_id`)
 );
 
-DELIMITER //
-CREATE TRIGGER gym_updated 
+CREATE TRIGGER gym_updated
 BEFORE UPDATE ON gym
 FOR EACH ROW BEGIN
   IF ((OLD.raid_pokemon_id IS NULL OR OLD.raid_pokemon_id = 0) AND (NEW.raid_pokemon_id IS NOT NULL AND NEW.raid_pokemon_id != 0)) THEN
@@ -47,10 +46,8 @@ FOR EACH ROW BEGIN
     ON DUPLICATE KEY UPDATE
       count = count + 1;
   END IF;
-END //
-DELIMITER ;
+END;
 
-DELIMITER //
 CREATE TRIGGER gym_inserted
 BEFORE INSERT ON gym
 FOR EACH ROW BEGIN
@@ -61,5 +58,4 @@ FOR EACH ROW BEGIN
     ON DUPLICATE KEY UPDATE
       count = count + 1;
   END IF;
-END //
-DELIMITER ;
+END;
