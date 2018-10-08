@@ -209,13 +209,7 @@ function initMap() {
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
 
-        $('.select-button').each(function (button) {
-            manageSelectButton($(this), false);
-        });
-        $('.select-button-new').each(function (button) {
-            manageSelectButton($(this), true);
-        });
-
+        $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
     });
 
     $('#disable-all-filter').on('click', function(event) {
@@ -227,13 +221,7 @@ function initMap() {
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
 
-        $('.select-button').each(function (button) {
-            manageSelectButton($(this), false);
-        });
-        $('.select-button-new').each(function (button) {
-            manageSelectButton($(this), true);
-        });
-
+        $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
     });
 
 	$('#saveSettings').on('click', function(event) {
