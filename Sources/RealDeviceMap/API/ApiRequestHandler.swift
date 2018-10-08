@@ -108,7 +108,7 @@ class ApiRequestHandler {
                 pokemonData.append([
                     "pokemon_id": String(format: "%03d", i),
                     "pokemon_name": Localizer.global.get(value: "poke_\(i)") ?? "?",
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:31px; width:31px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size
                 ])
