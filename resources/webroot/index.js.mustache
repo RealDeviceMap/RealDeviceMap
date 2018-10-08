@@ -187,9 +187,6 @@ function initMap() {
 		onAdd: function (map) {
             let container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
 
-			container.style.backgroundColor = 'white';
-			container.style.width = '26px';
-			container.style.height = '26px';
 			container.innerHTML = '<a href="#"><img src="/static/svg/location.svg" style="width: 21px; height: 21px; class="center-block;"/></a>';
 
 			container.onclick = function(){
@@ -312,9 +309,6 @@ function initMap() {
 		onAdd: function (map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
 
-			container.style.backgroundColor = 'white';
-			container.style.width = '26px';
-			container.style.height = '26px';
 			container.innerHTML = '<a href="#"><img src="/static/svg/settings.svg" style="width: 21px; height: 21px; class="center-block;"/></a>';
 
 			container.onclick = function(){
