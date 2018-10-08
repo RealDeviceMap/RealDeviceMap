@@ -79,10 +79,10 @@ class ApiRequestHandler {
                 
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-off select-button-new" data-id="\(i)" data-type="pokemon" data-info="hide">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="pokemon" data-info="hide">
                             <input type="radio" name="options" id="hide" autocomplete="off">Hide
                         </label>
-                        <label class="btn btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
+                        <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
                             <input type="radio" name="options" id="show" autocomplete="off">Show
                         </label>
                     </div>
@@ -90,16 +90,16 @@ class ApiRequestHandler {
                 
                 let size = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="small">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="small">
                             <input type="radio" name="options" id="hide" autocomplete="off">Small
                         </label>
-                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="normal">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="normal">
                             <input type="radio" name="options" id="show" autocomplete="off">Normal
                         </label>
-                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="large">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="large">
                             <input type="radio" name="options" id="show" autocomplete="off">Large
                         </label>
-                        <label class="btn btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="huge">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="huge">
                             <input type="radio" name="options" id="show" autocomplete="off">Huge
                         </label>
                     </div>
@@ -108,7 +108,7 @@ class ApiRequestHandler {
                 pokemonData.append([
                     "pokemon_id": String(format: "%03d", i),
                     "pokemon_name": Localizer.global.get(value: "poke_\(i)") ?? "?",
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:31px; width:31px;\">",
                     "filter": filter,
                     "size": size
                 ])

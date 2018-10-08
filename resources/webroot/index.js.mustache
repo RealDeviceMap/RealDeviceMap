@@ -36,6 +36,8 @@ $(function() {
             manageSelectButton($(this), false);
         });
 
+        const scrollHeight = $(document).height() * 0.5;
+
         if (!pokemonFilterLoaded) {
         	pokemonFilterLoaded = true;
             const table = $('#table-filter-pokemon').DataTable( {
@@ -59,7 +61,7 @@ $(function() {
                     "orderable": false
                 }],
                 "deferRender": true,
-                "scrollY": 300,
+                "scrollY": scrollHeight,
                 "scrollCollapse": true,
                 "scroller": true,
                 "lengthChange": false,
@@ -199,11 +201,28 @@ function initMap() {
 	map.addControl(new customControlLocation());
 
 	$('#reset-pokemon-filter').on('click', function(event) {
-		console.log("Reset");
         const defaultPokemonFilter = [];
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
             defaultPokemonFilter[i] = {"show": true, "size": "normal"};
+        }
+        store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
+        pokemonFilterNew = defaultPokemonFilter;
+
+        $('.select-button').each(function (button) {
+            manageSelectButton($(this), false);
+        });
+        $('.select-button-new').each(function (button) {
+            manageSelectButton($(this), true);
+        });
+
+    });
+
+    $('#disable-all-filter').on('click', function(event) {
+        const defaultPokemonFilter = [];
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultPokemonFilter[i] = {"show": false, "size": pokemonFilterNew[i]["size"]};
         }
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
