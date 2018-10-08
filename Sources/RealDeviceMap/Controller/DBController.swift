@@ -135,6 +135,7 @@ class DBController {
     
     private func setup() {
         
+        multiStatement = true
         guard let mysql = mysql else {
             let message = "Failed to connect to database while initializing."
             Log.critical(message: "[DBController] " + message)
@@ -177,20 +178,14 @@ class DBController {
             }
         }
         
-        migrate(fromVersion: version, toVersion: newestDBVersion)
+        migrate(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
+        multiStatement = false
     }
     
-    private func migrate(fromVersion: Int, toVersion: Int) {
+    private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
         if fromVersion < toVersion {
             Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
             
-            multiStatement = true
-            var mysql = self.mysql
-            if mysql == nil {
-                let message = "Migration failed: Can't connect to database)"
-                Log.critical(message: "[DBController] " + message)
-                fatalError(message)
-            }
             
             var migrateSQL: String
             do {
@@ -204,10 +199,14 @@ class DBController {
                 fatalError(message)
             }
             
-            guard mysql!.query(statement: migrateSQL) else {
-                let message = "Migration Failed: (\(mysql!.errorMessage()))"
+            guard mysql.query(statement: migrateSQL) else {
+                let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
                 fatalError(message)
+            }
+            
+            while mysql.moreResults() {
+                _ = mysql.nextResult()
             }
             
             let updateVersionSQL = """
@@ -216,16 +215,8 @@ class DBController {
                 ON DUPLICATE KEY UPDATE `value` = \(fromVersion + 1);
             """
             
-            multiStatement = false
-            mysql = self.mysql
-            if mysql == nil {
-                let message = "Migration failed: Can't connect to database)"
-                Log.critical(message: "[DBController] " + message)
-                fatalError(message)
-            }
-            
-            guard mysql!.query(statement: updateVersionSQL) else {
-                let message = "Migration Failed: (\(mysql!.errorMessage()))"
+            guard mysql.query(statement: updateVersionSQL) else {
+                let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
                 fatalError(message)
             }
@@ -233,7 +224,7 @@ class DBController {
             clearPerms()
             
             Log.info(message: "[DBController] Migration successful")
-            migrate(fromVersion: fromVersion + 1, toVersion: toVersion)
+            migrate(mysql: mysql, fromVersion: fromVersion + 1, toVersion: toVersion)
         }
     }
  
