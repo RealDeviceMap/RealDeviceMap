@@ -6,7 +6,7 @@ let package = Package(
     dependencies: [
         .Package(url: "https://github.com/PerfectlySoft/Perfect-HTTPServer.git", majorVersion: 3),
         .Package(url: "https://github.com/123FLO321/Perfect-Session-MySQL.git", majorVersion: 3),
-        .Package(url: "https://github.com/PerfectlySoft/Perfect-MySQL.git", majorVersion: 3),
+        .Package(url: "https://github.com/123FLO321/Perfect-MySQL.git", majorVersion: 3),
         .Package(url: "https://github.com/PerfectlySoft/Perfect-Thread.git", majorVersion: 3),
         .Package(url: "https://github.com/PerfectlySoft/Perfect-Mustache.git", majorVersion: 3),
         .Package(url: "https://github.com/PerfectlySoft/Perfect-CURL.git", majorVersion: 3),

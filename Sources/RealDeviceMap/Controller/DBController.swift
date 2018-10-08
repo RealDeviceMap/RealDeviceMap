@@ -17,11 +17,18 @@ class DBController {
     
     public private(set) static var global = DBController()
 
+    private var multiStatement = false
+    
     public var mysql: MySQL? {
         let mysql = MySQL()
         mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8mb4")
         let connected = mysql.connect(host: host, user: username, password: password, db: database)
         if connected {
+            if multiStatement {
+                mysql.setServerOption(.MYSQL_OPTION_MULTI_STATEMENTS_ON)
+            } else {
+                mysql.setServerOption(.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+            }
             return mysql
         } else {
             Log.error(message: "Failed to connect to Database: (\(mysql.errorMessage())")
@@ -128,6 +135,7 @@ class DBController {
     
     private func setup() {
         
+        multiStatement = true
         guard let mysql = mysql else {
             let message = "Failed to connect to database while initializing."
             Log.critical(message: "[DBController] " + message)
@@ -171,7 +179,7 @@ class DBController {
         }
         
         migrate(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
-        
+        multiStatement = false
     }
     
     private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
@@ -196,16 +204,10 @@ class DBController {
                 fatalError(message)
             }
             
-            // TODO: - clear perms in web_session;
-        
-            for sql in migrateSQL.components(separatedBy: ";") {
-                if sql.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    guard mysql.query(statement: sql) else {
-                        let message = "Migration Failed: (\(mysql.errorMessage()))"
-                        Log.critical(message: "[DBController] " + message)
-                        fatalError(message)
-                    }
-                }
+            guard mysql.query(statement: migrateSQL) else {
+                let message = "Migration Failed: (\(mysql.errorMessage()))"
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
             }
             
             clearPerms()
