@@ -168,7 +168,12 @@ function loadStorage() {
         pokemonFilter = defaultPokemonFilter;
     } else {
         pokemonFilter = JSON.parse(pokemonFilterValue);
-    }
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (pokemonFilter[i] == undefined) {
+                pokemonFilter[i] = {"show": true, "size": "normal"};
+            }
+        }
+	}
 }
 
 function initMap() {

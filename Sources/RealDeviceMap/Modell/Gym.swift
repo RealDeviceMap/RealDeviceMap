@@ -298,23 +298,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             if oldGym!.url != nil && self.url == nil {
                 self.url = oldGym!.url
             }
-            if oldGym!.exRaidEligible != nil && self.exRaidEligible == nil {
-                self.exRaidEligible = oldGym!.exRaidEligible
-            }
-            if oldGym!.inBattle != nil && self.inBattle == nil {
-                self.inBattle = oldGym!.inBattle
-            }
-            if oldGym!.raidPokemonForm != nil && self.raidPokemonForm == nil {
-                self.raidPokemonForm = oldGym!.raidPokemonForm
-            }
-            if oldGym!.raidPokemonMove1 != nil && self.raidPokemonMove1 == nil {
-                self.raidPokemonMove1 = oldGym!.raidPokemonMove1
-                self.raidPokemonMove2 = oldGym!.raidPokemonMove2
-            }
-            if oldGym!.raidPokemonCp != nil && self.raidPokemonCp == nil {
-                self.raidPokemonCp = oldGym!.raidPokemonCp
-            }
-            
+
             if oldGym!.availbleSlots != self.availbleSlots || oldGym!.teamId != self.teamId {
                 WebHookController.global.addGymInfoEvent(gym: self)
             }
