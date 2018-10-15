@@ -218,7 +218,7 @@ class WebReqeustHandler {
                 data["low_level_selected"] = true
             }
         case .dashboardInstanceEdit:
-            let instanceName = request.urlVariables["instance_name"] ?? ""
+            let instanceName = (request.urlVariables["instance_name"] ?? "").replacingOccurrences(of: "&dash&", with: "/")
             data["page_is_dashboard"] = true
             data["old_name"] = instanceName
             data["page"] = "Dashboard - Edit Instance"
