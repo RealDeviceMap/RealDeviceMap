@@ -56,6 +56,13 @@ class WebRoutes {
             Route(methods: [.get, .post], uri: "/dashboard/instance/edit/{instance_name}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardInstanceEdit, requiredPerms: [.adminSetting])
             }),
+            Route(method: .get, uri: "/dashboard/accounts", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAccounts, requiredPerms: [.adminSetting])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/accounts/add", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAccountsAdd
+                    , requiredPerms: [.adminSetting])
+            }),
             Route(method: .get, uri: "/static/**", handler: WebStaticReqeustHandler.handle)
         ]
         

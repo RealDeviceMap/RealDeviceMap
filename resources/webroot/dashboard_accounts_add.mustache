@@ -1,0 +1,31 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Add new Accounts to {{title}}!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Account Level
+                <select class="form-control" name="level" required>
+                    <option value="low_level" {{#low_level_selected}}selected{{/low_level_selected}}>Low Level</option>
+                    <option value="high_level" {{#high_level_selected}}selected{{/high_level_selected}}>High Level</option>
+                </select>
+            </div>
+            <div class="form-group">
+                Accounts
+                <textarea class="form-control" rows="5" name="accounts" required>{{{accounts}}}</textarea>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+    <br>
+</body>

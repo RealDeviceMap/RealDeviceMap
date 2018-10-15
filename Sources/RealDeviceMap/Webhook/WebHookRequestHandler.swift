@@ -18,7 +18,7 @@ import POGOProtos
 class WebHookRequestHandler {
     
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
-    
+        
         switch type {
         case .json:
             jsonHandler(request: request, response: response)
@@ -184,15 +184,27 @@ class WebHookRequestHandler {
         if type == "init" {
             do {
                 let device = try Device.getById(id: uuid)
+                let firstWarningTimestamp: UInt32?
+                if device == nil || device!.accountUsername == nil {
+                    firstWarningTimestamp = nil
+                } else {
+                    let account = try Account.getWithUsername(username: device!.accountUsername!)
+                    if account != nil {
+                        firstWarningTimestamp = account!.firstWarningTimestamp
+                    } else {
+                        firstWarningTimestamp = nil
+                    }
+                }
+                
                 if device == nil {
-                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0)
+                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil)
                     try newDevice.create()
-                    try response.respondWithData(data: ["assigned": false])
+                    try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(data: ["assigned": false])
+                        try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                     } else {
-                        try response.respondWithData(data: ["assigned": true])
+                        try response.respondWithData(data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any])
                     }
                 }
             } catch {
@@ -219,7 +231,104 @@ class WebHookRequestHandler {
             } else {
                 response.respondWithError(status: .notFound)
             }
+        } else if type == "get_account" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let account = try Account.getNewAccount(highLevel: false)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if device.accountUsername != nil {
+                    do {
+                        let oldAccount = try Account.getWithUsername(username: device.accountUsername!)
+                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
+                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password])
+                            return
+                        }
+                    } catch { }
+                }
+                
+                device.accountUsername = account.username
+                try device.save(oldUUID: device.uuid)
+                try response.respondWithData(data: ["username": account.username, "password": account.password])
+            
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_banned" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                else {
+                    response.respondWithError(status: .internalServerError)
+                    return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "banned"
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_warning" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if account.firstWarningTimestamp == nil {
+                    account.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_invalid_credentials" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "invalid_credentials"
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "logged_out" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid)
+                else {
+                    response.respondWithError(status: .notFound)
+                    return
+                }
+                device.accountUsername = nil
+                try device.save(oldUUID: device.uuid)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
+            Log.info(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
             response.respondWithError(status: .badRequest)
         }
         

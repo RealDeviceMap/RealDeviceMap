@@ -128,6 +128,7 @@ class ApiRequestHandler {
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
                     deviceData["instance"] = device.instanceName ?? ""
+                    deviceData["username"] = device.accountUsername ?? ""
                     
                     if formatted {
                         let formattedDate: String

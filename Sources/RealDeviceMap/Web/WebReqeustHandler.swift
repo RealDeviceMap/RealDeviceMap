@@ -183,8 +183,6 @@ class WebReqeustHandler {
                     return
                 }
             }
-            
-
         case .dashboardInstances:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Instances"
@@ -199,6 +197,25 @@ class WebReqeustHandler {
                 }
             } else {
                 data["nothing_selected"] = true
+            }
+        case .dashboardAccounts:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Accounts"
+            data["new_accounts_count"] = (try? Account.getNewCount()) ?? "?"
+            data["in_use_accounts_count"] = (try? Account.getInUseCount()) ?? "?"
+            data["warned_accounts_count"] = (try? Account.getWarnedCount()) ?? "?"
+            data["failed_accounts_count"] = (try? Account.getFailedCount()) ?? "?"
+        case .dashboardAccountsAdd:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Accounts"
+            if request.method == .post {
+                do {
+                    data = try addAccounts(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            } else {
+                data["low_level_selected"] = true
             }
         case .dashboardInstanceEdit:
             let instanceName = request.urlVariables["instance_name"] ?? ""
@@ -755,5 +772,60 @@ class WebReqeustHandler {
         data["instances"] = instancesData
         return data
         
+    }
+    
+    static func addAccounts(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        
+        guard
+            let level = request.param(name: "level"),
+            let accounts = request.param(name: "accounts")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression).replacingOccurrences(of: ";", with: ",").replacingOccurrences(of: ":", with: ",")
+            else {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+        }
+        
+        data["accounts"] = accounts
+        var isHighLevel: Bool
+        if level.lowercased() == "high_level" {
+            data["high_level_selected"] = true
+            isHighLevel = true
+        } else {
+            data["low_level_selected"] = true
+            isHighLevel = false
+        }
+        
+        var accs = [Account]()
+        let accountsRows = accounts.components(separatedBy: "\n")
+        for accountsRow in accountsRows {
+            let rowSplit = accountsRow.components(separatedBy: ",")
+            if rowSplit.count == 2 {
+                let username = rowSplit[0]
+                let password = rowSplit[1]
+                accs.append(Account(username: username, password: password, isHighLevel: isHighLevel, firstWarningTimestamp: nil, failedTimestamp: nil, failed: nil))
+            }
+        }
+        
+        if accs.count == 0 {
+            data["show_error"] = true
+            data["error"] = "Failed to parse accounts."
+            return data
+        } else {
+            do {
+                for acc in accs {
+                    try acc.save(update: false)
+                }
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to save accounts."
+                return data
+            }
+            response.redirect(path: "/dashboard/accounts")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+            throw CompletedEarly()
+        }
     }
 }
