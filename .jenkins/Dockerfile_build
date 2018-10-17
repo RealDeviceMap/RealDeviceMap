@@ -1,4 +1,8 @@
-FROM perfectlysoft/perfectassistant:4.1
+FROM swift:4.2
+
+# Perfect Requirements
+RUN apt-get -y update && apt-get install -y openssl libssl-dev uuid-dev
+
 # Perfect-COpenSSL-Linux.git--493483816737093971/PADockerfile
 RUN apt-get -y update && apt-get install -y libssl-dev
 
