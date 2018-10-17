@@ -23,9 +23,13 @@ let showRaids;
 let showPokemon;
 let showSpawnpoints;
 
+let avilableForms = [];
+
 let pokemonFilterLoaded = false;
 
 $(function() {
+
+    avilableForms = JSON.parse('{{{avilable_forms_json}}}');
 
     loadStorage();
 
@@ -107,7 +111,7 @@ $(function() {
         dataTable.columns.adjust();
     });
 
-	$.getJSON( "static/data/en.json", function( data ) {
+	$.getJSON( "static/data/{{{locale}}}.json", function( data ) {
 		i18n.translator.add(data);
 	});
 
@@ -724,7 +728,14 @@ function getPokemonPopupContent(pokemon) {
 
     let content = '';
 
-	content += '<b>'+getPokemonName(pokemon.pokemon_id)+'</b><br>';
+    let pokemonName;
+    if (pokemon.form !== 0 && pokemon.form !== null) {
+        pokemonName = getFormName(pokemon.form) + ' ' + getPokemonName(pokemon.pokemon_id);
+    } else {
+        pokemonName = getPokemonName(pokemon.pokemon_id);
+    }
+
+	content += '<b>'+pokemonName+'</b><br>';
 	if (pokemon.expire_timestamp_true) {
 		content += 'Despawn Time: '
 	} else {
@@ -791,7 +802,13 @@ function getGymPopupContent(gym) {
     const isRaidBattle = raidBattleDate <= now && isRaid;
 
 	if (isRaid && gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
-		content += "Raid Boss: " + getPokemonName(gym.raid_pokemon_id) + '<br>';
+        let pokemonName;
+        if (gym.raid_pokemon_form !== 0 && gym.raid_pokemon_form !== null) {
+            pokemonName = getFormName(gym.raid_pokemon_form) + ' ' + getPokemonName(gym.raid_pokemon_id);
+        } else {
+            pokemonName = getPokemonName(gym.raid_pokemon_id);
+        }
+		content += "Raid Boss: " + pokemonName + '<br>';
 	} else if (isRaidBattle) {
 		content += "Raid Boss: Unknown Raid Boss<br>";
 	}
@@ -821,20 +838,37 @@ function getPokemonName(pokemonId) {
 	return i18n('poke_'+pokemonId) + ' (' + pokemonId + ')';
 }
 
-function getMoveName(move_id) {
-    return i18n('move_'+move_id);
+function getFormName(formId) {
+    return i18n('form_'+formId);
 }
 
-function getWeatherName(weather_id) {
-    return i18n('weather_'+weather_id);
+function getMoveName(moveId) {
+    return i18n('move_'+moveId);
+}
+
+function getWeatherName(weatherId) {
+    return i18n('weather_'+weatherId);
 }
 
 // MARK: - Markers
 
 function getPokemonMarkerIcon(pokemon, ts) {
 	const size = getPokemonSize(pokemon.pokemon_id);
+
+    let pokemonIdString;
+    if (pokemon.form !== 0 && pokemon.form !== null) {
+        const pokemonIdStringTmp = '' + pokemon.pokemon_id + '-' + pokemon.form;
+        if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+            pokemonIdString = pokemonIdStringTmp;
+        } else {
+            pokemonIdString = '' + pokemon.pokemon_id;
+        }
+    } else {
+        pokemonIdString = '' + pokemon.pokemon_id;
+    }
+
     const icon = L.icon({
-        iconUrl: 		'static/img/pokemon/' + pokemon.pokemon_id + '.png',
+        iconUrl: 		'static/img/pokemon/' + pokemonIdString + '.png',
         iconSize:    	[size, size],
         iconAnchor:   	[size/2, size/2],
         popupAnchor:  	[0, -(size/2)]
@@ -918,8 +952,21 @@ function getGymMarkerIcon(gym, ts) {
     let icon;
     if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && showRaids && parseInt(gym.raid_level) > 0) {
         if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
+
+        	let pokemonIdString;
+        	if (gym.raid_pokemon_form !== 0 && gym.raid_pokemon_form !== null) {
+        		const pokemonIdStringTmp = '' + gym.raid_pokemon_id + '-' + gym.raid_pokemon_form;
+        		if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+                    pokemonIdString = pokemonIdStringTmp;
+				} else {
+                    pokemonIdString = '' + gym.raid_pokemon_id;
+                }
+			} else {
+        		pokemonIdString = '' + gym.raid_pokemon_id;
+			}
+
             icon = L.icon({
-                iconUrl: 		'static/img/raid/'+ gym.team_id + '_' + size + '_' + gym.raid_pokemon_id + '.png',
+                iconUrl: 		'static/img/raid/'+ gym.team_id + '_' + size + '_' + pokemonIdString+ '.png',
                 iconSize: 		[40, 67],
                 iconAnchor: 	[20, 47],
                 popupAnchor: 	[0, -47]

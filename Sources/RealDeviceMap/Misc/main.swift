@@ -10,6 +10,7 @@ import PerfectLib
 import PerfectThread
 import PerfectHTTPServer
 import TurnstileCrypto
+import POGOProtos
 
 func shell(_ args: String...) -> Int32 {
     let task = Process()
@@ -31,7 +32,6 @@ func combineImages(image1: String, image2: String, output: String) {
 // Init DBController
 _ = DBController.global
 
-
 // Init Instance Contoller
 do {
     try InstanceController.setup()
@@ -44,12 +44,23 @@ do {
 // Start WebHookController
 WebHookController.global.start()
 
+// Load Forms
+var avilableForms = [String]()
+for formString in POGOProtos_Enums_Form.allFormsInString {
+    let file = File("resources/webroot/static/img/pokemon/\(formString).png")
+    if file.exists {
+        avilableForms.append(formString)
+    }
+}
+WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
+
 // Load Settings
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
 WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
+Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE") ?? "en"
 
 Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
 Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600

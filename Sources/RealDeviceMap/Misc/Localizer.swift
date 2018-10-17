@@ -10,7 +10,7 @@ import PerfectLib
 
 class Localizer {
     
-    public static let locale = "en"
+    public static var locale = "en"
     public static let global = Localizer()
     
     private var cachedData = [String: String]()
