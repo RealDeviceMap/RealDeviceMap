@@ -23,6 +23,7 @@ class WebReqeustHandler {
     static var startZoom: Int = 14
     static var maxPokemonId: Int = 386
     static var title: String = "RealDeviceMap"
+    static var avilableFormsJson: String = ""
     
     private static let sessionDriver = MySQLSessions()
         
@@ -32,6 +33,7 @@ class WebReqeustHandler {
         var data = MustacheEvaluationContext.MapType()
         data["csrf"] = request.session?.data["csrf"]
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
+        data["locale"] = Localizer.locale
         
         // Get User
         var username = request.session?.userid
@@ -157,6 +159,8 @@ class WebReqeustHandler {
             data["start_lat"] = startLat
             data["start_lon"] = startLon
             data["start_zoom"] = startZoom
+            data["max_pokemon_id"] = maxPokemonId
+            data["locale_new"] = Localizer.locale
             data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
@@ -292,6 +296,7 @@ class WebReqeustHandler {
             data["start_lon"] = startLon
             data["start_zoom"] = startZoom
             data["max_pokemon_id"] = maxPokemonId
+            data["avilable_forms_json"] = avilableFormsJson
         default:
             break
         }
@@ -491,7 +496,9 @@ class WebReqeustHandler {
             let startZoom = request.param(name: "start_zoom")?.toInt(),
             let title = request.param(name: "title"),
             let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
-            let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32()
+            let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
+            let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
+            let locale = request.param(name: "locale_new")
         else {
             data["show_error"] = true
             return data
@@ -510,6 +517,8 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_UNSEEN", value: defaultTimeUnseen.description)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
+            try DBController.global.setValueForKey(key: "MAX_POKEMON_ID", value: maxPokemonId.description)
+            try DBController.global.setValueForKey(key: "LOCALE", value: locale)
         } catch {
             data["show_error"] = true
             return data
@@ -519,10 +528,12 @@ class WebReqeustHandler {
         WebReqeustHandler.startLon = startLon
         WebReqeustHandler.startZoom = startZoom
         WebReqeustHandler.title = title
+        WebReqeustHandler.maxPokemonId = maxPokemonId
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         Pokemon.defaultTimeUnseen = defaultTimeUnseen
         Pokemon.defaultTimeReseen = defaultTimeReseen
+        Localizer.locale = locale
         
         data["title"] = title
         data["show_success"] = true

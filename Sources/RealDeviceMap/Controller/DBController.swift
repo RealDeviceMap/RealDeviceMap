@@ -22,7 +22,7 @@ class DBController {
     public var mysql: MySQL? {
         let mysql = MySQL()
         mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8mb4")
-        let connected = mysql.connect(host: host, user: username, password: password, db: database)
+        let connected = mysql.connect(host: host, user: username, password: password, db: database, port: port)
         if connected {
             if multiStatement {
                 mysql.setServerOption(.MYSQL_OPTION_MULTI_STATEMENTS_ON)
@@ -38,7 +38,7 @@ class DBController {
     
     private let database: String
     private let host: String
-    private let port: Int
+    private let port: UInt32
     private let username: String
     private let password: String?
     
@@ -117,12 +117,12 @@ class DBController {
         let enviroment = ProcessInfo.processInfo.environment
         database = enviroment["DB_DATABASE"] ?? "rdmdb"
         host = enviroment["DB_HOST"] ?? "127.0.0.1"
-        port = Int(enviroment["DB_PORT"] ?? "") ?? 3306
-        username = enviroment["DB_USERNAME"] ?? "root"
+        port = UInt32(enviroment["DB_PORT"] ?? "") ?? 3306
+        username = enviroment["DB_USERNAME"] ?? "rdmuser"
         password = enviroment["DB_PASSWORD"]
         
         MySQLSessionConnector.host = host
-        MySQLSessionConnector.port = port
+        MySQLSessionConnector.port = Int(port)
         MySQLSessionConnector.username = username
         MySQLSessionConnector.password = password ?? ""
         MySQLSessionConnector.database = database
