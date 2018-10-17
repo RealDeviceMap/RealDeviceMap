@@ -244,7 +244,7 @@ class WebHookRequestHandler {
                     do {
                         let oldAccount = try Account.getWithUsername(username: device.accountUsername!)
                         if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password])
+                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any])
                             return
                         }
                     } catch { }
@@ -252,7 +252,7 @@ class WebHookRequestHandler {
                 
                 device.accountUsername = account.username
                 try device.save(oldUUID: device.uuid)
-                try response.respondWithData(data: ["username": account.username, "password": account.password])
+                try response.respondWithData(data: ["username": account.username, "password": account.password, "first_warning_timestamp": account.firstWarningTimestamp as Any])
             
             } catch {
                 response.respondWithError(status: .internalServerError)
