@@ -21,7 +21,7 @@ class WebReqeustHandler {
     static var startLat: Double = 0
     static var startLon: Double = 0
     static var startZoom: Int = 14
-    static var maxPokemonId: Int = 386
+    static var maxPokemonId: Int = 493
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = ""
     
@@ -500,7 +500,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_UNSEEN", value: defaultTimeUnseen.description)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
-            try DBController.global.setValueForKey(key: "MAX_POKEMON_ID", value: maxPokemonId.description)
+            try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
         } catch {
             data["show_error"] = true
