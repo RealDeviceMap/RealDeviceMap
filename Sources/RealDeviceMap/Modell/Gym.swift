@@ -88,6 +88,7 @@ class Gym: JSONConvertibleObject, WebHookEvent {
                 "level": raidLevel ?? 0,
                 "pokemon_id": raidPokemonId ?? 0,
                 "cp": raidPokemonCp ?? 0,
+                "form": raidPokemonForm ?? 0,
                 "move_1": raidPokemonMove1 ?? 0,
                 "move_2": raidPokemonMove2 ?? 0,
                 "sponsor_id": exRaidEligible ?? 0,
