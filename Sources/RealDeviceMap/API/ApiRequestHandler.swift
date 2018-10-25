@@ -128,6 +128,7 @@ class ApiRequestHandler {
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
                     deviceData["instance"] = device.instanceName ?? ""
+                    deviceData["username"] = device.accountUsername ?? ""
                     
                     if formatted {
                         let formattedDate: String
@@ -140,7 +141,7 @@ class ApiRequestHandler {
                             formattedDate = formatter.string(from: date)
                         }
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]
-                        deviceData["buttons"] = "<a href=\"/dashboard/device/assign/\(device.uuid.stringByEncodingURL.replacingOccurrences(of: "/", with: "%2F"))\" role=\"button\" class=\"btn btn-primary\">Assign Instance</a>"
+                        deviceData["buttons"] = "<a href=\"/dashboard/device/assign/\(device.uuid.stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Assign Instance</a>"
                     } else {
                         deviceData["last_seen"] = device.lastSeen
                     }
@@ -168,7 +169,7 @@ class ApiRequestHandler {
                     }
                     
                     if formatted {
-                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.stringByEncodingURL.replacingOccurrences(of: "/", with: "%2F"))\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.replacingOccurrences(of: "/", with: "&dash&").stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
                     jsonArray.append(instanceData)
                 }

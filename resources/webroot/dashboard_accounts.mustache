@@ -1,0 +1,19 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <h1 align="center">Configure {{title}}'s Accounts!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <h4 align="center">New Accounts: {{new_accounts_count}}</h4>
+        <h4 align="center">Accounts in Use: {{in_use_accounts_count}}</h4>
+        <h4 align="center">Accounts with Warning: {{warned_accounts_count}}</h4>
+        <h4 align="center">Failed Accounts: {{failed_accounts_count}}</h4>
+        <br><br>
+        <div style="text-align: center">
+            <a href="/dashboard/accounts/add" role="button" class="btn btn-success">Add Accounts</a>
+        </div>
+    </div>
+    <br>
+</body>

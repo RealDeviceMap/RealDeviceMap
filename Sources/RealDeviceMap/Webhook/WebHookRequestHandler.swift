@@ -14,11 +14,12 @@ import PerfectThread
 import Foundation
 import SwiftProtobuf
 import POGOProtos
+import Turf
 
 class WebHookRequestHandler {
     
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
-    
+        
         switch type {
         case .json:
             jsonHandler(request: request, response: response)
@@ -40,54 +41,105 @@ class WebHookRequestHandler {
             return
         }
         
-        response.respondWithOk()
-
+        let latTarget = json["lat_target"] as? Double ?? 0.0
+        let lonTarget = json["lon_target"] as? Double ?? 0.0
+        let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
+        let targetCoord = CLLocationCoordinate2D(latitude: latTarget, longitude: lonTarget)
+        var inArea = false
+        
+        var gyms = [Gym]()
+        if let gymsData = json["gyms"] as? [[String: Any]] {
+            for gymData in gymsData {
+                guard let gym = try? Gym(json: gymData) else {
+                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Gym")
+                    continue
+                }
+                if !inArea {
+                    let coord = CLLocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
+                    if coord.distance(to: targetCoord) <= targetMaxDistance {
+                        inArea = true
+                    }
+                }
+                gyms.append(gym)
+            }
+        }
+        var pokestops = [Pokestop]()
+        if let pokestopsData = json["pokestops"] as? [[String: Any]] {
+            for pokestopData in pokestopsData {
+                guard let pokestop = try? Pokestop(json: pokestopData) else {
+                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokestop")
+                    continue
+                }
+                if !inArea {
+                    let coord = CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
+                    if coord.distance(to: targetCoord) <= targetMaxDistance {
+                        inArea = true
+                    }
+                }
+                pokestops.append(pokestop)
+            }
+        }
+        var wildPokemons = [Pokemon]()
+        if let pokemonsData = json["pokemon"] as? [[String: Any]] {
+            for pokemonData in pokemonsData {
+                guard let pokemon = try? Pokemon(json: pokemonData) else {
+                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokemon")
+                    continue
+                }
+                if !inArea {
+                    let coord = CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)
+                    if coord.distance(to: targetCoord) <= targetMaxDistance {
+                        inArea = true
+                    }
+                }
+                wildPokemons.append(pokemon)
+            }
+        }
+        
+        do {
+            try response.respondWithData(data: ["nearby": (json["nearby_pokemon"] as? [[String: Any]] ?? [[String: Any]]()).count, "wild": wildPokemons.count, "forts": pokestops.count + gyms.count, "in_area": inArea])
+        } catch {
+            response.respondWithError(status: .internalServerError)
+        }
+        
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
-            if let gyms = json["gyms"] as? [[String: Any]] {
-                let start = Date()
-                for gymData in gyms {
-                    guard let gym = try? Gym(json: gymData) else {
-                        //Log.warning(message: "[WebHookRequestHandler] Failed to Parse gym")
-                        continue
-                    }
-                    try? gym.save()
-                }
-                Log.info(message: "[WebHookRequestHandler] Gym Count: \(gyms.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
-            }
-            if let pokestops = json["pokestops"] as? [[String: Any]] {
-                let start = Date()
-                for pokestopData in pokestops {
-                    guard let pokestop = try? Pokestop(json: pokestopData) else {
-                        //Log.warning(message: "[WebHookRequestHandler] Failed to Parse pokestop")
-                        continue
-                    }
-                    try? pokestop.save()
-                }
-                Log.info(message: "[WebHookRequestHandler] Pokestop Count: \(pokestops.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
-            }
-            if let nearbyPokemons = json["nearby_pokemon"] as? [[String: Any]] {
-                let start = Date()
-                for pokemonData in nearbyPokemons {
+            
+            var nearbyPokemons = [Pokemon]()
+            if let nearbyPokemonsData = json["nearby_pokemon"] as? [[String: Any]] {
+                for pokemonData in nearbyPokemonsData {
                     guard let pokemon = try? Pokemon(json: pokemonData) else {
                         //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Nearby Pokemon")
                         continue
                     }
-                    try? pokemon.save()
+                    nearbyPokemons.append(pokemon)
                 }
-                Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            if let pokemons = json["pokemon"] as? [[String: Any]] {
-                let start = Date()
-                for pokemonData in pokemons {
-                    guard let pokemon = try? Pokemon(json: pokemonData) else {
-                        //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokemon")
-                        continue
-                    }
-                    try? pokemon.save()
-                }
-                Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(pokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+        
+            let startWildPokemon = Date()
+            for wildPokemon in wildPokemons {
+                try? wildPokemon.save()
             }
+            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+            
+            let startPokemon = Date()
+            for nearbyPokemon in nearbyPokemons {
+                try? nearbyPokemon.save()
+            }
+            Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+            
+            let startGym = Date()
+            for gym in gyms {
+                try? gym.save()
+            }
+            Log.info(message: "[WebHookRequestHandler] Gym Count: \(gyms.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startGym)))s")
+            
+            let startPokestop = Date()
+            for pokestop in pokestops {
+                try? pokestop.save()
+            }
+            Log.info(message: "[WebHookRequestHandler] Pokestop Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokestop)))s")
+            
             Threading.destroyQueue(queue)
         }
         
@@ -104,6 +156,12 @@ class WebHookRequestHandler {
         }
         
         let gmos = json["gmo"] as! [[String: Any]]
+        
+        let latTarget = json["lat_target"] as? Double ?? 0.0
+        let lonTarget = json["lon_target"] as? Double ?? 0.0
+        let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
+        let targetCoord = CLLocationCoordinate2D(latitude: latTarget, longitude: lonTarget)
+        var inArea = false
         
         var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
         var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
@@ -122,8 +180,29 @@ class WebHookRequestHandler {
             
         }
         
+        for fort in forts {
+            if !inArea {
+                let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
+                if coord.distance(to: targetCoord) <= targetMaxDistance {
+                    inArea = true
+                }
+            } else {
+                break
+            }
+        }
+        for pokemon in wildPokemons {
+            if !inArea {
+                let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
+                if coord.distance(to: targetCoord) <= targetMaxDistance {
+                    inArea = true
+                }
+            } else {
+                break
+            }
+        }
+        
         do {
-            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count])
+            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "in_area": inArea])
         } catch {
             response.respondWithError(status: .internalServerError)
         }
@@ -184,15 +263,27 @@ class WebHookRequestHandler {
         if type == "init" {
             do {
                 let device = try Device.getById(id: uuid)
+                let firstWarningTimestamp: UInt32?
+                if device == nil || device!.accountUsername == nil {
+                    firstWarningTimestamp = nil
+                } else {
+                    let account = try Account.getWithUsername(username: device!.accountUsername!)
+                    if account != nil {
+                        firstWarningTimestamp = account!.firstWarningTimestamp
+                    } else {
+                        firstWarningTimestamp = nil
+                    }
+                }
+                
                 if device == nil {
-                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0)
+                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil)
                     try newDevice.create()
-                    try response.respondWithData(data: ["assigned": false])
+                    try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(data: ["assigned": false])
+                        try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                     } else {
-                        try response.respondWithData(data: ["assigned": true])
+                        try response.respondWithData(data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any])
                     }
                 }
             } catch {
@@ -219,7 +310,104 @@ class WebHookRequestHandler {
             } else {
                 response.respondWithError(status: .notFound)
             }
+        } else if type == "get_account" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let account = try Account.getNewAccount(highLevel: false)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if device.accountUsername != nil {
+                    do {
+                        let oldAccount = try Account.getWithUsername(username: device.accountUsername!)
+                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
+                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any])
+                            return
+                        }
+                    } catch { }
+                }
+                
+                device.accountUsername = account.username
+                try device.save(oldUUID: device.uuid)
+                try response.respondWithData(data: ["username": account.username, "password": account.password, "first_warning_timestamp": account.firstWarningTimestamp as Any])
+            
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_banned" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                else {
+                    response.respondWithError(status: .internalServerError)
+                    return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "banned"
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_warning" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if account.firstWarningTimestamp == nil {
+                    account.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "account_invalid_credentials" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "invalid_credentials"
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "logged_out" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid)
+                else {
+                    response.respondWithError(status: .notFound)
+                    return
+                }
+                device.accountUsername = nil
+                try device.save(oldUUID: device.uuid)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
+            Log.info(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
             response.respondWithError(status: .badRequest)
         }
         

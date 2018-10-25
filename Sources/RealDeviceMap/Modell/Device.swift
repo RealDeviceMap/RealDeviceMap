@@ -15,12 +15,14 @@ class Device {
     var instanceName: String?
     var lastHost: String?
     var lastSeen: UInt32
+    var accountUsername: String?
 
-    init(uuid: String, instanceName: String?, lastHost: String?, lastSeen: UInt32) {
+    init(uuid: String, instanceName: String?, lastHost: String?, lastSeen: UInt32, accountUsername: String?) {
         self.uuid = uuid
         self.instanceName = instanceName
         self.lastHost = lastHost
         self.lastSeen = lastSeen
+        self.accountUsername = accountUsername
     }
     
     public static func touch(uuid: String, host: String, seen: Int) throws {
@@ -57,7 +59,7 @@ class Device {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET uuid = ?, instance_name = ?, last_host = ?, last_seen = ?
+                SET uuid = ?, instance_name = ?, last_host = ?, last_seen = ?, account_username = ?
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
@@ -65,6 +67,7 @@ class Device {
         mysqlStmt.bindParam(instanceName)
         mysqlStmt.bindParam(lastHost)
         mysqlStmt.bindParam(lastSeen)
+        mysqlStmt.bindParam(accountUsername)
         mysqlStmt.bindParam(oldUUID)
         
         guard mysqlStmt.execute() else {
@@ -82,8 +85,8 @@ class Device {
 
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
-            INSERT INTO device (uuid, instance_name, last_host, last_seen)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO device (uuid, instance_name, last_host, last_seen, account_username)
+            VALUES (?, ?, ?, ?, ?)
         """
         
         _ = mysqlStmt.prepare(statement: sql)
@@ -91,6 +94,7 @@ class Device {
         mysqlStmt.bindParam(instanceName)
         mysqlStmt.bindParam(lastHost)
         mysqlStmt.bindParam(lastSeen)
+        mysqlStmt.bindParam(accountUsername)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -106,7 +110,7 @@ class Device {
         }
         
         let sql = """
-            SELECT uuid, instance_name, last_host, last_seen
+            SELECT uuid, instance_name, last_host, last_seen, account_username
             FROM device
         """
         
@@ -125,8 +129,9 @@ class Device {
             let instanceName = result[1] as? String
             let lastHost = result[2] as? String
             let lastSeen = result[3] as! UInt32
+            let accountUsername = result[4] as? String
             
-            devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen))
+            devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen, accountUsername: accountUsername))
         }
         return devices
         
@@ -140,7 +145,7 @@ class Device {
         }
         
         let sql = """
-            SELECT instance_name, last_host, last_seen
+            SELECT instance_name, last_host, last_seen, account_username
             FROM device
             WHERE uuid = ?
             LIMIT 1
@@ -163,9 +168,9 @@ class Device {
         let instanceName = result[0] as? String
         let lastHost = result[1] as? String
         let lastSeen = result[2] as! UInt32
+        let accountUsername = result[3] as? String
         
-        return Device(uuid: id, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen)
-        
+        return Device(uuid: id, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen, accountUsername: accountUsername)
     }
     
     
