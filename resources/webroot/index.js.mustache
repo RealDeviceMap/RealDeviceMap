@@ -413,6 +413,7 @@ function loadData() {
     }
 
     const data = {
+        '_': Math.round((new Date()).getTime() / 1000),
 		'min_lat': bounds._southWest.lat,
 		'max_lat': bounds._northEast.lat,
 		'min_lon': bounds._southWest.lng,
