@@ -10,12 +10,18 @@ import PerfectLib
 
 class Localizer {
     
-    public static var locale = "en"
+    public static var locale = "en" {
+        didSet {
+            global.load()
+        }
+    }
     public static let global = Localizer()
     
     private var cachedData = [String: String]()
     
-    private init() {
+    private init() {}
+    
+    private func load() {
         let file = File("resources/webroot/static/data/\(Localizer.locale).json")
         do {
             try file.open()
@@ -23,9 +29,9 @@ class Localizer {
             guard
                 let json = try contents.jsonDecode() as? [String: Any],
                 let values = json["values"] as? [String: String]
-            else {
-                Log.error(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
-                return
+                else {
+                    Log.error(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
+                    return
             }
             cachedData = values
         } catch {
@@ -33,8 +39,16 @@ class Localizer {
         }
     }
  
-    func get(value: String) -> String? {
-        return cachedData[value]
+    func get(value: String) -> String {
+        return cachedData[value] ?? value
+    }
+    
+    func get(value: String, replace: [String: String]) -> String {
+        var value = cachedData[value] ?? value
+        for repl in replace {
+            value = value.replacingOccurrences(of: "%{\(repl.key)}", with: repl.value)
+        }
+        return value
     }
     
 }

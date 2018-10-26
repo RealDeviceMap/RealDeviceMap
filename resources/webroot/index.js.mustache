@@ -29,6 +29,10 @@ let pokemonFilterLoaded = false;
 
 $(function() {
 
+    $.getJSON( "static/data/{{{locale}}}.json", function( data ) {
+        i18n.translator.add(data);
+    });
+
     avilableForms = JSON.parse('{{{avilable_forms_json}}}');
 
     loadStorage();
@@ -45,6 +49,11 @@ $(function() {
         if (!pokemonFilterLoaded) {
         	pokemonFilterLoaded = true;
             const table = $('#table-filter-pokemon').DataTable( {
+				"language": {
+                    "search": i18n('filter_table_search'),
+                    "emptyTable": i18n('filter_table_empty'),
+					"zeroRecords": i18n('filter_table_empty'),
+                },
                 "autoWidth": false,
                 "columns": [
                     { "data": "image", "width": "5%", "className": 'details-control'},
@@ -111,11 +120,7 @@ $(function() {
         dataTable.columns.adjust();
     });
 
-	$.getJSON( "static/data/{{{locale}}}.json", function( data ) {
-		i18n.translator.add(data);
-	});
-
-	initMap();
+    initMap();
 });
 
 // MARK: - Setup
