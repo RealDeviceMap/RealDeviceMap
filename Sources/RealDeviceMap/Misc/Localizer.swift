@@ -18,11 +18,14 @@ class Localizer {
     public static let global = Localizer()
     
     private var cachedData = [String: String]()
+
+    public private(set) var lastModified: Int = 0
     
     private init() {}
     
     private func load() {
         let file = File("resources/webroot/static/data/\(Localizer.locale).json")
+        lastModified = file.modificationTime
         do {
             try file.open()
             let contents = try file.readString()
