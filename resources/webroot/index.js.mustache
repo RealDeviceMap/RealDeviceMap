@@ -29,7 +29,7 @@ let pokemonFilterLoaded = false;
 
 $(function() {
 
-    $.getJSON( "static/data/{{{locale}}}.json", function( data ) {
+    $.getJSON( "static/data/{{{locale}}}.json", {_: '{{{locale_last_modified}}}'}, function( data ) {
         i18n.translator.add(data);
     });
 

@@ -36,6 +36,7 @@ class WebReqeustHandler {
         data["csrf"] = request.session?.data["csrf"]
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
         data["locale"] = Localizer.locale
+        data["locale_last_modified"] = localizer.lastModified
         
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
