@@ -148,6 +148,7 @@ class ApiRequestHandler {
                             let date = Date(timeIntervalSince1970: TimeInterval(device.lastSeen))
                             let formatter = DateFormatter()
                             formatter.dateFormat = "HH:mm:ss dd.MM.yyy"
+                            formatter.timeZone = Localizer.global.timeZone
                             formattedDate = formatter.string(from: date)
                         }
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]

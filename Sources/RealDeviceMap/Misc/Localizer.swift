@@ -10,16 +10,19 @@ import PerfectLib
 
 class Localizer {
     
+    public static let global = Localizer()
     public static var locale = "en" {
         didSet {
             global.load()
         }
     }
-    public static let global = Localizer()
     
-    private var cachedData = [String: String]()
-
+    public var timeZone = NSTimeZone.default
     public private(set) var lastModified: Int = 0
+
+    private var cachedData = [String: String]()
+    
+
     
     private init() {}
     

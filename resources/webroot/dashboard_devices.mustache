@@ -8,7 +8,7 @@
 
 <script>
 	$(document).ready(function() {
-		$('#table').DataTable( {
+		const table = $('#table').DataTable( {
 			"ajax": {
 				"url": "/api/get_data?show_devices=true&formatted=true",
 				"dataSrc": "data.devices"
@@ -35,6 +35,9 @@
 			}],
             "responsive": true
         });
+		setInterval( function () {
+            table.ajax.reload(null, false);
+        }, 5000)
 	} );
 </script>
 
