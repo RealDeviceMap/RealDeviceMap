@@ -29,11 +29,19 @@ class WebReqeustHandler {
         
     static func handle(request: HTTPRequest, response: HTTPResponse, page: WebServer.Page, requiredPerms: [Group.Perm], requiredPermsCount:Int = -1) {
         
+        let localizer = Localizer.global
+        
         let documentRoot = Dir.workingDir.path + "/resources/webroot"
         var data = MustacheEvaluationContext.MapType()
         data["csrf"] = request.session?.data["csrf"]
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
         data["locale"] = Localizer.locale
+        
+        // Localize Navbar
+        let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
+        for loc in navLoc {
+            data[loc] = localizer.get(value: loc)
+        }
         
         // Get User
         var username = request.session?.userid
@@ -141,6 +149,13 @@ class WebReqeustHandler {
             data["hide_raids"] = !perms.contains(.viewMapRaid)
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
+            
+            // Localize
+            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size"]
+            for loc in homeLoc {
+                data[loc] = localizer.get(value: loc)
+            }
+            
         case .dashboard:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
@@ -258,6 +273,14 @@ class WebReqeustHandler {
         case .register:
             data["page_is_register"] = true
             data["page"] = "Register"
+            
+            // Localize
+            let homeLoc = ["register_username", "register_email", "register_password", "register_retype_password", "register_register"]
+            for loc in homeLoc {
+                data[loc] = localizer.get(value: loc)
+            }
+            data["register_title"] = localizer.get(value: "register_title", replace: ["name" : title])
+            
             if request.method == .post {
                 do {
                     data = try register(data: data, request: request, response: response, useAccessToken: false)
@@ -268,6 +291,14 @@ class WebReqeustHandler {
         case .login:
             data["page_is_login"] = true
             data["page"] = "Login"
+            
+            // Localize
+            let homeLoc = ["login_username_email", "login_password", "login_login"]
+            for loc in homeLoc {
+                data[loc] = localizer.get(value: loc)
+            }
+            data["login_title"] = localizer.get(value: "login_title", replace: ["name" : title])
+            
             if request.method == .post {
                 do {
                     data = try login(data: data, request: request, response: response)
@@ -376,30 +407,31 @@ class WebReqeustHandler {
                 }
                 user = try User.register(username: username!, email: email!, password: password!, groupName: groupName)
             } catch {
+                let localizer = Localizer.global
                 if error is DBController.DBError {
                     data["is_undefined_error"] = true
-                    data["undefined_error"] = "Something went wrong. Please try again later."
+                    data["undefined_error"] = localizer.get(value: "register_error_undefined")
                 } else {
                     let registerError = error as! User.RegisterError
                     switch registerError.type {
                     case .usernameInvalid:
                         data["is_username_error"] = true
-                        data["username_error"] = "Username is invalid."
+                        data["username_error"] = localizer.get(value: "register_error_username_invalid")
                     case .usernameTaken:
                         data["is_username_error"] = true
-                        data["username_error"] = "Username already taken."
+                        data["username_error"] = localizer.get(value: "register_error_username_taken")
                     case .emailInvalid:
                         data["is_email_error"] = true
-                        data["email_error"] = "Email is invalid"
+                        data["email_error"] = localizer.get(value: "register_error_email_invalid")
                     case .emailTaken:
                         data["is_email_error"] = true
-                        data["email_error"] = "Email already talen."
+                        data["email_error"] = localizer.get(value: "register_error_email_taken")
                     case .passwordInvalid:
                         data["is_password_error"] = true
-                        data["password_error"] = "Please use a stronger password (at least 8 chars)"
+                        data["password_error"] = localizer.get(value: "register_error_password_invalid")
                     case .undefined:
                         data["is_undefined_error"] = true
-                        data["undefined_error"] = "Something went wrong. Please try again later."
+                        data["undefined_error"] = localizer.get(value: "register_error_undefined")
                     }
                 }
             }
@@ -453,18 +485,19 @@ class WebReqeustHandler {
                 user = try User.login(username: usernameEmail, password: password)
             }
         } catch {
+            let localizer = Localizer.global
             if error is DBController.DBError {
                 data["is_error"] = true
-                data["error"] = "Something went wrong. Please try again later."
+                data["error"] = localizer.get(value: "login_error_undefined")
             } else {
                 let registerError = error as! User.LoginError
                 switch registerError.type {
                 case .usernamePasswordInvalid:
                     data["is_error"] = true
-                    data["error"] = "Invalid Username/Email or password."
+                    data["error"] = localizer.get(value: "login_error_invalid")
                 case .undefined:
                     data["is_error"] = true
-                    data["error"] = "Something went wrong. Please try again later."
+                    data["error"] = localizer.get(value: "login_error_undefined")
                 }
             }
         }
@@ -498,7 +531,7 @@ class WebReqeustHandler {
             let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
             let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
-            let locale = request.param(name: "locale_new")
+            let locale = request.param(name: "locale_new")?.lowercased()
         else {
             data["show_error"] = true
             return data
