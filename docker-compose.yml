@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   rdm:
-    image: 0815flo/realdevicemap-beta:latest
+    image: 0815flo/realdevicemap:latest
     container_name: realdevicemap
     restart: unless-stopped
     tty: true
@@ -9,6 +9,7 @@ services:
       - db
     volumes:
       - images:/perfect-deployed/realdevicemap/resources/webroot/static/img
+#     - /etc/localtime:/etc/localtime:ro
     ports:
       - 9000:9000
       - 9001:9001
@@ -35,7 +36,8 @@ services:
     ports:
       - 3306:3306
     volumes:
-     - data:/var/lib/mysql
+      - data:/var/lib/mysql
+#     - /etc/localtime:/etc/localtime:ro
 volumes:
   images:
     driver: local

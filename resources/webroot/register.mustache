@@ -1,32 +1,32 @@
 {{> header}}
 <body>
     <br>
-    <h1 align="center">Register to {{title}}!</h1>
+    <h1 align="center">{{register_title}}</h1>
     <div class="w-75" style="float: none; margin: 0 auto;">
         <form action="" method="post">
             <div class="form-group">
-                <label for="username" {{#is_username_error}}class="text-danger"{{/is_username_error}}>Username</label>
+                <label for="username" {{#is_username_error}}class="text-danger"{{/is_username_error}}>{{register_username}}</label>
                 <input type="username" class="form-control {{#is_username_error}}is-invalid{{/is_username_error}}" id="username" name="username" value="{{username}}" required>
                 {{#is_username_error}}<small class="text-danger">{{username_error}}</small>{{/is_username_error}}
             </div>
 
             <div class="form-group">
-                <label for="email" {{#is_email_error}}class="text-danger"{{/is_email_error}}>Email</label>
+                <label for="email" {{#is_email_error}}class="text-danger"{{/is_email_error}}>{{register_email}}</label>
                 <input type="email" class="form-control {{#is_email_error}}is-invalid{{/is_email_error}}" id="email" aria-describedby="email" name="email" value="{{email}}" required>
                 {{#is_email_error}}<small class="text-danger">{{email_error}}</small>{{/is_email_error}}
             </div>
             <div class="form-group">
-                <label for="password" {{#is_password_error}}class="text-danger"{{/is_password_error}}>Password</label>
+                <label for="password" {{#is_password_error}}class="text-danger"{{/is_password_error}}>{{register_password}}</label>
                 <input type="password" class="form-control {{#is_password_error}}is-invalid{{/is_password_error}}" id="password" name="password" value="{{password}}" required>
                 {{#is_password_error}}<small class="text-danger">{{password_error}}</small>{{/is_password_error}}
             </div>
             <div class="form-group">
-                <label for="password-retype" {{#is_password_retype_error}}class="text-danger"{{/is_password_retype_error}}>Retype Password</label>
+                <label for="password-retype" {{#is_password_retype_error}}class="text-danger"{{/is_password_retype_error}}>{{register_retype_password}}</label>
                 <input type="password" class="form-control {{#is_password_retype_error}}is-invalid{{/is_password_retype_error}}" id="password-retype" name="password-retype" value="{{password-retype}}" required>
                 {{#is_password_retype_error}}<small class="text-danger">{{password_retype_error}}</small>{{/is_password_retype_error}}
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
-            <button type="submit" class="btn btn-primary">Register</button>
+            <button type="submit" class="btn btn-primary">{{register_register}}</button>
             {{#is_undefined_error}}<br><small class="text-danger">{{undefined_error}}</small>{{/is_undefined_error}}
         </form>
     </div>

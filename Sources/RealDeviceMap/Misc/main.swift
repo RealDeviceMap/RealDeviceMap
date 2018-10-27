@@ -12,13 +12,16 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
-func shell(_ args: String...) -> Int32 {
+func shell(_ args: String...) -> String? {
     let task = Process()
     task.launchPath = "/usr/bin/env"
     task.arguments = args
+    let pipe = Pipe()
+    task.standardOutput = pipe
     task.launch()
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
     task.waitUntilExit()
-    return task.terminationStatus
+    return String(data: data, encoding: String.Encoding.utf8)
 }
 
 func combineImages(image1: String, image2: String, output: String) {
@@ -54,13 +57,30 @@ for formString in POGOProtos_Enums_Form.allFormsInString {
 }
 WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
 
+// Load timezone
+if let result = shell("date", "+%z")?.replacingOccurrences(of: "\n", with: "") {
+    let sign = result.substring(toIndex: 1)
+    if let hours = Int(result.substring(toIndex: 3).substring(fromIndex: 1)),
+       let mins = Int(result.substring(toIndex: 5).substring(fromIndex: 3)) {
+        let offset: Int
+        if sign == "-" {
+            offset = -hours * 3600 + mins * 60
+        } else {
+            offset = hours * 3600 + mins * 60
+        }
+        if let timeZone = TimeZone(secondsFromGMT: offset) {
+            Localizer.global.timeZone = timeZone
+        }
+    }
+}
+
 // Load Settings
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
 WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
-Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE") ?? "en"
+Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 
 Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
 Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600

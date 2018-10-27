@@ -74,40 +74,50 @@ class ApiRequestHandler {
             data["spawnpoints"] = try? SpawnPoint.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
         }
         if permViewMap && showPokemonFilter {
+            
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
             var pokemonData = [[String: Any]]()
             for i in 1...WebReqeustHandler.maxPokemonId {
                 
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="pokemon" data-info="hide">
-                            <input type="radio" name="options" id="hide" autocomplete="off">Hide
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                         </label>
                         <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
-                            <input type="radio" name="options" id="show" autocomplete="off">Show
+                            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                         </label>
                     </div>
                 """
                 
+                
                 let size = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="small">
-                            <input type="radio" name="options" id="hide" autocomplete="off">Small
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
                         </label>
                         <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="normal">
-                            <input type="radio" name="options" id="show" autocomplete="off">Normal
+                            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
                         </label>
                         <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="large">
-                            <input type="radio" name="options" id="show" autocomplete="off">Large
+                            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
                         </label>
                         <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="huge">
-                            <input type="radio" name="options" id="show" autocomplete="off">Huge
+                            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
                         </label>
                     </div>
                 """
                 
                 pokemonData.append([
                     "pokemon_id": String(format: "%03d", i),
-                    "pokemon_name": Localizer.global.get(value: "poke_\(i)") ?? "?",
+                    "pokemon_name": Localizer.global.get(value: "poke_\(i)") ,
                     "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size
@@ -138,6 +148,7 @@ class ApiRequestHandler {
                             let date = Date(timeIntervalSince1970: TimeInterval(device.lastSeen))
                             let formatter = DateFormatter()
                             formatter.dateFormat = "HH:mm:ss dd.MM.yyy"
+                            formatter.timeZone = Localizer.global.timeZone
                             formattedDate = formatter.string(from: date)
                         }
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]
