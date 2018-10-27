@@ -103,20 +103,33 @@ class WebHookRequestHandler {
             return
         }
         
-        let gmos = json["gmo"] as! [[String: Any]]
+        let contents = json["contents"] as! [[String: Any]]
         
         var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
         var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
         var forts = [POGOProtos_Map_Fort_FortData]()
 
-        for gmoData in gmos {
-            let data = Data(base64Encoded: gmoData["data"] as! String)!
+        for rawData in contents {
+            let data = Data(base64Encoded: rawData["data"] as! String)!
             
-            if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
-                for mapCell in gmo.mapCells {
-                    wildPokemons += mapCell.wildPokemons
-                    nearbyPokemons += mapCell.nearbyPokemons
-                    forts += mapCell.forts
+            let method = rawData["method"] as? Int ?? 106
+            print(method)
+            
+            if method == 106 {
+                if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
+                    for mapCell in gmo.mapCells {
+                        wildPokemons += mapCell.wildPokemons
+                        nearbyPokemons += mapCell.nearbyPokemons
+                        forts += mapCell.forts
+                    }
+                }
+            } else if method == 102 {
+                if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
+                    print(er)
+                }
+            } else if method == 101 {
+                if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
+                    print(fsr)
                 }
             }
             

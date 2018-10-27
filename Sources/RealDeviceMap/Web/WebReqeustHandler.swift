@@ -546,7 +546,6 @@ class WebReqeustHandler {
         var data = data
         guard
             let name = request.param(name: "name"),
-            let type = request.param(name: "type"),
             let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
         else {
             data["show_error"] = true
@@ -554,35 +553,44 @@ class WebReqeustHandler {
             return data
         }
         
+        let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
+        
         data["name"] = name
         data["area"] = area
-        if type.lowercased() == "circle_pokemon" {
-            data["circle_pokemon_selected"] = true
-        } else if type.lowercased() == "circle_raid" {
-            data["circle_raid_selected"] = true
-        } else {
+        
+        if type == nil {
             data["nothing_selected"] = true
+        } else if type! == .circlePokemon {
+            data["circle_pokemon_selected"] = true
+        } else if type! == .circleRaid {
+            data["circle_raid_selected"] = true
+        } else if type! == .autoQuest {
+            data["auto_quest_selected"] = true
         }
         
-        var coords = [Coord]()
-        let areaRows = area.components(separatedBy: "\n")
-        for areaRow in areaRows {
-            let rowSplit = areaRow.components(separatedBy: ",")
-            if rowSplit.count == 2 {
-                let lat = rowSplit[0].toDouble()
-                let lon = rowSplit[1].toDouble()
-                if lat != nil && lon != nil {
-                    coords.append(Coord(lat: lat!, lon: lon!))
+        if type == nil {
+            
+        } else if type! == .circlePokemon || type! == .circleRaid {
+            var coords = [Coord]()
+            let areaRows = area.components(separatedBy: "\n")
+            for areaRow in areaRows {
+                let rowSplit = areaRow.components(separatedBy: ",")
+                if rowSplit.count == 2 {
+                    let lat = rowSplit[0].toDouble()
+                    let lon = rowSplit[1].toDouble()
+                    if lat != nil && lon != nil {
+                        coords.append(Coord(lat: lat!, lon: lon!))
+                    }
                 }
             }
-        }
-        
-        if coords.count == 0 {
-            data["show_error"] = true
-            data["error"] = "Failed to parse coords."
-            return data
-        } else {
-            let instance = Instance(name: name, type: Instance.InstanceType.fromString(type)!, data: ["area" : coords])
+            
+            if coords.count == 0 {
+                data["show_error"] = true
+                data["error"] = "Failed to parse coords."
+                return data
+            }
+            
+            let instance = Instance(name: name, type: type!, data: ["area" : coords])
             do {
                 try instance.create()
                 InstanceController.global.addInstance(instance: instance)
@@ -591,11 +599,49 @@ class WebReqeustHandler {
                 data["error"] = "Failed to create instance. Is the name unique?"
                 return data
             }
-            response.redirect(path: "/dashboard/instances")
-            sessionDriver.save(session: request.session!)
-            response.completed(status: .seeOther)
-            throw CompletedEarly()
+        } else if type! == .autoQuest {
+            var coordArray = [[Coord]]()
+            let areaRows = area.components(separatedBy: "\n")
+            var currentIndex = 0
+            for areaRow in areaRows {
+                let rowSplit = areaRow.components(separatedBy: ",")
+                if rowSplit.count == 2 {
+                    let lat = rowSplit[0].toDouble()
+                    let lon = rowSplit[1].toDouble()
+                    if lat != nil && lon != nil {
+                        while coordArray.count != currentIndex + 1{
+                            coordArray.append([Coord]())
+                        }
+                        coordArray[currentIndex].append(Coord(lat: lat!, lon: lon!))
+                    }
+                } else if areaRow.contains(string: "[") && areaRow.contains(string: "]") &&
+                    coordArray.count > currentIndex && coordArray[currentIndex].count != 0 {
+                    currentIndex += 1
+                }
+            }
+            
+            if coordArray.count == 0 {
+                data["show_error"] = true
+                data["error"] = "Failed to parse coords."
+                return data
+            }
+            
+            let instance = Instance(name: name, type: type!, data: ["area" : coordArray])
+            do {
+                try instance.create()
+                InstanceController.global.addInstance(instance: instance)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create instance. Is the name unique?"
+                return data
+            }
+
         }
+        
+        response.redirect(path: "/dashboard/instances")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
     }
     
     static func editInstancePost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, instanceName: String) throws -> MustacheEvaluationContext.MapType {
@@ -617,6 +663,8 @@ class WebReqeustHandler {
             data["circle_pokemon_selected"] = true
         } else if type.lowercased() == "circle_raid" {
             data["circle_raid_selected"] = true
+        } else if type.lowercased() == "auto_quest" {
+            data["auto_quest_selected"] = true
         } else {
             data["nothing_selected"] = true
         }
@@ -685,7 +733,6 @@ class WebReqeustHandler {
             response.completed(status: .notFound)
             throw CompletedEarly()
         } else {
-            
             var areaString = ""
             let area = oldInstance!.data["area"] as? [[String: Double]]
             if area != nil {
@@ -703,6 +750,8 @@ class WebReqeustHandler {
                 data["circle_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
+            case .autoQuest:
+                data["auto_quest_selected"] = true
             }
             return data
         }

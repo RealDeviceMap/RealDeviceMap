@@ -166,6 +166,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Circle Raid"
                     case .circlePokemon:
                         instanceData["type"] = "Circle Pokemon"
+                    case .autoQuest:
+                        instanceData["type"] = "Auto Quest"
                     }
                     
                     if formatted {

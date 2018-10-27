@@ -9,11 +9,6 @@ import Foundation
 
 class CircleInstanceController: InstanceControllerProto {
    
-    static func == (lhs: CircleInstanceController, rhs: CircleInstanceController) -> Bool {
-        return lhs.name == rhs.name
-    }
-    
-    
     enum CircleType {
         case pokemon
         case raid
@@ -35,18 +30,13 @@ class CircleInstanceController: InstanceControllerProto {
     
     func getTask() -> [String : Any] {
         
-        let count = coords.count
-        
         lock.lock()
         let currentIndex = self.lastIndex
-        
-        let nextIndex: Int
-        if lastIndex + 1 == count {
-            nextIndex = 0
+        if lastIndex + 1 == coords.count {
+            lastIndex = 0
         } else {
-            nextIndex = lastIndex + 1
+            lastIndex = lastIndex + 1
         }
-        lastIndex = nextIndex
         lock.unlock()
         
         let currentCoord = coords[currentIndex]
@@ -58,5 +48,5 @@ class CircleInstanceController: InstanceControllerProto {
         }
         
     }
-        
+    
 }

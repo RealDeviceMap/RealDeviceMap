@@ -14,12 +14,15 @@ class Instance {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleRaid = "circle_raid"
+        case autoQuest = "auto_quest"
         
         static func fromString(_ s: String) -> InstanceType? {
             if s.lowercased() == "circle_pokemon" || s.lowercased() == "circlepokemon" {
                 return .circlePokemon
             } else if s.lowercased() == "circle_raid" || s.lowercased() == "circleraid" {
                 return .circleRaid
+            } else if s.lowercased() == "auto_quest" || s.lowercased() == "autoquest" {
+                return .autoQuest
             } else {
                 return nil
             }

@@ -6,10 +6,20 @@
 //
 
 import Foundation
+import Turf
+#if !os(Linux)
+import CoreLocation
+#endif
 
 protocol InstanceControllerProto {
     var name: String { get }
     func getTask() -> [String: Any]
+}
+
+extension InstanceControllerProto {
+    static func == (lhs: InstanceControllerProto, rhs:InstanceControllerProto) -> Bool {
+        return lhs.name == rhs.name
+    }
 }
 
 class InstanceController {
@@ -66,6 +76,33 @@ class InstanceController {
             } else {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .raid)
             }
+        case .autoQuest:
+            var areaArray = [[Coord]]()
+            if instance.data["area"] as? [[Coord]] != nil {
+                areaArray = instance.data["area"] as! [[Coord]]
+            } else {
+                let areas = instance.data["area"] as! [[[String: Double]]]
+                var i = 0
+                for coords in areas {
+                    for coord in coords {
+                        while areaArray.count != i + 1{
+                            areaArray.append([Coord]())
+                        }
+                        areaArray[i].append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
+                    }
+                    i += 1
+                }
+            }
+            var areaArrayEmptyInner = [[[CLLocationCoordinate2D]]]()
+            for coords in areaArray {
+                var polyCoords = [CLLocationCoordinate2D]()
+                for coord in coords {
+                    polyCoords.append(CLLocationCoordinate2D(latitude: coord.lat, longitude: coord.lon))
+                }
+                areaArrayEmptyInner.append([polyCoords])
+            }
+            
+            instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest)
         }
         instancesByInstanceName[instance.name] = instanceController
     }
@@ -75,7 +112,9 @@ class InstanceController {
         if oldInstance != nil {
             for row in devicesByDeviceUUID {
                 if row.value.instanceName == oldInstance!.name {
-                    row.value.instanceName = newInstance.name
+                    let device = row.value
+                    device.instanceName = newInstance.name
+                    devicesByDeviceUUID[row.key] = device
                 }
             }
             instancesByInstanceName[oldInstanceName] = nil
