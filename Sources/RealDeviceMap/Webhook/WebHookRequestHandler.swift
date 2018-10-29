@@ -35,7 +35,11 @@ class WebHookRequestHandler {
         
         let json: [String: Any]
         do {
-            json = try (request.postBodyString ?? "").jsonDecode() as! [String : Any]
+            guard let jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
+                response.respondWithError(status: .badRequest)
+                return
+            }
+            json = jsonOpt
         } catch {
             response.respondWithError(status: .badRequest)
             return
@@ -149,13 +153,20 @@ class WebHookRequestHandler {
         
         let json: [String: Any]
         do {
-            json = try (request.postBodyString ?? "").jsonDecode() as! [String : Any]
+            guard let jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
+                response.respondWithError(status: .badRequest)
+                return
+            }
+            json = jsonOpt
         } catch {
             response.respondWithError(status: .badRequest)
             return
         }
         
-        let contents = json["contents"] as! [[String: Any]]
+        guard let contents = json["contents"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
+            response.respondWithError(status: .badRequest)
+            return
+        }
         
         let latTarget = json["lat_target"] as? Double ?? 0.0
         let lonTarget = json["lon_target"] as? Double ?? 0.0
