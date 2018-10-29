@@ -270,6 +270,12 @@ function initMap() {
 
 			gymMarkers = newGymMarkers;
 		}
+        if (newShowPokemon !== showPokemon) {
+            $.each(pokemonMarkers, function (index, pokemon) {
+                map.removeLayer(pokemon.marker);
+            });
+            gymMarkers = [];
+        }
 		if (newShowRaids !== showRaids) {
 			$.each(gymMarkers, function (index, gym) {
 				map.removeLayer(gym.marker);
