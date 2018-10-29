@@ -24,11 +24,9 @@ exit -1
 fi
 
 echo "Building deploy build..."
-docker image build -f .jenkins/Dockerfile_deploy -t 0815flo/realdevicemap:$1 -t 0815flo/realdevicemap:$2 -t 0815flo/realdevicemap:latest ${PWD}
+docker image build -f .jenkins/Dockerfile_deploy -t 0815flo/realdevicemap-beta:latest ${PWD}
 echo "Building deploy image sucessfull"
 
 echo "Pushing image..."
-docker push 0815flo/realdevicemap:$1
-docker push 0815flo/realdevicemap:$2
-docker push 0815flo/realdevicemap:latest
+docker push 0815flo/realdevicemap-beta:latest
 echo "Pushing image sucessfull"
