@@ -9,6 +9,7 @@ import Foundation
 import PerfectLib
 import PerfectThread
 import Turf
+import SwiftDate
 
 class AutoInstanceController: InstanceControllerProto {
     
@@ -42,10 +43,13 @@ class AutoInstanceController: InstanceControllerProto {
             questClearerQueue!.dispatch {
                 
                 while true {
-                    var calendar = Calendar.current
-                    calendar.timeZone = TimeZone(secondsFromGMT: timezoneOffset) ?? TimeZone.current
-                    let tomorrowMidnight = calendar.nextDate(after: Date(), matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTimePreservingSmallerComponents)!
-                    let timeLeft = tomorrowMidnight.timeIntervalSince(Date())
+                    
+                    let calendar = Calendar.Identifier.gregorian
+                    let zone = TimeZone(secondsFromGMT: timezoneOffset) ?? TimeZone.current
+                    let region = Region(calendar: calendar, zone: zone, locale: Locales.english)
+                    let now = DateInRegion(Date(), region: region)
+                    let midnight = now.dateAtEndOf(Calendar.Component.day)
+                    let timeLeft = midnight.timeIntervalSince(now) + 1
                     
                     if timeLeft > 0 {
                         sleep(UInt32(timeLeft))
