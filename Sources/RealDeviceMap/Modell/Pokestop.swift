@@ -45,7 +45,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "template": questTemplate!,
                 "conditions": questConditions!,
                 "rewards": questRewards!,
-                "updated": questTimestamp!
+                "updated": questTimestamp!,
+                "pokestop_name": name ?? "Unknown",
+                "pokestop_url": url ?? ""
             ]
             return [
                 "type": "quest",
