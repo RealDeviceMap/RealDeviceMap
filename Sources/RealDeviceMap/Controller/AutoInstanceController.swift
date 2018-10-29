@@ -9,7 +9,6 @@ import Foundation
 import PerfectLib
 import PerfectThread
 import Turf
-import SwiftDate
 
 class AutoInstanceController: InstanceControllerProto {
     
@@ -44,12 +43,18 @@ class AutoInstanceController: InstanceControllerProto {
                 
                 while true {
                     
-                    let calendar = Calendar.Identifier.gregorian
-                    let zone = TimeZone(secondsFromGMT: timezoneOffset) ?? TimeZone.current
-                    let region = Region(calendar: calendar, zone: zone, locale: Locales.english)
-                    let now = DateInRegion(Date(), region: region)
-                    let midnight = now.dateAtEndOf(Calendar.Component.day)
-                    let timeLeft = midnight.timeIntervalSince(now) + 1
+                    let date = Date()
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "HH:mm:ss"
+                    formatter.timeZone = TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone
+                    let formattedDate = formatter.string(from: date)
+                    
+                    let split = formattedDate.components(separatedBy: ":")
+                    let hour = Int(split[0])!
+                    let minute = Int(split[1])!
+                    let second = Int(split[2])!
+                    
+                    let timeLeft = (23 - hour) * 3600 + (59 - minute) * 60 + (60 - second)
                     
                     if timeLeft > 0 {
                         sleep(UInt32(timeLeft))

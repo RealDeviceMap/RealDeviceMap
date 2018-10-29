@@ -16,10 +16,9 @@ let package = Package(
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.2.0"),
         .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", from: "1.1.0"),
-        .package(url: "https://github.com/123FLO321/turf-swift.git", from: "0.3.1"),
-        .package(url: "https://github.com/malcommac/SwiftDate.git", from: "5.0.13")
+        .package(url: "https://github.com/123FLO321/turf-swift.git", from: "0.3.1")
     ],
     targets: [
-        .target(name: "RealDeviceMap", dependencies: ["PerfectHTTPServer","PerfectSessionMySQL","PerfectMySQL","PerfectThread","PerfectMustache","PerfectCURL","Turnstile","Regex","POGOProtos","Turf","SwiftDate"])
+        .target(name: "RealDeviceMap", dependencies: ["PerfectHTTPServer","PerfectSessionMySQL","PerfectMySQL","PerfectThread","PerfectMustache","PerfectCURL","Turnstile","Regex","POGOProtos","Turf"])
     ]
 )
