@@ -1,8 +1,7 @@
 ALTER TABLE instance
 MODIFY `type` enum('circle_pokemon','circle_raid','auto_quest') NOT NULL;
 ALTER TABLE instance
-MODIFY `data` LONGTEXT NOT NULL;
-
+MODIFY `data` longtext NOT NULL;
 ALTER TABLE account
 ADD COLUMN `level` tinyint(3) unsigned NOT NULL DEFAULT 0;
 UPDATE account
@@ -23,9 +22,9 @@ ADD COLUMN `quest_timestamp` int(11) unsigned DEFAULT NULL;
 ALTER TABLE pokestop
 ADD COLUMN `quest_target` smallint(6) unsigned DEFAULT NULL;
 ALTER TABLE pokestop
-ADD COLUMN `quest_conditions` JSON DEFAULT NULL;
+ADD COLUMN `quest_conditions` text DEFAULT NULL;
 ALTER TABLE pokestop
-ADD COLUMN `quest_rewards` JSON DEFAULT NULL;
+ADD COLUMN `quest_rewards` text DEFAULT NULL;
 ALTER TABLE pokestop
 ADD COLUMN `quest_pokemon_id` smallint(6) unsigned  GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(quest_rewards, '$[*].info.pokemon_id'), '$[0]') );
 ALTER TABLE pokestop
