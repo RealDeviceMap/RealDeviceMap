@@ -10,7 +10,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
-class Pokestop: JSONConvertibleObject, WebHookEvent {
+class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
     class ParsingError: Error {}
     
@@ -68,6 +68,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent {
                 "message": message
             ]
         }
+    }
+    
+    public var hashValue: Int {
+        return id.hashValue
     }
     
     var id: String
@@ -599,5 +603,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent {
         }
         
     }
-
+    
+    static func == (lhs: Pokestop, rhs: Pokestop) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
 }

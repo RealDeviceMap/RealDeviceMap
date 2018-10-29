@@ -190,9 +190,9 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 stopsLock.lock()
-                todayStops?.removeAll(where: { (stop) -> Bool in
-                    stop.id == closest.id
-                })
+                if let index =  todayStops!.index(of: closest) {
+                    todayStops!.remove(at: index)
+                }
                 stopsLock.unlock()
             } else {
                 stopsLock.lock()

@@ -10,7 +10,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
-class Gym: JSONConvertibleObject, WebHookEvent {
+class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     
     class ParsingError: Error {}
     
@@ -102,6 +102,10 @@ class Gym: JSONConvertibleObject, WebHookEvent {
             "type": realType,
             "message": message
         ]
+    }
+    
+    public var hashValue: Int {
+        return id.hashValue
     }
     
     var id: String
@@ -522,4 +526,9 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         
         return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive)
     }
+    
+    static func == (lhs: Gym, rhs: Gym) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
 }
