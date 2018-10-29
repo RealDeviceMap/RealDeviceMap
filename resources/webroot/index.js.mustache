@@ -274,7 +274,7 @@ function initMap() {
             $.each(pokemonMarkers, function (index, pokemon) {
                 map.removeLayer(pokemon.marker);
             });
-            gymMarkers = [];
+            pokemonMarkers = [];
         }
 		if (newShowRaids !== showRaids) {
 			$.each(gymMarkers, function (index, gym) {
@@ -314,8 +314,6 @@ function initMap() {
         $.each(pokemonMarkers, function (index, pokemon) {
             if ((pokemonFilterOld[pokemon.pokemon_id]["show"] !== pokemonFilter[pokemon.pokemon_id]["show"]) ||
                 !(pokemonFilterOld[pokemon.pokemon_id]["size"].localeCompare(pokemonFilter[pokemon.pokemon_id]["size"]))) {
-
-                console.log("changed");
 
                 map.removeLayer(pokemon.marker);
                 if (matchesPokemonFilter(pokemon.pokemon_id)) {
