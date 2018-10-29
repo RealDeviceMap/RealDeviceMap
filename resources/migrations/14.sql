@@ -1,2 +1,2 @@
-ALTER TABLE metadata
-MODIFY COLUMN `key` varchar(200) NOT NULL;
+ALTER TABLE `metadata`
+MODIFY `key` varchar(200) NOT NULL;
