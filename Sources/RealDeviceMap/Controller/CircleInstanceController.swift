@@ -28,7 +28,7 @@ class CircleInstanceController: InstanceControllerProto {
         self.type = type
     }
     
-    func getTask() -> [String : Any] {
+    func getTask(uuid: String, username: String?) -> [String : Any] {
         
         lock.lock()
         let currentIndex = self.lastIndex

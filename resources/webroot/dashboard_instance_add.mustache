@@ -26,6 +26,10 @@
                 </select>
             </div>
             <div class="form-group">
+                Timezone Offset (in seconds)
+                <input type="number" class="form-control" name="timezone_offset" value="{{timezone_offset}}" step=1 min="-43200" max="43200" required>
+            </div>
+            <div class="form-group">
                 Scan Area
                 <textarea class="form-control" rows="5" name="area" required>{{{area}}}</textarea>
             </div>

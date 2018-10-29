@@ -51,6 +51,18 @@
                         {{filter_pokestops}}
                         <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
                     </div>
+                    <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_quests}}class="d-none"{{/hide_quests}}>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label id="hide-quests" class="btn btn-sm btn-off">
+                                <input type="radio" name="options" id="hide" autocomplete="off" checked>{{filter_hide}}
+                            </label>
+                            <label id="show-quests" class="btn btn-sm btn-on">
+                                <input type="radio" name="options" id="show" autocomplete="off">{{filter_show}}
+                            </label>
+                        </div>
+                        {{filter_quests}}
+                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                    </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_spawnpoints}}class="d-none"{{/hide_spawnpoints}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
                             <label id="hide-spawnpoints" class="btn btn-sm btn-off">

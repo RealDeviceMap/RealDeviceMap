@@ -22,7 +22,12 @@
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Scheduler Type</option>
                     <option value="circle_pokemon" {{#circle_pokemon_selected}}selected{{/circle_pokemon_selected}}>Circle Pokemon</option>
                     <option value="circle_raid" {{#circle_raid_selected}}selected{{/circle_raid_selected}}>Circle Raid</option>
+                    <option value="auto_quest" {{#auto_quest_selected}}selected{{/auto_quest_selected}}>Auto Quest</option>
                 </select>
+            </div>
+            <div class="form-group">
+                Timezone Offset (in seconds)
+                <input type="number" class="form-control" name="timezone_offset" value="{{timezone_offset}}" step=1 min="-43200" max="43200" required>
             </div>
             <div class="form-group">
                 Scan Area

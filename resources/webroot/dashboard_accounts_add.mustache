@@ -14,10 +14,7 @@
         <form action="" method="post">
             <div class="form-group">
                 Account Level
-                <select class="form-control" name="level" required>
-                    <option value="low_level" {{#low_level_selected}}selected{{/low_level_selected}}>Low Level</option>
-                    <option value="high_level" {{#high_level_selected}}selected{{/high_level_selected}}>High Level</option>
-                </select>
+                <input type="number" class="form-control" name="level" value="{{level}}" step=1 min="0" max="40" required>
             </div>
             <div class="form-group">
                 Accounts

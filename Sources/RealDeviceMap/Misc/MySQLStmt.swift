@@ -6,6 +6,7 @@
 //
 
 import PerfectMySQL
+import PerfectLib
 
 extension MySQLStmt {
     
@@ -66,4 +67,5 @@ extension MySQLStmt {
             bindParam(0)
         }
     }
+
 }

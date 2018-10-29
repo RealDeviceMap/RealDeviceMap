@@ -166,14 +166,30 @@ class WebHookRequestHandler {
         var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
         var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
         var forts = [POGOProtos_Map_Fort_FortData]()
+        var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
+        var quests = [POGOProtos_Data_Quests_Quest]()
 
         for rawData in contents {
             let data = Data(base64Encoded: rawData["data"] as! String)!
             
             let method = rawData["method"] as? Int ?? 106
-            print(method)
             
-            if method == 106 {
+            if method == 101 {
+                if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
+                    if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
+                        let quest = fsr.challengeQuest.quest
+                        quests.append(quest)
+                    }
+                }
+            /*} else if method == 102 {
+                if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
+                    print(er)
+                }*/
+            } else if method == 104 {
+                if let fdr = try? POGOProtos_Networking_Responses_FortDetailsResponse(serializedData: data) {
+                    fortDetails.append(fdr)
+                }
+            } else if method == 106 {
                 if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
                     for mapCell in gmo.mapCells {
                         wildPokemons += mapCell.wildPokemons
@@ -181,16 +197,7 @@ class WebHookRequestHandler {
                         forts += mapCell.forts
                     }
                 }
-            } else if method == 102 {
-                if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
-                    print(er)
-                }
-            } else if method == 101 {
-                if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
-                    print(fsr)
-                }
             }
-            
         }
         
         for fort in forts {
@@ -249,6 +256,53 @@ class WebHookRequestHandler {
             }
             Log.info(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
             
+            if !fortDetails.isEmpty {
+                let start = Date()
+                for fort in fortDetails {
+                    if fort.type == .gym {
+                        let gym: Gym?
+                        do {
+                            gym = try Gym.getWithId(id: fort.fortID)
+                        } catch {
+                            gym = nil
+                        }
+                        if gym != nil {
+                            gym!.addDetails(fortData: fort)
+                            try? gym!.save()
+                        }
+                    } else if fort.type == .checkpoint {
+                        let pokestop: Pokestop?
+                        do {
+                            pokestop = try Pokestop.getWithId(id: fort.fortID)
+                        } catch {
+                            pokestop = nil
+                        }
+                        if pokestop != nil {
+                            pokestop!.addDetails(fortData: fort)
+                            try? pokestop!.save()
+                        }
+                    }
+                }
+                Log.info(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+            
+            if !quests.isEmpty {
+                let start = Date()
+                for quest in quests {
+                    let pokestop: Pokestop?
+                    do {
+                        pokestop = try Pokestop.getWithId(id: quest.fortID)
+                    } catch {
+                        pokestop = nil
+                    }
+                    if pokestop != nil {
+                        pokestop!.addQuest(questData: quest)
+                        try? pokestop!.save()
+                    }
+                }
+                Log.info(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+            
             Threading.destroyQueue(queue)
         }
         
@@ -272,6 +326,8 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
+        
+        let username = jsonO?["username"] as? String
         
         if type == "init" {
             do {
@@ -319,15 +375,16 @@ class WebHookRequestHandler {
         } else if type == "get_job" {
             let controller = InstanceController.global.getInstanceController(deviceUUID: uuid)
             if controller != nil {
-                try! response.respondWithData(data: controller!.getTask())
+                try! response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
             } else {
                 response.respondWithError(status: .notFound)
             }
         } else if type == "get_account" {
+            
             do {
                 guard
                     let device = try Device.getById(id: uuid),
-                    let account = try Account.getNewAccount(highLevel: false)
+                    let account = try Account.getNewAccount(minLevel: 0, maxLevel: 29)
                     else {
                         response.respondWithError(status: .notFound)
                         return
@@ -346,6 +403,24 @@ class WebHookRequestHandler {
                 try device.save(oldUUID: device.uuid)
                 try response.respondWithData(data: ["username": account.username, "password": account.password, "first_warning_timestamp": account.firstWarningTimestamp as Any])
             
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if type == "tutorial_done" {
+            do {
+                guard
+                    let device = try Device.getById(id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(username: username)
+                    else {
+                        response.respondWithError(status: .internalServerError)
+                        return
+                }
+                if account.level == 0 {
+                    account.level = 1
+                    try account.save(update: true)
+                }
+                response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
             }

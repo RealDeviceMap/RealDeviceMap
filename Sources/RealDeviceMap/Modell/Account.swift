@@ -13,18 +13,24 @@ class Account {
     
     var username: String
     var password: String
-    var isHighLevel: Bool
+    var level: UInt8
     var firstWarningTimestamp: UInt32?
     var failedTimestamp: UInt32?
     var failed: String?
+    var lastEncounterLat: Double?
+    var lastEncounterLon: Double?
+    var lastEncounterTime: UInt32?
     
-    init(username: String, password: String, isHighLevel: Bool, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?) {
+    init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?, lastEncounterTime: UInt32?) {
         self.username = username
         self.password = password
-        self.isHighLevel = isHighLevel
+        self.level = level
         self.firstWarningTimestamp = firstWarningTimestamp
         self.failedTimestamp = failedTimestamp
         self.failed = failed
+        self.lastEncounterLat = lastEncounterLat
+        self.lastEncounterLon = lastEncounterLon
+        self.lastEncounterTime = lastEncounterTime
     }
     
     public func save(update: Bool) throws {
@@ -45,16 +51,36 @@ class Account {
         if oldAccount == nil {
             
             let sql = """
-                INSERT INTO account (username, password, is_high_level, first_warning_timestamp, failed_timestamp, failed)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
             
             mysqlStmt.bindParam(username)
         } else if update {
+            
+            if lastEncounterLat == nil && oldAccount!.lastEncounterLat != nil {
+                self.lastEncounterLat = oldAccount!.lastEncounterLat!
+            }
+            if lastEncounterLon == nil && oldAccount!.lastEncounterLon != nil {
+                self.lastEncounterLon = oldAccount!.lastEncounterLon!
+            }
+            if lastEncounterTime == nil && oldAccount!.lastEncounterTime != nil {
+                self.lastEncounterTime = oldAccount!.lastEncounterTime!
+            }
+            if failed == nil && oldAccount!.failed != nil {
+                self.failed = oldAccount!.failed!
+            }
+            if firstWarningTimestamp == nil && oldAccount!.firstWarningTimestamp != nil {
+                self.firstWarningTimestamp = oldAccount!.firstWarningTimestamp!
+            }
+            if failedTimestamp == nil && oldAccount!.failedTimestamp != nil {
+                self.failedTimestamp = oldAccount!.failedTimestamp!
+            }
+            
             let sql = """
                 UPDATE account
-                SET password = ?, is_high_level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?
+                SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?
                 WHERE username = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -63,10 +89,13 @@ class Account {
         }
         
         mysqlStmt.bindParam(password)
-        mysqlStmt.bindParam(isHighLevel)
+        mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(firstWarningTimestamp)
         mysqlStmt.bindParam(failedTimestamp)
         mysqlStmt.bindParam(failed)
+        mysqlStmt.bindParam(lastEncounterLat)
+        mysqlStmt.bindParam(lastEncounterLon)
+        mysqlStmt.bindParam(lastEncounterTime)
 
         if oldAccount != nil {
             mysqlStmt.bindParam(username)
@@ -78,7 +107,7 @@ class Account {
         }
     }
     
-    public static func getNewAccount(highLevel: Bool) throws -> Account? {
+    public static func getNewAccount(minLevel: Int, maxLevel: Int) throws -> Account? {
         
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -86,17 +115,18 @@ class Account {
         }
         
         let sql = """
-            SELECT username, password, is_high_level, first_warning_timestamp, failed_timestamp, failed
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time
             FROM account
             LEFT JOIN device ON username = account_username
-            WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND is_high_level = ? AND failed IS NULL
-            ORDER BY RAND()
+            WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND level >= ? AND level <= ? AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() -  CAST(last_encounter_time AS INTEGER) >= 7200)
+            ORDER BY level DESC, RAND()
             LIMIT 1
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(highLevel)
+        mysqlStmt.bindParam(minLevel)
+        mysqlStmt.bindParam(maxLevel)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -111,12 +141,15 @@ class Account {
         
         let username = result[0] as! String
         let password = result[1] as! String
-        let isHighLevel = (result[2] as? UInt8)!.toBool()
+        let level = result[2] as! UInt8
         let firstWarningTimestamp = result[3] as? UInt32
         let failedTimestamp = result[4] as? UInt32
         let failed = result[5] as? String
+        let lastEncounterLat = result[6] as? Double
+        let lastEncounterLon = result[7] as? Double
+        let lastEncounterTime = result[8] as? UInt32
         
-        return Account(username: username, password: password, isHighLevel: isHighLevel, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed)
+        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime)
     }
     
     public static func getWithUsername(username: String) throws -> Account? {
@@ -127,7 +160,7 @@ class Account {
         }
         
         let sql = """
-            SELECT username, password, is_high_level, first_warning_timestamp, failed_timestamp, failed
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time
             FROM account
             WHERE username = ?
         """
@@ -149,12 +182,15 @@ class Account {
         
         let username = result[0] as! String
         let password = result[1] as! String
-        let isHighLevel = (result[2] as? UInt8)!.toBool()
+        let level = result[2] as! UInt8
         let firstWarningTimestamp = result[3] as? UInt32
         let failedTimestamp = result[4] as? UInt32
         let failed = result[5] as? String
+        let lastEncounterLat = result[6] as? Double
+        let lastEncounterLon = result[7] as? Double
+        let lastEncounterTime = result[8] as? UInt32
         
-        return Account(username: username, password: password, isHighLevel: isHighLevel, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed)
+        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime)
     }
     
     public static func getNewCount() throws -> Int64 {

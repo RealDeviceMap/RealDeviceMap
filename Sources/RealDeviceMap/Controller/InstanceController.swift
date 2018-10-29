@@ -7,13 +7,10 @@
 
 import Foundation
 import Turf
-#if !os(Linux)
-import CoreLocation
-#endif
 
 protocol InstanceControllerProto {
     var name: String { get }
-    func getTask() -> [String: Any]
+    func getTask(uuid: String, username: String?) -> [String: Any]
 }
 
 extension InstanceControllerProto {
@@ -93,6 +90,8 @@ class InstanceController {
                     i += 1
                 }
             }
+            let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0
+            
             var areaArrayEmptyInner = [[[CLLocationCoordinate2D]]]()
             for coords in areaArray {
                 var polyCoords = [CLLocationCoordinate2D]()
@@ -102,7 +101,7 @@ class InstanceController {
                 areaArrayEmptyInner.append([polyCoords])
             }
             
-            instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest)
+            instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset)
         }
         instancesByInstanceName[instance.name] = instanceController
     }

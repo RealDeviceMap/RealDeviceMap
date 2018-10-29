@@ -150,9 +150,10 @@ class WebReqeustHandler {
             data["hide_raids"] = !perms.contains(.viewMapRaid)
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
+            data["hide_quests"] = !perms.contains(.viewMapQuest)
             
             // Localize
-            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size"]
+            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size", "filter_quests"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -211,11 +212,12 @@ class WebReqeustHandler {
             data["page"] = "Dashboard - Add Instance"
             if request.method == .post {
                 do {
-                    data = try addInstance(data: data, request: request, response: response)
+                    data = try addEditInstance(data: data, request: request, response: response)
                 } catch {
                     return
                 }
             } else {
+                data["timezone_offset"] = 0
                 data["nothing_selected"] = true
             }
         case .dashboardAccounts:
@@ -235,10 +237,10 @@ class WebReqeustHandler {
                     return
                 }
             } else {
-                data["low_level_selected"] = true
+                data["level"] = 0
             }
         case .dashboardInstanceEdit:
-            let instanceName = (request.urlVariables["instance_name"] ?? "").replacingOccurrences(of: "&dash&", with: "/")
+            let instanceName = (request.urlVariables["instance_name"] ?? "").decodeUrl()!
             data["page_is_dashboard"] = true
             data["old_name"] = instanceName
             data["page"] = "Dashboard - Edit Instance"
@@ -260,7 +262,7 @@ class WebReqeustHandler {
                 
             } else if request.method == .post {
                 do {
-                    data = try editInstancePost(data: data, request: request, response: response, instanceName: instanceName)
+                    data = try addEditInstance(data: data, request: request, response: response, instanceName: instanceName)
                 } catch {
                     return
                 }
@@ -575,7 +577,7 @@ class WebReqeustHandler {
         return data
     }
     
-    static func addInstance(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+    static func addEditInstance(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, instanceName: String? = nil) throws -> MustacheEvaluationContext.MapType {
         
         var data = data
         guard
@@ -586,11 +588,13 @@ class WebReqeustHandler {
             data["error"] = "Invalid Request."
             return data
         }
+        let timezoneOffset = Int(request.param(name: "timezone_offset") ?? "0" ) ?? 0
         
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
         
         data["name"] = name
         data["area"] = area
+        data["timezone_offset"] = timezoneOffset
         
         if type == nil {
             data["nothing_selected"] = true
@@ -602,9 +606,9 @@ class WebReqeustHandler {
             data["auto_quest_selected"] = true
         }
         
-        if type == nil {
-            
-        } else if type! == .circlePokemon || type! == .circleRaid {
+        var newCoords: [Any]
+        
+        if type != nil && type! == .circlePokemon || type! == .circleRaid {
             var coords = [Coord]()
             let areaRows = area.components(separatedBy: "\n")
             for areaRow in areaRows {
@@ -624,16 +628,9 @@ class WebReqeustHandler {
                 return data
             }
             
-            let instance = Instance(name: name, type: type!, data: ["area" : coords])
-            do {
-                try instance.create()
-                InstanceController.global.addInstance(instance: instance)
-            } catch {
-                data["show_error"] = true
-                data["error"] = "Failed to create instance. Is the name unique?"
-                return data
-            }
-        } else if type! == .autoQuest {
+            newCoords = coords
+            
+        } else if type != nil && type! == .autoQuest {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
             var currentIndex = 0
@@ -660,70 +657,17 @@ class WebReqeustHandler {
                 return data
             }
             
-            let instance = Instance(name: name, type: type!, data: ["area" : coordArray])
-            do {
-                try instance.create()
-                InstanceController.global.addInstance(instance: instance)
-            } catch {
-                data["show_error"] = true
-                data["error"] = "Failed to create instance. Is the name unique?"
-                return data
-            }
-
-        }
-        
-        response.redirect(path: "/dashboard/instances")
-        sessionDriver.save(session: request.session!)
-        response.completed(status: .seeOther)
-        throw CompletedEarly()
-    }
-    
-    static func editInstancePost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, instanceName: String) throws -> MustacheEvaluationContext.MapType {
-        
-        var data = data
-        guard
-            let name = request.param(name: "name"),
-            let type = request.param(name: "type"),
-            let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
-            else {
-                data["show_error"] = true
-                data["error"] = "Invalid Request."
-                return data
-        }
-    
-        data["name"] = name
-        data["area"] = area
-        if type.lowercased() == "circle_pokemon" {
-            data["circle_pokemon_selected"] = true
-        } else if type.lowercased() == "circle_raid" {
-            data["circle_raid_selected"] = true
-        } else if type.lowercased() == "auto_quest" {
-            data["auto_quest_selected"] = true
+            newCoords = coordArray
         } else {
-            data["nothing_selected"] = true
-        }
-        
-        var coords = [Coord]()
-        let areaRows = area.components(separatedBy: "\n")
-        for areaRow in areaRows {
-            let rowSplit = areaRow.components(separatedBy: ",")
-            if rowSplit.count == 2 {
-                let lat = rowSplit[0].toDouble()
-                let lon = rowSplit[1].toDouble()
-                if lat != nil && lon != nil {
-                    coords.append(Coord(lat: lat!, lon: lon!))
-                }
-            }
-        }
-        
-        if coords.count == 0 {
             data["show_error"] = true
-            data["error"] = "Failed to parse coords."
+            data["error"] = "Invalid Request."
             return data
-        } else {
+        }
+        
+        if instanceName != nil {
             let oldInstance: Instance?
             do {
-                oldInstance = try Instance.getByName(name: instanceName)
+                oldInstance = try Instance.getByName(name: instanceName!)
             } catch {
                 data["show_error"] = true
                 data["error"] = "Failed to update instance. Is the name unique?"
@@ -736,16 +680,32 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             } else {
                 oldInstance!.name = name
-                oldInstance!.type = Instance.InstanceType.fromString(type)!
-                oldInstance!.data["area"] = coords
-                try oldInstance!.update(oldName: instanceName)
-                InstanceController.global.reloadInstance(newInstance: oldInstance!, oldInstanceName: instanceName)
+                oldInstance!.type = type!
+                oldInstance!.data["area"] = newCoords
+                oldInstance!.data["timezone_offset"] = timezoneOffset
+                try oldInstance!.update(oldName: instanceName!)
+                InstanceController.global.reloadInstance(newInstance: oldInstance!, oldInstanceName: instanceName!)
                 response.redirect(path: "/dashboard/instances")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
             }
+        } else {
+            let instance = Instance(name: name, type: type!, data: ["area" : newCoords, "timezone_offset": timezoneOffset])
+            do {
+                try instance.create()
+                InstanceController.global.addInstance(instance: instance)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create instance. Is the name unique?"
+                return data
+            }
         }
+        
+        response.redirect(path: "/dashboard/instances")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
     }
     
     static func editInstanceGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, instanceName: String) throws -> MustacheEvaluationContext.MapType {
@@ -768,17 +728,30 @@ class WebReqeustHandler {
             throw CompletedEarly()
         } else {
             var areaString = ""
-            let area = oldInstance!.data["area"] as? [[String: Double]]
-            if area != nil {
-                for coordLine in area! {
+            let areaType1 = oldInstance!.data["area"] as? [[String: Double]]
+            let areaType2 = oldInstance!.data["area"] as? [[[String: Double]]]
+            if areaType1 != nil {
+                for coordLine in areaType1! {
                     let lat = coordLine["lat"]
                     let lon = coordLine["lon"]
                     areaString += "\(lat!),\(lon!)\n"
+                }
+            } else if areaType2 != nil {
+                var index = 1
+                for geofence in areaType2! {
+                    areaString += "[Geofence \(index)]\n"
+                    index += 1
+                    for coordLine in geofence {
+                        let lat = coordLine["lat"]
+                        let lon = coordLine["lon"]
+                        areaString += "\(lat!),\(lon!)\n"
+                    }
                 }
             }
             
             data["name"] = oldInstance!.name
             data["area"] = areaString
+            data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             switch oldInstance!.type {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
@@ -873,7 +846,7 @@ class WebReqeustHandler {
         var data = data
         
         guard
-            let level = request.param(name: "level"),
+            let level = request.param(name: "level")?.toUInt8(),
             let accounts = request.param(name: "accounts")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression).replacingOccurrences(of: ";", with: ",").replacingOccurrences(of: ":", with: ",")
             else {
                 data["show_error"] = true
@@ -882,14 +855,7 @@ class WebReqeustHandler {
         }
         
         data["accounts"] = accounts
-        var isHighLevel: Bool
-        if level.lowercased() == "high_level" {
-            data["high_level_selected"] = true
-            isHighLevel = true
-        } else {
-            data["low_level_selected"] = true
-            isHighLevel = false
-        }
+        data["level"] = level
         
         var accs = [Account]()
         let accountsRows = accounts.components(separatedBy: "\n")
@@ -898,7 +864,7 @@ class WebReqeustHandler {
             if rowSplit.count == 2 {
                 let username = rowSplit[0]
                 let password = rowSplit[1]
-                accs.append(Account(username: username, password: password, isHighLevel: isHighLevel, firstWarningTimestamp: nil, failedTimestamp: nil, failed: nil))
+                accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil, failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil, lastEncounterTime: nil))
             }
         }
         

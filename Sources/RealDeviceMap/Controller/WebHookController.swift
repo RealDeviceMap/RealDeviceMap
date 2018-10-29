@@ -26,6 +26,8 @@ class WebHookController {
     private var pokestopEvents = [String: Pokestop]()
     private var lureEventLock = NSLock()
     private var lureEvents = [String: Pokestop]()
+    private var questEventLock = NSLock()
+    private var questEvents = [String: Pokestop]()
     private var gymEventLock = NSLock()
     private var gymEvents = [String: Gym]()
     private var gymInfoEventLock = NSLock()
@@ -58,6 +60,14 @@ class WebHookController {
             lureEventLock.lock()
             lureEvents[pokestop.id] = pokestop
             lureEventLock.unlock()
+        }
+    }
+    
+    public func addQuestEvent(pokestop: Pokestop) {
+        if !self.webhookURLStrings.isEmpty {
+            questEventLock.lock()
+            questEvents[pokestop.id] = pokestop
+            questEventLock.unlock()
         }
     }
     
@@ -123,6 +133,13 @@ class WebHookController {
                         }
                         self.lureEvents = [String: Pokestop]()
                         self.lureEventLock.unlock()
+                        
+                        self.questEventLock.lock()
+                        for questEvent in self.questEvents {
+                            events.append(questEvent.value.getWebhookValues(type: "quest"))
+                        }
+                        self.questEvents = [String: Pokestop]()
+                        self.questEventLock.unlock()
                         
                         self.gymEventLock.lock()
                         for gymEvent in self.gymEvents {

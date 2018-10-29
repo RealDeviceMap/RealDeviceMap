@@ -32,6 +32,7 @@ class ApiRequestHandler {
         let showGyms = request.param(name: "show_gyms")?.toBool() ?? false
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
+        let showQuests = request.param(name: "show_quests")?.toBool() ?? false
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
         let pokemonFilterExclude = (try? (request.param(name: "pokemon_filter_exclude") ?? "")?.jsonDecode() as? [Int]) ?? nil
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
@@ -61,11 +62,13 @@ class ApiRequestHandler {
         var data = [String: Any]()
         let permShowRaid = perms.contains(.viewMapRaid)
         let permShowGym =  perms.contains(.viewMapGym)
-        if (permViewMap && (showGyms && permShowGym || showRaids && permShowGym)) {
+        if (permViewMap && (showGyms && permShowGym || showRaids && permShowRaid)) {
             data["gyms"] = try? Gym.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, raidsOnly: !showGyms, showRaids: permShowRaid)
         }
-        if permViewMap && showPokestops && perms.contains(.viewMapPokestop){
-            data["pokestops"] = try? Pokestop.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+        let permShowStops = perms.contains(.viewMapPokestop)
+        let permShowQuests =  perms.contains(.viewMapQuest)
+        if (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
+            data["pokestops"] = try? Pokestop.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests)
         }
         if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
             data["pokemon"] = try? Pokemon.getAll(minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude)
@@ -152,7 +155,7 @@ class ApiRequestHandler {
                             formattedDate = formatter.string(from: date)
                         }
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]
-                        deviceData["buttons"] = "<a href=\"/dashboard/device/assign/\(device.uuid.stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Assign Instance</a>"
+                        deviceData["buttons"] = "<a href=\"/dashboard/device/assign/\(device.uuid.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Assign Instance</a>"
                     } else {
                         deviceData["last_seen"] = device.lastSeen
                     }
@@ -182,7 +185,7 @@ class ApiRequestHandler {
                     }
                     
                     if formatted {
-                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.replacingOccurrences(of: "/", with: "&dash&").stringByEncodingURL)\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
                     jsonArray.append(instanceData)
                 }

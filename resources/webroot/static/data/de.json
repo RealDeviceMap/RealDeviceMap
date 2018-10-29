@@ -9,6 +9,7 @@
 		"filter_gyms": "Arenen",
 		"filter_raids": "Raids",
 		"filter_pokestops": "Pokestops",
+        "filter_quests": "Quests",
 		"filter_spawnpoints": "Spawnpunkte",
 		"filter_pokemon": "Pokemon",
 		"filter_filter": "Filter",
@@ -1227,6 +1228,6 @@
 		"form_114": "Eis",
 		"form_115": "Drache",
 		"form_116": "Unlicht",
-		"form_117": "Fee"
-	}
+		"form_117": "Fee",
+    }
 }

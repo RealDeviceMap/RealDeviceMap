@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PerfectLib
 
 extension String {
     
@@ -19,6 +20,14 @@ extension String {
     
     func toInt() -> Int? {
         return Int(self)
+    }
+    
+    func toUInt8() -> UInt8? {
+        return UInt8(self)
+    }
+    
+    func toUInt16() -> UInt16? {
+        return UInt16(self)
     }
     
     func toUInt32() -> UInt32? {
@@ -51,6 +60,24 @@ extension String {
         let start = index(startIndex, offsetBy: range.lowerBound)
         let end = index(start, offsetBy: range.upperBound - range.lowerBound)
         return String(self[start ..< end])
+    }
+    
+    func jsonDecodeForceTry() -> JSONConvertible? {
+        
+        do {
+            return try self.jsonDecode()
+        } catch {
+            return nil
+        }
+        
+    }
+    
+    func encodeUrl() -> String? {
+        return self.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
+    }
+    
+    func decodeUrl() -> String? {
+        return self.removingPercentEncoding?.replacingOccurrences(of: "+", with: " ")
     }
     
 }

@@ -21,8 +21,9 @@ struct Group {
         case viewMapGym = 6
         case viewMapPokestop = 7
         case viewMapSpawnpoint = 8
+        case viewMapQuest = 9
         
-        static var all: [Perm] = [.viewMap, .viewMapRaid, .viewMapPokemon, .viewStats, .adminSetting, .adminUser, .viewMapGym, .viewMapPokestop, .viewMapSpawnpoint]
+        static var all: [Perm] = [.viewMap, .viewMapRaid, .viewMapPokemon, .viewStats, .adminSetting, .adminUser, .viewMapGym, .viewMapPokestop, .viewMapSpawnpoint, .viewMapQuest]
         
         
         static func permsToNumber(perms: [Perm]) -> UInt32 {
@@ -61,7 +62,7 @@ struct Group {
         }
         
         let sql = """
-            SELECT perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin_setting, perm_admin_user, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint
+            SELECT perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin_setting, perm_admin_user, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest
             FROM `group`
             WHERE name = ?
         """
@@ -90,6 +91,7 @@ struct Group {
         let permViewMapGym = (result[6] as? UInt8)!.toBool()
         let permViewMapPokestop = (result[7] as? UInt8)!.toBool()
         let permViewMapSpawnpoint = (result[8] as? UInt8)!.toBool()
+        let permViewMapQuest = (result[9] as? UInt8)!.toBool()
         
         var perms = [Perm]()
         if permViewMap {
@@ -119,6 +121,9 @@ struct Group {
         if permViewMapSpawnpoint {
             perms.append(.viewMapSpawnpoint)
         }
+        if permViewMapQuest {
+            perms.append(.viewMapQuest)
+        }
         
         return Group(name: name, perms: perms)
         
@@ -132,8 +137,8 @@ struct Group {
         }
         
         var sql = """
-        INSERT INTO `group` (name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin_setting, perm_admin_user, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO `group` (name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin_setting, perm_admin_user, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         if update {
             sql += """
@@ -147,6 +152,7 @@ struct Group {
                 perm_view_map_gym=VALUES(perm_view_map_gym),
                 perm_view_map_pokestop=VALUES(perm_view_map_pokestop),
                 perm_view_map_spawnpoint=VALUES(perm_view_map_spawnpoint)
+                perm_view_map_quest=VALUES(perm_view_map_quest)
             """
         }
         
@@ -163,6 +169,7 @@ struct Group {
         mysqlStmt.bindParam(perms.contains(.viewMapGym))
         mysqlStmt.bindParam(perms.contains(.viewMapPokestop))
         mysqlStmt.bindParam(perms.contains(.viewMapSpawnpoint))
+        mysqlStmt.bindParam(perms.contains(.viewMapQuest))
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")

@@ -18,6 +18,7 @@ let openedPokestop;
 let openedGym;
 
 let showPokestops;
+let showQuests;
 let showGyms;
 let showRaids;
 let showPokemon;
@@ -150,6 +151,14 @@ function loadStorage() {
         showPokestops = (showPokestopsValue  === 'true');
     }
 
+    const showQuestsValue = retrieve('show_quests');
+    if (showQuestsValue === null) {
+        store('show_quests', true);
+        showQuests = true;
+    } else {
+        showQuests = (showQuestsValue  === 'true');
+    }
+
     const showSpawnpointsValue = retrieve('show_spawnpoints');
     if (showSpawnpointsValue === null) {
         store('show_spawnpoints', false);
@@ -243,7 +252,8 @@ function initMap() {
         const newShowGyms = $('#show-gyms').hasClass('active')
 		const newShowRaids = $('#show-raids').hasClass('active');
 		const newShowPokestops = $('#show-pokestops').hasClass('active');
-		const newShowPokemon = $('#show-pokemon').hasClass('active');
+        const newShowQuests= $('#show-quests').hasClass('active');
+        const newShowPokemon = $('#show-pokemon').hasClass('active');
         const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active');
 
         const ts = Math.round((new Date()).getTime() / 1000);
@@ -261,7 +271,6 @@ function initMap() {
 			gymMarkers = newGymMarkers;
 		}
 		if (newShowRaids !== showRaids) {
-			// TODO smart update
 			$.each(gymMarkers, function (index, gym) {
 				map.removeLayer(gym.marker);
 			});
@@ -273,11 +282,17 @@ function initMap() {
 			});
 			pokestopMarkers = [];
 		}
-		if (newShowPokemon !== showPokemon && newShowPokemon === false) {
-			$.each(pokemonMarkers, function (index, pokemon) {
-				map.removeLayer(pokemon.marker);
-			});
-			pokemonMarkers = [];
+        if (newShowRaids !== showRaids) {
+            $.each(pokestopMarkers, function (index, pokestop) {
+                map.removeLayer(pokestop.marker);
+            });
+            pokestopMarkers = [];
+        }
+		if (newShowQuests !== showQuests && newShowQuests === false) {
+            $.each(pokestopMarkers, function (index, pokestop) {
+                map.removeLayer(pokestop.marker);
+            });
+            pokestopMarkers = [];
 		}
         if (newShowSpawnpoints !== showSpawnpoints && newShowSpawnpoints === false) {
             $.each(spawnpointMarkers, function (index, spawnpoint) {
@@ -286,29 +301,41 @@ function initMap() {
             spawnpointMarkers = [];
         }
 
+        pokemonFilter = pokemonFilterNew;
+        const pokemonFilterOld = $.extend(true, {}, pokemonFilter);
+
+        const newPokemonMarkers = [];
+        $.each(pokemonMarkers, function (index, pokemon) {
+            if ((pokemonFilterOld[pokemon.pokemon_id]["show"] !== pokemonFilter[pokemon.pokemon_id]["show"]) ||
+                !(pokemonFilterOld[pokemon.pokemon_id]["size"].localeCompare(pokemonFilter[pokemon.pokemon_id]["size"]))) {
+
+                console.log("changed");
+
+                map.removeLayer(pokemon.marker);
+                if (matchesPokemonFilter(pokemon.pokemon_id)) {
+                    pokemon.marker = getPokemonMarker(pokemon, ts);
+                    newPokemonMarkers.push(pokemon);
+                    pokemon.marker.addTo(map);
+                }
+            } else {
+                newPokemonMarkers.push(pokemon);
+            }
+        });
+        pokemonMarkers = newPokemonMarkers;
+
 		showGyms = newShowGyms;
 		store('show_gyms', newShowGyms);
 		showRaids = newShowRaids;
 		store('show_raids', newShowRaids);
 		showPokestops = newShowPokestops;
 		store('show_pokestops', newShowPokestops);
+        showQuests = newShowQuests;
+        store('show_quests', newShowQuests);
 		showPokemon = newShowPokemon;
 		store('show_pokemon', newShowPokemon);
         showSpawnpoints = newShowSpawnpoints;
         store('show_spawnpoints', newShowSpawnpoints);
-        pokemonFilter = pokemonFilterNew;
         store('pokemon_filter',JSON.stringify(pokemonFilter));
-
-        const newPokemonMarkers = [];
-        $.each(pokemonMarkers, function (index, pokemon) {
-            map.removeLayer(pokemon.marker);
-            if (matchesPokemonFilter(pokemon.pokemon_id)) {
-                pokemon.marker = getPokemonMarker(pokemon, ts);
-                newPokemonMarkers.push(pokemon);
-                pokemon.marker.addTo(map);
-			}
-        });
-        pokemonMarkers = newPokemonMarkers;
 
 		lastUpdateServer = 0;
 		loadData();
@@ -349,6 +376,14 @@ function initMap() {
                 } else {
                     $('#hide-pokestops').addClass('active');
                     $('#show-pokestops').removeClass('active');
+                }
+
+                if (retrieve('show_quests') == 'true') {
+                    $('#show-quests').addClass('active');
+                    $('#hide-quests').removeClass('active');
+                } else {
+                    $('#hide-quests').addClass('active');
+                    $('#show-quests').removeClass('active');
                 }
 
                 if (retrieve('show_pokemon') == 'true') {
@@ -421,7 +456,8 @@ function loadData() {
 		'show_gyms': showGyms,
 		'show_raids': showRaids,
 		'show_pokestops': showPokestops,
-		'show_pokemon': showPokemon,
+        'show_quests': showQuests,
+        'show_pokemon': showPokemon,
 		'pokemon_filter_exclude': JSON.stringify(pokemonFilterExclude),
 		'show_spawnpoints': showSpawnpoints,
 		'last_update': lastUpdateServer,
@@ -484,7 +520,7 @@ function loadData() {
 			const pokestops = data.data.pokestops;
 			ts = Math.round((new Date()).getTime() / 1000);
             $.each(pokestops, function (index, pokestop) {
-				if (showPokestops) {
+                if (showPokestops || (showQuests && pokestop.quest_type !== null)) {
 
 					if (pokestop.updated > lastUpdateServer) {
 						lastUpdateServer = pokestop.updated;
@@ -781,6 +817,32 @@ function getPokestopPopupContent(pokestop) {
 		content += 'Lure End Time: ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')';
 	}
 
+	if (pokestop.quest_type !== null) {
+	    let conditions = pokestop.quest_conditions;
+        let conditionsString = '';
+        if (conditions !== undefined && conditions.length > 0) {
+            conditionsString += ' (';
+            $.each(conditions, function (index, condition) {
+                let formating
+                if (index === 0) {
+                    formating = '';
+                } else {
+                    formating = ', ';
+                }
+
+                conditionsString += formating + getQuestCondition(condition);
+            });
+            conditionsString += ')';
+        }
+
+        content += 'Quest Condition: ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>';
+
+        $.each(pokestop.quest_rewards, function (index, reward) {
+            content += 'Quest Reward: ' + getQuestReward(reward) + '<br>';
+        });
+
+    }
+
 	return content;
 
 }
@@ -840,8 +902,20 @@ function getGymPopupContent(gym) {
 
 // MARK: - Translation
 
+function getPokemonNameNoId(pokemonId) {
+    return i18n('poke_'+pokemonId);
+}
+
 function getPokemonName(pokemonId) {
 	return i18n('poke_'+pokemonId) + ' (' + pokemonId + ')';
+}
+
+function getThrowType(typeID) {
+    return i18n('throw_type_'+typeID);
+}
+
+function getPokemonType(typeId) {
+    return i18n('poke_type_'+typeId);
 }
 
 function getFormName(formId) {
@@ -854,6 +928,92 @@ function getMoveName(moveId) {
 
 function getWeatherName(weatherId) {
     return i18n('weather_'+weatherId);
+}
+
+function getQuestName(questId, amount) {
+    return i18n('quest_'+questId, {"amount": amount});
+}
+
+function getItemName(itemId) {
+    return i18n('item_'+itemId);
+}
+
+function getQuestReward(reward) {
+    const id = reward.type;
+    const info = reward.info;
+
+    if (id === 1 && info !== undefined && info.amount !== undefined) {
+        return i18n('quest_reward_1_formated', {'amount': info.amount});
+    } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
+        return i18n('quest_reward_2_formated', {'amount': info.amount, 'item': getItemName(info.item_id)});
+    } else if (id === 3 && info !== undefined && info.amount !== undefined) {
+        return i18n('quest_reward_3_formated', {'amount': info.amount});
+    } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+        return i18n('quest_reward_4_formated', {'amount': info.amount, 'pokemon': getPokemonName(info.pokemon_id)});
+    } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
+        return i18n('quest_reward_7_formated', {'pokemon': getPokemonName(info.pokemon_id)});
+    } else {
+        return i18n('quest_reward_'+id);
+    }
+}
+
+function getQuestCondition(condition) {
+
+    const id = condition.type;
+    const info = condition.info;
+
+    if (id === 1 && info !== undefined && info.pokemon_type_ids !== undefined) {
+        let typesString = '';
+        $.each(info.pokemon_type_ids, function (index, typeId) {
+            let formatted;
+            if (index === 0) {
+                formatted = '';
+            } else if (index === info.pokemon_type_ids.length - 1) {
+                formatted = ' or ';
+            } else {
+                formatted = ', ';
+            }
+            typesString += formatted + getPokemonType(typeId);
+        });
+        return i18n('quest_condition_1_formated', {'types': typesString});
+    } else if (id === 2 && info !== undefined && info.pokemon_ids !== undefined) {
+        let pokemonString = '';
+        $.each(info.pokemon_ids, function (index, pokemonId) {
+            let formatted;
+            if (index === 0) {
+                formatted = '';
+            } else if (index === info.pokemon_ids.length - 1) {
+                formatted = ' or ';
+            } else {
+                formatted = ', ';
+            }
+            pokemonString += formatted + getPokemonNameNoId(pokemonId);
+        });
+        return i18n('quest_condition_2_formated', {'pokemon': pokemonString});
+    } else if (id === 7 && info !== undefined && info.raid_levels !== undefined) {
+        let levelsString = '';
+        $.each(info.raid_levels, function (index, level) {
+            let formatted;
+            if (index === 0) {
+                formatted = '';
+            } else if (index === info.raid_levels.length - 1) {
+                formatted = ' or ';
+            } else {
+                formatted = ', ';
+            }
+            levelsString += formatted + level;
+        });
+        return i18n('quest_condition_7_formated', {'levels': levelsString});
+    } else if (id === 8 && info !== undefined && info.throw_type_id !== undefined) {
+        return i18n('quest_condition_8_formated', {'throw_type': getThrowType(info.throw_type_id)});
+    } else if (id === 11 && info !== undefined && info.item_id !== undefined) {
+        return i18n('quest_condition_11_formated', {'item': getItemName(info.item_id)});
+    } else if (id === 14 && info !== undefined && info.throw_type_id !== undefined) {
+        return i18n('quest_condition_14_formated', {'throw_type': getThrowType(info.throw_type_id)});
+    } else {
+        return i18n('quest_condition_'+id);
+    }
+
 }
 
 // MARK: - Markers
@@ -897,28 +1057,72 @@ function getPokemonMarker(pokemon, ts) {
 
 function getPokestopMarkerIcon(pokestop, ts) {
 	let icon;
-	if (pokestop.lure_expire_timestamp >= ts) {
-        icon = L.icon({
-            iconUrl: 		'static/img/pokestop/1.png',
-            iconSize:     	[30, 30],
-            iconAnchor:   	[15, 27],
-            popupAnchor:  	[0, -27]
-        });
-	} else {
-		icon = L.icon({
-            iconUrl: 		'static/img/pokestop/0.png',
-            iconSize:     	[30, 30],
-            iconAnchor:   	[15, 27],
-            popupAnchor:  	[0, -27]
-        });
-	}
+	if (pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+
+        const id = pokestop.quest_rewards[0].type;
+        const info = pokestop.quest_rewards[0].info;
+
+        let rewardString;
+
+        if (id === 1 && info !== undefined && info.amount !== undefined) {
+            rewardString = "i-2";
+        } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
+            rewardString = "i"+info.item_id;
+        } else if (id === 3 && info !== undefined && info.amount !== undefined) {
+            rewardString = "i-1";
+        } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+            rewardString = "i-3";
+        } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
+            rewardString = "p"+info.pokemon_id;
+        } else {
+            rewardString = "i0";
+        }
+        if (pokestop.lure_expire_timestamp >= ts) {
+            icon = L.icon({
+                iconUrl: 'static/img/quest/1_' + rewardString + '.png',
+                iconSize: 		[30, 50],
+                iconAnchor: 	[15, 47],
+                popupAnchor: 	[0, -47]
+            });
+        } else {
+            icon = L.icon({
+                iconUrl: 'static/img/quest/0_'+ rewardString +'.png',
+                iconSize: 		[30, 50],
+                iconAnchor: 	[15, 47],
+                popupAnchor: 	[0, -47]
+            });
+        }
+    } else {
+        if (pokestop.lure_expire_timestamp >= ts) {
+            icon = L.icon({
+                iconUrl: 'static/img/pokestop/1.png',
+                iconSize: [30, 30],
+                iconAnchor: [15, 27],
+                popupAnchor: [0, -27]
+            });
+        } else {
+            icon = L.icon({
+                iconUrl: 'static/img/pokestop/0.png',
+                iconSize: [30, 30],
+                iconAnchor: [15, 27],
+                popupAnchor: [0, -27]
+            });
+        }
+    }
 	return icon;
 }
 
 function getPokestopMarker(pokestop, ts) {
+
+    let zIndex;
+    if (pokestop.quest_type !== null) {
+        zIndex = 1;
+    } else {
+        zIndex = 0;
+    }
     const marker = L.marker([pokestop.lat, pokestop.lon], {
         icon: getPokestopMarkerIcon(pokestop, ts),
-        forceZIndex: 20
+        forceZIndex: 20 + zIndex
     });
     marker.bindPopup(pokestop.name);
     marker.on('popupopen', function (popup) {

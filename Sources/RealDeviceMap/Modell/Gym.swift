@@ -267,6 +267,21 @@ class Gym: JSONConvertibleObject, WebHookEvent {
         
     }
     
+    public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
+        
+        self.id = fortData.fortID
+        self.lat = fortData.latitude
+        self.lon = fortData.longitude
+        if !fortData.imageUrls.isEmpty {
+            self.url = fortData.imageUrls[0]
+        }
+        self.name = fortData.name
+        self.teamId = fortData.teamColor.rawValue.toUInt8()
+        
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+    }
+    
     public func save() throws {
         
         guard let mysql = DBController.global.mysql else {
