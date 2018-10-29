@@ -180,6 +180,10 @@ class DBController {
         
         migrate(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
         multiStatement = false
+        
+        if version != newestDBVersion {
+            clearPerms()
+        }
     }
     
     private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
@@ -220,8 +224,6 @@ class DBController {
                 Log.critical(message: "[DBController] " + message)
                 fatalError(message)
             }
-            
-            clearPerms()
             
             Log.info(message: "[DBController] Migration successful")
             migrate(mysql: mysql, fromVersion: fromVersion + 1, toVersion: toVersion)
