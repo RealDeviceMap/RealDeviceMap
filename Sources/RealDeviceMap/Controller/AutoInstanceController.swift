@@ -56,7 +56,7 @@ class AutoInstanceController: InstanceControllerProto {
                     
                     let timeLeft = (23 - hour) * 3600 + (59 - minute) * 60 + (60 - second)
                     let at = date.addingTimeInterval(TimeInterval(timeLeft))
-                    Log.debug(message: "[AutoInstanceController] Clearing Quests in \(timeLeft)s at \(formatter.string(from: at)) (Currently: \(formatter.string(from: date)))")
+                    Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests in \(timeLeft)s at \(formatter.string(from: at)) (Currently: \(formatter.string(from: date)))")
                     
                     if timeLeft > 0 {
                         Threading.sleep(seconds: Double(timeLeft))
