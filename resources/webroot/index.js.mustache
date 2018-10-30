@@ -1061,7 +1061,7 @@ function getPokemonMarker(pokemon, ts) {
 
 function getPokestopMarkerIcon(pokestop, ts) {
 	let icon;
-	if (pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+	if (showQuests && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
 
         const id = pokestop.quest_rewards[0].type;
         const info = pokestop.quest_rewards[0].info;
@@ -1119,7 +1119,7 @@ function getPokestopMarkerIcon(pokestop, ts) {
 function getPokestopMarker(pokestop, ts) {
 
     let zIndex;
-    if (pokestop.quest_type !== null) {
+    if (showQuests && pokestop.quest_type !== null) {
         zIndex = 1;
     } else {
         zIndex = 0;
@@ -1214,7 +1214,7 @@ function getGymMarkerIcon(gym, ts) {
 function getGymMarker(gym, ts) {
 
 	let zIndex;
-    if (gym.raid_end_timestamp >= ts) {
+    if (showRaids && gym.raid_end_timestamp >= ts) {
         zIndex = gym.raid_level
     } else {
         zIndex = 0
