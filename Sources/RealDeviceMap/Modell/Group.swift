@@ -54,9 +54,9 @@ struct Group {
     var name: String
     var perms: [Perm]
     
-    public static func getWithName(name: String) throws -> Group? {
+    public static func getWithName(mysql: MySQL?=nil, name: String) throws -> Group? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -129,9 +129,9 @@ struct Group {
         
     }
     
-    public func save(update: Bool!=true) throws {
+    public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }

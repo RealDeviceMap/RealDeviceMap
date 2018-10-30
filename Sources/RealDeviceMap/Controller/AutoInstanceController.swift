@@ -137,6 +137,11 @@ class AutoInstanceController: InstanceControllerProto {
         switch type {
         case .quest:
             
+            guard let mysql = DBController.global.mysql else {
+                Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
+                return [String : Any]()
+            }
+            
             stopsLock.lock()
             if todayStops == nil || todayStops!.isEmpty {
                 stopsLock.unlock()
@@ -150,7 +155,7 @@ class AutoInstanceController: InstanceControllerProto {
             var account: Account?
             
             do {
-                if username != nil, let accountT = try Account.getWithUsername(username: username!) {
+                if username != nil, let accountT = try Account.getWithUsername(mysql: mysql, username: username!) {
                     account = accountT
                     lastLat = accountT.lastEncounterLat
                     lastLon = accountT.lastEncounterLon
@@ -218,7 +223,7 @@ class AutoInstanceController: InstanceControllerProto {
                 account!.lastEncounterLon = newLon
                 account!.lastEncounterLat = newLat
                 account!.lastEncounterTime = encounterTime
-                try? account!.save(update: true)
+                try? account!.save(mysql: mysql, update: true)
             } else {
                 try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lat", value: newLat.description)
                 try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lon", value: newLon.description)
@@ -241,7 +246,7 @@ class AutoInstanceController: InstanceControllerProto {
                 var done = false
                 while !done {
                     do {
-                        newStops = try Pokestop.getIn(ids: ids)
+                        newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
                         done = true
                     } catch {
                         Threading.sleep(seconds: 1.0)

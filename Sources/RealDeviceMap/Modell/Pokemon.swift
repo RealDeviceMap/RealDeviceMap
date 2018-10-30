@@ -128,7 +128,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
         self.firstSeenTimestamp = firstSeenTimestamp
     }
     
-    init(json: [String: Any]) throws {
+    init(mysql: MySQL?=nil, json: [String: Any]) throws {
                 
         var lat = json["lat"] as? Double
         var lon = json["lon"] as? Double
@@ -142,7 +142,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
                 WHERE id = ?;
             """
             
-            guard let mysql = DBController.global.mysql else {
+            guard let mysql = mysql ?? DBController.global.mysql else {
                 Log.error(message: "[POKEMON] Failed to connect to database.")
                 throw DBController.DBError()
             }
@@ -233,7 +233,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
         
     }
     
-    init(nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon) throws {
+    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon) throws {
         
         let id = nearbyPokemon.encounterID.description
         let pokemonId = nearbyPokemon.pokemonID.rawValue.toUInt16()
@@ -249,7 +249,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
                 WHERE id = ?;
             """
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -288,22 +288,40 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
         self.updated = UInt32(Date().timeIntervalSince1970)
 
     }
-
-    public func save() throws {
+    
+    public func addEncounter(encounterData: POGOProtos_Networking_Responses_EncounterResponse) {
         
-        guard let mysql = DBController.global.mysql else {
+        self.cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
+        self.move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
+        self.move2 = UInt16(encounterData.wildPokemon.pokemonData.move2.rawValue)
+        self.size = Double(encounterData.wildPokemon.pokemonData.heightM)
+        self.weight = Double(encounterData.wildPokemon.pokemonData.weightKg)
+        self.atkIv = UInt8(encounterData.wildPokemon.pokemonData.individualAttack)
+        self.defIv = UInt8(encounterData.wildPokemon.pokemonData.individualDefense)
+        self.staIv = UInt8(encounterData.wildPokemon.pokemonData.individualStamina)
+        self.costume = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.costume.rawValue)
+        self.form = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.form.rawValue)
+        self.gender = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.gender.rawValue)
+        
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        
+    }
+
+    public func save(mysql: MySQL?=nil) throws {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
         
         if self.spawnId != nil {
             let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated)
-            try? spawnPoint.save()
+            try? spawnPoint.save(mysql: mysql)
         }
         
         let oldPokemon: Pokemon?
         do {
-            oldPokemon = try Pokemon.getWithId(id: id)
+            oldPokemon = try Pokemon.getWithId(mysql: mysql, id: id)
         } catch {
             oldPokemon = nil
         }
@@ -399,9 +417,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
         }
     }
     
-    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -475,9 +493,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
         
     }
     
-    public static func getWithId(id: String) throws -> Pokemon? {
+    public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Pokemon? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }

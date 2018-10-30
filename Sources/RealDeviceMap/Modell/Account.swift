@@ -33,16 +33,16 @@ class Account {
         self.lastEncounterTime = lastEncounterTime
     }
     
-    public func save(update: Bool) throws {
+    public func save(mysql: MySQL?=nil, update: Bool) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
         
         let oldAccount: Account?
         do {
-            oldAccount = try Account.getWithUsername(username: username)
+            oldAccount = try Account.getWithUsername(mysql: mysql, username: username)
         } catch {
             oldAccount = nil
         }
@@ -107,9 +107,9 @@ class Account {
         }
     }
     
-    public static func getNewAccount(minLevel: Int, maxLevel: Int) throws -> Account? {
+    public static func getNewAccount(mysql: MySQL?=nil, minLevel: Int, maxLevel: Int) throws -> Account? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -152,9 +152,9 @@ class Account {
         return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime)
     }
     
-    public static func getWithUsername(username: String) throws -> Account? {
+    public static func getWithUsername(mysql: MySQL?=nil, username: String) throws -> Account? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -193,9 +193,9 @@ class Account {
         return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime)
     }
     
-    public static func getNewCount() throws -> Int64 {
+    public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -221,9 +221,9 @@ class Account {
         return count
     }
     
-    public static func getInUseCount() throws -> Int64 {
+    public static func getInUseCount(mysql: MySQL?=nil) throws -> Int64 {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -249,9 +249,9 @@ class Account {
         return count
     }
 
-    public static func getWarnedCount() throws -> Int64 {
+    public static func getWarnedCount(mysql: MySQL?=nil) throws -> Int64 {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -276,9 +276,9 @@ class Account {
         return count
     }
     
-    public static func getFailedCount() throws -> Int64 {
+    public static func getFailedCount(mysql: MySQL?=nil) throws -> Int64 {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }

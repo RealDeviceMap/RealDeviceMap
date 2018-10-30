@@ -45,6 +45,12 @@ class WebHookRequestHandler {
             return
         }
         
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            response.respondWithError(status: .internalServerError)
+            return
+        }
+        
         let latTarget = json["lat_target"] as? Double ?? 0.0
         let lonTarget = json["lon_target"] as? Double ?? 0.0
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
@@ -86,7 +92,7 @@ class WebHookRequestHandler {
         var wildPokemons = [Pokemon]()
         if let pokemonsData = json["pokemon"] as? [[String: Any]] {
             for pokemonData in pokemonsData {
-                guard let pokemon = try? Pokemon(json: pokemonData) else {
+                guard let pokemon = try? Pokemon(mysql: mysql, json: pokemonData) else {
                     //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokemon")
                     continue
                 }
@@ -112,7 +118,7 @@ class WebHookRequestHandler {
             var nearbyPokemons = [Pokemon]()
             if let nearbyPokemonsData = json["nearby_pokemon"] as? [[String: Any]] {
                 for pokemonData in nearbyPokemonsData {
-                    guard let pokemon = try? Pokemon(json: pokemonData) else {
+                    guard let pokemon = try? Pokemon(mysql: mysql, json: pokemonData) else {
                         //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Nearby Pokemon")
                         continue
                     }
@@ -122,25 +128,25 @@ class WebHookRequestHandler {
         
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
-                try? wildPokemon.save()
+                try? wildPokemon.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                try? nearbyPokemon.save()
+                try? nearbyPokemon.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
             
             let startGym = Date()
             for gym in gyms {
-                try? gym.save()
+                try? gym.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] Gym Count: \(gyms.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startGym)))s")
             
             let startPokestop = Date()
             for pokestop in pokestops {
-                try? pokestop.save()
+                try? pokestop.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] Pokestop Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokestop)))s")
             
@@ -168,6 +174,12 @@ class WebHookRequestHandler {
             return
         }
         
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            response.respondWithError(status: .internalServerError)
+            return
+        }
+        
         let latTarget = json["lat_target"] as? Double ?? 0.0
         let lonTarget = json["lon_target"] as? Double ?? 0.0
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
@@ -179,6 +191,7 @@ class WebHookRequestHandler {
         var forts = [POGOProtos_Map_Fort_FortData]()
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
+        var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
 
         for rawData in contents {
             let data = Data(base64Encoded: rawData["data"] as! String)!
@@ -192,10 +205,10 @@ class WebHookRequestHandler {
                         quests.append(quest)
                     }
                 }
-            /*} else if method == 102 {
+            } else if method == 102 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
-                    print(er)
-                }*/
+                    encounters.append(er)
+                }
             } else if method == 104 {
                 if let fdr = try? POGOProtos_Networking_Responses_FortDetailsResponse(serializedData: data) {
                     fortDetails.append(fdr)
@@ -244,14 +257,14 @@ class WebHookRequestHandler {
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
                 let pokemon = Pokemon(wildPokemon: wildPokemon)
-                try? pokemon.save()
+                try? pokemon.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                let pokemon = try? Pokemon(nearbyPokemon: nearbyPokemon)
-                try? pokemon?.save()
+                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon)
+                try? pokemon?.save(mysql: mysql)
             }
             Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 
@@ -259,10 +272,10 @@ class WebHookRequestHandler {
             for fort in forts {
                 if fort.type == .gym {
                     let gym = Gym(fortData: fort)
-                    try? gym.save()
+                    try? gym.save(mysql: mysql)
                 } else if fort.type == .checkpoint {
                     let pokestop = Pokestop(fortData: fort)
-                    try? pokestop.save()
+                    try? pokestop.save(mysql: mysql)
                 }
             }
             Log.info(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
@@ -273,24 +286,24 @@ class WebHookRequestHandler {
                     if fort.type == .gym {
                         let gym: Gym?
                         do {
-                            gym = try Gym.getWithId(id: fort.fortID)
+                            gym = try Gym.getWithId(mysql: mysql, id: fort.fortID)
                         } catch {
                             gym = nil
                         }
                         if gym != nil {
                             gym!.addDetails(fortData: fort)
-                            try? gym!.save()
+                            try? gym!.save(mysql: mysql)
                         }
                     } else if fort.type == .checkpoint {
                         let pokestop: Pokestop?
                         do {
-                            pokestop = try Pokestop.getWithId(id: fort.fortID)
+                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.fortID)
                         } catch {
                             pokestop = nil
                         }
                         if pokestop != nil {
                             pokestop!.addDetails(fortData: fort)
-                            try? pokestop!.save()
+                            try? pokestop!.save(mysql: mysql)
                         }
                     }
                 }
@@ -302,16 +315,33 @@ class WebHookRequestHandler {
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
-                        pokestop = try Pokestop.getWithId(id: quest.fortID)
+                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.fortID)
                     } catch {
                         pokestop = nil
                     }
                     if pokestop != nil {
                         pokestop!.addQuest(questData: quest)
-                        try? pokestop!.save()
+                        try? pokestop!.save(mysql: mysql)
                     }
                 }
                 Log.info(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+            
+            if !encounters.isEmpty {
+                let start = Date()
+                for encounter in encounters {
+                    let pokemon: Pokemon?
+                    do {
+                        pokemon = try Pokemon.getWithId(mysql: mysql, id: encounter.wildPokemon.encounterID.description)
+                    } catch {
+                        pokemon = nil
+                    }
+                    if pokemon != nil {
+                        pokemon!.addEncounter(encounterData: encounter)
+                        try? pokemon!.save(mysql: mysql)
+                    }
+                }
+                Log.info(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
             
             Threading.destroyQueue(queue)
@@ -340,14 +370,20 @@ class WebHookRequestHandler {
         
         let username = jsonO?["username"] as? String
         
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            response.respondWithError(status: .internalServerError)
+            return
+        }
+        
         if type == "init" {
             do {
-                let device = try Device.getById(id: uuid)
+                let device = try Device.getById(mysql: mysql, id: uuid)
                 let firstWarningTimestamp: UInt32?
                 if device == nil || device!.accountUsername == nil {
                     firstWarningTimestamp = nil
                 } else {
-                    let account = try Account.getWithUsername(username: device!.accountUsername!)
+                    let account = try Account.getWithUsername(mysql: mysql, username: device!.accountUsername!)
                     if account != nil {
                         firstWarningTimestamp = account!.firstWarningTimestamp
                     } else {
@@ -357,7 +393,7 @@ class WebHookRequestHandler {
                 
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil)
-                    try newDevice.create()
+                    try newDevice.create(mysql: mysql)
                     try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                 } else {
                     if device!.instanceName == nil {
@@ -378,7 +414,7 @@ class WebHookRequestHandler {
                 host = "?"
             }
             do {
-                try Device.touch(uuid: uuid, host: host, seen: now)
+                try Device.touch(mysql: mysql, uuid: uuid, host: host, seen: now)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
@@ -394,15 +430,15 @@ class WebHookRequestHandler {
             
             do {
                 guard
-                    let device = try Device.getById(id: uuid),
-                    let account = try Account.getNewAccount(minLevel: 0, maxLevel: 29)
+                    let device = try Device.getById(mysql: mysql, id: uuid),
+                    let account = try Account.getNewAccount(mysql: mysql, minLevel: 0, maxLevel: 29)
                     else {
                         response.respondWithError(status: .notFound)
                         return
                 }
                 if device.accountUsername != nil {
                     do {
-                        let oldAccount = try Account.getWithUsername(username: device.accountUsername!)
+                        let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
                         if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
                             try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any])
                             return
@@ -411,7 +447,7 @@ class WebHookRequestHandler {
                 }
                 
                 device.accountUsername = account.username
-                try device.save(oldUUID: device.uuid)
+                try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: ["username": account.username, "password": account.password, "first_warning_timestamp": account.firstWarningTimestamp as Any])
             
             } catch {
@@ -420,16 +456,16 @@ class WebHookRequestHandler {
         } else if type == "tutorial_done" {
             do {
                 guard
-                    let device = try Device.getById(id: uuid),
+                    let device = try Device.getById(mysql: mysql, id: uuid),
                     let username = device.accountUsername,
-                    let account = try Account.getWithUsername(username: username)
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
                         response.respondWithError(status: .internalServerError)
                         return
                 }
                 if account.level == 0 {
                     account.level = 1
-                    try account.save(update: true)
+                    try account.save(mysql: mysql, update: true)
                 }
                 response.respondWithOk()
             } catch {
@@ -438,9 +474,9 @@ class WebHookRequestHandler {
         } else if type == "account_banned" {
             do {
                 guard
-                    let device = try Device.getById(id: uuid),
+                    let device = try Device.getById(mysql: mysql, id: uuid),
                     let username = device.accountUsername,
-                    let account = try Account.getWithUsername(username: username)
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
                 else {
                     response.respondWithError(status: .internalServerError)
                     return
@@ -448,7 +484,7 @@ class WebHookRequestHandler {
                 if account.failedTimestamp == nil || account.failed == nil {
                     account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
                     account.failed = "banned"
-                    try account.save(update: true)
+                    try account.save(mysql: mysql, update: true)
                 }
                 response.respondWithOk()
             } catch {
@@ -457,16 +493,16 @@ class WebHookRequestHandler {
         } else if type == "account_warning" {
             do {
                 guard
-                    let device = try Device.getById(id: uuid),
+                    let device = try Device.getById(mysql: mysql, id: uuid),
                     let username = device.accountUsername,
-                    let account = try Account.getWithUsername(username: username)
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
                         response.respondWithError(status: .notFound)
                         return
                 }
                 if account.firstWarningTimestamp == nil {
                     account.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                    try account.save(update: true)
+                    try account.save(mysql: mysql, update: true)
                 }
                 response.respondWithOk()
             } catch {
@@ -475,9 +511,9 @@ class WebHookRequestHandler {
         } else if type == "account_invalid_credentials" {
             do {
                 guard
-                    let device = try Device.getById(id: uuid),
+                    let device = try Device.getById(mysql: mysql, id: uuid),
                     let username = device.accountUsername,
-                    let account = try Account.getWithUsername(username: username)
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
                         response.respondWithError(status: .notFound)
                         return
@@ -485,7 +521,7 @@ class WebHookRequestHandler {
                 if account.failedTimestamp == nil || account.failed == nil {
                     account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
                     account.failed = "invalid_credentials"
-                    try account.save(update: true)
+                    try account.save(mysql: mysql, update: true)
                 }
                 response.respondWithOk()
             } catch {
@@ -494,13 +530,13 @@ class WebHookRequestHandler {
         } else if type == "logged_out" {
             do {
                 guard
-                    let device = try Device.getById(id: uuid)
+                    let device = try Device.getById(mysql: mysql, id: uuid)
                 else {
                     response.respondWithError(status: .notFound)
                     return
                 }
                 device.accountUsername = nil
-                try device.save(oldUUID: device.uuid)
+                try device.save(mysql: mysql, oldUUID: device.uuid)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)

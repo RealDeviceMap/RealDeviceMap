@@ -25,9 +25,9 @@ class Device {
         self.accountUsername = accountUsername
     }
     
-    public static func touch(uuid: String, host: String, seen: Int) throws {
+    public static func touch(mysql: MySQL?=nil, uuid: String, host: String, seen: Int) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -49,9 +49,9 @@ class Device {
         }
     }
     
-    public func save(oldUUID: String) throws {
+    public func save(mysql: MySQL?=nil, oldUUID: String) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -76,9 +76,9 @@ class Device {
         }
     }
     
-    public func create() throws {
+    public func create(mysql: MySQL?=nil) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -102,9 +102,9 @@ class Device {
         }
     }
     
-    public static func getAll() throws -> [Device] {
+    public static func getAll(mysql: MySQL?=nil) throws -> [Device] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -137,9 +137,9 @@ class Device {
         
     }
     
-    public static func getById(id: String) throws -> Device? {
+    public static func getById(mysql: MySQL?=nil, id: String) throws -> Device? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
         }

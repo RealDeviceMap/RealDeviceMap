@@ -286,16 +286,16 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
     
-    public func save() throws {
+    public func save(mysql: MySQL?=nil) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }
         
         let oldGym: Gym?
         do {
-            oldGym = try Gym.getWithId(id: id)
+            oldGym = try Gym.getWithId(mysql: mysql, id: id)
         } catch {
             oldGym = nil
         }
@@ -398,9 +398,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
     
-    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, raidsOnly: Bool, showRaids: Bool) throws -> [Gym] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, raidsOnly: Bool, showRaids: Bool) throws -> [Gym] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -473,9 +473,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
 
-    public static func getWithId(id: String) throws -> Gym? {
+    public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Gym? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }

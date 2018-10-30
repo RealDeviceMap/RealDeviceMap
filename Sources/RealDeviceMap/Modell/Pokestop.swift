@@ -310,16 +310,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.updated = UInt32(Date().timeIntervalSince1970)
     }
     
-    public func save() throws {
+    public func save(mysql: MySQL?=nil) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
         
         let oldPokestop: Pokestop?
         do {
-            oldPokestop = try Pokestop.getWithId(id: id)
+            oldPokestop = try Pokestop.getWithId(mysql: mysql, id: id)
         } catch {
             oldPokestop = nil
         }
@@ -395,9 +395,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
 
-    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool) throws -> [Pokestop] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool) throws -> [Pokestop] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -467,9 +467,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
     
-    public static func getIn(ids: [String]) throws -> [Pokestop] {
+    public static func getIn(mysql: MySQL?=nil, ids: [String]) throws -> [Pokestop] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -524,9 +524,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
 
-    public static func getWithId(id: String) throws -> Pokestop? {
+    public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Pokestop? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -573,9 +573,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
     
-    public static func clearQuests(ids: [String]) throws {
+    public static func clearQuests(mysql: MySQL?=nil, ids: [String]) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }

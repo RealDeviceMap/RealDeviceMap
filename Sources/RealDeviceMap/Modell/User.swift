@@ -73,7 +73,7 @@ class User {
     
     // MARK: - REGISTER
     
-    public static func register(username: String, email: String, password: String, groupName: String) throws -> User {
+    public static func register(mysql: MySQL?=nil, username: String, email: String, password: String, groupName: String) throws -> User {
         
         guard checkUsernameValid(username: username) else {
             throw RegisterError(type: .usernameInvalid)
@@ -87,7 +87,7 @@ class User {
 
         let usernameTaken: Bool
         do {
-            usernameTaken = try checkUsernameTaken(username: username)
+            usernameTaken = try checkUsernameTaken(mysql: mysql, username: username)
         } catch {
             throw RegisterError(type: .undefined)
         }
@@ -97,7 +97,7 @@ class User {
         
         let emailTaken: Bool
         do {
-            emailTaken = try checkEmailTaken(email: email)
+            emailTaken = try checkEmailTaken(mysql: mysql, email: email)
         } catch {
             throw RegisterError(type: .undefined)
         }
@@ -109,7 +109,7 @@ class User {
         
         let user = User(username: username, email: email, passwordHash: passwordHash, groupName: groupName)
         do {
-            try user.save()
+            try user.save(mysql: mysql)
         } catch {
             throw RegisterError(type: .undefined)
         }
@@ -138,9 +138,9 @@ class User {
         return password.count >= 8
     }
     
-    private static func checkUsernameTaken(username: String) throws -> Bool {
+    private static func checkUsernameTaken(mysql: MySQL?=nil, username: String) throws -> Bool {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[USER] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -164,9 +164,9 @@ class User {
         return results.numRows != 0
     }
     
-    private static func checkEmailTaken(email: String) throws -> Bool {
+    private static func checkEmailTaken(mysql: MySQL?=nil, email: String) throws -> Bool {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[USER] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -192,18 +192,18 @@ class User {
     
     // MARK: - LOGIN
     
-    public static func login(username: String, password: String) throws -> User {
-        return try login(username: username, email: nil, password: password)
+    public static func login(mysql: MySQL?=nil, username: String, password: String) throws -> User {
+        return try login(mysql: mysql, username: username, email: nil, password: password)
     }
     
-    public static func login(email: String, password: String) throws -> User {
-        return try login(username: nil, email: email, password: password)
+    public static func login(mysql: MySQL?=nil, email: String, password: String) throws -> User {
+        return try login(mysql: mysql, username: nil, email: email, password: password)
     }
     
-    private static func login(username: String? = nil, email: String? = nil, password: String) throws -> User {
+    private static func login(mysql: MySQL?=nil, username: String? = nil, email: String? = nil, password: String) throws -> User {
         let user: User?
         do {
-            user = try User.get(username: username, email: email)
+            user = try User.get(mysql: mysql, username: username, email: email)
         } catch {
             throw LoginError(type: .undefined)
         }
@@ -221,13 +221,13 @@ class User {
     
     // MARK: - DB
     
-    public static func get(username: String? = nil, email: String? = nil) throws -> User? {
+    public static func get(mysql: MySQL?=nil, username: String? = nil, email: String? = nil) throws -> User? {
         
         if username == nil && email == nil {
             fatalError("Invalid call to User.get without username or email")
         }
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[USER] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -272,9 +272,9 @@ class User {
         }
     }
     
-    private func save(update: Bool = false) throws {
+    private func save(mysql: MySQL?=nil, update: Bool = false) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[USER] Failed to connect to database.")
             throw DBController.DBError()
         }

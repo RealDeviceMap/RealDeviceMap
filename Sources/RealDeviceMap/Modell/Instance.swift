@@ -39,9 +39,9 @@ class Instance {
         self.data = data
     }
     
-    public func create() throws {
+    public func create(mysql: MySQL?=nil) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -63,9 +63,9 @@ class Instance {
         }
     }
     
-    public static func delete(name: String) throws {
+    public static func delete(mysql: MySQL?=nil, name: String) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -85,9 +85,9 @@ class Instance {
         }
     }
     
-    public func update(oldName: String) throws {
+    public func update(mysql: MySQL?=nil, oldName: String) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -111,9 +111,9 @@ class Instance {
         }
     }
     
-    public static func getAll() throws -> [Instance] {
+    public static func getAll(mysql: MySQL?=nil) throws -> [Instance] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -143,9 +143,9 @@ class Instance {
         
     }
     
-    public static func getByName(name: String) throws -> Instance? {
+    public static func getByName(mysql: MySQL?=nil, name: String) throws -> Instance? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }

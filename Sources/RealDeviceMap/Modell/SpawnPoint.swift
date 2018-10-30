@@ -36,16 +36,16 @@ class SpawnPoint: JSONConvertibleObject{
         self.updated = updated
     }
 
-    public func save() throws {
+    public func save(mysql: MySQL?=nil) throws {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
         
         let oldSpawnpoint: SpawnPoint?
         do {
-            oldSpawnpoint = try SpawnPoint.getWithId(id: id)
+            oldSpawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: id)
         } catch {
             oldSpawnpoint = nil
         }
@@ -71,9 +71,9 @@ class SpawnPoint: JSONConvertibleObject{
 
     }
     
-    public static func getAll(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [SpawnPoint] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [SpawnPoint] {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
@@ -113,9 +113,9 @@ class SpawnPoint: JSONConvertibleObject{
         
     }
     
-    public static func getWithId(id: UInt64) throws -> SpawnPoint? {
+    public static func getWithId(mysql: MySQL?=nil, id: UInt64) throws -> SpawnPoint? {
         
-        guard let mysql = DBController.global.mysql else {
+        guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
