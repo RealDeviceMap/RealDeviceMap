@@ -59,7 +59,7 @@ class AutoInstanceController: InstanceControllerProto {
                     Log.debug(message: "[AutoInstanceController] Clearing Quests in \(timeLeft)s at \(formatter.string(from: at)) (Currently: \(formatter.string(from: date)))")
                     
                     if timeLeft > 0 {
-                        sleep(UInt32(timeLeft))
+                        Threading.sleep(seconds: Double(timeLeft))
                         
                         let ids = self.allStops!.map({ (stop) -> String in
                             return stop.id
@@ -70,7 +70,7 @@ class AutoInstanceController: InstanceControllerProto {
                                 try Pokestop.clearQuests(ids: ids)
                                 done = true
                             } catch {
-                                sleep(5)
+                                Threading.sleep(seconds: 5.0)
                             }
                         }
                         self.update()
@@ -244,7 +244,7 @@ class AutoInstanceController: InstanceControllerProto {
                         newStops = try Pokestop.getIn(ids: ids)
                         done = true
                     } catch {
-                        sleep(1)
+                        Threading.sleep(seconds: 1.0)
                     }
                 }
                 

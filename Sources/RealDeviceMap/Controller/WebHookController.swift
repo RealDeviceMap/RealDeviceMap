@@ -178,7 +178,7 @@ class WebHookController {
                         
                     }
                     
-                    usleep(UInt32(self.webhookSendDelay * 1000000))
+                    Threading.sleep(seconds: self.webhookSendDelay)
                 }
             }
         }
