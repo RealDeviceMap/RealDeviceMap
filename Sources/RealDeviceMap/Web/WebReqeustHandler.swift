@@ -276,6 +276,21 @@ class WebReqeustHandler {
                     return
                 }
             }
+        case .dashboardClearQuests:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Clear All Quests"
+            if request.method == .post {
+                do {
+                    try Pokestop.clearQuests()
+                    response.redirect(path: "/dashboard")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .found)
+                    return
+                } catch {
+                    data["show_error"] = true
+                    data["error"] = "Failed to clear Quests. Please try agai later."
+                }
+            }
         case .register:
             
             if !enableRegister {

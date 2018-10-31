@@ -30,6 +30,7 @@ class WebServer {
         case dashboardInstanceEdit = "dashboard_instance_edit.mustache"
         case dashboardAccounts = "dashboard_accounts.mustache"
         case dashboardAccountsAdd = "dashboard_accounts_add.mustache"
+        case dashboardClearQuests = "dashboard_clearquests.mustach"
     }
     
     public enum APIPage {

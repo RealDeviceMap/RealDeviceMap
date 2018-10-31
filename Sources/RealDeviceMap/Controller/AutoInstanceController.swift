@@ -65,6 +65,7 @@ class AutoInstanceController: InstanceControllerProto {
                             return stop.id
                         })
                         var done = false
+                        Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests in area.")
                         while !done {
                             do {
                                 try Pokestop.clearQuests(ids: ids)

@@ -573,30 +573,39 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
     
-    public static func clearQuests(mysql: MySQL?=nil, ids: [String]) throws {
+    public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
         
-        var inSQL = "("
-        for _ in 1..<ids.count {
-            inSQL += "?, "
+        let whereSQL: String
+        
+        if ids != nil {
+            var inSQL = "("
+            for _ in 1..<ids!.count {
+                inSQL += "?, "
+            }
+            inSQL += "?)"
+            whereSQL = "WHERE id IN \(inSQL)"
+        } else {
+            whereSQL = ""
         }
-        inSQL += "?)"
         
         let sql = """
             UPDATE pokestop
             SET updated = ?, quest_type = NULL, quest_timestamp = NULL, quest_target = NULL, quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
-            WHERE id IN \(inSQL)
+            \(whereSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(Int(Date().timeIntervalSince1970))
-        for id in ids {
-            mysqlStmt.bindParam(id)
+        if ids != nil {
+            for id in ids! {
+                mysqlStmt.bindParam(id)
+            }
         }
         
         guard mysqlStmt.execute() else {
