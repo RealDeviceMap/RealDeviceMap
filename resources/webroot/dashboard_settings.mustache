@@ -64,6 +64,11 @@
                 <input type="text" class="form-control" name="locale_new" value="{{locale_new}}" required>
             </div>
             <br>
+            <div class="form-group">
+                Enable Register
+                <input type="checkbox" class="form-control" name="enable_register_new" value="enable_register_new" {{#enable_register_new}}checked{{/enable_register_new}}>
+            </div>
+            <br>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Update</button>
         </form>

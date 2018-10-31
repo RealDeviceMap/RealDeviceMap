@@ -21,9 +21,11 @@
         </ul>
         {{^is_logged_in}}
             <ul class="nav navbar-nav navbar-right">
+                {{#enable_register}}
                 <li class="nav-item{{#page_is_register}} active{{/page_is_register}}">
                     <a class="nav-link" href="/register">{{nav_register}}{{#page_is_register}}<span class="sr-only">(current)</span>{{/page_is_register}}</a>
                 </li>
+                {{/enable_register}}
                 <li class="nav-item{{#page_is_login}} active{{/page_is_login}}">
                     <a class="nav-link" href="/login">{{nav_login}}{{#page_is_login}}<span class="sr-only">(current)</span>{{/page_is_login}}</a>
                 </li>

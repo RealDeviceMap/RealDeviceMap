@@ -24,6 +24,7 @@ class WebReqeustHandler {
     static var maxPokemonId: Int = 493
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = ""
+    static var enableRegister: Bool = true
     
     private static let sessionDriver = MySQLSessions()
         
@@ -37,6 +38,7 @@ class WebReqeustHandler {
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
         data["locale"] = Localizer.locale
         data["locale_last_modified"] = localizer.lastModified
+        data["enable_register"] = enableRegister
         
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
@@ -178,6 +180,7 @@ class WebReqeustHandler {
             data["start_zoom"] = startZoom
             data["max_pokemon_id"] = maxPokemonId
             data["locale_new"] = Localizer.locale
+            data["enable_register_new"] = enableRegister
             data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
@@ -274,6 +277,14 @@ class WebReqeustHandler {
                 }
             }
         case .register:
+            
+            if !enableRegister {
+                response.redirect(path: "/")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .found)
+                return
+            }
+            
             data["page_is_register"] = true
             data["page"] = "Register"
             
@@ -543,6 +554,7 @@ class WebReqeustHandler {
         let webhookDelay = request.param(name: "webhook_delay")?.toDouble() ?? 5.0
         let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
+        let enableRegister = request.param(name: "enable_register_new") != nil
         
         do {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
@@ -555,6 +567,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
+            try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
         } catch {
             data["show_error"] = true
             return data
@@ -565,6 +578,7 @@ class WebReqeustHandler {
         WebReqeustHandler.startZoom = startZoom
         WebReqeustHandler.title = title
         WebReqeustHandler.maxPokemonId = maxPokemonId
+        WebReqeustHandler.enableRegister = enableRegister
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         Pokemon.defaultTimeUnseen = defaultTimeUnseen
