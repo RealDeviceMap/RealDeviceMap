@@ -61,6 +61,13 @@ class AutoInstanceController: InstanceControllerProto {
                     if timeLeft > 0 {
                         Threading.sleep(seconds: Double(timeLeft))
                         
+                        self.stopsLock.lock()
+                        if self.allStops == nil {
+                            Log.debug(message: "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
+                            continue
+                        }
+                        
+                        Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids")
                         let ids = self.allStops!.map({ (stop) -> String in
                             return stop.id
                         })
@@ -74,6 +81,7 @@ class AutoInstanceController: InstanceControllerProto {
                                 Threading.sleep(seconds: 5.0)
                             }
                         }
+                        self.stopsLock.unlock()
                         self.update()
                     }
                 }
