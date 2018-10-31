@@ -169,7 +169,7 @@ class WebHookRequestHandler {
             return
         }
         
-        guard let contents = json["contents"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
+        guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
             response.respondWithError(status: .badRequest)
             return
         }
@@ -194,9 +194,27 @@ class WebHookRequestHandler {
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
 
         for rawData in contents {
-            let data = Data(base64Encoded: rawData["data"] as! String)!
             
-            let method = rawData["method"] as? Int ?? 106
+            let data: Data
+            let method: Int
+            if let gmo = rawData["GetMapObjects"] as? String {
+                data = Data(base64Encoded: gmo) ?? Data()
+                method = 106
+            } else if let er = rawData["EncounterResponse"] as? String {
+                data = Data(base64Encoded: er) ?? Data()
+                method = 102
+            } else if let fdr = rawData["FortDetailsResponse"] as? String {
+                data = Data(base64Encoded: fdr) ?? Data()
+                method = 104
+            } else if let fsr = rawData["FortSearchResponse"] as? String {
+                data = Data(base64Encoded: fsr) ?? Data()
+                method = 101
+            } else if let dataString = rawData["data"] as? String {
+                data = Data(base64Encoded: dataString) ?? Data()
+                method = rawData["method"] as? Int ?? 106
+            } else {
+                continue
+            }
             
             if method == 101 {
                 if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
