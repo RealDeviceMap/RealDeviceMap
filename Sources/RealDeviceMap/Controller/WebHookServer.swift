@@ -14,7 +14,6 @@ import PerfectSessionMySQL
 class WebHookServer {
     
     public enum Action {
-        case json
         case controler
         case raw
     }

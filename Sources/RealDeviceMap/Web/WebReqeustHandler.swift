@@ -27,7 +27,7 @@ class WebReqeustHandler {
     static var enableRegister: Bool = true
     
     private static let sessionDriver = MySQLSessions()
-        
+            
     static func handle(request: HTTPRequest, response: HTTPResponse, page: WebServer.Page, requiredPerms: [Group.Perm], requiredPermsCount:Int = -1) {
         
         let localizer = Localizer.global
@@ -893,7 +893,7 @@ class WebReqeustHandler {
             if rowSplit.count == 2 {
                 let username = rowSplit[0]
                 let password = rowSplit[1]
-                accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil, failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil, lastEncounterTime: nil))
+                accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil, failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil, lastEncounterTime: nil, spins: 0))
             }
         }
         

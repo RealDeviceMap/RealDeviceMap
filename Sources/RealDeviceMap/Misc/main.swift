@@ -74,6 +74,8 @@ if let webhookDelay = Double(webhookDelayString) {
 }
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
+AccountController.global.setup()
+
 // Check if is setup
 let isSetup: String?
 do {

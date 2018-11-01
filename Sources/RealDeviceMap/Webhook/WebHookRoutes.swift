@@ -14,9 +14,6 @@ class WebHookRoutes {
     
     public static var routes: [Route] {
         let routes = [
-            Route(method: .post, uri: "/json", handler: { (request, response) in
-                WebHookRequestHandler.handle(request: request, response: response, type: .json)
-            }),
             Route(method: .post, uri: "/raw", handler: { (request, response) in
                 WebHookRequestHandler.handle(request: request, response: response, type: .raw)
             }),

@@ -18,139 +18,16 @@ import Turf
 
 class WebHookRequestHandler {
     
+    static var levelCacheLock = NSLock()
+    static var levelCache = [String: Int]()
+        
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
         
         switch type {
-        case .json:
-            jsonHandler(request: request, response: response)
         case .controler:
             controlerHandler(request: request, response: response)
         case .raw:
             rawHandler(request: request, response: response)
-        }
-        
-    }
-    
-    static func jsonHandler(request: HTTPRequest, response: HTTPResponse) {
-        
-        let json: [String: Any]
-        do {
-            guard let jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
-                response.respondWithError(status: .badRequest)
-                return
-            }
-            json = jsonOpt
-        } catch {
-            response.respondWithError(status: .badRequest)
-            return
-        }
-        
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
-            response.respondWithError(status: .internalServerError)
-            return
-        }
-        
-        let latTarget = json["lat_target"] as? Double ?? 0.0
-        let lonTarget = json["lon_target"] as? Double ?? 0.0
-        let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
-        let targetCoord = CLLocationCoordinate2D(latitude: latTarget, longitude: lonTarget)
-        var inArea = false
-        
-        var gyms = [Gym]()
-        if let gymsData = json["gyms"] as? [[String: Any]] {
-            for gymData in gymsData {
-                guard let gym = try? Gym(json: gymData) else {
-                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Gym")
-                    continue
-                }
-                if !inArea {
-                    let coord = CLLocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
-                    if coord.distance(to: targetCoord) <= targetMaxDistance {
-                        inArea = true
-                    }
-                }
-                gyms.append(gym)
-            }
-        }
-        var pokestops = [Pokestop]()
-        if let pokestopsData = json["pokestops"] as? [[String: Any]] {
-            for pokestopData in pokestopsData {
-                guard let pokestop = try? Pokestop(json: pokestopData) else {
-                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokestop")
-                    continue
-                }
-                if !inArea {
-                    let coord = CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
-                    if coord.distance(to: targetCoord) <= targetMaxDistance {
-                        inArea = true
-                    }
-                }
-                pokestops.append(pokestop)
-            }
-        }
-        var wildPokemons = [Pokemon]()
-        if let pokemonsData = json["pokemon"] as? [[String: Any]] {
-            for pokemonData in pokemonsData {
-                guard let pokemon = try? Pokemon(mysql: mysql, json: pokemonData) else {
-                    //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Pokemon")
-                    continue
-                }
-                if !inArea {
-                    let coord = CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)
-                    if coord.distance(to: targetCoord) <= targetMaxDistance {
-                        inArea = true
-                    }
-                }
-                wildPokemons.append(pokemon)
-            }
-        }
-        
-        do {
-            try response.respondWithData(data: ["nearby": (json["nearby_pokemon"] as? [[String: Any]] ?? [[String: Any]]()).count, "wild": wildPokemons.count, "forts": pokestops.count + gyms.count, "in_area": inArea])
-        } catch {
-            response.respondWithError(status: .internalServerError)
-        }
-        
-        let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
-        queue.dispatch {
-            
-            var nearbyPokemons = [Pokemon]()
-            if let nearbyPokemonsData = json["nearby_pokemon"] as? [[String: Any]] {
-                for pokemonData in nearbyPokemonsData {
-                    guard let pokemon = try? Pokemon(mysql: mysql, json: pokemonData) else {
-                        //Log.warning(message: "[WebHookRequestHandler] Failed to Parse Nearby Pokemon")
-                        continue
-                    }
-                    nearbyPokemons.append(pokemon)
-                }
-            }
-        
-            let startWildPokemon = Date()
-            for wildPokemon in wildPokemons {
-                try? wildPokemon.save(mysql: mysql)
-            }
-            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
-            
-            let startPokemon = Date()
-            for nearbyPokemon in nearbyPokemons {
-                try? nearbyPokemon.save(mysql: mysql)
-            }
-            Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
-            
-            let startGym = Date()
-            for gym in gyms {
-                try? gym.save(mysql: mysql)
-            }
-            Log.info(message: "[WebHookRequestHandler] Gym Count: \(gyms.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startGym)))s")
-            
-            let startPokestop = Date()
-            for pokestop in pokestops {
-                try? pokestop.save(mysql: mysql)
-            }
-            Log.info(message: "[WebHookRequestHandler] Pokestop Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokestop)))s")
-            
-            Threading.destroyQueue(queue)
         }
         
     }
@@ -169,17 +46,31 @@ class WebHookRequestHandler {
             return
         }
         
-        guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
-            response.respondWithError(status: .badRequest)
-            return
-        }
-        
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
         
+        if let username = json["username"] as? String, let level = json["trainerlvl"] as? Int ?? json["trainerLevel"] as? Int {
+            levelCacheLock.lock()
+            let oldLevel = levelCache[username]
+            levelCacheLock.unlock()
+            if oldLevel != level {
+                do {
+                    try Account.setLevel(mysql: mysql, username: username, level: level)
+                    levelCacheLock.lock()
+                    levelCache[username] = level
+                    levelCacheLock.unlock()
+                } catch {}
+            }
+        }
+        
+        guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
+            response.respondWithError(status: .badRequest)
+            return
+        }
+    
         let latTarget = json["lat_target"] as? Double ?? 0.0
         let lonTarget = json["lon_target"] as? Double ?? 0.0
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
@@ -264,7 +155,7 @@ class WebHookRequestHandler {
         }
         
         do {
-            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "in_area": inArea])
+            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "in_area": inArea])
         } catch {
             response.respondWithError(status: .internalServerError)
         }

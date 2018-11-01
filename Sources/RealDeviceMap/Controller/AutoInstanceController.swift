@@ -140,7 +140,6 @@ class AutoInstanceController: InstanceControllerProto {
     
     }
     
-    
     func getTask(uuid: String, username: String?) -> [String : Any] {
         
         switch type {
@@ -175,6 +174,14 @@ class AutoInstanceController: InstanceControllerProto {
                     lastTime = UInt32(try DBController.global.getValueForKey(key: "AIC_\(uuid)_last_time") ?? "")
                 }
             } catch { }
+            
+            if username != nil && account != nil {
+                if account!.spins >= 500 {
+                    return ["action": "switch_account"]
+                } else {
+                    try? Account.spin(mysql: mysql, username: username!)
+                }
+            }
             
             let newLon: Double
             let newLat: Double
@@ -229,10 +236,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
             
             if username != nil && account != nil {
-                account!.lastEncounterLon = newLon
-                account!.lastEncounterLat = newLat
-                account!.lastEncounterTime = encounterTime
-                try? account!.save(mysql: mysql, update: true)
+                try? Account.didEncounter(mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime)
             } else {
                 try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lat", value: newLat.description)
                 try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lon", value: newLon.description)
