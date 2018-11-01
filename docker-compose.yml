@@ -17,14 +17,14 @@ services:
       DB_DATABASE: rdmdb
       DB_HOST: db
       DB_PORT: 3306
-      DB_USERNAME: rdmuser
-      DB_PASSWORD: YourStrongPassw0rd!
+      DB_USERNAME: root
+      DB_PASSWORD: YourStrongRootPassw0rd!
       WEB_SERVER_ADDRESS: 0.0.0.0
       WEB_SERVER_PORT: 9000
       WEBHOOK_SERVER_ADDRESS: 0.0.0.0
       WEBHOOK_SERVER_PORT: 9001
   db:
-    image: mariadb
+    image: mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     container_name: realdevicemap-db
     restart: unless-stopped
