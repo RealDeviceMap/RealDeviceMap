@@ -44,8 +44,8 @@ FOR EACH ROW BEGIN
     VALUES
       (NEW.raid_pokemon_id, 1, DATE(FROM_UNIXTIME(NEW.raid_end_timestamp)))
     ON DUPLICATE KEY UPDATE
-      count = count + 1;
-  END IF;
+      count = count + 1&semi
+  END IF&semi
 END;
 
 CREATE TRIGGER gym_inserted
@@ -56,6 +56,6 @@ FOR EACH ROW BEGIN
     VALUES
       (NEW.raid_pokemon_id, 1, DATE(FROM_UNIXTIME(NEW.raid_end_timestamp)))
     ON DUPLICATE KEY UPDATE
-      count = count + 1;
-  END IF;
+      count = count + 1&semi
+  END IF&semi
 END;

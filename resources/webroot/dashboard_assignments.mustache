@@ -8,48 +8,48 @@
 
 <script>
 	$(document).ready(function() {
-		const table = $('#table').DataTable( {
+		$('#table').DataTable( {
 			"ajax": {
-				"url": "/api/get_data?show_instances=true&formatted=true",
-				"dataSrc": "data.instances"
+				"url": "/api/get_data?show_assignments=true&formatted=true",
+				"dataSrc": "data.assignments"
 			},
 			"paging":   true,
 			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 			"columns": [
-				{ "data": "name" },
-				{ "data": "type" },
-                { "data": "status" },
-				{ "data": "buttons" }
-			],
+				{ "data": "instance_name" },
+				{ "data": "device_uuid" },
+                { data: {
+                    _:    "time.formatted",
+                    sort: "time.timestamp"
+                } },
+                { "data": "buttons" }
+            ],
 			"info":     false,
-			"order": [[ 0, "asc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
+			"order": [[ 2, "asc" ]],
+            "columnDefs": [ {
 				"targets": [3],
 				"orderable": false
 			}],
+			"search.caseInsensitive": true,
             "responsive": true
 		});
-		setInterval( function () {
-            table.ajax.reload(null, false);
-        }, 5000)
 	} );
 </script>
 
 <body>
 
     <br>
-    <h1 align="center">Configure {{title}}'s Instances!</h1>
+    <h1 align="center">Configure {{title}}'s Auto-Assignments!</h1>
     <br>
     <div style="width:90%; margin-left:calc(5%);">
-        <a href="/dashboard/instance/add" role="button" style="float: right;" class="btn btn-success">Add New Instance</a>
+        <a href="/dashboard/assignment/add" role="button" style="float: right;" class="btn btn-success">Add New Assignment</a>
         <br><br>
         <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
             <thead>
             <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Status</th>
+                <th>Instance Name</th>
+                <th>Device UUID</th>
+                <th>Time</th>
                 <th width="5%"></th>
             </tr>
             </thead>

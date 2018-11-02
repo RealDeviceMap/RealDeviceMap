@@ -73,11 +73,25 @@ extension String {
     }
     
     func encodeUrl() -> String? {
-        return self.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
+        let a = self.replacingOccurrences(of: "/", with: "&slash")
+        let b = a.replacingOccurrences(of: "+", with: "&plus")
+        return b.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
     }
     
     func decodeUrl() -> String? {
-        return self.removingPercentEncoding?.replacingOccurrences(of: "+", with: " ")
+        if let a = self.removingPercentEncoding {
+            let b = a.replacingOccurrences(of: "&slash", with: "/")
+            return b.replacingOccurrences(of: "&plus", with: "+")
+        }
+        return nil
+    }
+    
+    func escaped() -> String {
+        return self.replacingOccurrences(of: "\\", with: "\\\\")
+    }
+    
+    func unscaped() -> String {
+        return self.replacingOccurrences(of: "\\\\", with: "\\")
     }
     
 }

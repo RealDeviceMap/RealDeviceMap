@@ -8,9 +8,15 @@
 import Foundation
 import Turf
 
+protocol InstanceControllerDelegate {
+    func instanceControllerDone(name: String)
+}
+
 protocol InstanceControllerProto {
     var name: String { get }
+    var delegate: InstanceControllerDelegate? { get set }
     func getTask(uuid: String, username: String?) -> [String: Any]
+    func getStatus() -> String
 }
 
 extension InstanceControllerProto {
@@ -54,7 +60,7 @@ class InstanceController {
     }
     
     public func addInstance(instance: Instance) {
-        let instanceController: InstanceControllerProto
+        var instanceController: InstanceControllerProto
         switch instance.type {
         case .circlePokemon:
             fallthrough
@@ -103,6 +109,7 @@ class InstanceController {
             
             instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset)
         }
+        instanceController.delegate = AssignmentController.global
         instancesByInstanceName[instance.name] = instanceController
     }
     
@@ -156,6 +163,24 @@ class InstanceController {
     
     public func removeDevice(deviceUUID: String) {
         devicesByDeviceUUID[deviceUUID] = nil
+    }
+    
+    public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
+        var deviceUUIDS = [String]()
+        for device in devicesByDeviceUUID {
+            if device.value.instanceName == instanceName {
+                deviceUUIDS.append(device.key)
+            }
+        }
+        return deviceUUIDS
+    }
+    
+    public func getInstanceStatus(instance: Instance) -> String {
+        if let instanceProto = instancesByInstanceName[instance.name] {
+            return instanceProto.getStatus()
+        } else {
+            return "?"
+        }
     }
         
 }

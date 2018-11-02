@@ -9,7 +9,11 @@ import Foundation
 import PerfectLib
 import PerfectMySQL
 
-class Instance {
+class Instance: Hashable {
+    
+    public var hashValue: Int {
+        return name.hashValue
+    }
     
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
@@ -174,6 +178,10 @@ class Instance {
             let data = (try! (result[1] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
         return Instance(name: name, type: type, data: data)
     
+    }
+    
+    static func == (lhs: Instance, rhs: Instance) -> Bool {
+        return lhs.name == rhs.name
     }
     
 }

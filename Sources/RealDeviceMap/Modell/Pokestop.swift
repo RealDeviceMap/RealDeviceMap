@@ -575,6 +575,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
         
+        if ids?.count == 0 {
+            return
+        }
+        
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()

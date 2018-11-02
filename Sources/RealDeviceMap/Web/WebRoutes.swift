@@ -67,6 +67,15 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardClearQuests
                     , requiredPerms: [.adminSetting])
             }),
+            Route(method: .get, uri: "/dashboard/assignments", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignments, requiredPerms: [.adminSetting])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/assignment/add", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentAdd, requiredPerms: [.adminSetting])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/assignment/delete/{uuid}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentDelete, requiredPerms: [.adminSetting])
+            }),
             Route(method: .get, uri: "/static/**", handler: WebStaticReqeustHandler.handle)
         ]
         

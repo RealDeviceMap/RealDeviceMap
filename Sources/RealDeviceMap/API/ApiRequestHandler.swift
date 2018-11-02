@@ -41,6 +41,7 @@ class ApiRequestHandler {
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
+        let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         
         if (showGyms || showRaids || showPokestops || showPokemon) &&
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
@@ -174,6 +175,7 @@ class ApiRequestHandler {
         if showInstances && perms.contains(.adminSetting) {
             
             let instances = try? Instance.getAll(mysql: mysql)
+            
             var jsonArray = [[String: Any]]()
             
             if instances != nil {
@@ -189,6 +191,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Auto Quest"
                     }
                     
+                    instanceData["status"] = InstanceController.global.getInstanceStatus(instance: instance)
+                    
                     if formatted {
                         instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
@@ -196,6 +200,41 @@ class ApiRequestHandler {
                 }
             }
             data["instances"] = jsonArray
+            
+        }
+        
+        if showAssignments && perms.contains(.adminSetting) {
+            
+            let assignments = try? Assignment.getAll(mysql: mysql)
+            
+            var jsonArray = [[String: Any]]()
+            
+            if assignments != nil {
+                for assignment in assignments! {
+                    var assignmentData = [String: Any]()
+                    
+                    assignmentData["instance_name"] = assignment.instanceName
+                    assignmentData["device_uuid"] = assignment.deviceUUID
+
+                    if formatted {
+                        let formattedTime: String
+                        if assignment.time == 0 {
+                            formattedTime = "On Complete"
+                        } else {
+                            let times = assignment.time.secondsToHoursMinutesSeconds()
+                            formattedTime = "\(String(format: "%02d", times.hours)):\(String(format: "%02d", times.minutes)):\(String(format: "%02d", times.seconds))"
+                        }
+                        assignmentData["time"] = ["timestamp": assignment.time as Any, "formatted": formattedTime]
+                       
+                        let instanceUUID = "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
+                        assignmentData["buttons"] = "<a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-danger\">Delete</a>"                    } else {
+                        assignmentData["time"] = assignment.time as Any
+                    }
+                    
+                    jsonArray.append(assignmentData)
+                }
+            }
+            data["assignments"] = jsonArray
             
         }
         

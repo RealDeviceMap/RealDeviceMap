@@ -182,6 +182,7 @@ class DBController {
         multiStatement = false
         
         if version != newestDBVersion {
+            Log.info(message: "[DBController] Reseting Permissions")
             clearPerms()
         }
     }
@@ -203,10 +204,15 @@ class DBController {
                 fatalError(message)
             }
             
-            guard mysql.query(statement: migrateSQL) else {
-                let message = "Migration Failed: (\(mysql.errorMessage()))"
-                Log.critical(message: "[DBController] " + message)
-                fatalError(message)
+            for sql in migrateSQL.split(separator: ";") {
+                let sql = sql.replacingOccurrences(of: "&semi", with: ";").trimmingCharacters(in: .whitespacesAndNewlines)
+                if sql != "" {
+                    guard mysql.query(statement: sql) else {
+                        let message = "Migration Failed: (\(mysql.errorMessage()))"
+                        Log.critical(message: "[DBController] " + message)
+                        fatalError(message)
+                    }
+                }
             }
             
             while mysql.moreResults() {

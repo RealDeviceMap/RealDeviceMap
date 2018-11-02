@@ -191,7 +191,7 @@ class WebReqeustHandler {
         case .dashboardDeviceAssign:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assign Device"
-            let deviceUUID = request.urlVariables["device_uuid"] ?? ""
+            let deviceUUID = (request.urlVariables["device_uuid"] ?? "").decodeUrl()!
 
             data["device_uuid"] = deviceUUID
             if request.method == .post {
@@ -223,6 +223,56 @@ class WebReqeustHandler {
                 data["timezone_offset"] = 0
                 data["nothing_selected"] = true
             }
+        case .dashboardAssignments:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Assignments"
+        case .dashboardAssignmentAdd:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Assignment"
+            if request.method == .get {
+                do {
+                    data = try editAssignmentsGet(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editAssignmentsPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardAssignmentDelete:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Delete Assignment"
+            
+            let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
+            let tmp = uuid.replacingOccurrences(of: "\\\\-", with: "&tmp")
+            
+            let split = tmp.components(separatedBy: "\\-")
+            if split.count == 3 {
+                let instanceName = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+                let deviceUUID = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+                let time = UInt32(split[2]) ?? 0
+                let assignment = Assignment(instanceName: instanceName, deviceUUID: deviceUUID, time: time)
+                do {
+                    try assignment.delete()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                }
+                AssignmentController.global.deleteAssignment(assignment: assignment)
+                response.redirect(path: "/dashboard/assignments")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+            
         case .dashboardAccounts:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
@@ -643,8 +693,8 @@ class WebReqeustHandler {
             for areaRow in areaRows {
                 let rowSplit = areaRow.components(separatedBy: ",")
                 if rowSplit.count == 2 {
-                    let lat = rowSplit[0].toDouble()
-                    let lon = rowSplit[1].toDouble()
+                    let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                    let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
                     if lat != nil && lon != nil {
                         coords.append(Coord(lat: lat!, lon: lon!))
                     }
@@ -666,8 +716,8 @@ class WebReqeustHandler {
             for areaRow in areaRows {
                 let rowSplit = areaRow.components(separatedBy: ",")
                 if rowSplit.count == 2 {
-                    let lat = rowSplit[0].toDouble()
-                    let lon = rowSplit[1].toDouble()
+                    let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                    let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
                     if lat != nil && lon != nil {
                         while coordArray.count != currentIndex + 1{
                             coordArray.append([Coord]())
@@ -867,6 +917,102 @@ class WebReqeustHandler {
         }
         data["instances"] = instancesData
         return data
+        
+    }
+    
+    static func editAssignmentsGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        let instances: [Instance]
+        let devices: [Device]
+        do {
+            devices = try Device.getAll()
+            instances = try Instance.getAll()
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+        
+        var instancesData = [[String: Any]]()
+        for instance in instances {
+            instancesData.append(["name": instance.name, "selected": false])
+        }
+        data["instances"] = instancesData
+        var devicesData = [[String: Any]]()
+        for device in devices {
+            devicesData.append(["uuid": device.uuid, "selected": false])
+        }
+        data["devices"] = devicesData
+        return data
+        
+    }
+    
+    static func editAssignmentsPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+        
+        let selectedDevice = request.param(name: "device")
+        let selectedInstance = request.param(name: "instance")
+        let time = request.param(name: "time")
+        
+        var data = data
+        let instances: [Instance]
+        let devices: [Device]
+        do {
+            devices = try Device.getAll()
+            instances = try Instance.getAll()
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+        
+        var instancesData = [[String: Any]]()
+        for instance in instances {
+            instancesData.append(["name": instance.name, "selected": instance.name == selectedInstance])
+        }
+        data["instances"] = instancesData
+        var devicesData = [[String: Any]]()
+        for device in devices {
+            devicesData.append(["uuid": device.uuid, "selected": device.uuid == selectedDevice])
+        }
+        data["devices"] = devicesData
+        data["time"] = time
+        
+        let timeInt: UInt32
+        if time == nil || time == "" {
+            timeInt = 0
+        } else {
+            let split = time!.components(separatedBy: ":")
+            if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(), let seconds = split[2].toInt() {
+                timeInt = UInt32(hours * 3600 + minutes * 60 + seconds)
+            } else {
+                data["show_error"] = true
+                data["error"] = "Invalid Time."
+                return data
+            }
+        }
+        
+        if selectedDevice == nil || selectedInstance == nil {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+        do {
+            let assignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt)
+            try assignment.create()
+            AssignmentController.global.addAssignment(assignment: assignment)
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to assign Device."
+            return data
+        }
+        
+        response.redirect(path: "/dashboard/assignments")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
         
     }
     

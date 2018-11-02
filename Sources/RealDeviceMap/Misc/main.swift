@@ -13,10 +13,12 @@ import TurnstileCrypto
 import POGOProtos
 
 // Init DBController
+Log.debug(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
 
 // Init Instance Contoller
 do {
+    Log.debug(message: "[MAIN] Starting Instance Controller")
     try InstanceController.setup()
 } catch {
     let message = "[MAIN] Failed to setup InstanceController"
@@ -25,9 +27,11 @@ do {
 }
 
 // Start WebHookController
+Log.debug(message: "[MAIN] Starting Webhook Controller")
 WebHookController.global.start()
 
 // Load Forms
+Log.debug(message: "[MAIN] Loading Avilable Forms")
 var avilableForms = [String]()
 for formString in POGOProtos_Enums_Form.allFormsInString {
     let file = File("resources/webroot/static/img/pokemon/\(formString).png")
@@ -38,6 +42,7 @@ for formString in POGOProtos_Enums_Form.allFormsInString {
 WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
 
 // Load timezone
+Log.debug(message: "[MAIN] Loading Timezone")
 if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
     let sign = result.substring(toIndex: 1)
     if let hours = Int(result.substring(toIndex: 3).substring(fromIndex: 1)),
@@ -55,6 +60,7 @@ if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with:
 }
 
 // Load Settings
+Log.debug(message: "[MAIN] Loading Settings")
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
 WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
@@ -72,11 +78,24 @@ let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_UR
 if let webhookDelay = Double(webhookDelayString) {
     WebHookController.global.webhookSendDelay = webhookDelay
 }
+
+Log.debug(message: "[MAIN] Starting Webhook")
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
+Log.debug(message: "[MAIN] Starting Account Controller")
 AccountController.global.setup()
 
+Log.debug(message: "[MAIN] Starting Assignement Controller")
+do {
+    try AssignmentController.global.setup()
+} catch {
+    let message = "[MAIN] Failed to start Assignement Controller"
+    Log.error(message: message)
+    fatalError(message)
+}
+
 // Check if is setup
+Log.debug(message: "[MAIN] Checking if setup is completed")
 let isSetup: String?
 do {
     isSetup = try DBController.global.getValueForKey(key: "IS_SETUP")
@@ -91,12 +110,14 @@ if isSetup != nil && isSetup == "true" {
 } else {
     WebReqeustHandler.isSetup = false
     WebReqeustHandler.accessToken = URandom().secureToken
-    Log.info(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
+    Log.debug(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
 }
 
 // Create Raid images
+Log.debug(message: "[MAIN] Starting Images Generator")
 ImageGenerator.generate()
 
+Log.debug(message: "[MAIN] Starting Webserves")
 do {
     try HTTPServer.launch(
         [

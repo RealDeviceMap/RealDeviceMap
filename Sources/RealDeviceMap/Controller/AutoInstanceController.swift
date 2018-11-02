@@ -17,6 +17,7 @@ class AutoInstanceController: InstanceControllerProto {
     }
     
     public private(set) var name: String
+    public var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
     private var type: AutoType
@@ -123,6 +124,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
             stopsLock.unlock()
+            
         }
     }
     
@@ -273,7 +275,8 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 if todayStops!.isEmpty {
-                    Log.info(message: "[AutoInstanceController] Instance \(name) done")
+                    Log.info(message: "[AutoInstanceController] [\(name)] Instance done")
+                    delegate?.instanceControllerDone(name: name)
                 }
                 
                 stopsLock.unlock()
@@ -285,5 +288,18 @@ class AutoInstanceController: InstanceControllerProto {
 
     }
     
-        
+    func getStatus() -> String {
+        switch type {
+        case .quest:
+            let maxCount = self.allStops?.count ?? 0
+            let currentCount = maxCount - (self.todayStops?.count ?? 0)
+            let percentage: Double
+            if maxCount > 0 {
+                percentage = Double(currentCount) / Double(maxCount) * 100
+            } else {
+                percentage = 100
+            }
+            return "Done: \(currentCount)/\(maxCount) (\(percentage.rounded(toStringWithDecimals: 1))%)"
+        }
+    }
 }
