@@ -987,9 +987,9 @@ class WebReqeustHandler {
             let split = time!.components(separatedBy: ":")
             if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(), let seconds = split[2].toInt() {
                 let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
-                if timeIntNew = 0 {
+                if timeIntNew == 0 {
                     timeInt = 1
-                } else {
+                } else {
                     timeInt = timeIntNew
                 }
             } else {
