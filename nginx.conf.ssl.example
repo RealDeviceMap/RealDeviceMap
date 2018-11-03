@@ -1,0 +1,26 @@
+server {
+        listen 80;
+        listen [::]:80;
+        server_name example.com;
+        return 301 https://$server_name$request_uri;
+}
+
+server {
+
+        listen 443 ssl;
+
+        server_name     example.com;
+        ssl_certificate /etc/nginx/ssl/example/nginx.crt;
+        ssl_certificate_key /etc/nginx/ssl/example/nginx.key;
+
+
+
+        location / {
+                proxy_pass              http://127.0.0.1:9000/;
+                proxy_set_header        Host $host;
+                proxy_set_header        X-Real-IP $remote_addr;
+                proxy_request_buffering off;
+                proxy_buffering         off;
+                proxy_set_header        Connection keep-alive;
+        }
+}
