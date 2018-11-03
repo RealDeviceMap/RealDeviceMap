@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS `quest_stats` (
   `date` DATE NOT NULL,
   `reward_type` smallint(6) unsigned NOT NULL DEFAULT 0,
-  `pokemon_id` smallint(6) unsigned NOT NULL DEFAULT 0,
-  `item_id` smallint(6) unsigned NOT NULL DEFAULT 0,
+  `pokemon_id` smallint(6) unsigned DEFAULT NULL DEFAULT 0,
+  `item_id` smallint(6) unsigned DEFAULT NULL DEFAULT 0,
   `count` int NOT NULL,
   PRIMARY KEY (`date`, `reward_type`, `pokemon_id`, `item_id`)
 );
@@ -41,7 +41,7 @@ CREATE TRIGGER gym_updated
 BEFORE UPDATE ON gym
 FOR EACH ROW BEGIN
   IF ((OLD.raid_pokemon_id IS NULL OR OLD.raid_pokemon_id = 0) AND (NEW.raid_pokemon_id IS NOT NULL AND NEW.raid_pokemon_id != 0)) THEN
-    INSERT INTO raid_stats (pokemon_id, raid_level, count, date)
+    INSERT INTO raid_stats (pokemon_id, level, count, date)
     VALUES
       (NEW.raid_pokemon_id, NEW.raid_level, 1, DATE(FROM_UNIXTIME(NEW.raid_end_timestamp)))
     ON DUPLICATE KEY UPDATE
@@ -53,7 +53,7 @@ CREATE TRIGGER gym_inserted
 AFTER INSERT ON gym
 FOR EACH ROW BEGIN
   IF (NEW.raid_pokemon_id IS NOT NULL AND NEW.raid_pokemon_id != 0) THEN
-    INSERT INTO raid_stats (pokemon_id, raid_level, count, date)
+    INSERT INTO raid_stats (pokemon_id, level, count, date)
     VALUES
       (NEW.raid_pokemon_id, NEW.raid_level, 1, DATE(FROM_UNIXTIME(NEW.raid_end_timestamp)))
     ON DUPLICATE KEY UPDATE
