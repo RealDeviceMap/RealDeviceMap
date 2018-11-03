@@ -291,6 +291,18 @@ class AutoInstanceController: InstanceControllerProto {
     func getStatus() -> String {
         switch type {
         case .quest:
+            var currentCountDb = 0
+            let ids = self.allStops!.map({ (stop) -> String in
+                return stop.id
+            })
+            if let stops = try? Pokestop.getIn(ids: ids) {
+                for stop in stops {
+                    if stop.questType != nil {
+                        currentCountDb += 1
+                    }
+                }
+            }
+            
             let maxCount = self.allStops?.count ?? 0
             let currentCount = maxCount - (self.todayStops?.count ?? 0)
             let percentage: Double
@@ -299,7 +311,13 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 percentage = 100
             }
-            return "Done: \(currentCount)/\(maxCount) (\(percentage.rounded(toStringWithDecimals: 1))%)"
+            let percentageReal: Double
+            if maxCount > 0 {
+                percentageReal = Double(currentCountDb) / Double(maxCount) * 100
+            } else {
+                percentageReal = 100
+            }
+            return "Done: \(currentCountDb)|\(currentCount)/\(maxCount) (\(percentageReal.rounded(toStringWithDecimals: 1))|\(percentage.rounded(toStringWithDecimals: 1))%)"
         }
     }
 }

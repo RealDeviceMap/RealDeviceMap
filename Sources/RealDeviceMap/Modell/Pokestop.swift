@@ -469,6 +469,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
     public static func getIn(mysql: MySQL?=nil, ids: [String]) throws -> [Pokestop] {
         
+        if ids.count == 0 {
+            return [Pokestop]()
+        }
+        
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
