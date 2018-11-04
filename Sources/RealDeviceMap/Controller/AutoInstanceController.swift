@@ -11,7 +11,7 @@ import PerfectThread
 import Turf
 
 class AutoInstanceController: InstanceControllerProto {
-    
+        
     enum AutoType {
         case quest
     }
@@ -342,5 +342,9 @@ class AutoInstanceController: InstanceControllerProto {
             }
             return "Done: \(currentCountDb)|\(currentCount)/\(maxCount) (\(percentageReal.rounded(toStringWithDecimals: 1))|\(percentage.rounded(toStringWithDecimals: 1))%)"
         }
+    }
+    
+    func reload() {
+        update()
     }
 }

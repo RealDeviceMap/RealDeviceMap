@@ -334,6 +334,7 @@ class WebReqeustHandler {
             if request.method == .post {
                 do {
                     try Pokestop.clearQuests()
+                    InstanceController.global.reloadAllInstances()
                     response.redirect(path: "/dashboard")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .found)

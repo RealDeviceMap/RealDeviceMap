@@ -17,6 +17,7 @@ protocol InstanceControllerProto {
     var delegate: InstanceControllerDelegate? { get set }
     func getTask(uuid: String, username: String?) -> [String: Any]
     func getStatus() -> String
+    func reload()
 }
 
 extension InstanceControllerProto {
@@ -111,6 +112,12 @@ class InstanceController {
         }
         instanceController.delegate = AssignmentController.global
         instancesByInstanceName[instance.name] = instanceController
+    }
+    
+    public func reloadAllInstances() {
+        for instance in instancesByInstanceName {
+            instance.value.reload()
+        }
     }
     
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
