@@ -119,7 +119,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
             self.todayStops = [Pokestop]()
             for stop in self.allStops! {
-                if stop.questType == nil {
+                if stop.questType == nil && stop.enabled == true {
                     self.todayStops!.append(stop)
                 }
             }
@@ -154,6 +154,30 @@ class AutoInstanceController: InstanceControllerProto {
             
             stopsLock.lock()
             if todayStops == nil || todayStops!.isEmpty {
+                let ids = self.allStops!.map({ (stop) -> String in
+                    return stop.id
+                })
+                var newStops: [Pokestop]!
+                var done = false
+                while !done {
+                    do {
+                        newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
+                        done = true
+                    } catch {
+                        Threading.sleep(seconds: 1.0)
+                    }
+                }
+                
+                stopsLock.lock()
+                for stop in newStops {
+                    if stop.questType == nil && stop.enabled == true {
+                        todayStops!.append(stop)
+                    }
+                }
+                if todayStops!.isEmpty {
+                    delegate?.instanceControllerDone(name: name)
+                }
+                
                 stopsLock.unlock()
                 return [String : Any]()
             }
@@ -270,7 +294,7 @@ class AutoInstanceController: InstanceControllerProto {
                 
                 stopsLock.lock()
                 for stop in newStops {
-                    if stop.questType == nil {
+                    if stop.questType == nil && stop.enabled == true {
                         todayStops!.append(stop)
                     }
                 }
@@ -280,7 +304,6 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 
                 stopsLock.unlock()
-                
             }
             
             return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay": delay]

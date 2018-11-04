@@ -302,7 +302,61 @@ class Account {
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
-            WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND failed IS NULL
+            WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND spins < 400)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        let result = results.next()!
+        let count = result[0] as! Int64
+        
+        return count
+    }
+    
+    public static func getCooldownCount(mysql: MySQL?=nil) throws -> Int64 {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT COUNT(*)
+            FROM account
+            WHERE last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) < 7200
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        let result = results.next()!
+        let count = result[0] as! Int64
+        
+        return count
+    }
+
+    public static func getSpinLimitCount(mysql: MySQL?=nil) throws -> Int64 {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT COUNT(*)
+            FROM account
+            WHERE spins >= 500
         """
         
         let mysqlStmt = MySQLStmt(mysql)

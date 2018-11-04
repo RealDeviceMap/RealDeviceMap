@@ -280,6 +280,8 @@ class WebReqeustHandler {
             data["in_use_accounts_count"] = (try? Account.getInUseCount()) ?? "?"
             data["warned_accounts_count"] = (try? Account.getWarnedCount()) ?? "?"
             data["failed_accounts_count"] = (try? Account.getFailedCount()) ?? "?"
+            data["cooldown_accounts_count"] = (try? Account.getCooldownCount()) ?? "?"
+            data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount()) ?? "?"
         case .dashboardAccountsAdd:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Accounts"
