@@ -153,7 +153,10 @@ class AutoInstanceController: InstanceControllerProto {
             }
             
             stopsLock.lock()
-            if todayStops == nil || todayStops!.isEmpty {
+            if todayStops == nil {
+                todayStops = [Pokestop]()
+            }
+            if todayStops!.isEmpty {
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
                 })
@@ -168,7 +171,6 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 
-                stopsLock.lock()
                 for stop in newStops {
                     if stop.questType == nil && stop.enabled == true {
                         todayStops!.append(stop)
@@ -176,10 +178,8 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 if todayStops!.isEmpty {
                     delegate?.instanceControllerDone(name: name)
+                    return [String : Any]()
                 }
-                
-                stopsLock.unlock()
-                return [String : Any]()
             }
             stopsLock.unlock()
         
