@@ -211,7 +211,7 @@ class AutoInstanceController: InstanceControllerProto {
             
             let newLon: Double
             let newLat: Double
-            let encounterTime: UInt32
+            var encounterTime: UInt32
             
             if lastLat != nil && lastLon != nil {
                 
@@ -235,15 +235,19 @@ class AutoInstanceController: InstanceControllerProto {
                 
                 newLon = closest.lon
                 newLat = closest.lat
+                let now = UInt32(Date().timeIntervalSince1970)
                 if lastTime == nil {
-                    encounterTime = UInt32(Date().timeIntervalSince1970)
+                    encounterTime = now
                 } else {
                     let encounterTimeT = lastTime! + encounterCooldown(distM: closestDistance)
-                    let new = UInt32(Date().timeIntervalSince1970)
-                    if encounterTimeT < new {
-                        encounterTime = new
+                    if encounterTimeT < now {
+                        encounterTime = now
                     } else {
                         encounterTime = encounterTimeT
+                    }
+                    
+                    if encounterTime - now >= 7200 {
+                        encounterTime = now + 7200
                     }
                 }
                 stopsLock.lock()

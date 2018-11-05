@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS `quest_stats` (
+DROP TABLE IF EXISTS `quest_stats`;
+CREATE TABLE `quest_stats` (
   `date` DATE NOT NULL,
   `reward_type` smallint(6) unsigned NOT NULL DEFAULT 0,
   `pokemon_id` smallint(6) unsigned NOT NULL DEFAULT 0,
@@ -7,8 +8,8 @@ CREATE TABLE IF NOT EXISTS `quest_stats` (
   PRIMARY KEY (`date`, `reward_type`, `pokemon_id`, `item_id`)
 );
 
-DROP TRIGGER  IF EXISTS pokestop_updated;
-DROP TRIGGER  IF EXISTS pokestop_inserted;
+DROP TRIGGER IF EXISTS pokestop_updated;
+DROP TRIGGER IF EXISTS pokestop_inserted;
 
 CREATE TRIGGER pokestop_updated
 BEFORE UPDATE ON pokestop
@@ -34,8 +35,8 @@ FOR EACH ROW BEGIN
   END IF&semi
 END;
 
-DROP TRIGGER  IF EXISTS gym_updated;
-DROP TRIGGER  IF EXISTS gym_inserted;
+DROP TRIGGER IF EXISTS gym_updated;
+DROP TRIGGER IF EXISTS gym_inserted;
 
 CREATE TRIGGER gym_updated
 BEFORE UPDATE ON gym
