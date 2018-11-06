@@ -175,6 +175,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 if todayStops!.isEmpty {
+                    stopsLock.unlock()
                     delegate?.instanceControllerDone(name: name)
                     return [String : Any]()
                 }
