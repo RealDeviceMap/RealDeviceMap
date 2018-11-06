@@ -14,6 +14,8 @@ protocol InstanceControllerDelegate {
 
 protocol InstanceControllerProto {
     var name: String { get }
+    var minLevel: UInt8 { get }
+    var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
     func getTask(uuid: String, username: String?) -> [String: Any]
     func getStatus() -> String
@@ -76,11 +78,16 @@ class InstanceController {
                     coordsArray.append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
                 }
             }
+            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
+            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            
             if instance.type == .circlePokemon {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .pokemon)
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
             } else {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .raid)
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .raid, minLevel: minLevel, maxLevel: maxLevel)
             }
+        case .pokemonIV:
+            fallthrough
         case .autoQuest:
             var areaArray = [[Coord]]()
             if instance.data["area"] as? [[Coord]] != nil {
@@ -109,7 +116,17 @@ class InstanceController {
                 areaArrayEmptyInner.append([polyCoords])
             }
             
-            instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset)
+            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
+            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            
+            if instance.type == .pokemonIV {
+                let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
+                    return UInt16(e)
+                }) ?? [UInt16]()
+                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel)
+            } else {
+                instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel)
+            }
         }
         instanceController.delegate = AssignmentController.global
         instancesByInstanceName[instance.name] = instanceController
@@ -193,5 +210,14 @@ class InstanceController {
             return "?"
         }
     }
+    
+    public func gotPokemon(pokemon: Pokemon) {
+        for instance in instancesByInstanceName {
+            if let instance = instance.value as? IVInstanceController {
+                instance.addPokemon(pokemon: pokemon)
+            }
+        }
         
+    }
+    
 }

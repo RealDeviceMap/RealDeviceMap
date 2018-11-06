@@ -19,6 +19,7 @@ class Instance: Hashable {
         case circlePokemon = "circle_pokemon"
         case circleRaid = "circle_raid"
         case autoQuest = "auto_quest"
+        case pokemonIV = "pokemon_iv"
         
         static func fromString(_ s: String) -> InstanceType? {
             if s.lowercased() == "circle_pokemon" || s.lowercased() == "circlepokemon" {
@@ -27,6 +28,8 @@ class Instance: Hashable {
                 return .circleRaid
             } else if s.lowercased() == "auto_quest" || s.lowercased() == "autoquest" {
                 return .autoQuest
+            } else if s.lowercased() == "pokemon_iv" || s.lowercased() == "pokemoniv" {
+                return .pokemonIV
             } else {
                 return nil
             }

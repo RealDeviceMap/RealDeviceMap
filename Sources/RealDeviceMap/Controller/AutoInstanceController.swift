@@ -17,11 +17,13 @@ class AutoInstanceController: InstanceControllerProto {
     }
     
     public private(set) var name: String
+    public private(set) var minLevel: UInt8
+    public private(set) var maxLevel: UInt8
     public var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
     private var type: AutoType
-    private var stopsLock = NSLock()
+    private var stopsLock = Threading.Lock()
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
     private var questClearerQueue: ThreadQueue?
@@ -31,8 +33,10 @@ class AutoInstanceController: InstanceControllerProto {
         lhs.key < rhs.key
     }
     
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int) {
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int, minLevel: UInt8, maxLevel: UInt8) {
         self.name = name
+        self.minLevel = minLevel
+        self.maxLevel = maxLevel
         self.type = type
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
@@ -202,7 +206,7 @@ class AutoInstanceController: InstanceControllerProto {
             
             if username != nil && account != nil {
                 if account!.spins >= 500 {
-                    return ["action": "switch_account"]
+                    return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 } else {
                     try? Account.spin(mysql: mysql, username: username!)
                 }
@@ -309,7 +313,7 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.unlock()
             }
             
-            return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay": delay]
+            return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay": delay, "min_level": minLevel, "max_level": maxLevel]
         }
 
     }

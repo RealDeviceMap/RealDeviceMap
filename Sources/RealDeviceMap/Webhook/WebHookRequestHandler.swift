@@ -18,7 +18,7 @@ import Turf
 
 class WebHookRequestHandler {
     
-    static var levelCacheLock = NSLock()
+    static var levelCacheLock = Threading.Lock()
     static var levelCache = [String: Int]()
         
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
@@ -52,7 +52,9 @@ class WebHookRequestHandler {
             return
         }
         
+        let trainerLevel: Int
         if let username = json["username"] as? String, let level = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() {
+            trainerLevel = level
             levelCacheLock.lock()
             let oldLevel = levelCache[username]
             levelCacheLock.unlock()
@@ -64,6 +66,8 @@ class WebHookRequestHandler {
                     levelCacheLock.unlock()
                 } catch {}
             }
+        } else {
+            trainerLevel = 0
         }
         
         guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
@@ -91,7 +95,7 @@ class WebHookRequestHandler {
             if let gmo = rawData["GetMapObjects"] as? String {
                 data = Data(base64Encoded: gmo) ?? Data()
                 method = 106
-            } else if let er = rawData["EncounterResponse"] as? String {
+            } else if trainerLevel >= 30, let er = rawData["EncounterResponse"] as? String {
                 data = Data(base64Encoded: er) ?? Data()
                 method = 102
             } else if let fdr = rawData["FortDetailsResponse"] as? String {
@@ -133,11 +137,17 @@ class WebHookRequestHandler {
             }
         }
         
+        // MARK: - TEMP EDITS
+        var minDistance = 999999999.0
         for fort in forts {
             if !inArea {
                 let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
-                if coord.distance(to: targetCoord) <= targetMaxDistance {
+                let dist = coord.distance(to: targetCoord)
+                if dist <= targetMaxDistance {
                     inArea = true
+                }
+                if dist <= minDistance {
+                    minDistance = dist
                 }
             } else {
                 break
@@ -146,16 +156,23 @@ class WebHookRequestHandler {
         for pokemon in wildPokemons {
             if !inArea {
                 let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
-                if coord.distance(to: targetCoord) <= targetMaxDistance {
+                let dist = coord.distance(to: targetCoord)
+                if dist <= targetMaxDistance {
                     inArea = true
+                }
+                if dist <= minDistance {
+                    minDistance = dist
                 }
             } else {
                 break
             }
         }
+        // MARK: - TEMP EDITS END
+        
+        Log.debug(message: "[WebHookRequestHandler] Target: \(targetCoord.latitude),\(targetCoord.longitude), In Area: \(inArea), Min Distance: \(minDistance)")
         
         do {
-            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "in_area": inArea])
+            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "in_area": inArea, "level": trainerLevel as Any])
         } catch {
             response.respondWithError(status: .internalServerError)
         }
@@ -278,7 +295,9 @@ class WebHookRequestHandler {
         }
         
         let username = jsonO?["username"] as? String
-        
+        let minLevel = jsonO?["min_level"] as? Int ?? 0
+        let maxLevel = jsonO?["max_level"] as? Int ?? 29
+
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
@@ -340,7 +359,7 @@ class WebHookRequestHandler {
             do {
                 guard
                     let device = try Device.getById(mysql: mysql, id: uuid),
-                    let account = try Account.getNewAccount(mysql: mysql, minLevel: 0, maxLevel: 29)
+                    let account = try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
                     else {
                         response.respondWithError(status: .notFound)
                         return
@@ -349,7 +368,7 @@ class WebHookRequestHandler {
                     do {
                         let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
                         if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any])
+                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any, "level": oldAccount!.level])
                             return
                         }
                     } catch { }

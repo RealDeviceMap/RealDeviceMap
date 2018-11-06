@@ -13,7 +13,7 @@ class AssignmentController: InstanceControllerDelegate {
     
     public static var global = AssignmentController()
     
-    private var assignmentsLock = NSLock()
+    private var assignmentsLock = Threading.Lock()
     private var assignments = [Assignment]()
     private var isSetup = false
     private var queue: ThreadQueue!

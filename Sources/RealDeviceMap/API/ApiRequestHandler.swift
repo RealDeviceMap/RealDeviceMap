@@ -189,6 +189,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Circle Pokemon"
                     case .autoQuest:
                         instanceData["type"] = "Auto Quest"
+                    case .pokemonIV:
+                        instanceData["type"] = "Pokemon IV"
                     }
                     
                     instanceData["status"] = InstanceController.global.getInstanceStatus(instance: instance)

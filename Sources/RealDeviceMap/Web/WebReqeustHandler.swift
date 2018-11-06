@@ -220,6 +220,8 @@ class WebReqeustHandler {
                     return
                 }
             } else {
+                data["min_level"] = 0
+                data["max_level"] = 29
                 data["timezone_offset"] = 0
                 data["nothing_selected"] = true
             }
@@ -664,18 +666,36 @@ class WebReqeustHandler {
         var data = data
         guard
             let name = request.param(name: "name"),
-            let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
+            let minLevel = request.param(name: "min_level")?.toUInt8(),
+            let maxLevel = request.param(name: "max_level")?.toUInt8()
         else {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
         }
+        
         let timezoneOffset = Int(request.param(name: "timezone_offset") ?? "0" ) ?? 0
+        let pokemonIDsText = request.param(name: "pokemon_ids")?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
+        
+        var pokemonIDs = [UInt16]()
+        let pokemonIDsSplit = pokemonIDsText?.components(separatedBy: ",")
+        if pokemonIDsSplit != nil {
+            for pokemonIDText in pokemonIDsSplit! {
+                let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces).toUInt16()
+                if pokemonID != nil {
+                    pokemonIDs.append(pokemonID!)
+                }
+            }
+        }
         
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
         
         data["name"] = name
         data["area"] = area
+        data["pokemon_ids"] = pokemonIDsText
+        data["min_level"] = minLevel
+        data["max_level"] = maxLevel
         data["timezone_offset"] = timezoneOffset
         
         if type == nil {
@@ -686,6 +706,20 @@ class WebReqeustHandler {
             data["circle_raid_selected"] = true
         } else if type! == .autoQuest {
             data["auto_quest_selected"] = true
+        } else if type! == .pokemonIV {
+            data["pokemon_iv_selected"] = true
+        }
+        
+        if type == .pokemonIV && pokemonIDs.isEmpty {
+            data["show_error"] = true
+            data["error"] = "Failed to parse Pokemon IDs."
+            return data
+        }
+        
+        if minLevel > maxLevel || minLevel < 0 || minLevel > 40 || maxLevel < 0 || maxLevel > 40 {
+            data["show_error"] = true
+            data["error"] = "Invalid Levels"
+            return data
         }
         
         var newCoords: [Any]
@@ -712,7 +746,7 @@ class WebReqeustHandler {
             
             newCoords = coords
             
-        } else if type != nil && type! == .autoQuest {
+        } else if type != nil && type! == .autoQuest || type! == .pokemonIV {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
             var currentIndex = 0
@@ -765,7 +799,19 @@ class WebReqeustHandler {
                 oldInstance!.type = type!
                 oldInstance!.data["area"] = newCoords
                 oldInstance!.data["timezone_offset"] = timezoneOffset
-                try oldInstance!.update(oldName: instanceName!)
+                oldInstance!.data["min_level"] = minLevel
+                oldInstance!.data["max_level"] = maxLevel
+
+                if type == .pokemonIV {
+                    oldInstance!.data["pokemon_ids"] = pokemonIDs
+                }
+                do {
+                    try oldInstance!.update(oldName: instanceName!)
+                } catch {
+                    data["show_error"] = true
+                    data["error"] = "Failed to update instance. Is the name unique?"
+                    return data
+                }
                 InstanceController.global.reloadInstance(newInstance: oldInstance!, oldInstanceName: instanceName!)
                 response.redirect(path: "/dashboard/instances")
                 sessionDriver.save(session: request.session!)
@@ -773,7 +819,11 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             }
         } else {
-            let instance = Instance(name: name, type: type!, data: ["area" : newCoords, "timezone_offset": timezoneOffset])
+            var data: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
+            if type == .pokemonIV {
+                data["pokemon_ids"] = pokemonIDs
+            }
+            let instance = Instance(name: name, type: type!, data: data)
             do {
                 try instance.create()
                 InstanceController.global.addInstance(instance: instance)
@@ -833,7 +883,18 @@ class WebReqeustHandler {
             
             data["name"] = oldInstance!.name
             data["area"] = areaString
+            data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 0
+            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
+            let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
+            if pokemonIDs != nil {
+                var text = ""
+                for id in pokemonIDs! {
+                    text.append("\(id)\n")
+                }
+                data["pokemon_ids"] = text
+            }
+            
             switch oldInstance!.type {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
@@ -841,7 +902,10 @@ class WebReqeustHandler {
                 data["circle_raid_selected"] = true
             case .autoQuest:
                 data["auto_quest_selected"] = true
+            case .pokemonIV:
+                data["pokemon_iv_selected"] = true
             }
+            
             return data
         }
     }

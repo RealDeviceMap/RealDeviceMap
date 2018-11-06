@@ -10,7 +10,11 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
-class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
+class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConvertible {
+    
+    var description: String {
+        return pokemonId.description
+    }
     
     static var defaultTimeUnseen: UInt32 = 1200
     static var defaultTimeReseen: UInt32 = 600
@@ -333,6 +337,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable {
             }
             
             WebHookController.global.addPokemonEvent(pokemon: self)
+            InstanceController.global.gotPokemon(pokemon: self)
             let sql = """
                 INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

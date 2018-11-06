@@ -1,5 +1,17 @@
 {{> header}}
 
+<script>
+	$(document).ready(function() {
+		$('.type-select').change(function() {
+            if ($(this).val() === 'pokemon_iv') {
+                $('.pokemon_ids_text').removeClass('d-none');
+            } else {
+                $('.pokemon_ids_text').addClass('d-none');
+            }
+        });
+    })
+</script>
+
 <body>
 
     <br>
@@ -18,20 +30,31 @@
             </div>
             <div class="form-group">
                 Scheduler Type
-                <select class="form-control" name="type" required>
+                <select class="form-control type-select" name="type" required>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Scheduler Type</option>
                     <option value="circle_pokemon" {{#circle_pokemon_selected}}selected{{/circle_pokemon_selected}}>Circle Pokemon</option>
                     <option value="circle_raid" {{#circle_raid_selected}}selected{{/circle_raid_selected}}>Circle Raid</option>
                     <option value="auto_quest" {{#auto_quest_selected}}selected{{/auto_quest_selected}}>Auto Quest</option>
+                    <option value="pokemon_iv" {{#pokemon_iv_selected}}selected{{/pokemon_iv_selected}}>Pokemon IV</option>
                 </select>
             </div>
             <div class="form-group">
-                Timezone Offset (in seconds)
+                Timezone Offset (in seconds) from UTC
                 <input type="number" class="form-control" name="timezone_offset" value="{{timezone_offset}}" step=1 min="-43200" max="43200" required>
+            </div>
+            <div class="form-group">
+                Min Level
+                <input type="number" class="form-control" name="min_level" value="{{min_level}}" step=1 min="0" max="40" required>
+                Max Level
+                <input type="number" class="form-control" name="max_level" value="{{max_level}}" step=1 min="0" max="40" required>
             </div>
             <div class="form-group">
                 Scan Area
                 <textarea class="form-control" rows="5" name="area" required>{{{area}}}</textarea>
+            </div>
+            <div class="form-group pokemon_ids_text {{^pokemon_iv_selected}}d-none{{/pokemon_iv_selected}}">
+                Pokemon IDs (first = highest priority)
+                <textarea class="form-control" rows="5" name="pokemon_ids">{{{pokemon_ids}}}</textarea>
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Update</button>

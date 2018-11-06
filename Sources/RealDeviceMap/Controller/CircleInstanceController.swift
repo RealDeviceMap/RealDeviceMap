@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PerfectThread
 
 class CircleInstanceController: InstanceControllerProto {
 
@@ -15,19 +16,24 @@ class CircleInstanceController: InstanceControllerProto {
     }
     
     public private(set) var name: String
+    public private(set) var minLevel: UInt8
+    public private(set) var maxLevel: UInt8
     public var delegate: InstanceControllerDelegate?
     
     private let type: CircleType
     private let coords: [Coord]
     private var lastIndex: Int = 0
-    private var lock = NSLock()
+    private var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
 
-    init(name: String, coords: [Coord], type: CircleType) {
+    init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8) {
         self.name = name
+        self.minLevel = minLevel
+        self.maxLevel = maxLevel
         self.coords = coords
         self.type = type
+        self.lastCompletedTime = Date()
     }
     
     func getTask(uuid: String, username: String?) -> [String : Any] {
@@ -46,9 +52,9 @@ class CircleInstanceController: InstanceControllerProto {
         let currentCoord = coords[currentIndex]
         
         if type == .pokemon {
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon]
+            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
         } else {
-            return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon]
+            return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
         }
         
     }
