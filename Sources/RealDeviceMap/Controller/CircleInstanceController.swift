@@ -8,7 +8,7 @@
 import Foundation
 
 class CircleInstanceController: InstanceControllerProto {
-    
+
     enum CircleType {
         case pokemon
         case raid
@@ -24,7 +24,6 @@ class CircleInstanceController: InstanceControllerProto {
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
 
-    
     init(name: String, coords: [Coord], type: CircleType) {
         self.name = name
         self.coords = coords
@@ -64,11 +63,13 @@ class CircleInstanceController: InstanceControllerProto {
         }
         
     }
-    
+
     func reload() {
         lock.lock()
         lastIndex = 0
         lock.unlock()
     }
+    
+    func stop() {}
     
 }

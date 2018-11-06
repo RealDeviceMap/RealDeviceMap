@@ -93,9 +93,7 @@ class AutoInstanceController: InstanceControllerProto {
     }
     
     deinit {
-        if questClearerQueue != nil {
-            Threading.destroyQueue(questClearerQueue!)
-        }
+        stop()
     }
     
     private func update() {
@@ -350,5 +348,11 @@ class AutoInstanceController: InstanceControllerProto {
     
     func reload() {
         update()
+    }
+    
+    func stop() {
+        if questClearerQueue != nil {
+            Threading.destroyQueue(questClearerQueue!)
+        }
     }
 }

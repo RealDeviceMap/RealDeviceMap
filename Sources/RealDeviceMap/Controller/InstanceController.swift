@@ -18,6 +18,7 @@ protocol InstanceControllerProto {
     func getTask(uuid: String, username: String?) -> [String: Any]
     func getStatus() -> String
     func reload()
+    func stop()
 }
 
 extension InstanceControllerProto {
@@ -130,12 +131,14 @@ class InstanceController {
                     devicesByDeviceUUID[row.key] = device
                 }
             }
+            instancesByInstanceName[oldInstanceName]?.stop()
             instancesByInstanceName[oldInstanceName] = nil
         }
         addInstance(instance: newInstance)
     }
     
     public func removeInstance(instance: Instance) {
+        instancesByInstanceName[instance.name]?.stop()
         instancesByInstanceName[instance.name] = nil
         for device in devicesByDeviceUUID {
             if device.value.instanceName == instance.name {
@@ -145,6 +148,7 @@ class InstanceController {
     }
     
     public func removeInstance(instanceName: String) {
+        instancesByInstanceName[instanceName]?.stop()
         instancesByInstanceName[instanceName] = nil
         for device in devicesByDeviceUUID {
             if device.value.instanceName == instanceName {
