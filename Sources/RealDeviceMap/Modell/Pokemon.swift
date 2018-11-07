@@ -379,6 +379,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.pokestopId = oldPokemon!.pokestopId
             }
             
+            if oldPokemon!.atkIv == nil && self.atkIv != nil {
+                WebHookController.global.addPokemonEvent(pokemon: self)
+                changed = UInt32(Date().timeIntervalSince1970)
+            } else {
+                changed = self.firstSeenTimestamp
+            }
+            
             if oldPokemon!.atkIv != nil && self.atkIv == nil {
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
@@ -389,13 +396,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.move1 = oldPokemon!.move1
                 self.move2 = oldPokemon!.move2
                 self.level = oldPokemon!.level
-            }
-            
-            if oldPokemon!.atkIv != self.atkIv {
-                WebHookController.global.addPokemonEvent(pokemon: self)
-                changed = UInt32(Date().timeIntervalSince1970)
-            } else {
-                changed = self.firstSeenTimestamp
             }
             
             let sql = """
