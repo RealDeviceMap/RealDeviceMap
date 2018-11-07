@@ -138,16 +138,11 @@ class WebHookRequestHandler {
         }
         
         // MARK: - TEMP EDITS
-        var minDistance = 999999999.0
         for fort in forts {
             if !inArea {
                 let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
-                let dist = coord.distance(to: targetCoord)
-                if dist <= targetMaxDistance {
+                if coord.distance(to: targetCoord) <= targetMaxDistance {
                     inArea = true
-                }
-                if dist <= minDistance {
-                    minDistance = dist
                 }
             } else {
                 break
@@ -156,20 +151,13 @@ class WebHookRequestHandler {
         for pokemon in wildPokemons {
             if !inArea {
                 let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
-                let dist = coord.distance(to: targetCoord)
-                if dist <= targetMaxDistance {
+                if coord.distance(to: targetCoord) <= targetMaxDistance {
                     inArea = true
-                }
-                if dist <= minDistance {
-                    minDistance = dist
                 }
             } else {
                 break
             }
         }
-        // MARK: - TEMP EDITS END
-        
-        Log.debug(message: "[WebHookRequestHandler] Target: \(targetCoord.latitude),\(targetCoord.longitude), In Area: \(inArea), Min Distance: \(minDistance)")
         
         do {
             try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "in_area": inArea, "level": trainerLevel as Any])
