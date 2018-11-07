@@ -600,6 +600,17 @@ function loadData() {
 						if (oldPokemon.expire_timestamp !== pokemon.expire_timestamp){
 							oldPokemon.expire_timestamp = pokemon.expire_timestamp;
 						}
+                        if (oldPokemon.atk_iv !== pokemon.atk_iv){
+                            oldPokemon.atk_iv = pokemon.atk_iv
+                            oldPokemon.def_iv = pokemon.def_iv
+                            oldPokemon.sta_iv = pokemon.sta_iv
+                            oldPokemon.cp = pokemon.cp
+                            oldPokemon.weight = pokemon.weight
+                            oldPokemon.size = pokemon.size
+                            oldPokemon.move_1 = pokemon.move_1
+                            oldPokemon.move_2 = pokemon.move_2
+                            oldPokemon.level = pokemon.level
+						}
                         if (oldPokemon.updated !== pokemon.updated){
                             oldPokemon.updated = pokemon.updated;
                         }
@@ -783,13 +794,21 @@ function getPokemonPopupContent(pokemon) {
     }
 
 	content += '<b>'+pokemonName+'</b><br>';
+
+    if (pokemon.atk_iv !== null) {
+        const ivPercent = Math.round( (pokemon.atk_iv + pokemon.def_iv + pokemon.sta_iv) / 45 * 1000 ) / 10;
+        content += 'IV: ' + ivPercent + ' (' + pokemon.atk_iv + '|' + pokemon.def_iv + '|' + pokemon.sta_iv + ')<br>';
+    }
+    if (pokemon.cp !== null) {
+        content += 'CP: ' + pokemon.cp + ' (' + pokemon.level + ')<br>';
+    }
+
 	if (pokemon.expire_timestamp_true) {
 		content += 'Despawn Time: '
 	} else {
 		content += 'Aprox. Despawn Time: '
 	}
     content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>';
-
 
     if (pokemon.weather !== 0 && pokemon.weather !== null) {
         content += 'Weather: ' + getWeatherName(pokemon.weather) + '<br>';

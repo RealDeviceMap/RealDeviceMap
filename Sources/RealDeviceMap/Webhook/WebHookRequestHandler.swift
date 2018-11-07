@@ -75,11 +75,10 @@ class WebHookRequestHandler {
             return
         }
     
-        let latTarget = json["lat_target"] as? Double ?? 0.0
-        let lonTarget = json["lon_target"] as? Double ?? 0.0
+        let latTarget = json["lat_target"] as? Double
+        let lonTarget = json["lon_target"] as? Double
+        let pokemonEncounterId = json["pokemon_encounter_id"] as? String
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
-        let targetCoord = CLLocationCoordinate2D(latitude: latTarget, longitude: lonTarget)
-        var inArea = false
         
         var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
         var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
@@ -137,30 +136,64 @@ class WebHookRequestHandler {
             }
         }
         
-        // MARK: - TEMP EDITS
-        for fort in forts {
-            if !inArea {
-                let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
-                if coord.distance(to: targetCoord) <= targetMaxDistance {
-                    inArea = true
+        let targetCoord: CLLocationCoordinate2D?
+        var inArea = false
+        if latTarget != nil && lonTarget != nil {
+            targetCoord = CLLocationCoordinate2D(latitude: latTarget!, longitude: lonTarget!)
+        } else {
+            targetCoord = nil
+        }
+        
+        var pokemonCoords: CLLocationCoordinate2D?
+        
+        if targetCoord != nil {
+            for fort in forts {
+                if !inArea {
+                    let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
+                    if coord.distance(to: targetCoord!) <= targetMaxDistance {
+                        inArea = true
+                    }
+                } else {
+                    break
                 }
-            } else {
-                break
             }
         }
-        for pokemon in wildPokemons {
-            if !inArea {
-                let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
-                if coord.distance(to: targetCoord) <= targetMaxDistance {
-                    inArea = true
+        if targetCoord != nil || pokemonEncounterId != nil {
+            for pokemon in wildPokemons {
+                if targetCoord != nil {
+                    if !inArea {
+                        let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
+                        if coord.distance(to: targetCoord!) <= targetMaxDistance {
+                            inArea = true
+                        }
+                    } else if pokemonEncounterId == nil || pokemonCoords != nil {
+                        break
+                    }
                 }
-            } else {
-                break
+                if pokemonEncounterId != nil {
+                    if pokemonCoords == nil {
+                        if pokemon.encounterID.description == pokemonEncounterId {
+                            pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
+                        }
+                    } else if targetCoord == nil || inArea {
+                        break
+                    }
+                }
             }
         }
         
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any]
+        
+        if targetCoord != nil {
+            data["in_area"] = inArea
+        }
+        if pokemonCoords != nil {
+            data["pokemon_lat"] = pokemonCoords!.latitude
+            data["pokemon_lon"] = pokemonCoords!.longitude
+        }
+        
         do {
-            try response.respondWithData(data: ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "in_area": inArea, "level": trainerLevel as Any])
+            try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
         }

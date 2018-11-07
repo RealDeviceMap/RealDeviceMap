@@ -37,6 +37,11 @@ class IVInstanceController: InstanceControllerProto {
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
+        
+        if UInt32(Date().timeIntervalSince1970) - pokemon.firstSeenTimestamp >= 600 {
+            return getTask(uuid: uuid, username: username)
+        }
+        
         return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id, "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
     }
     
@@ -51,6 +56,11 @@ class IVInstanceController: InstanceControllerProto {
     func addPokemon(pokemon: Pokemon) {
         if pokemonList.contains(pokemon.pokemonId) && multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
+            
+            if pokemonQueue.contains(pokemon) {
+                pokemonLock.unlock()
+                return
+            }
             
             let index = lastIndexOf(pokemonId: pokemon.pokemonId)
             

@@ -306,6 +306,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.costume = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.costume.rawValue)
         self.form = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.form.rawValue)
         self.gender = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.gender.rawValue)
+        let cpMultiplier = encounterData.wildPokemon.pokemonData.cpMultiplier
+        let level: UInt8
+        if cpMultiplier < 0.734 {
+            level = UInt8(58.35178527 * cpMultiplier * cpMultiplier - 2.838007664 * cpMultiplier + 0.8539209906)
+        } else {
+            level = UInt8(171.0112688 * cpMultiplier - 95.20425243)
+        }
+        self.level = level
         
         self.updated = UInt32(Date().timeIntervalSince1970)
         
@@ -331,16 +339,20 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         let mysqlStmt = MySQLStmt(mysql)
         
+        let changed: UInt32
+        
         if oldPokemon == nil {
             if self.expireTimestamp == nil {
                 self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeUnseen
             }
             
+            changed = self.firstSeenTimestamp
+            
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
             let sql = """
-                INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
@@ -374,17 +386,21 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.cp = oldPokemon!.cp
                 self.weight = oldPokemon!.weight
                 self.size = oldPokemon!.size
+                self.move1 = oldPokemon!.move1
+                self.move2 = oldPokemon!.move2
+                self.level = oldPokemon!.level
             }
             
             if oldPokemon!.atkIv != self.atkIv {
                 WebHookController.global.addPokemonEvent(pokemon: self)
+                changed = UInt32(Date().timeIntervalSince1970)
+            } else {
+                changed = self.firstSeenTimestamp
             }
-            
-            // Resend?
             
             let sql = """
                 UPDATE pokemon
-                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, gender = ?, form = ?, cp = ?, level = ?, weather = ?, costume = ?, weight = ?, size = ?, pokestop_id = ?, updated = ?, first_seen_timestamp = ?
+                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, gender = ?, form = ?, cp = ?, level = ?, weather = ?, costume = ?, weight = ?, size = ?, pokestop_id = ?, updated = ?, first_seen_timestamp = ?, changed = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -411,6 +427,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(pokestopId)
         mysqlStmt.bindParam(updated)
         mysqlStmt.bindParam(firstSeenTimestamp)
+        mysqlStmt.bindParam(changed)
         
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
