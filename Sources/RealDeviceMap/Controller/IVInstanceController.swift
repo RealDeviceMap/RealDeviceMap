@@ -21,6 +21,9 @@ class IVInstanceController: InstanceControllerProto {
     private var pokemonList: [UInt16]
     private var pokemonQueue = [Pokemon]()
     private var pokemonLock = Threading.Lock()
+    private var scannedPokemon = [(Date, Pokemon)]()
+    private var scannedPokemonLock = Threading.Lock()
+    private var checkScannedThreadingQueue: ThreadQueue?
     
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
         self.name = name
@@ -28,7 +31,51 @@ class IVInstanceController: InstanceControllerProto {
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
+        
+        checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
+        checkScannedThreadingQueue!.dispatch {
+            
+            while true {
+                
+                self.scannedPokemonLock.lock()
+                if self.scannedPokemon.isEmpty {
+                    self.scannedPokemonLock.unlock()
+                    Threading.sleep(seconds: 5)
+                } else {
+                    let first = self.scannedPokemon.removeFirst()
+                    self.scannedPokemonLock.unlock()
+                    let timeSince = Date().timeIntervalSince(first.0)
+                    if timeSince < 120 {
+                        Threading.sleep(seconds: 120 - timeSince)
+                    }
+                    var success = false
+                    var pokemonReal: Pokemon?
+                    while !success {
+                        do {
+                            pokemonReal = try Pokemon.getWithId(id: first.1.id)
+                            success = true
+                        } catch {}
+                    }
+                    if let pokemonReal = pokemonReal {
+                        if pokemonReal.atkIv == nil {
+                            Log.debug(message: "[IVInstanceController] Checked Pokemon doesn't have IV") // TMP
+                            self.addPokemon(pokemon: pokemonReal)
+                        } else {
+                            Log.debug(message: "[IVInstanceController] Checked Pokemon has IV") // TMP
+                        }
+                    }
+                    
+                }
+                
+            }
+            
+        }
     }
+    
+    deinit {
+        stop()
+    }
+    
     func getTask(uuid: String, username: String?) -> [String : Any] {
         pokemonLock.lock()
         if pokemonQueue.isEmpty {
@@ -37,6 +84,9 @@ class IVInstanceController: InstanceControllerProto {
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
+        scannedPokemonLock.lock()
+        scannedPokemon.append((Date(), pokemon))
+        scannedPokemonLock.unlock()
         
         if UInt32(Date().timeIntervalSince1970) - pokemon.firstSeenTimestamp >= 600 {
             return getTask(uuid: uuid, username: username)
@@ -51,7 +101,11 @@ class IVInstanceController: InstanceControllerProto {
     
     func reload() {}
     
-    func stop() {}
+    func stop() {
+        if checkScannedThreadingQueue != nil {
+            Threading.destroyQueue(checkScannedThreadingQueue!)
+        }
+    }
     
     func addPokemon(pokemon: Pokemon) {
         if pokemonList.contains(pokemon.pokemonId) && multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
