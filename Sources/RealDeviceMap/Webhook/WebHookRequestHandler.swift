@@ -52,22 +52,19 @@ class WebHookRequestHandler {
             return
         }
         
-        let trainerLevel: Int
-        if let username = json["username"] as? String, let level = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() {
-            trainerLevel = level
+        let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
+        if let username = json["username"] as? String {
             levelCacheLock.lock()
             let oldLevel = levelCache[username]
             levelCacheLock.unlock()
-            if oldLevel != level {
+            if oldLevel != trainerLevel {
                 do {
-                    try Account.setLevel(mysql: mysql, username: username, level: level)
+                    try Account.setLevel(mysql: mysql, username: username, level: trainerLevel)
                     levelCacheLock.lock()
-                    levelCache[username] = level
+                    levelCache[username] = trainerLevel
                     levelCacheLock.unlock()
                 } catch {}
             }
-        } else {
-            trainerLevel = 0
         }
         
         guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
