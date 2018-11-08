@@ -190,6 +190,7 @@ class WebHookRequestHandler {
         if pokemonCoords != nil {
             data["pokemon_lat"] = pokemonCoords!.latitude
             data["pokemon_lon"] = pokemonCoords!.longitude
+            data["pokemon_encounter_id"] = pokemonEncounterId!
         }
         
         do {
