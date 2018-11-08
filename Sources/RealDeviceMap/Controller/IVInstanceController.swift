@@ -85,13 +85,14 @@ class IVInstanceController: InstanceControllerProto {
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
-        scannedPokemonLock.lock()
-        scannedPokemon.append((Date(), pokemon))
-        scannedPokemonLock.unlock()
         
         if UInt32(Date().timeIntervalSince1970) - pokemon.firstSeenTimestamp >= 600 {
             return getTask(uuid: uuid, username: username)
         }
+        
+        scannedPokemonLock.lock()
+        scannedPokemon.append((Date(), pokemon))
+        scannedPokemonLock.unlock()
         
         return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id, "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
     }
