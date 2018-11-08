@@ -67,7 +67,7 @@ class ApiRequestHandler {
         
         var data = [String: Any]()
         let permShowRaid = perms.contains(.viewMapRaid)
-        let permShowGym =  perms.contains(.viewMapGym)
+        let permShowGym = perms.contains(.viewMapGym)
         if (permViewMap && (showGyms && permShowGym || showRaids && permShowRaid)) {
             data["gyms"] = try? Gym.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, raidsOnly: !showGyms, showRaids: permShowRaid)
         }
@@ -76,8 +76,9 @@ class ApiRequestHandler {
         if (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
             data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests)
         }
+        let permShowIV = perms.contains(.viewMapIV)
         if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
-            data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude)
+            data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude)
         }
         if permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
             data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)

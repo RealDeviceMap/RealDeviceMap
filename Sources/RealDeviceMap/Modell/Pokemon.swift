@@ -364,7 +364,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
     }
     
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
@@ -416,19 +416,42 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let lon = result[3] as! Double
             let spawnId = result[4] as? UInt64
             let expireTimestamp = result[5] as? UInt32
-            let atkIv = result[6] as? UInt8
-            let defIv = result[7] as? UInt8
-            let staIv = result[8] as? UInt8
-            let move1 = result[9] as? UInt16
-            let move2 = result[10] as? UInt16
+            
+            let atkIv: UInt8?
+            let defIv: UInt8?
+            let staIv: UInt8?
+            let move1: UInt16?
+            let move2: UInt16?
+            let cp: UInt16?
+            let level: UInt8?
+            let weight: Double?
+            let size: Double?
+            if showIV {
+                atkIv = result[6] as? UInt8
+                defIv = result[7] as? UInt8
+                staIv = result[8] as? UInt8
+                move1 = result[9] as? UInt16
+                move2 = result[10] as? UInt16
+                cp = result[13] as? UInt16
+                level = result[14] as? UInt8
+                weight = result[17] as? Double
+                size = result[18] as? Double
+            } else {
+                atkIv = nil
+                defIv = nil
+                staIv = nil
+                move1 = nil
+                move2 = nil
+                cp = nil
+                level = nil
+                weight = nil
+                size = nil
+            }
+            
             let gender = result[11] as? UInt8
             let form = result[12] as? UInt8
-            let cp = result[13] as? UInt16
-            let level = result[14] as? UInt8
             let weather = result[15] as? UInt8
             let costume = result[16] as? UInt8
-            let weight = result[17] as? Double
-            let size = result[18] as? Double
             let pokestopId = result[19] as? String
             let updated = result[20] as! UInt32
             let firstSeenTimestamp = result[21] as! UInt32
