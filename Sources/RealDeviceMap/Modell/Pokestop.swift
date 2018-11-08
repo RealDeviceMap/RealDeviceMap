@@ -111,41 +111,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.questRewards = questRewards
         self.questTemplate = questTemplate
     }
-    
-    init(json: [String: Any]) throws {
         
-        guard
-            let id = json["pokestop_id"] as? String,
-            let lat = json["latitude"] as? Double,
-            let lon = json["longitude"] as? Double
-        else {
-            throw ParsingError()
-        }
-        let enabled = json["enabled"] as? Bool
-        var lastModifiedTimestamp = json["last_modified"] as? Int
-        var lureExpireTimestamp = json["lure_expiration"] as? Int
-        let url = json["imageURL"] as? String
-        
-        if lastModifiedTimestamp != nil {
-            lastModifiedTimestamp = lastModifiedTimestamp! / 1000
-        }
-        if lureExpireTimestamp != nil {
-            lureExpireTimestamp = lureExpireTimestamp! / 1000
-        }
-        
-        self.id = id
-        self.lat = lat
-        self.lon = lon
-        self.enabled = enabled
-        self.lastModifiedTimestamp = lastModifiedTimestamp?.toUInt32()
-        self.lureExpireTimestamp = lureExpireTimestamp?.toUInt32()
-        if url != "" {
-            self.url = url
-        }
-  
-        self.updated = UInt32(Date().timeIntervalSince1970)
-    }
-    
     init(fortData: POGOProtos_Map_Fort_FortData) {
         
         self.id = fortData.id
