@@ -45,6 +45,7 @@ class IVInstanceController: InstanceControllerProto {
                     let first = self.scannedPokemon.removeFirst()
                     self.scannedPokemonLock.unlock()
                     let timeSince = Date().timeIntervalSince(first.0)
+                    Log.debug(message: "[IVInstanceController] Checked at: \(first.0) (\(timeSince)s agoe") // TMP
                     if timeSince < 120 {
                         Threading.sleep(seconds: 120 - timeSince)
                     }

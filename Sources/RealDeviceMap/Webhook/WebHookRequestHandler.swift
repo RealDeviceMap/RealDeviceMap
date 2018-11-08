@@ -206,14 +206,14 @@ class WebHookRequestHandler {
                 let pokemon = Pokemon(wildPokemon: wildPokemon)
                 try? pokemon.save(mysql: mysql)
             }
-            Log.info(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+            Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
                 let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon)
                 try? pokemon?.save(mysql: mysql)
             }
-            Log.info(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 
             let startForts = Date()
             for fort in forts {
@@ -225,7 +225,7 @@ class WebHookRequestHandler {
                     try? pokestop.save(mysql: mysql)
                 }
             }
-            Log.info(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
             
             if !fortDetails.isEmpty {
                 let start = Date()
@@ -254,7 +254,7 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                Log.info(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
             
             if !quests.isEmpty {
@@ -271,7 +271,7 @@ class WebHookRequestHandler {
                         try? pokestop!.save(mysql: mysql)
                     }
                 }
-                Log.info(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
             
             if !encounters.isEmpty {
@@ -288,7 +288,7 @@ class WebHookRequestHandler {
                         try? pokemon!.save(mysql: mysql)
                     }
                 }
-                Log.info(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
             
             Threading.destroyQueue(queue)
@@ -314,6 +314,8 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
+        
+        Log.debug(message: "[WebHookRequestHandler] Got \(type) Request from \(uuid)") // TMP
         
         let username = jsonO?["username"] as? String
         let minLevel = jsonO?["min_level"] as? Int ?? 0
@@ -491,7 +493,7 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
         } else {
-            Log.info(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
+            Log.debug(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
             response.respondWithError(status: .badRequest)
         }
         
