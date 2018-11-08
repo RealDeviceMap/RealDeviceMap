@@ -186,6 +186,8 @@ class WebHookRequestHandler {
         
         if targetCoord != nil {
             data["in_area"] = inArea
+            data["lat_target"] = latTarget!
+            data["lon_target"] = lonTarget!
         }
         if pokemonCoords != nil {
             data["pokemon_lat"] = pokemonCoords!.latitude
