@@ -10,6 +10,7 @@ import PerfectLib
 import PerfectMySQL
 import PerfectCRUD
 import PerfectSessionMySQL
+import PerfectThread
 
 class DBController {
     
@@ -31,7 +32,7 @@ class DBController {
             }
             return mysql
         } else {
-            Log.error(message: "Failed to connect to Database: (\(mysql.errorMessage())")
+            Log.error(message: "[DBController] Failed to connect to Database: (\(mysql.errorMessage())")
             return nil
         }
     }
@@ -136,10 +137,25 @@ class DBController {
     private func setup() {
         
         multiStatement = true
-        guard let mysql = mysql else {
-            let message = "Failed to connect to database while initializing."
-            Log.critical(message: "[DBController] " + message)
-            fatalError(message)
+        
+        var count = 1
+        var done = false
+        var mysql: MySQL!
+        while !done {
+            guard let mysqlTemp = self.mysql else {
+                let message = "Failed to connect to database while initializing. Try: \(count)/10"
+                if count == 10 {
+                    Log.error(message: "[DBController] " + message)
+                    fatalError(message)
+                } else {
+                    Log.warning(message: "[DBController] " + message)
+                }
+                count += 1
+                Threading.sleep(seconds: 2.5)
+                continue
+            }
+            done = true
+            mysql = mysqlTemp
         }
         
         var version = 0
