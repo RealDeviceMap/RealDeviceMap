@@ -245,7 +245,7 @@ class ApiRequestHandler {
         
         if showIVQueue && perms.contains(.adminSetting), let instance = instance {
            
-            let queue = InstanceController.global.getIVQueue(name: instance)
+            let queue = InstanceController.global.getIVQueue(name: instance.decodeUrl() ?? "")
             
             var jsonArray = [[String: Any]]()
             var i = 1
