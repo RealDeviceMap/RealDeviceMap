@@ -115,7 +115,7 @@ class IVInstanceController: InstanceControllerProto {
         let ivh: String
         self.statsLock.lock()
         if self.startDate != nil {
-            ivh = "\(self.count / (UInt64(Date().timeIntervalSince(self.startDate!)) / 3600))"
+            ivh = "\(Int(Double(self.count) / (Date().timeIntervalSince(self.startDate!) * 3600)))"
         } else {
             ivh = "?"
         }
