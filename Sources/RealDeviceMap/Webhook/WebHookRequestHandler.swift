@@ -163,7 +163,7 @@ class WebHookRequestHandler {
                         if coord.distance(to: targetCoord!) <= targetMaxDistance {
                             inArea = true
                         }
-                    } else if pokemonEncounterId == nil || pokemonCoords != nil {
+                    } else if pokemonCoords != nil && inArea {
                         break
                     }
                 }
@@ -172,7 +172,7 @@ class WebHookRequestHandler {
                         if pokemon.encounterID.description == pokemonEncounterId {
                             pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
                         }
-                    } else if targetCoord == nil || inArea {
+                    } else if pokemonCoords != nil && inArea {
                         break
                     }
                 }
@@ -371,7 +371,11 @@ class WebHookRequestHandler {
         } else if type == "get_job" {
             let controller = InstanceController.global.getInstanceController(deviceUUID: uuid)
             if controller != nil {
-                try! response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
+                do {
+                    try response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
+                } catch {
+                    response.respondWithError(status: .internalServerError)
+                }
             } else {
                 response.respondWithError(status: .notFound)
             }

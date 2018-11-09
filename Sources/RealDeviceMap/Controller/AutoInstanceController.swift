@@ -158,6 +158,13 @@ class AutoInstanceController: InstanceControllerProto {
             if todayStops == nil {
                 todayStops = [Pokestop]()
             }
+            if allStops == nil {
+                allStops = [Pokestop]()
+            }
+            if allStops!.isEmpty {
+                stopsLock.unlock()
+                return [String: Any]()
+            }
             if todayStops!.isEmpty {
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
@@ -226,6 +233,9 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.lock()
                 let todayStopsC = todayStops
                 stopsLock.unlock()
+                if todayStopsC!.isEmpty {
+                    return [String: Any]()
+                }
                 
                 for stop in todayStopsC! {
                     let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
@@ -254,17 +264,21 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 stopsLock.lock()
-                if let index =  todayStops!.index(of: closest) {
+                if let index = todayStops!.index(of: closest) {
                     todayStops!.remove(at: index)
                 }
                 stopsLock.unlock()
             } else {
                 stopsLock.lock()
-                let stop = todayStops!.first!
-                newLon = stop.lon
-                newLat = stop.lat
-                encounterTime = UInt32(Date().timeIntervalSince1970)
-                _ = todayStops!.removeFirst()
+                if let stop = todayStops!.first {
+                    newLon = stop.lon
+                    newLat = stop.lat
+                    encounterTime = UInt32(Date().timeIntervalSince1970)
+                    _ = todayStops!.removeFirst()
+                } else {
+                    stopsLock.unlock()
+                    return [String: Any]()
+                }
                 stopsLock.unlock()
             }
             
@@ -284,6 +298,7 @@ class AutoInstanceController: InstanceControllerProto {
                 delay = delayT + 1
             }
             
+            stopsLock.lock()
             if todayStops!.isEmpty {
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
@@ -309,7 +324,8 @@ class AutoInstanceController: InstanceControllerProto {
                     Log.info(message: "[AutoInstanceController] [\(name)] Instance done")
                     delegate?.instanceControllerDone(name: name)
                 }
-                
+                stopsLock.unlock()
+            } else {
                 stopsLock.unlock()
             }
             
