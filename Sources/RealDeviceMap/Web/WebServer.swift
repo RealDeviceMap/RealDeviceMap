@@ -28,6 +28,7 @@ class WebServer {
         case dashboardInstances = "dashboard_instances.mustache"
         case dashboardInstanceAdd = "dashboard_instance_add.mustache"
         case dashboardInstanceEdit = "dashboard_instance_edit.mustache"
+        case dashboardInstanceIVQueue = "dashboard_instance_ivqueue.mustache"
         case dashboardAccounts = "dashboard_accounts.mustache"
         case dashboardAccountsAdd = "dashboard_accounts_add.mustache"
         case dashboardClearQuests = "dashboard_clearquests.mustach"

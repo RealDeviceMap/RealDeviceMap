@@ -314,9 +314,7 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
-        
-        Log.debug(message: "[WebHookRequestHandler] Got \(type) Request from \(uuid)") // TMP
-        
+                
         let username = jsonO?["username"] as? String
         let minLevel = jsonO?["min_level"] as? Int ?? 0
         let maxLevel = jsonO?["max_level"] as? Int ?? 29

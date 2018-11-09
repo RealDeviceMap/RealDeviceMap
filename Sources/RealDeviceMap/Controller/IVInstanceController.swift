@@ -24,6 +24,9 @@ class IVInstanceController: InstanceControllerProto {
     private var scannedPokemon = [(Date, Pokemon)]()
     private var scannedPokemonLock = Threading.Lock()
     private var checkScannedThreadingQueue: ThreadQueue?
+    private var statsLock = Threading.Lock()
+    private var startDate: Date?
+    private var count: UInt64 = 0
     
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
         self.name = name
@@ -45,7 +48,6 @@ class IVInstanceController: InstanceControllerProto {
                     let first = self.scannedPokemon.removeFirst()
                     self.scannedPokemonLock.unlock()
                     let timeSince = Date().timeIntervalSince(first.0)
-                    Log.debug(message: "[IVInstanceController] Checked at: \(first.0) (\(timeSince)s ago)") // TMP
                     if timeSince < 120 {
                         Threading.sleep(seconds: 120 - timeSince)
                     }
@@ -59,10 +61,21 @@ class IVInstanceController: InstanceControllerProto {
                     }
                     if let pokemonReal = pokemonReal {
                         if pokemonReal.atkIv == nil {
-                            Log.debug(message: "[IVInstanceController] Checked Pokemon doesn't have IV") // TMP
+                            Log.debug(message: "[IVInstanceController] Checked Pokemon doesn't have IV")
                             self.addPokemon(pokemon: pokemonReal)
                         } else {
-                            Log.debug(message: "[IVInstanceController] Checked Pokemon has IV") // TMP
+                            Log.debug(message: "[IVInstanceController] Checked Pokemon has IV")
+                            self.statsLock.lock()
+                            if self.startDate == nil {
+                                self.startDate = Date()
+                            }
+                            if self.count == UInt64.max {
+                                self.count = 0
+                                self.startDate = Date()
+                            } else {
+                                self.count += 1
+                            }
+                            self.statsLock.unlock()
                         }
                     }
                     
@@ -98,7 +111,16 @@ class IVInstanceController: InstanceControllerProto {
     }
     
     func getStatus() -> String {
-        return "Queue: \(pokemonQueue.count)"
+        
+        let ivh: String
+        self.statsLock.lock()
+        if self.startDate != nil {
+            ivh = "\(self.count / (UInt64(Date().timeIntervalSince(self.startDate!)) / 3600))"
+        } else {
+            ivh = "?"
+        }
+        self.statsLock.unlock()
+        return "<a href=\"/dashboard/instance/ivqueue/\(name.encodeUrl() ?? "")\">Queue</a>: \(pokemonQueue.count), IV/h: \(ivh)"
     }
     
     func reload() {}
@@ -107,6 +129,13 @@ class IVInstanceController: InstanceControllerProto {
         if checkScannedThreadingQueue != nil {
             Threading.destroyQueue(checkScannedThreadingQueue!)
         }
+    }
+    
+    func getQueue() -> [Pokemon] {
+        pokemonLock.lock()
+        let pokemon = self.pokemonQueue
+        pokemonLock.unlock()
+        return pokemon
     }
     
     func addPokemon(pokemon: Pokemon) {

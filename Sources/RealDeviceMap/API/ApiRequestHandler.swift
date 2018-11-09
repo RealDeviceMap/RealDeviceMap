@@ -29,6 +29,7 @@ class ApiRequestHandler {
         let maxLat = request.param(name: "max_lat")?.toDouble()
         let minLon = request.param(name: "min_lon")?.toDouble()
         let maxLon = request.param(name: "max_lon")?.toDouble()
+        let instance = request.param(name: "instance")
         let showGyms = request.param(name: "show_gyms")?.toBool() ?? false
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
@@ -42,6 +43,7 @@ class ApiRequestHandler {
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
+        let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         
         if (showGyms || showRaids || showPokestops || showPokemon) &&
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
@@ -238,6 +240,36 @@ class ApiRequestHandler {
                 }
             }
             data["assignments"] = jsonArray
+            
+        }
+        
+        if showIVQueue && perms.contains(.adminSetting), let instance = instance {
+           
+            let queue = InstanceController.global.getIVQueue(name: instance)
+            
+            var jsonArray = [[String: Any]]()
+            var i = 1
+            for pokemon in queue {
+                
+                
+                var json: [String: Any] = [
+                    "id": i,
+                    "pokemon_id": String(format: "%03d", pokemon.pokemonId),
+                    "pokemon_name": Localizer.global.get(value: "poke_\(pokemon.pokemonId)") ,
+                    "pokemon_spawn_id": pokemon.id,
+                    "location": "\(pokemon.lat), \(pokemon.lon)"
+                ]
+                if formatted {
+                    json["pokemon_image"] = "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                }
+                jsonArray.append(json)
+                
+                i += 1
+                
+            }
+            
+            data["ivqueue"] = jsonArray
+
             
         }
         

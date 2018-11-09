@@ -220,4 +220,11 @@ class InstanceController {
         
     }
     
+    public func getIVQueue(name: String) -> [Pokemon] {
+        if let instance = instancesByInstanceName[name] as? IVInstanceController {
+            return instance.getQueue()
+        }
+        return [Pokemon]()
+    }
+    
 }

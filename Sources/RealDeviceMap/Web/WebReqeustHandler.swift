@@ -225,6 +225,12 @@ class WebReqeustHandler {
                 data["timezone_offset"] = 0
                 data["nothing_selected"] = true
             }
+        case .dashboardInstanceIVQueue:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - IV Queue"
+            let instanceName = request.urlVariables["instance_name"] ?? ""
+            data["instance_name_url"] = instanceName
+            data["instance_name"] = instanceName.decodeUrl() ?? ""
         case .dashboardAssignments:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assignments"
