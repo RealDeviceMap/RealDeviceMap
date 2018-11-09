@@ -400,7 +400,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         
         let sqlAdd: String
-        if pokemonFilterIV == nil || pokemonFilterIV!.isEmpty {
+        if (pokemonFilterIV == nil || pokemonFilterIV!.isEmpty) && pokemonFilterExclude.isEmpty {
+            sqlAdd = ""
+        } else if pokemonFilterIV == nil || pokemonFilterIV!.isEmpty {
             sqlAdd = " AND \(sqlExclude)"
         } else {
             var orPart = ""
@@ -456,7 +458,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             FROM pokemon
             WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlAdd)
         """
-                
+        
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLat)

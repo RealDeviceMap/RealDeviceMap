@@ -250,9 +250,13 @@ function initMap() {
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
             defaultPokemonFilter[i] = {"show": true, "size": "normal"};
         }
+
+        defaultPokemonFilter["iv_and"] = {"on": false, "filter": "0-100"};
+        defaultPokemonFilter["iv_or"] = {"on": false, "filter": "0-100"};
+
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
-
+        i
         $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
     });
 
@@ -260,8 +264,12 @@ function initMap() {
         const defaultPokemonFilter = [];
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            defaultPokemonFilter[i] = {"show": false, "size": pokemonFilterNew[i]["size"]};
+            defaultPokemonFilter[i] = {"show": false, "size": pokemonFilterNew[i]["size"],  "filter": pokemonFilterNew[i]["filter"]};
         }
+        defaultPokemonFilter["iv_and"] = {"on": false, "filter": pokemonFilterNew["iv_and"]["filter"]};
+        defaultPokemonFilter["iv_or"] = {"on": false, "filter": pokemonFilterNew["iv_or"]["filter"]};
+
+
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
 
