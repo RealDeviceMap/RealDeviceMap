@@ -412,7 +412,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     continue
                 }
                 if filter.key == "and" {
-                    andPart += " AND \(sql)"
+                    andPart += "\(sql)"
                 } else {
                     if orPart == "" {
                         orPart += "("

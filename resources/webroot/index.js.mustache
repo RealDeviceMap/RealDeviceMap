@@ -344,7 +344,8 @@ function initMap() {
 
         const newPokemonMarkers = [];
         $.each(pokemonMarkers, function (index, pokemon) {
-            if ((pokemonFilterOld[pokemon.pokemon_id]["show"] !== pokemonFilter[pokemon.pokemon_id]["show"]) ||
+            map.removeLayer(pokemon.marker);
+            /*if ((pokemonFilterOld[pokemon.pokemon_id]["show"] !== pokemonFilter[pokemon.pokemon_id]["show"]) ||
                 !(pokemonFilterOld[pokemon.pokemon_id]["size"].localeCompare(pokemonFilter[pokemon.pokemon_id]["size"]))) {
 
                 map.removeLayer(pokemon.marker);
@@ -355,7 +356,7 @@ function initMap() {
                 }
             } else {
                 newPokemonMarkers.push(pokemon);
-            }
+            }*/
         });
         pokemonMarkers = newPokemonMarkers;
 
@@ -616,7 +617,7 @@ function loadData() {
 			const pokemon = data.data.pokemon;
             ts = Math.round((new Date()).getTime() / 1000);
             $.each(pokemon, function (index, pokemon) {
-				if (showPokemon && pokemon.expire_timestamp >= ts && matchesPokemonFilter(pokemon.pokemon_id)) {
+				if (showPokemon && pokemon.expire_timestamp >= ts /*&& matchesPokemonFilter(pokemon.pokemon_id)*/) {
 					if (pokemon.updated > lastUpdateServer) {
 						lastUpdateServer = pokemon.updated;
 					}
@@ -698,9 +699,9 @@ function loadData() {
 
 // MARK: - Filters
 
-function matchesPokemonFilter(pokemonId) {
-	return pokemonFilter[pokemonId]["show"];
-}
+//function matchesPokemonFilter(pokemonId) {
+//	return pokemonFilter[pokemonId]["show"] === true ||;
+//}
 
 function getPokemonSize(pokemonId) {
     const size = pokemonFilter[pokemonId]["size"];
