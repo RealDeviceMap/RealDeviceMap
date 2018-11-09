@@ -115,9 +115,10 @@ class IVInstanceController: InstanceControllerProto {
         let ivh: String
         self.statsLock.lock()
         if self.startDate != nil {
+            Log.debug(message: "\(Double(self.count)), \(Date().timeIntervalSince(self.startDate!))")
             ivh = "\(Int(Double(self.count) / (Date().timeIntervalSince(self.startDate!) * 3600)))"
         } else {
-            ivh = "?"
+            ivh = "-"
         }
         self.statsLock.unlock()
         return "<a href=\"/dashboard/instance/ivqueue/\(name.encodeUrl() ?? "")\">Queue</a>: \(pokemonQueue.count), IV/h: \(ivh)"
