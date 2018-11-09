@@ -260,7 +260,7 @@ class ApiRequestHandler {
                     "location": "\(pokemon.lat), \(pokemon.lon)"
                 ]
                 if formatted {
-                    json["pokemon_image"] = "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                    json["pokemon_image"] = "<img src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
                 }
                 jsonArray.append(json)
                 
