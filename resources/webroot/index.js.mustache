@@ -44,6 +44,9 @@ $(function() {
         $('.select-button').each(function (button) {
             manageSelectButton($(this), false);
         });
+        $('.configure-button').each(function (button) {
+            manageConfigureButton($(this), false);
+        });
 
         const scrollHeight = $(document).height() * 0.5;
 
@@ -55,11 +58,17 @@ $(function() {
                     "emptyTable": i18n('filter_table_empty'),
 					"zeroRecords": i18n('filter_table_empty'),
                 },
+                rowGroup: {
+                    dataSrc: "type"
+                },
                 "autoWidth": false,
                 "columns": [
                     { "data": "image", "width": "5%", "className": 'details-control'},
-                    { "data": "pokemon_name", "width": "15%"  },
-                    { "data": "pokemon_id", "width": "5%" },
+                    { "data": "pokemon_name", "width": "15%" },
+                    { "data": {
+                        _:    "pokemon_id.formatted",
+                        sort: "pokemon_id.sort"
+                    }, "width": "5%" },
                     { "data": "filter" },
                     { "data": "size" }
                 ],
@@ -73,7 +82,10 @@ $(function() {
                 "columnDefs": [ {
                     "targets": [0,3,4],
                     "orderable": false
-                }],
+                    },{
+                    "type": "num",
+                    "targets": 2
+                } ],
                 "deferRender": true,
                 "scrollY": scrollHeight,
                 "scrollCollapse": true,
@@ -90,6 +102,9 @@ $(function() {
                     $('.select-button-new').each(function (button) {
                         manageSelectButton($(this), true);
                     });
+                    $('.configure-button-new').each(function (button) {
+                        manageConfigureButton($(this), true);
+                    });
                 },
                 "responsive": true
             });
@@ -97,6 +112,9 @@ $(function() {
             $('#table-filter-pokemon tbody').on('click', 'td.details-control', function () {
                 $('.select-button-new').each(function (button) {
                     manageSelectButton($(this), true);
+                });
+                $('.configure-button-new').each(function (button) {
+                    manageConfigureButton($(this), true);
                 });
             } );
 
@@ -190,6 +208,12 @@ function loadStorage() {
             if (pokemonFilter[i] == undefined) {
                 pokemonFilter[i] = {"show": true, "size": "normal"};
             }
+        }
+        if (pokemonFilter["iv_and"] == undefined) {
+            pokemonFilter["iv_and"] = {"on": false, "filter": "0-100"};
+        }
+        if (pokemonFilter["iv_or"] == undefined) {
+            pokemonFilter["iv_or"] = {"on": false, "filter": "0-100"};
         }
 	}
 }
@@ -442,13 +466,27 @@ function loadData() {
 	const bounds = map.getBounds();
 
     const pokemonFilterExclude = [];
+    const pokemonFilterIV = {};
     if (showPokemon) {
     	var i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            if (pokemonFilter[i]["show"] !== true) {
+            if (pokemonFilter[i]["show"] === false) {
                 pokemonFilterExclude.push(i);
             }
+            if (pokemonFilter[i]["show"] === "filter") {
+                pokemonFilterIV[i] = pokemonFilter[i]['filter'].replace(/\s/g,'');
+            }
         }
+
+
+        if (pokemonFilter['iv_and']['on'] === true) {
+            pokemonFilterIV['and'] = pokemonFilter['iv_and']['filter'].replace(/\s/g,'');
+        }
+
+        if (pokemonFilter['iv_or']['on'] === true) {
+            pokemonFilterIV['or'] = pokemonFilter['iv_or']['filter'].replace(/\s/g,'');
+        }
+
     }
 
     const data = {
@@ -463,7 +501,8 @@ function loadData() {
         'show_quests': showQuests,
         'show_pokemon': showPokemon,
 		'pokemon_filter_exclude': JSON.stringify(pokemonFilterExclude),
-		'show_spawnpoints': showSpawnpoints,
+        'pokemon_filter_iv': JSON.stringify(pokemonFilterIV),
+        'show_spawnpoints': showSpawnpoints,
 		'last_update': lastUpdateServer,
 	};
 
@@ -1263,14 +1302,17 @@ function manageSelectButton(e, isNew) {
     const id = e.attr('data-id');
     const type = e.attr('data-type');
     const info = e.attr('data-info');
-    if (type === "pokemon") {
+    if (type === "pokemon" || type === "pokemon-iv") {
         var shouldShow = false;
         switch (info) {
             case "hide":
-                shouldShow = !pokemonFilterNew[id]["show"];
+                shouldShow = pokemonFilterNew[id]["show"] === false;
                 break;
             case "show":
-                shouldShow = pokemonFilterNew[id]["show"];
+                shouldShow = pokemonFilterNew[id]["show"] === true;
+                break;
+            case "iv":
+                shouldShow = pokemonFilterNew[id]["show"] === "filter";
                 break;
             case "small":
                 shouldShow = pokemonFilterNew[id]["size"] === "small";
@@ -1283,6 +1325,12 @@ function manageSelectButton(e, isNew) {
                 break;
             case "huge":
                 shouldShow = pokemonFilterNew[id]["size"] === "huge";
+                break;
+            case "off":
+                shouldShow = !pokemonFilterNew["iv_"+id]["on"];
+                break;
+            case "on":
+                shouldShow = pokemonFilterNew["iv_"+id]["on"];
                 break;
         }
         if (shouldShow) {
@@ -1297,13 +1345,16 @@ function manageSelectButton(e, isNew) {
         e.addClass("select-button");
         e.on('click', function (e) {
             e.preventDefault();
-            if (type === "pokemon") {
+            if (type === "pokemon" || type === "pokemon-iv") {
                 switch (info) {
                     case "hide":
                         pokemonFilterNew[id]["show"] = false;
                         break;
                     case "show":
                         pokemonFilterNew[id]["show"] = true;
+                        break;
+                    case "iv":
+                        return manageIVPopup(id, pokemonFilterNew);
                         break;
                     case "small":
                         pokemonFilterNew[id]["size"] = "small";
@@ -1317,6 +1368,33 @@ function manageSelectButton(e, isNew) {
                     case "huge":
                         pokemonFilterNew[id]["size"] = "huge";
                         break;
+                    case "off":
+                        pokemonFilterNew["iv_"+id]["on"] = false;
+                        break;
+                    case "on":
+                        pokemonFilterNew["iv_"+id]["on"] = true;
+                        break;
+                }
+            }
+
+        })
+    }
+}
+
+function manageConfigureButton(e, isNew) {
+    const id = e.attr('data-id');
+    const type = e.attr('data-type');
+    const info = e.attr('data-info');
+
+    if (isNew) {
+        e.removeClass("configure-button-new");
+        e.addClass("configure-button");
+        e.on('click', function (e) {
+            e.preventDefault();
+            if (type === "pokemon-iv") {
+                switch (info) {
+                    case "global-iv":
+                        return manageGlobalIVPopup(id, pokemonFilterNew);
                 }
             }
 
@@ -1340,4 +1418,45 @@ function getTimeUntill(date) {
     }
 
     return str;
+}
+
+function manageIVPopup(id, filter) {
+    const result = prompt("Please enter a IV Filter", filter[id]["filter"]);
+    const prevShow = filter[id]["show"];
+    let success;
+    if (result == null) {
+        success = false;
+    } else if (checkIVFilterValid(result)) {
+        filter[id]["show"] = "filter";
+        filter[id]["filter"] = result;
+        success = true;
+    } else {
+        success = false;
+        alert("Invalid IV Filter!");
+    }
+    if (!success) {
+        if (prevShow === true) {
+            $('.select-button[data-id="'+id+'"][data-info="show"]').addClass("active");
+        } else if (prevShow === false) {
+            $('.select-button[data-id="'+id+'"][data-info="hide"]').addClass("active");
+        }
+    }
+    return success;
+}
+
+function manageGlobalIVPopup(id, filter) {
+    const result = prompt("Please enter a IV Filter", filter['iv_'+id]["filter"]);
+    if (result == null) {
+        return false;
+    } else if (checkIVFilterValid(result)) {
+        filter['iv_'+id]["filter"] = result;
+        return true;
+    } else {
+        alert("Invalid IV Filter!");
+        return false;
+    }
+}
+
+function checkIVFilterValid(filter) {
+    return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\)?)*$/g);
 }

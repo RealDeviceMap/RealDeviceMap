@@ -35,7 +35,8 @@ class ApiRequestHandler {
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
         let showQuests = request.param(name: "show_quests")?.toBool() ?? false
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
-        let pokemonFilterExclude = (try? (request.param(name: "pokemon_filter_exclude") ?? "")?.jsonDecode() as? [Int]) ?? nil
+        let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
+        let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
@@ -80,7 +81,7 @@ class ApiRequestHandler {
         }
         let permShowIV = perms.contains(.viewMapIV)
         if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
-            data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude)
+            data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude, pokemonFilterIV: pokemonFilterIV)
         }
         if permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
             data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
@@ -89,13 +90,68 @@ class ApiRequestHandler {
             
             let hideString = Localizer.global.get(value: "filter_hide")
             let showString = Localizer.global.get(value: "filter_show")
+            let onString = Localizer.global.get(value: "filter_on")
+            let offString = Localizer.global.get(value: "filter_off")
+            let ivString = Localizer.global.get(value: "filter_iv")
             
             let smallString = Localizer.global.get(value: "filter_small")
             let normalString = Localizer.global.get(value: "filter_normal")
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
             
+            let pokemonTypeString = Localizer.global.get(value: "filter_name")
+            let generalTypeString = Localizer.global.get(value: "filter_general")
+
+            let globalIV = Localizer.global.get(value: "filter_global_iv")
+            let configureString = Localizer.global.get(value: "filter_configure")
+            let andString = Localizer.global.get(value: "filter_and")
+            let orString = Localizer.global.get(value: "filter_or")
+
             var pokemonData = [[String: Any]]()
+            
+            for i in 0...1 {
+                
+                let id: String
+                if i == 0 {
+                    id = "and"
+                } else {
+                    id = "or"
+                }
+                
+                 let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="off">
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                        </label>
+                        <label class="btn btn-sm btn-on select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="on">
+                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                        </label>
+                    </div>
+                """
+                
+                let andOrString: String
+                if i == 0 {
+                    andOrString = andString
+                } else {
+                    andOrString = orString
+                }
+                
+                let size = "<button class=\"btn btn-sm btn-primary configure-button-new\" data-id=\"\(id)\" data-type=\"pokemon-iv\" data-info=\"global-iv\">\(configureString)</button>"
+                
+                pokemonData.append([
+                    "pokemon_id": [
+                        "formatted": andOrString,
+                        "sort": i
+                    ],
+                    "pokemon_name": globalIV,
+                    "image": "-",
+                    "filter": filter,
+                    "size": size,
+                    "type": generalTypeString
+                    ])
+                
+            }
+            
             for i in 1...WebReqeustHandler.maxPokemonId {
                 
                 let filter = """
@@ -105,6 +161,9 @@ class ApiRequestHandler {
                         </label>
                         <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
                             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                        </label>
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="iv">
+                            <input type="radio" name="options" id="iv" autocomplete="off">\(ivString)
                         </label>
                     </div>
                 """
@@ -128,11 +187,15 @@ class ApiRequestHandler {
                 """
                 
                 pokemonData.append([
-                    "pokemon_id": String(format: "%03d", i),
+                    "pokemon_id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+1
+                    ],
                     "pokemon_name": Localizer.global.get(value: "poke_\(i)") ,
                     "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
-                    "size": size
+                    "size": size,
+                    "type": pokemonTypeString
                 ])
             }
             data["pokemon_filters"] = pokemonData

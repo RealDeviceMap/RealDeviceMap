@@ -118,7 +118,7 @@ class User {
     }
     
     private static func checkUsernameValid(username: String) -> Bool {
-        let regex = "^[A-Z0-9a-z_\\- ]{4,25}+$"
+        let regex = "^[A-Z0-9a-z_\\- ]{4,25}$"
         
         if username =~ regex {
             if !username.contains(string: "  ") && !username.contains(string: "__") && !username.contains(string: "--") {

@@ -9,6 +9,7 @@ import Foundation
 import PerfectLib
 import PerfectMySQL
 import POGOProtos
+import Regex
 
 class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConvertible {
     
@@ -68,6 +69,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "individual_attack": atkIv ?? 0,
             "individual_defense": defIv ?? 0,
             "individual_stamina": staIv ?? 0,
+            "level": level ?? 0,
             "move_1": move1 ?? 0,
             "move_2": move2 ?? 0,
             "weight": weight ?? 0,
@@ -364,30 +366,97 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
     }
     
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil) throws -> [Pokemon] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil, pokemonFilterIV: [String: String]?=nil) throws -> [Pokemon] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        var pokemonFilterExclude = pokemonFilterExclude ?? [Int]()
+        
+        if pokemonFilterIV != nil && !pokemonFilterIV!.isEmpty {
+            for ivFilter in pokemonFilterIV! {
+                guard let id = Int(ivFilter.key) else {
+                    continue
+                }
+                if !pokemonFilterExclude.contains(id) {
+                    pokemonFilterExclude.append(id)
+                }
+            }
+            
+        }
+        
         let sqlExclude: String
-        if pokemonFilterExclude == nil || pokemonFilterExclude!.isEmpty {
+        if pokemonFilterExclude.isEmpty {
             sqlExclude = ""
         } else {
-            var sqlExcludeCreate = "AND pokemon_id NOT IN ("
-            for _ in 1..<pokemonFilterExclude!.count {
+            var sqlExcludeCreate = "pokemon_id NOT IN ("
+            for _ in 1..<pokemonFilterExclude.count {
                 sqlExcludeCreate += "?, "
             }
             sqlExcludeCreate += "?)"
             sqlExclude = sqlExcludeCreate
         }
+        
+        let sqlAdd: String
+        if pokemonFilterIV == nil || pokemonFilterIV!.isEmpty {
+            sqlAdd = " AND \(sqlExclude)"
+        } else {
+            var orPart = ""
+            var andPart = ""
+            for filter in pokemonFilterIV! {
+                guard let sql = sqlifyIvFilter(filter: filter.value), sql != "" else {
+                    continue
+                }
+                if filter.key == "and" {
+                    andPart += " AND \(sql)"
+                } else {
+                    if orPart == "" {
+                        orPart += "("
+                    } else {
+                        orPart += " OR "
+                    }
+                    if filter.key == "or" {
+                        orPart += "(\(sql))"
+                    } else {
+                        let id = Int(filter.key) ?? 0
+                        orPart += "( pokemon_id = \(id) AND \(sql))"
+                    }
+                }
+            }
+            if sqlExclude != "" {
+                if orPart == "" {
+                    orPart += "("
+                } else {
+                    orPart += " OR "
+                }
+                orPart += "(\(sqlExclude))"
+            }
+            if orPart != "" {
+                orPart += ")"
+            }
+            
+            if orPart != "" && andPart != "" {
+                sqlAdd = " AND \(orPart) \(andPart)"
+            } else if orPart != "" {
+                sqlAdd = " AND \(orPart)"
+            } else if andPart != "" {
+                sqlAdd = " AND \(andPart)"
+            } else if sqlExclude != "" {
+                sqlAdd = " AND \(sqlExclude)"
+            } else {
+                sqlAdd = ""
+            }
+            
+        }
+        
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed
             FROM pokemon
-            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlExclude)
+            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlAdd)
         """
-        
+                
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLat)
@@ -395,10 +464,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
-        if pokemonFilterExclude != nil {
-            for id in pokemonFilterExclude! {
-                mysqlStmt.bindParam(id)
-            }
+        for id in pokemonFilterExclude {
+            mysqlStmt.bindParam(id)
         }
         
         guard mysqlStmt.execute() else {
@@ -522,6 +589,72 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     
     static func == (lhs: Pokemon, rhs: Pokemon) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    private static func sqlifyIvFilter(filter: String) -> String? {
+        
+        let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\\)?)*$"
+        
+        if filter !~ fullMatch {
+            return nil
+        }
+        
+        let singleMatch = "(A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?"
+        
+        var sql = singleMatch.r?.replaceAll(in: filter) { match in
+            if let firstGroup = match.group(at: 0) {
+                
+                var firstGroupNumbers = firstGroup.replacingOccurrences(of: "A", with: "")
+                firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "D", with: "")
+                firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "S", with: "")
+                
+                let column: String
+                if firstGroup.contains(string: "A") {
+                    column = "atk_iv"
+                } else if firstGroup.contains(string: "D") {
+                    column = "def_iv"
+                } else if firstGroup.contains(string: "S") {
+                    column = "sta_iv"
+                } else {
+                    column = "iv"
+                }
+                
+                if firstGroupNumbers.contains(string: "-") { // min max
+                    let split = firstGroupNumbers.components(separatedBy: "-")
+                    guard split.count == 2, let number0 = Float(split[0]), let number1 = Float(split[1]) else {
+                        return nil
+                    }
+                    
+                    let min: Float
+                    let max: Float
+                    if number0 < number1 {
+                        min = number0
+                        max = number1
+                    } else {
+                        max = number1
+                        min = number0
+                    }
+                    
+                    return "\(column) >= \(min) AND \(column) <= \(max)"
+                } else { // fixed
+                    guard let number = Float(firstGroupNumbers) else {
+                        return nil
+                    }
+                    return "\(column) = \(number)"
+                }
+                
+            }
+            return nil
+        } ?? ""
+        if sql == "" {
+            return nil
+        }
+        
+        sql = sql.replacingOccurrences(of: "&&", with: " AND ")
+        sql = sql.replacingOccurrences(of: "||", with: " OR ")
+        
+        return sql
+        
     }
     
 }
