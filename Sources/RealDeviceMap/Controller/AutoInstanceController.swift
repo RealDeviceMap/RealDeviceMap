@@ -28,6 +28,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var todayStops: [Pokestop]?
     private var questClearerQueue: ThreadQueue?
     private var timezoneOffset: Int
+    private var shouldExit = false
     
     private static let cooldownDataArray = [0.3: 0.16, 1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 7, 15: 9, 20: 12, 25: 15, 30: 17, 35: 18, 45: 20, 50: 20, 60: 21, 70: 23, 80: 24, 90: 25, 100: 26, 125: 29, 150: 32, 175: 34, 201: 37, 250: 41, 300: 46, 328: 48, 350: 50, 400: 54, 450: 58, 500: 62, 550: 66, 600: 70, 650: 74, 700: 77, 751: 82, 802: 84, 839: 88, 897: 90, 900: 91, 948: 95, 1007: 98, 1020: 102, 1100: 104, 1180: 109, 1200: 111, 1221: 113, 1300: 117, 1344: 119, Double(Int.max): 120].sorted { (lhs, rhs) -> Bool in
         lhs.key < rhs.key
@@ -46,7 +47,7 @@ class AutoInstanceController: InstanceControllerProto {
             questClearerQueue = Threading.getQueue(name: "\(name)-quest-clearer", type: .serial)
             questClearerQueue!.dispatch {
                 
-                while true {
+                while !self.shouldExit {
                     
                     let date = Date()
                     let formatter = DateFormatter()
@@ -65,6 +66,9 @@ class AutoInstanceController: InstanceControllerProto {
                     
                     if timeLeft > 0 {
                         Threading.sleep(seconds: Double(timeLeft))
+                        if self.shouldExit {
+                            return
+                        }
                         
                         self.stopsLock.lock()
                         if self.allStops == nil {
@@ -84,6 +88,9 @@ class AutoInstanceController: InstanceControllerProto {
                                 done = true
                             } catch {
                                 Threading.sleep(seconds: 5.0)
+                                if self.shouldExit {
+                                    return
+                                }
                             }
                         }
                         self.stopsLock.unlock()
@@ -372,6 +379,7 @@ class AutoInstanceController: InstanceControllerProto {
     }
     
     func stop() {
+        self.shouldExit = true
         if questClearerQueue != nil {
             Threading.destroyQueue(questClearerQueue!)
         }

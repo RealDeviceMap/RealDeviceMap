@@ -27,6 +27,7 @@ class IVInstanceController: InstanceControllerProto {
     private var statsLock = Threading.Lock()
     private var startDate: Date?
     private var count: UInt64 = 0
+    private var shouldExit = false
     
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
         self.name = name
@@ -38,18 +39,24 @@ class IVInstanceController: InstanceControllerProto {
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
             
-            while true {
+            while !self.shouldExit {
                 
                 self.scannedPokemonLock.lock()
                 if self.scannedPokemon.isEmpty {
                     self.scannedPokemonLock.unlock()
-                    Threading.sleep(seconds: 5)
+                    Threading.sleep(seconds: 5.0)
+                    if self.shouldExit {
+                        return
+                    }
                 } else {
                     let first = self.scannedPokemon.removeFirst()
                     self.scannedPokemonLock.unlock()
                     let timeSince = Date().timeIntervalSince(first.0)
                     if timeSince < 120 {
                         Threading.sleep(seconds: 120 - timeSince)
+                        if self.shouldExit {
+                            return
+                        }
                     }
                     var success = false
                     var pokemonReal: Pokemon?
@@ -57,7 +64,12 @@ class IVInstanceController: InstanceControllerProto {
                         do {
                             pokemonReal = try Pokemon.getWithId(id: first.1.id)
                             success = true
-                        } catch {}
+                        } catch {
+                            Threading.sleep(seconds: 1.0)
+                            if self.shouldExit {
+                                return
+                            }
+                        }
                     }
                     if let pokemonReal = pokemonReal {
                         if pokemonReal.atkIv == nil {
@@ -126,6 +138,7 @@ class IVInstanceController: InstanceControllerProto {
     func reload() {}
     
     func stop() {
+        self.shouldExit = true
         if checkScannedThreadingQueue != nil {
             Threading.destroyQueue(checkScannedThreadingQueue!)
         }
