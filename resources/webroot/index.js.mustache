@@ -848,10 +848,10 @@ function getPokemonPopupContent(pokemon) {
 
     if (pokemon.atk_iv !== null) {
         const ivPercent = Math.round( (pokemon.atk_iv + pokemon.def_iv + pokemon.sta_iv) / 45 * 1000 ) / 10;
-        content += 'IV: ' + ivPercent + '% (' + pokemon.atk_iv + '|' + pokemon.def_iv + '|' + pokemon.sta_iv + ')<br>';
+        content += 'IV: ' + ivPercent + '% (A' + pokemon.atk_iv + '|D' + pokemon.def_iv + '|S' + pokemon.sta_iv + ')<br>';
     }
     if (pokemon.cp !== null) {
-        content += 'CP: ' + pokemon.cp + ' (' + pokemon.level + ')<br>';
+        content += 'CP: ' + pokemon.cp + ' (Lvl. ' + pokemon.level + ')<br>';
     }
 
 	if (pokemon.expire_timestamp_true) {
