@@ -440,7 +440,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             
             if orPart != "" && andPart != "" {
-                sqlAdd = " AND \(orPart) \(andPart)"
+                sqlAdd = " AND \(orPart) AND \(andPart)"
             } else if orPart != "" {
                 sqlAdd = " AND \(orPart)"
             } else if andPart != "" {
@@ -469,6 +469,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         for id in pokemonFilterExclude {
             mysqlStmt.bindParam(id)
         }
+        
+        print(sql)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
