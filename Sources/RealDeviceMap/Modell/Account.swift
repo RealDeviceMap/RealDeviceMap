@@ -26,12 +26,18 @@ class Account {
         self.username = username
         self.password = password
         self.level = level
-        self.firstWarningTimestamp = firstWarningTimestamp
-        self.failedTimestamp = failedTimestamp
+        if firstWarningTimestamp != 0 {
+            self.firstWarningTimestamp = firstWarningTimestamp
+        }
+        if failedTimestamp != 0 {
+            self.failedTimestamp = failedTimestamp
+        }
         self.failed = failed
         self.lastEncounterLat = lastEncounterLat
         self.lastEncounterLon = lastEncounterLon
-        self.lastEncounterTime = lastEncounterTime
+        if lastEncounterTime != 0 {
+            self.lastEncounterTime = lastEncounterTime
+        }
         self.spins = spins
     }
     
