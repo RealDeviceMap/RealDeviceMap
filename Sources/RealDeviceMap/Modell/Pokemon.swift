@@ -595,13 +595,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     
     private static func sqlifyIvFilter(filter: String) -> String? {
         
-        let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S|L)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\\)?)*$"
+        let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?)\\)?)*$"
         
         if filter !~ fullMatch {
             return nil
         }
         
-        let singleMatch = "(A|D|S)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?"
+        let singleMatch = "(A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?"
         
         var sql = singleMatch.r?.replaceAll(in: filter) { match in
             if let firstGroup = match.group(at: 0) {

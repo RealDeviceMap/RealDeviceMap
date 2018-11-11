@@ -1467,5 +1467,5 @@ function manageGlobalIVPopup(id, filter) {
 }
 
 function checkIVFilterValid(filter) {
-    return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S|L)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\)?)*$/g);
+    return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?)\)?)*$/g);
 }
