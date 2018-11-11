@@ -604,6 +604,15 @@ function loadData() {
 							oldPokestop.lure_expire_timestamp = pokestop.lure_expire_timestamp;
 							oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
 						}
+                        if (oldPokestop.quest_type !== pokestop.quest_type) {
+							oldPokestop.quest_type = pokestop.quest_type;
+							oldPokestop.quest_target = pokestop.quest_target;
+							oldPokestop.quest_template = pokestop.quest_template;
+							oldPokestop.quest_conditions = pokestop.quest_conditions;
+							oldPokestop.quest_rewards = pokestop.quest_rewards;
+							oldPokestop.quest_timestamp = pokestop.quest_timestamp;
+							oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
+						}
 						if (oldPokestop.willUpdate === false && oldPokestop.lure_expire_timestamp >= ts) {
 							oldPokestop.willUpdate = true;
 							startPokestopTimer(oldPokestop, ts)
