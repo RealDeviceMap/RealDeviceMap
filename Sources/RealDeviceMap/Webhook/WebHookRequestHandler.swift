@@ -91,7 +91,7 @@ class WebHookRequestHandler {
             if let gmo = rawData["GetMapObjects"] as? String {
                 data = Data(base64Encoded: gmo) ?? Data()
                 method = 106
-            } else if trainerLevel >= 30, let er = rawData["EncounterResponse"] as? String {
+            } else if let er = rawData["EncounterResponse"] as? String {
                 data = Data(base64Encoded: er) ?? Data()
                 method = 102
             } else if let fdr = rawData["FortDetailsResponse"] as? String {
@@ -114,7 +114,7 @@ class WebHookRequestHandler {
                         quests.append(quest)
                     }
                 }
-            } else if method == 102 {
+            } else if method == 102 && trainerLevel >= 30 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
                     encounters.append(er)
                 }
