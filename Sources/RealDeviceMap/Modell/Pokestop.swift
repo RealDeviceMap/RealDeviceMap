@@ -374,7 +374,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
         """
         if questsOnly {
-            sql += " AND quest_type IS NOT NULL"
+            sql += " AND quest_reward_type IS NOT NULL"
         }
         
         let mysqlStmt = MySQLStmt(mysql)
