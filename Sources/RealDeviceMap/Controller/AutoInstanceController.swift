@@ -73,6 +73,7 @@ class AutoInstanceController: InstanceControllerProto {
                         self.stopsLock.lock()
                         if self.allStops == nil {
                             Log.debug(message: "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
+                            self.stopsLock.unlock()
                             continue
                         }
                         
@@ -89,6 +90,7 @@ class AutoInstanceController: InstanceControllerProto {
                             } catch {
                                 Threading.sleep(seconds: 5.0)
                                 if self.shouldExit {
+                                    self.stopsLock.unlock()
                                     return
                                 }
                             }
@@ -310,6 +312,7 @@ class AutoInstanceController: InstanceControllerProto {
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
                 })
+                stopsLock.unlock()
                 var newStops: [Pokestop]!
                 var done = false
                 while !done {
@@ -344,10 +347,13 @@ class AutoInstanceController: InstanceControllerProto {
     func getStatus() -> String {
         switch type {
         case .quest:
+            stopsLock.lock()
             var currentCountDb = 0
             let ids = self.allStops!.map({ (stop) -> String in
                 return stop.id
             })
+            stopsLock.unlock()
+            
             if let stops = try? Pokestop.getIn(ids: ids) {
                 for stop in stops {
                     if stop.questType != nil {
@@ -356,8 +362,11 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
             
+            stopsLock.lock()
             let maxCount = self.allStops?.count ?? 0
             let currentCount = maxCount - (self.todayStops?.count ?? 0)
+            stopsLock.unlock()
+            
             let percentage: Double
             if maxCount > 0 {
                 percentage = Double(currentCount) / Double(maxCount) * 100
