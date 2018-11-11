@@ -595,13 +595,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     
     private static func sqlifyIvFilter(filter: String) -> String? {
         
-        let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\\)?)*$"
+        let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S|L)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\\)?)*$"
         
         if filter !~ fullMatch {
             return nil
         }
         
-        let singleMatch = "(A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?"
+        let singleMatch = "(A|D|S)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?"
         
         var sql = singleMatch.r?.replaceAll(in: filter) { match in
             if let firstGroup = match.group(at: 0) {
@@ -609,6 +609,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 var firstGroupNumbers = firstGroup.replacingOccurrences(of: "A", with: "")
                 firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "D", with: "")
                 firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "S", with: "")
+                firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "L", with: "")
                 
                 let column: String
                 if firstGroup.contains(string: "A") {
@@ -617,6 +618,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     column = "def_iv"
                 } else if firstGroup.contains(string: "S") {
                     column = "sta_iv"
+                } else if firstGroup.contains(string: "L") {
+                    column = "level"
                 } else {
                     column = "iv"
                 }

@@ -198,8 +198,7 @@ class DBController {
         multiStatement = false
         
         if version != newestDBVersion {
-            Log.info(message: "[DBController] Reseting Permissions")
-            clearPerms()
+            try? clearPerms()
         }
     }
     
@@ -252,24 +251,36 @@ class DBController {
         }
     }
  
-    private func clearPerms() {
-        let sessions = try? getAllSessionData()
-        if sessions != nil {
-            for session in sessions! {
-                var dataJson = try! session.value.jsonDecode() as! [String: Any]
-                dataJson["perms"] = nil
-                try? setSessionData(token: session.key, data: try! dataJson.jsonEncodedString())
-            }
-        }
+    private func clearPerms() throws {
         
-    }
-    
-    private func getAllSessionData() throws -> [String: String] {
+        Log.info(message: "[DBController] Reseting Permissions")
         
         guard let mysql = mysql else {
             Log.error(message: "[DBController] Failed to connect to database.")
             throw DBError()
         }
+        
+        let sql = """
+            UPDATE web_session
+            SET data = JSON_REMOVE(data, "$.perms");
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DBController] Fast Reset failed. Using legacy Reset.")
+            let sessions = try getAllSessionData(mysql: mysql)
+            for session in sessions {
+                var dataJson = try session.value.jsonDecode() as! [String: Any]
+                dataJson["perms"] = nil
+                try setSessionData(token: session.key, data: dataJson.jsonEncodedString(), mysql: mysql)
+            }
+            return
+        }
+        
+    }
+    
+    private func getAllSessionData(mysql: MySQL) throws -> [String: String] {
         
         let sql = """
             SELECT token, data
@@ -294,12 +305,8 @@ class DBController {
         return sessions
     }
     
-    private func setSessionData(token: String, data: String) throws {
-        guard let mysql = mysql else {
-            Log.error(message: "[DBController] Failed to connect to database.")
-            throw DBError()
-        }
-        
+    private func setSessionData(token: String, data: String, mysql: MySQL) throws {
+
         let sql = """
             UPDATE `web_session`
             SET data = ?

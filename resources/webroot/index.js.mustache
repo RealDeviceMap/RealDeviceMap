@@ -1430,7 +1430,7 @@ function getTimeUntill(date) {
 }
 
 function manageIVPopup(id, filter) {
-    const result = prompt("Please enter a IV Filter", filter[id]["filter"]);
+    const result = prompt("Please enter a IV Filter", filter[id]["filter"]).toUpperCase();
     const prevShow = filter[id]["show"];
     let success;
     if (result == null) {
@@ -1467,5 +1467,5 @@ function manageGlobalIVPopup(id, filter) {
 }
 
 function checkIVFilterValid(filter) {
-    return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\)?)*$/g);
+    return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S|L)?[0-9.]+(-(A|D|S)?[0-9.]+)?)\)?)*$/g);
 }
