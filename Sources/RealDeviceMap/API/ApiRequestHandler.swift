@@ -109,51 +109,63 @@ class ApiRequestHandler {
 
             var pokemonData = [[String: Any]]()
             
-            for i in 0...1 {
-                
-                let id: String
-                if i == 0 {
-                    id = "and"
-                } else {
-                    id = "or"
+            if permShowIV {
+                for i in 0...1 {
+                    
+                    let id: String
+                    if i == 0 {
+                        id = "and"
+                    } else {
+                        id = "or"
+                    }
+                    
+                     let filter = """
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-sm btn-off select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="off">
+                                <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                            </label>
+                            <label class="btn btn-sm btn-on select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="on">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                            </label>
+                        </div>
+                    """
+                    
+                    let andOrString: String
+                    if i == 0 {
+                        andOrString = andString
+                    } else {
+                        andOrString = orString
+                    }
+                    
+                    let size = "<button class=\"btn btn-sm btn-primary configure-button-new\" data-id=\"\(id)\" data-type=\"pokemon-iv\" data-info=\"global-iv\">\(configureString)</button>"
+                    
+                    pokemonData.append([
+                        "pokemon_id": [
+                            "formatted": andOrString,
+                            "sort": i
+                        ],
+                        "pokemon_name": globalIV,
+                        "image": "-",
+                        "filter": filter,
+                        "size": size,
+                        "type": generalTypeString
+                        ])
+                    
                 }
-                
-                 let filter = """
-                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-sm btn-off select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="off">
-                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
-                        </label>
-                        <label class="btn btn-sm btn-on select-button-new" data-id="\(id)" data-type="pokemon-iv" data-info="on">
-                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
-                        </label>
-                    </div>
-                """
-                
-                let andOrString: String
-                if i == 0 {
-                    andOrString = andString
-                } else {
-                    andOrString = orString
-                }
-                
-                let size = "<button class=\"btn btn-sm btn-primary configure-button-new\" data-id=\"\(id)\" data-type=\"pokemon-iv\" data-info=\"global-iv\">\(configureString)</button>"
-                
-                pokemonData.append([
-                    "pokemon_id": [
-                        "formatted": andOrString,
-                        "sort": i
-                    ],
-                    "pokemon_name": globalIV,
-                    "image": "-",
-                    "filter": filter,
-                    "size": size,
-                    "type": generalTypeString
-                    ])
-                
             }
             
             for i in 1...WebReqeustHandler.maxPokemonId {
                 
+                let ivLabel: String
+                if permShowIV {
+                    ivLabel = """
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="iv">
+                        <input type="radio" name="options" id="iv" autocomplete="off">\(ivString)
+                        </label>
+                    """
+                } else {
+                    ivLabel = ""
+                }
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="pokemon" data-info="hide">
@@ -162,9 +174,7 @@ class ApiRequestHandler {
                         <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokemon" data-info="show">
                             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                         </label>
-                        <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokemon" data-info="iv">
-                            <input type="radio" name="options" id="iv" autocomplete="off">\(ivString)
-                        </label>
+                        \(ivLabel)
                     </div>
                 """
                 

@@ -14,9 +14,9 @@ UPDATE `group`
 SET perm_view_map_gym = 1, perm_view_map_pokestop = 1
 WHERE name = "no_user";
 INSERT INTO metadata (`key`, `value`)
-VALUES("MAP_START_LAT", "0.0");
+VALUES("MAP_START_LAT", "47.263042");
 INSERT INTO metadata (`key`, `value`)
-VALUES("MAP_START_LON", "0.0");
+VALUES("MAP_START_LON", "11.400476");
 INSERT INTO metadata (`key`, `value`)
 VALUES("MAP_START_ZOOM", "14");
 INSERT INTO metadata (`key`, `value`)

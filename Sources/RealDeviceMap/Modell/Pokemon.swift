@@ -375,7 +375,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         
         var pokemonFilterExclude = pokemonFilterExclude ?? [Int]()
         
-        if pokemonFilterIV != nil && !pokemonFilterIV!.isEmpty {
+        if pokemonFilterIV != nil && !pokemonFilterIV!.isEmpty && showIV {
             for ivFilter in pokemonFilterIV! {
                 guard let id = Int(ivFilter.key) else {
                     continue
@@ -400,9 +400,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         
         let sqlAdd: String
-        if (pokemonFilterIV == nil || pokemonFilterIV!.isEmpty) && pokemonFilterExclude.isEmpty {
+        if (pokemonFilterIV == nil || pokemonFilterIV!.isEmpty || !showIV) && pokemonFilterExclude.isEmpty {
             sqlAdd = ""
-        } else if pokemonFilterIV == nil || pokemonFilterIV!.isEmpty {
+        } else if pokemonFilterIV == nil || pokemonFilterIV!.isEmpty || !showIV {
             sqlAdd = " AND \(sqlExclude)"
         } else {
             var orPart = ""
