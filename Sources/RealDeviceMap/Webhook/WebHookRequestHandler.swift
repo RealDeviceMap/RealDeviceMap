@@ -326,12 +326,12 @@ class WebHookRequestHandler {
             
             if enableClearing {
                 for gymId in gymIdsPerCell {
-                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key) {
+                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key), cleared != 0 {
                         Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Gyms.")
                     }
                 }
                 for stopId in stopsIdsPerCell {
-                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key) {
+                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key), cleared != 0 {
                         Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Pokestops.")
                     }
                 }
