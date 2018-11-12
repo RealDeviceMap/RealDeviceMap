@@ -111,7 +111,7 @@ class IVInstanceController: InstanceControllerProto {
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
         
-        if UInt32(Date().timeIntervalSince1970) - pokemon.firstSeenTimestamp >= 600 {
+        if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
             return getTask(uuid: uuid, username: username)
         }
         

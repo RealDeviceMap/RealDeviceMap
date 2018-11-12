@@ -181,6 +181,7 @@ class WebReqeustHandler {
             data["max_pokemon_id"] = maxPokemonId
             data["locale_new"] = Localizer.locale
             data["enable_register_new"] = enableRegister
+            data["enable_clearing"] = WebHookRequestHandler.enableClearing
             data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
@@ -631,6 +632,7 @@ class WebReqeustHandler {
         let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
         let enableRegister = request.param(name: "enable_register_new") != nil
+        let enableClearing = request.param(name: "enable_clearing") != nil
         
         do {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
@@ -644,6 +646,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
+            try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
         } catch {
             data["show_error"] = true
             return data
@@ -657,6 +660,7 @@ class WebReqeustHandler {
         WebReqeustHandler.enableRegister = enableRegister
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
+        WebHookRequestHandler.enableClearing = enableClearing
         Pokemon.defaultTimeUnseen = defaultTimeUnseen
         Pokemon.defaultTimeReseen = defaultTimeReseen
         Localizer.locale = locale

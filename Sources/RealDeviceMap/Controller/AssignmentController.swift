@@ -22,49 +22,48 @@ class AssignmentController: InstanceControllerDelegate {
     private init() {}
     
     public func setup() throws {
-        if isSetup {
-            return
-        }
-        isSetup = true
         
         assignmentsLock.lock()
         assignments = try Assignment.getAll()
         assignmentsLock.unlock()
-        queue = Threading.getQueue(name: "AssignmentController-updater", type: .serial)
         
         timeZone = Localizer.global.timeZone
         
-        queue.dispatch {
-            
-            var lastUpdate: Int32 = -2
-            
-            while true {
-            
-                let now = self.todaySeconds()
-                if lastUpdate == -2 {
-                    lastUpdate = Int32(now)
-                } else if lastUpdate > now {
-                    lastUpdate = -1
-                }
+        if !isSetup {
+            queue = Threading.getQueue(name: "AssignmentController-updater", type: .serial)
+            queue.dispatch {
                 
-                self.assignmentsLock.lock()
-                let assignments = self.assignments
-                self.assignmentsLock.unlock()
+                var lastUpdate: Int32 = -2
                 
-                for assignment in assignments {
-                    
-                    if assignment.time != 0 && now >= assignment.time && lastUpdate < assignment.time {
-                        self.triggerAssignment(assignment: assignment)
+                while true {
+                
+                    let now = self.todaySeconds()
+                    if lastUpdate == -2 {
+                        lastUpdate = Int32(now)
+                    } else if lastUpdate > now {
+                        lastUpdate = -1
                     }
                     
+                    self.assignmentsLock.lock()
+                    let assignments = self.assignments
+                    self.assignmentsLock.unlock()
+                    
+                    for assignment in assignments {
+                        
+                        if assignment.time != 0 && now >= assignment.time && lastUpdate < assignment.time {
+                            self.triggerAssignment(assignment: assignment)
+                        }
+                        
+                    }
+                    
+                    Threading.sleep(seconds: 5)
+                    lastUpdate = Int32(now)
+                    
                 }
                 
-                Threading.sleep(seconds: 5)
-                lastUpdate = Int32(now)
-                
             }
-            
         }
+        isSetup = true
         
     }
     

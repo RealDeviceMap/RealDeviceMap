@@ -18,8 +18,10 @@ import Turf
 
 class WebHookRequestHandler {
     
-    static var levelCacheLock = Threading.Lock()
-    static var levelCache = [String: Int]()
+    static var enableClearing = false
+    
+    private static var levelCacheLock = Threading.Lock()
+    private static var levelCache = [String: Int]()
         
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
         
@@ -77,12 +79,15 @@ class WebHookRequestHandler {
         let pokemonEncounterId = json["pokemon_encounter_id"] as? String
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
         
-        var wildPokemons = [POGOProtos_Map_Pokemon_WildPokemon]()
-        var nearbyPokemons = [POGOProtos_Map_Pokemon_NearbyPokemon]()
-        var forts = [POGOProtos_Map_Fort_FortData]()
+        var wildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon)]()
+        var nearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
+        var forts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
+        
+        var isEmtpyGMO = true
+        var containsGMO = false
 
         for rawData in contents {
             
@@ -124,10 +129,22 @@ class WebHookRequestHandler {
                 }
             } else if method == 106 {
                 if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
-                    for mapCell in gmo.mapCells {
-                        wildPokemons += mapCell.wildPokemons
-                        nearbyPokemons += mapCell.nearbyPokemons
-                        forts += mapCell.forts
+                    containsGMO = true
+                    if gmo.timeOfDay.rawValue == 0 {
+                        Log.info(message: "[WebHookRequestHandler] GMO doesn't contain time of day. Asuming empty.")
+                    } else {
+                        isEmtpyGMO = false
+                        for mapCell in gmo.mapCells {
+                            for wildPokemon in mapCell.wildPokemons {
+                                wildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon))
+                            }
+                            for nearbyPokemon in mapCell.nearbyPokemons {
+                                nearbyPokemons.append((cell: mapCell.s2CellID, data: nearbyPokemon))
+                            }
+                            for fort in mapCell.forts {
+                                forts.append((cell: mapCell.s2CellID, data: fort))
+                            }
+                        }
                     }
                 }
             }
@@ -146,7 +163,7 @@ class WebHookRequestHandler {
         if targetCoord != nil {
             for fort in forts {
                 if !inArea {
-                    let coord = CLLocationCoordinate2D(latitude: fort.latitude, longitude: fort.longitude)
+                    let coord = CLLocationCoordinate2D(latitude: fort.data.latitude, longitude: fort.data.longitude)
                     if coord.distance(to: targetCoord!) <= targetMaxDistance {
                         inArea = true
                     }
@@ -159,7 +176,7 @@ class WebHookRequestHandler {
             for pokemon in wildPokemons {
                 if targetCoord != nil {
                     if !inArea {
-                        let coord = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
+                        let coord = CLLocationCoordinate2D(latitude: pokemon.data.latitude, longitude: pokemon.data.longitude)
                         if coord.distance(to: targetCoord!) <= targetMaxDistance {
                             inArea = true
                         }
@@ -169,8 +186,8 @@ class WebHookRequestHandler {
                 }
                 if pokemonEncounterId != nil {
                     if pokemonCoords == nil {
-                        if pokemon.encounterID.description == pokemonEncounterId {
-                            pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.latitude, longitude: pokemon.longitude)
+                        if pokemon.data.encounterID.description == pokemonEncounterId {
+                            pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.data.latitude, longitude: pokemon.data.longitude)
                         }
                     } else if pokemonCoords != nil && inArea {
                         break
@@ -179,7 +196,7 @@ class WebHookRequestHandler {
             }
         }
         
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any]
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO]
         
         if targetCoord != nil {
             data["in_area"] = inArea
@@ -201,28 +218,44 @@ class WebHookRequestHandler {
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
             
+            var gymIdsPerCell = [UInt64: [String]]()
+            var stopsIdsPerCell = [UInt64: [String]]()
+            
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
-                let pokemon = Pokemon(wildPokemon: wildPokemon)
+                let pokemon = Pokemon(wildPokemon: wildPokemon.data, cellId: wildPokemon.cell)
                 try? pokemon.save(mysql: mysql)
             }
             Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon)
+                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell)
                 try? pokemon?.save(mysql: mysql)
             }
             Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 
             let startForts = Date()
             for fort in forts {
-                if fort.type == .gym {
-                    let gym = Gym(fortData: fort)
+                if fort.data.type == .gym {
+                    let gym = Gym(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
-                } else if fort.type == .checkpoint {
-                    let pokestop = Pokestop(fortData: fort)
+                    
+                    if gymIdsPerCell[fort.cell] == nil {
+                        gymIdsPerCell[fort.cell] = [fort.data.id]
+                    } else {
+                        gymIdsPerCell[fort.cell]!.append(fort.data.id)
+                    }
+                    
+                } else if fort.data.type == .checkpoint {
+                    let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
+                    
+                    if stopsIdsPerCell[fort.cell] == nil {
+                        stopsIdsPerCell[fort.cell] = [fort.data.id]
+                    } else {
+                        stopsIdsPerCell[fort.cell]!.append(fort.data.id)
+                    }
                 }
             }
             Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
@@ -289,6 +322,19 @@ class WebHookRequestHandler {
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+            
+            if enableClearing {
+                for gymId in gymIdsPerCell {
+                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key) {
+                        Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Gyms.")
+                    }
+                }
+                for stopId in stopsIdsPerCell {
+                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key) {
+                        Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Pokestops.")
+                    }
+                }
             }
             
             Threading.destroyQueue(queue)

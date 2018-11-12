@@ -31,7 +31,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "spawn_id": spawnId as Any,
             "expire_timestamp": expireTimestamp as Any,
             "expire_timestamp_true": false, // FIXME: - Temp solution
-            "first_seen_timestamp": firstSeenTimestamp,
+            "first_seen_timestamp": firstSeenTimestamp ?? 1,
             "atk_iv": atkIv as Any,
             "def_iv": defIv as Any,
             "sta_iv": staIv as Any,
@@ -46,7 +46,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "weather": weather as Any,
             "pokestop_id": pokestopId as Any,
             "costume": costume as Any,
-            "updated": updated
+            "updated": updated ?? 1
         ]
     }
     
@@ -59,9 +59,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "latitude": lat,
             "longitude": lon,
             "disappear_time": expireTimestamp ?? 0,
-            "first_seen": firstSeenTimestamp,
+            "first_seen": firstSeenTimestamp ?? 1,
             "verified": false,
-            "last_modified_time": updated,
+            "last_modified_time": updated ?? 1,
             "gender": gender ?? 0,
             "cp": cp ?? 0,
             "form": form ?? 0,
@@ -106,11 +106,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     var size: Double?
     var weather: UInt8?
     var pokestopId: String?
-    var firstSeenTimestamp: UInt32
-    var updated: UInt32
-    var changed: UInt32
+    var firstSeenTimestamp: UInt32?
+    var updated: UInt32?
+    var changed: UInt32?
+    var cellId: UInt64?
     
-    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32, updated: UInt32, changed: UInt32) {
+    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt8?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, weather: UInt8?, pokestopId: String?, firstSeenTimestamp: UInt32?, updated: UInt32?, changed: UInt32?, cellId: UInt64?) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -134,9 +135,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.updated = updated
         self.firstSeenTimestamp = firstSeenTimestamp
         self.changed = changed
+        self.cellId = cellId
     }
         
-    init(wildPokemon: POGOProtos_Map_Pokemon_WildPokemon) {
+    init(wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64) {
         
         let id = wildPokemon.encounterID.description
         let pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
@@ -158,13 +160,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.gender = gender
         self.form = form
         
-        self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
-        self.updated = UInt32(Date().timeIntervalSince1970)
-        self.changed = self.updated
+        self.cellId = cellId
         
     }
     
-    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon) throws {
+    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon, cellId: UInt64) throws {
         
         let id = nearbyPokemon.encounterID.description
         let pokemonId = nearbyPokemon.pokemonID.rawValue.toUInt16()
@@ -215,9 +215,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.gender = gender
         self.form = form
         
-        self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
-        self.updated = UInt32(Date().timeIntervalSince1970)
-        self.changed = self.updated
+        self.cellId = cellId
 
     }
     
@@ -250,6 +248,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     public func save(mysql: MySQL?=nil) throws {
         
+        var bindFirstSeen: Bool
+        var bindChangedTimestamp: Bool
+        
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
@@ -260,6 +261,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             try? spawnPoint.save(mysql: mysql)
         }
         
+        updated = UInt32(Date().timeIntervalSince1970)
+        
         let oldPokemon: Pokemon?
         do {
             oldPokemon = try Pokemon.getWithId(mysql: mysql, id: id)
@@ -269,21 +272,24 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let mysqlStmt = MySQLStmt(mysql)
         
         if oldPokemon == nil {
+            bindFirstSeen = false
+            bindChangedTimestamp = false
+            
             if self.expireTimestamp == nil {
                 self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeUnseen
             }
-            
-            self.changed = self.firstSeenTimestamp
             
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
             let sql = """
                 INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
+            bindFirstSeen = true
+            
             self.firstSeenTimestamp = oldPokemon!.firstSeenTimestamp
             
             if self.expireTimestamp == nil {
@@ -296,6 +302,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 }
             }
             
+            if oldPokemon!.cellId != nil && self.cellId == nil {
+                self.cellId = oldPokemon!.cellId
+            }
+            
             if oldPokemon!.spawnId != nil && self.spawnId == nil {
                 self.spawnId = oldPokemon!.spawnId
                 self.lat = oldPokemon!.lat
@@ -306,11 +316,15 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.pokestopId = oldPokemon!.pokestopId
             }
             
+            let changedSQL: String
             if oldPokemon!.atkIv == nil && self.atkIv != nil {
                 WebHookController.global.addPokemonEvent(pokemon: self)
-                self.changed = UInt32(Date().timeIntervalSince1970)
+                bindChangedTimestamp = false
+                changedSQL = "UNIX_TIMESTAMP()"
             } else {
+                bindChangedTimestamp = true
                 self.changed = oldPokemon!.changed
+                changedSQL = "?"
             }
             
             if oldPokemon!.atkIv != nil && self.atkIv == nil {
@@ -327,7 +341,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             
             let sql = """
                 UPDATE pokemon
-                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, gender = ?, form = ?, cp = ?, level = ?, weather = ?, costume = ?, weight = ?, size = ?, pokestop_id = ?, updated = ?, first_seen_timestamp = ?, changed = ?
+                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, gender = ?, form = ?, cp = ?, level = ?, weather = ?, costume = ?, weight = ?, size = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(), first_seen_timestamp = ?, changed = \(changedSQL)
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -352,9 +366,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(weight)
         mysqlStmt.bindParam(size)
         mysqlStmt.bindParam(pokestopId)
-        mysqlStmt.bindParam(updated)
-        mysqlStmt.bindParam(firstSeenTimestamp)
-        mysqlStmt.bindParam(changed)
+
+        if bindFirstSeen {
+            mysqlStmt.bindParam(firstSeenTimestamp)
+        }
+        if bindChangedTimestamp {
+            mysqlStmt.bindParam(changed)
+        }
         
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
@@ -454,7 +472,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         
         let sql = """
-            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed
+            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed, cell_id
             FROM pokemon
             WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlAdd)
         """
@@ -525,8 +543,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let updated = result[20] as! UInt32
             let firstSeenTimestamp = result[21] as! UInt32
             let changed = result[22] as! UInt32
+            let cellId = result[23] as? UInt64
             
-            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, weather: weather, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed))
+            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, weather: weather, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId))
             
         }
         return pokemons
@@ -541,7 +560,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         
         let sql = """
-            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed
+            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed, cell_id
             FROM pokemon
             WHERE id = ?
         """
@@ -584,8 +603,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let updated = result[20] as! UInt32
         let firstSeenTimestamp = result[21] as! UInt32
         let changed = result[22] as! UInt32
+        let cellId = result[23] as? UInt64
         
-        return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, weather: weather, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed)
+        return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, weather: weather, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId)
         
     }
     

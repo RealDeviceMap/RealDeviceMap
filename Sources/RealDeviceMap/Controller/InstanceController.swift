@@ -136,6 +136,7 @@ class InstanceController {
         for instance in instancesByInstanceName {
             instance.value.reload()
         }
+        try? AssignmentController.global.setup()
     }
     
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
@@ -162,6 +163,7 @@ class InstanceController {
                 devicesByDeviceUUID[device.key] = nil
             }
         }
+        try? AssignmentController.global.setup()
     }
     
     public func removeInstance(instanceName: String) {
@@ -172,12 +174,14 @@ class InstanceController {
                 devicesByDeviceUUID[device.key] = nil
             }
         }
+        try? AssignmentController.global.setup()
     }
     
     public func addDevice(device: Device) {
         if device.instanceName != nil && instancesByInstanceName[device.instanceName!] != nil {
             devicesByDeviceUUID[device.uuid] = device
         }
+        try? AssignmentController.global.setup()
     }
     
     public func reloadDevice(newDevice: Device, oldDeviceUUID: String) {
@@ -187,10 +191,12 @@ class InstanceController {
     
     public func removeDevice(device: Device) {
         devicesByDeviceUUID[device.uuid] = nil
+        try? AssignmentController.global.setup()
     }
     
     public func removeDevice(deviceUUID: String) {
         devicesByDeviceUUID[deviceUUID] = nil
+        try? AssignmentController.global.setup()
     }
     
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {

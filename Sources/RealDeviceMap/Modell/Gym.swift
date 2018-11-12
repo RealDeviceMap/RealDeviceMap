@@ -31,7 +31,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_pokemon_id": raidPokemonId as Any,
             "raid_level": raidLevel as Any,
             "availble_slots": availbleSlots as Any,
-            "updated": updated,
+            "updated": updated ?? 1,
             "ex_raid_eligible": exRaidEligible as Any,
             "in_battle": inBattle as Any,
             "raid_pokemon_form": raidPokemonForm as Any,
@@ -128,12 +128,13 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var raidPokemonForm: UInt8?
     var raidPokemonCp: UInt16?
     var availbleSlots: UInt16?
-    var updated: UInt32
+    var updated: UInt32?
     var exRaidEligible: Bool?
     var inBattle: Bool?
     var raidIsExclusive: Bool?
+    var cellId: UInt64?
     
-    init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?, lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?, raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots:UInt16?, updated:UInt32, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?, raidPokemonForm: UInt8?, raidPokemonCp: UInt16?, raidIsExclusive: Bool?) {
+    init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?, lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?, raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots:UInt16?, updated:UInt32?, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?, raidPokemonForm: UInt8?, raidPokemonCp: UInt16?, raidIsExclusive: Bool?, cellId: UInt64?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -157,9 +158,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.raidPokemonForm = raidPokemonForm
         self.raidPokemonCp = raidPokemonCp
         self.raidIsExclusive = raidIsExclusive
+        self.cellId = cellId
     }
     
-    init(fortData: POGOProtos_Map_Fort_FortData) {
+    init(fortData: POGOProtos_Map_Fort_FortData, cellId: UInt64) {
         
         self.id = fortData.id
         self.lat = fortData.latitude
@@ -188,7 +190,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             self.raidIsExclusive = fortData.raidInfo.isExclusive
         }
         
-        self.updated = UInt32(Date().timeIntervalSince1970)
+        self.cellId = cellId
         
     }
     
@@ -202,8 +204,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         self.name = fortData.name
         self.teamId = fortData.teamColor.rawValue.toUInt8()
-        
-        self.updated = UInt32(Date().timeIntervalSince1970)
         
     }
     
@@ -222,6 +222,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         let mysqlStmt = MySQLStmt(mysql)
         
+        updated = UInt32(Date().timeIntervalSince1970)
+        
         if oldGym == nil {
             WebHookController.global.addGymEvent(gym: self)
             WebHookController.global.addGymInfoEvent(gym: self)
@@ -238,12 +240,15 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
             
             let sql = """
-                INSERT INTO gym (id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO gym (id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
+            if oldGym!.cellId != nil && self.cellId == nil {
+                self.cellId = oldGym!.cellId
+            }
             if oldGym!.name != nil && self.name == nil {
                 self.name = oldGym!.name
             }
@@ -280,7 +285,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             
             let sql = """
                 UPDATE gym
-                SET lat = ?, lon = ? , name = ? , url = ? , guarding_pokemon_id = ? , last_modified_timestamp = ? , team_id = ? , raid_end_timestamp = ? , raid_spawn_timestamp = ? , raid_battle_timestamp = ? , raid_pokemon_id = ? , enabled = ? , availble_slots = ? , updated = ? , raid_level = ?, ex_raid_eligible = ?, in_battle = ?, raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?, raid_pokemon_form = ?, raid_pokemon_cp = ?, raid_is_exclusive = ?
+                SET lat = ?, lon = ? , name = ? , url = ? , guarding_pokemon_id = ? , last_modified_timestamp = ? , team_id = ? , raid_end_timestamp = ? , raid_spawn_timestamp = ? , raid_battle_timestamp = ? , raid_pokemon_id = ? , enabled = ? , availble_slots = ? , updated = UNIX_TIMESTAMP(), raid_level = ?, ex_raid_eligible = ?, in_battle = ?, raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?, raid_pokemon_form = ?, raid_pokemon_cp = ?, raid_is_exclusive = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -299,7 +304,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(raidPokemonId)
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(availbleSlots)
-        mysqlStmt.bindParam(updated)
         mysqlStmt.bindParam(raidLevel)
         mysqlStmt.bindParam(exRaidEligible)
         mysqlStmt.bindParam(inBattle)
@@ -327,7 +331,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         
         var sql = """
-            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive
+            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
         """
@@ -387,8 +391,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidPokemonForm = result[20] as? UInt8
             let raidPokemonCp = result[21] as? UInt16
             let raidIsExclusive = (result[22] as? UInt8)?.toBool()
+            let cellId = result[23] as? UInt64
             
-            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive))
+            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive, cellId: cellId))
         }
         return gyms
         
@@ -402,7 +407,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         
         let sql = """
-            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive
+            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id
             FROM gym
             WHERE id = ?
         """
@@ -444,8 +449,54 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let raidPokemonForm = result[20] as? UInt8
         let raidPokemonCp = result[21] as? UInt16
         let raidIsExclusive = (result[22] as? UInt8)?.toBool()
+        let cellId = result[23] as? UInt64
         
-        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive)
+        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive, cellId: cellId)
+    }
+    
+    public static func clearOld(mysql: MySQL?=nil, ids: [String], cellId: UInt64) throws -> UInt {
+        
+        if ids.count == 0 {
+            return 0
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[GYM] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let notInSQL: String
+        
+        if ids.count != 0 {
+            var inSQL = "("
+            for _ in 1..<ids.count {
+                inSQL += "?, "
+            }
+            inSQL += "?)"
+            notInSQL = "AND id NOT IN \(inSQL)"
+        } else {
+            notInSQL = ""
+        }
+        
+        let sql = """
+            DELETE FROM gym
+            WHERE cell_id = ? \(notInSQL)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(cellId)
+        for id in ids {
+            mysqlStmt.bindParam(id)
+        }
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        return mysqlStmt.affectedRows()
+        
     }
     
     static func == (lhs: Gym, rhs: Gym) -> Bool {

@@ -19,17 +19,16 @@ class SpawnPoint: JSONConvertibleObject{
             "id":id,
             "lat":lat,
             "lon":lon,
-            "updated":updated
+            "updated":updated ?? 1
         ]
     }
     
     var id: UInt64
     var lat: Double
     var lon: Double
-    var updated: UInt32
+    var updated: UInt32?
     
-    
-    init(id: UInt64, lat: Double, lon: Double, updated: UInt32) {
+    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -51,17 +50,18 @@ class SpawnPoint: JSONConvertibleObject{
         }
         let mysqlStmt = MySQLStmt(mysql)
         
+        updated = UInt32(Date().timeIntervalSince1970)
+        
         if oldSpawnpoint == nil {
 
             let sql = """
                 INSERT INTO spawnpoint (id, lat, lon, updated)
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, UNIX_TIMESTAMP())
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
             mysqlStmt.bindParam(lat)
             mysqlStmt.bindParam(lon)
-            mysqlStmt.bindParam(updated)
             
             guard mysqlStmt.execute() else {
                 Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
