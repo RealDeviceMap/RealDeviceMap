@@ -9,6 +9,7 @@ services:
       - db
     volumes:
       - images:/perfect-deployed/realdevicemap/resources/webroot/static/img
+      - backups:/perfect-deployed/realdevicemap/backups
 #     - /etc/localtime:/etc/localtime:ro
     ports:
       - 9000:9000
@@ -19,13 +20,15 @@ services:
       DB_PORT: 3306
       DB_USERNAME: rdmuser
       DB_PASSWORD: YourStrongPassw0rd!
+      DB_ROOT_USERNAME: root
+      DB_ROOT_PASSWORD: YourStrongRootPassw0rd!
       WEB_SERVER_ADDRESS: 0.0.0.0
       WEB_SERVER_PORT: 9000
       WEBHOOK_SERVER_ADDRESS: 0.0.0.0
       WEBHOOK_SERVER_PORT: 9001
   db:
     image: mariadb
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
     container_name: realdevicemap-db
     restart: unless-stopped
     environment:

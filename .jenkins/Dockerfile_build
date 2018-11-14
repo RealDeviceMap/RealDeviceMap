@@ -15,5 +15,8 @@ RUN apt-get -y update && apt-get install -y uuid-dev
 RUN rm -rf /var/lib/apt/lists/*
 
 # imagemagick for creating raid images
-RUN apt-get -y update && apt-get install  -y imagemagick
+RUN apt-get -y update && apt-get install -y imagemagick
 RUN cp /usr/bin/convert /usr/local/bin
+
+# MySQL Client
+RUN apt-get -y update && apt-get install -y mysql-client-5.7

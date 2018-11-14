@@ -12,6 +12,14 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
+// Check if /backups exists
+let backups = Dir("backups")
+if !backups.exists {
+    let message = "[MAIN] Backups directory doesn't exist! Make sure to persist the backups folder before continuing."
+    Log.critical(message: message)
+    fatalError(message)
+}
+
 // Init DBController
 Log.debug(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
@@ -22,7 +30,7 @@ do {
     try InstanceController.setup()
 } catch {
     let message = "[MAIN] Failed to setup InstanceController"
-    Log.error(message: message)
+    Log.critical(message: message)
     fatalError(message)
 }
 
@@ -92,7 +100,7 @@ do {
     try AssignmentController.global.setup()
 } catch {
     let message = "[MAIN] Failed to start Assignement Controller"
-    Log.error(message: message)
+    Log.critical(message: message)
     fatalError(message)
 }
 

@@ -19,11 +19,17 @@ class DBController {
     public private(set) static var global = DBController()
 
     private var multiStatement = false
+    private var asRoot = false
     
     public var mysql: MySQL? {
         let mysql = MySQL()
         mysql.setOption(.MYSQL_SET_CHARSET_NAME, "utf8mb4")
-        let connected = mysql.connect(host: host, user: username, password: password, db: database, port: port)
+        let connected: Bool
+        if asRoot {
+            connected = mysql.connect(host: host, user: rootUsername, password: rootPassword, db: database, port: port)
+        } else {
+            connected = mysql.connect(host: host, user: username, password: password, db: database, port: port)
+        }
         if connected {
             if multiStatement {
                 mysql.setServerOption(.MYSQL_OPTION_MULTI_STATEMENTS_ON)
@@ -42,6 +48,8 @@ class DBController {
     private let port: UInt32
     private let username: String
     private let password: String?
+    private let rootUsername: String
+    private let rootPassword: String?
     
     private var newestDBVersion: Int {
         let fileManager = FileManager.default
@@ -121,6 +129,8 @@ class DBController {
         port = UInt32(enviroment["DB_PORT"] ?? "") ?? 3306
         username = enviroment["DB_USERNAME"] ?? "rdmuser"
         password = enviroment["DB_PASSWORD"]
+        rootUsername = enviroment["DB_ROOT_USERNAME"] ?? "root"
+        rootPassword = enviroment["DB_ROOT_PASSWORD"]
         
         MySQLSessionConnector.host = host
         MySQLSessionConnector.port = Int(port)
@@ -136,6 +146,7 @@ class DBController {
     
     private func setup() {
         
+        asRoot = true
         multiStatement = true
         
         var count = 1
@@ -143,9 +154,9 @@ class DBController {
         var mysql: MySQL!
         while !done {
             guard let mysqlTemp = self.mysql else {
-                let message = "Failed to connect to database while initializing. Try: \(count)/10"
+                let message = "Failed to connect to database (as \(self.rootUsername)) while initializing. Try: \(count)/10"
                 if count == 10 {
-                    Log.error(message: "[DBController] " + message)
+                    Log.critical(message: "[DBController] " + message)
                     fatalError(message)
                 } else {
                     Log.warning(message: "[DBController] " + message)
@@ -155,6 +166,13 @@ class DBController {
                 continue
             }
             done = true
+            asRoot = false
+            guard self.mysql != nil else {
+                let message = "Failed to connect to database (as \(self.username)) while initializing."
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
+            }
+            asRoot = true
             mysql = mysqlTemp
         }
         
@@ -196,6 +214,7 @@ class DBController {
         
         migrate(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
         multiStatement = false
+        asRoot = false
         
         if version != newestDBVersion {
             try? clearPerms()
@@ -206,6 +225,38 @@ class DBController {
         if fromVersion < toVersion {
             Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
             
+            let uuidString = Foundation.UUID().uuidString
+            let backupsDir = Dir("backups")
+            let backupFile = File(backupsDir.path + "/" + uuidString + ".sql")
+            Log.debug(message: "[DBController] Creating backup \(uuidString)")
+            #if os(macOS)
+            let mysqldumpCommand = "/usr/local/opt/mysql@5.7/bin/mysqldump"
+            #else
+            let mysqldumpCommand = "/usr/bin/mysqldump"
+            #endif
+            
+            let command = Shell(mysqldumpCommand, "--add-drop-table", self.database, "-h", self.host, "-P", self.port.description, "-u", self.rootUsername, "-p\(self.rootPassword ?? "")")
+            var result = command.run()
+            if result == nil || result!.trimmingCharacters(in: .whitespacesAndNewlines) == "" {
+                let message = "Failed to create Backup"
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
+            }
+            
+            do {
+                try backupFile.open(.readWrite)
+                try backupFile.write(string: "-- RDM Auto Generated Backup\n")
+                try backupFile.write(string: "-- Migration: \(fromVersion) -> \(fromVersion + 1)\n")
+                try backupFile.write(string: "-- Date: \(Date())\n")
+                try backupFile.write(string: "-- ------------------------------------------------------\n\n")
+                try backupFile.write(string: result!)
+                backupFile.close()
+                result = nil
+            } catch {
+                let message = "Failed to create Backup)"
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
+            }
             
             var migrateSQL: String
             do {
@@ -225,6 +276,8 @@ class DBController {
                     guard mysql.query(statement: sql) else {
                         let message = "Migration Failed: (\(mysql.errorMessage()))"
                         Log.critical(message: "[DBController] " + message)
+                        Log.info(message: "[DBController] Rolling back migration. Do not kill RDM!")
+                        rollback(backup: backupFile)
                         fatalError(message)
                     }
                 }
@@ -249,6 +302,33 @@ class DBController {
             Log.info(message: "[DBController] Migration successful")
             migrate(mysql: mysql, fromVersion: fromVersion + 1, toVersion: toVersion)
         }
+    }
+    
+    private func rollback(backup: File) {
+        let backupSQL: String
+        do {
+            try backup.open(.read)
+            backupSQL = try backup.readString()
+        } catch {
+            Log.error(message: "[DBController] Failed to read backup! Manual restore required!")
+            return
+        }
+
+        #if os(macOS)
+        let mysqlCommand = "/usr/local/opt/mysql@5.7/bin/mysql"
+        #else
+        let mysqlCommand = "/usr/bin/mysql"
+        #endif
+
+        let command = Shell(mysqlCommand, self.database, "-h", self.host, "-P", self.port.description, "-u", self.rootUsername, "-p\(self.rootPassword ?? "")")
+        let inputPipe = Pipe()
+        let backupSQLData = backupSQL.data(using: .utf8)!
+        inputPipe.fileHandleForWriting.write(backupSQLData)
+        inputPipe.fileHandleForWriting.closeFile()
+        _ = command.run(inputPipe: inputPipe)
+
+        Log.info(message: "[DBController] Database restored successfully!")
+    
     }
  
     private func clearPerms() throws {

@@ -15,11 +15,13 @@ class Shell {
         self.args = args
     }
     
-    func run() -> String? {
+    func run(errorPipe: Any?=nil, inputPipe: Any?=nil) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"
         task.arguments = args
         let pipe = Pipe()
+        task.standardError = errorPipe
+        task.standardInput = inputPipe
         task.standardOutput = pipe
         task.launch()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
