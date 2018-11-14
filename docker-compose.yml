@@ -44,7 +44,7 @@ services:
 volumes:
   images:
     driver: local
+  backups:
+    driver: local
   data:
     driver: local
-
-

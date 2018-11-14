@@ -1,4 +1,4 @@
-CREATE TABLE `group` (
+CREATE TABLE IF NOT EXISTS `group` (
 	`name` VARCHAR(32) NOT NULL PRIMARY KEY,
 	`perm_view_map` tinyint(1) unsigned NOT NULL,
 	`perm_view_map_raid` tinyint(1) unsigned NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE `group` (
 	`perm_admin_user` tinyint(1) unsigned NOT NULL,
 	`perm_admin_group` tinyint(1) unsigned NOT NULL
 );
-CREATE TABLE `user` (
+CREATE TABLE IF NOT EXISTS `user` (
 	`username` VARCHAR(32) NOT NULL PRIMARY KEY,
 	`email` VARCHAR(128) NOT NULL UNIQUE KEY,
 	`password` VARCHAR(72) NOT NULL,

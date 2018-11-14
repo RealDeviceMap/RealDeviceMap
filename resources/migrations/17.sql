@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS `quest_stats`;
-CREATE TABLE `quest_stats` (
+CREATE TABLE IF NOT EXISTS `quest_stats` (
   `date` DATE NOT NULL,
   `reward_type` smallint(6) unsigned NOT NULL DEFAULT 0,
   `pokemon_id` smallint(6) unsigned NOT NULL DEFAULT 0,

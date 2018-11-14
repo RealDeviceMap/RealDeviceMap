@@ -4,7 +4,7 @@ DROP TRIGGER IF EXISTS `pokemon_inserted`;
 DROP TRIGGER IF EXISTS `gym_updated`;
 DROP TRIGGER IF EXISTS `gym_inserted`;
 
-CREATE TABLE `pokemon_stats` (
+CREATE TABLE IF NOT EXISTS `pokemon_stats` (
   `date` DATE NOT NULL,
   `pokemon_id` smallint(6) unsigned NOT NULL,
   `count` int NOT NULL,
@@ -29,7 +29,7 @@ FOR EACH ROW
   ON DUPLICATE KEY UPDATE
     count = count + 1;
 
-CREATE TABLE `raid_stats` (
+CREATE TABLE IF NOT EXISTS `raid_stats` (
   `date` DATE NOT NULL,
   `pokemon_id` smallint(6) unsigned NOT NULL,
   `count` int NOT NULL,

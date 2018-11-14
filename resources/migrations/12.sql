@@ -1,4 +1,4 @@
-CREATE TABLE `account` (
+CREATE TABLE IF NOT EXISTS `account` (
   `username` varchar(32) NOT NULL,
   `password` varchar(32) NOT NULL,
   `is_high_level` tinyint(1) unsigned NOT NULL,

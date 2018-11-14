@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `web_session` (
     `useragent` text DEFAULT NULL,
     PRIMARY KEY (`token`)
 );
-CREATE TABLE `pokestop` (
+CREATE TABLE IF NOT EXISTS `pokestop` (
     `id` varchar(35) NOT NULL,
     `lat` double(18,14) NOT NULL,
     `lon` double(18,14) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE `pokestop` (
     KEY `ix_lure_expire_timestamp` (`lure_expire_timestamp`),
     KEY `ix_updated` (`updated`)
 );
-CREATE TABLE `gym` (
+CREATE TABLE IF NOT EXISTS `gym` (
     `id` varchar(35) NOT NULL,
     `lat` double(18,14) NOT NULL,
     `lon` double(18,14) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE `gym` (
     KEY `ix_raid_end_timestamp` (`raid_end_timestamp`),
     KEY `ix_updated` (`updated`)
 );
-CREATE TABLE `pokemon` (
+CREATE TABLE IF NOT EXISTS `pokemon` (
     `id` varchar(35) NOT NULL,
 	`pokestop_id` varchar(35) DEFAULT NULL,
 	`spawn_id` varchar(20) DEFAULT NULL,

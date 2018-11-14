@@ -1,4 +1,4 @@
-CREATE TABLE `spawnpoint` (
+CREATE TABLE IF NOT EXISTS `spawnpoint` (
 	`id` bigint(15) unsigned NOT NULL,
     `lat` double(18,14) NOT NULL,
     `lon` double(18,14) NOT NULL,

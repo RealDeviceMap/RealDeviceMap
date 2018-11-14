@@ -1,9 +1,9 @@
-CREATE TABLE `instance` (
+CREATE TABLE IF NOT EXISTS `instance` (
 	`name` VARCHAR(30) NOT NULL PRIMARY KEY,
 	`type` ENUM('circle_pokemon', 'circle_raid') NOT NULL,
     `data` text NOT NULL
 );
-CREATE TABLE `device` (
+CREATE TABLE IF NOT EXISTS `device` (
 	`uuid` VARCHAR(40) NOT NULL PRIMARY KEY,
     `instance_name` VARCHAR(30) DEFAULT NULL,
     `last_host` VARCHAR(30) DEFAULT NULL,
