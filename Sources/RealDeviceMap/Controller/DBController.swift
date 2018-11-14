@@ -328,6 +328,8 @@ class DBController {
         _ = command.run(inputPipe: inputPipe)
 
         Log.info(message: "[DBController] Database restored successfully!")
+        Log.info(message: "[DBController] Sleeping for 60s before restarting again. (Save to kill now)")
+        Threading.sleep(seconds: 60)
     
     }
  
