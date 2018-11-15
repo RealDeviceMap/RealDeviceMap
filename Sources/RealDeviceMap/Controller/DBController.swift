@@ -225,6 +225,52 @@ class DBController {
         if fromVersion < toVersion {
             Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
             
+            var allTables = [
+                "account": true,
+                "assignment": true,
+                "device": true,
+                "group": true,
+                "gym": true,
+                "gyms": true,
+                "instance": true,
+                "metadata": true,
+                "pokemon": true,
+                "pokemon_stats": false,
+                "pokestop": true,
+                "quest_stats": false,
+                "raid_stats": false,
+                "spawnpoint": true,
+                "user": true,
+                "web_session": true
+            ]
+            
+            var tablesShema = ""
+            var tablesData = ""
+            
+            let allTablesSQL = """
+                SHOW TABLES
+            """
+            
+            let mysqlStmtTables = MySQLStmt(mysql)
+            _ = mysqlStmtTables.prepare(statement: allTablesSQL)
+            
+            guard mysqlStmtTables.execute() else {
+                let message = "Failed to execute query. (\(mysqlStmtTables.errorMessage())"
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
+            }
+            let results = mysqlStmtTables.results()
+            while let result = results.next() {
+                if let name = result[0] as? String {
+                    if let withData = allTables[name] {
+                        tablesShema += " \(name)"
+                        if withData {
+                            tablesData += " \(name)"
+                        }
+                    }
+                }
+            }
+            
             let uuidString = Foundation.UUID().uuidString
             let backupsDir = Dir("backups")
             let backupFileSchema = File(backupsDir.path + uuidString + ".schema.sql")
@@ -238,7 +284,7 @@ class DBController {
             #endif
             
             // Schema
-            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
+            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
             let resultSchema = commandSchema.runError()
             if resultSchema == nil || resultSchema!.stringByReplacing(string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.", withString: "").trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                 let message = "Failed to create Command Backup: \(resultSchema as Any)"
@@ -247,7 +293,7 @@ class DBController {
             }
             
             // Trigger
-            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --add-drop-trigger --triggers --no-create-info --no-data --skip-routines \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
+            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
             let resultTrigger = commandTrigger.runError()
             if resultTrigger == nil || resultTrigger!.stringByReplacing(string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.", withString: "").trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                 let message = "Failed to create Command Backup \(resultTrigger as Any)"
@@ -256,7 +302,7 @@ class DBController {
             }
  
             // Data
-            let commandData = Shell("bash", "-c", mysqldumpCommand + " --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
+            let commandData = Shell("bash", "-c", mysqldumpCommand + " --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
             let resultData = commandData.runError()
             if resultData == nil || resultData!.stringByReplacing(string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.", withString: "").trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                 let message = "Failed to create Data Backup \(resultData as Any)"
