@@ -72,7 +72,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "longitude":lon,
                 "team": teamId ?? 0,
                 "slots_available": availbleSlots ?? 6,
-                "sponsor_id": exRaidEligible ?? 0
+                "sponsor_id": exRaidEligible ?? 0,
+                "in_battle": inBattle ?? false,
             ]
         } else if type == "egg" || type == "raid" {
             realType = "raid"
@@ -92,7 +93,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "move_1": raidPokemonMove1 ?? 0,
                 "move_2": raidPokemonMove2 ?? 0,
                 "sponsor_id": exRaidEligible ?? 0,
-                "is_exclusive": raidIsExclusive as Any
+                "is_exclusive": raidIsExclusive ?? false,
             ]
         } else {
             realType = "unkown"
@@ -259,7 +260,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.raidIsExclusive = oldGym!.raidIsExclusive
             }
 
-            if oldGym!.availbleSlots != self.availbleSlots || oldGym!.teamId != self.teamId {
+            if oldGym!.availbleSlots != self.availbleSlots || oldGym!.teamId != self.teamId || oldGym!.inBattle != self.inBattle {
                 WebHookController.global.addGymInfoEvent(gym: self)
             }
             
