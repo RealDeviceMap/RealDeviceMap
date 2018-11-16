@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/stormpath/Turnstile.git", from: "1.0.6"),
         .package(url: "https://github.com/crossroadlabs/Regex.git", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.2.0"),
-        .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", from: "1.1.0"),
+        .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", from: "1.1.3"),
         .package(url: "https://github.com/123FLO321/turf-swift.git", from: "0.3.1")
     ],
     targets: [

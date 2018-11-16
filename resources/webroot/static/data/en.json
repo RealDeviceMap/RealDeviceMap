@@ -30,6 +30,7 @@
         "filter_reset": "Reset Filter",
         "filter_disable_all": "Disable All",
         "filter_pokemon_filter": "Pokemon Filter",
+		"filter_quest_filter": "Quest Filter",
 		"filter_table_search": "Search:",
 		"filter_table_empty": "No matching Pokemon found",
         "filter_global_iv": "Global IV Limit",
@@ -38,6 +39,13 @@
         "filter_on": "On",
         "filter_off": "Off",
         "filter_configure": "Configure",
+		"filter_misc": "Miscellaneous",
+		"filter_items": "Items",
+
+		"filter_stardust": "Stardust",
+		"filter_xp": "XP",
+		"filter_candy": "Candy",
+
 		"register_title": "Register to %{name}!",
 		"register_username": "Username",
 		"register_email": "Email",

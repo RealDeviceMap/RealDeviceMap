@@ -27,6 +27,7 @@ let showSpawnpoints;
 let avilableForms = [];
 
 let pokemonFilterLoaded = false;
+let questFilterLoaded = false;
 
 $(function() {
 
@@ -48,88 +49,15 @@ $(function() {
             manageConfigureButton($(this), false);
         });
 
-        const scrollHeight = $(document).height() * 0.5;
-
         if (!pokemonFilterLoaded) {
-        	pokemonFilterLoaded = true;
-            const table = $('#table-filter-pokemon').DataTable( {
-				"language": {
-                    "search": i18n('filter_table_search'),
-                    "emptyTable": i18n('filter_table_empty'),
-					"zeroRecords": i18n('filter_table_empty'),
-                },
-                rowGroup: {
-                    dataSrc: "type"
-                },
-                "autoWidth": false,
-                "columns": [
-                    { "data": "image", "width": "5%", "className": 'details-control'},
-                    { "data": "pokemon_name", "width": "15%" },
-                    { "data": {
-                        _:    "pokemon_id.formatted",
-                        sort: "pokemon_id.sort"
-                    }, "width": "5%" },
-                    { "data": "filter" },
-                    { "data": "size" }
-                ],
-                "ajax": {
-                    "url": "/api/get_data?show_pokemon_filter=true",
-                    "dataSrc": "data.pokemon_filters"
-                },
-                "info":     false,
-                "order": [[ 2, "asc" ]],
-                "search.caseInsensitive": true,
-                "columnDefs": [ {
-                    "targets": [0,3,4],
-                    "orderable": false
-                    },{
-                    "type": "num",
-                    "targets": 2
-                } ],
-                "deferRender": true,
-                "scrollY": scrollHeight,
-                "scrollCollapse": true,
-                "scroller": true,
-                "lengthChange": false,
-                "dom": "lfrti",
-                "drawCallback": function( settings ) {
-					$('.lazy_load').each(function () {
-						var img = $(this);
-						img.removeClass("lazy_load");
-						img.attr('src', img.data('src'));
-					});
+            pokemonFilterLoaded = true;
+            loadPokemonFilter();
+        }
 
-                    $('.select-button-new').each(function (button) {
-                        manageSelectButton($(this), true);
-                    });
-                    $('.configure-button-new').each(function (button) {
-                        manageConfigureButton($(this), true);
-                    });
-                },
-                "responsive": true
-            });
-
-            $('#table-filter-pokemon tbody').on('click', 'td.details-control', function () {
-                $('.select-button-new').each(function (button) {
-                    manageSelectButton($(this), true);
-                });
-                $('.configure-button-new').each(function (button) {
-                    manageConfigureButton($(this), true);
-                });
-            } );
-
-            table.on( 'search.dt', function () {
-                $( "tr" ).each(function() {
-                    var tr = $(this).closest('tr');
-                    var row = table.row(tr);
-                    if (row.child.isShown()) {
-                        row.child.hide();
-                        tr.removeClass('parent');
-
-                    };
-                })
-            } );
-		}
+        if (!questFilterLoaded) {
+            questFilterLoaded = true;
+            loadQuestFilter();
+        }
 
     });
 
@@ -260,7 +188,7 @@ function initMap() {
         $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
     });
 
-    $('#disable-all-filter').on('click', function(event) {
+    $('#disable-all-pokemon-filter').on('click', function(event) {
         const defaultPokemonFilter = [];
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
@@ -1477,4 +1405,169 @@ function manageGlobalIVPopup(id, filter) {
 
 function checkIVFilterValid(filter) {
     return filter.replace(/\s/g,'').match(/^(?!&&|\|\|)((\|\||&&)?\(?((A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?)\)?)*$/g);
+}
+
+
+// MARK: - Init Filter
+
+function loadPokemonFilter() {
+    const scrollHeight = $(document).height() * 0.5;
+    const table = $('#table-filter-pokemon').DataTable( {
+        "language": {
+            "search": i18n('filter_table_search'),
+            "emptyTable": i18n('filter_table_empty'),
+            "zeroRecords": i18n('filter_table_empty'),
+        },
+        rowGroup: {
+            dataSrc: "type"
+        },
+        "autoWidth": false,
+        "columns": [
+            { "data": "image", "width": "5%", "className": 'details-control'},
+            { "data": "name", "width": "15%" },
+            { "data": {
+                    _:    "id.formatted",
+                    sort: "id.sort"
+                }, "width": "5%" },
+            { "data": "filter" },
+            { "data": "size" }
+        ],
+        "ajax": {
+            "url": "/api/get_data?show_pokemon_filter=true",
+            "dataSrc": "data.pokemon_filters"
+        },
+        "info":     false,
+        "order": [[ 2, "asc" ]],
+        "search.caseInsensitive": true,
+        "columnDefs": [ {
+            "targets": [0,3,4],
+            "orderable": false
+        },{
+            "type": "num",
+            "targets": 2
+        } ],
+        "deferRender": true,
+        "scrollY": scrollHeight,
+        "scrollCollapse": true,
+        "scroller": true,
+        "lengthChange": false,
+        "dom": "lfrti",
+        "drawCallback": function( settings ) {
+            $('.lazy_load').each(function () {
+                var img = $(this);
+                img.removeClass("lazy_load");
+                img.attr('src', img.data('src'));
+            });
+
+            $('.select-button-new').each(function (button) {
+                manageSelectButton($(this), true);
+            });
+            $('.configure-button-new').each(function (button) {
+                manageConfigureButton($(this), true);
+            });
+        },
+        "responsive": true
+    });
+
+    $('#table-filter-pokemon tbody').on('click', 'td.details-control', function () {
+        $('.select-button-new').each(function (button) {
+            manageSelectButton($(this), true);
+        });
+        $('.configure-button-new').each(function (button) {
+            manageConfigureButton($(this), true);
+        });
+    } );
+
+    table.on( 'search.dt', function () {
+        $( "tr" ).each(function() {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('parent');
+
+            };
+        })
+    } );
+}
+
+function loadQuestFilter() {
+    const scrollHeight = $(document).height() * 0.5;
+    const table = $('#table-filter-quest').DataTable( {
+        "language": {
+            "search": i18n('filter_table_search'),
+            "emptyTable": i18n('filter_table_empty'),
+            "zeroRecords": i18n('filter_table_empty'),
+        },
+        rowGroup: {
+            dataSrc: "type"
+        },
+        "autoWidth": false,
+        "columns": [
+            { "data": "image", "width": "5%", "className": 'details-control'},
+            { "data": "name", "width": "15%" },
+            { "data": {
+                    _:    "id.formatted",
+                    sort: "id.sort"
+                }, "width": "5%" },
+            { "data": "filter" },
+            { "data": "size" }
+        ],
+        "ajax": {
+            "url": "/api/get_data?show_quest_filter=true",
+            "dataSrc": "data.quest_filters"
+        },
+        "info":     false,
+        "order": [[ 2, "asc" ]],
+        "search.caseInsensitive": true,
+        "columnDefs": [ {
+            "targets": [0,3,4],
+            "orderable": false
+        },{
+            "type": "num",
+            "targets": 2
+        } ],
+        "deferRender": true,
+        "scrollY": scrollHeight,
+        "scrollCollapse": true,
+        "scroller": true,
+        "lengthChange": false,
+        "dom": "lfrti",
+        "drawCallback": function( settings ) {
+            $('.lazy_load').each(function () {
+                var img = $(this);
+                img.removeClass("lazy_load");
+                img.attr('src', img.data('src'));
+            });
+
+            $('.select-button-new').each(function (button) {
+                manageSelectButton($(this), true);
+            });
+            $('.configure-button-new').each(function (button) {
+                manageConfigureButton($(this), true);
+            });
+        },
+        "responsive": true
+    });
+
+    $('#table-filter-quest tbody').on('click', 'td.details-control', function () {
+        $('.select-button-new').each(function (button) {
+            manageSelectButton($(this), true);
+        });
+        $('.configure-button-new').each(function (button) {
+            manageConfigureButton($(this), true);
+        });
+    } );
+
+    table.on( 'search.dt', function () {
+        $( "tr" ).each(function() {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('parent');
+
+            };
+        })
+    } );
 }

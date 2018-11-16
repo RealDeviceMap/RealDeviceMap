@@ -10,6 +10,7 @@ import PerfectLib
 import PerfectHTTP
 import PerfectMustache
 import PerfectSessionMySQL
+import POGOProtos
 
 class ApiRequestHandler {
     
@@ -41,6 +42,7 @@ class ApiRequestHandler {
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
+        let showQuestFilter = request.param(name: "show_quest_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
@@ -99,7 +101,7 @@ class ApiRequestHandler {
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
             
-            let pokemonTypeString = Localizer.global.get(value: "filter_name")
+            let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
             let generalTypeString = Localizer.global.get(value: "filter_general")
 
             let globalIV = Localizer.global.get(value: "filter_global_iv")
@@ -140,11 +142,11 @@ class ApiRequestHandler {
                     let size = "<button class=\"btn btn-sm btn-primary configure-button-new\" data-id=\"\(id)\" data-type=\"pokemon-iv\" data-info=\"global-iv\">\(configureString)</button>"
                     
                     pokemonData.append([
-                        "pokemon_id": [
+                        "id": [
                             "formatted": andOrString,
                             "sort": i
                         ],
-                        "pokemon_name": globalIV,
+                        "name": globalIV,
                         "image": "-",
                         "filter": filter,
                         "size": size,
@@ -197,11 +199,11 @@ class ApiRequestHandler {
                 """
                 
                 pokemonData.append([
-                    "pokemon_id": [
+                    "id": [
                         "formatted": String(format: "%03d", i),
                         "sort": i+1
                     ],
-                    "pokemon_name": Localizer.global.get(value: "poke_\(i)") ,
+                    "name": Localizer.global.get(value: "poke_\(i)") ,
                     "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -210,7 +212,169 @@ class ApiRequestHandler {
             }
             data["pokemon_filters"] = pokemonData
         }
+        
+        if permViewMap && showQuestFilter {
+            
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
+            let miscTypeString = Localizer.global.get(value: "filter_misc")
+            let itemsTypeString = Localizer.global.get(value: "filter_items")
 
+            
+            var questData = [[String: Any]]()
+            
+            // Misc
+            for i in 1...3 {
+                
+                let itemName: String
+                switch i {
+                case 1:
+                    itemName = Localizer.global.get(value: "filter_stardust")
+                case 2:
+                    itemName = Localizer.global.get(value: "filter_xp")
+                default:
+                    itemName = Localizer.global.get(value: "filter_candy")
+                }
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="quest-misc" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="quest-misc" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-misc" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-misc" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-misc" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-misc" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                questData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": itemName,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(-i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": miscTypeString
+                ])
+            }
+            
+            // Items
+            var itemI = 1
+            for item in POGOProtos_Inventory_Item_ItemId.allAvilable {
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                questData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", itemI),
+                        "sort": itemI+100
+                    ],
+                    "name": Localizer.global.get(value: "item_\(item.rawValue)") ,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(item.rawValue).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": itemsTypeString
+                ])
+                itemI += 1
+            }
+            
+            // Pokemon
+            for i in 1...WebReqeustHandler.maxPokemonId {
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="quest-pokemon" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                questData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+200
+                    ],
+                    "name": Localizer.global.get(value: "poke_\(i)") ,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": pokemonTypeString
+                    ])
+            }
+            data["quest_filters"] = questData
+        }
         
         if showDevices && perms.contains(.adminSetting) {
             

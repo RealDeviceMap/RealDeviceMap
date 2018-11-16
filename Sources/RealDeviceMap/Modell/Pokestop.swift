@@ -255,12 +255,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["pokemon_id"] = info.pokemonID.rawValue
             case .pokemonEncounter:
                 let info = rewardData.pokemonEncounter
-                infoData["pokemon_id"] = info.pokemonID.rawValue
+                if info.isHiddenDitto {
+                    infoData["pokemon_id"] = 132
+                    infoData["pokemon_id_display"] = info.pokemonID.rawValue
+                } else {
+                    infoData["pokemon_id"] = info.pokemonID.rawValue
+                }
                 infoData["costume_id"] = info.pokemonDisplay.costume.rawValue
                 infoData["form_id"] = info.pokemonDisplay.form.rawValue
                 infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
                 infoData["shiny"] = info.pokemonDisplay.shiny
-                infoData["ditto"] = info.isHiddenDitto
             case .avatarClothing: break
             case .quest: break
             default: break
