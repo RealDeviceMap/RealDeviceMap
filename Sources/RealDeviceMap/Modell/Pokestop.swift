@@ -203,13 +203,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 }
                 infoData["hit"] = info.hit
             case .withThrowTypeInARow:
-                if conditionData.hasWithThrowType {
-                    let info = conditionData.withThrowType
-                    if info.throwType.rawValue != 0 {
-                        infoData["throw_type_id"] = info.throwType.rawValue
-                    }
-                    infoData["hit"] = info.hit
+                let info = conditionData.withThrowType
+                if info.throwType.rawValue != 0 {
+                    infoData["throw_type_id"] = info.throwType.rawValue
                 }
+                infoData["hit"] = info.hit
             case .withWinGymBattleStatus: break
             case .withSuperEffectiveCharge: break
             case .withUniquePokestop: break
