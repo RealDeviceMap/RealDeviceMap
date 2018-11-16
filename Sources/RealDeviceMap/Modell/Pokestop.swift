@@ -275,7 +275,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.questTimestamp = UInt32(Date().timeIntervalSince1970)
     }
     
-    public func save(mysql: MySQL?=nil) throws {
+    public func save(mysql: MySQL?=nil, updateQuest:Bool=false) throws {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
@@ -317,7 +317,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if oldPokestop!.url != nil && self.url == nil {
                 self.url = oldPokestop!.url
             }
-            if oldPokestop!.questType != nil && self.questType == nil {
+            if updateQuest && oldPokestop!.questType != nil && self.questType == nil {
                 self.questType = oldPokestop!.questType
                 self.questTarget = oldPokestop!.questTarget
                 self.questConditions = oldPokestop!.questConditions
@@ -329,13 +329,20 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
                 WebHookController.global.addLureEvent(pokestop: self)
             }
-            if questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
+            if updateQuest && questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
                 WebHookController.global.addQuestEvent(pokestop: self)
+            }
+            
+            let questSQL: String
+            if updateQuest {
+                questSQL = "quest_type = ?, quest_timestamp = ?, quest_target = ?, quest_conditions = ?, quest_rewards = ?, quest_template = ?,"
+            } else {
+                questSQL = ""
             }
             
             let sql = """
                 UPDATE pokestop
-                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), quest_type = ?, quest_timestamp = ?, quest_target = ?, quest_conditions = ?, quest_rewards = ?, quest_template = ?, cell_id = ?
+                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -348,12 +355,14 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
         mysqlStmt.bindParam(lastModifiedTimestamp)
-        mysqlStmt.bindParam(questType)
-        mysqlStmt.bindParam(questTimestamp)
-        mysqlStmt.bindParam(questTarget)
-        mysqlStmt.bindParam(questConditions.jsonEncodeForceTry())
-        mysqlStmt.bindParam(questRewards.jsonEncodeForceTry())
-        mysqlStmt.bindParam(questTemplate)
+        if updateQuest{
+            mysqlStmt.bindParam(questType)
+            mysqlStmt.bindParam(questTimestamp)
+            mysqlStmt.bindParam(questTarget)
+            mysqlStmt.bindParam(questConditions.jsonEncodeForceTry())
+            mysqlStmt.bindParam(questRewards.jsonEncodeForceTry())
+            mysqlStmt.bindParam(questTemplate)
+        }
         mysqlStmt.bindParam(cellId)
         
         if oldPokestop != nil {

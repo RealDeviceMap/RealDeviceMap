@@ -246,7 +246,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         
     }
 
-    public func save(mysql: MySQL?=nil) throws {
+    public func save(mysql: MySQL?=nil, updateIV:Bool=false) throws {
         
         var bindFirstSeen: Bool
         var bindChangedTimestamp: Bool
@@ -318,7 +318,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             
             let changedSQL: String
-            if oldPokemon!.atkIv == nil && self.atkIv != nil {
+            if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
                 WebHookController.global.addPokemonEvent(pokemon: self)
                 bindChangedTimestamp = false
                 changedSQL = "UNIX_TIMESTAMP()"
@@ -328,7 +328,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 changedSQL = "?"
             }
             
-            if oldPokemon!.atkIv != nil && self.atkIv == nil {
+            if updateIV && oldPokemon!.atkIv != nil && self.atkIv == nil {
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
                 self.staIv = oldPokemon!.staIv
@@ -340,9 +340,16 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.level = oldPokemon!.level
             }
             
+            let ivSQL: String
+            if updateIV {
+                ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, weight = ?, size = ?,"
+            } else {
+                ivSQL = ""
+            }
+            
             let sql = """
                 UPDATE pokemon
-                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, gender = ?, form = ?, cp = ?, level = ?, weather = ?, costume = ?, weight = ?, size = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(), first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?
+                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(), first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -353,19 +360,21 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(lon)
         mysqlStmt.bindParam(spawnId)
         mysqlStmt.bindParam(expireTimestamp)
-        mysqlStmt.bindParam(atkIv)
-        mysqlStmt.bindParam(defIv)
-        mysqlStmt.bindParam(staIv)
-        mysqlStmt.bindParam(move1)
-        mysqlStmt.bindParam(move2)
+        if updateIV {
+            mysqlStmt.bindParam(atkIv)
+            mysqlStmt.bindParam(defIv)
+            mysqlStmt.bindParam(staIv)
+            mysqlStmt.bindParam(move1)
+            mysqlStmt.bindParam(move2)
+            mysqlStmt.bindParam(cp)
+            mysqlStmt.bindParam(level)
+            mysqlStmt.bindParam(weight)
+            mysqlStmt.bindParam(size)
+        }
         mysqlStmt.bindParam(gender)
         mysqlStmt.bindParam(form)
-        mysqlStmt.bindParam(cp)
-        mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(weather)
         mysqlStmt.bindParam(costume)
-        mysqlStmt.bindParam(weight)
-        mysqlStmt.bindParam(size)
         mysqlStmt.bindParam(pokestopId)
         if bindFirstSeen {
             mysqlStmt.bindParam(firstSeenTimestamp)

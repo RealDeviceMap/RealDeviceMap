@@ -301,7 +301,7 @@ class WebHookRequestHandler {
                     }
                     if pokestop != nil {
                         pokestop!.addQuest(questData: quest)
-                        try? pokestop!.save(mysql: mysql)
+                        try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
@@ -318,7 +318,7 @@ class WebHookRequestHandler {
                     }
                     if pokemon != nil {
                         pokemon!.addEncounter(encounterData: encounter)
-                        try? pokemon!.save(mysql: mysql)
+                        try? pokemon!.save(mysql: mysql, updateIV: true)
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
