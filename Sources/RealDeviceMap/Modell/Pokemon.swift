@@ -360,7 +360,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(lon)
         mysqlStmt.bindParam(spawnId)
         mysqlStmt.bindParam(expireTimestamp)
-        if updateIV {
+        if updateIV || oldPokemon == nil {
             mysqlStmt.bindParam(atkIv)
             mysqlStmt.bindParam(defIv)
             mysqlStmt.bindParam(staIv)
