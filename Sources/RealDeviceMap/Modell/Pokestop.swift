@@ -355,7 +355,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
         mysqlStmt.bindParam(lastModifiedTimestamp)
-        if updateQuest || oldPokestop == nil {
+        if updateQuest || oldPokestop == nil {
             mysqlStmt.bindParam(questType)
             mysqlStmt.bindParam(questTimestamp)
             mysqlStmt.bindParam(questTarget)
