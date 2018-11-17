@@ -24,45 +24,12 @@ if !backups.exists {
 Log.debug(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
 
-// Init Instance Contoller
-do {
-    Log.debug(message: "[MAIN] Starting Instance Controller")
-    try InstanceController.setup()
-} catch {
-    let message = "[MAIN] Failed to setup InstanceController"
-    Log.critical(message: message)
-    fatalError(message)
-}
-
-// Start WebHookController
-Log.debug(message: "[MAIN] Starting Webhook Controller")
-WebHookController.global.start()
-
-// Load Forms
-Log.debug(message: "[MAIN] Loading Avilable Forms")
-var avilableForms = [String]()
-for formString in POGOProtos_Enums_Form.allFormsInString {
-    let file = File("resources/webroot/static/img/pokemon/\(formString).png")
-    if file.exists {
-        avilableForms.append(formString)
-    }
-}
-WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
-
-Log.debug(message: "[MAIN] Loading Avilable Items")
-var aviableItems = [-3, -2, -1]
-for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
-    aviableItems.append(itemId.rawValue)
-}
-WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
-
-
 // Load timezone
 Log.debug(message: "[MAIN] Loading Timezone")
 if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
     let sign = result.substring(toIndex: 1)
     if let hours = Int(result.substring(toIndex: 3).substring(fromIndex: 1)),
-       let mins = Int(result.substring(toIndex: 5).substring(fromIndex: 3)) {
+        let mins = Int(result.substring(toIndex: 5).substring(fromIndex: 3)) {
         let offset: Int
         if sign == "-" {
             offset = -hours * 3600 + mins * 60
@@ -96,6 +63,38 @@ let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_UR
 if let webhookDelay = Double(webhookDelayString) {
     WebHookController.global.webhookSendDelay = webhookDelay
 }
+
+// Init Instance Contoller
+do {
+    Log.debug(message: "[MAIN] Starting Instance Controller")
+    try InstanceController.setup()
+} catch {
+    let message = "[MAIN] Failed to setup InstanceController"
+    Log.critical(message: message)
+    fatalError(message)
+}
+
+// Start WebHookController
+Log.debug(message: "[MAIN] Starting Webhook Controller")
+WebHookController.global.start()
+
+// Load Forms
+Log.debug(message: "[MAIN] Loading Avilable Forms")
+var avilableForms = [String]()
+for formString in POGOProtos_Enums_Form.allFormsInString {
+    let file = File("resources/webroot/static/img/pokemon/\(formString).png")
+    if file.exists {
+        avilableForms.append(formString)
+    }
+}
+WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
+
+Log.debug(message: "[MAIN] Loading Avilable Items")
+var aviableItems = [-3, -2, -1]
+for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
+    aviableItems.append(itemId.rawValue)
+}
+WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
 Log.debug(message: "[MAIN] Starting Webhook")
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
