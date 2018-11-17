@@ -257,10 +257,10 @@ function initMap() {
         const defaultQuestFilter = {};
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            defaultQuestFilter["p" + i] = {"show": false, "size": questFilter["p" + i]["size"]};
+            defaultQuestFilter["p" + i] = {"show": false, "size": questFilterNew["p" + i]["size"]};
         }
         $.each(avilableItems, function (index, itemId) {
-            defaultQuestFilter["i" + itemId] = {"show": false, "size": questFilter["i" + itemId]["size"]};
+            defaultQuestFilter["i" + itemId] = {"show": false, "size": questFilterNew["i" + itemId]["size"]};
         });
 
         store('quest_filter', JSON.stringify(defaultQuestFilter));
