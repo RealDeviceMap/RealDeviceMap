@@ -32,7 +32,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         //.itemXAttack,
         //.itemXDefense,
         //.itemXMiracle,
-        //.itemRazzBerry,
+        .itemRazzBerry,
         //.itemBlukBerry,
         .itemNanabBerry,
         //.itemWeparBerry,
