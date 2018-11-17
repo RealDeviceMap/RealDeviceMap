@@ -241,10 +241,10 @@ function initMap() {
         const defaultQuestFilter = {};
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            defaultQuestFilter["p_" + i] = {"show": true, "size": "normal"};
+            defaultQuestFilter["p" + i] = {"show": true, "size": "normal"};
         }
         $.each(avilableItems, function (index, itemId) {
-            defaultQuestFilter["i_" + itemId] = {"show": true, "size": "normal"};
+            defaultQuestFilter["i" + itemId] = {"show": true, "size": "normal"};
         });
 
         store('quest_filter', JSON.stringify(defaultQuestFilter));
@@ -257,10 +257,10 @@ function initMap() {
         const defaultQuestFilter = {};
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            defaultQuestFilter["p_" + i] = {"show": false, "size": questFilter["p_" + i]["size"]};
+            defaultQuestFilter["p" + i] = {"show": false, "size": questFilter["p_" + i]["size"]};
         }
         $.each(avilableItems, function (index, itemId) {
-            defaultQuestFilter["i_" + itemId] = {"show": false, "size": questFilter["i_" + itemId]["size"]};
+            defaultQuestFilter["i" + itemId] = {"show": false, "size": questFilter["i_" + itemId]["size"]};
         });
 
         store('quest_filter', JSON.stringify(defaultQuestFilter));
