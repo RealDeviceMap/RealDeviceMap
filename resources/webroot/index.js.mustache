@@ -768,7 +768,9 @@ function getPokemonIndex(pokemonId) {
 }
 
 function getQuestSize(questId) {
-    console.log(questId);
+    if (questFilter[questId] === undefined || questFilter[questId]["size"] === undefined) {
+        return 30;
+    }
     const size = questFilter[questId]["size"];
     if (size === "small") {
         return 20;
@@ -782,7 +784,9 @@ function getQuestSize(questId) {
 }
 
 function getQuestIndex(questId) {
-    console.log(questId);
+    if (questFilter[questId] === undefined || questFilter[questId]["size"] === undefined) {
+        return 0;
+    }
     const size = questFilter[questId]["size"];
     if (size === "small") {
         return 1;
