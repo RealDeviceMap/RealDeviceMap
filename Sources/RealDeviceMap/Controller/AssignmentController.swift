@@ -39,7 +39,9 @@ class AssignmentController: InstanceControllerDelegate {
                 
                     let now = self.todaySeconds()
                     if lastUpdate == -2 {
+                        Threading.sleep(seconds: 5)
                         lastUpdate = Int32(now)
+                        continue
                     } else if lastUpdate > now {
                         lastUpdate = -1
                     }
