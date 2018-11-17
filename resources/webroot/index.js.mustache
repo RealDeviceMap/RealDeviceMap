@@ -67,12 +67,6 @@ $(function() {
 
     });
 
-    $('#filterPokemonModal').on("shown.bs.modal", function () {
-        const dataTable= $('#table-filter-pokemon').DataTable();
-        dataTable.responsive.recalc();
-        dataTable.columns.adjust();
-    });
-
     initMap();
 });
 
@@ -161,10 +155,10 @@ function loadStorage() {
         const defaultQuestFilter = {};
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            defaultQuestFilter["p_" + i] = {"show": true, "size": "normal"};
+            defaultQuestFilter["p" + i] = {"show": true, "size": "normal"};
         }
         $.each(avilableItems, function (index, itemId) {
-            defaultQuestFilter["i_" + itemId] = {"show": true, "size": "normal"};
+            defaultQuestFilter["i" + itemId] = {"show": true, "size": "normal"};
         });
 
         store('quest_filter', JSON.stringify(defaultQuestFilter));
@@ -173,13 +167,13 @@ function loadStorage() {
         questFilter = JSON.parse(questFilterValue);
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            if (questFilter["p_" + i] === undefined) {
-                questFilter["p_" + i] = {"show": true, "size": "normal"};
+            if (questFilter["p" + i] === undefined) {
+                questFilter["p" + i] = {"show": true, "size": "normal"};
             }
         }
         $.each(avilableItems, function (index, itemId) {
-            if (questFilter["i_" + itemId] === undefined) {
-                questFilter["i_" + itemId] = {"show": true, "size": "normal"};
+            if (questFilter["i" + itemId] === undefined) {
+                questFilter["i" + itemId] = {"show": true, "size": "normal"};
             }
         });
         store('quest_filter', JSON.stringify(questFilter));
@@ -339,8 +333,7 @@ function initMap() {
         }
 
         pokemonFilter = pokemonFilterNew;
-        const pokemonFilterOld = $.extend(true, {}, pokemonFilter);
-
+        //const pokemonFilterOld = $.extend(true, {}, pokemonFilter);
         const newPokemonMarkers = [];
         $.each(pokemonMarkers, function (index, pokemon) {
             map.removeLayer(pokemon.marker);
@@ -360,8 +353,7 @@ function initMap() {
         pokemonMarkers = newPokemonMarkers;
 
         questFilter = questFilterNew;
-        const questFilterOld = $.extend(true, {}, questFilter);
-
+        //const questFilterOld = $.extend(true, {}, questFilter);
         const newPokestopMarkers = [];
         $.each(pokestopMarkers, function (index, pokestop) {
             map.removeLayer(pokestop.marker);
@@ -378,7 +370,7 @@ function initMap() {
                 newPokemonMarkers.push(pokemon);
             }*/
         });
-        pokestopMarkers = pokestopMarkers;
+        pokestopMarkers = newPokestopMarkers;
 
 		showGyms = newShowGyms;
 		store('show_gyms', newShowGyms);
@@ -498,7 +490,7 @@ function loadData() {
     const pokemonFilterExclude = [];
     const pokemonFilterIV = {};
     if (showPokemon) {
-    	var i;
+    	let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
             if (pokemonFilter[i]["show"] === false) {
                 pokemonFilterExclude.push(i);
@@ -519,6 +511,21 @@ function loadData() {
 
     }
 
+    const questFilterExclude = [];
+    if (showQuests) {
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (questFilter["p" + i]["show"] === false) {
+                questFilterExclude.push("p" + i);
+            }
+        }
+        $.each(avilableItems, function (index, itemId) {
+            if (questFilter["i" + itemId]["show"] === false) {
+                questFilterExclude.push("i" + itemId);
+            }
+        });
+    }
+
     const data = {
         '_': Math.round((new Date()).getTime() / 1000),
 		'min_lat': bounds._southWest.lat,
@@ -531,6 +538,7 @@ function loadData() {
         'show_quests': showQuests,
         'show_pokemon': showPokemon,
 		'pokemon_filter_exclude': JSON.stringify(pokemonFilterExclude),
+        'quest_filter_exclude': JSON.stringify(questFilterExclude),
         'pokemon_filter_iv': JSON.stringify(pokemonFilterIV),
         'show_spawnpoints': showSpawnpoints,
 		'last_update': lastUpdateServer,
@@ -748,6 +756,34 @@ function getPokemonSize(pokemonId) {
 
 function getPokemonIndex(pokemonId) {
     const size = pokemonFilter[pokemonId]["size"];
+    if (size === "small") {
+        return 1;
+    } else if (size === "large") {
+        return 3;
+    } else if (size === "huge") {
+        return 4;
+    } else {
+        return 2;
+    }
+}
+
+function getQuestSize(questId) {
+    console.log(questId);
+    const size = questFilter[questId]["size"];
+    if (size === "small") {
+        return 20;
+    } else if (size === "large") {
+        return 45;
+    } else if (size === "huge") {
+        return 65;
+    } else {
+        return 30;
+    }
+}
+
+function getQuestIndex(questId) {
+    console.log(questId);
+    const size = questFilter[questId]["size"];
     if (size === "small") {
         return 1;
     } else if (size === "large") {
@@ -1182,19 +1218,22 @@ function getPokestopMarkerIcon(pokestop, ts) {
         } else {
             rewardString = "i0";
         }
+        const size = getQuestSize(rewardString);
+
+
         if (pokestop.lure_expire_timestamp >= ts) {
             icon = L.icon({
                 iconUrl: 'static/img/quest/1_' + rewardString + '.png',
-                iconSize: 		[30, 50],
-                iconAnchor: 	[15, 47],
-                popupAnchor: 	[0, -47]
+                iconSize: 		[size       , size * 1.667  ],
+                iconAnchor: 	[size / 2   , size * 1.567  ],
+                popupAnchor: 	[0          , size * -1.567 ]
             });
         } else {
             icon = L.icon({
                 iconUrl: 'static/img/quest/0_'+ rewardString +'.png',
-                iconSize: 		[30, 50],
-                iconAnchor: 	[15, 47],
-                popupAnchor: 	[0, -47]
+                iconSize: 		[size       , size * 1.667  ],
+                iconAnchor: 	[size / 2   , size * 1.567  ],
+                popupAnchor: 	[0          , size * -1.567 ]
             });
         }
     } else {
@@ -1220,11 +1259,29 @@ function getPokestopMarkerIcon(pokestop, ts) {
 function getPokestopMarker(pokestop, ts) {
 
     let zIndex;
-    if (showQuests && pokestop.quest_type !== null) {
-        zIndex = 1;
+
+    if (showQuests && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+        let rewardString;
+        const id = pokestop.quest_rewards[0].type;
+        const info = pokestop.quest_rewards[0].info;
+        if (id === 1 && info !== undefined && info.amount !== undefined) {
+            rewardString = "i-2";
+        } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
+            rewardString = "i" + info.item_id;
+        } else if (id === 3 && info !== undefined && info.amount !== undefined) {
+            rewardString = "i-1";
+        } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+            rewardString = "i-3";
+        } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
+            rewardString = "p" + info.pokemon_id;
+        } else {
+            rewardString = "i0";
+        }
+        zIndex = getQuestIndex(rewardString);
     } else {
         zIndex = 0;
     }
+
     const marker = L.marker([pokestop.lat, pokestop.lon], {
         icon: getPokestopMarkerIcon(pokestop, ts),
         forceZIndex: 20 + zIndex
@@ -1372,8 +1429,69 @@ function manageSelectButton(e, isNew) {
                 shouldShow = pokemonFilterNew["iv_" + id]["on"];
                 break;
         }
-    } else if (type === "") {
-        shouldShow = false;
+    } else if (type === "quest-misc") {
+        switch (info) {
+            case "hide":
+                shouldShow = questFilterNew["i"+ -id]["show"] === false;
+                break;
+            case "show":
+                shouldShow = questFilterNew["i"+ -id]["show"] === true;
+                break;
+            case "small":
+                shouldShow = questFilterNew["i"+ -id]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = questFilterNew["i"+ -id]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = questFilterNew["i"+ -id]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = questFilterNew["i"+ -id]["size"] === "huge";
+                break;
+        }
+    } else if (type === "quest-item") {
+        switch (info) {
+            case "hide":
+                shouldShow = questFilterNew["i"+ id]["show"] === false;
+                break;
+            case "show":
+                shouldShow = questFilterNew["i"+ id]["show"] === true;
+                break;
+            case "small":
+                shouldShow = questFilterNew["i"+ id]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = questFilterNew["i"+ id]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = questFilterNew["i"+ id]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = questFilterNew["i"+ id]["size"] === "huge";
+                break;
+        }
+    } else if (type === "quest-pokemon") {
+        switch (info) {
+            case "hide":
+                shouldShow = questFilterNew["p"+ id]["show"] === false;
+                break;
+            case "show":
+                shouldShow = questFilterNew["p"+ id]["show"] === true;
+                break;
+            case "small":
+                shouldShow = questFilterNew["p"+ id]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = questFilterNew["p"+ id]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = questFilterNew["p"+ id]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = questFilterNew["p"+ id]["size"] === "huge";
+                break;
+        }
     } else {
         shouldShow = false;
     }
@@ -1419,8 +1537,70 @@ function manageSelectButton(e, isNew) {
                         pokemonFilterNew["iv_"+id]["on"] = true;
                         break;
                 }
+            } else if (type === "quest-misc") {
+                switch (info) {
+                    case "hide":
+                        questFilterNew["i"+ -id]["show"] = false;
+                        break;
+                    case "show":
+                        questFilterNew["i"+ -id]["show"] = true;
+                        break;
+                    case "small":
+                        questFilterNew["i"+ -id]["size"] = "small";
+                        break;
+                    case "normal":
+                        questFilterNew["i"+ -id]["size"] = "normal";
+                        break;
+                    case "large":
+                        questFilterNew["i"+ -id]["size"] = "large";
+                        break;
+                    case "huge":
+                        questFilterNew["i"+ -id]["size"] = "huge";
+                        break;
+                }
+            } else if (type === "quest-item") {
+                switch (info) {
+                    case "hide":
+                        questFilterNew["i" + id]["show"] = false;
+                        break;
+                    case "show":
+                        questFilterNew["i" + id]["show"] = true;
+                        break;
+                    case "small":
+                        questFilterNew["i" + id]["size"] = "small";
+                        break;
+                    case "normal":
+                        questFilterNew["i" + id]["size"] = "normal";
+                        break;
+                    case "large":
+                        questFilterNew["i" + id]["size"] = "large";
+                        break;
+                    case "huge":
+                        questFilterNew["i" + id]["size"] = "huge";
+                        break;
+                }
+            } else if (type === "quest-pokemon") {
+                switch (info) {
+                    case "hide":
+                        questFilterNew["p" + id]["show"] = false;
+                        break;
+                    case "show":
+                        questFilterNew["p" + id]["show"] = true;
+                        break;
+                    case "small":
+                        questFilterNew["p" + id]["size"] = "small";
+                        break;
+                    case "normal":
+                        questFilterNew["p" + id]["size"] = "normal";
+                        break;
+                    case "large":
+                        questFilterNew["p" + id]["size"] = "large";
+                        break;
+                    case "huge":
+                        questFilterNew["p" + id]["size"] = "huge";
+                        break;
+                }
             }
-
         })
     }
 }
@@ -1587,6 +1767,13 @@ function loadPokemonFilter() {
             };
         })
     } );
+
+
+    $('#filterPokemonModal').on("shown.bs.modal", function () {
+        const dataTable= $('#table-filter-pokemon').DataTable();
+        dataTable.responsive.recalc();
+        dataTable.columns.adjust();
+    });
 }
 
 function loadQuestFilter() {
@@ -1668,4 +1855,11 @@ function loadQuestFilter() {
             };
         })
     } );
+
+
+    $('#filterQuestModal').on("shown.bs.modal", function () {
+        const dataTable= $('#table-filter-quest').DataTable();
+        dataTable.responsive.recalc();
+        dataTable.columns.adjust();
+    });
 }

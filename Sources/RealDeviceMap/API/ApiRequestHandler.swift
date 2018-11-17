@@ -35,6 +35,7 @@ class ApiRequestHandler {
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
         let showQuests = request.param(name: "show_quests")?.toBool() ?? false
+        let questFilterExclude = request.param(name: "quest_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
@@ -79,7 +80,7 @@ class ApiRequestHandler {
         let permShowStops = perms.contains(.viewMapPokestop)
         let permShowQuests =  perms.contains(.viewMapQuest)
         if (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
-            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests)
+            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, questFilterExclude: questFilterExclude)
         }
         let permShowIV = perms.contains(.viewMapIV)
         if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
@@ -290,10 +291,10 @@ class ApiRequestHandler {
                 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="hide">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="hide">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                 </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="show">
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="show">
                 <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                 </label>
                 </div>
@@ -301,16 +302,16 @@ class ApiRequestHandler {
                 
                 let size = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="small">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="small">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="normal">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="normal">
                 <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="large">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="large">
                 <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(itemI)" data-type="quest-item" data-info="huge">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)" data-type="quest-item" data-info="huge">
                 <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
                 </label>
                 </div>

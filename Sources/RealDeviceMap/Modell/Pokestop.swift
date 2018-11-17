@@ -377,17 +377,81 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool) throws -> [Pokestop] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool, questFilterExclude: [String]?=nil) throws -> [Pokestop] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        var excludedTypes = [Int]()
+        var excludedPokemon = [Int]()
+        var excludedItems = [Int]()
+        
+        if showQuests && questFilterExclude != nil {
+            for filter in questFilterExclude! {
+                if filter.contains(string: "p") {
+                    if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
+                        excludedPokemon.append(id)
+                    }
+                } else if filter.contains(string: "i") {
+                    if let id = filter.stringByReplacing(string: "i", withString: "").toInt() {
+                        if id > 0 {
+                            excludedItems.append(id)
+                        } else if id < 0 {
+                            excludedTypes.append(-id)
+                        }
+                    }
+                }
+            }
+        }
+
+        let excludeTypeSQL: String
+        let excludePokemonSQL: String
+        let excludeItemSQL: String
+        if showQuests {
+            if excludedTypes.isEmpty {
+                excludeTypeSQL = ""
+            } else {
+                var sqlExcludeCreate = "AND (quest_reward_type IS NULL OR quest_reward_type NOT IN ("
+                for _ in 1..<excludedTypes.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludeTypeSQL = sqlExcludeCreate
+            }
+            
+            if excludedPokemon.isEmpty {
+                excludePokemonSQL = ""
+            } else {
+                var sqlExcludeCreate = "AND (quest_pokemon_id IS NULL OR quest_pokemon_id NOT IN ("
+                for _ in 1..<excludedPokemon.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludePokemonSQL = sqlExcludeCreate
+            }
+            
+            if excludedItems.isEmpty {
+                excludeItemSQL = ""
+            } else {
+                var sqlExcludeCreate = "AND (quest_item_id IS NULL OR quest_item_id NOT IN ("
+                for _ in 1..<excludedItems.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludeItemSQL = sqlExcludeCreate
+            }
+        } else {
+            excludeTypeSQL = ""
+            excludePokemonSQL = ""
+            excludeItemSQL = ""
+        }
+        
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id
             FROM pokestop
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"
@@ -400,6 +464,21 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
+        for id in excludedTypes {
+            if id == 1 {
+                mysqlStmt.bindParam(3)
+            } else if id == 2 {
+                mysqlStmt.bindParam(1)
+            } else if id == 3 {
+                mysqlStmt.bindParam(4)
+            }
+        }
+        for id in excludedPokemon {
+            mysqlStmt.bindParam(id)
+        }
+        for id in excludedItems {
+            mysqlStmt.bindParam(id)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
