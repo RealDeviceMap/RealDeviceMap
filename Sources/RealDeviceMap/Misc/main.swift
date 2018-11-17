@@ -49,6 +49,14 @@ for formString in POGOProtos_Enums_Form.allFormsInString {
 }
 WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
 
+Log.debug(message: "[MAIN] Loading Avilable Items")
+var aviableItems = [-3, -2, -1]
+for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
+    aviableItems.append(itemId.rawValue)
+}
+WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
+
+
 // Load timezone
 Log.debug(message: "[MAIN] Loading Timezone")
 if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {

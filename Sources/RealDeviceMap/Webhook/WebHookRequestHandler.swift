@@ -87,6 +87,7 @@ class WebHookRequestHandler {
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         
         var isEmtpyGMO = true
+        var isInvalidGMO = true
         var containsGMO = false
 
         for rawData in contents {
@@ -128,8 +129,9 @@ class WebHookRequestHandler {
                     fortDetails.append(fdr)
                 }
             } else if method == 106 {
+                containsGMO = true
                 if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
-                    containsGMO = true
+                    isInvalidGMO = false
                     if gmo.timeOfDay.rawValue == 0 {
                         Log.info(message: "[WebHookRequestHandler] GMO doesn't contain time of day. Asuming empty.")
                     } else {
@@ -196,7 +198,7 @@ class WebHookRequestHandler {
             }
         }
         
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO]
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO]
         
         if targetCoord != nil {
             data["in_area"] = inArea

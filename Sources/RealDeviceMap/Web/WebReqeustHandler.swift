@@ -24,6 +24,7 @@ class WebReqeustHandler {
     static var maxPokemonId: Int = 493
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = ""
+    static var avilableItemJson: String = ""
     static var enableRegister: Bool = true
     
     private static let sessionDriver = MySQLSessions()
@@ -419,6 +420,7 @@ class WebReqeustHandler {
             data["start_zoom"] = startZoom
             data["max_pokemon_id"] = maxPokemonId
             data["avilable_forms_json"] = avilableFormsJson
+            data["avilable_items_json"] = avilableItemJson
         default:
             break
         }

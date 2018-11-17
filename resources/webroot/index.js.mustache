@@ -13,6 +13,9 @@ let spawnpointMarkers = [];
 let pokemonFilter = {};
 let pokemonFilterNew = {};
 
+let questFilter = {};
+let questFilterNew = {};
+
 let openedPokemon;
 let openedPokestop;
 let openedGym;
@@ -25,6 +28,7 @@ let showPokemon;
 let showSpawnpoints;
 
 let avilableForms = [];
+let avilableItems = [];
 
 let pokemonFilterLoaded = false;
 let questFilterLoaded = false;
@@ -36,11 +40,13 @@ $(function() {
     });
 
     avilableForms = JSON.parse('{{{avilable_forms_json}}}');
+    avilableItems = JSON.parse('{{{avilable_items_json}}}');
 
     loadStorage();
 
     $('#settingsModal').on("show.bs.modal", function () {
         pokemonFilterNew = $.extend(true, {}, pokemonFilter);
+        questFilterNew = $.extend(true, {}, questFilter);
 
         $('.select-button').each(function (button) {
             manageSelectButton($(this), false);
@@ -123,27 +129,61 @@ function loadStorage() {
 
     const pokemonFilterValue = retrieve('pokemon_filter');
     if (pokemonFilterValue === null) {
-        const defaultPokemonFilter = [];
+        const defaultPokemonFilter = {};
         let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
             defaultPokemonFilter[i] = {"show": true, "size": "normal"};
         }
+        defaultPokemonFilter["iv_and"] = {"on": false, "filter": "0-100"};
+        defaultPokemonFilter["iv_or"] = {"on": false, "filter": "0-100"};
+
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilter = defaultPokemonFilter;
     } else {
         pokemonFilter = JSON.parse(pokemonFilterValue);
+        let i;
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
-            if (pokemonFilter[i] == undefined) {
+            if (pokemonFilter[i] === undefined) {
                 pokemonFilter[i] = {"show": true, "size": "normal"};
             }
         }
-        if (pokemonFilter["iv_and"] == undefined) {
+        if (pokemonFilter["iv_and"] === undefined) {
             pokemonFilter["iv_and"] = {"on": false, "filter": "0-100"};
         }
-        if (pokemonFilter["iv_or"] == undefined) {
+        if (pokemonFilter["iv_or"] === undefined) {
             pokemonFilter["iv_or"] = {"on": false, "filter": "0-100"};
         }
-	}
+        store('pokemon_filter', JSON.stringify(pokemonFilter));
+    }
+
+    const questFilterValue = retrieve('quest_filter');
+    if (questFilterValue === null) {
+        const defaultQuestFilter = {};
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultQuestFilter["p_" + i] = {"show": true, "size": "normal"};
+        }
+        $.each(avilableItems, function (index, itemId) {
+            defaultQuestFilter["i_" + itemId] = {"show": true, "size": "normal"};
+        });
+
+        store('quest_filter', JSON.stringify(defaultQuestFilter));
+        questFilter = defaultQuestFilter;
+    } else {
+        questFilter = JSON.parse(questFilterValue);
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (questFilter["p_" + i] === undefined) {
+                questFilter["p_" + i] = {"show": true, "size": "normal"};
+            }
+        }
+        $.each(avilableItems, function (index, itemId) {
+            if (questFilter["i_" + itemId] === undefined) {
+                questFilter["i_" + itemId] = {"show": true, "size": "normal"};
+            }
+        });
+        store('quest_filter', JSON.stringify(questFilter));
+    }
 }
 
 function initMap() {
@@ -178,13 +218,12 @@ function initMap() {
         for (i = 1; i <= {{max_pokemon_id}}; i++) {
             defaultPokemonFilter[i] = {"show": true, "size": "normal"};
         }
-
         defaultPokemonFilter["iv_and"] = {"on": false, "filter": "0-100"};
         defaultPokemonFilter["iv_or"] = {"on": false, "filter": "0-100"};
 
         store('pokemon_filter',JSON.stringify(defaultPokemonFilter));
         pokemonFilterNew = defaultPokemonFilter;
-        i
+
         $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
     });
 
@@ -202,6 +241,38 @@ function initMap() {
         pokemonFilterNew = defaultPokemonFilter;
 
         $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
+    });
+
+    $('#reset-quest-filter').on('click', function(event) {
+        const defaultQuestFilter = {};
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultQuestFilter["p_" + i] = {"show": true, "size": "normal"};
+        }
+        $.each(avilableItems, function (index, itemId) {
+            defaultQuestFilter["i_" + itemId] = {"show": true, "size": "normal"};
+        });
+
+        store('quest_filter', JSON.stringify(defaultQuestFilter));
+        questFilterNew = defaultQuestFilter;
+
+        $('#table-filter-quests').DataTable().rows().invalidate('data').draw(false);
+    });
+
+    $('#disable-all-quest-filter').on('click', function(event) {
+        const defaultQuestFilter = {};
+        let i;
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultQuestFilter["p_" + i] = {"show": false, "size": questFilter["p_" + i]["size"]};
+        }
+        $.each(avilableItems, function (index, itemId) {
+            defaultQuestFilter["i_" + itemId] = {"show": false, "size": questFilter["i_" + itemId]["size"]};
+        });
+
+        store('quest_filter', JSON.stringify(defaultQuestFilter));
+        questFilterNew = defaultQuestFilter;
+
+        $('#table-filter-quests').DataTable().rows().invalidate('data').draw(false);
     });
 
 	$('#saveSettings').on('click', function(event) {
@@ -288,6 +359,27 @@ function initMap() {
         });
         pokemonMarkers = newPokemonMarkers;
 
+        questFilter = questFilterNew;
+        const questFilterOld = $.extend(true, {}, questFilter);
+
+        const newPokestopMarkers = [];
+        $.each(pokestopMarkers, function (index, pokestop) {
+            map.removeLayer(pokestop.marker);
+            /*if ((pokemonFilterOld[pokemon.pokemon_id]["show"] !== pokemonFilter[pokemon.pokemon_id]["show"]) ||
+                !(pokemonFilterOld[pokemon.pokemon_id]["size"].localeCompare(pokemonFilter[pokemon.pokemon_id]["size"]))) {
+
+                map.removeLayer(pokemon.marker);
+                if (matchesPokemonFilter(pokemon.pokemon_id)) {
+                    pokemon.marker = getPokemonMarker(pokemon, ts);
+                    newPokemonMarkers.push(pokemon);
+                    pokemon.marker.addTo(map);
+                }
+            } else {
+                newPokemonMarkers.push(pokemon);
+            }*/
+        });
+        pokestopMarkers = pokestopMarkers;
+
 		showGyms = newShowGyms;
 		store('show_gyms', newShowGyms);
 		showRaids = newShowRaids;
@@ -301,6 +393,7 @@ function initMap() {
         showSpawnpoints = newShowSpawnpoints;
         store('show_spawnpoints', newShowSpawnpoints);
         store('pokemon_filter',JSON.stringify(pokemonFilter));
+        store('quest_filter',JSON.stringify(questFilter));
 
 		lastUpdateServer = 0;
 		loadData();
@@ -1248,8 +1341,8 @@ function manageSelectButton(e, isNew) {
     const id = e.attr('data-id');
     const type = e.attr('data-type');
     const info = e.attr('data-info');
+    var shouldShow = false;
     if (type === "pokemon" || type === "pokemon-iv") {
-        var shouldShow = false;
         switch (info) {
             case "hide":
                 shouldShow = pokemonFilterNew[id]["show"] === false;
@@ -1273,17 +1366,22 @@ function manageSelectButton(e, isNew) {
                 shouldShow = pokemonFilterNew[id]["size"] === "huge";
                 break;
             case "off":
-                shouldShow = !pokemonFilterNew["iv_"+id]["on"];
+                shouldShow = !pokemonFilterNew["iv_" + id]["on"];
                 break;
             case "on":
-                shouldShow = pokemonFilterNew["iv_"+id]["on"];
+                shouldShow = pokemonFilterNew["iv_" + id]["on"];
                 break;
         }
-        if (shouldShow) {
-            e.addClass("active");
-        } else {
-            e.removeClass("active");
-        }
+    } else if (type === "") {
+        shouldShow = false;
+    } else {
+        shouldShow = false;
+    }
+
+    if (shouldShow) {
+        e.addClass("active");
+    } else {
+        e.removeClass("active");
     }
 
     if (isNew) {
