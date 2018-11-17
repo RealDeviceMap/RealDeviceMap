@@ -250,7 +250,7 @@ function initMap() {
         store('quest_filter', JSON.stringify(defaultQuestFilter));
         questFilterNew = defaultQuestFilter;
 
-        $('#table-filter-quests').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false);
     });
 
     $('#disable-all-quest-filter').on('click', function(event) {
@@ -266,7 +266,7 @@ function initMap() {
         store('quest_filter', JSON.stringify(defaultQuestFilter));
         questFilterNew = defaultQuestFilter;
 
-        $('#table-filter-quests').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false);
     });
 
 	$('#saveSettings').on('click', function(event) {
