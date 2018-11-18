@@ -72,21 +72,22 @@ class ApiRequestHandler {
         }
         
         var data = [String: Any]()
+        let isPost = request.method == .post
         let permShowRaid = perms.contains(.viewMapRaid)
         let permShowGym = perms.contains(.viewMapGym)
-        if (permViewMap && (showGyms && permShowGym || showRaids && permShowRaid)) {
+        if isPost && (permViewMap && (showGyms && permShowGym || showRaids && permShowRaid)) {
             data["gyms"] = try? Gym.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, raidsOnly: !showGyms, showRaids: permShowRaid)
         }
         let permShowStops = perms.contains(.viewMapPokestop)
         let permShowQuests =  perms.contains(.viewMapQuest)
-        if (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
+        if isPost && (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
             data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, questFilterExclude: questFilterExclude)
         }
         let permShowIV = perms.contains(.viewMapIV)
-        if permViewMap && showPokemon && perms.contains(.viewMapPokemon){
+        if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon){
             data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude, pokemonFilterIV: pokemonFilterIV)
         }
-        if permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
+        if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
             data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
         }
         if permViewMap && showPokemonFilter {

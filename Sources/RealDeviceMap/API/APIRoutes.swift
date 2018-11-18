@@ -14,7 +14,7 @@ class APIRoutes {
     
     public static var routes: [Route] {
         let routes = [
-            Route(method: .get, uri: "/api/get_data", handler: { (request, response) in
+            Route(methods: [.get, .post], uri: "/api/get_data", handler: { (request, response) in
                 ApiRequestHandler.handle(request: request, response: response, route: .getData)
             })
         ]

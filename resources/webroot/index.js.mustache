@@ -542,11 +542,13 @@ function loadData() {
         'pokemon_filter_iv': JSON.stringify(pokemonFilterIV),
         'show_spawnpoints': showSpawnpoints,
 		'last_update': lastUpdateServer,
+        '_csrf': "{{csrf}}"
 	};
 
 	$.ajax({
 		url: '/api/get_data',
 		data: data,
+        type: "post",
 		success: function (data) {
 			const gyms = data.data.gyms;
             let ts = Math.round((new Date()).getTime() / 1000);
