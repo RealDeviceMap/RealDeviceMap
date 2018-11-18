@@ -119,14 +119,20 @@ class WebHookRequestHandler {
                         let quest = fsr.challengeQuest.quest
                         quests.append(quest)
                     }
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
                 }
             } else if method == 102 && trainerLevel >= 30 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
                     encounters.append(er)
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] Malformed EncounterResponse")
                 }
             } else if method == 104 {
                 if let fdr = try? POGOProtos_Networking_Responses_FortDetailsResponse(serializedData: data) {
                     fortDetails.append(fdr)
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] Malformed FortDetailsResponse")
                 }
             } else if method == 106 {
                 containsGMO = true
@@ -148,6 +154,8 @@ class WebHookRequestHandler {
                             }
                         }
                     }
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] Malformed GetMapObjectsResponse")
                 }
             }
         }
