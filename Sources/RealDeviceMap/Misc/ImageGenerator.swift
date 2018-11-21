@@ -88,7 +88,7 @@ class ImageGenerator {
                 try! raidDoneLock.write(string: Int(Date().timeIntervalSince1970).description)
  
             }
-            if !questDoneLock.exists && questDir.exists && itemDir.exists && pokestopDir.exists {
+            if !questDoneLock.exists && questDir.exists && itemDir.exists && pokestopDir.exists && pokemonDir.exists {
                 
                 Log.info(message: "[ImageGenerator] Creating Quest Images...")
                 
