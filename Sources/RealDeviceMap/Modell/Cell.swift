@@ -20,7 +20,7 @@ class Cell: JSONConvertibleObject {
     
     override func getJSONValues() -> [String : Any] {
         
-        let s2cell = S2Cell(cellId: S2CellId(id: Int64(id)))
+        let s2cell = S2Cell(cellId: S2CellId(uid: id))
         var polygon =  [[Double]]()
         for i in 0...3 {
             polygon.append([
