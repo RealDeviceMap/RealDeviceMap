@@ -8,11 +8,11 @@ PRIMARY KEY (`id`)
 );
 
 INSERT IGNORE INTO s2cell (id, level, updated)
-SELECT cell_id, 15, MAX(updated) FROM pokemon GROUP BY cell_id;
+SELECT cell_id, 15, MAX(updated) FROM pokemon WHERE cell_id IS NOT NULL AND cell_id != 0 GROUP BY cell_id;
 INSERT IGNORE INTO s2cell (id, level, updated)
-SELECT cell_id, 15, MAX(updated) FROM gym GROUP BY cell_id;
+SELECT cell_id, 15, MAX(updated) FROM gym WHERE cell_id IS NOT NULL AND cell_id != 0 GROUP BY cell_id;
 INSERT IGNORE INTO s2cell (id, level, updated)
-SELECT cell_id, 15, MAX(updated) FROM pokestop GROUP BY cell_id;
+SELECT cell_id, 15, MAX(updated) FROM pokestop WHERE cell_id IS NOT NULL AND cell_id != 0 GROUP BY cell_id;
 
 ALTER TABLE pokemon
 DROP KEY `ix_pokemon_cell_id`;
