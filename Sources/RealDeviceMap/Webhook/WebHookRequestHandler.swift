@@ -86,6 +86,7 @@ class WebHookRequestHandler {
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
+        var cells = [UInt64]()
         
         var isEmtpyGMO = true
         var isInvalidGMO = true
@@ -153,6 +154,7 @@ class WebHookRequestHandler {
                             for fort in mapCell.forts {
                                 forts.append((cell: mapCell.s2CellID, data: fort))
                             }
+                            cells.append(mapCell.s2CellID)
                         }
                     }
                 } else {
@@ -231,7 +233,6 @@ class WebHookRequestHandler {
             
             var gymIdsPerCell = [UInt64: [String]]()
             var stopsIdsPerCell = [UInt64: [String]]()
-            var cells = [UInt64]()
             
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
@@ -258,7 +259,6 @@ class WebHookRequestHandler {
                     } else {
                         gymIdsPerCell[fort.cell]!.append(fort.data.id)
                     }
-                    cells.append(fort.cell)
                     
                 } else if fort.data.type == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
@@ -269,7 +269,6 @@ class WebHookRequestHandler {
                     } else {
                         stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                     }
-                    cells.append(fort.cell)
                     
                 }
             }
