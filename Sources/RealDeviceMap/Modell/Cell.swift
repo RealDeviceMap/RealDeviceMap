@@ -90,17 +90,16 @@ class Cell: JSONConvertibleObject {
         let sql = """
         SELECT id, level, center_lat, center_lon, updated
         FROM s2cell
+        WHERE center_lat >= ? AND center_lat <= ? AND center_lon >= ? AND center_lon <= ? AND updated > ?
         """
-        //        WHERE center_lat >= ? AND center_lat <= ? AND center_lon >= ? AND center_lon <= ? AND updated > ?
 
-        
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        /*mysqlStmt.bindParam(minLat)
+        mysqlStmt.bindParam(minLat)
         mysqlStmt.bindParam(maxLat)
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
-        mysqlStmt.bindParam(updated)*/
+        mysqlStmt.bindParam(updated)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
