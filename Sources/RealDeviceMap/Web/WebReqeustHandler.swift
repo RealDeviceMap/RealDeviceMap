@@ -155,7 +155,10 @@ class WebReqeustHandler {
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             data["hide_cells"] = !perms.contains(.viewMapCell)
-            
+            data["lat"] = request.urlVariables["lat"] ?? self.startLat
+            data["lon"] = request.urlVariables["lon"] ?? self.startLon
+            data["zoom"] = request.urlVariables["zoom"] ?? self.startZoom
+
             // Localize
             let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells"]
             for loc in homeLoc {
@@ -416,9 +419,9 @@ class WebReqeustHandler {
                 }
             }
         case .homeJs:
-            data["start_lat"] = startLat
-            data["start_lon"] = startLon
-            data["start_zoom"] = startZoom
+            data["start_lat"] = request.param(name: "lat")?.toDouble() ?? startLat
+            data["start_lon"] = request.param(name: "lon")?.toDouble() ?? startLon
+            data["start_zoom"] = request.param(name: "zoom")?.toUInt8() ?? startZoom
             data["max_pokemon_id"] = maxPokemonId
             data["avilable_forms_json"] = avilableFormsJson
             data["avilable_items_json"] = avilableItemJson

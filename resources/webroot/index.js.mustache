@@ -38,7 +38,7 @@ let questFilterLoaded = false;
 
 $(function() {
 
-    $.getJSON( "static/data/{{{locale}}}.json", {_: '{{{locale_last_modified}}}'}, function( data ) {
+    $.getJSON( "/static/data/{{{locale}}}.json", {_: '{{{locale_last_modified}}}'}, function( data ) {
         i18n.translator.add(data);
     });
 
@@ -1274,7 +1274,7 @@ function getPokemonMarkerIcon(pokemon, ts) {
     }
 
     const icon = L.icon({
-        iconUrl: 		'static/img/pokemon/' + pokemonIdString + '.png',
+        iconUrl: 		'/static/img/pokemon/' + pokemonIdString + '.png',
         iconSize:    	[size, size],
         iconAnchor:   	[size/2, size/2],
         popupAnchor:  	[0, -(size/2)]
@@ -1322,14 +1322,14 @@ function getPokestopMarkerIcon(pokestop, ts) {
 
         if (pokestop.lure_expire_timestamp >= ts) {
             icon = L.icon({
-                iconUrl: 'static/img/quest/1_' + rewardString + '.png',
+                iconUrl: '/static/img/quest/1_' + rewardString + '.png',
                 iconSize: 		[size       , size * 1.667  ],
                 iconAnchor: 	[size / 2   , size * 1.567  ],
                 popupAnchor: 	[0          , size * -1.567 ]
             });
         } else {
             icon = L.icon({
-                iconUrl: 'static/img/quest/0_'+ rewardString +'.png',
+                iconUrl: '/static/img/quest/0_'+ rewardString +'.png',
                 iconSize: 		[size       , size * 1.667  ],
                 iconAnchor: 	[size / 2   , size * 1.567  ],
                 popupAnchor: 	[0          , size * -1.567 ]
@@ -1338,14 +1338,14 @@ function getPokestopMarkerIcon(pokestop, ts) {
     } else {
         if (pokestop.lure_expire_timestamp >= ts) {
             icon = L.icon({
-                iconUrl: 'static/img/pokestop/1.png',
+                iconUrl: '/static/img/pokestop/1.png',
                 iconSize: [30, 30],
                 iconAnchor: [15, 27],
                 popupAnchor: [0, -27]
             });
         } else {
             icon = L.icon({
-                iconUrl: 'static/img/pokestop/0.png',
+                iconUrl: '/static/img/pokestop/0.png',
                 iconSize: [30, 30],
                 iconAnchor: [15, 27],
                 popupAnchor: [0, -27]
@@ -1395,7 +1395,7 @@ function getPokestopMarker(pokestop, ts) {
 
 function getSpawnpointMarkerIcon(spawnpoint, ts) {
     const icon = L.icon({
-        iconUrl:		'static/img/spawnpoint/0.png',
+        iconUrl:		'/static/img/spawnpoint/0.png',
         iconSize:		[10, 10],
         iconAnchor:		[5, 5],
         popupAnchor:	[0, -5]
@@ -1437,14 +1437,14 @@ function getGymMarkerIcon(gym, ts) {
 			}
 
             icon = L.icon({
-                iconUrl: 		'static/img/raid/'+ gym.team_id + '_' + size + '_' + pokemonIdString+ '.png',
+                iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_' + pokemonIdString+ '.png',
                 iconSize: 		[40, 67],
                 iconAnchor: 	[20, 47],
                 popupAnchor: 	[0, -47]
             });
         } else {
             icon = L.icon({
-                iconUrl: 		'static/img/raid/'+ gym.team_id + '_' + size + '_ue' + gym.raid_level + '.png',
+                iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_ue' + gym.raid_level + '.png',
                 iconSize: 		[40, 67],
                 iconAnchor: 	[20, 47],
                 popupAnchor: 	[0, -47]
@@ -1452,14 +1452,14 @@ function getGymMarkerIcon(gym, ts) {
         }
     } else if (gym.raid_end_timestamp >= ts && parseInt(gym.raid_level) > 0 && showRaids) {
         icon = L.icon({
-            iconUrl: 		'static/img/raid/'+ gym.team_id + '_' + size + '_e' + gym.raid_level + '.png',
+            iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_e' + gym.raid_level + '.png',
             iconSize: 		[40, 67],
             iconAnchor: 	[20, 47],
             popupAnchor: 	[0, -47]
         });
     } else {
     	icon = L.icon({
-            iconUrl: 		'static/img/gym/'+ gym.team_id + '_' + size +'.png',
+            iconUrl: 		'/static/img/gym/'+ gym.team_id + '_' + size +'.png',
             iconSize:     	[40, 40],
             iconAnchor:   	[20, 20],
             popupAnchor:  	[0, -20]
