@@ -9,6 +9,7 @@ let pokestopMarkers = [];
 let gymMarkers = [];
 let pokemonMarkers = [];
 let spawnpointMarkers = [];
+let cellMarkers = [];
 
 let pokemonFilter = {};
 let pokemonFilterNew = {};
@@ -19,6 +20,7 @@ let questFilterNew = {};
 let openedPokemon;
 let openedPokestop;
 let openedGym;
+let openedCell;
 
 let showPokestops;
 let showQuests;
@@ -26,6 +28,7 @@ let showGyms;
 let showRaids;
 let showPokemon;
 let showSpawnpoints;
+let showCells;
 
 let avilableForms = [];
 let avilableItems = [];
@@ -119,6 +122,14 @@ function loadStorage() {
         showPokemon = true;
     } else {
         showPokemon = (showPokemonValue === 'true');
+    }
+
+    const showCellsValue = retrieve('show_cells');
+    if (showCellsValue === null) {
+        store('show_cells', false);
+        showCells = false;
+    } else {
+        showCells = (showCellsValue === 'true');
     }
 
     const pokemonFilterValue = retrieve('pokemon_filter');
@@ -280,6 +291,7 @@ function initMap() {
         const newShowQuests= $('#show-quests').hasClass('active');
         const newShowPokemon = $('#show-pokemon').hasClass('active');
         const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active');
+        const newShowCells = $('#show-cells').hasClass('active');
 
         const ts = Math.round((new Date()).getTime() / 1000);
 
@@ -330,6 +342,12 @@ function initMap() {
                 map.removeLayer(spawnpoint.marker);
             });
             spawnpointMarkers = [];
+        }
+        if (newShowCells !== showCells && newShowCells === false) {
+            $.each(cellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            cellMarkers = [];
         }
 
         pokemonFilter = pokemonFilterNew;
@@ -386,6 +404,8 @@ function initMap() {
         store('show_spawnpoints', newShowSpawnpoints);
         store('pokemon_filter',JSON.stringify(pokemonFilter));
         store('quest_filter',JSON.stringify(questFilter));
+        store('show_cells', newShowCells);
+        showCells = newShowCells;
 
 		lastUpdateServer = 0;
 		loadData();
@@ -450,6 +470,14 @@ function initMap() {
                 } else {
                     $('#hide-spawnpoints').addClass('active');
                     $('#show-spawnpoints').removeClass('active');
+                }
+
+                if (retrieve('show_cells') == 'true') {
+                    $('#show-cells').addClass('active');
+                    $('#hide-cells').removeClass('active');
+                } else {
+                    $('#hide-cells').addClass('active');
+                    $('#show-cells').removeClass('active');
                 }
 
 				$('#settingsModal').modal('show');
@@ -541,7 +569,8 @@ function loadData() {
         'quest_filter_exclude': JSON.stringify(questFilterExclude),
         'pokemon_filter_iv': JSON.stringify(pokemonFilterIV),
         'show_spawnpoints': showSpawnpoints,
-		'last_update': lastUpdateServer,
+        'show_cells': showCells,
+        'last_update': lastUpdateServer,
         '_csrf': "{{csrf}}"
 	};
 
@@ -717,7 +746,7 @@ function loadData() {
                     if (spawnpoint.updated > lastUpdateServer) {
                         lastUpdateServer = spawnpoint.updated;
                     }
-                    var oldSpawnpoint = spawnpointMarkers.find(function (value) {
+                    const oldSpawnpoint = spawnpointMarkers.find(function (value) {
                         return spawnpoint.lat === value.lat && spawnpoint.lon === value.lon;
                     });
 
@@ -727,8 +756,27 @@ function loadData() {
                         spawnpoint.marker.addTo(map);
                     }
                 }
+            });
 
+            const cells = data.data.cells;
+            $.each(cells, function (index, cell) {
+                if (showCells) {
+                    if (cell.updated > lastUpdateServer) {
+                        lastUpdateServer = cell.updated;
+                    }
+                    const oldCell = cellMarkers.find(function (value) {
+                        return cell.id === value.id ;
+                    });
 
+                    if (oldCell === undefined) {
+                        cell.marker = getCellMarker(cell, ts);
+                        cellMarkers.push(cell);
+                        cell.marker.addTo(map);
+                    } else {
+                        oldCell.updated = cell.updated;
+                        oldCell.marker.setStyle(getCellStyle(cell, ts));
+                    }
+                }
             });
 
             lastUpdate = new Date();
@@ -902,6 +950,9 @@ function updateOpenedPopupLoop() {
 	if (openedGym !== undefined) {
 		openedGym.marker._popup.setContent(getGymPopupContent(openedGym));
 	}
+    if (openedCell !== undefined) {
+        openedCell.marker._popup.setContent(getCellPopupContent(openedCell));
+    }
 }
 
 function getPokemonPopupContent(pokemon) {
@@ -1047,6 +1098,17 @@ function getGymPopupContent(gym) {
 	return content;
 }
 
+function getCellPopupContent(cell) {
+
+    let content = '<b>Level '+cell.level+' S2 Cell</b><br>';
+    content += 'Id: '+cell.id+'<br>';
+
+    const updatedDate = new Date(cell.updated * 1000);
+
+    content += 'Updated At: '+ updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')';
+    return content;
+}
+
 // MARK: - Translation
 
 function getPokemonNameNoId(pokemonId) {
@@ -1164,6 +1226,29 @@ function getQuestCondition(condition) {
 }
 
 // MARK: - Markers
+
+function getCellMarker(cell, ts) {
+    const polygon = L.polygon(cell.polygon);
+    polygon.setStyle(getCellStyle(cell, ts));
+    polygon.bindPopup(getCellPopupContent(cell));
+    polygon.on('popupopen', function (popup) {
+        openedCell = cell;
+        polygon._popup.setContent(getCellPopupContent(cell));
+    });
+    return polygon;
+}
+
+function getCellStyle(cell, ts) {
+    let ago = ts - cell.updated;
+    let value;
+    if (ago <= 150) {
+        value = 0;
+    } else {
+        value = Math.min((ago - 150) / 750, 1);
+    }
+    const hue = ((1-value)*120).toString(10);
+    return {fillColor: ["hsl(",hue,",100%,50%)"].join(""), color: "black", opacity: 0.75, fillOpacity: 0.5};
+}
 
 function getPokemonMarkerIcon(pokemon, ts) {
 	const size = getPokemonSize(pokemon.pokemon_id);
@@ -1634,6 +1719,24 @@ function manageConfigureButton(e, isNew) {
 
 function getTimeUntill(date) {
     const diff = Math.round((date - new Date()) / 1000);
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor(diff % 3600 / 60);
+    const s = Math.floor(diff % 3600 % 60);
+
+    var str = '';
+    if (h > 0) {
+        str = h + 'h ' + m + 'm ' + s + 's';
+    } else if (m > 0) {
+        str = m + 'm ' + s + 's';
+    } else {
+        str = s + 's';
+    }
+
+    return str;
+}
+
+function getTimeSince(date) {
+    const diff = Math.round(( new Date() - date) / 1000);
     const h = Math.floor(diff / 3600);
     const m = Math.floor(diff % 3600 / 60);
     const s = Math.floor(diff % 3600 % 60);

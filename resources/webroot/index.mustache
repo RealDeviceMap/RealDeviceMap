@@ -87,6 +87,18 @@
                         {{filter_pokemon}}
                         <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterPokemonModal">{{filter_filter}}</button>
                     </div>
+                    <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_cells}}class="d-none"{{/hide_cells}}>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label id="hide-cells" class="btn btn-sm btn-off">
+                                <input type="radio" name="options" id="hide" autocomplete="off" checked>{{filter_hide}}
+                            </label>
+                            <label id="show-cells" class="btn btn-sm btn-on">
+                                <input type="radio" name="options" id="show" autocomplete="off">{{filter_show}}
+                            </label>
+                        </div>
+                        {{filter_cells}}
+                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{filter_cancel}}</button>

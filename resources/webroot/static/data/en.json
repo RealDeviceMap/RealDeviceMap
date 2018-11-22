@@ -45,6 +45,7 @@
 		"filter_stardust": "Stardust",
 		"filter_xp": "XP",
 		"filter_candy": "Candy",
+		"filter_cells": "Cells",
 		"register_title": "Register to %{name}!",
 		"register_username": "Username",
 		"register_email": "Email",

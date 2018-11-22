@@ -45,6 +45,7 @@
 		"filter_stardust": "Sternenstaub",
 		"filter_xp": "XP",
 		"filter_candy": "Bonbons",
+		"filter_cells": "Zellen",
 		"register_title": "Bei %{name} Registrieren!",
 		"register_username": "Nutzername",
 		"register_email": "Email",

@@ -11,6 +11,7 @@ import PerfectHTTP
 import PerfectMustache
 import PerfectSessionMySQL
 import POGOProtos
+import S2Geometry
 
 class ApiRequestHandler {
     
@@ -40,6 +41,7 @@ class ApiRequestHandler {
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
+        let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
@@ -49,7 +51,7 @@ class ApiRequestHandler {
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         
-        if (showGyms || showRaids || showPokestops || showPokemon) &&
+        if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints || showCells) &&
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
             response.respondWithError(status: .badRequest)
             return
@@ -89,6 +91,9 @@ class ApiRequestHandler {
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
             data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+        }
+        if isPost && showCells && perms.contains(.viewMapCell) {
+            data["cells"] = try? Cell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
         }
         if permViewMap && showPokemonFilter {
             

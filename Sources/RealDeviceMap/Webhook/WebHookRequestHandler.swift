@@ -15,6 +15,7 @@ import Foundation
 import SwiftProtobuf
 import POGOProtos
 import Turf
+import S2Geometry
 
 class WebHookRequestHandler {
     
@@ -230,6 +231,7 @@ class WebHookRequestHandler {
             
             var gymIdsPerCell = [UInt64: [String]]()
             var stopsIdsPerCell = [UInt64: [String]]()
+            var cells = [UInt64]()
             
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
@@ -256,6 +258,7 @@ class WebHookRequestHandler {
                     } else {
                         gymIdsPerCell[fort.cell]!.append(fort.data.id)
                     }
+                    cells.append(fort.cell)
                     
                 } else if fort.data.type == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
@@ -266,6 +269,8 @@ class WebHookRequestHandler {
                     } else {
                         stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                     }
+                    cells.append(fort.cell)
+                    
                 }
             }
             Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
@@ -345,6 +350,14 @@ class WebHookRequestHandler {
                         Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Pokestops.")
                     }
                 }
+            }
+            for cellId in cells {
+                let s2cell = S2Cell(cellId: S2CellId(id: Int64(cellId)))
+                let lat = s2cell.capBound.rectBound.center.lat.degrees
+                let lon = s2cell.capBound.rectBound.center.lng.degrees
+                let level = s2cell.level
+                let cell = Cell(id: cellId, level: UInt8(level), centerLat: lat, centerLon: lon, updated: nil)
+                try? cell.save(mysql: mysql, update: true)
             }
             
             Threading.destroyQueue(queue)
