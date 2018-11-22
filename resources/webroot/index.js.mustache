@@ -501,6 +501,7 @@ function initMap() {
 	loadData();
 	setInterval(loadData, 5000);
 	setInterval(updateOpenedPopupLoop, 1000);
+    setInterval(updateCellsLoop, 10000);
 }
 
 // MARK: - Date Loading
@@ -953,6 +954,13 @@ function updateOpenedPopupLoop() {
     if (openedCell !== undefined) {
         openedCell.marker._popup.setContent(getCellPopupContent(openedCell));
     }
+}
+
+function updateCellsLoop() {
+    const ts = Math.round((new Date()).getTime() / 1000);
+    $.each(cellMarkers, function (index, cell) {
+        cell.marker.setStyle(getCellStyle(cell, ts));
+    });
 }
 
 function getPokemonPopupContent(pokemon) {
