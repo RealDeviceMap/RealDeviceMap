@@ -82,6 +82,11 @@ class Cell: JSONConvertibleObject {
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [Cell] {
         
+        let minLatReal = minLat - 0.01
+        let maxLatReal = maxLat + 0.01
+        let minLonReal = minLon - 0.01
+        let maxLonReal = maxLon + 0.01
+        
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[CELL] Failed to connect to database.")
             throw DBController.DBError()
@@ -95,10 +100,10 @@ class Cell: JSONConvertibleObject {
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(minLat)
-        mysqlStmt.bindParam(maxLat)
-        mysqlStmt.bindParam(minLon)
-        mysqlStmt.bindParam(maxLon)
+        mysqlStmt.bindParam(minLatReal)
+        mysqlStmt.bindParam(maxLatReal)
+        mysqlStmt.bindParam(minLonReal)
+        mysqlStmt.bindParam(maxLonReal)
         mysqlStmt.bindParam(updated)
         
         guard mysqlStmt.execute() else {
