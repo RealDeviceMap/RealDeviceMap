@@ -388,7 +388,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         var excludedPokemon = [Int]()
         var excludedItems = [Int]()
         
-        if showQuests && questFilterExclude != nil {
+        if showQuests && questsOnly && questFilterExclude != nil {
             for filter in questFilterExclude! {
                 if filter.contains(string: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
@@ -409,7 +409,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludeTypeSQL: String
         let excludePokemonSQL: String
         let excludeItemSQL: String
-        if showQuests {
+        if showQuests && questsOnly {
             if excludedTypes.isEmpty {
                 excludeTypeSQL = ""
             } else {

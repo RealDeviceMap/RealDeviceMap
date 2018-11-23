@@ -1048,14 +1048,8 @@ function getPokestopPopupContent(pokestop) {
     }
 
 	if (lureExpireDate >= now) {
-		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')';
+		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>';
 	}
-
-    const updatedDate = new Date(pokestop.updated*1000);
-    const modifiedDate = new Date(pokestop.last_modified_timestamp*1000);
-    if (updatedDate) {
-        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
-    }
 
 	if (pokestop.quest_type !== null) {
 	    let conditions = pokestop.quest_conditions;
@@ -1075,12 +1069,17 @@ function getPokestopPopupContent(pokestop) {
             conditionsString += ')';
         }
 
-        content += '<br><b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>';
+        content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>';
 
         $.each(pokestop.quest_rewards, function (index, reward) {
             content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>';
         });
 
+    }
+
+    const updatedDate = new Date(pokestop.updated*1000);
+    if (updatedDate) {
+        content += "<br><b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
     }
 
     content += '<br><a href="https://www.google.com/maps/place/'+pokestop.lat+','+pokestop.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
@@ -1120,15 +1119,6 @@ function getGymPopupContent(gym) {
         content += '<br>';
     }
 
-    const updatedDate = new Date(gym.updated*1000);
-    const modifiedDate = new Date(gym.last_modified_timestamp*1000);
-    if (updatedDate) {
-        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
-    }
-    if (modifiedDate) {
-        content += "<b>Last Modified:</b> " + modifiedDate.toLocaleDateString() + ' ' + modifiedDate.toLocaleTimeString() + ' (' + getTimeSince(modifiedDate) + ')<br>';
-    }
-
     const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0;
     const isRaidBattle = raidBattleDate <= now && isRaid;
 
@@ -1139,9 +1129,9 @@ function getGymPopupContent(gym) {
         } else {
             pokemonName = getPokemonName(gym.raid_pokemon_id);
         }
-		content += "<br><b>Raid Boss:</b> " + pokemonName + '<br>';
+		content += "<b>Raid Boss:</b> " + pokemonName + '<br>';
 	} else if (isRaidBattle) {
-		content += "<br><b>Raid Boss:</b> Unknown Raid Boss<br>";
+		content += "<b>Raid Boss:</b> Unknown Raid Boss<br>";
 	}
     if (isRaid && gym.raid_pokemon_move_1 !== 0 && gym.raid_pokemon_move_1 !== null && isRaid &&
         gym.raid_pokemon_move_2 !== 0 && gym.raid_pokemon_move_2 !== null) {
@@ -1157,8 +1147,17 @@ function getGymPopupContent(gym) {
 		content += "<b>Raid Start:</b> " + raidBattleDate.toLocaleTimeString() + ' ('+getTimeUntill(raidBattleDate)+')<br>';
 	}
 	if (isRaid) {
-		content += "<b>Raid End:</b> " + raidEndDate.toLocaleTimeString() + ' ('+getTimeUntill(raidEndDate)+')<br>';
+		content += "<b>Raid End:</b> " + raidEndDate.toLocaleTimeString() + ' ('+getTimeUntill(raidEndDate)+')<br><br>';
 	}
+
+    const updatedDate = new Date(gym.updated*1000);
+    const modifiedDate = new Date(gym.last_modified_timestamp*1000);
+    if (updatedDate) {
+        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
+    }
+    if (modifiedDate) {
+        content += "<b>Last Modified:</b> " + modifiedDate.toLocaleDateString() + ' ' + modifiedDate.toLocaleTimeString() + ' (' + getTimeSince(modifiedDate) + ')<br>';
+    }
 
     content += '<br><a href="https://www.google.com/maps/place/'+gym.lat+','+gym.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
 	content += '</center>';
