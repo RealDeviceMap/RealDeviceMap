@@ -533,6 +533,19 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
     public static func getIn(mysql: MySQL?=nil, ids: [String]) throws -> [Pokestop] {
         
+        if ids.count > 60000 {
+            var result = [Pokestop]()
+            for i in 0..<(Int(ceil(Double(ids.count)/60000.0))) {
+                let start = 60000 * i
+                let end = min(60000 * (i+1) - 1, ids.count - 1)
+                let splice = Array(ids[start...end])
+                if let spliceResult = try? getIn(mysql: mysql, ids: splice) {
+                    result += spliceResult
+                }
+            }
+            return result
+        }
+        
         if ids.count == 0 {
             return [Pokestop]()
         }

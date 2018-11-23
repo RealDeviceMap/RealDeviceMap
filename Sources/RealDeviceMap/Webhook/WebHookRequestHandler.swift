@@ -208,6 +208,19 @@ class WebHookRequestHandler {
                 }
             }
         }
+        if targetCoord != nil && !inArea {
+            for cell in cells {
+                if !inArea {
+                    let cell = S2Cell(cellId: S2CellId(uid: cell))
+                    let coord = S2LatLng(point: cell.center).coord
+                    if coord.distance(to: targetCoord!) <= max(targetMaxDistance, 100) {
+                        inArea = true
+                    }
+                } else {
+                    break
+                }
+            }
+        }
         
         var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO]
         
