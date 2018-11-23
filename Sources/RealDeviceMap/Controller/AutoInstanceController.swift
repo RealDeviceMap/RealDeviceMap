@@ -141,7 +141,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
         Log.debug(message: "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s")
         bootstrappLock.lock()
-        bootstrappCellIDs = missingCellIDs
+        bootstrappCellIDs = missingCellIDs.shuffled()
         bootstrappTotalCount = totalCount
         bootstrappLock.unlock()
         
@@ -206,7 +206,25 @@ class AutoInstanceController: InstanceControllerProto {
                 if let target = bootstrappCellIDs.popLast() {
                     bootstrappLock.unlock()
                     let cell = S2Cell(cellId: target)
-                    let coord = S2LatLng(point: cell.center).coord
+                    let center = S2LatLng(point: cell.center)
+                    let coord = center.coord
+                    let radians = 0.00007839251445558
+                    
+                    let centerNormalizedPoint = center.normalized.point
+                    let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
+                    let coverer = S2RegionCoverer()
+                    coverer.maxCells = 100
+                    coverer.maxLevel = 15
+                    coverer.minLevel = 15
+                    let cellIDs = coverer.getCovering(region: circle)
+                    bootstrappLock.lock()
+                    for cellID in cellIDs {
+                        if let index = bootstrappCellIDs.index(of: cellID) {
+                            bootstrappCellIDs.remove(at: index)
+                        }
+                    }
+                    bootstrappLock.unlock()
+                    
                     return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
                 } else {
                     bootstrappLock.unlock()
