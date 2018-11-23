@@ -223,7 +223,20 @@ class AutoInstanceController: InstanceControllerProto {
                             bootstrappCellIDs.remove(at: index)
                         }
                     }
-                    bootstrappLock.unlock()
+                    if bootstrappCellIDs.isEmpty {
+                        bootstrappLock.unlock()
+                        bootstrap()
+                        bootstrappLock.lock()
+                        if bootstrappCellIDs.isEmpty {
+                            bootstrappLock.unlock()
+                            update()
+                        } else {
+                            bootstrappLock.unlock()
+                        }
+                    } else {
+                        bootstrappLock.unlock()
+                    }
+                    
                     
                     return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
                 } else {
