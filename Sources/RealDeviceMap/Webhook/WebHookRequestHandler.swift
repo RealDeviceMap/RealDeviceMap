@@ -254,6 +254,8 @@ class WebHookRequestHandler {
                 let level = s2cell.level
                 let cell = Cell(id: cellId, level: UInt8(level), centerLat: lat, centerLon: lon, updated: nil)
                 try? cell.save(mysql: mysql, update: true)
+                gymIdsPerCell[cellId] = [String]()
+                stopsIdsPerCell[cellId] = [String]()
             }
             
             let startWildPokemon = Date()
@@ -275,23 +277,11 @@ class WebHookRequestHandler {
                 if fort.data.type == .gym {
                     let gym = Gym(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
-                    
-                    if gymIdsPerCell[fort.cell] == nil {
-                        gymIdsPerCell[fort.cell] = [fort.data.id]
-                    } else {
-                        gymIdsPerCell[fort.cell]!.append(fort.data.id)
-                    }
-                    
+                    gymIdsPerCell[fort.cell]!.append(fort.data.id)
                 } else if fort.data.type == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
-                    
-                    if stopsIdsPerCell[fort.cell] == nil {
-                        stopsIdsPerCell[fort.cell] = [fort.data.id]
-                    } else {
-                        stopsIdsPerCell[fort.cell]!.append(fort.data.id)
-                    }
-                    
+                    stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
             Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")

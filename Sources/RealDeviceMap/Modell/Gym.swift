@@ -458,10 +458,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     
     public static func clearOld(mysql: MySQL?=nil, ids: [String], cellId: UInt64) throws -> UInt {
         
-        if ids.count == 0 {
-            return 0
-        }
-        
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
