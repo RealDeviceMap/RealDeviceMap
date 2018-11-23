@@ -1131,9 +1131,9 @@ function getGymPopupContent(gym) {
         } else {
             pokemonName = getPokemonName(gym.raid_pokemon_id);
         }
-		content += "<b>Raid Boss:</b> " + pokemonName + '<br>';
+		content += "<br><b>Raid Boss:</b> " + pokemonName + '<br>';
 	} else if (isRaidBattle) {
-		content += "<b>Raid Boss:</b> Unknown Raid Boss<br>";
+		content += "<br><b>Raid Boss:</b> Unknown Raid Boss<br>";
 	}
     if (isRaid && gym.raid_pokemon_move_1 !== 0 && gym.raid_pokemon_move_1 !== null && isRaid &&
         gym.raid_pokemon_move_2 !== 0 && gym.raid_pokemon_move_2 !== null) {
@@ -1159,12 +1159,14 @@ function getGymPopupContent(gym) {
 
 function getCellPopupContent(cell) {
 
-    let content = '<b>Level '+cell.level+' S2 Cell</b><br>';
-    content += 'Id: '+cell.id+'<br>';
+    let content = '<center>';
+    content += '<h6><b>Level '+cell.level+' S2 Cell</b></h6>';
+    content += '<b>Id:</b> '+cell.id+'<br>';
 
     const updatedDate = new Date(cell.updated * 1000);
 
-    content += 'Updated At: '+ updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')';
+    content += '<b>Last Updated:</b> '+ updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')';
+    content += '</center>';
     return content;
 }
 
@@ -1459,7 +1461,7 @@ function getSpawnpointMarker(spawnpoint, ts) {
         icon: getSpawnpointMarkerIcon(spawnpoint, ts),
         forceZIndex: 10
     });
-    marker.bindPopup('<b>Spawnpoint</b>');
+    marker.bindPopup('<center><h6><b>Spawnpoint</b></h6></center>');
     return marker;
 }
 
