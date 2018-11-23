@@ -30,6 +30,8 @@ class AssignmentController: InstanceControllerDelegate {
         timeZone = Localizer.global.timeZone
         
         if !isSetup {
+            isSetup = true
+
             queue = Threading.getQueue(name: "AssignmentController-updater", type: .serial)
             queue.dispatch {
                 
@@ -65,7 +67,6 @@ class AssignmentController: InstanceControllerDelegate {
                 
             }
         }
-        isSetup = true
         
     }
     

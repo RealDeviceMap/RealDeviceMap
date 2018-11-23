@@ -28,7 +28,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "pokemon_id": pokemonId,
             "lat": lat,
             "lon": lon,
-            "spawn_id": spawnId as Any,
+            "spawn_id": spawnId?.toHexString() as Any,
             "expire_timestamp": expireTimestamp as Any,
             "expire_timestamp_true": false, // FIXME: - Temp solution
             "first_seen_timestamp": firstSeenTimestamp ?? 1,

@@ -16,7 +16,7 @@ class SpawnPoint: JSONConvertibleObject{
     
     override func getJSONValues() -> [String : Any] {
         return [
-            "id":id,
+            "id":id.toHexString()!,
             "lat":lat,
             "lon":lon,
             "updated":updated ?? 1
