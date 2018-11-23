@@ -36,5 +36,12 @@ extension Int {
         }
         return nil
     }
+    static func getRandomNum(_ min: Int, _ max: Int) -> Int {
+        #if os(Linux)
+        return Int(Glibc.random() % max) + min
+        #else
+        return Int(arc4random_uniform(UInt32(max)) + UInt32(min))
+        #endif
+    }
     
 }

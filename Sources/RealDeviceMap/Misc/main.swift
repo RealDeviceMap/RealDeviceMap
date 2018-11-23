@@ -12,6 +12,10 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
+#if os(Linux)
+    srand(UInt32(time(nil)))
+#endif
+
 // Check if /backups exists
 let backups = Dir("backups")
 if !backups.exists {
