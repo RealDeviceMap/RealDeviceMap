@@ -966,7 +966,7 @@ function updateCellsLoop() {
 function getPokemonPopupContent(pokemon) {
 	const despawnDate = new Date(pokemon.expire_timestamp * 1000);
 
-    let content = '';
+    let content = '<center>';
 
     let pokemonName;
     if (pokemon.form !== 0 && pokemon.form !== null) {
@@ -975,35 +975,51 @@ function getPokemonPopupContent(pokemon) {
         pokemonName = getPokemonName(pokemon.pokemon_id);
     }
 
-	content += '<b>'+pokemonName+'</b><br>';
-
-    if (pokemon.atk_iv !== null) {
-        const ivPercent = Math.round( (pokemon.atk_iv + pokemon.def_iv + pokemon.sta_iv) / 45 * 1000 ) / 10;
-        content += 'IV: ' + ivPercent + '% (A' + pokemon.atk_iv + '|D' + pokemon.def_iv + '|S' + pokemon.sta_iv + ')<br>';
-    }
-    if (pokemon.cp !== null) {
-        content += 'CP: ' + pokemon.cp + ' (Lvl. ' + pokemon.level + ')<br>';
-    }
+	content += '<h6><b>'+pokemonName+'</b></h6>';
 
 	if (pokemon.expire_timestamp_true) {
-		content += 'Despawn Time: '
+		content += '<b>Despawn Time:</b> '
 	} else {
-		content += 'Aprox. Despawn Time: '
+		content += '<b>Despawn Time:</b> ~'
 	}
     content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>';
 
-    if (pokemon.weather !== 0 && pokemon.weather !== null) {
-        content += 'Weather: ' + getWeatherName(pokemon.weather) + '<br>';
-    }
 
     if (pokemon.first_seen_timestamp !== 0 && pokemon.first_seen_timestamp !== undefined) {
         const firstSeenDate = new Date(pokemon.first_seen_timestamp * 1000);
-        content += 'First Seen at: ' + firstSeenDate.toLocaleTimeString() + '<br>';
+        content += '<b>First Seen:</b> ' + firstSeenDate.toLocaleTimeString() + ' (' + getTimeSince(firstSeenDate) + ')<br>';
     }
     if (pokemon.updated !== 0 && pokemon.updated !== null) {
         const updatedDate = new Date(pokemon.updated * 1000);
-        content += 'Latest Seen at: ' + updatedDate.toLocaleTimeString() + '<br>';
+        content += '<b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
     }
+
+    let didAddBr = false;
+    if (pokemon.weather !== 0 && pokemon.weather !== null) {
+        if (!didAddBr) {
+            didAddBr = true;
+            content += '<br>';
+        }
+        content += '<b>Weather:</b> ' + getWeatherName(pokemon.weather) + '<br>';
+    }
+    if (pokemon.atk_iv !== null) {
+        if (!didAddBr) {
+            didAddBr = true;
+            content += '<br>';
+        }
+        const ivPercent = Math.round( (pokemon.atk_iv + pokemon.def_iv + pokemon.sta_iv) / 45 * 1000 ) / 10;
+        content += '<b>IV:</b> ' + ivPercent + '% (A' + pokemon.atk_iv + '|D' + pokemon.def_iv + '|S' + pokemon.sta_iv + ')<br>';
+    }
+    if (pokemon.cp !== null) {
+        if (!didAddBr) {
+            didAddBr = true;
+            content += '<br>';
+        }
+        content += '<b>CP:</b> ' + pokemon.cp + ' (Lvl. ' + pokemon.level + ')<br>';
+    }
+
+    content += '<br><a href="https://www.google.com/maps/place/'+pokemon.lat+','+pokemon.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
+    content += '</center>';
 
 	return content
 }
@@ -1012,16 +1028,26 @@ function getPokestopPopupContent(pokestop) {
 	const now = new Date();
     const lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000);
 
-	let content = '';
-	if (pokestop.name === null) {
-		content += '<b>Unknown Pokestop Name</b><br>';
+	let content = '<center>';
+	if (pokestop.name === null || pokestop.name === "") {
+		content += '<h6><b>Unknown Pokestop Name</b></h6>';
 	} else {
-		content += '<b>'+pokestop.name+'</b><br>';
+		content += '<h6><b>'+pokestop.name+'</b></h6>';
 	}
 
+    if (pokestop.url !== null) {
+        content += '<img src="'+pokestop.url+'" style="max-width:150px;max-height:100px;"/><br><br>';
+    }
+
 	if (lureExpireDate >= now) {
-		content += 'Lure End Time: ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')';
+		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')';
 	}
+
+    const updatedDate = new Date(pokestop.updated*1000);
+    const modifiedDate = new Date(pokestop.last_modified_timestamp*1000);
+    if (updatedDate) {
+        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
+    }
 
 	if (pokestop.quest_type !== null) {
 	    let conditions = pokestop.quest_conditions;
@@ -1041,15 +1067,17 @@ function getPokestopPopupContent(pokestop) {
             conditionsString += ')';
         }
 
-        content += 'Quest Condition: ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>';
+        content += '<br><b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>';
 
         $.each(pokestop.quest_rewards, function (index, reward) {
-            content += 'Quest Reward: ' + getQuestReward(reward) + '<br>';
+            content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>';
         });
 
     }
 
-	return content;
+    content += '<br><a href="https://www.google.com/maps/place/'+pokestop.lat+','+pokestop.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
+    content += '</center>';
+    return content;
 
 }
 
@@ -1058,18 +1086,39 @@ function getGymPopupContent(gym) {
 	const raidBattleDate = new Date(gym.raid_battle_timestamp*1000);
 	const raidEndDate = new Date(gym.raid_end_timestamp*1000);
 
-	let content = '';
-	if (gym.name === null) {
-		content += '<b>Unknown Gym Name</b><br>';
-	} else {
-		content += '<b>'+gym.name+'</b><br>';
-	}
+	let content = '<center>';
 
+    if (gym.name === null || gym.name === "") {
+        content += '<h6><b>Unknown Gym Name</b></h6>';
+    } else {
+        content += '<h6><b>'+gym.name+'</b></h6>';
+    }
+
+    if (gym.url !== null) {
+        content += '<img src="'+gym.url+'" style="max-width:150px;max-height:100px;"/><br><br>';
+    }
+
+    let hasStatus = false;
     if (gym.ex_raid_eligible === true) {
-        content += 'Gym is EX-Raid eligible<br>';
+        content += '<b>Gym is EX-Raid eligible</b><br>';
+        hasStatus = true;
     }
     if (gym.in_battle === true) {
-        content += 'Gym is under attack!<br>';
+        content += '<b>Gym is under attack!</b><br>';
+        hasStatus = true;
+    }
+
+    if (hasStatus) {
+        content += '<br>';
+    }
+
+    const updatedDate = new Date(gym.updated*1000);
+    const modifiedDate = new Date(gym.last_modified_timestamp*1000);
+    if (updatedDate) {
+        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
+    }
+    if (modifiedDate) {
+        content += "<b>Last Modified:</b> " + modifiedDate.toLocaleDateString() + ' ' + modifiedDate.toLocaleTimeString() + ' (' + getTimeSince(modifiedDate) + ')<br>';
     }
 
     const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0;
@@ -1082,27 +1131,29 @@ function getGymPopupContent(gym) {
         } else {
             pokemonName = getPokemonName(gym.raid_pokemon_id);
         }
-		content += "Raid Boss: " + pokemonName + '<br>';
+		content += "<b>Raid Boss:</b> " + pokemonName + '<br>';
 	} else if (isRaidBattle) {
-		content += "Raid Boss: Unknown Raid Boss<br>";
+		content += "<b>Raid Boss:</b> Unknown Raid Boss<br>";
 	}
     if (isRaid && gym.raid_pokemon_move_1 !== 0 && gym.raid_pokemon_move_1 !== null && isRaid &&
         gym.raid_pokemon_move_2 !== 0 && gym.raid_pokemon_move_2 !== null) {
-        content += "Raid Moves: " + getMoveName(gym.raid_pokemon_move_1) + ' | ' + getMoveName(gym.raid_pokemon_move_2) + '<br>';
+        content += "<b>Raid Moves:</b> " + getMoveName(gym.raid_pokemon_move_1) + ' | ' + getMoveName(gym.raid_pokemon_move_2) + '<br>';
     }
     if (isRaid && gym.raid_pokemon_cp !== 0 && gym.raid_pokemon_cp !== null) {
-        content += "Raid CP: " + gym.raid_pokemon_cp + '<br>';
+        content += "<b>Raid CP:</b> " + gym.raid_pokemon_cp + '<br>';
     }
 	if (isRaid) {
-		content += "Raid Level: " + gym.raid_level + '<br>';
+		content += "<b>Raid Level:</b> " + gym.raid_level + '<br>';
 	}
 	if (isRaid && !isRaidBattle) {
-		content += "Raid Start: " + raidBattleDate.toLocaleTimeString() + ' ('+getTimeUntill(raidBattleDate)+')<br>';
+		content += "<b>Raid Start:</b> " + raidBattleDate.toLocaleTimeString() + ' ('+getTimeUntill(raidBattleDate)+')<br>';
 	}
 	if (isRaid) {
-		content += "Raid End: " + raidEndDate.toLocaleTimeString() + ' ('+getTimeUntill(raidEndDate)+')<br>';
+		content += "<b>Raid End:</b> " + raidEndDate.toLocaleTimeString() + ' ('+getTimeUntill(raidEndDate)+')<br>';
 	}
 
+    content += '<br><a href="https://www.google.com/maps/place/'+gym.lat+','+gym.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
+	content += '</center>';
 	return content;
 }
 
