@@ -607,7 +607,11 @@ function loadData() {
 							gym.raidTimerSet = false;
 						}
 					} else {
-						if (
+
+                        oldGym.updated = gym.updated;
+                        oldGym.last_modified_timestamp = gym.last_modified_timestamp;
+
+                        if (
 							oldGym.availble_slots !== gym.availble_slots ||
 							oldGym.team_id !== gym.team_id ||
 							oldGym.raid_end_timestamp != gym.raid_end_timestamp ||
@@ -665,6 +669,10 @@ function loadData() {
 							oldPokestop.lure_expire_timestamp = pokestop.lure_expire_timestamp;
 							oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
 						}
+
+                        oldPokestop.updated = pokestop.updated;
+                        oldPokestop.last_modified_timestamp = pokestop.last_modified_timestamp;
+
                         if (oldPokestop.quest_type !== pokestop.quest_type) {
 							oldPokestop.quest_type = pokestop.quest_type;
 							oldPokestop.quest_target = pokestop.quest_target;
