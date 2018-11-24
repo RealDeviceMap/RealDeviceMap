@@ -213,6 +213,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     
     public func addEncounter(encounterData: POGOProtos_Networking_Responses_EncounterResponse) {
         
+        self.pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
         self.cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
         self.move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
         self.move2 = UInt16(encounterData.wildPokemon.pokemonData.move2.rawValue)
@@ -293,6 +294,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 } else {
                     self.expireTimestamp = oldPokemon!.expireTimestamp
                 }
+            }
+            
+            if oldPokemon!.pokemonId != self.pokemonId {
+                Log.debug(message: "[POKEMON] Pokemon \(id) changed from \(oldPokemon!.pokemonId) to \(self.pokemonId)")
             }
             
             if oldPokemon!.cellId != nil && self.cellId == nil {
