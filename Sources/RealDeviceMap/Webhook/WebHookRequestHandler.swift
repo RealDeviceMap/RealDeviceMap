@@ -56,7 +56,7 @@ class WebHookRequestHandler {
         }
         
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        if let username = json["username"] as? String {
+        if let username = json["username"] as? String, trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username]
             levelCacheLock.unlock()

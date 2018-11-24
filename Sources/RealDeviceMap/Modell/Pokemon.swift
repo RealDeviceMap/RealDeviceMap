@@ -140,26 +140,18 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         
     init(wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64) {
         
-        let id = wildPokemon.encounterID.description
-        let pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
-        let lat = wildPokemon.latitude
-        let lon = wildPokemon.longitude
-        let spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
-        let gender = wildPokemon.pokemonData.pokemonDisplay.gender.rawValue.toUInt8()
-        let form = wildPokemon.pokemonData.pokemonDisplay.form.rawValue.toUInt8()
-        let costume = wildPokemon.pokemonData.pokemonDisplay.costume.rawValue.toUInt8()
-        let weather = wildPokemon.pokemonData.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
-        
-        self.id = id
-        self.lat = lat
-        self.lon = lon
-        self.pokemonId = pokemonId
-        self.spawnId = spawnId
-        self.weather = weather
-        self.costume = costume
-        self.gender = gender
-        self.form = form
-        
+        id = wildPokemon.encounterID.description
+        pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
+        lat = wildPokemon.latitude
+        lon = wildPokemon.longitude
+        spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
+        gender = wildPokemon.pokemonData.pokemonDisplay.gender.rawValue.toUInt8()
+        form = wildPokemon.pokemonData.pokemonDisplay.form.rawValue.toUInt8()
+        if wildPokemon.pokemonData.hasPokemonDisplay {
+            costume = wildPokemon.pokemonData.pokemonDisplay.costume.rawValue.toUInt8()
+            weather = wildPokemon.pokemonData.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        }
+    
         self.cellId = cellId
         
     }
@@ -171,8 +163,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let pokestopId = nearbyPokemon.fortID
         let gender = nearbyPokemon.pokemonDisplay.gender.rawValue.toUInt8()
         let form = nearbyPokemon.pokemonDisplay.form.rawValue.toUInt8()
-        let costume = nearbyPokemon.pokemonDisplay.costume.rawValue.toUInt8()
-        let weather = nearbyPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        if nearbyPokemon.hasPokemonDisplay {
+            costume = nearbyPokemon.pokemonDisplay.costume.rawValue.toUInt8()
+            weather = nearbyPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        }
         
         let sql = """
                 SELECT lat, lon
@@ -210,8 +204,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.lon = lon
         self.pokemonId = pokemonId
         self.pokestopId = pokestopId
-        self.weather = weather
-        self.costume = costume
         self.gender = gender
         self.form = form
         
