@@ -276,7 +276,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
             let sql = """
-                INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, pokestop_id, updated, first_seen_timestamp, changed, cell_id)
+                INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight, size, gender, form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
