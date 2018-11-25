@@ -1044,7 +1044,7 @@ function getPokestopPopupContent(pokestop) {
 	}
 
     if (pokestop.url !== null) {
-        content += '<img src="'+pokestop.url+'" style="max-width:150px;max-height:100px;"/><br><br>';
+        content += '<img src="'+pokestop.url.replace("http://", "https://")+'" style="max-width:150px;max-height:100px;"/><br><br>';
     }
 
 	if (lureExpireDate >= now) {
@@ -1075,11 +1075,13 @@ function getPokestopPopupContent(pokestop) {
             content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>';
         });
 
+        content += '<br>';
+
     }
 
     const updatedDate = new Date(pokestop.updated*1000);
     if (updatedDate) {
-        content += "<br><b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
+        content += "<b>Last Updated:</b> " + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br>';
     }
 
     content += '<br><a href="https://www.google.com/maps/place/'+pokestop.lat+','+pokestop.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
@@ -1102,7 +1104,7 @@ function getGymPopupContent(gym) {
     }
 
     if (gym.url !== null) {
-        content += '<img src="'+gym.url+'" style="max-width:150px;max-height:100px;"/><br><br>';
+        content += '<img src="'+gym.url.replace("http://", "https://")+'" style="max-width:150px;max-height:100px;"/><br><br>';
     }
 
     let hasStatus = false;
