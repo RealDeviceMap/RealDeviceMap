@@ -51,6 +51,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         .itemMetalCoat,
         .itemDragonScale,
         .itemUpGrade,
+        .itemGen4EvolutionStone,
         .itemMoveRerollFastAttack,
         .itemMoveRerollSpecialAttack,
         .itemRareCandy,
