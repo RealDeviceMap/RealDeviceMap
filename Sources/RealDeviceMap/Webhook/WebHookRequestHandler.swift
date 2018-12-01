@@ -126,6 +126,7 @@ class WebHookRequestHandler {
                 }
             } else if method == 102 && trainerLevel >= 30 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
+                    print(data.count, [UInt8](data))
                     encounters.append(er)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed EncounterResponse")
