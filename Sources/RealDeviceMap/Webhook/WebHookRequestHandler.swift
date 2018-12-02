@@ -127,19 +127,26 @@ class WebHookRequestHandler {
             } else if method == 102 && trainerLevel >= 30 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
 
-                    let bytes = [UInt8](data)
-                    for i in 0...bytes.count-3 {
-                        if bytes[i] == 1 && bytes[i+1] == 2 && bytes[i+2] == 3 {
-                            var index = i - 1
-                            while index != 0 {
-                                if bytes[index] == 1 {
-                                    print("Size: \(data.count) Index: \(index)")
-                                    break
+                    if er.status == .encounterSuccess {
+                        let bytes = [UInt8](data)
+                        for i in 0..<bytes.count {
+                            if bytes[i] == 1 {
+                                var newBytes = bytes
+                                newBytes[i] = 2
+                                
+                                if let er2 = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: Data(newBytes)) {
+                                    if er2.status != .encounterSuccess {
+                                        print("Size: \(bytes.count) Index: \(i)")
+                                        if bytes.count > 126 {
+                                            print("Size: \(bytes.count) Data: \(bytes)")
+                                        }
+                                    }
                                 }
-                                index -= 1
+                                
                             }
                         }
                     }
+                    
 
                     encounters.append(er)
                 } else {
