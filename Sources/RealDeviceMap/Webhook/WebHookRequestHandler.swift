@@ -126,28 +126,6 @@ class WebHookRequestHandler {
                 }
             } else if method == 102 && trainerLevel >= 30 {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
-
-                    if er.status == .encounterSuccess {
-                        let bytes = [UInt8](data)
-                        for i in 0..<bytes.count {
-                            if bytes[i] == 1 {
-                                var newBytes = bytes
-                                newBytes[i] = 2
-                                
-                                if let er2 = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: Data(newBytes)) {
-                                    if er2.status != .encounterSuccess {
-                                        print("Size: \(bytes.count) Index: \(i)")
-                                        if bytes.count > 126 {
-                                            print("Size: \(bytes.count) Data: \(bytes)")
-                                        }
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
-                    
-
                     encounters.append(er)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed EncounterResponse")
