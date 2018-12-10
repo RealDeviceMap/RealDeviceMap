@@ -47,50 +47,13 @@ class WebReqeustHandler {
             data[loc] = localizer.get(value: loc)
         }
         
-        // Get User
-        var username = request.session?.userid
+        let tmp = getPerms(request: request)
+        let perms = tmp.perms
+        let username = tmp.username
+        
         if username != nil && username != "" {
             data["username"] = username
             data["is_logged_in"] = true
-        }
-        
-        var perms = [Group.Perm]()
-        let sessionPerms = (request.session?.data["perms"] as? Int)?.toUInt32()
-        if sessionPerms == nil {
-            if username != nil && username != "" {
-                let user: User?
-                do {
-                    user = try User.get(username: username!)
-                } catch {
-                    user = nil
-                }
-                if user == nil {
-                    request.session?.userid = ""
-                    username = ""
-                    perms = []
-                } else {
-                    let userPerms = user!.group?.perms
-                    perms = userPerms ?? []
-                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms ?? [])
-                }
-            }
-            if username == nil || username == "" {
-                let group: Group?
-                do {
-                    group = try Group.getWithName(name: "no_user")
-                } catch {
-                    group = nil
-                }
-                if group == nil {
-                    perms = [Group.Perm]()
-                } else {
-                    let userPerms = group!.perms
-                    perms = userPerms
-                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms)
-                }
-            }
-        } else {
-            perms = Group.Perm.numberToPerms(number: sessionPerms!)
         }
         
         var requiredPermsCountReal: Int
@@ -1150,5 +1113,48 @@ class WebReqeustHandler {
             response.completed(status: .seeOther)
             throw CompletedEarly()
         }
+    }
+    
+    static func getPerms(request: HTTPRequest) -> (perms: [Group.Perm], username: String?) {
+        var username = request.session?.userid
+        var perms = [Group.Perm]()
+        let sessionPerms = (request.session?.data["perms"] as? Int)?.toUInt32()
+        if sessionPerms == nil {
+            if username != nil && username != "" {
+                let user: User?
+                do {
+                    user = try User.get(username: username!)
+                } catch {
+                    user = nil
+                }
+                if user == nil {
+                    request.session?.userid = ""
+                    username = ""
+                    perms = []
+                } else {
+                    let userPerms = user!.group?.perms
+                    perms = userPerms ?? []
+                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms ?? [])
+                }
+            }
+            if username == nil || username == "" {
+                let group: Group?
+                do {
+                    group = try Group.getWithName(name: "no_user")
+                } catch {
+                    group = nil
+                }
+                if group == nil {
+                    perms = [Group.Perm]()
+                } else {
+                    let userPerms = group!.perms
+                    perms = userPerms
+                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms)
+                }
+            }
+        } else {
+            perms = Group.Perm.numberToPerms(number: sessionPerms!)
+        }
+        return (perms, username)
     }
 }

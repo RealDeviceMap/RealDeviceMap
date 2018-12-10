@@ -57,13 +57,51 @@ class ApiRequestHandler {
             return
         }
         
-        var perms = [Group.Perm]()
-        let sessionPerms = (request.session?.data["perms"] as? Int)?.toUInt32()
-        if sessionPerms == nil {
-            response.respondWithError(status: .unauthorized)
-            return
-        } else {
-            perms = Group.Perm.numberToPerms(number: sessionPerms!)
+        let tmp = WebReqeustHandler.getPerms(request: request)
+        let perms = tmp.perms
+        let username = tmp.username
+        
+        if username == nil || username == "", let authorization = request.header(.authorization) {
+            let base64String = authorization.replacingOccurrences(of: "Basic ", with: "")
+            if let data = Data(base64Encoded: base64String),  let string = String(data: data, encoding: .utf8) {
+                let split = string.components(separatedBy: ":")
+                if split.count == 2 {
+                    if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
+                        let user: User
+                        do {
+                            if usernameEmail.contains("@") {
+                                user = try User.login(email: usernameEmail, password: password)
+                            } else {
+                                user = try User.login(username: usernameEmail, password: password)
+                            }
+                        } catch {
+                            if error is DBController.DBError {
+                                response.respondWithError(status: .internalServerError)
+                                return
+                            } else {
+                                let registerError = error as! User.LoginError
+                                switch registerError.type {
+                                case .usernamePasswordInvalid:
+                                    response.respondWithError(status: .unauthorized)
+                                    return
+                                case .undefined:
+                                    response.respondWithError(status: .internalServerError)
+                                    return
+                                }
+                            }
+                        }
+                        
+                        request.session?.userid = user.username
+                        if user.group != nil {
+                            request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
+                        }
+                        sessionDriver.save(session: request.session!)
+                        handleGetData(request: request, response: response)
+                        return
+                    }
+                }
+            
+            }
         }
         
         let permViewMap = perms.contains(.viewMap)
