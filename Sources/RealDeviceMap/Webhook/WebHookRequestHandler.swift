@@ -140,22 +140,33 @@ class WebHookRequestHandler {
                 containsGMO = true
                 if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
                     isInvalidGMO = false
-                    if gmo.timeOfDay.rawValue == 0 {
-                        Log.info(message: "[WebHookRequestHandler] GMO doesn't contain time of day. Asuming empty.")
+                    
+                    var newWildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon)]()
+                    var newNearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
+                    var newForts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
+                    var newCells = [UInt64]()
+                    
+                    for mapCell in gmo.mapCells {
+                        for wildPokemon in mapCell.wildPokemons {
+                            newWildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon))
+                        }
+                        for nearbyPokemon in mapCell.nearbyPokemons {
+                            newNearbyPokemons.append((cell: mapCell.s2CellID, data: nearbyPokemon))
+                        }
+                        for fort in mapCell.forts {
+                            newForts.append((cell: mapCell.s2CellID, data: fort))
+                        }
+                        newCells.append(mapCell.s2CellID)
+                    }
+                    
+                    if newWildPokemons.isEmpty && newNearbyPokemons.isEmpty && newForts.isEmpty {
+                        Log.info(message: "[WebHookRequestHandler] GMO is empty.")
                     } else {
                         isEmtpyGMO = false
-                        for mapCell in gmo.mapCells {
-                            for wildPokemon in mapCell.wildPokemons {
-                                wildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon))
-                            }
-                            for nearbyPokemon in mapCell.nearbyPokemons {
-                                nearbyPokemons.append((cell: mapCell.s2CellID, data: nearbyPokemon))
-                            }
-                            for fort in mapCell.forts {
-                                forts.append((cell: mapCell.s2CellID, data: fort))
-                            }
-                            cells.append(mapCell.s2CellID)
-                        }
+                        wildPokemons += newWildPokemons
+                        nearbyPokemons += newNearbyPokemons
+                        forts += newForts
+                        cells += newCells
                     }
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed GetMapObjectsResponse")
