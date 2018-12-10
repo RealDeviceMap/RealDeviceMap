@@ -64,6 +64,7 @@
 		"login_login": "Anmelden",
 		"login_error_invalid": "Nutzername/Email oder Passwort ungültig.",
 		"login_error_undefined": "Etwas ist schief gelaufen. Bitte versuchen Sie es später noch einmal!",
+        "login_error_limited": "Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es später noch einmal!",
 		"poke_1": "Bisasam",
 		"poke_2": "Bisaknosp",
 		"poke_3": "Bisaflor",

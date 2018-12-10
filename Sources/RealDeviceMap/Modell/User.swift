@@ -33,6 +33,7 @@ class User {
     class LoginError: Error {
         enum ErrorType: String {
             case usernamePasswordInvalid = "credentials_invalid"
+            case limited = "limited"
             case undefined = "undefined"
         }
         
@@ -192,15 +193,20 @@ class User {
     
     // MARK: - LOGIN
     
-    public static func login(mysql: MySQL?=nil, username: String, password: String) throws -> User {
-        return try login(mysql: mysql, username: username, email: nil, password: password)
+    public static func login(mysql: MySQL?=nil, username: String, password: String, host: String) throws -> User {
+        return try login(mysql: mysql, username: username, email: nil, password: password, host: host)
     }
     
-    public static func login(mysql: MySQL?=nil, email: String, password: String) throws -> User {
-        return try login(mysql: mysql, username: nil, email: email, password: password)
+    public static func login(mysql: MySQL?=nil, email: String, password: String, host: String) throws -> User {
+        return try login(mysql: mysql, username: nil, email: email, password: password, host: host)
     }
     
-    private static func login(mysql: MySQL?=nil, username: String? = nil, email: String? = nil, password: String) throws -> User {
+    private static func login(mysql: MySQL?=nil, username: String? = nil, email: String? = nil, password: String, host: String) throws -> User {
+        
+        if !LoginLimiter.global.allowed(host: host) {
+            throw LoginError(type: .limited)
+        }
+        
         let user: User?
         do {
             user = try User.get(mysql: mysql, username: username, email: email)
@@ -209,12 +215,14 @@ class User {
         }
         
         if user == nil  {
+            LoginLimiter.global.failed(host: host)
             throw LoginError(type: .usernamePasswordInvalid)
         }
         
         if try BCrypt.verify(password: password, matchesHash: user!.passwordHash) {
             return user!
         } else {
+            LoginLimiter.global.failed(host: host)
             throw LoginError(type: .usernamePasswordInvalid)
         }
     }

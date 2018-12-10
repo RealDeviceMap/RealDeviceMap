@@ -69,10 +69,17 @@ class ApiRequestHandler {
                     if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
                         let user: User
                         do {
-                            if usernameEmail.contains("@") {
-                                user = try User.login(email: usernameEmail, password: password)
+                            let host: String
+                            let ff = request.header(.xForwardedFor) ?? ""
+                            if ff.isEmpty {
+                                host = request.remoteAddress.host
                             } else {
-                                user = try User.login(username: usernameEmail, password: password)
+                                host = ff
+                            }
+                            if usernameEmail.contains("@") {
+                                user = try User.login(email: usernameEmail, password: password, host: host)
+                            } else {
+                                user = try User.login(username: usernameEmail, password: password, host: host)
                             }
                         } catch {
                             if error is DBController.DBError {
@@ -81,6 +88,8 @@ class ApiRequestHandler {
                             } else {
                                 let registerError = error as! User.LoginError
                                 switch registerError.type {
+                                case .limited:
+                                    fallthrough
                                 case .usernamePasswordInvalid:
                                     response.respondWithError(status: .unauthorized)
                                     return

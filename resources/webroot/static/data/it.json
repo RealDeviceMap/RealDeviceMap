@@ -64,6 +64,7 @@
 		"login_login": "Login",
 		"login_error_invalid": "Invalid Username/Email or password.",
 		"login_error_undefined": "Something went wrong. Please try again later!",
+        "login_error_limited": "Too many login attempts. Try again later!",
 		"poke_1": "Bulbasaur",
 		"poke_2": "Ivysaur",
 		"poke_3": "Venusaur",

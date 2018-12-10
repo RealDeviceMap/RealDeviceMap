@@ -539,10 +539,17 @@ class WebReqeustHandler {
         
         var user: User?
         do {
-            if usernameEmail.contains("@") {
-                user = try User.login(email: usernameEmail, password: password)
+            let host: String
+            let ff = request.header(.xForwardedFor) ?? ""
+            if ff.isEmpty {
+                host = request.remoteAddress.host
             } else {
-                user = try User.login(username: usernameEmail, password: password)
+                host = ff
+            }
+            if usernameEmail.contains("@") {
+                user = try User.login(email: usernameEmail, password: password, host: host)
+            } else {
+                user = try User.login(username: usernameEmail, password: password, host: host)
             }
         } catch {
             let localizer = Localizer.global
@@ -558,6 +565,9 @@ class WebReqeustHandler {
                 case .undefined:
                     data["is_error"] = true
                     data["error"] = localizer.get(value: "login_error_undefined")
+                case .limited:
+                    data["is_error"] = true
+                    data["error"] = localizer.get(value: "login_error_limited")
                 }
             }
         }
