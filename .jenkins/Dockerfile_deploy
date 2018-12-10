@@ -1,4 +1,4 @@
-FROM 0815flo/realdevicemap-build:latest
+FROM realdevicemap/realdevicemap-build:latest
 COPY .build_lin/release/RealDeviceMap /perfect-deployed/realdevicemap/
 COPY resources /perfect-deployed/realdevicemap/resources
 RUN rm -rf /var/lib/apt/lists/*

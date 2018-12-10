@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Building build image..."
-docker image build -f .jenkins/Dockerfile_build -t 0815flo/realdevicemap-build:latest ${PWD}
+docker image build -f .jenkins/Dockerfile_build -t realdevicemap/realdevicemap-build:latest ${PWD}
 echo "Building build image sucessfull"
 
 echo "Running swift build..."
@@ -14,7 +14,7 @@ rm -rf ./.build_lin/*
 rm -rf ./.packages_lin/*
 fi
 
-docker run -i -v "${PWD}:/perfectbuild" -v "${PWD}/.packages_lin:/perfectbuild/Packages" -w /perfectbuild --rm -t "0815flo/realdevicemap-build" swift build --build-path=/perfectbuild/.build_lin -c release
+docker run -i -v "${PWD}:/perfectbuild" -v "${PWD}/.packages_lin:/perfectbuild/Packages" -w /perfectbuild --rm -t "realdevicemap/realdevicemap-build" swift build --build-path=/perfectbuild/.build_lin -c release
 
 if [ $? -eq 0 ]; then
 echo "Running swift build sucessfull"
@@ -24,9 +24,9 @@ exit -1
 fi
 
 echo "Building deploy build..."
-docker image build -f .jenkins/Dockerfile_deploy -t 0815flo/realdevicemap-beta:latest ${PWD}
+docker image build -f .jenkins/Dockerfile_deploy -t realdevicemap/realdevicemap-beta:latest ${PWD}
 echo "Building deploy image sucessfull"
 
 echo "Pushing image..."
-docker push 0815flo/realdevicemap-beta:latest
+docker push realdevicemap/realdevicemap-beta:latest
 echo "Pushing image sucessfull"
