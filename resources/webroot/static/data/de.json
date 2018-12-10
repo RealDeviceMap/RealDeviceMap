@@ -46,6 +46,8 @@
 		"filter_xp": "XP",
 		"filter_candy": "Bonbons",
 		"filter_cells": "Zellen",
+        "filter_mapstyle": "Map-Style",
+        "filter_select_mapstyle": "Map-Style Wählen",
 		"register_title": "Bei %{name} Registrieren!",
 		"register_username": "Nutzername",
 		"register_email": "Email",

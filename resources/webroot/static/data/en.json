@@ -46,6 +46,8 @@
 		"filter_xp": "XP",
 		"filter_candy": "Candy",
 		"filter_cells": "Cells",
+        "filter_mapstyle": "Map-Style",
+        "filter_select_mapstyle": "Select Map-Style",
 		"register_title": "Register to %{name}!",
 		"register_username": "Username",
 		"register_email": "Email",

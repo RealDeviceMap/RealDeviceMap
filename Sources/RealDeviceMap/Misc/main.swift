@@ -51,6 +51,8 @@ WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
+WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String] ?? ["Default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"]
+
 
 Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 

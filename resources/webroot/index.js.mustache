@@ -32,9 +32,13 @@ let showCells;
 
 let avilableForms = [];
 let avilableItems = [];
+let avilableTileservers = {};
+let selectedTileserver = "Default";
 
 let pokemonFilterLoaded = false;
 let questFilterLoaded = false;
+
+let tileLayer;
 
 $(function() {
 
@@ -44,8 +48,17 @@ $(function() {
 
     avilableForms = JSON.parse('{{{avilable_forms_json}}}');
     avilableItems = JSON.parse('{{{avilable_items_json}}}');
+    avilableTileservers = JSON.parse('{{{avilable_tileservers_json}}}');
 
     loadStorage();
+
+    $.each(avilableTileservers, function (index, tileserver) {
+        $('#select-mapstyle').append($('<option>', {
+            value: index,
+            text: index,
+            selected: index === selectedTileserver,
+        }));
+    });
 
     $('#settingsModal').on("show.bs.modal", function () {
         pokemonFilterNew = $.extend(true, {}, pokemonFilter);
@@ -71,11 +84,43 @@ $(function() {
     });
 
     initMap();
+
+    $('#select-mapstyle').on('change', function() {
+        selectedTileserver = this.value;
+        store("tileserver", this.value);
+        map.removeLayer(tileLayer);
+
+        let scale = "";
+        if (L.Browser.retina) {
+            scale = "@2x"
+        }
+        tileLayer = L.tileLayer(avilableTileservers[selectedTileserver], {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            maxZoom: 18,
+            scale: scale,
+            hq: L.Browser.retina,
+        });
+        tileLayer.addTo(map);
+
+    });
+
 });
 
 // MARK: - Setup
 
 function loadStorage() {
+
+    const selectedTileserverTmp = retrieve('tileserver');
+    if (selectedTileserverTmp === undefined) {
+        selectedTileserver = 'Default';
+    } else {
+        if (avilableTileservers[selectedTileserverTmp] === undefined) {
+            selectedTileserver = 'Default';
+        } else {
+            selectedTileserver = selectedTileserverTmp;
+        }
+    }
+
     const showGymsValue = retrieve('show_gyms');
     if (showGymsValue === null) {
         store('show_gyms', true);
@@ -195,10 +240,17 @@ function initMap() {
 
 	map = L.map('map').setView([{{start_lat}}, {{start_lon}}], {{start_zoom}});
 
-	L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	let scale = "";
+	if (L.Browser.retina) {
+        scale = "@2x"
+    }
+    tileLayer = L.tileLayer(avilableTileservers[selectedTileserver], {
 		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-		maxZoom: 18
-	}).addTo(map);
+		maxZoom: 18,
+        scale: scale,
+        hq: L.Browser.retina,
+	});
+    tileLayer.addTo(map);
 
 	const customControlLocation = L.Control.extend({
 		options: {

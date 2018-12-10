@@ -26,6 +26,7 @@ class WebReqeustHandler {
     static var avilableFormsJson: String = ""
     static var avilableItemJson: String = ""
     static var enableRegister: Bool = true
+    static var tileservers = [String: String]()
     
     private static let sessionDriver = MySQLSessions()
             
@@ -123,7 +124,7 @@ class WebReqeustHandler {
             data["zoom"] = request.urlVariables["zoom"] ?? self.startZoom
 
             // Localize
-            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells"]
+            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells", "filter_select_mapstyle", "filter_mapstyle"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -154,6 +155,11 @@ class WebReqeustHandler {
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
             data["pokemon_time_old"] = Pokemon.defaultTimeReseen
+            var tileserverString = ""
+            for tileserver in tileservers {
+                tileserverString += "\(tileserver.key);\(tileserver.value)\n"
+            }
+            data["tileservers"] = tileserverString
         case .dashboardDevices:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
@@ -388,6 +394,7 @@ class WebReqeustHandler {
             data["max_pokemon_id"] = maxPokemonId
             data["avilable_forms_json"] = avilableFormsJson
             data["avilable_items_json"] = avilableItemJson
+            data["avilable_tileservers_json"] = tileservers.jsonEncodeForceTry() ?? ""
         default:
             break
         }
@@ -601,8 +608,9 @@ class WebReqeustHandler {
             let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
             let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
-            let locale = request.param(name: "locale_new")?.lowercased()
-        else {
+            let locale = request.param(name: "locale_new")?.lowercased(),
+            let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            else {
             data["show_error"] = true
             return data
         }
@@ -612,6 +620,17 @@ class WebReqeustHandler {
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
         let enableRegister = request.param(name: "enable_register_new") != nil
         let enableClearing = request.param(name: "enable_clearing") != nil
+        
+        var tileservers = [String: String]()
+        for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
+            let split = tileserverString.components(separatedBy: ";")
+            if split.count == 2 {
+                tileservers[split[0]] = split[1]
+            } else {
+                data["show_error"] = true
+                return data
+            }
+        }
         
         do {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
@@ -626,6 +645,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
+            try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
         } catch {
             data["show_error"] = true
             return data
@@ -637,6 +657,7 @@ class WebReqeustHandler {
         WebReqeustHandler.title = title
         WebReqeustHandler.maxPokemonId = maxPokemonId
         WebReqeustHandler.enableRegister = enableRegister
+        WebReqeustHandler.tileservers = tileservers
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
