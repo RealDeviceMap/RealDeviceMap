@@ -23,6 +23,9 @@ class WebHookRequestHandler {
     
     private static var levelCacheLock = Threading.Lock()
     private static var levelCache = [String: Int]()
+    
+    private static var emptyCellsLock = Threading.Lock()
+    private static var emptyCells = [UInt64: Int]()
         
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
         
@@ -160,6 +163,21 @@ class WebHookRequestHandler {
                     }
                     
                     if newWildPokemons.isEmpty && newNearbyPokemons.isEmpty && newForts.isEmpty {
+                        for cell in newCells {
+                            emptyCellsLock.lock()
+                            let count = emptyCells[cell]
+                            if count == nil {
+                                emptyCells[cell] = 1
+                            } else {
+                                emptyCells[cell] = count! + 1
+                            }
+                            emptyCellsLock.unlock()
+                            if cell == 3 {
+                                Log.debug(message: "[WebHookRequestHandler] Cell \(cell) was empty 3 times in a row. Asuming empty.")
+                                cells.append(cell)
+                            }
+                        }
+                        
                         Log.info(message: "[WebHookRequestHandler] GMO is empty.")
                     } else {
                         isEmtpyGMO = false
