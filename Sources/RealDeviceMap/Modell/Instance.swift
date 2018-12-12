@@ -18,6 +18,7 @@ class Instance: Hashable {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleRaid = "circle_raid"
+        case circleSmartRaid = "circle_smart_raid"
         case autoQuest = "auto_quest"
         case pokemonIV = "pokemon_iv"
         
@@ -26,6 +27,8 @@ class Instance: Hashable {
                 return .circlePokemon
             } else if s.lowercased() == "circle_raid" || s.lowercased() == "circleraid" {
                 return .circleRaid
+            } else if s.lowercased() == "circle_smart_raid" || s.lowercased() == "circlesmartraid" {
+                return .circleSmartRaid
             } else if s.lowercased() == "auto_quest" || s.lowercased() == "autoquest" {
                 return .autoQuest
             } else if s.lowercased() == "pokemon_iv" || s.lowercased() == "pokemoniv" {

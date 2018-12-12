@@ -13,7 +13,7 @@ class WebStaticReqeustHandler {
     private init() {}
     
     static func handle(request: HTTPRequest, _ response: HTTPResponse) {
-        let documentRoot = Dir.workingDir.path + "/resources/webroot"
+        let documentRoot = "\(projectroot)/resources/webroot"
         let staticFileHandler = StaticFileHandler(documentRoot: documentRoot)
         staticFileHandler.handleRequest(request: request, response: response)
         response.completed()

@@ -53,7 +53,7 @@ class DBController {
     
     private var newestDBVersion: Int {
         let fileManager = FileManager.default
-        let migrationsRoot = Dir.workingDir.path + "/resources/migrations/"
+        let migrationsRoot = "\(projectroot)/resources/migrations/"
         var current = 0
         
         while fileManager.fileExists(atPath: migrationsRoot + "\(current + 1).sql") {
@@ -272,7 +272,7 @@ class DBController {
             }
             
             let uuidString = Foundation.UUID().uuidString
-            let backupsDir = Dir("backups")
+            let backupsDir = Dir("\(projectroot)/backups")
             let backupFileSchema = File(backupsDir.path + uuidString + ".schema.sql")
             let backupFileTrigger = File(backupsDir.path + uuidString + ".trigger.sql")
             let backupFileData = File(backupsDir.path + uuidString + ".data.sql")
@@ -311,7 +311,7 @@ class DBController {
             }
             
             var migrateSQL: String
-            let sqlFile = File(Dir.workingDir.path + "/resources/migrations/\(fromVersion + 1).sql")
+            let sqlFile = File("\(projectroot)/resources/migrations/\(fromVersion + 1).sql")
             do {
                 try sqlFile.open(.read)
                 try migrateSQL = sqlFile.readString()

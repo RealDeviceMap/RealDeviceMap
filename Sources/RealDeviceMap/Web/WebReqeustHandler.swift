@@ -34,7 +34,7 @@ class WebReqeustHandler {
         
         let localizer = Localizer.global
         
-        let documentRoot = Dir.workingDir.path + "/resources/webroot"
+        let documentRoot = "\(projectroot)/resources/webroot"
         var data = MustacheEvaluationContext.MapType()
         data["csrf"] = request.session?.data["csrf"]
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
@@ -714,6 +714,8 @@ class WebReqeustHandler {
             data["circle_pokemon_selected"] = true
         } else if type! == .circleRaid {
             data["circle_raid_selected"] = true
+        } else if type! == .circleSmartRaid {
+            data["circle_smart_raid_selected"] = true
         } else if type! == .autoQuest {
             data["auto_quest_selected"] = true
         } else if type! == .pokemonIV {
@@ -734,7 +736,7 @@ class WebReqeustHandler {
         
         var newCoords: [Any]
         
-        if type != nil && type! == .circlePokemon || type! == .circleRaid {
+        if type != nil && type! == .circlePokemon || type! == .circleRaid || type! == .circleSmartRaid {
             var coords = [Coord]()
             let areaRows = area.components(separatedBy: "\n")
             for areaRow in areaRows {
@@ -829,11 +831,11 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             }
         } else {
-            var data: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
+            var instanceData: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
             if type == .pokemonIV {
-                data["pokemon_ids"] = pokemonIDs
+                instanceData["pokemon_ids"] = pokemonIDs
             }
-            let instance = Instance(name: name, type: type!, data: data)
+            let instance = Instance(name: name, type: type!, data: instanceData)
             do {
                 try instance.create()
                 InstanceController.global.addInstance(instance: instance)
@@ -910,6 +912,8 @@ class WebReqeustHandler {
                 data["circle_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
+            case .circleSmartRaid:
+                data["circle_smart_raid_selected"] = true
             case .autoQuest:
                 data["auto_quest_selected"] = true
             case .pokemonIV:

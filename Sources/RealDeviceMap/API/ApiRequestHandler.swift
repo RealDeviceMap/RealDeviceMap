@@ -479,6 +479,8 @@ class ApiRequestHandler {
                     switch instance.type {
                     case .circleRaid:
                         instanceData["type"] = "Circle Raid"
+                    case .circleSmartRaid:
+                        instanceData["type"] = "Circle Smart Raid"
                     case .circlePokemon:
                         instanceData["type"] = "Circle Pokemon"
                     case .autoQuest:

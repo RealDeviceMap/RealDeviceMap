@@ -205,11 +205,13 @@ class AutoInstanceController: InstanceControllerProto {
                 
                 if let target = bootstrappCellIDs.popLast() {
                     bootstrappLock.unlock()
+                    
                     let cell = S2Cell(cellId: target)
                     let center = S2LatLng(point: cell.center)
-                    let coord = center.coord
-                    let radians = 0.00007839251445558
                     
+                    // Get all cells rouching a 500m circle at center
+                    let coord = center.coord
+                    let radians = 0.00007839251445558 // 500m
                     let centerNormalizedPoint = center.normalized.point
                     let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
                     let coverer = S2RegionCoverer()
@@ -217,6 +219,7 @@ class AutoInstanceController: InstanceControllerProto {
                     coverer.maxLevel = 15
                     coverer.minLevel = 15
                     let cellIDs = coverer.getCovering(region: circle)
+                    
                     bootstrappLock.lock()
                     for cellID in cellIDs {
                         if let index = bootstrappCellIDs.index(of: cellID) {

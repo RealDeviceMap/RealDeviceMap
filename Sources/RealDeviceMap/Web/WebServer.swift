@@ -50,7 +50,7 @@ class WebServer {
         let port = Int(enviroment["WEB_SERVER_PORT"] ?? "") ?? 9000
         
         SessionConfig.name = "SESSION-TOKEN"
-        SessionConfig.idle = 2592000
+        SessionConfig.idle = 604800 // 7 Days
         
         //SessionConfig.cookieDomain = "/"
         SessionConfig.cookieSecure = false // <- make secure

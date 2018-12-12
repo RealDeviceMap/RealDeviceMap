@@ -14,14 +14,14 @@ class ImageGenerator {
     private init() {}
     
     static func generate() {
-        let raidDir = Dir("resources/webroot/static/img/raid/")
-        let gymDir = Dir("resources/webroot/static/img/gym/")
-        let eggDir = Dir("resources/webroot/static/img/egg/")
-        let unkownEggDir = Dir("resources/webroot/static/img/unkown_egg/")
-        let pokestopDir = Dir("resources/webroot/static/img/pokestop/")
-        let pokemonDir = Dir("resources/webroot/static/img/pokemon/")
-        let itemDir = Dir("resources/webroot/static/img/item/")
-        let questDir = Dir("resources/webroot/static/img/quest/")
+        let raidDir = Dir("\(projectroot)/resources/webroot/static/img/raid/")
+        let gymDir = Dir("\(projectroot)/resources/webroot/static/img/gym/")
+        let eggDir = Dir("\(projectroot)/resources/webroot/static/img/egg/")
+        let unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unkown_egg/")
+        let pokestopDir = Dir("\(projectroot)/resources/webroot/static/img/pokestop/")
+        let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
+        let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
+        let questDir = Dir("\(projectroot)/resources/webroot/static/img/quest/")
         if !raidDir.exists {
             try! raidDir.create()
         }

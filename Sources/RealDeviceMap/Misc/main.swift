@@ -12,9 +12,18 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
+#if DEBUG
+let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.workingDir.path
+#else
+let projectroot = Dir.workingDir.path
+#endif
+
 
 // Check if /backups exists
-let backups = Dir("backups")
+let backups = Dir("\(projectroot)/backups")
+#if DEBUG
+try? backups.create()
+#endif
 if !backups.exists {
     let message = "[MAIN] Backups directory doesn't exist! Make sure to persist the backups folder before continuing."
     Log.critical(message: message)
@@ -85,7 +94,7 @@ WebHookController.global.start()
 Log.debug(message: "[MAIN] Loading Avilable Forms")
 var avilableForms = [String]()
 for formString in POGOProtos_Enums_Form.allFormsInString {
-    let file = File("resources/webroot/static/img/pokemon/\(formString).png")
+    let file = File("\(projectroot)/resources/webroot/static/img/pokemon/\(formString).png")
     if file.exists {
         avilableForms.append(formString)
     }

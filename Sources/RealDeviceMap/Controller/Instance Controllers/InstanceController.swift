@@ -66,6 +66,8 @@ class InstanceController {
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
         switch instance.type {
+        case .circleSmartRaid:
+            fallthrough
         case .circlePokemon:
             fallthrough
         case .circleRaid:
@@ -81,7 +83,7 @@ class InstanceController {
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
             
-            if instance.type == .circlePokemon {
+            if instance.type == .circlePokemon { // TODO: - Smart Raid
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
             } else {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .raid, minLevel: minLevel, maxLevel: maxLevel)

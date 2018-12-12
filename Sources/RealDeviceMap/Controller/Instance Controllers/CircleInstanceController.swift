@@ -13,6 +13,7 @@ class CircleInstanceController: InstanceControllerProto {
     enum CircleType {
         case pokemon
         case raid
+        case smartRaid
     }
     
     public private(set) var name: String

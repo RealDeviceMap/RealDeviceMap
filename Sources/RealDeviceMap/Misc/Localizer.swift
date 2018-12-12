@@ -27,7 +27,7 @@ class Localizer {
     private init() {}
     
     private func load() {
-        let file = File("resources/webroot/static/data/\(Localizer.locale).json")
+        let file = File("\(projectroot)/resources/webroot/static/data/\(Localizer.locale).json")
         lastModified = file.modificationTime
         do {
             try file.open()
