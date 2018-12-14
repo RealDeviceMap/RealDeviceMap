@@ -172,7 +172,7 @@ class WebHookRequestHandler {
                                 emptyCells[cell] = count! + 1
                             }
                             emptyCellsLock.unlock()
-                            if cell == 3 {
+                            if count == 3 {
                                 Log.debug(message: "[WebHookRequestHandler] Cell \(cell) was empty 3 times in a row. Asuming empty.")
                                 cells.append(cell)
                             }
