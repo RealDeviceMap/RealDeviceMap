@@ -77,17 +77,6 @@ class IVInstanceController: InstanceControllerProto {
                             self.addPokemon(pokemon: pokemonReal)
                         } else {
                             Log.debug(message: "[IVInstanceController] Checked Pokemon has IV")
-                            self.statsLock.lock()
-                            if self.startDate == nil {
-                                self.startDate = Date()
-                            }
-                            if self.count == UInt64.max {
-                                self.count = 0
-                                self.startDate = Date()
-                            } else {
-                                self.count += 1
-                            }
-                            self.statsLock.unlock()
                         }
                     }
                     
@@ -194,4 +183,29 @@ class IVInstanceController: InstanceControllerProto {
         
     }
     
+    func gotIV(pokemon: Pokemon) {
+        
+        if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
+        
+            pokemonLock.lock()
+            if let index = pokemonQueue.index(of: pokemon) {
+                pokemonQueue.remove(at: index)
+            }
+            pokemonLock.unlock()
+            
+            self.statsLock.lock()
+            if self.startDate == nil {
+                self.startDate = Date()
+            }
+            if self.count == UInt64.max {
+                self.count = 0
+                self.startDate = Date()
+            } else {
+                self.count += 1
+            }
+            self.statsLock.unlock()
+            
+        }
+    }
+
 }

@@ -121,11 +121,14 @@ class AssignmentController: InstanceControllerDelegate {
         let formattedDate = formatter.string(from: date)
         
         let split = formattedDate.components(separatedBy: ":")
-        let hour = UInt32(split[0])!
-        let minute = UInt32(split[1])!
-        let second = UInt32(split[2])!
-        
-        return hour * 3600 + minute * 60 + second
+        if split.count >= 3 {
+            let hour = UInt32(split[0]) ?? 0
+            let minute = UInt32(split[1]) ?? 0
+            let second = UInt32(split[2]) ?? 0
+            return hour * 3600 + minute * 60 + second
+        } else {
+            return 0
+        }
     }
     
     deinit {

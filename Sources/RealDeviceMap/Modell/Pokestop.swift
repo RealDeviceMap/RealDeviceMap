@@ -12,6 +12,7 @@ import POGOProtos
 
 class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
+    
     class ParsingError: Error {}
     
     override func getJSONValues() -> [String : Any] {

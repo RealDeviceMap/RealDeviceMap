@@ -225,7 +225,14 @@ class InstanceController {
                 instance.addPokemon(pokemon: pokemon)
             }
         }
-        
+    }
+    
+    public func gotIV(pokemon: Pokemon) {
+        for instance in instancesByInstanceName {
+            if let instance = instance.value as? IVInstanceController {
+                instance.gotIV(pokemon: pokemon)
+            }
+        }
     }
     
     public func getIVQueue(name: String) -> [Pokemon] {

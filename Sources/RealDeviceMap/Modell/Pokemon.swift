@@ -317,6 +317,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let changedSQL: String
             if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
                 WebHookController.global.addPokemonEvent(pokemon: self)
+                InstanceController.global.gotIV(pokemon: self)
                 bindChangedTimestamp = false
                 changedSQL = "UNIX_TIMESTAMP()"
             } else {
