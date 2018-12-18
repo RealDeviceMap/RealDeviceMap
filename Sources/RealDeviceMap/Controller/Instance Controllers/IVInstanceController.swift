@@ -166,23 +166,6 @@ class IVInstanceController: InstanceControllerProto {
         
     }
     
-    private func lastIndexOf(pokemonId: UInt16) -> Int? {
-        
-        let targetPriority = pokemonList.index(of: pokemonId)!
-        
-        var i = 0
-        for pokemon in pokemonQueue {
-            let priority = pokemonList.index(of: pokemon.pokemonId)!
-            if targetPriority < priority {
-                return i
-            }
-            i += 1
-        }
-        
-        return nil
-        
-    }
-    
     func gotIV(pokemon: Pokemon) {
         
         if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
@@ -208,4 +191,21 @@ class IVInstanceController: InstanceControllerProto {
         }
     }
 
+    private func lastIndexOf(pokemonId: UInt16) -> Int? {
+        
+        let targetPriority = pokemonList.index(of: pokemonId)!
+        
+        var i = 0
+        for pokemon in pokemonQueue {
+            let priority = pokemonList.index(of: pokemon.pokemonId)!
+            if targetPriority < priority {
+                return i
+            }
+            i += 1
+        }
+        
+        return nil
+        
+    }
+    
 }

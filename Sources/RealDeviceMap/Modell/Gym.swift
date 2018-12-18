@@ -456,6 +456,166 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive, cellId: cellId)
     }
     
+    public static func getWithIDs(mysql: MySQL?=nil, ids: [String]) throws -> [Gym] {
+        
+        if ids.count > 60000 {
+            var result = [Gym]()
+            for i in 0..<(Int(ceil(Double(ids.count)/60000.0))) {
+                let start = 60000 * i
+                let end = min(60000 * (i+1) - 1, ids.count - 1)
+                let splice = Array(ids[start...end])
+                if let spliceResult = try? getWithIDs(mysql: mysql, ids: splice) {
+                    result += spliceResult
+                }
+            }
+            return result
+        }
+        
+        if ids.count == 0 {
+            return [Gym]()
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[GYM] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        var inSQL = "("
+        for _ in 1..<ids.count {
+            inSQL += "?, "
+        }
+        inSQL += "?)"
+        
+        let sql = """
+        SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id
+        FROM gym
+        WHERE id IN \(inSQL)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for id in ids {
+            mysqlStmt.bindParam(id)
+        }
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var gyms = [Gym]()
+        while let result = results.next() {
+            let id = result[0] as! String
+            let lat = result[1] as! Double
+            let lon = result[2] as! Double
+            let name = result[3] as? String
+            let url = result[4] as? String
+            let guardPokemonId = result[5] as? UInt16
+            let lastModifiedTimestamp = result[6] as? UInt32
+            let teamId = result[7] as? UInt8
+            let raidEndTimestamp = result[8] as? UInt32
+            let raidSpawnTimestamp = result[9] as? UInt32
+            let raidBattleTimestamp = result[10] as? UInt32
+            let raidPokemonId = result[11] as? UInt16
+            let enabled = (result[12] as? UInt8)?.toBool()
+            let availbleSlots = result[13] as? UInt16
+            let updated = result[14] as! UInt32
+            let raidLevel = result[15] as? UInt8
+            let exRaidEligible = (result[16] as? UInt8)?.toBool()
+            let inBattle = (result[17] as? UInt8)?.toBool()
+            let raidPokemonMove1 = result[18] as? UInt16
+            let raidPokemonMove2 = result[19] as? UInt16
+            let raidPokemonForm = result[20] as? UInt8
+            let raidPokemonCp = result[21] as? UInt16
+            let raidIsExclusive = (result[22] as? UInt8)?.toBool()
+            let cellId = result[23] as? UInt64
+            
+            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive, cellId: cellId))
+        }
+        return gyms
+    }
+  
+    public static func getWithCellIDs(mysql: MySQL?=nil, cellIDs: [UInt64]) throws -> [Gym] {
+        
+        if cellIDs.count > 60000 {
+            var result = [Gym]()
+            for i in 0..<(Int(ceil(Double(cellIDs.count)/60000.0))) {
+                let start = 60000 * i
+                let end = min(60000 * (i+1) - 1, cellIDs.count - 1)
+                let splice = Array(cellIDs[start...end])
+                if let spliceResult = try? getWithCellIDs(mysql: mysql, cellIDs: splice) {
+                    result += spliceResult
+                }
+            }
+            return result
+        }
+        
+        if cellIDs.count == 0 {
+            return [Gym]()
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[GYM] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        var inSQL = "("
+        for _ in 1..<cellIDs.count {
+            inSQL += "?, "
+        }
+        inSQL += "?)"
+        
+        let sql = """
+            SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id
+            FROM gym
+            WHERE cell_id IN \(inSQL)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for id in cellIDs {
+            mysqlStmt.bindParam(id)
+        }
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var gyms = [Gym]()
+        while let result = results.next() {
+            let id = result[0] as! String
+            let lat = result[1] as! Double
+            let lon = result[2] as! Double
+            let name = result[3] as? String
+            let url = result[4] as? String
+            let guardPokemonId = result[5] as? UInt16
+            let lastModifiedTimestamp = result[6] as? UInt32
+            let teamId = result[7] as? UInt8
+            let raidEndTimestamp = result[8] as? UInt32
+            let raidSpawnTimestamp = result[9] as? UInt32
+            let raidBattleTimestamp = result[10] as? UInt32
+            let raidPokemonId = result[11] as? UInt16
+            let enabled = (result[12] as? UInt8)?.toBool()
+            let availbleSlots = result[13] as? UInt16
+            let updated = result[14] as! UInt32
+            let raidLevel = result[15] as? UInt8
+            let exRaidEligible = (result[16] as? UInt8)?.toBool()
+            let inBattle = (result[17] as? UInt8)?.toBool()
+            let raidPokemonMove1 = result[18] as? UInt16
+            let raidPokemonMove2 = result[19] as? UInt16
+            let raidPokemonForm = result[20] as? UInt8
+            let raidPokemonCp = result[21] as? UInt16
+            let raidIsExclusive = (result[22] as? UInt8)?.toBool()
+            let cellId = result[23] as? UInt64
+            
+            gyms.append(Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled, lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp, raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm, raidPokemonCp: raidPokemonCp, raidIsExclusive: raidIsExclusive, cellId: cellId))
+        }
+        return gyms
+    }
+    
     public static func clearOld(mysql: MySQL?=nil, ids: [String], cellId: UInt64) throws -> UInt {
         
         guard let mysql = mysql ?? DBController.global.mysql else {

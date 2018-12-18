@@ -209,9 +209,9 @@ class AutoInstanceController: InstanceControllerProto {
                     let cell = S2Cell(cellId: target)
                     let center = S2LatLng(point: cell.center)
                     
-                    // Get all cells rouching a 500m circle at center
+                    // Get all cells touching a 500m (-10m for error) circle at center
                     let coord = center.coord
-                    let radians = 0.00007839251445558 // 500m
+                    let radians = 0.00007682466416647 // 490m
                     let centerNormalizedPoint = center.normalized.point
                     let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
                     let coverer = S2RegionCoverer()

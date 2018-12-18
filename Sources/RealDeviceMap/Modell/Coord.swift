@@ -8,10 +8,14 @@
 import Foundation
 import PerfectLib
 
-class Coord: JSONConvertibleObject {
+class Coord: JSONConvertibleObject, Hashable {
         
     var lat: Double
     var lon: Double
+    
+    public var hashValue: Int {
+        return "\(lat.rounded(toStringWithDecimals: 10));\(lon.rounded(toStringWithDecimals: 10))".hashValue
+    }
     
     init(lat: Double, lon: Double) {
         self.lat = lat
@@ -24,5 +28,9 @@ class Coord: JSONConvertibleObject {
             "lon": lon
         ]
     }
-
+    
+    static func == (lhs: Coord, rhs: Coord) -> Bool {
+        return lhs.lat == rhs.lat && lhs.lon == rhs.lon
+    }
+    
 }

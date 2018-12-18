@@ -253,12 +253,12 @@ class WebHookRequestHandler {
         
         var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO]
         
-        if targetCoord != nil {
+        if latTarget != nil && lonTarget != nil {
             data["in_area"] = inArea
             data["lat_target"] = latTarget!
             data["lon_target"] = lonTarget!
         }
-        if pokemonCoords != nil {
+        if pokemonCoords != nil && pokemonEncounterId != nil {
             data["pokemon_lat"] = pokemonCoords!.latitude
             data["pokemon_lon"] = pokemonCoords!.longitude
             data["pokemon_encounter_id"] = pokemonEncounterId!
@@ -306,10 +306,16 @@ class WebHookRequestHandler {
                 if fort.data.type == .gym {
                     let gym = Gym(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
+                    if gymIdsPerCell[fort.cell] == nil {
+                        gymIdsPerCell[fort.cell] = [String]()
+                    }
                     gymIdsPerCell[fort.cell]!.append(fort.data.id)
                 } else if fort.data.type == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
+                    if stopsIdsPerCell[fort.cell] == nil {
+                        stopsIdsPerCell[fort.cell] = [String]()
+                    }
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
