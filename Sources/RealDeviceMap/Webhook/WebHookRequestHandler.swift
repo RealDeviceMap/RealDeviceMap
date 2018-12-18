@@ -283,8 +283,6 @@ class WebHookRequestHandler {
                 let level = s2cell.level
                 let cell = Cell(id: cellId, level: UInt8(level), centerLat: lat, centerLon: lon, updated: nil)
                 try? cell.save(mysql: mysql, update: true)
-                gymIdsPerCell[cellId] = [String]()
-                stopsIdsPerCell[cellId] = [String]()
             }
             
             let startWildPokemon = Date()
