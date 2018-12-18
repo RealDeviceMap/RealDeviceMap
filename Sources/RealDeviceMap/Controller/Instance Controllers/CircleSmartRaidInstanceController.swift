@@ -118,7 +118,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
             if updated == nil || nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTime {
                 for id in gymsInPoint.value {
                     if let gym = smartRaidGyms[id] {
-                        if gym.raidEndTimestamp != nil &&
+                        if gym.raidEndTimestamp == nil ||
                             nowTimestamp >= Int(gym.raidEndTimestamp!) + CircleSmartRaidInstanceController.noRaidTime {
                             gymsNoRaid.append((gym, updated!, gymsInPoint.key))
                         } else if gym.raidPokemonId == nil &&

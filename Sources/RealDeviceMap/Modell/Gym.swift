@@ -264,6 +264,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 WebHookController.global.addGymInfoEvent(gym: self)
             }
             
+            if self.raidEndTimestamp == nil && oldGym!.raidEndTimestamp != nil {
+                self.raidEndTimestamp = oldGym!.raidEndTimestamp
+            }
+            
             if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 &&
                 (
                     oldGym!.raidLevel != self.raidLevel ||
