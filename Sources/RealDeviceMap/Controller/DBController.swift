@@ -241,7 +241,8 @@ class DBController {
                 "raid_stats": false,
                 "spawnpoint": true,
                 "user": true,
-                "web_session": true
+                "web_session": true,
+                "s2cell": true
             ]
             
             var tablesShema = ""
