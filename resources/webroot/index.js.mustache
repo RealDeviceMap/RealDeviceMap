@@ -48,6 +48,7 @@ $(function() {
 
     avilableForms = JSON.parse('{{{avilable_forms_json}}}');
     avilableItems = JSON.parse('{{{avilable_items_json}}}');
+    console.log('{{{avilable_tileservers_json}}}')
     avilableTileservers = JSON.parse('{{{avilable_tileservers_json}}}');
 
     loadStorage();
@@ -94,8 +95,8 @@ $(function() {
         if (L.Browser.retina) {
             scale = "@2x"
         }
-        tileLayer = L.tileLayer(avilableTileservers[selectedTileserver], {
-            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        tileLayer = L.tileLayer(avilableTileservers[selectedTileserver]['url'], {
+            attribution: avilableTileservers[selectedTileserver]['attribution'],
             maxZoom: 18,
             scale: scale,
             hq: L.Browser.retina,
@@ -258,8 +259,8 @@ function initMap() {
 	if (L.Browser.retina) {
         scale = "@2x"
     }
-    tileLayer = L.tileLayer(avilableTileservers[selectedTileserver], {
-		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+    tileLayer = L.tileLayer(avilableTileservers[selectedTileserver]['url'], {
+		attribution: avilableTileservers[selectedTileserver]['attribution'],
 		maxZoom: 18,
         scale: scale,
         hq: L.Browser.retina,
