@@ -332,9 +332,6 @@ class WebReqeustHandler {
                     data["error"] = "Failed to clear Quests. Please try agai later."
                 }
             }
-        case .dashboardGroups:
-            data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Groups"
         case .register:
             
             if !enableRegister {
