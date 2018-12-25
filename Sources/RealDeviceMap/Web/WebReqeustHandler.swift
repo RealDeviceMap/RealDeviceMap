@@ -26,7 +26,7 @@ class WebReqeustHandler {
     static var avilableFormsJson: String = ""
     static var avilableItemJson: String = ""
     static var enableRegister: Bool = true
-    static var tileservers = [String: String]()
+    static var tileservers = [String: [String: String]]()
     
     private static let sessionDriver = MySQLSessions()
             
@@ -154,8 +154,13 @@ class WebReqeustHandler {
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
             data["pokemon_time_old"] = Pokemon.defaultTimeReseen
             var tileserverString = ""
-            for tileserver in tileservers {
-                tileserverString += "\(tileserver.key);\(tileserver.value)\n"
+            
+            let tileserversSorted = tileservers.sorted { (rhs, lhs) -> Bool in
+                return rhs.key == "Default" || rhs.key < lhs.key
+            }
+            
+            for tileserver in tileserversSorted {
+                tileserverString += "\(tileserver.key);\(tileserver.value["url"] ?? "");\(tileserver.value["attribution"] ?? "")\n"
             }
             data["tileservers"] = tileserverString
         case .dashboardDevices:

@@ -60,7 +60,17 @@ WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
-WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String] ?? ["Default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"]
+
+if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String]  {
+    var tileservers = [String: [String: String]]()
+    for tileserver in tileserversOld {
+        tileservers[tileserver.key] = ["url": tileserver.value, "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"]
+    }
+    WebReqeustHandler.tileservers = tileservers
+} else {
+    WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: [String:String]] ?? ["Default": ["url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"]]
+}
+
 
 
 Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"

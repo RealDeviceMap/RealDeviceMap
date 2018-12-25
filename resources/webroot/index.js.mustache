@@ -48,18 +48,30 @@ $(function() {
 
     avilableForms = JSON.parse('{{{avilable_forms_json}}}');
     avilableItems = JSON.parse('{{{avilable_items_json}}}');
-    console.log('{{{avilable_tileservers_json}}}')
     avilableTileservers = JSON.parse('{{{avilable_tileservers_json}}}');
 
     loadStorage();
 
-    $.each(avilableTileservers, function (index, tileserver) {
-        $('#select-mapstyle').append($('<option>', {
-            value: index,
-            text: index,
-            selected: index === selectedTileserver,
-        }));
-    });
+    let avilableTileserverKeys = [];
+    for (var avilableTileserverKey in avilableTileservers) {
+        avilableTileserverKeys.push(avilableTileserverKey);
+    }
+    avilableTileserverKeys.sort();
+    $('#select-mapstyle').append($('<option>', {
+        value: "Default",
+        text: "Default",
+        selected: "Default" === selectedTileserver,
+    }));
+    for (var i = 0; i < avilableTileserverKeys.length; i++) {
+        let key = avilableTileserverKeys[i];
+        if (key !== "Default") {
+            $('#select-mapstyle').append($('<option>', {
+                value: key,
+                text: key,
+                selected: key === selectedTileserver,
+            }));
+        }
+    };
 
     $('#settingsModal').on("show.bs.modal", function () {
         pokemonFilterNew = $.extend(true, {}, pokemonFilter);
