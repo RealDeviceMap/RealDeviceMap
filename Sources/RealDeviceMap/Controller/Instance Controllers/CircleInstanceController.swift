@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PerfectLib
 import PerfectThread
 
 class CircleInstanceController: InstanceControllerProto {
@@ -59,13 +60,21 @@ class CircleInstanceController: InstanceControllerProto {
         
     }
     
-    func getStatus() -> String {
+    func getStatus(formatted: Bool) -> JSONConvertible? {
         
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))
-            return "Round Time: \(time)s"
+            if formatted {
+                return "Round Time: \(time)s"
+            } else {
+                return ["round_time": time]
+            }
         } else {
-            return "-"
+            if formatted {
+                return "-"
+            } else {
+                return nil
+            }
         }
         
     }

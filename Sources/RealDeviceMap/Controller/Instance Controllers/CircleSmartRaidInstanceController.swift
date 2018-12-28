@@ -7,6 +7,7 @@
 
 import Foundation
 import PerfectThread
+import PerfectLib
 import Turf
 import S2Geometry
 
@@ -172,17 +173,27 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         
     }
     
-    override func getStatus() -> String {
+    override func getStatus(formatted: Bool) -> JSONConvertible? {
         
-        let scansh: String
+        let scansh: Int?
         self.statsLock.lock()
         if self.startDate != nil {
-            scansh = "\(Int(Double(self.count) / Date().timeIntervalSince(self.startDate!) * 3600))"
+            scansh = Int(Double(self.count) / Date().timeIntervalSince(self.startDate!) * 3600)
         } else {
-            scansh = "-"
+            scansh = nil
         }
         self.statsLock.unlock()
-        return "Scans/h: \(scansh)"
+        if formatted {
+            let scanshString: String
+            if scansh == nil {
+                scanshString = "-"
+            } else {
+                scanshString = "\(scansh!)"
+            }
+            return "Scans/h: \(scanshString)"
+        } else {
+            return ["scans_per_h": scansh]
+        }
         
     }
     

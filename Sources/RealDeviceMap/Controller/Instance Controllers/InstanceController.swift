@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import PerfectLib
+import PerfectThread
 import Turf
 
 protocol InstanceControllerDelegate {
@@ -18,7 +20,7 @@ protocol InstanceControllerProto {
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
     func getTask(uuid: String, username: String?) -> [String: Any]
-    func getStatus() -> String
+    func getStatus(formatted: Bool) -> JSONConvertible?
     func reload()
     func stop()
 }
@@ -213,11 +215,15 @@ class InstanceController {
         return deviceUUIDS
     }
     
-    public func getInstanceStatus(instance: Instance) -> String {
+    public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
         if let instanceProto = instancesByInstanceName[instance.name] {
-            return instanceProto.getStatus()
+            return instanceProto.getStatus(formatted: formatted)
         } else {
-            return "?"
+            if formatted {
+                return "?"
+            } else {
+                return nil
+            }
         }
     }
     
