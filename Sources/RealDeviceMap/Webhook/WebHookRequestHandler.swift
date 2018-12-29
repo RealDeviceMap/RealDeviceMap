@@ -251,7 +251,7 @@ class WebHookRequestHandler {
             }
         }
         
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO]
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO]
         
         if latTarget != nil && lonTarget != nil {
             data["in_area"] = inArea
