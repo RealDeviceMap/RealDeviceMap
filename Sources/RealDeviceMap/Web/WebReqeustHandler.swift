@@ -132,6 +132,8 @@ class WebReqeustHandler {
         case .dashboard:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
+            data["show_setting"] = perms.contains(.adminSetting)
+            data["show_user"] = perms.contains(.adminUser)
         case .dashboardSettings:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Settings"
@@ -330,88 +332,6 @@ class WebReqeustHandler {
                     data["error"] = "Failed to clear Quests. Please try agai later."
                 }
             }
-        case .dashboardUsers:
-            data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Users"
-        case .dashboardUserEdit:
-            data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Edit User"
-            let editUsername = (request.urlVariables["username"] ?? "").decodeUrl()!
-            data["edit_username"] = editUsername
-            
-            let userTmp: User?
-            do {
-                userTmp = try User.get(username: editUsername)
-            } catch {
-                userTmp = nil
-            }
-            
-            guard
-                let groups = try? Group.getAll(),
-                let user = userTmp
-            else {
-                response.setBody(string: "Internal Server Error")
-                sessionDriver.save(session: request.session!)
-                response.completed(status: .internalServerError)
-                return
-            }
-            if request.method == .post {
-                let groupName = request.param(name: "group")
-                
-                var groupsData = [[String: Any]]()
-                for group in groups {
-                    if group.name != "no_user" {
-                        groupsData.append([
-                            "name": group.name,
-                            "selected": group.name == groupName ?? ""
-                        ])
-                    }
-                }
-                data["groups"] = groupsData
-                
-                if request.param(name: "delete")?.toBool() ?? false == true {
-                    do {
-                        try user.delete()
-                        response.redirect(path: "/dashboard/users")
-                        sessionDriver.save(session: request.session!)
-                        response.completed(status: .seeOther)
-                    } catch {
-                        data["show_error"] = true
-                        data["error"] = "Failed to delete user. Try again later."
-                    }
-                } else {
-                    if groupName == nil || groupName! == "no_user" || !groups.map({ (group) -> String in
-                        return group.name
-                    }).contains(groupName!) {
-                        data["show_error"] = true
-                        data["error"] = "Failed to update user. Invalid group."
-                    } else {
-                        do {
-                            try user.setGroup(groupName: groupName!)
-                            response.redirect(path: "/dashboard/users")
-                            sessionDriver.save(session: request.session!)
-                            response.completed(status: .seeOther)
-                        } catch {
-                            data["show_error"] = true
-                            data["error"] = "Failed to update user. Try again later."
-                        }
-                    }
-                }
-            } else {
-                var groupsData = [[String: Any]]()
-                for group in groups {
-                    if group.name != "no_user" {
-                        groupsData.append([
-                            "name": group.name,
-                            "selected": group.name == user.groupName
-                        ])
-                    }
-                }
-                data["groups"] = groupsData
-            }
-        case .dashboardGroups:
-            data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Groups"
         case .register:
             
             if !enableRegister {
