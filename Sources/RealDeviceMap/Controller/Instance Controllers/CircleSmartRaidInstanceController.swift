@@ -37,9 +37,9 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         
         for point in coords {
             
-            // Get all cells rouching a 500m (-10m for error) circle at center
+            // Get all cells rouching a 630m (-5m for error) circle at center
             let coord = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
-            let radians = 0.00007682466416647 // 490m
+            let radians = 0.00009799064306948 // 625m
             let centerNormalizedPoint = S2LatLng(coord: coord).normalized.point
             let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
             let coverer = S2RegionCoverer()
