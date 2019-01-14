@@ -457,7 +457,7 @@ class ApiRequestHandler {
                         deviceData["last_seen"] = ["timestamp": device.lastSeen, "formatted": formattedDate]
                         deviceData["buttons"] = "<a href=\"/dashboard/device/assign/\(device.uuid.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Assign Instance</a>"
                     } else {
-                        deviceData["last_seen"] = device.lastSeen
+                        deviceData["last_seen"] = device.lastSeen as Any
                     }
                     jsonArray.append(deviceData)
                 }
@@ -497,7 +497,7 @@ class ApiRequestHandler {
                             instanceData["status"] = "?"
                         }
                     } else {
-                        instanceData["status"] = InstanceController.global.getInstanceStatus(instance: instance, formatted: false)
+                        instanceData["status"] = InstanceController.global.getInstanceStatus(instance: instance, formatted: false) as Any
                     }
                     
                     if formatted {
