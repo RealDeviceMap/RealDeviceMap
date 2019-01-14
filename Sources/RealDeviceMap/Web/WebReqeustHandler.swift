@@ -27,6 +27,7 @@ class WebReqeustHandler {
     static var avilableItemJson: String = ""
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
+    static var cities = [String: [String: Any]]()
     
     private static let sessionDriver = MySQLSessions()
             
@@ -119,9 +120,35 @@ class WebReqeustHandler {
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             data["hide_cells"] = !perms.contains(.viewMapCell)
-            data["lat"] = request.urlVariables["lat"] ?? self.startLat
-            data["lon"] = request.urlVariables["lon"] ?? self.startLon
-            data["zoom"] = request.urlVariables["zoom"] ?? self.startZoom
+            var zoom = request.urlVariables["zoom"]?.toInt()
+            var lat = request.urlVariables["lat"]?.toDouble()
+            var lon = request.urlVariables["lon"]?.toDouble()
+            var city = request.urlVariables["city"]
+            if city == nil, let tmpCity = request.urlVariables["lat"], tmpCity.toDouble() == nil { // City but in wrong route
+                city = tmpCity
+                if let tmpZoom = request.urlVariables["lon"]?.toInt() {
+                    zoom = tmpZoom
+                }
+                
+            }
+            
+            if city != nil {
+                guard let citySetting = cities[city!.lowercased()] else {
+                    response.setBody(string: "The city \(city!) was not found.")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+                lat = citySetting["lat"] as? Double
+                lon = citySetting["lon"] as? Double
+                if zoom == nil {
+                    zoom = citySetting["zoom"] as? Int
+                }
+            }
+            
+            data["lat"] = lat ?? self.startLat
+            data["lon"] = lon ?? self.startLon
+            data["zoom"] = zoom ?? self.startZoom
 
             // Localize
             let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells", "filter_select_mapstyle", "filter_mapstyle"]
@@ -165,6 +192,20 @@ class WebReqeustHandler {
                 tileserverString += "\(tileserver.key);\(tileserver.value["url"] ?? "");\(tileserver.value["attribution"] ?? "")\n"
             }
             data["tileservers"] = tileserverString
+            
+            var citiesString = ""
+            for city in self.cities {
+                if let lat = city.value["lat"] as? Double, let lon = city.value["lon"] as? Double {
+                    let zoom = city.value["zoom"] as? Int
+                    citiesString += "\(city.key);\(lat);\(lon)"
+                    if zoom != nil {
+                        citiesString += ";\(zoom!)"
+                    }
+                    citiesString += "\n"
+                }
+            }
+            data["cities"] = citiesString
+            
         case .dashboardDevices:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
@@ -614,7 +655,8 @@ class WebReqeustHandler {
             let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
             let locale = request.param(name: "locale_new")?.lowercased(),
-            let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
+            let cities = request.param(name: "cities")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
             else {
             data["show_error"] = true
             return data
@@ -637,6 +679,40 @@ class WebReqeustHandler {
             }
         }
         
+        var citySettings = [String: [String: Any]]()
+        for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
+            let split = cityString.components(separatedBy: ";")
+            // Mayrhofen;10;10;15
+            
+            let name: String
+            let lat: Double?
+            let lon: Double?
+            let zoom: Int?
+            if split.count == 3 {
+                name = split[0].lowercased()
+                lat = split[1].toDouble()
+                lon = split[2].toDouble()
+                zoom = nil
+            } else if split.count == 4 {
+                name = split[0].lowercased()
+                lat = split[1].toDouble()
+                lon = split[2].toDouble()
+                zoom = split[3].toInt()
+            } else {
+                data["show_error"] = true
+                return data
+            }
+            guard let latReal = lat, let lonReal = lon else {
+                data["show_error"] = true
+                return data
+            }
+            citySettings[name] = [
+                "lat": latReal,
+                "lon": lonReal,
+                "zoom": zoom as Any
+            ]
+        }
+        
         do {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
             try DBController.global.setValueForKey(key: "MAP_START_LON", value: startLon.description)
@@ -651,6 +727,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
             try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "CITIES", value: citySettings.jsonEncodeForceTry() ?? "")
         } catch {
             data["show_error"] = true
             return data
@@ -663,6 +740,7 @@ class WebReqeustHandler {
         WebReqeustHandler.maxPokemonId = maxPokemonId
         WebReqeustHandler.enableRegister = enableRegister
         WebReqeustHandler.tileservers = tileservers
+        WebReqeustHandler.cities = citySettings
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing

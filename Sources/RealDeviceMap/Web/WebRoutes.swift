@@ -23,6 +23,12 @@ class WebRoutes {
             Route(method: .get, uri: "/@/{lat}/{lon}/{zoom}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
             }),
+            Route(method: .get, uri: "/@/{city}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@/{city}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
             Route(method: .get, uri: "/index.js", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .homeJs, requiredPerms: [.viewMap])
             }),
