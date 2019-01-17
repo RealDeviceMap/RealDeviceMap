@@ -1309,7 +1309,11 @@ function getQuestReward(reward) {
     } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
         return i18n('quest_reward_4_formated', {'amount': info.amount, 'pokemon': getPokemonName(info.pokemon_id)});
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
-        return i18n('quest_reward_7_formated', {'pokemon': getPokemonName(info.pokemon_id)});
+        if (info.shiny) {
+            return '<b>Shiny</b> ' + i18n('quest_reward_4_formated', {'pokemon': getPokemonName(info.pokemon_id)});
+        } else {
+            return i18n('quest_reward_4_formated', {'pokemon': getPokemonName(info.pokemon_id)});
+        }
     } else {
         return i18n('quest_reward_'+id);
     }
