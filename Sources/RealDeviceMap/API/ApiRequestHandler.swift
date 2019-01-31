@@ -44,6 +44,8 @@ class ApiRequestHandler {
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
+        let showUsers =  request.param(name: "show_users")?.toBool() ?? false
+        let showGroups =  request.param(name: "show_groups")?.toBool() ?? false
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
         let showQuestFilter = request.param(name: "show_quest_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
@@ -57,7 +59,7 @@ class ApiRequestHandler {
             return
         }
         
-        let tmp = WebReqeustHandler.getPerms(request: request)
+        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
         
@@ -205,7 +207,7 @@ class ApiRequestHandler {
                         "filter": filter,
                         "size": size,
                         "type": generalTypeString
-                        ])
+                    ])
                     
                 }
             }
@@ -430,7 +432,7 @@ class ApiRequestHandler {
             data["quest_filters"] = questData
         }
         
-        if showDevices && perms.contains(.adminSetting) {
+        if showDevices && perms.contains(.admin) {
             
             let devices = try? Device.getAll(mysql: mysql)
             var jsonArray = [[String: Any]]()
@@ -466,7 +468,7 @@ class ApiRequestHandler {
             
         }
         
-        if showInstances && perms.contains(.adminSetting) {
+        if showInstances && perms.contains(.admin) {
             
             let instances = try? Instance.getAll(mysql: mysql)
             
@@ -510,7 +512,7 @@ class ApiRequestHandler {
             
         }
         
-        if showAssignments && perms.contains(.adminSetting) {
+        if showAssignments && perms.contains(.admin) {
             
             let assignments = try? Assignment.getAll(mysql: mysql)
             
@@ -545,7 +547,7 @@ class ApiRequestHandler {
             
         }
         
-        if showIVQueue && perms.contains(.adminSetting), let instance = instance {
+        if showIVQueue && perms.contains(.admin), let instance = instance {
            
             let queue = InstanceController.global.getIVQueue(name: instance.decodeUrl() ?? "")
             
@@ -573,6 +575,94 @@ class ApiRequestHandler {
             data["ivqueue"] = jsonArray
 
             
+        }
+        
+        if showUsers && perms.contains(.admin) {
+            let users = try? User.getAll(mysql: mysql)
+            var jsonArray = [[String: Any]]()
+            
+            if users != nil {
+                for user in users! {
+                    var userData = [String: Any]()
+                    userData["username"] = user.username
+                    userData["group"] = user.groupName
+
+                    if formatted {
+                        if user.emailVerified {
+                            userData["email"] = "\(user.email) (Verified)"
+                        } else {
+                            userData["email"] = user.email
+                        }
+                        userData["buttons"] = "<a href=\"/dashboard/user/edit/\(user.username.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit User</a>"
+                    } else {
+                        userData["email"] = user.email
+                        userData["email_verified"] = user.emailVerified
+                    }
+                    jsonArray.append(userData)
+                }
+            }
+            data["users"] = jsonArray
+        }
+        
+        if showGroups && perms.contains(.admin) {
+            let groups = try? Group.getAll(mysql: mysql)
+            var jsonArray = [[String: Any]]()
+            
+            if groups != nil {
+                for group in groups! {
+                    var groupData = [String: Any]()
+                    groupData["name"] = group.name
+                    
+                    if formatted {
+                        if group.name != "root" {
+                            groupData["buttons"] = "<a href=\"/dashboard/group/edit/\(group.name.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit Group</a>"
+                        } else {
+                            groupData["buttons"] = ""
+                        }
+                        var permsString = ""
+                        for perm in group.perms {
+                            var permName: String
+                            switch perm {
+                            case .viewMap:
+                                permName = "Map"
+                            case .viewMapRaid:
+                                permName = "Raid"
+                            case .viewMapPokemon:
+                                permName = "Pokemon"
+                            case .viewStats:
+                                permName = "Stats"
+                            case .admin:
+                                permName = "Admin"
+                            case .viewMapGym:
+                                permName = "Gym"
+                            case .viewMapPokestop:
+                                permName = "Pokestop"
+                            case .viewMapSpawnpoint:
+                                permName = "Spawnpoint"
+                            case .viewMapQuest:
+                                permName = "Quest"
+                            case .viewMapIV:
+                                permName = "IV"
+                            case .viewMapCell:
+                                permName = "Cell"
+                            }
+                            
+                            if permsString == "" {
+                                permsString += permName
+                            } else {
+                                permsString += ","+permName
+                            }
+                        }
+                        groupData["perms"] = permsString
+
+                        
+                    } else {
+                        groupData["perms"] = Group.Perm.permsToNumber(perms: group.perms)
+                    }
+                    jsonArray.append(groupData)
+                }
+            }
+            data["groups"] = jsonArray
         }
         
         data["timestamp"] = Int(Date().timeIntervalSince1970)

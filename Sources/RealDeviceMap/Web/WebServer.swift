@@ -21,6 +21,11 @@ class WebServer {
         case login = "login.mustache"
         case register = "register.mustache"
         case logout = "logout.mustache"
+        case profile = "profile.mustache"
+        case confirmemail = "confirmemail.mustache"
+        case confirmemailToken = "confirmemail_token.mustache"
+        case resetpassword = "resetpassword.mustache"
+        case resetpasswordToken = "resetpassword_token.mustache"
         case dashboard = "dashboard.mustache"
         case dashboardSettings = "dashboard_settings.mustache"
         case dashboardDevices = "dashboard_devices.mustache"
@@ -35,6 +40,11 @@ class WebServer {
         case dashboardAssignments = "dashboard_assignments.mustache"
         case dashboardAssignmentAdd = "dashboard_assignment_add.mustache"
         case dashboardAssignmentDelete = "dashboard_assignment_delete.mustache"
+        case dashboardUsers = "dashboard_users.mustache"
+        case dashboardUserEdit = "dashboard_user_edit.mustache"
+        case dashboardGroups = "dashboard_groups.mustache"
+        case dashboardGroupEdit = "dashboard_group_edit.mustache"
+        case dashboardGroupAdd = "dashboard_group_add.mustache"
     }
     
     public enum APIPage {

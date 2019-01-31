@@ -1,0 +1,56 @@
+{{> header}}
+
+<style>
+    table.dataTable tbody td {
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+	$(document).ready(function() {
+		const table = $('#table').DataTable( {
+			"ajax": {
+				"url": "/api/get_data?show_users=true&formatted=true",
+				"dataSrc": "data.users"
+			},
+			"paging":   true,
+			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+			"columns": [
+				{ "data": "username" },
+                { "data": "email" },
+				{ "data": "group" },
+				{ "data": "buttons" }
+			],
+			"info":     false,
+			"order": [[ 0, "asc" ]],
+			"search.caseInsensitive": true,
+			"columnDefs": [ {
+				"targets": [3],
+				"orderable": false
+			}],
+            "responsive": true
+        });
+	} );
+</script>
+
+<body>
+
+    <br>
+    <h1 align="center">Configure {{title}}'s Users!</h1>
+    <br>
+    <div style="width:90%; margin-left:calc(5%);">
+        <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>E-Mail</th>
+                <th>Group</th>
+                <th width="5%"></th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <br>
+</body>

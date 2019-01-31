@@ -10,6 +10,7 @@ import PerfectLib
 import PerfectHTTP
 import PerfectMustache
 import PerfectSessionMySQL
+import PerfectThread
 
 class WebReqeustHandler {
     
@@ -30,17 +31,19 @@ class WebReqeustHandler {
     
     private static let sessionDriver = MySQLSessions()
             
-    static func handle(request: HTTPRequest, response: HTTPResponse, page: WebServer.Page, requiredPerms: [Group.Perm], requiredPermsCount:Int = -1) {
+    static func handle(request: HTTPRequest, response: HTTPResponse, page: WebServer.Page, requiredPerms: [Group.Perm], requiredPermsCount:Int = -1, requiresLogin: Bool=false) {
         
         let localizer = Localizer.global
         
         let documentRoot = "\(projectroot)/resources/webroot"
         var data = MustacheEvaluationContext.MapType()
         data["csrf"] = request.session?.data["csrf"]
+        data["uri"] = request.uri
         data["timestamp"] = UInt32(Date().timeIntervalSince1970)
         data["locale"] = Localizer.locale
         data["locale_last_modified"] = localizer.lastModified
         data["enable_register"] = enableRegister
+        data["has_mailer"] = MailController.global.isSetup
         
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
@@ -55,6 +58,12 @@ class WebReqeustHandler {
         if username != nil && username != "" {
             data["username"] = username
             data["is_logged_in"] = true
+        } else if requiresLogin {
+            response.setBody(string: "Unauthorized. Log in first.")
+            response.redirect(path: "/login?redirect=\(request.uri)")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .found)
+            return
         }
         
         var requiredPermsCountReal: Int
@@ -77,18 +86,18 @@ class WebReqeustHandler {
                 return
             } else {
                 response.setBody(string: "Unauthorized. Log in first.")
-                response.redirect(path: "/login")
+                response.redirect(path: "/login?redirect=\(request.uri)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .found)
                 return
             }
         }
         
-        if perms.contains(.viewStats) {
+        /*if perms.contains(.viewStats) {
             data["show_stats"] = true
-        }
+        }*/
  
-        if perms.contains(.adminUser) || perms.contains(.adminSetting) {
+        if  perms.contains(.admin) {
             data["show_dashboard"] = true
         }
         
@@ -111,7 +120,6 @@ class WebReqeustHandler {
         switch page {
         case .home:
             data["page_is_home"] = true
-            data["page"] = "Home"
             data["hide_gyms"] = !perms.contains(.viewMapGym)
             data["hide_pokestops"] = !perms.contains(.viewMapPokestop)
             data["hide_raids"] = !perms.contains(.viewMapRaid)
@@ -127,6 +135,221 @@ class WebReqeustHandler {
             let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells", "filter_select_mapstyle", "filter_mapstyle"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
+            }
+        case .confirmemail:
+            data["page_is_profile"] = true
+            data["page"] = localizer.get(value: "title_confirmmail")
+        
+            // Localize
+            let locs = ["confirmmail_title", "confirmmail_request"]
+            for loc in locs {
+                data[loc] = localizer.get(value: loc)
+            }
+            
+            do {
+                if let user = try User.get(username: username ?? "") {
+                    if user.emailVerified {
+                        data["is_error"] = true
+                        data["error"] = localizer.get(value: "confirmmail_error_verified")
+                    } else {
+                        if request.method == .post {
+                            try Token.delete(username: username ?? "", type: .confirmEmail)
+                            try user.sendConfirmEmail()
+                            data["is_success"] = true
+                            data["success"] = localizer.get(value: "confirmmail_success_new")
+                        }
+                    }
+                } else {
+                    data["is_error"] = true
+                    data["error"] = localizer.get(value: "confirmmail_error_undefined")
+                }
+            } catch {
+                data["is_error"] = true
+                data["error"] = localizer.get(value: "confirmmail_error_undefined")
+            }
+        case .confirmemailToken:
+            data["page_is_profile"] = true
+            data["page"] = localizer.get(value: "title_confirmmail")
+            
+            let token = ((request.urlVariables["token"] ?? "").decodeUrl() ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Localize
+            let locs = ["confirmmail_title"]
+            for loc in locs {
+                data[loc] = localizer.get(value: loc)
+            }
+            
+            let host: String
+            let ff = request.header(.xForwardedFor) ?? ""
+            if ff.isEmpty {
+                host = request.remoteAddress.host
+            } else {
+                host = ff
+            }
+            
+            if !LoginLimiter.global.tokenAllowed(host: host) {
+                data["is_error"] = true
+                data["error"] = localizer.get(value: "confirmmail_error_limited")
+            } else {
+                LoginLimiter.global.tokenTry(host: host)
+                do {
+                    if let user = try User.get(username: username ?? "") {
+                        if user.emailVerified {
+                            data["is_error"] = true
+                            data["error"] = localizer.get(value: "confirmmail_error_verified")
+                        } else {
+                            let valid = try Token.validate(token: token, username: username ?? "", type: .confirmEmail)
+                            if valid {
+                                try user.verifyEmail()
+                                try Token.delete(username: username ?? "", type: .confirmEmail)
+                                data["is_success"] = true
+                                data["success"] = localizer.get(value: "confirmmail_success")
+                            } else {
+                                data["is_error"] = true
+                                data["error"] = localizer.get(value: "confirmmail_error_invalid", replace: ["href": "/confirmemail"])
+                            }
+                        }
+                    } else {
+                        data["is_error"] = true
+                        data["error"] = localizer.get(value: "confirmmail_error_undefined")
+                    }
+                } catch {
+                    data["is_error"] = true
+                    data["error"] = localizer.get(value: "confirmmail_error_undefined")
+                }
+            }
+        case .resetpassword:
+            data["page_is_login"] = true
+            data["page"] = localizer.get(value: "title_resetpassword")
+            
+            // Localize
+            let locs = ["resetpassword_title", "resetpassword_username_email", "resetpassword_request"]
+            for loc in locs {
+                data[loc] = localizer.get(value: loc)
+            }
+            
+            if request.method == .post {
+                
+                let usernameEmail = request.param(name: "username-email") ?? ""
+                data["username-email"] = usernameEmail
+                
+                do {
+                    if let user = try User.get(usernameEmail: usernameEmail) {
+                        try Token.delete(username: user.username, type: .resetPassword)
+                        let thread = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
+                        thread.dispatch { // Dispatch this so all requests take the same time
+                            try? user.sendResetMail()
+                            Threading.destroyQueue(thread)
+                        }
+                        data["is_success"] = true
+                        data["success"] = localizer.get(value: "resetmail_success_new")
+                    } else {
+                        data["is_success"] = true
+                        data["success"] = localizer.get(value: "resetmail_success_new")
+                    }
+                } catch {
+                    data["is_error"] = true
+                    data["error"] = localizer.get(value: "resetmail_error_undefined")
+                }
+                
+            }
+        case .resetpasswordToken:
+            data["page_is_login"] = true
+            data["page"] = localizer.get(value: "title_resetpassword")
+            
+            // Localize
+            let locs = ["resetpassword_title", "resetpassword_password", "resetpassword_retype_password", "resetpassword_change"]
+            for loc in locs {
+                data[loc] = localizer.get(value: loc)
+            }
+            
+            let host: String
+            let ff = request.header(.xForwardedFor) ?? ""
+            if ff.isEmpty {
+                host = request.remoteAddress.host
+            } else {
+                host = ff
+            }
+            
+            if !LoginLimiter.global.tokenAllowed(host: host) {
+                data["is_error"] = true
+                data["error"] = localizer.get(value: "resetpassword_error_limited")
+            } else {
+                LoginLimiter.global.tokenTry(host: host)
+                
+                let token = ((request.urlVariables["token"] ?? "").decodeUrl() ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                let username: String?
+                do {
+                    if let tokenDb = try Token.get(token: token), tokenDb.type == .resetPassword {
+                        username = tokenDb.username
+                    } else {
+                        username = nil
+                        data["is_error"] = true
+                        data["error"] = localizer.get(value: "resetpassword_error_invalid", replace: ["href": "/resetpassword"])
+                    }
+                } catch {
+                    username = nil
+                    data["is_error"] = true
+                    data["error"] = localizer.get(value: "resetpassword_error_undefined")
+                }
+                
+                if let username = username {
+                    
+                    data["valid"] = true
+                    data["username"] = username
+                    
+                    let password = request.param(name: "password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    let passwordRetype = request.param(name: "password-retype")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    data["password"] = password
+                    data["password-retype"] = passwordRetype
+                    
+                    if password != "" {
+                        if password != passwordRetype {
+                            data["is_password_retype_error"] = true
+                            data["password_retype_error"] = localizer.get(value: "register_error_password_retype")
+                            data["is_password_error"] = true
+                            data["password_error"] = localizer.get(value: "register_error_password_retype")
+                        }
+                        
+                        let user: User?
+                        do {
+                            user = try User.get(username: username)
+                        } catch {
+                            user = nil
+                        }
+                        if user == nil {
+                            data["is_error"] = true
+                            data["error"] = localizer.get(value: "resetpassword_error_undefined")
+                        } else {
+                            do {
+                                try user!.setPassword(password: password)
+                                try Token.delete(username: username, type: .resetPassword)
+                                data["is_success"] = true
+                                data["success"] = localizer.get(value: "resetpassword_success", replace: ["href": "/login"])
+                            } catch {
+                                let isUndefined: Bool
+                                if let registerError = error as? User.RegisterError {
+                                    if registerError.type == .passwordInvalid {
+                                        data["is_password_error"] = true
+                                        data["password_error"] = localizer.get(value: "register_error_password_invalid")
+                                        isUndefined = false
+                                    } else {
+                                        isUndefined = true
+                                    }
+                                } else {
+                                    isUndefined = true
+                                }
+                                
+                                if isUndefined {
+                                    data["is_error"] = true
+                                    data["error"] = localizer.get(value: "resetpassword_error_undefined")
+                                }
+                            }
+                        }
+                    }
+                }
+                
             }
             
         case .dashboard:
@@ -153,6 +376,21 @@ class WebReqeustHandler {
             data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
             data["pokemon_time_old"] = Pokemon.defaultTimeReseen
+            data["pokestop_lure_time"] = Pokestop.lureTime
+            data["ex_raid_boss_id"] = Gym.exRaidBossId ?? 0
+            data["ex_raid_boss_form"] = Gym.exRaidBossForm ?? 0
+            data["mailer_base_uri"] = MailController.baseURI
+            data["mailer_name"] = MailController.fromName
+            data["mailer_email"] = MailController.fromAddress
+            data["mailer_url"] = MailController.clientURL
+            data["mailer_username"] = MailController.clientUsername
+            data["mailer_password"] = MailController.clientPassword
+            data["mailer_footer_html"] = MailController.footerHtml
+            data["discord_guild_ids"] = DiscordController.guilds.map({ (i) -> String in
+                    return i.description
+                }).joined(separator: ";")
+            data["discord_token"] = DiscordController.token
+            
             var tileserverString = ""
             
             let tileserversSorted = tileservers.sorted { (rhs, lhs) -> Bool in
@@ -412,6 +650,49 @@ class WebReqeustHandler {
         case .dashboardGroups:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Groups"
+        case .dashboardGroupEdit:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Edit Group"
+            let groupName = (request.urlVariables["group_name"])?.decodeUrl() ?? ""
+            data["name_old"] = groupName
+            if groupName == "root" {
+                response.redirect(path: "/dashboard/groups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .found)
+                return
+            }
+            let nameRequired: Bool
+            if groupName != "no_user" && groupName != "default" && groupName != "default_verified" {
+                nameRequired = true
+            } else {
+                nameRequired = false
+            }
+            data["show_edit_name"] = nameRequired
+            data["show_delete"] = nameRequired
+            
+            if request.method == .post {
+                do {
+                    data = try addEditGroup(data: data, request: request, response: response, groupName: groupName, nameRequired: nameRequired)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editGroupGet(data: data, request: request, response: response, groupName: groupName)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardGroupAdd:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Group"
+            if request.method == .post {
+                do {
+                    data = try addEditGroup(data: data, request: request, response: response, groupName: nil, nameRequired: true)
+                } catch {
+                    return
+                }
+            }
         case .register:
             
             if !enableRegister {
@@ -422,10 +703,10 @@ class WebReqeustHandler {
             }
             
             data["page_is_register"] = true
-            data["page"] = "Register"
+            data["page"] = localizer.get(value: "title_register")
             
             // Localize
-            let homeLoc = ["register_username", "register_email", "register_password", "register_retype_password", "register_register"]
+            let homeLoc = ["register_username", "register_email", "register_password", "register_retype_password", "register_register", "register_login_info"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -440,10 +721,10 @@ class WebReqeustHandler {
             }
         case .login:
             data["page_is_login"] = true
-            data["page"] = "Login"
+            data["page"] = localizer.get(value: "title_login")
             
             // Localize
-            let homeLoc = ["login_username_email", "login_password", "login_login"]
+            let homeLoc = ["login_username_email", "login_password", "login_login", "login_password_info", "login_register_info"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -457,7 +738,7 @@ class WebReqeustHandler {
                 }
             }
         case .logout:
-            data["page"] = "Logout"
+            data["page"] = localizer.get(value: "title_logout")
             do {
                 try logout(data: data, request: request, response: response)
             } catch {
@@ -468,6 +749,40 @@ class WebReqeustHandler {
             if request.method == .post {
                 do {
                     data = try register(data: data, request: request, response: response, useAccessToken: true)
+                } catch {
+                    return
+                }
+            }
+        case .profile:
+            data["page_is_profile"] = true
+            data["page"] = localizer.get(value: "title_profile")
+            
+            // Localize
+            let homeLoc = ["profile_username", "profile_email", "profile_password", "profile_retype_password", "profile_update", "profile_update_heading", "profile_unverified_header", "profile_unverified_text", "profile_update_password_heading", "profile_old_password", "profile_password_info"]
+            for loc in homeLoc {
+                data[loc] = localizer.get(value: loc)
+            }
+            data["profile_title"] = localizer.get(value: "profile_title", replace: ["name" : title])
+            
+            let user: User?
+            do {
+                user = try User.get(username: username ?? "")
+            } catch {
+                user = nil
+            }
+            if user == nil {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                return
+            }
+            data["mail_verified"] = user!.emailVerified
+            data["username_new"] = user!.username
+            data["email"] = user!.email
+            
+            if request.method == .post {
+                do {
+                    data = try updateProfile(data: data, request: request, response: response, user: user!)
                 } catch {
                     return
                 }
@@ -525,11 +840,12 @@ class WebReqeustHandler {
         
         var noError = true
         
+        let localizer = Localizer.global
         if password != passwordRetype {
             data["is_password_retype_error"] = true
-            data["password_retype_error"] = "The passwords do not match."
+            data["password_retype_error"] = localizer.get(value: "register_error_password_retype")
             data["is_password_error"] = true
-            data["password_error"] = "The passwords do not match."
+            data["password_error"] = localizer.get(value: "register_error_password_retype")
             noError = false
         }
         if useAccessToken && accessToken != self.accessToken {
@@ -539,12 +855,12 @@ class WebReqeustHandler {
         }
         if username == nil || username == "" {
             data["is_username_error"] = true
-            data["username_error"] = "Username can not be empty."
+            data["username_error"] = localizer.get(value: "register_error_username_empty")
             noError = false
         }
         if email == nil || email == "" {
             data["is_email_error"] = true
-            data["email_error"] = "Email can not be empty."
+            data["email_error"] = localizer.get(value: "register_error_email_empty")
             noError = false
         }
         
@@ -559,7 +875,6 @@ class WebReqeustHandler {
                 }
                 user = try User.register(username: username!, email: email!, password: password!, groupName: groupName)
             } catch {
-                let localizer = Localizer.global
                 if error is DBController.DBError {
                     data["is_undefined_error"] = true
                     data["undefined_error"] = localizer.get(value: "register_error_undefined")
@@ -694,7 +1009,10 @@ class WebReqeustHandler {
             let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
             let locale = request.param(name: "locale_new")?.lowercased(),
-            let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
+            let exRaidBossId = request.param(name: "ex_raid_boss_id")?.toUInt16(),
+            let exRaidBossForm = request.param(name: "ex_raid_boss_form")?.toUInt8(),
+            let pokestopLureTime = request.param(name: "pokestop_lure_time")?.toUInt32()
             else {
             data["show_error"] = true
             return data
@@ -705,6 +1023,18 @@ class WebReqeustHandler {
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
         let enableRegister = request.param(name: "enable_register_new") != nil
         let enableClearing = request.param(name: "enable_clearing") != nil
+        
+        let mailerBaseURI = request.param(name: "mailer_base_uri")
+        let mailerName = request.param(name: "mailer_name")
+        let mailerEmail = request.param(name: "mailer_email")
+        let mailerURL = request.param(name: "mailer_url")
+        let mailerUsername = request.param(name: "mailer_username")
+        let mailerPassword = request.param(name: "mailer_password")
+        let mailerFooterHTML = request.param(name: "mailer_footer_html")
+        let discordGuilds = request.param(name: "discord_guild_ids")?.components(separatedBy: ";").map({ (s) -> UInt64 in
+            return s.toUInt64() ?? 0
+        }) ?? [UInt64]()
+        let discordToken = request.param(name: "discord_token")
         
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
@@ -726,11 +1056,25 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_UNSEEN", value: defaultTimeUnseen.description)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
+            try DBController.global.setValueForKey(key: "POKESTOP_LURE_TIME", value: pokestopLureTime.description)
+            try DBController.global.setValueForKey(key: "GYM_EX_BOSS_ID", value: exRaidBossId.description)
+            try DBController.global.setValueForKey(key: "GYM_EX_BOSS_FORM", value: exRaidBossForm.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
             try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_URL", value: mailerURL ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_USERNAME", value: mailerUsername ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_PASSWORD", value: mailerPassword ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_EMAIL", value: mailerEmail ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_NAME", value: mailerName ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_FOOTER_HTML", value: mailerFooterHTML ?? "")
+            try DBController.global.setValueForKey(key: "MAILER_BASE_URI", value: mailerBaseURI ?? "")
+            try DBController.global.setValueForKey(key: "DISCORD_GUILD_IDS", value: discordGuilds.map({ (i) -> String in
+                return i.description
+            }).joined(separator: ";"))
+            try DBController.global.setValueForKey(key: "DISCORD_TOKEN", value: discordToken ?? "")
         } catch {
             data["show_error"] = true
             return data
@@ -748,6 +1092,18 @@ class WebReqeustHandler {
         WebHookRequestHandler.enableClearing = enableClearing
         Pokemon.defaultTimeUnseen = defaultTimeUnseen
         Pokemon.defaultTimeReseen = defaultTimeReseen
+        Pokestop.lureTime = pokestopLureTime
+        Gym.exRaidBossId = exRaidBossId
+        Gym.exRaidBossForm = exRaidBossForm
+        MailController.baseURI = mailerBaseURI ?? ""
+        MailController.footerHtml = mailerFooterHTML ?? ""
+        MailController.clientPassword = mailerPassword
+        MailController.clientUsername = mailerUsername
+        MailController.clientURL = mailerURL
+        MailController.fromAddress = mailerEmail
+        MailController.fromName = mailerName
+        DiscordController.guilds = discordGuilds
+        DiscordController.token = discordToken
         Localizer.locale = locale
         
         data["title"] = title
@@ -1235,46 +1591,307 @@ class WebReqeustHandler {
         }
     }
     
-    static func getPerms(request: HTTPRequest) -> (perms: [Group.Perm], username: String?) {
+    static func updateProfile(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, user: User) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        
+        let section = request.param(name: "section")
+        let username = request.param(name: "username")
+        let email = request.param(name: "email")
+        
+        let oldPassword = request.param(name: "old_password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let password = request.param(name: "password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let passwordRetype = request.param(name: "password-retype")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        
+        data["username_new"] = username
+        data["email"] = email
+        
+        let localizer = Localizer.global
+        
+        if section == "profile" {
+            if username == nil || email == nil {
+                data["is_undefined_error_profile"] = true
+                data["undefined_error_profile"] = localizer.get(value: "register_error_undefined")
+            } else {
+                if username != user.username {
+                    do {
+                        try user.setUsername(username: username!)
+                        request.session!.userid = username!
+                        data["username"] = username
+                        sessionDriver.save(session: request.session!)
+                    } catch {
+                        let isUndefined: Bool
+                        if let registerError = error as? User.RegisterError {
+                            if registerError.type == .usernameInvalid {
+                                data["is_username_error"] = true
+                                data["username_error"] = localizer.get(value: "register_error_username_invalid")
+                                isUndefined = false
+                            } else if registerError.type == .usernameTaken {
+                                data["is_username_error"] = true
+                                data["username_error"] = localizer.get(value: "register_error_username_taken")
+                                isUndefined = false
+                            } else {
+                                isUndefined = true
+                            }
+                        } else {
+                            isUndefined = true
+                        }
+                        
+                        if isUndefined {
+                            data["is_undefined_error"] = true
+                            data["undefined_error"] = localizer.get(value: "register_error_undefined")
+                        }
+                    }
+                }
+            
+                if email != user.email {
+                    do {
+                        try user.setEmail(email: email!)
+                        data["mail_verified"] = false
+                    } catch {
+                        let isUndefined: Bool
+                        if let registerError = error as? User.RegisterError {
+                            if registerError.type == .emailInvalid {
+                                data["is_email_error"] = true
+                                data["email_error"] = localizer.get(value: "register_error_email_invalid")
+                                isUndefined = false
+                            } else if registerError.type == .emailTaken {
+                                data["is_email_error"] = true
+                                data["email_error"] = localizer.get(value: "register_error_email_taken")
+                                isUndefined = false
+                            } else {
+                                isUndefined = true
+                            }
+                        } else {
+                            isUndefined = true
+                        }
+                        
+                        if isUndefined {
+                            data["is_undefined_error"] = true
+                            data["undefined_error"] = localizer.get(value: "register_error_undefined")
+                        }
+                    }
+                }
+            }
+        }
+        
+        if section == "password" {
+            if password == "" {
+                data["is_undefined_error_profile"] = true
+                data["undefined_error_profile"] = localizer.get(value: "register_error_undefined")
+            } else {
+                if password != passwordRetype {
+                    data["is_password_retype_error"] = true
+                    data["password_retype_error"] = localizer.get(value: "register_error_password_retype")
+                    data["is_password_error"] = true
+                    data["password_error"] =  localizer.get(value: "register_error_password_retype")
+                } else {
+                    do {
+                        if try user.verifyPassword(password: oldPassword) {
+                            try user.setPassword(password: password)
+                        } else {
+                            data["is_password_retype_error"] = true
+                            data["password_retype_error"] = localizer.get(value: "register_error_password_retype")
+                        }
+                    } catch {
+                        let isUndefined: Bool
+                        if let registerError = error as? User.RegisterError {
+                            if registerError.type == .passwordInvalid {
+                                data["is_password_error"] = true
+                                data["password_error"] = localizer.get(value: "register_error_password_invalid")
+                                isUndefined = false
+                            } else {
+                                isUndefined = true
+                            }
+                        } else {
+                            isUndefined = true
+                        }
+                        
+                        if isUndefined {
+                            data["is_undefined_error"] = true
+                            data["undefined_error"] = localizer.get(value: "register_error_undefined")
+                        }
+                    }
+                }
+            }
+        }
+        
+        return data
+    }
+    
+    static func addEditGroup(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, groupName: String? = nil, nameRequired: Bool) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        
+        let delete = request.param(name: "delete") == "true"
+        
+        let name = request.param(name: "name") ?? ""
+        if !delete && name == "" && nameRequired {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+        
+        let permAdmin = request.param(name: "perm_admin") != nil
+        let permViewMap = request.param(name: "perm_view_map") != nil
+        let permViewMapGym = request.param(name: "perm_view_map_gym") != nil
+        let permViewMapRaid = request.param(name: "perm_view_map_raid") != nil
+        let permViewMapPokestop = request.param(name: "perm_view_map_pokestop") != nil
+        let permViewMapQuest = request.param(name: "perm_view_map_quest") != nil
+        let permViewMapPokemon = request.param(name: "perm_view_map_pokemon") != nil
+        let permViewMapIV = request.param(name: "perm_view_map_iv") != nil
+        let permViewMapSpawnpoint = request.param(name: "perm_view_map_spawnpoint") != nil
+        let permViewMapCell = request.param(name: "perm_view_map_cell") != nil
+        let permViewStats = request.param(name: "perm_view_stats") != nil
+
+        
+        data["name"] = name
+        data["perm_admin"] = permAdmin
+        data["perm_view_map"] = permViewMap
+        data["perm_view_map_gym"] = permViewMapGym
+        data["perm_view_map_raid"] = permViewMapRaid
+        data["perm_view_map_pokestop"] = permViewMapPokestop
+        data["perm_view_map_quest"] = permViewMapQuest
+        data["perm_view_map_pokemon"] = permViewMapPokemon
+        data["perm_view_map_iv"] = permViewMapIV
+        data["perm_view_map_spawnpoint"] = permViewMapSpawnpoint
+        data["perm_view_map_cell"] = permViewMapCell
+        data["perm_view_stats"] = permViewStats
+
+        var perms = [Group.Perm]()
+        if permViewMap {
+            perms.append(.viewMap)
+        }
+        if permViewMapRaid {
+            perms.append(.viewMapRaid)
+        }
+        if permViewMapPokemon {
+            perms.append(.viewMapPokemon)
+        }
+        if permViewStats {
+            perms.append(.viewStats)
+        }
+        if permAdmin {
+            perms.append(.admin)
+        }
+        if permViewMapGym {
+            perms.append(.viewMapGym)
+        }
+        if permViewMapPokestop {
+            perms.append(.viewMapPokestop)
+        }
+        if permViewMapSpawnpoint {
+            perms.append(.viewMapSpawnpoint)
+        }
+        if permViewMapQuest {
+            perms.append(.viewMapQuest)
+        }
+        if permViewMapIV {
+            perms.append(.viewMapIV)
+        }
+        if permViewMapCell {
+            perms.append(.viewMapCell)
+        }
+        
+        if groupName == nil { // New Group
+            let group = Group(name: name, perms: perms)
+            do {
+                try group.save(update: false)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create group. Try again later."
+                return data
+            }
+        } else { // Update Group
+            do {
+                guard var group = try Group.getWithName(name: groupName!) else {
+                    response.setBody(string: "Group Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    throw CompletedEarly()
+                }
+
+                if delete {
+                    try group.delete()
+                } else {
+                    if name != "" {
+                        group.name = name
+                        try group.rename(oldName: groupName!)
+                    }
+                    group.perms = perms
+                    try group.save()
+                }
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to update group. Try again later."
+                return data
+            }
+        }
+        
+        response.redirect(path: "/dashboard/groups")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+    }
+
+    static func editGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, groupName: String) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        
+        guard let group = try Group.getWithName(name: groupName) else {
+            response.setBody(string: "Group Not Found")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .notFound)
+            throw CompletedEarly()
+        }
+        
+        let perms = group.perms
+        
+        data["name"] = group.name
+        data["perm_admin"] = perms.contains(.admin)
+        data["perm_view_map"] = perms.contains(.viewMap)
+        data["perm_view_map_gym"] = perms.contains(.viewMapGym)
+        data["perm_view_map_raid"] = perms.contains(.viewMapRaid)
+        data["perm_view_map_pokestop"] = perms.contains(.viewMapPokestop)
+        data["perm_view_map_quest"] = perms.contains(.viewMapQuest)
+        data["perm_view_map_pokemon"] = perms.contains(.viewMapPokemon)
+        data["perm_view_map_iv"] = perms.contains(.viewMapIV)
+        data["perm_view_map_spawnpoint"] = perms.contains(.viewMapSpawnpoint)
+        data["perm_view_map_cell"] = perms.contains(.viewMapCell)
+        data["perm_view_stats"] = perms.contains(.viewStats)
+        
+        return data
+    }
+    
+    static func getPerms(request: HTTPRequest, fromCache: Bool=false) -> (perms: [Group.Perm], username: String?) {
         var username = request.session?.userid
         var perms = [Group.Perm]()
-        let sessionPerms = (request.session?.data["perms"] as? Int)?.toUInt32()
-        if sessionPerms == nil {
-            if username != nil && username != "" {
+        
+        if username == nil || username == "" {
+            let group = Group.getFromCache(groupName: "no_user")
+            perms = group?.perms ?? []
+        } else {
+            if fromCache, let groupName = User.getGroupNameFromCache(username: username!) {
+                let group = Group.getFromCache(groupName: groupName)
+                perms = group?.perms ?? []
+            } else {
                 let user: User?
                 do {
                     user = try User.get(username: username!)
                 } catch {
                     user = nil
                 }
-                if user == nil {
+                if user != nil {
+                    let group = Group.getFromCache(groupName: user!.groupName)
+                    perms = group?.perms ?? []
+                } else {
                     request.session?.userid = ""
                     username = ""
                     perms = []
-                } else {
-                    let userPerms = user!.group?.perms
-                    perms = userPerms ?? []
-                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms ?? [])
                 }
             }
-            if username == nil || username == "" {
-                let group: Group?
-                do {
-                    group = try Group.getWithName(name: "no_user")
-                } catch {
-                    group = nil
-                }
-                if group == nil {
-                    perms = [Group.Perm]()
-                } else {
-                    let userPerms = group!.perms
-                    perms = userPerms
-                    request.session?.data["perms"] = Group.Perm.permsToNumber(perms: userPerms)
-                }
-            }
-        } else {
-            perms = Group.Perm.numberToPerms(number: sessionPerms!)
         }
         return (perms, username)
     }
+
 }

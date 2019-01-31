@@ -12,6 +12,7 @@ import POGOProtos
 
 class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
+    public static var lureTime: UInt32 = 1800
     
     class ParsingError: Error {}
     
@@ -121,7 +122,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.lat = fortData.latitude
         self.lon = fortData.longitude
         self.enabled = fortData.enabled
-        self.lureExpireTimestamp = UInt32(fortData.lureInfo.lureExpiresTimestampMs / 1000)
+        if fortData.activeFortModifier.contains(.itemTroyDisk) {
+            self.lureExpireTimestamp = UInt32(fortData.lastModifiedTimestampMs) / 1000 + Pokestop.lureTime
+        }
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.imageURL != "" {
             self.url = fortData.imageURL

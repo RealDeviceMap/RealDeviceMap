@@ -34,6 +34,15 @@ if !backups.exists {
 Log.debug(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
 
+// Load Groups
+do {
+    try Group.setup()
+} catch {
+    let message = "[MAIN] Failed to load groups (\(error.localizedDescription))"
+    Log.critical(message: message)
+    fatalError(message)
+}
+
 // Load timezone
 Log.debug(message: "[MAIN] Loading Timezone")
 if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
@@ -78,7 +87,25 @@ Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lower
 Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
 Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600
 
+Pokestop.lureTime = try! DBController.global.getValueForKey(key: "POKESTOP_LURE_TIME")?.toUInt32() ?? 1800
+
+Gym.exRaidBossId = try! DBController.global.getValueForKey(key: "GYM_EX_BOSS_ID")?.toUInt16()
+Gym.exRaidBossForm = try! DBController.global.getValueForKey(key: "GYM_EX_BOSS_FORM")?.toUInt8()
+
 WebHookRequestHandler.enableClearing = try! DBController.global.getValueForKey(key: "ENABLE_CLEARING")?.toBool() ?? false
+
+DiscordController.guilds = try! DBController.global.getValueForKey(key: "DISCORD_GUILD_IDS")?.components(separatedBy: ";").map({ (s) -> UInt64 in
+ return s.toUInt64() ?? 0
+ }) ?? [UInt64]()
+DiscordController.token = try! DBController.global.getValueForKey(key: "DISCORD_TOKEN") ?? ""
+
+MailController.clientURL = try! DBController.global.getValueForKey(key: "MAILER_URL")
+MailController.clientUsername = try! DBController.global.getValueForKey(key: "MAILER_USERNAME")
+MailController.clientPassword = try! DBController.global.getValueForKey(key: "MAILER_PASSWORD")
+MailController.fromAddress = try! DBController.global.getValueForKey(key: "MAILER_EMAIL")
+MailController.fromName = try! DBController.global.getValueForKey(key: "MAILER_NAME")
+MailController.footerHtml = try! DBController.global.getValueForKey(key: "MAILER_FOOTER_HTML") ?? ""
+MailController.baseURI = try! DBController.global.getValueForKey(key: "MAILER_BASE_URI") ?? ""
 
 let webhookDelayString = try! DBController.global.getValueForKey(key: "WEBHOOK_DELAY") ?? "5.0"
 let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_URLS") ?? ""
@@ -151,6 +178,14 @@ if isSetup != nil && isSetup == "true" {
     WebReqeustHandler.accessToken = URandom().secureToken
     Log.debug(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
 }
+
+// Start MailController
+Log.debug(message: "[MAIL] Starting Mail Controller")
+try! MailController.global.setup()
+
+// Start DiscordController
+Log.debug(message: "[MAIL] Starting Discord Controller")
+try! DiscordController.global.setup()
 
 // Create Raid images
 Log.debug(message: "[MAIN] Starting Images Generator")

@@ -15,6 +15,9 @@ class LoginLimiter {
     let failedLock = Threading.Lock()
     var failed = [String: [Date]]()
     
+    let tokenLock = Threading.Lock()
+    var token = [String: [Date]]()
+    
     private init() {}
     
     func allowed(host: String) -> Bool {
@@ -43,6 +46,34 @@ class LoginLimiter {
             failed[host]!.append(Date())
         }
         failedLock.unlock()
+    }
+    
+    func tokenAllowed(host: String) -> Bool {
+        tokenLock.lock()
+        if token[host] == nil {
+            tokenLock.unlock()
+            return true
+        }
+        let now = Date()
+        var realTimes = [Date]()
+        for time in token[host]! {
+            if now.timeIntervalSince(time) <= 900 {
+                realTimes.append(time)
+            }
+        }
+        token[host] = realTimes
+        tokenLock.unlock()
+        return realTimes.count < 15
+    }
+    
+    func tokenTry(host: String) {
+        tokenLock.lock()
+        if token[host] == nil {
+            token[host] = [Date()]
+        } else {
+            token[host]!.append(Date())
+        }
+        tokenLock.unlock()
     }
     
 }

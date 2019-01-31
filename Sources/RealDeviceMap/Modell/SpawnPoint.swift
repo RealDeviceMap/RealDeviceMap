@@ -27,15 +27,17 @@ class SpawnPoint: JSONConvertibleObject{
     var lat: Double
     var lon: Double
     var updated: UInt32?
+    var despawnSecond: UInt16?
     
-    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?) {
+    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, despawnSecond: UInt16?) {
         self.id = id
         self.lat = lat
         self.lon = lon
         self.updated = updated
+        self.despawnSecond = despawnSecond
     }
 
-    public func save(mysql: MySQL?=nil) throws {
+    public func save(mysql: MySQL?=nil, update: Bool=false) throws {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
@@ -52,21 +54,47 @@ class SpawnPoint: JSONConvertibleObject{
         
         updated = UInt32(Date().timeIntervalSince1970)
         
-        if oldSpawnpoint == nil {
-
-            let sql = """
-                INSERT INTO spawnpoint (id, lat, lon, updated)
-                VALUES (?, ?, ?, UNIX_TIMESTAMP())
-            """
-            _ = mysqlStmt.prepare(statement: sql)
-            mysqlStmt.bindParam(id)
-            mysqlStmt.bindParam(lat)
-            mysqlStmt.bindParam(lon)
+        if !update && oldSpawnpoint != nil {
+            return
+        }
+        
+        if oldSpawnpoint != nil {
             
-            guard mysqlStmt.execute() else {
-                Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
-                throw DBController.DBError()
+            if self.despawnSecond == nil && oldSpawnpoint!.despawnSecond != nil {
+                self.despawnSecond = oldSpawnpoint!.despawnSecond
             }
+            
+            if  self.lat == oldSpawnpoint!.lat &&
+                self.lon == oldSpawnpoint!.lon &&
+                self.despawnSecond == oldSpawnpoint!.despawnSecond {
+                return
+            }
+
+        }
+
+        var sql = """
+            INSERT INTO spawnpoint (id, lat, lon, updated, despawn_sec)
+            VALUES (?, ?, ?, UNIX_TIMESTAMP(), ?)
+        """
+        if update {
+            sql += """
+            ON DUPLICATE KEY UPDATE
+            lat=VALUES(lat),
+            lon=VALUES(lon),
+            updated=VALUES(updated),
+            despawn_sec=VALUES(despawn_sec)
+            """
+        }
+        
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
+        mysqlStmt.bindParam(lat)
+        mysqlStmt.bindParam(lon)
+        mysqlStmt.bindParam(despawnSecond)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
         }
 
     }
@@ -79,7 +107,7 @@ class SpawnPoint: JSONConvertibleObject{
         }
         
         let sql = """
-            SELECT id, lat, lon, updated
+            SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
         """
@@ -105,8 +133,9 @@ class SpawnPoint: JSONConvertibleObject{
             let lat = result[1] as! Double
             let lon = result[2] as! Double
             let updated = result[3] as! UInt32
+            let despawnSecond = result[4] as? UInt16
             
-            spawnpoints.append(SpawnPoint(id: id, lat: lat, lon: lon, updated: updated))
+            spawnpoints.append(SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, despawnSecond: despawnSecond))
             
         }
         return spawnpoints
@@ -121,7 +150,7 @@ class SpawnPoint: JSONConvertibleObject{
         }
         
         let sql = """
-            SELECT id, lat, lon, updated
+            SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
             WHERE id = ?
         """
@@ -145,8 +174,9 @@ class SpawnPoint: JSONConvertibleObject{
         let lat = result[1] as! Double
         let lon = result[2] as! Double
         let updated = result[3] as! UInt32
+        let despawnSecond = result[4] as? UInt16
         
-        return SpawnPoint(id: id, lat: lat, lon: lon, updated: updated)
+        return SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, despawnSecond: despawnSecond)
         
     }
     

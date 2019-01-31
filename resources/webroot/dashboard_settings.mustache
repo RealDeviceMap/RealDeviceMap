@@ -19,6 +19,10 @@
                 Page Name
                 <input type="text" class="form-control" name="title" value="{{title}}" required>
             </div>
+            <div class="form-group">
+                Locale
+                <input type="text" class="form-control" name="locale_new" value="{{locale_new}}" required>
+            </div>
             <br>
             <h4>Map</h4>
             <div class="form-group">
@@ -40,12 +44,32 @@
             <br>
             <h4>Pokemon</h4>
             <div class="form-group">
+                Max Pokemon ID
+                <input type="number" class="form-control" name="max_pokemon_id" value="{{max_pokemon_id}}" step=1 min="1" max="999" required>
+            </div>
+            <div class="form-group">
                 Default time left on new pokemon (in seconds)
                 <input type="number" class="form-control" name="pokemon_time_new" value="{{pokemon_time_new}}" step=1 min="60" max="3600" required>
             </div>
             <div class="form-group">
                 Default time left on re-seen pokemon (in seconds)
                 <input type="number" class="form-control" name="pokemon_time_old" value="{{pokemon_time_old}}" step=1 min="60" max="3600" required>
+            </div>
+            <br>
+            <h4>Pokestops</h4>
+            <div class="form-group">
+                Lure Time
+                <input type="number" class="form-control" name="pokestop_lure_time" value="{{pokestop_lure_time}}" step=1 min="1800" max="604800" required>
+            </div>
+            <br>
+            <h4>Gyms</h4>
+            <div class="form-group">
+                EX-Raid Boss ID (0 = Off)
+                <input type="number" class="form-control" name="ex_raid_boss_id" value="{{ex_raid_boss_id}}" step=1 min="0" max="999" required>
+            </div>
+            <div class="form-group">
+                EX-Raid Boss Form
+                <input type="number" class="form-control" name="ex_raid_boss_form" value="{{ex_raid_boss_form}}" step=1 min="0" max="255" required>
             </div>
             <br>
             <h4>Webhook</h4>
@@ -58,20 +82,50 @@
                 <input type="number" class="form-control" name="webhook_delay" value="{{webhook_delay}}" step=0.1 min="1.0" max="60.0" required>
             </div>
             <br>
-            <h4>Misc</h4>
+            <h4>Mail</h4>
             <div class="form-group">
-                Max Pokemon ID
-                <input type="number" class="form-control" name="max_pokemon_id" value="{{max_pokemon_id}}" step=1 min="60" max="3600" required>
+                Base URI
+                <input type="text" class="form-control" name="mailer_base_uri" value="{{mailer_base_uri}}">
             </div>
             <div class="form-group">
-                Locale
-                <input type="text" class="form-control" name="locale_new" value="{{locale_new}}" required>
+                Sender Name
+                <input type="text" class="form-control" name="mailer_name" value="{{mailer_name}}">
+            </div>
+            <div class="form-group">
+                Sender Email
+                <input type="text" class="form-control" name="mailer_email" value="{{mailer_email}}">
+            </div>
+            <div class="form-group">
+                SMTP Server URL (example: smtp://example.com)
+                <input type="text" class="form-control" name="mailer_url" value="{{mailer_url}}">
+            </div>
+            <div class="form-group">
+                SMTP Server Username
+                <input type="text" class="form-control" name="mailer_username" value="{{mailer_username}}">
+            </div>
+            <div class="form-group">
+                SMTP Server Password
+                <input type="text" class="form-control" name="mailer_password" value="{{mailer_password}}">
+            </div>
+            <div class="form-group">
+                Footer HTML
+                <textarea class="form-control" rows="2" name="mailer_footer_html">{{{mailer_footer_html}}}</textarea>
             </div>
             <br>
+            <h4>Discord</h4>
+            <div class="form-group">
+                Guild IDs (separated by ";")
+                <input type="text" class="form-control" name="discord_guild_ids" value="{{discord_guild_ids}}">
+            </div>
+            <div class="form-group">
+                Bot Token
+                <input type="text" class="form-control" name="discord_token" value="{{discord_token}}">
+            </div>
+            <br>
+            <h4>Misc</h4>
             <div class="checkbox">
                 <label><input type="checkbox" name="enable_clearing" value="enable_clearing" {{#enable_clearing}}checked{{/enable_clearing}}> Enable Clearing of removed Pokestops/Gyms</label>
             </div>
-            <br>
             <div class="checkbox">
                 <label><input type="checkbox" name="enable_register_new" value="enable_register_new" {{#enable_register_new}}checked{{/enable_register_new}}> Enable Register</label>
             </div>

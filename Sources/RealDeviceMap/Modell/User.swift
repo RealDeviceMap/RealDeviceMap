@@ -8,6 +8,8 @@
 import PerfectLib
 import TurnstileCrypto
 import PerfectMySQL
+import PerfectSMTP
+import PerfectThread
 import Regex
 
 class User {
@@ -50,6 +52,22 @@ class User {
     public private(set) var emailVerified: Bool
     public private(set) var discordId: UInt64?
     public private(set) var groupName: String
+
+    private static var cacheLock = Threading.Lock()
+    private static var cachedUserGroups = [String: String]()
+
+    public static func getGroupNameFromCache(username: String) -> String? {
+        cacheLock.lock()
+        let group = cachedUserGroups[username]
+        cacheLock.unlock()
+        return group
+    }
+    
+    public static func storeInCache(username: String, group: String?) {
+        cacheLock.lock()
+        cachedUserGroups[username] = group
+        cacheLock.unlock()
+    }
     
     private var groupCache: Group?
     public var group: Group? {
@@ -114,6 +132,11 @@ class User {
         } catch {
             throw RegisterError(type: .undefined)
         }
+        do {
+            try user.sendConfirmEmail(mysql: mysql)
+        } catch {
+            // TODO: - Handle
+        }
         return user
         
     }
@@ -142,7 +165,7 @@ class User {
     private static func checkUsernameTaken(mysql: MySQL?=nil, username: String) throws -> Bool {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[USER] Failed to connect to database.")
+            Log.error(message: "[User] Failed to connect to database.")
             throw DBController.DBError()
         }
         
@@ -157,7 +180,7 @@ class User {
         mysqlStmt.bindParam(username)
         
         guard mysqlStmt.execute() else {
-            Log.error(message: "[USER] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         
@@ -168,7 +191,7 @@ class User {
     private static func checkEmailTaken(mysql: MySQL?=nil, email: String) throws -> Bool {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[USER] Failed to connect to database.")
+            Log.error(message: "[User] Failed to connect to database.")
             throw DBController.DBError()
         }
         
@@ -183,7 +206,7 @@ class User {
         mysqlStmt.bindParam(email)
         
         guard mysqlStmt.execute() else {
-            Log.error(message: "[USER] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         
@@ -219,7 +242,7 @@ class User {
             throw LoginError(type: .usernamePasswordInvalid)
         }
         
-        if try BCrypt.verify(password: password, matchesHash: user!.passwordHash) {
+        if try user!.verifyPassword(password: password) {
             return user!
         } else {
             LoginLimiter.global.failed(host: host)
@@ -227,7 +250,19 @@ class User {
         }
     }
     
+    public func verifyPassword(password: String) throws -> Bool {
+        return try BCrypt.verify(password: password, matchesHash: passwordHash)
+    }
+    
     // MARK: - DB
+    
+    public static func get(mysql: MySQL?=nil, usernameEmail: String) throws -> User? {
+        if usernameEmail.contains(string: "@") {
+            return try get(mysql: mysql, username: nil, email: usernameEmail)
+        } else {
+            return try get(mysql: mysql, username: usernameEmail, email: nil)
+        }
+    }
     
     public static func get(mysql: MySQL?=nil, username: String? = nil, email: String? = nil) throws -> User? {
         
@@ -236,7 +271,7 @@ class User {
         }
         
         guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[USER] Failed to connect to database.")
+            Log.error(message: "[User] Failed to connect to database.")
             throw DBController.DBError()
         }
         
@@ -259,7 +294,7 @@ class User {
         }
         
         guard mysqlStmt.execute() else {
-            Log.error(message: "[USER] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         
@@ -275,15 +310,287 @@ class User {
             let discordId = result[3] as? UInt64
             let emailVerified = (result[4] as? UInt8)?.toBool() ?? false
             let groupName = result[5] as! String
+            
+            User.storeInCache(username: username, group: groupName)
 
             return User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName)
         }
     }
     
+    public static func getAll(mysql: MySQL?=nil) throws -> [User] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT username, email, password, discord_id, email_verified, group_name
+            FROM user
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let results = mysqlStmt.results()
+        
+        var users = [User]()
+        while let result = results.next() {
+            let username = result[0] as! String
+            let email = result[1] as! String
+            let passwordHash = result[2] as! String
+            let discordId = result[3] as? UInt64
+            let emailVerified = (result[4] as? UInt8)?.toBool() ?? false
+            let groupName = result[5] as! String
+            
+            User.storeInCache(username: username, group: groupName)
+            
+            users.append(User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName))
+        }
+        return users
+    }
+
+    public func setGroup(mysql: MySQL?=nil, groupName: String) throws {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            UPDATE user
+            SET group_name = ?
+            WHERE username = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(groupName)
+        mysqlStmt.bindParam(username)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        User.storeInCache(username: username, group: groupName)
+
+    }
+    
+    public func setPassword(mysql: MySQL?=nil, password: String) throws {
+        
+        guard User.checkPasswordValid(password: password) else {
+            throw RegisterError(type: .passwordInvalid)
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            UPDATE user
+            SET password = ?
+            WHERE username = ?
+        """
+        
+        let passwordHash = BCrypt.hash(password: password, salt: BCryptSalt(cost: 7))
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(passwordHash)
+        mysqlStmt.bindParam(username)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+    
+    public func setUsername(mysql: MySQL?=nil, username: String) throws {
+        
+        guard User.checkUsernameValid(username: username) else {
+            throw RegisterError(type: .usernameInvalid)
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        guard try !User.checkUsernameTaken(mysql: mysql, username: username) else {
+            throw RegisterError(type: .usernameTaken)
+        }
+        
+        let sql = """
+            UPDATE user
+            SET username = ?
+            WHERE username = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(username)
+        mysqlStmt.bindParam(self.username)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        self.username = username
+
+        User.storeInCache(username: username, group: nil)
+        User.storeInCache(username: self.username, group: groupName)
+
+    }
+
+    public func setEmail(mysql: MySQL?=nil, email: String) throws {
+        
+        guard User.checkEmailVaild(email: email) else {
+            throw RegisterError(type: .emailInvalid)
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        guard try !User.checkEmailTaken(mysql: mysql, email: email) else {
+            throw RegisterError(type: .emailTaken)
+        }
+        
+        try Token.delete(mysql: mysql, username: username, type: .resetPassword)
+        
+        let sqlA = """
+            UPDATE user
+            SET email = ?, email_verified = false
+            WHERE username = ?
+        """
+        
+        let sqlB = """
+            UPDATE user
+            SET group_name = "default"
+            WHERE username = ? AND group_name = "default_verified"
+        """
+        
+        let mysqlStmtA = MySQLStmt(mysql)
+        _ = mysqlStmtA.prepare(statement: sqlA)
+        mysqlStmtA.bindParam(email)
+        mysqlStmtA.bindParam(username)
+        
+        let mysqlStmtB = MySQLStmt(mysql)
+        _ = mysqlStmtB.prepare(statement: sqlB)
+        mysqlStmtB.bindParam(username)
+        
+        guard mysqlStmtA.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        guard mysqlStmtB.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        self.email = email
+        
+        let cachedGroup = User.getGroupNameFromCache(username: username)
+        if cachedGroup == "default_verified" {
+            User.storeInCache(username: username, group: "default")
+        }
+        
+        do {
+            try sendConfirmEmail(mysql: mysql)
+        } catch {
+            // TODO: - Handle
+        }
+        
+    }
+    
+    public func verifyEmail(mysql: MySQL?=nil) throws {
+        
+        guard User.checkEmailVaild(email: email) else {
+            throw RegisterError(type: .emailInvalid)
+        }
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sqlA = """
+            UPDATE user
+            SET email_verified = true
+            WHERE username = ?
+        """
+        
+        let sqlB = """
+            UPDATE user
+            SET group_name = "default_verified"
+            WHERE username = ? AND group_name = "default"
+        """
+        
+        let mysqlStmtA = MySQLStmt(mysql)
+        _ = mysqlStmtA.prepare(statement: sqlA)
+        mysqlStmtA.bindParam(username)
+        
+        guard mysqlStmtA.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let mysqlStmtB = MySQLStmt(mysql)
+        _ = mysqlStmtB.prepare(statement: sqlB)
+        mysqlStmtB.bindParam(username)
+        
+        guard mysqlStmtB.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let cachedGroup = User.getGroupNameFromCache(username: username)
+        if cachedGroup == "default" {
+            User.storeInCache(username: username, group: "default_verified")
+        }
+    
+    }
+
+    public func delete(mysql: MySQL?=nil) throws {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            DELETE
+            FROM user
+            WHERE username = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(username)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        User.storeInCache(username: username, group: nil)
+        
+    }
+    
     private func save(mysql: MySQL?=nil, update: Bool = false) throws {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[USER] Failed to connect to database.")
+            Log.error(message: "[User] Failed to connect to database.")
             throw DBController.DBError()
         }
         
@@ -312,9 +619,52 @@ class User {
         mysqlStmt.bindParam(groupName)
         
         guard mysqlStmt.execute() else {
-            Log.error(message: "[USER] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+        
+        User.storeInCache(username: username, group: groupName)
+        
+    }
+    
+    // MARK: - CONFIRM EMAIL
+    
+    public func sendConfirmEmail(mysql: MySQL?=nil) throws {
+        
+        if MailController.global.isSetup {
+            let token = try Token.create(mysql: mysql, type: .confirmEmail, username: username, validSeconds: 604800)
+            
+            try MailController.global.sendConfirmEmail(
+                recipient: Recipient(name: username, address: email),
+                key: token.token) { (code) in
+                    if code != 250 {
+                        Log.error(message: "[User] Failed to sent confirm email. Got code \(code)")
+                    } else {
+                        Log.debug(message: "[User] Confirm email send successfully")
+                    }
+            }
+        }
+        
+    }
+    
+    // MARK: - RESET PASSWORD EMAIL
+    
+    public func sendResetMail(mysql: MySQL?=nil) throws {
+        
+        if MailController.global.isSetup {
+            let token = try Token.create(mysql: mysql, type: .resetPassword, username: username, validSeconds: 3600)
+            
+            try MailController.global.sendResetEmail(
+                recipient: Recipient(name: username, address: email),
+                key: token.token) { (code) in
+                    if code != 250 {
+                        Log.error(message: "[User] Failed to sent reset password email. Got code \(code)")
+                    } else {
+                        Log.debug(message: "[User] Reset password email send successfully")
+                    }
+            }
+        }
+        
     }
     
 }

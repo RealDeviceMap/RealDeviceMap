@@ -17,7 +17,10 @@ class ImageGenerator {
         let raidDir = Dir("\(projectroot)/resources/webroot/static/img/raid/")
         let gymDir = Dir("\(projectroot)/resources/webroot/static/img/gym/")
         let eggDir = Dir("\(projectroot)/resources/webroot/static/img/egg/")
-        let unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unkown_egg/")
+        var unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unkown_egg/")
+        if !unkownEggDir.exists {
+            unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unknown_egg/")
+        }
         let pokestopDir = Dir("\(projectroot)/resources/webroot/static/img/pokestop/")
         let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
         let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
@@ -28,13 +31,11 @@ class ImageGenerator {
         if !questDir.exists {
             try! questDir.create()
         }
-        let raidDoneLock = File(raidDir.path + "done.lock")
-        let questDoneLock = File(questDir.path + "done.lock")
         
         let thread = Threading.getQueue(type: .serial)
         thread.dispatch {
             
-            if !raidDoneLock.exists && raidDir.exists && gymDir.exists && eggDir.exists && unkownEggDir.exists && pokemonDir.exists {
+            if raidDir.exists && gymDir.exists && eggDir.exists && unkownEggDir.exists && pokemonDir.exists {
                 
                 Log.info(message: "[ImageGenerator] Creating Raid Images...")
                 
@@ -84,11 +85,25 @@ class ImageGenerator {
                 }
                 
                 Log.info(message: "[ImageGenerator] Raid images created.")
-                try! raidDoneLock.open(.readWrite)
-                try! raidDoneLock.write(string: Int(Date().timeIntervalSince1970).description)
- 
+            } else {
+                Log.warning(message: "[ImageGenerator] Not generating Quest Images (missing Dirs)")
+                if !raidDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(raidDir.path)")
+                }
+                if !gymDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(gymDir.path)")
+                }
+                if !eggDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(eggDir.path)")
+                }
+                if !unkownEggDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(unkownEggDir.path)")
+                }
+                if !pokemonDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
+                }
             }
-            if !questDoneLock.exists && questDir.exists && itemDir.exists && pokestopDir.exists && pokemonDir.exists {
+            if questDir.exists && itemDir.exists && pokestopDir.exists && pokemonDir.exists {
                 
                 Log.info(message: "[ImageGenerator] Creating Quest Images...")
                 
@@ -127,8 +142,20 @@ class ImageGenerator {
                 }
                 
                 Log.info(message: "[ImageGenerator] Quest images created.")
-                try! questDoneLock.open(.readWrite)
-                try! questDoneLock.write(string: Int(Date().timeIntervalSince1970).description)
+            } else {
+                Log.warning(message: "[ImageGenerator] Not generating Quest Images (missing Dirs)")
+                if !questDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(questDir.path)")
+                }
+                if !itemDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(itemDir.path)")
+                }
+                if !pokestopDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokestopDir.path)")
+                }
+                if !pokemonDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
+                }
             }
             
             Threading.destroyQueue(thread)

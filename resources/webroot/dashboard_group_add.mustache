@@ -1,0 +1,63 @@
+{{> header}}
+<body>
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong><br>{{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Add a new Group to {{title}}!</h1>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <br>
+            <h4>General</h4>
+            <div class="form-group">
+                Name
+                <input type="text" class="form-control" name="name" value="{{name}}" required>
+            </div>
+            <br>
+            <h4>Admin Permissions</h4>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_admin" value="perm_admin" {{#perm_admin}}checked{{/perm_admin}}> Admin</label>
+            </div>
+            <br>
+            <h4>Map Permissions</h4>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map" value="perm_view_map" {{#perm_view_map}}checked{{/perm_view_map}}> Map</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_gym" value="perm_view_map_gym" {{#perm_view_map_gym}}checked{{/perm_view_map_gym}}> Gyms</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_raid" value="perm_view_map_raid" {{#perm_view_map_raid}}checked{{/perm_view_map_raid}}> Raids</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_pokestop" value="perm_view_map_pokestop" {{#perm_view_map_pokestop}}checked{{/perm_view_map_pokestop}}> Pokestops</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_quest" value="perm_view_map_quest" {{#perm_view_map_quest}}checked{{/perm_view_map_quest}}>  Quests</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_pokemon" value="perm_view_map_pokemon" {{#perm_view_map_pokemon}}checked{{/perm_view_map_pokemon}}> Pokemon</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_iv" value="perm_view_map_iv" {{#perm_view_map_iv}}checked{{/perm_view_map_iv}}> IV</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_spawnpoint" value="perm_view_map_spawnpoint" {{#perm_view_map_spawnpoint}}checked{{/perm_view_map_spawnpoint}}> Spawnpoints</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_map_cell" value="perm_view_map_cell" {{#perm_view_map_cell}}checked{{/perm_view_map_cell}}> Cells</label>
+            </div>
+            <br>
+            <h4>Misc Permissions</h4>
+            <div class="checkbox">
+                <label><input type="checkbox" name="perm_view_stats" value="perm_view_stats" {{#perm_view_stats}}checked{{/perm_view_stats}}> Stats</label>
+            </div>
+            <br>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+    <br>
+</body>

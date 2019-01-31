@@ -16,6 +16,8 @@
             <button type="submit" class="btn btn-primary">{{login_login}}</button>
             {{#is_error}}<br><small class="text-danger">{{error}}</small>{{/is_error}}
         </form>
+        {{#enable_register}}<br><a href="/register">{{login_register_info}}</a>{{/enable_register}}
+        {{#has_mailer}}<br><a href="/resetpassword">{{login_password_info}}</a>{{/has_mailer}}
     </div>
     <br>
 </body>

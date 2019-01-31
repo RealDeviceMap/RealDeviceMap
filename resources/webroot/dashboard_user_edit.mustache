@@ -1,0 +1,35 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Edit User "{{edit_username}}"!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Select Group
+                <select class="form-control" name="group" required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose a Group</option>
+                    {{#groups}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/groups}}
+                </select>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Assign</button>
+        </form>
+        <br>
+        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to delete the user {{edit_username}}?');">
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <input type="hidden" name="delete" value="true">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+    <br>
+</body>

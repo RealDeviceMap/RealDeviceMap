@@ -1,0 +1,11 @@
+{{> header}}
+<body>
+    <br>
+    <h1 align="center">{{confirmmail_title}}</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        {{#is_error}}<h4 align="center" class="text-danger">{{{error}}}</h4>{{/is_error}}
+        {{#is_success}}<h4 align="center" class="text-success">{{{success}}}</h4>{{/is_success}}
+    </div>
+    <br>
+</body>

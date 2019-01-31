@@ -12,6 +12,9 @@ import POGOProtos
 
 class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     
+    public static var exRaidBossId: UInt16?
+    public static var exRaidBossForm: UInt8?
+    
     class ParsingError: Error {}
     
     override func getJSONValues() -> [String : Any] {
@@ -60,7 +63,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "guard_pokemon_id": guardPokemonId ?? 0,
                 "slots_available": availbleSlots ?? 6,
                 "raid_active_until": raidEndTimestamp ?? 0,
-                "sponsor_id": exRaidEligible ?? 0
+                "ex_raid_eligible": exRaidEligible ?? 0
             ]
         } else if type == "gym-info" {
             realType = "gym_details"
@@ -72,7 +75,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "longitude":lon,
                 "team": teamId ?? 0,
                 "slots_available": availbleSlots ?? 6,
-                "sponsor_id": exRaidEligible ?? 0,
+                "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
             ]
         } else if type == "egg" || type == "raid" {
@@ -80,6 +83,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             message = [
                 "gym_id": id,
                 "gym_name":name ?? "Unknown",
+                "gym_url":url ?? "",
                 "latitude":lat,
                 "longitude":lon,
                 "team_id": teamId ?? 0,
@@ -92,7 +96,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "form": raidPokemonForm ?? 0,
                 "move_1": raidPokemonMove1 ?? 0,
                 "move_2": raidPokemonMove2 ?? 0,
-                "sponsor_id": exRaidEligible ?? 0,
+                "ex_raid_eligible": exRaidEligible ?? 0,
                 "is_exclusive": raidIsExclusive ?? false,
             ]
         } else {
@@ -196,16 +200,15 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     }
     
     public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
-        
-        self.id = fortData.fortID
-        self.lat = fortData.latitude
-        self.lon = fortData.longitude
         if !fortData.imageUrls.isEmpty {
             self.url = fortData.imageUrls[0]
         }
         self.name = fortData.name
-        self.teamId = fortData.teamColor.rawValue.toUInt8()
-        
+    }
+    
+    public func addDetails(gymInfo: POGOProtos_Networking_Responses_GymGetInfoResponse) {
+        self.name = gymInfo.name
+        self.url = gymInfo.url
     }
     
     public func save(mysql: MySQL?=nil) throws {
@@ -222,6 +225,11 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             oldGym = nil
         }
         let mysqlStmt = MySQLStmt(mysql)
+        
+        if raidIsExclusive != nil && raidIsExclusive! && Gym.exRaidBossId != nil {
+            raidPokemonId = Gym.exRaidBossId!
+            raidPokemonForm = Gym.exRaidBossForm ?? 0
+        }
         
         updated = UInt32(Date().timeIntervalSince1970)
         

@@ -20,7 +20,7 @@
     </div>
     {{#show_error}}<br>{{/show_error}}
 
-    <h1 align="center">Edit {{old_name}}!</h1>
+    <h1 align="center">Edit Instance "{{old_name}}"!</h1>
     <br>
     <div class="w-75" style="float: none; margin: 0 auto;">
         <form action="" method="post">
@@ -61,7 +61,7 @@
             <button type="submit" class="btn btn-primary">Update</button>
         </form>
         <br>
-        <form action="" method="post">
+        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to delete the instance {{old_name}}?');">
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <input type="hidden" name="delete" value="true">
             <button type="submit" class="btn btn-danger">Delete</button>

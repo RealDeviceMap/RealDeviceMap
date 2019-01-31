@@ -216,9 +216,6 @@ class DBController {
         multiStatement = false
         asRoot = false
         
-        if version != newestDBVersion {
-            try? clearPerms()
-        }
     }
     
     private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
@@ -311,6 +308,8 @@ class DBController {
                 fatalError(message)
             }
             
+            Log.info(message: "[DBController] Migrating...")
+
             var migrateSQL: String
             let sqlFile = File("\(projectroot)/resources/migrations/\(fromVersion + 1).sql")
             do {
@@ -399,79 +398,6 @@ class DBController {
         Log.info(message: "[DBController] Sleeping for 60s before restarting again. (Save to kill now)")
         Threading.sleep(seconds: 60)
     
-    }
- 
-    private func clearPerms() throws {
-        
-        Log.info(message: "[DBController] Reseting Permissions")
-        
-        guard let mysql = mysql else {
-            Log.error(message: "[DBController] Failed to connect to database.")
-            throw DBError()
-        }
-        
-        let sql = """
-            UPDATE web_session
-            SET data = JSON_REMOVE(data, "$.perms");
-        """
-        
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[DBController] Fast Reset failed. Using legacy Reset.")
-            let sessions = try getAllSessionData(mysql: mysql)
-            for session in sessions {
-                var dataJson = try session.value.jsonDecode() as! [String: Any]
-                dataJson["perms"] = nil
-                try setSessionData(token: session.key, data: dataJson.jsonEncodedString(), mysql: mysql)
-            }
-            return
-        }
-        
-    }
-    
-    private func getAllSessionData(mysql: MySQL) throws -> [String: String] {
-        
-        let sql = """
-            SELECT token, data
-            FROM `web_session`
-        """
-        
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[DBController] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBError()
-        }
-        let results = mysqlStmt.results()
-    
-        var sessions = [String: String]()
-        while let result = results.next() {
-            let token = result[0] as! String
-            let data = result[1] as! String
-            sessions[token] = data
-        }
-        return sessions
-    }
-    
-    private func setSessionData(token: String, data: String, mysql: MySQL) throws {
-
-        let sql = """
-            UPDATE `web_session`
-            SET data = ?
-            WHERE token = ?
-        """
-        
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(data)
-        mysqlStmt.bindParam(token)
-        
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[DBController] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBError()
-        }
     }
     
 }

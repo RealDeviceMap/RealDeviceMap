@@ -1,0 +1,56 @@
+{{> header}}
+
+<style>
+    table.dataTable tbody td {
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+	$(document).ready(function() {
+		const table = $('#table').DataTable( {
+			"ajax": {
+				"url": "/api/get_data?show_groups=true&formatted=true",
+				"dataSrc": "data.groups"
+			},
+			"paging":   true,
+			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+			"columns": [
+				{ "data": "name" },
+                { "data": "perms" },
+				{ "data": "buttons" }
+			],
+			"info":     false,
+			"order": [[ 0, "asc" ]],
+			"search.caseInsensitive": true,
+			"columnDefs": [ {
+				"targets": [2],
+				"orderable": false
+			}],
+            "responsive": true
+        });
+	} );
+</script>
+
+<body>
+
+    <br>
+    <h1 align="center">Configure {{title}}'s Groups!</h1>
+    <br>
+    <div style="width:90%; margin-left:calc(5%);">
+        <a href="/dashboard/group/add" role="button" style="float: right;" class="btn btn-success">Add New Group</a>
+        <br><br>
+        <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Perms</th>
+                <th width="5%"></th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <br>
+</body>

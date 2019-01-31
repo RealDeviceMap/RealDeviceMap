@@ -37,7 +37,7 @@
                     <a class="nav-link" href="/profile">{{username}}{{#page_is_profile}}<span class="sr-only">(current)</span>{{/page_is_profile}}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/logout">{{nav_logout}}</a>
+                <a class="nav-link" href="/logout?redirect={{uri}}">{{nav_logout}}</a>
                 </li>
             </ul>
         {{/is_logged_in}}

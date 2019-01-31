@@ -27,6 +27,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var stopsLock = Threading.Lock()
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
+    private var todayStopsTries: [Pokestop: UInt8]?
     private var questClearerQueue: ThreadQueue?
     private var timezoneOffset: Int
     private var shouldExit = false
@@ -171,6 +172,7 @@ class AutoInstanceController: InstanceControllerProto {
                 
             }
             self.todayStops = [Pokestop]()
+            self.todayStopsTries = [Pokestop: UInt8]()
             for stop in self.allStops! {
                 if stop.questType == nil && stop.enabled == true {
                     self.todayStops!.append(stop)
@@ -258,6 +260,7 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.lock()
                 if todayStops == nil {
                     todayStops = [Pokestop]()
+                    todayStopsTries = [Pokestop: UInt8]()
                 }
                 if allStops == nil {
                     allStops = [Pokestop]()
@@ -282,7 +285,8 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     
                     for stop in newStops {
-                        if stop.questType == nil && stop.enabled == true {
+                        let count = todayStopsTries![stop] ?? 0
+                        if stop.questType == nil && stop.enabled == true && count <= 5 {
                             todayStops!.append(stop)
                         }
                     }
@@ -323,13 +327,14 @@ class AutoInstanceController: InstanceControllerProto {
                 let newLon: Double
                 let newLat: Double
                 var encounterTime: UInt32
+                let pokestop: Pokestop
                 
                 if lastLat != nil && lastLon != nil {
                     
                     let current = CLLocationCoordinate2D(latitude: lastLat!, longitude: lastLon!)
                     
-                    var closest: Pokestop!
-                    var closestDistance: Double = 6378137
+                    var closest: Pokestop?
+                    var closestDistance: Double = 9999999999999999
                     
                     stopsLock.lock()
                     let todayStopsC = todayStops
@@ -347,8 +352,13 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                     
-                    newLon = closest.lon
-                    newLat = closest.lat
+                    if closest == nil {
+                         return [String: Any]()
+                    }
+                    
+                    newLon = closest!.lon
+                    newLat = closest!.lat
+                    pokestop = closest!
                     let now = UInt32(Date().timeIntervalSince1970)
                     if lastTime == nil {
                         encounterTime = now
@@ -365,7 +375,7 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                     stopsLock.lock()
-                    if let index = todayStops!.index(of: closest) {
+                    if let index = todayStops!.index(of: pokestop) {
                         todayStops!.remove(at: index)
                     }
                     stopsLock.unlock()
@@ -374,6 +384,7 @@ class AutoInstanceController: InstanceControllerProto {
                     if let stop = todayStops!.first {
                         newLon = stop.lon
                         newLat = stop.lat
+                        pokestop = stop
                         encounterTime = UInt32(Date().timeIntervalSince1970)
                         _ = todayStops!.removeFirst()
                     } else {
@@ -382,6 +393,14 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     stopsLock.unlock()
                 }
+                
+                stopsLock.lock()
+                if todayStopsTries![pokestop] == nil {
+                    todayStopsTries![pokestop] = 1
+                } else {
+                    todayStopsTries![pokestop]! += 1
+                }
+                stopsLock.unlock()
                 
                 if username != nil && account != nil {
                     try? Account.didEncounter(mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime)

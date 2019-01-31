@@ -1,0 +1,15 @@
+{{> header}}
+<body>
+    <br>
+    <h1 align="center">{{confirmmail_title}}</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto; text-align: center;">
+        <form action="" method="post">
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">{{confirmmail_request}}</button>
+            {{#is_error}}<br><br><h4 align="center" class="text-danger">{{{error}}}</h4>{{/is_error}}
+            {{#is_success}}<br><br><h4 align="center" class="text-success">{{{success}}}</h4>{{/is_success}}
+        </form>
+    </div>
+    <br>
+</body>
