@@ -69,6 +69,7 @@ WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
+WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?.jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
 
 if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String]  {
     var tileservers = [String: [String: String]]()
