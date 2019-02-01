@@ -36,6 +36,9 @@ class WebReqeustHandler {
         
         response.setHeader(.accessControlAllowHeaders, value: "*")
         response.setHeader(.accessControlAllowMethods, value: "GET")
+        if let host = request.header(.host) {
+            response.setHeader(.accessControlAllowOrigin, value: "http://\(host), https://\(host)")
+        }
         
         let localizer = Localizer.global
         
