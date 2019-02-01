@@ -34,6 +34,9 @@ class WebReqeustHandler {
             
     static func handle(request: HTTPRequest, response: HTTPResponse, page: WebServer.Page, requiredPerms: [Group.Perm], requiredPermsCount:Int = -1, requiresLogin: Bool=false) {
         
+        response.setHeader(.accessControlAllowHeaders, value: "*")
+        response.setHeader(.accessControlAllowMethods, value: "GET")
+        
         let localizer = Localizer.global
         
         let documentRoot = "\(projectroot)/resources/webroot"
@@ -174,7 +177,7 @@ class WebReqeustHandler {
             }
             
             do {
-                if let user = try User.get(username: username ?? "") {
+                if MailController.global.isSetup, let user = try User.get(username: username ?? "") {
                     if user.emailVerified {
                         data["is_error"] = true
                         data["error"] = localizer.get(value: "confirmmail_error_verified")
@@ -220,7 +223,7 @@ class WebReqeustHandler {
             } else {
                 LoginLimiter.global.tokenTry(host: host)
                 do {
-                    if let user = try User.get(username: username ?? "") {
+                    if MailController.global.isSetup, let user = try User.get(username: username ?? "") {
                         if user.emailVerified {
                             data["is_error"] = true
                             data["error"] = localizer.get(value: "confirmmail_error_verified")
@@ -261,7 +264,7 @@ class WebReqeustHandler {
                 data["username-email"] = usernameEmail
                 
                 do {
-                    if let user = try User.get(usernameEmail: usernameEmail) {
+                    if MailController.global.isSetup, let user = try User.get(usernameEmail: usernameEmail) {
                         try Token.delete(username: user.username, type: .resetPassword)
                         let thread = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
                         thread.dispatch { // Dispatch this so all requests take the same time
@@ -301,6 +304,9 @@ class WebReqeustHandler {
             if !LoginLimiter.global.tokenAllowed(host: host) {
                 data["is_error"] = true
                 data["error"] = localizer.get(value: "resetpassword_error_limited")
+            } else if !MailController.global.isSetup {
+                data["is_error"] = true
+                data["error"] = localizer.get(value: "resetpassword_error_undefined")
             } else {
                 LoginLimiter.global.tokenTry(host: host)
                 
@@ -817,7 +823,12 @@ class WebReqeustHandler {
                 response.completed(status: .internalServerError)
                 return
             }
-            data["mail_verified"] = user!.emailVerified
+            
+            if MailController.global.isSetup {
+                data["mail_verified"] = user!.emailVerified
+            } else {
+                data["mail_verified"] = false
+            }
             data["username_new"] = user!.username
             data["email"] = user!.email
             

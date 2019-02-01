@@ -122,10 +122,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.lat = fortData.latitude
         self.lon = fortData.longitude
         self.enabled = fortData.enabled
+        let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.activeFortModifier.contains(.itemTroyDisk) {
-            self.lureExpireTimestamp = UInt32(fortData.lastModifiedTimestampMs) / 1000 + Pokestop.lureTime
+            self.lureExpireTimestamp = lastModifiedTimestamp + Pokestop.lureTime
         }
-        self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+        self.lastModifiedTimestamp = lastModifiedTimestamp
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
         }
