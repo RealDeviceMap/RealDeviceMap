@@ -428,11 +428,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             mysqlStmt.bindParam(id)
         }
         
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-        
         if self.spawnId != nil {
             let spawnPoint: SpawnPoint
             if expireTimestampVerified && expireTimestamp != nil {
@@ -452,6 +447,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated, despawnSecond: nil)
             }
             try? spawnPoint.save(mysql: mysql, update: true)
+        }
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
         }
         
     }
