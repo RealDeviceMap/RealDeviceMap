@@ -1998,6 +1998,13 @@ class WebReqeustHandler {
             throw CompletedEarly()
         }
         
+        if request.param(name: "error") != nil {
+            response.redirect(path: "/login")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+            throw CompletedEarly()
+        }
+        
         if let code = request.param(name: "code") {
             
             let redirect: String
@@ -2027,15 +2034,11 @@ class WebReqeustHandler {
                 } else {
                     isLink = false
                 }
-                
-                print(isLogin, isLink)
-                
             } else {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=true")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
-
             }
             
             let curl = CURLRequest("https://discordapp.com/api/oauth2/token",
@@ -2054,14 +2057,14 @@ class WebReqeustHandler {
             do {
                 bodyJSON = try curl.perform().bodyJSON
             } catch {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
 
             }
             guard let accessToken =  bodyJSON?["access_token"] as? String else {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
@@ -2077,14 +2080,14 @@ class WebReqeustHandler {
             do {
                 bodyJSONUser = try curlUser.perform().bodyJSON
             } catch {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
             }
             
             guard let idString = bodyJSONUser?["id"] as? String, let id = UInt64(idString) else {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()
@@ -2108,7 +2111,7 @@ class WebReqeustHandler {
                         throw CompletedEarly()
                     }
                 } catch {
-                    response.redirect(path: "/oauth/discord")
+                    response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .seeOther)
                     throw CompletedEarly()
@@ -2117,13 +2120,13 @@ class WebReqeustHandler {
                 do {
                     try user!.setDiscordId(id: id)
                 } catch {
-                    response.redirect(path: "/oauth/discord")
+                    response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .seeOther)
                     throw CompletedEarly()
                 }
             } else {
-                response.redirect(path: "/oauth/discord")
+                response.redirect(path: "/oauth/discord?login=\(isLogin)&link=\(isLink)")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
                 throw CompletedEarly()

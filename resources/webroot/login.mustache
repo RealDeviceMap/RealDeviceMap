@@ -16,10 +16,10 @@
             <button type="submit" class="btn btn-primary">{{login_login}}</button>
             {{#is_error}}<br><small class="text-danger">{{error}}</small>{{/is_error}}
         </form>
-        {{#enable_register}}<br><a href="/register">{{login_register_info}}</a>{{/enable_register}}
-        {{#has_mailer}}<br><a href="/resetpassword">{{login_password_info}}</a>{{/has_mailer}}
+        {{#enable_register}}<a href="/register">{{login_register_info}}</a><br>{{/enable_register}}
+        {{#has_mailer}}<a href="/resetpassword">{{login_password_info}}<br></a>{{/has_mailer}}
         {{#has_discord_oauth}}
-        <br><br><h4>Discord</h4>
+        <br><h4>Discord</h4>
         <form method="get" action="/oauth/discord">
             <input type="hidden" name="login" value="true">
             <input type="hidden" name="redirect" value="{{redirect}}">
