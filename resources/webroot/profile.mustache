@@ -47,7 +47,20 @@
             <button type="submit" class="btn btn-primary">{{profile_update}}</button>
             {{#is_undefined_error_password}}<br><small class="text-danger">{{undefined_error_password}}</small>{{/is_undefined_error_password}}
         </form>
-        {{#has_mailer}}<br><a href="/resetpassword">{{profile_password_info}}</a>{{/has_mailer}}
+        {{#has_mailer}}<a href="/resetpassword">{{profile_password_info}}</a><br>{{/has_mailer}}
+        {{#has_discord_oauth}}
+        <br><h4>Discord</h4>
+        {{^discord_oauth_set}}
+        <form method="get" action="/oauth/discord">
+            <input type="hidden" name="link" value="true">
+            <input type="hidden" name="redirect" value="/profile?linked=true">
+            <button type="submit" class="btn btn-primary"> {{profile_discord_link}}</button>
+        </form>
+        {{/discord_oauth_set}}
+        {{#discord_oauth_set}}
+            {{profile_discord_linked}}
+        {{/discord_oauth_set}}
+        {{/has_discord_oauth}}
     </div>
     <br>
 </body>

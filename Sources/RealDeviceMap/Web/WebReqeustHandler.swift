@@ -9,8 +9,10 @@ import Foundation
 import PerfectLib
 import PerfectHTTP
 import PerfectMustache
+import PerfectSession
 import PerfectSessionMySQL
 import PerfectThread
+import PerfectCURL
 
 class WebReqeustHandler {
     
@@ -29,6 +31,10 @@ class WebReqeustHandler {
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
+    
+    static var oauthDiscordRedirectURL: String?
+    static var oauthDiscordClientID: String?
+    static var oauthDiscordClientSecret: String?
     
     private static let sessionDriver = MySQLSessions()
             
@@ -426,7 +432,10 @@ class WebReqeustHandler {
                     return i.description
                 }).joined(separator: ";")
             data["discord_token"] = DiscordController.token
-            
+            data["discord_redirect_url"] = WebReqeustHandler.oauthDiscordRedirectURL
+            data["discord_client_id"] = WebReqeustHandler.oauthDiscordClientID
+            data["discord_client_secret"] = WebReqeustHandler.oauthDiscordClientSecret
+
             var tileserverString = ""
             
             let tileserversSorted = tileservers.sorted { (rhs, lhs) -> Bool in
@@ -774,11 +783,13 @@ class WebReqeustHandler {
             data["page"] = localizer.get(value: "title_login")
             
             // Localize
-            let homeLoc = ["login_username_email", "login_password", "login_login", "login_password_info", "login_register_info"]
+            let homeLoc = ["login_username_email", "login_password", "login_login", "login_password_info", "login_register_info", "login_discord"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
             data["login_title"] = localizer.get(value: "login_title", replace: ["name" : title])
+            data["redirect"] = request.param(name: "redirect") ?? "/"
+            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil && WebReqeustHandler.oauthDiscordRedirectURL != nil && WebReqeustHandler.oauthDiscordClientID != nil
             
             if request.method == .post {
                 do {
@@ -786,6 +797,12 @@ class WebReqeustHandler {
                 } catch {
                     return
                 }
+            }
+        case .oauthDiscord:
+            do {
+                data = try oauthDiscord(data: data, request: request, response: response)
+            } catch {
+                return
             }
         case .logout:
             data["page"] = localizer.get(value: "title_logout")
@@ -807,8 +824,10 @@ class WebReqeustHandler {
             data["page_is_profile"] = true
             data["page"] = localizer.get(value: "title_profile")
             
+            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil && WebReqeustHandler.oauthDiscordRedirectURL != nil && WebReqeustHandler.oauthDiscordClientID != nil
+            
             // Localize
-            let homeLoc = ["profile_username", "profile_email", "profile_password", "profile_retype_password", "profile_update", "profile_update_heading", "profile_unverified_header", "profile_unverified_text", "profile_update_password_heading", "profile_old_password", "profile_password_info"]
+            let homeLoc = ["profile_username", "profile_email", "profile_password", "profile_retype_password", "profile_update", "profile_update_heading", "profile_unverified_header", "profile_unverified_text", "profile_update_password_heading", "profile_old_password", "profile_password_info", "profile_discord_link", "profile_discord_linked"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -826,6 +845,8 @@ class WebReqeustHandler {
                 response.completed(status: .internalServerError)
                 return
             }
+            
+            data["discord_oauth_set"] = user?.discordId != nil
             
             if MailController.global.isSetup {
                 data["mail_verified"] = user!.emailVerified
@@ -1036,9 +1057,6 @@ class WebReqeustHandler {
         
         if user != nil {
             request.session?.userid = user!.username
-            if user!.group != nil {
-                request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user!.group!.perms)
-            }
             let redirect = request.param(name: "redirect") ?? "/"
             response.redirect(path: redirect)
             sessionDriver.save(session: request.session!)
@@ -1091,6 +1109,9 @@ class WebReqeustHandler {
             return s.toUInt64() ?? 0
         }) ?? [UInt64]()
         let discordToken = request.param(name: "discord_token")
+        let oauthDiscordRedirectURL = request.param(name: "discord_redirect_url")
+        let oauthDiscordClientID = request.param(name: "discord_client_id")
+        let oauthDiscordClientSecret = request.param(name: "discord_client_secret")
         
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
@@ -1104,35 +1125,37 @@ class WebReqeustHandler {
         }
         
         var citySettings = [String: [String: Any]]()
-        for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
-            let split = cityString.components(separatedBy: ";")
-            let name: String
-            let lat: Double?
-            let lon: Double?
-            let zoom: Int?
-            if split.count == 3 {
-                name = split[0].lowercased()
-                lat = split[1].toDouble()
-                lon = split[2].toDouble()
-                zoom = nil
-            } else if split.count == 4 {
-                name = split[0].lowercased()
-                lat = split[1].toDouble()
-                lon = split[2].toDouble()
-                zoom = split[3].toInt()
-            } else {
-                data["show_error"] = true
-                return data
+        if cities != "" {
+            for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
+                let split = cityString.components(separatedBy: ";")
+                let name: String
+                let lat: Double?
+                let lon: Double?
+                let zoom: Int?
+                if split.count == 3 {
+                    name = split[0].lowercased()
+                    lat = split[1].toDouble()
+                    lon = split[2].toDouble()
+                    zoom = nil
+                } else if split.count == 4 {
+                    name = split[0].lowercased()
+                    lat = split[1].toDouble()
+                    lon = split[2].toDouble()
+                    zoom = split[3].toInt()
+                } else {
+                    data["show_error"] = true
+                    return data
+                }
+                guard let latReal = lat, let lonReal = lon else {
+                    data["show_error"] = true
+                    return data
+                }
+                citySettings[name] = [
+                    "lat": latReal,
+                    "lon": lonReal,
+                    "zoom": zoom as Any
+                ]
             }
-            guard let latReal = lat, let lonReal = lon else {
-                data["show_error"] = true
-                return data
-            }
-            citySettings[name] = [
-                "lat": latReal,
-                "lon": lonReal,
-                "zoom": zoom as Any
-            ]
         }
         
         do {
@@ -1163,6 +1186,9 @@ class WebReqeustHandler {
                 return i.description
             }).joined(separator: ";"))
             try DBController.global.setValueForKey(key: "DISCORD_TOKEN", value: discordToken ?? "")
+            try DBController.global.setValueForKey(key: "DISCORD_REDIRECT_URL", value: oauthDiscordRedirectURL ?? "")
+            try DBController.global.setValueForKey(key: "DISCORD_CLIENT_ID", value: oauthDiscordClientID ?? "")
+            try DBController.global.setValueForKey(key: "DISCORD_CLIENT_SECRET", value: oauthDiscordClientSecret ?? "")
             try DBController.global.setValueForKey(key: "CITIES", value: citySettings.jsonEncodeForceTry() ?? "")
         } catch {
             data["show_error"] = true
@@ -1195,6 +1221,9 @@ class WebReqeustHandler {
         DiscordController.guilds = discordGuilds
         DiscordController.token = discordToken
         Localizer.locale = locale
+        WebReqeustHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
+        WebReqeustHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
+        WebReqeustHandler.oauthDiscordClientID = oauthDiscordClientID
         
         data["title"] = title
         data["show_success"] = true
@@ -1686,19 +1715,17 @@ class WebReqeustHandler {
         var data = data
         
         let section = request.param(name: "section")
-        let username = request.param(name: "username")
-        let email = request.param(name: "email")
-        
-        let oldPassword = request.param(name: "old_password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let password = request.param(name: "password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let passwordRetype = request.param(name: "password-retype")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        
-        data["username_new"] = username
-        data["email"] = email
-        
+
         let localizer = Localizer.global
         
         if section == "profile" {
+            
+            let username = request.param(name: "username")
+            let email = request.param(name: "email")
+            
+            data["username_new"] = username
+            data["email"] = email
+            
             if username == nil || email == nil {
                 data["is_undefined_error_profile"] = true
                 data["undefined_error_profile"] = localizer.get(value: "register_error_undefined")
@@ -1766,6 +1793,15 @@ class WebReqeustHandler {
         }
         
         if section == "password" {
+            
+            let oldPassword = request.param(name: "old_password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let password = request.param(name: "password")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let passwordRetype = request.param(name: "password-retype")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            
+            data["old_password"] = oldPassword
+            data["password"] = password
+            data["password-retype"] = passwordRetype
+
             if password == "" {
                 data["is_undefined_error_profile"] = true
                 data["undefined_error_profile"] = localizer.get(value: "register_error_undefined")
@@ -1953,7 +1989,164 @@ class WebReqeustHandler {
         return data
     }
     
+    static func oauthDiscord(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+        var data = data
+        if oauthDiscordClientID == nil || oauthDiscordRedirectURL == nil || oauthDiscordClientSecret == nil {
+            response.redirect(path: "/")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+            throw CompletedEarly()
+        }
+        
+        if let code = request.param(name: "code") {
+            
+            let redirect: String
+            let usernameNew: String?
+            let isLogin: Bool
+            let isLink: Bool
+            
+            if let state = request.param(name: "state") {
+                let split = state.components(separatedBy: ";")
+                let oldSession = MySQLSessions().resume(token: split[0])
+                request.session?.userid = oldSession.userid
+                usernameNew = oldSession.userid
+                if split.count >= 2 {
+                    redirect = split[1]
+                } else {
+                    redirect = "/"
+                }
+                
+                if split.count >= 3 {
+                    isLogin = split[2] == "true"
+                } else {
+                    isLogin = false
+                }
+                
+                if split.count >= 4 {
+                    isLink = split[3] == "true"
+                } else {
+                    isLink = false
+                }
+                
+                print(isLogin, isLink)
+                
+            } else {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+
+            }
+            
+            let curl = CURLRequest("https://discordapp.com/api/oauth2/token",
+                                   options: [
+                                    .addHeader(.userAgent, "RealDeviceMap"),
+                                    .addHeader(.accept, "application/json"),
+                                    .postField(CURLRequest.POSTField(name: "client_id", value: oauthDiscordClientID!)),
+                                    .postField(CURLRequest.POSTField(name: "client_secret", value: oauthDiscordClientSecret!)),
+                                    .postField(CURLRequest.POSTField(name: "grant_type", value: "authorization_code")),
+                                    .postField(CURLRequest.POSTField(name: "code", value: code)),
+                                    .postField(CURLRequest.POSTField(name: "redirect_uri", value: oauthDiscordRedirectURL!)),
+                                    .postField(CURLRequest.POSTField(name: "scope", value: "identify"))
+                ]
+            )
+            let bodyJSON: [String: Any]?
+            do {
+                bodyJSON = try curl.perform().bodyJSON
+            } catch {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+
+            }
+            guard let accessToken =  bodyJSON?["access_token"] as? String else {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+            
+            let curlUser = CURLRequest("https://discordapp.com/api/users/@me",
+                                       options: [
+                                        .addHeader(.userAgent, "RealDeviceMap"),
+                                        .addHeader(.accept, "application/json"),
+                                        .addHeader(.authorization, "Bearer \(accessToken)")
+                ])
+            let bodyJSONUser: [String: Any]?
+            do {
+                bodyJSONUser = try curlUser.perform().bodyJSON
+            } catch {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+            
+            guard let idString = bodyJSONUser?["id"] as? String, let id = UInt64(idString) else {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+            
+            let user: User?
+            do {
+                user = try User.get(username: usernameNew ?? "")
+            } catch {
+                user = nil
+            }
+            if user == nil && isLogin {
+                do {
+                    let user = try User.get(discordId: id)
+                    if user != nil {
+                        request.session?.userid = user!.username
+                    } else {
+                        response.redirect(path: "/login")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .seeOther)
+                        throw CompletedEarly()
+                    }
+                } catch {
+                    response.redirect(path: "/oauth/discord")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    throw CompletedEarly()
+                }
+            } else if isLink {
+                do {
+                    try user!.setDiscordId(id: id)
+                } catch {
+                    response.redirect(path: "/oauth/discord")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    throw CompletedEarly()
+                }
+            } else {
+                response.redirect(path: "/oauth/discord")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+            
+            data["url"] = redirect
+        } else {
+            let isLogin = request.param(name: "login") == "true"
+            let isLink = request.param(name: "link") == "true"
+            
+            let token = request.session?.token ?? ""
+            let redirect = request.param(name: "redirect") ?? "/"
+            let url = "https://discordapp.com/api/oauth2/authorize?client_id=\(oauthDiscordClientID!)&redirect_uri=\(oauthDiscordRedirectURL!.stringByEncodingURL)&response_type=code&scope=identify&state=\(token);\(redirect);\(isLogin);\(isLink)"
+            response.redirect(path: url)
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+            throw CompletedEarly()
+        }
+        return data
+    }
+    
     static func getPerms(request: HTTPRequest, fromCache: Bool=false) -> (perms: [Group.Perm], username: String?) {
+
         var username = request.session?.userid
         var perms = [Group.Perm]()
         

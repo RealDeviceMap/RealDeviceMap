@@ -316,6 +316,48 @@ class User {
             return User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName)
         }
     }
+
+    public static func get(mysql: MySQL?=nil, discordId: UInt64) throws -> User? {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT username, email, password, discord_id, email_verified, group_name
+            FROM user
+            WHERE discord_id = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(discordId)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let results = mysqlStmt.results()
+        
+        if results.numRows == 0 {
+            return nil
+        } else {
+            let result = results.next()!
+            let username = result[0] as! String
+            let email = result[1] as! String
+            let passwordHash = result[2] as! String
+            let discordId = result[3] as? UInt64
+            let emailVerified = (result[4] as? UInt8)?.toBool() ?? false
+            let groupName = result[5] as! String
+            
+            User.storeInCache(username: username, group: groupName)
+            
+            return User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName)
+        }
+    }
+
     
     public static func getAll(mysql: MySQL?=nil) throws -> [User] {
         
@@ -513,6 +555,45 @@ class User {
         
     }
     
+    public func setDiscordId(mysql: MySQL?=nil, id: UInt64) throws {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[User] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sqlA = """
+            UPDATE user
+            SET discord_id = NULL
+            WHERE discord_id = ?
+        """
+        
+        let mysqlStmtA = MySQLStmt(mysql)
+        _ = mysqlStmtA.prepare(statement: sqlA)
+        mysqlStmtA.bindParam(id)
+        
+        guard mysqlStmtA.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        let sqlB = """
+            UPDATE user
+            SET discord_id = ?
+            WHERE username = ?
+        """
+                
+        let mysqlStmtB = MySQLStmt(mysql)
+        _ = mysqlStmtB.prepare(statement: sqlB)
+        mysqlStmtB.bindParam(id)
+        mysqlStmtB.bindParam(username)
+        
+        guard mysqlStmtB.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+
     public func verifyEmail(mysql: MySQL?=nil) throws {
         
         guard User.checkEmailVaild(email: email) else {

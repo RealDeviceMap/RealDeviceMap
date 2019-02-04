@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS `token` (
 	`type` ENUM('confirm_email', 'reset_password') NOT NULL,
     `username` varchar(32) NOT NULL,
     `expire_timestamp` int(11) unsigned NOT NULL,
-    CONSTRAINT `fk_tokem_username` FOREIGN KEY (`username`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX `fk_tokem_username` (`username`),
+    FOREIGN KEY (`username`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
     KEY ix_expire_timestamp (expire_timestamp)
 );

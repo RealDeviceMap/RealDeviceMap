@@ -41,6 +41,9 @@ class WebRoutes {
             Route(methods: [.get, .post], uri: "/login", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .login, requiredPerms: [])
             }),
+            Route(methods: [.get, .post], uri: "/oauth/discord", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .oauthDiscord, requiredPerms: [])
+            }),
             Route(methods: [.get, .post], uri: "/register", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .register, requiredPerms: [])
             }),

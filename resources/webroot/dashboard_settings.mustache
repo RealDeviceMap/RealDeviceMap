@@ -43,7 +43,7 @@
             </div>
             <div class="form-group">
                 Cities (one per line, Name;Lat;Lon;Zoom [Zoom is optional])
-                <textarea class="form-control" rows="2" name="cities" required>{{{cities}}}</textarea>
+                <textarea class="form-control" rows="2" name="cities">{{{cities}}}</textarea>
             </div>
             <br>
             <h4>Pokemon</h4>
@@ -124,6 +124,18 @@
             <div class="form-group">
                 Bot Token
                 <input type="text" class="form-control" name="discord_token" value="{{discord_token}}">
+            </div>
+            <div class="form-group">
+                Redirect URL
+                <input type="text" class="form-control" name="discord_redirect_url" value="{{discord_redirect_url}}">
+            </div>
+            <div class="form-group">
+                Client ID
+                <input type="text" class="form-control" name="discord_client_id" value="{{discord_client_id}}">
+            </div>
+            <div class="form-group">
+                Client Secret
+                <input type="text" class="form-control" name="discord_client_secret" value="{{discord_client_secret}}">
             </div>
             <br>
             <h4>Misc</h4>

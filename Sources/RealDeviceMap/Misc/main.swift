@@ -70,6 +70,9 @@ WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "M
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
 WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?.jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
+WebReqeustHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?.emptyToNil()
+WebReqeustHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?.emptyToNil()
+WebReqeustHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?.emptyToNil()
 
 if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String]  {
     var tileservers = [String: [String: String]]()

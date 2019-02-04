@@ -19,6 +19,7 @@ class WebServer {
         case homeCss = "index.css.mustache"
         case setup = "setup.mustache"
         case login = "login.mustache"
+        case oauthDiscord = "oauth_discord.mustache"
         case register = "register.mustache"
         case logout = "logout.mustache"
         case profile = "profile.mustache"

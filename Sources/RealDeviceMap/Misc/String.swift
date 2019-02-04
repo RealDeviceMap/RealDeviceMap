@@ -94,4 +94,12 @@ extension String {
         return self.replacingOccurrences(of: "\\\\", with: "\\")
     }
     
+    func emptyToNil() -> String? {
+        if self.trimmingCharacters(in: .whitespacesAndNewlines) == "" {
+            return nil
+        } else {
+            return self
+        }
+    }
+    
 }
