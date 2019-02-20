@@ -790,6 +790,14 @@ class WebReqeustHandler {
             data["login_title"] = localizer.get(value: "login_title", replace: ["name" : title])
             data["redirect"] = request.param(name: "redirect") ?? "/"
             data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil && WebReqeustHandler.oauthDiscordRedirectURL != nil && WebReqeustHandler.oauthDiscordClientID != nil
+            let error = request.param(name: "error")
+            if error != nil {
+                if error == "discord_undefined" {
+                    data["error"] = localizer.get(value: "login_discord_undefined")
+                } else if error == "discord_not_linked" {
+                    data["error"] = localizer.get(value: "login_discord_not_linked")
+                }
+            }
             
             if request.method == .post {
                 do {
@@ -825,6 +833,12 @@ class WebReqeustHandler {
             data["page"] = localizer.get(value: "title_profile")
             
             data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil && WebReqeustHandler.oauthDiscordRedirectURL != nil && WebReqeustHandler.oauthDiscordClientID != nil
+            
+            if let success = request.param(name: "success") {
+                if success == "discord_linked" {
+                    data["success"] = localizer.get(value: "profile_discord_linked_success")
+                }
+            }
             
             // Localize
             let homeLoc = ["profile_username", "profile_email", "profile_password", "profile_retype_password", "profile_update", "profile_update_heading", "profile_unverified_header", "profile_unverified_text", "profile_update_password_heading", "profile_old_password", "profile_password_info", "profile_discord_link", "profile_discord_linked"]
@@ -1736,6 +1750,7 @@ class WebReqeustHandler {
                         request.session!.userid = username!
                         data["username"] = username
                         sessionDriver.save(session: request.session!)
+                        data["success"] = localizer.get(value: "profile_update_profile_success")
                     } catch {
                         let isUndefined: Bool
                         if let registerError = error as? User.RegisterError {
@@ -1765,6 +1780,7 @@ class WebReqeustHandler {
                     do {
                         try user.setEmail(email: email!)
                         data["mail_verified"] = false
+                        data["success"] = localizer.get(value: "profile_update_profile_success")
                     } catch {
                         let isUndefined: Bool
                         if let registerError = error as? User.RegisterError {
@@ -1815,6 +1831,7 @@ class WebReqeustHandler {
                     do {
                         if try user.verifyPassword(password: oldPassword) {
                             try user.setPassword(password: password)
+                            data["success"] = localizer.get(value: "profile_update_password_success")
                         } else {
                             data["is_password_retype_error"] = true
                             data["password_retype_error"] = localizer.get(value: "register_error_password_retype")
@@ -1998,8 +2015,12 @@ class WebReqeustHandler {
             throw CompletedEarly()
         }
         
-        if request.param(name: "error") != nil {
-            response.redirect(path: "/login")
+        if let error = request.param(name: "error") {
+            if error == "access_denied" {
+                response.redirect(path: "/login")
+            } else {
+                response.redirect(path: "/login?error=discord_undefined")
+            }
             sessionDriver.save(session: request.session!)
             response.completed(status: .seeOther)
             throw CompletedEarly()
@@ -2105,7 +2126,7 @@ class WebReqeustHandler {
                     if user != nil {
                         request.session?.userid = user!.username
                     } else {
-                        response.redirect(path: "/login")
+                        response.redirect(path: "/login?error=discord_not_linked")
                         sessionDriver.save(session: request.session!)
                         response.completed(status: .seeOther)
                         throw CompletedEarly()

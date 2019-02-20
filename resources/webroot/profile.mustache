@@ -6,10 +6,17 @@
     </div>
     {{^mail_verified}}<br>{{/mail_verified}}
 
+    {{#success}}
+    <div class="alert alert-success w-75" style="float: none; margin: 0 auto;">
+        <strong>Success!</strong><br>{{success}}</a>
+    </div>
+    <br>
+    {{/success}}
+
     <h1 align="center">{{profile_title}}</h1>
     <div class="w-75" style="float: none; margin: 0 auto;">
         <br><h4>{{profile_update_heading}}</h4>
-        <form action="" method="post">
+        <form action="/profile" method="post">
             <div class="form-group">
                 <label for="username" {{#is_username_error}}class="text-danger"{{/is_username_error}}>{{profile_username}}</label>
                 <input type="username" class="form-control {{#is_username_error}}is-invalid{{/is_username_error}}" id="username" name="username" value="{{username_new}}" required>
@@ -25,7 +32,7 @@
             <button type="submit" class="btn btn-primary">{{profile_update}}</button>
             {{#is_undefined_error_profile}}<br><small class="text-danger">{{undefined_error_profile}}</small>{{/is_undefined_error_profile}}
         </form>
-        <form action="" method="post">
+        <form action="/profile" method="post">
         <br><h4>{{profile_update_password_heading}}</h4>
             <div class="form-group">
                 <label for="password" {{#is_old_password_error}}class="text-danger"{{/is_old_password_error}}>{{profile_old_password}}</label>
@@ -53,7 +60,7 @@
         {{^discord_oauth_set}}
         <form method="get" action="/oauth/discord">
             <input type="hidden" name="link" value="true">
-            <input type="hidden" name="redirect" value="/profile?linked=true">
+            <input type="hidden" name="redirect" value="/profile?success=discord_linked">
             <button type="submit" class="btn btn-primary"> {{profile_discord_link}}</button>
         </form>
         {{/discord_oauth_set}}

@@ -1,9 +1,15 @@
 {{> header}}
 <body>
     <br>
+    {{#error}}
+    <div class="alert alert-danger w-75" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong><br>{{error}}</a>
+    </div>
+    <br>
+    {{/error}}
     <h1 align="center">{{login_title}}</h1>
     <div class="w-75" style="float: none; margin: 0 auto;">
-        <form action="" method="post">
+        <form action="/login" method="post">
             <div class="form-group">
                 <label for="username-email">{{login_username_email}}</label>
                 <input type="username-email" class="form-control" id="username-email" name="username-email" value="{{username-email}}" required>

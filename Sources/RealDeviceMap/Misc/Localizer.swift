@@ -21,8 +21,7 @@ class Localizer {
     public private(set) var lastModified: Int = 0
 
     private var cachedData = [String: String]()
-    
-
+    private var cachedDataEn = [String: String]()
     
     private init() {}
     
@@ -43,14 +42,26 @@ class Localizer {
         } catch {
             Log.error(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
         }
+        if Localizer.locale != "en" {
+            do {
+                let fileEn = File("\(projectroot)/resources/webroot/static/data/en.json")
+                try fileEn.open()
+                let contentsEn = try fileEn.readString()
+                let jsonEn = try contentsEn.jsonDecode() as? [String: Any]
+                let valuesEn = jsonEn?["values"] as? [String: String]
+                if valuesEn != nil {
+                    cachedDataEn = valuesEn!
+                }
+            } catch {}
+        }
     }
  
     func get(value: String) -> String {
-        return cachedData[value] ?? value
+        return cachedData[value] ?? cachedDataEn[value] ?? value
     }
     
     func get(value: String, replace: [String: String]) -> String {
-        var value = cachedData[value] ?? value
+        var value = cachedData[value] ?? cachedDataEn[value] ?? value
         for repl in replace {
             value = value.replacingOccurrences(of: "%{\(repl.key)}", with: repl.value)
         }
