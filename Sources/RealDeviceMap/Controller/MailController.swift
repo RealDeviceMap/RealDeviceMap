@@ -10,6 +10,7 @@ import PerfectLib
 import PerfectMustache
 import PerfectThread
 import PerfectSMTP
+import PerfectCURL
 
 class MailController {
     
@@ -166,11 +167,20 @@ class MailController {
         }
         email.to = [recipient]
         
-        try email.send(completion: { (code, header, body) in
-            if code != 250 {
-                Log.error(message: "[MailController] Failed to send Email.")
+        do {
+            try email.send(completion: { (code, header, body) in
+                if code != 250 {
+                    Log.error(message: "[MailController] Failed to send Email.")
+                }
+                completion(code)
+            })
+        } catch {
+            if let error = error as? CURLResponse.Error {
+                Log.error(message: "[MailController] Failed to sent email. Got error: \(error.description)")
+            } else {
+                Log.error(message: "[MailController] Failed to sent email. Got error: \(error.localizedDescription)")
             }
-            completion(code)
-        })
+            throw error
+        }
     }
 }
