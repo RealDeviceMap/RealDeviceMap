@@ -2405,8 +2405,4 @@ class WebReqeustHandler {
         return (perms, username)
     }
     
-    static func showUnauthorized() {
-
-    }
-
 }
