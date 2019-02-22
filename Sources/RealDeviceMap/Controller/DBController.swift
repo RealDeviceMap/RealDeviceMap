@@ -239,7 +239,9 @@ class DBController {
                 "spawnpoint": true,
                 "user": true,
                 "web_session": true,
-                "s2cell": true
+                "s2cell": true,
+                "token": true,
+                "discord_rule": true
             ]
             
             var tablesShema = ""
