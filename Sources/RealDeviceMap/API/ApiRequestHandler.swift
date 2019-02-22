@@ -52,6 +52,7 @@ class ApiRequestHandler {
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
+        let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints || showCells) &&
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
@@ -663,6 +664,48 @@ class ApiRequestHandler {
                 }
             }
             data["groups"] = jsonArray
+        }
+        
+        if showDiscordRules && perms.contains(.admin) {
+            
+            var jsonArray = [[String: Any]]()
+            let discordRules = DiscordController.global.getDiscordRules()
+            
+            for discordRule in discordRules {
+                var discordRuleData = [String: Any]()
+                discordRuleData["priority"] = discordRule.priority
+                discordRuleData["group_name"] = discordRule.groupName
+                if formatted {
+                    let serverId = discordRule.serverId
+                    let roleId = discordRule.roleId
+                    let guilds = DiscordController.global.getAllGuilds()
+                    
+                    discordRuleData["server"] = [
+                        "id": serverId,
+                        "name": guilds[serverId]?.name ?? serverId.description
+                    ]
+                    if roleId != nil {
+                        let guild = guilds[serverId]
+                        let name = guild?.roles[roleId!] ?? roleId!.description
+    
+                        discordRuleData["role"] = [
+                            "id": roleId as Any,
+                            "name": name
+                        ]
+                    } else {
+                        discordRuleData["role"] = [
+                            "id": nil,
+                            "name": "Any"
+                        ]
+                    }
+                    discordRuleData["buttons"] = "<a href=\"/dashboard/discordrule/edit/\(discordRule.priority)\" role=\"button\" class=\"btn btn-primary\">Edit Discord Rule</a>"
+                } else {
+                    discordRuleData["server_id"] = discordRule.serverId
+                    discordRuleData["role_id"] = discordRule.roleId
+                }
+                jsonArray.append(discordRuleData)
+            }
+            data["discordrules"] = jsonArray
         }
         
         data["timestamp"] = Int(Date().timeIntervalSince1970)

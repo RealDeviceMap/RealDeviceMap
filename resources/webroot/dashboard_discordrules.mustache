@@ -10,53 +10,45 @@
 	$(document).ready(function() {
 		const table = $('#table').DataTable( {
 			"ajax": {
-				"url": "/api/get_data?show_devices=true&formatted=true",
-				"dataSrc": "data.devices"
+				"url": "/api/get_data?show_discordrules=true&formatted=true",
+				"dataSrc": "data.discordrules"
 			},
 			"paging":   true,
 			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 			"columns": [
-				{ "data": "uuid" },
-                { "data": "username" },
-				{ "data": "instance" },
-				{ "data": "host" },
-                { data: {
-                    _:    "last_seen.formatted",
-                    sort: "last_seen.timestamp"
-                } },
-				{ "data": "buttons" }
+				{ "data": "priority" },
+                { "data": "server.name" },
+				{ "data": "role.name" },
+				{ "data": "group_name" },
+                { "data": "buttons" }
 			],
 			"info":     false,
-			"order": [[ 0, "asc" ]],
+			"order": [[ 0, "desc" ]],
 			"search.caseInsensitive": true,
 			"columnDefs": [ {
-				"targets": [5],
+				"targets": [4],
 				"orderable": false
 			}],
             "responsive": true
         });
-        $('#table').on( 'draw.dt', function () {
-            setTimeout( function () {
-                table.ajax.reload(null, false);
-            }, 5000);
-        } );
 	} );
 </script>
 
 <body>
 
     <br>
-    <h1 align="center">Configure {{title}}'s Devices!</h1>
+    <h1 align="center">Configure {{title}}'s Discord Rules!</h1>
     <br>
     <div style="width:90%; margin-left:calc(5%);">
+        <a href="/dashboard/discordrule/add" role="button" style="float: right;" class="btn btn-success">Add New Discord Rule</a>
+        <br><br>
         <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
             <thead>
             <tr>
-                <th>UUID</th>
-                <th>Username</th>
-                <th>Instance</th>
-                <th>Host</th>
-                <th>Last Seen</th>
+                <th>Priority</th>
+                <th>Server</th>
+                <th>Role</th>
+                <th>Group</th>
                 <th width="5%"></th>
             </tr>
             </thead>

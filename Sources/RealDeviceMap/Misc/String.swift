@@ -22,6 +22,10 @@ extension String {
         return Int(self)
     }
     
+    func toInt32() -> Int32? {
+        return Int32(self)
+    }
+    
     func toUInt8() -> UInt8? {
         return UInt8(self)
     }

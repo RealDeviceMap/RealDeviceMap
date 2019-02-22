@@ -98,10 +98,10 @@ Gym.exRaidBossForm = try! DBController.global.getValueForKey(key: "GYM_EX_BOSS_F
 
 WebHookRequestHandler.enableClearing = try! DBController.global.getValueForKey(key: "ENABLE_CLEARING")?.toBool() ?? false
 
-DiscordController.guilds = try! DBController.global.getValueForKey(key: "DISCORD_GUILD_IDS")?.components(separatedBy: ";").map({ (s) -> UInt64 in
+DiscordController.global.guilds = try! DBController.global.getValueForKey(key: "DISCORD_GUILD_IDS")?.components(separatedBy: ";").map({ (s) -> UInt64 in
  return s.toUInt64() ?? 0
  }) ?? [UInt64]()
-DiscordController.token = try! DBController.global.getValueForKey(key: "DISCORD_TOKEN") ?? ""
+DiscordController.global.token = try! DBController.global.getValueForKey(key: "DISCORD_TOKEN") ?? ""
 
 MailController.clientURL = try! DBController.global.getValueForKey(key: "MAILER_URL")
 MailController.clientUsername = try! DBController.global.getValueForKey(key: "MAILER_USERNAME")

@@ -357,19 +357,28 @@ class User {
             return User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName)
         }
     }
-
     
-    public static func getAll(mysql: MySQL?=nil) throws -> [User] {
+    public static func getAll(onlyDiscord: Bool=false, mysql: MySQL?=nil) throws -> [User] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[User] Failed to connect to database.")
             throw DBController.DBError()
         }
         
-        let sql = """
-            SELECT username, email, password, discord_id, email_verified, group_name
-            FROM user
-        """
+        let sql: String
+        if onlyDiscord {
+            sql = """
+                SELECT username, email, password, discord_id, email_verified, group_name
+                FROM user
+                WHERE discord_id IS NOT NULL
+            """
+        } else {
+            sql = """
+                SELECT username, email, password, discord_id, email_verified, group_name
+                FROM user
+            """
+        }
+
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
@@ -563,8 +572,8 @@ class User {
         }
         
         let sqlA = """
-            UPDATE user
-            SET discord_id = NULL
+            SELECT username, email, password, discord_id, email_verified, group_name
+            FROM user
             WHERE discord_id = ?
         """
         
@@ -577,21 +586,60 @@ class User {
             throw DBController.DBError()
         }
         
+        let results = mysqlStmtA.results()
+        
+        while let result = results.next() {
+            let username = result[0] as! String
+            let email = result[1] as! String
+            let passwordHash = result[2] as! String
+            let discordId = result[3] as? UInt64
+            let emailVerified = (result[4] as? UInt8)?.toBool() ?? false
+            let groupName = result[5] as! String
+            
+            let user = User(username: username, email: email, passwordHash: passwordHash, emailVerified: emailVerified, discordId: discordId, groupName: groupName)
+            
+            if emailVerified {
+                try user.setGroup(groupName: "default_verified")
+            } else {
+                try user.setGroup(groupName: "default")
+            }
+            
+        }
+        
         let sqlB = """
             UPDATE user
-            SET discord_id = ?
-            WHERE username = ?
+            SET discord_id = NULL
+            WHERE discord_id = ?
         """
-                
+        
         let mysqlStmtB = MySQLStmt(mysql)
         _ = mysqlStmtB.prepare(statement: sqlB)
         mysqlStmtB.bindParam(id)
-        mysqlStmtB.bindParam(username)
         
         guard mysqlStmtB.execute() else {
             Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
             throw DBController.DBError()
         }
+        
+        let sqlC = """
+            UPDATE user
+            SET discord_id = ?
+            WHERE username = ?
+        """
+                
+        let mysqlStmtC = MySQLStmt(mysql)
+        _ = mysqlStmtC.prepare(statement: sqlC)
+        mysqlStmtC.bindParam(id)
+        mysqlStmtC.bindParam(username)
+        
+        guard mysqlStmtC.execute() else {
+            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtC.errorMessage())")
+            throw DBController.DBError()
+        }
+        
+        self.discordId = id
+        DiscordController.global.userChanged(user: self)
+        
     }
 
     public func verifyEmail(mysql: MySQL?=nil) throws {

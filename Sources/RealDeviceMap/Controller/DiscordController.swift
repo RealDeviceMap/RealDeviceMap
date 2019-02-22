@@ -10,56 +10,88 @@ import PerfectLib
 import PerfectThread
 import cURL
 import PerfectCURL
+import PerfectMySQL
 
 class DiscordController {
-    
+
     struct DiscordUser {
         var id: UInt64
-        var roleIds: Set<UInt64>
-        var guildIds: Set<UInt64>
+        var rolesInGuilds: [UInt64: [UInt64]]
     }
 
     public private(set) static var global = DiscordController()
     
-    public static var guilds = [UInt64]()
-    public static var token: String?
+    public var guilds = [UInt64]()
+    public var token: String?
     
+    private var usersLock = Threading.Lock()
     private var users = [UInt64: DiscordUser]()
+    
+    private var discordRulesLock = Threading.Lock()
+    private var discordRules = [DiscordRule]()
 
     private init() {}
     
     public func setup() throws {
         
+        self.users = [UInt64: DiscordUser]()
+        let users = try User.getAll()
+        for user in users {
+            if let id = user.discordId {
+                self.users[id] = DiscordUser(id: id, rolesInGuilds: [UInt64: [UInt64]]())
+            }
+        }
+        
         let queue = Threading.getQueue(name: "DiscordController", type: .serial)
         queue.dispatch {
             self.runForEver()
         }
+        
+        discordRulesLock.lock()
+        discordRules = try DiscordRule.getAll()
+        discordRules.sort { (lhs, rhs) -> Bool in
+            return lhs.priority > rhs.priority
+        }
+        discordRulesLock.unlock()
+        
     }
 
     private func runForEver() {
         while true {
-            if DiscordController.token != nil && DiscordController.token! != "" {
-                let users = getAll(guilds: DiscordController.guilds)
-                var changedUsers = [DiscordUser]()
+            if token != nil && token! != "" {
+                let users = getAll(guilds: guilds)
+                usersLock.lock()
+                let oldUsers = self.users
+                usersLock.unlock()
+                var changedUsers = [UInt64: DiscordUser]()
                 for user in users {
-                    let oldUser = self.users[user.key]
+                    let oldUser = oldUsers[user.key]
                     if oldUser == nil {
-                        changedUsers.append(user.value)
+                        changedUsers[user.key] = user.value
                     } else {
-                        if oldUser!.guildIds != user.value.guildIds ||
-                            oldUser!.roleIds != user.value.roleIds {
-                            changedUsers.append(user.value)
+                        if oldUser!.rolesInGuilds != user.value.rolesInGuilds {
+                            changedUsers[user.key] = user.value
                         }
                     }
                 }
+                for oldUser in oldUsers {
+                    if !users.contains(where: { (user) -> Bool in
+                        user.key == oldUser.key
+                    }) {
+                        var oldUser = oldUser
+                        oldUser.value.rolesInGuilds.removeAll()
+                        changedUsers[oldUser.key] = oldUser.value
+                    }
+                }
                 Log.debug(message: "[DiscordController] Users: \(users.count), Changed: \(changedUsers.count)")
-                //print(changedUsers)
                 
-                // TODO: - Changed Users
+                usersChanged(users: changedUsers)
                 
+                usersLock.lock()
                 self.users = users
+                usersLock.unlock()
             }
-            Threading.sleep(seconds: 15.0)
+            Threading.sleep(seconds: 30.0)
         }
     }
     
@@ -73,10 +105,10 @@ class DiscordController {
             var done = false
             var after: UInt64 = 0
             
-            while !done && DiscordController.token != nil {
+            while !done && token != nil {
             
                 let curlObject = CURL(url: "\(url)?limit=1000&after=\(after)")
-                curlObject.setOption(CURLOPT_HTTPHEADER, s: "Authorization: Bot \(DiscordController.token ?? "")")
+                curlObject.setOption(CURLOPT_HTTPHEADER, s: "Authorization: Bot \(token ?? "")")
                 let result = curlObject.performFullySync()
                 let data = Data(result.bodyBytes)
                 
@@ -118,13 +150,11 @@ class DiscordController {
                             }
                         }
                         
-                        var discordUser = DiscordUser(id: id, roleIds: Set(roles), guildIds: Set([guild]))
-                        if let oldUser = users[id] {
-                            discordUser.roleIds.formUnion(oldUser.roleIds)
-                            discordUser.guildIds.formUnion([guild])
-                            users[id] = discordUser
+                        if var oldUser = users[id] {
+                            oldUser.rolesInGuilds[guild] = roles
+                            users[id] = oldUser
                         } else {
-                            users[id] = discordUser
+                            users[id] = DiscordUser(id: id, rolesInGuilds: [guild: roles])
                         }
                         
                         if id > after {
@@ -154,6 +184,146 @@ class DiscordController {
         }
         
         return users
+    }
+    
+    public func userChanged(user: User) {
+        usersLock.lock()
+        if let discordId = user.discordId, let discordUser = users[discordId] {
+            usersLock.unlock()
+            userChanged(user: user, discordUser: discordUser)
+        } else {
+            usersLock.unlock()
+        }
+    }
+    
+    private func usersChanged(users: [UInt64: DiscordUser]) {
+        
+        if users.isEmpty {
+            return
+        }
+        
+        let mysql = DBController.global.mysql
+        
+        var success = false
+        var dbUsers = [User]()
+        while !success {
+            do {
+                dbUsers = try User.getAll(onlyDiscord: true, mysql: mysql)
+                success = true
+            } catch {
+                Threading.sleep(seconds: 5.0)
+            }
+        }
+        
+        for dbUser in dbUsers {
+            if let user = users[dbUser.discordId ?? 0] {
+                userChanged(user: dbUser, discordUser: user)
+            }
+        }
+        
+    }
+    
+    private func userChanged(user: User, discordUser: DiscordUser) {
+
+        var firstMatch: String
+        if user.emailVerified {
+            firstMatch = "default_verified"
+        } else {
+            firstMatch = "default"
+        }
+        
+        discordRulesLock.lock()
+        for rule in discordRules {
+            
+            if let roles = discordUser.rolesInGuilds[rule.serverId], (rule.roleId == nil || roles.contains(rule.roleId!)) {
+                firstMatch = rule.groupName
+                break
+            }
+        }
+        discordRulesLock.unlock()
+        
+        var success = false
+        while !success {
+            do {
+                try user.setGroup(groupName: firstMatch)
+                success = true
+            } catch {
+                Threading.sleep(seconds: 5.0)
+            }
+        }
+    }
+    
+    public func getAllGuilds() -> [UInt64: (name: String, roles: [UInt64: String])] {
+        
+        var guilds = [UInt64: (name: String, roles: [UInt64: String])]()
+        
+        for guild in self.guilds {
+        
+            let url = "https://discordapp.com/api/guilds/\(guild)"
+            let curlObject = CURL(url: url)
+            curlObject.setOption(CURLOPT_HTTPHEADER, s: "Authorization: Bot \(token ?? "")")
+            let result = curlObject.performFullySync()
+            let data = Data(result.bodyBytes)
+
+            guard let json = String(data: data, encoding: .utf8)?.jsonDecodeForceTry() as? [String: Any] else {
+                continue
+            }
+
+            if let idString = json["id"] as? String, let id = idString.toUInt64(), let name = json["name"] as? String, let roles = json["roles"] as? [[String: Any]] {
+                var rolesNew = [UInt64: String]()
+                for role in roles {
+                    if let idString = role["id"] as? String, let id = idString.toUInt64(), let name = role["name"] as? String {
+                        rolesNew[id] = name
+                    }
+                }
+                
+                guilds[id] = (name: name, roles: rolesNew)
+            }
+            
+        }
+        
+        return guilds
+    }
+    
+    public func addDiscordRule(discordRule: DiscordRule) {
+        discordRulesLock.lock()
+        discordRules.append(discordRule)
+        discordRules.sort { (lhs, rhs) -> Bool in
+            return lhs.priority > rhs.priority
+        }
+        discordRulesLock.unlock()
+        
+        usersChanged(users: users)
+    }
+    
+    public func deleteDiscordRule(priority: Int32) {
+        discordRulesLock.lock()
+        if let index = discordRules.index(of: DiscordRule(priority: priority, serverId: 0, roleId: 0, groupName: "")) {
+            discordRules.remove(at: index)
+        }
+        discordRules.sort { (lhs, rhs) -> Bool in
+            return lhs.priority > rhs.priority
+        }
+        discordRulesLock.unlock()
+    }
+    
+    public func updateDiscordRule(oldPriority: Int32, discordRule: DiscordRule) {
+        discordRulesLock.lock()
+        if let index = discordRules.index(of: DiscordRule(priority: oldPriority, serverId: 0, roleId: 0, groupName: "")) {
+            discordRules.remove(at: index)
+        }
+        discordRules.append(discordRule)
+        discordRules.sort { (lhs, rhs) -> Bool in
+            return lhs.priority > rhs.priority
+        }
+        discordRulesLock.unlock()
+    }
+    
+    public func getDiscordRules() -> [DiscordRule] {
+        discordRulesLock.lock()
+        let rules = discordRules
+        discordRulesLock.unlock()
+        return rules
     }
     
 }

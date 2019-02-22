@@ -57,7 +57,8 @@ class WebReqeustHandler {
         data["locale_last_modified"] = localizer.lastModified
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
-        
+        data["title"] = title
+
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
         for loc in navLoc {
@@ -93,8 +94,26 @@ class WebReqeustHandler {
         }
         if requiredPermsCountReal > requiredPermsFound {
             if username != nil && username != "" {
-                response.setBody(string: "Unauthorized.")
-                sessionDriver.save(session: request.session!)
+                data["page"] = localizer.get(value: "title_unauthorized")
+                data["unauthorized_title"] = localizer.get(value: "unauthorized_title")
+                
+                do {
+                    if let user = try User.get(username: username!) {
+                        if user.discordId == nil && WebReqeustHandler.oauthDiscordClientSecret != nil && WebReqeustHandler.oauthDiscordRedirectURL != nil && WebReqeustHandler.oauthDiscordClientID != nil {
+                            data["discord_info"] = localizer.get(value: "unauthorized_discord", replace: ["href": "/oauth/discord?link=true"])
+                        }
+                        if !user.emailVerified && MailController.global.isSetup {
+                            data["verifymail_info"] = localizer.get(value: "unauthorized_verifymail", replace: ["href": "/confirmemail"])
+                        }
+                    }
+                } catch {}
+                
+                mustacheRequest(
+                    request: request,
+                    response: response,
+                    handler: WebPageHandler(page: page, data: data),
+                    templatePath: documentRoot + "/" + WebServer.Page.unauthorized.rawValue
+                )
                 response.completed(status: .unauthorized)
                 return
             } else {
@@ -129,7 +148,6 @@ class WebReqeustHandler {
             return
         }
         
-        data["title"] = title
         switch page {
         case .home:
             data["page_is_home"] = true
@@ -428,10 +446,10 @@ class WebReqeustHandler {
             data["mailer_username"] = MailController.clientUsername
             data["mailer_password"] = MailController.clientPassword
             data["mailer_footer_html"] = MailController.footerHtml
-            data["discord_guild_ids"] = DiscordController.guilds.map({ (i) -> String in
+            data["discord_guild_ids"] = DiscordController.global.guilds.map({ (i) -> String in
                     return i.description
                 }).joined(separator: ";")
-            data["discord_token"] = DiscordController.token
+            data["discord_token"] = DiscordController.global.token
             data["discord_redirect_url"] = WebReqeustHandler.oauthDiscordRedirectURL
             data["discord_client_id"] = WebReqeustHandler.oauthDiscordClientID
             data["discord_client_secret"] = WebReqeustHandler.oauthDiscordClientSecret
@@ -752,6 +770,142 @@ class WebReqeustHandler {
                     return
                 }
             }
+        case .dashboardDiscordRules:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Discord Rules"
+        case .dashboardDiscordRuleAdd:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Discord Rule"
+            
+            guard let groups = try? Group.getAll() else {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                return
+            }
+            
+            var guilds = [[String: Any]]()
+            for guild in DiscordController.global.getAllGuilds() {
+                var guildJson = [String: Any]()
+                guildJson["id"] = guild.key.description
+                guildJson["name"] = guild.value.name
+                
+                var roles = [[String: Any]]()
+                for role in guild.value.roles {
+                    roles.append([
+                        "id": role.key.description,
+                        "name": role.value
+                    ])
+                }
+                roles.sort { (lhs, rhs) -> Bool in
+                    return rhs["name"] as! String > lhs["name"] as! String
+                }
+                guildJson["roles"] = roles
+                guilds.append(guildJson)
+            }
+            guilds.sort { (lhs, rhs) -> Bool in
+                return rhs["name"] as! String > lhs["name"] as! String
+            }
+            data["guilds"] = guilds.jsonEncodeForceTry()
+            
+            var groupsArray = [[String: Any]]()
+            for group in groups {
+                groupsArray.append(["name": group.name, "selected": group.name == "default"])
+            }
+            data["groups"] = groupsArray
+            
+            if request.method == .post {
+                do {
+                    data = try addEditDiscordRule(data: data, request: request, response: response, groups: groups)
+                } catch {
+                    return
+                }
+            }
+            
+        case .dashboardDiscordRuleEdit:
+            
+            let priority = (request.urlVariables["discordrule_priority"] ?? "").toInt32()
+            data["priority_old"] = priority
+            
+            if request.param(name: "delete") == "true" {
+                do {
+                    try DiscordRule.delete(priority: priority ?? 0)
+                    response.redirect(path: "/dashboard/discordrules")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    return
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+            } else {
+            
+                let discordRule: DiscordRule
+                let groups: [Group]
+                do {
+                    if let priority = priority,
+                        let discordRule2 = try DiscordRule.get(priority: priority) {
+                        discordRule = discordRule2
+                    } else {
+                        response.setBody(string: "DiscordRule Not Found")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .notFound)
+                        return
+                    }
+                    groups = try Group.getAll()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                
+                var guilds = [[String: Any]]()
+                for guild in DiscordController.global.getAllGuilds() {
+                    var guildJson = [String: Any]()
+                    guildJson["id"] = guild.key.description
+                    guildJson["name"] = guild.value.name
+                    
+                    var roles = [[String: Any]]()
+                    for role in guild.value.roles {
+                        roles.append([
+                            "id": role.key.description,
+                            "name": role.value
+                            ])
+                    }
+                    roles.sort { (lhs, rhs) -> Bool in
+                        return rhs["name"] as! String > lhs["name"] as! String
+                    }
+                    guildJson["roles"] = roles
+                    guilds.append(guildJson)
+                }
+                guilds.sort { (lhs, rhs) -> Bool in
+                    return rhs["name"] as! String > lhs["name"] as! String
+                }
+                data["guilds"] = guilds.jsonEncodeForceTry()
+                
+                if request.method == .get {
+                    
+                    var groupsArray = [[String: Any]]()
+                    for group in groups {
+                        groupsArray.append(["name": group.name, "selected": group.name == discordRule.groupName])
+                    }
+                    data["groups"] = groupsArray
+                    
+                    data["selected_guild"] = discordRule.serverId
+                    data["selected_role"] = discordRule.roleId
+                    data["priority"] = discordRule.priority
+                } else {
+                    do {
+                        data = try addEditDiscordRule(data: data, request: request, response: response, oldPriority: priority, discordRule: discordRule, groups: groups)
+                    } catch {
+                        return
+                    }
+                }
+            }
+            
         case .register:
             
             if !enableRegister {
@@ -1232,8 +1386,8 @@ class WebReqeustHandler {
         MailController.clientURL = mailerURL
         MailController.fromAddress = mailerEmail
         MailController.fromName = mailerName
-        DiscordController.guilds = discordGuilds
-        DiscordController.token = discordToken
+        DiscordController.global.guilds = discordGuilds
+        DiscordController.global.token = discordToken
         Localizer.locale = locale
         WebReqeustHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
         WebReqeustHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
@@ -2006,6 +2160,56 @@ class WebReqeustHandler {
         return data
     }
     
+    static func addEditDiscordRule(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, oldPriority: Int32?=nil, discordRule: DiscordRule?=nil, groups: [Group]) throws -> MustacheEvaluationContext.MapType {
+        
+        var data = data
+        guard
+            let priority = request.param(name: "priority")?.toInt32(),
+            let guild = request.param(name: "guild")?.toUInt64(),
+            let role = request.param(name: "role")?.toUInt64(),
+            let group = request.param(name: "group")
+            else {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+        }
+        
+        var groupsArray = [[String: Any]]()
+        for group2 in groups {
+            groupsArray.append(["name": group2.name, "selected": group2.name == group])
+        }
+        data["groups"] = groupsArray
+        
+        data["selected_guild"] = guild
+        data["selected_role"] = role
+        data["priority"] = priority
+        
+        let newDiscordRule = DiscordRule(priority: priority, serverId: guild, roleId: role, groupName: group)
+        if discordRule != nil && oldPriority != nil {
+            do {
+                try newDiscordRule.update(oldPriority: oldPriority!)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to update discord rule. Does this priority already exist?"
+                return data
+            }
+        } else {
+            do {
+                try newDiscordRule.create()
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create discord rule. Does this priority already exist?"
+                return data
+            }
+        }
+        
+        response.redirect(path: "/dashboard/discordrules")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+        
+    }
+
     static func oauthDiscord(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
         var data = data
         if oauthDiscordClientID == nil || oauthDiscordRedirectURL == nil || oauthDiscordClientSecret == nil {
@@ -2199,6 +2403,10 @@ class WebReqeustHandler {
             }
         }
         return (perms, username)
+    }
+    
+    static func showUnauthorized() {
+
     }
 
 }

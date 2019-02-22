@@ -124,6 +124,15 @@ class WebRoutes {
             Route(methods: [.get, .post], uri: "/dashboard/group/add", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardGroupAdd, requiredPerms: [.admin])
             }),
+            Route(methods: [.get, .post], uri: "/dashboard/discordrules", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDiscordRules, requiredPerms: [.admin])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/discordrule/add", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDiscordRuleAdd, requiredPerms: [.admin])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/discordrule/edit/{discordrule_priority}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDiscordRuleEdit, requiredPerms: [.admin])
+            }),
             Route(method: .get, uri: "/static/**", handler: WebStaticReqeustHandler.handle)
         ]
         

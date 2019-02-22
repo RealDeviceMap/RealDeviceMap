@@ -30,9 +30,11 @@
 			}],
             "responsive": true
 		});
-		setInterval( function () {
-            table.ajax.reload(null, false);
-        }, 5000)
+        $('#table').on( 'draw.dt', function () {
+            setTimeout( function () {
+                table.ajax.reload(null, false);
+            }, 5000);
+        } );
 	} );
 </script>
 

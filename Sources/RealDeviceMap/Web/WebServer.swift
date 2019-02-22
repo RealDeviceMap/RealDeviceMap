@@ -46,6 +46,10 @@ class WebServer {
         case dashboardGroups = "dashboard_groups.mustache"
         case dashboardGroupEdit = "dashboard_group_edit.mustache"
         case dashboardGroupAdd = "dashboard_group_add.mustache"
+        case dashboardDiscordRules = "dashboard_discordrules.mustache"
+        case dashboardDiscordRuleAdd = "dashboard_discordrule_add.mustache"
+        case dashboardDiscordRuleEdit = "dashboard_discordrule_edit.mustache"
+        case unauthorized = "unauthorized.mustache"
     }
     
     public enum APIPage {
