@@ -212,6 +212,9 @@ class DiscordController {
         if users.isEmpty {
             return
         }
+        if discordRules.isEmpty {
+            return
+        }
         
         let mysql = DBController.global.mysql
         
