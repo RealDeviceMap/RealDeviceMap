@@ -884,7 +884,7 @@ class WebReqeustHandler {
                 guilds.sort { (lhs, rhs) -> Bool in
                     return rhs["name"] as! String > lhs["name"] as! String
                 }
-                data["guilds"] = guilds.jsonEncodeForceTry()?.replacingOccurrences(of: "\\\"", with: "\\\\\"")
+                data["guilds"] = guilds.jsonEncodeForceTry()?.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
                 
                 if request.method == .get {
                     
@@ -1036,9 +1036,9 @@ class WebReqeustHandler {
             data["start_lon"] = request.param(name: "lon")?.toDouble() ?? startLon
             data["start_zoom"] = request.param(name: "zoom")?.toUInt8() ?? startZoom
             data["max_pokemon_id"] = maxPokemonId
-            data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
-            data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
-            data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "").replacingOccurrences(of: "\\\"", with: "\\\\\"")
+            data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
+            data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
+            data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "").replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
         default:
             break
         }
