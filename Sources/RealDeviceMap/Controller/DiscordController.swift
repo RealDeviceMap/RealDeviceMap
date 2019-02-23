@@ -278,6 +278,10 @@ class DiscordController {
                 }
                 
                 guilds[id] = (name: name, roles: rolesNew)
+            } else if let error = json["error"] {
+                Log.error(message: "[DiscordController] Failed to get guild infos of \(guild). (\(error))")
+            } else {
+                Log.error(message: "[DiscordController] Failed to get guild infos of \(guild).")
             }
             
         }
