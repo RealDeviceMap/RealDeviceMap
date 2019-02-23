@@ -806,7 +806,7 @@ class WebReqeustHandler {
             guilds.sort { (lhs, rhs) -> Bool in
                 return rhs["name"] as! String > lhs["name"] as! String
             }
-            data["guilds"] = guilds.jsonEncodeForceTry()
+            data["guilds"] = guilds.jsonEncodeForceTry()?.replacingOccurrences(of: "\\\"", with: "\\\\\"")
             
             var groupsArray = [[String: Any]]()
             for group in groups {
@@ -884,7 +884,7 @@ class WebReqeustHandler {
                 guilds.sort { (lhs, rhs) -> Bool in
                     return rhs["name"] as! String > lhs["name"] as! String
                 }
-                data["guilds"] = guilds.jsonEncodeForceTry()
+                data["guilds"] = guilds.jsonEncodeForceTry()?.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                 
                 if request.method == .get {
                     
