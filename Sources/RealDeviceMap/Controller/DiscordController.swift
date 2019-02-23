@@ -319,6 +319,16 @@ class DiscordController {
         discordRulesLock.unlock()
     }
     
+    public func updateGroupName(oldName: String, newName: String) {
+        discordRulesLock.lock()
+        for rule in discordRules {
+            if rule.groupName == oldName {
+                rule.groupName = newName
+            }
+        }
+        discordRulesLock.unlock()
+    }
+    
     public func getDiscordRules() -> [DiscordRule] {
         discordRulesLock.lock()
         let rules = discordRules

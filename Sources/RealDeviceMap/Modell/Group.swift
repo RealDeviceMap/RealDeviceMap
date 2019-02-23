@@ -80,6 +80,7 @@ struct Group {
             group.name = newName
             cachedGroups[newName] = group
         }
+        DiscordController.global.updateGroupName(oldName: oldName, newName: newName)
         cacheLock.unlock()
     }
     
