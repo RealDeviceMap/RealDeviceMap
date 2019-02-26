@@ -651,7 +651,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE gym
             SET deleted = true
-            WHERE cell_id = ? \(notInSQL)
+            WHERE cell_id = ? \(notInSQL) AND deleted = false
         """
         
         let mysqlStmt = MySQLStmt(mysql)

@@ -729,7 +729,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE pokestop
             SET deleted = true
-            WHERE cell_id = ? \(notInSQL)
+            WHERE cell_id = ? \(notInSQL) AND deleted = false
         """
         
         let mysqlStmt = MySQLStmt(mysql)
