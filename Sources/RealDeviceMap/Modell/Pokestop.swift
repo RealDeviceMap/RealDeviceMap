@@ -393,7 +393,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool, questFilterExclude: [String]?=nil) throws -> [Pokestop] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool, questFilterExclude: [String]?=nil, pokestopFilterExclude: [String]?=nil) throws -> [Pokestop] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
@@ -403,6 +403,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         var excludedTypes = [Int]()
         var excludedPokemon = [Int]()
         var excludedItems = [Int]()
+        var excludeAllButLured = Bool()
         
         if showQuests && questsOnly && questFilterExclude != nil {
             for filter in questFilterExclude! {
@@ -421,10 +422,19 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 }
             }
         }
+        
+        if pokestopFilterExclude != nil {
+            for filter in pokestopFilterExclude! {
+                if filter.contains(string: "lured") {
+                    excludeAllButLured = true
+                }
+            }
+        }
 
         let excludeTypeSQL: String
         let excludePokemonSQL: String
         let excludeItemSQL: String
+        let excludeAllButLuredSQL: String
         if showQuests && questsOnly {
             if excludedTypes.isEmpty {
                 excludeTypeSQL = ""
@@ -464,10 +474,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeItemSQL = ""
         }
         
+        if excludeAllButLured {
+            excludeAllButLuredSQL = "AND (lure_expire_timestamp >= UNIX_TIMESTAMP())"
+        } else {
+            excludeAllButLuredSQL = ""
+        }
+        
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id
             FROM pokestop
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludeAllButLuredSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"

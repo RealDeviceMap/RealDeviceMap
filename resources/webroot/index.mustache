@@ -25,7 +25,7 @@
                             </label>
                         </div>
                         {{filter_gyms}}
-                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                        <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterGymModal">{{filter_filter}}</button>
                     </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_raids}}class="d-none"{{/hide_raids}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -37,7 +37,7 @@
                             </label>
                         </div>
                         {{filter_raids}}
-                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                        <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterRaidModal">{{filter_filter}}</button>
                     </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_pokestops}}class="d-none"{{/hide_pokestops}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -49,7 +49,7 @@
                             </label>
                         </div>
                         {{filter_pokestops}}
-                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                        <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterPokestopModal">{{filter_filter}}</button>
                     </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_quests}}class="d-none"{{/hide_quests}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -61,7 +61,7 @@
                             </label>
                         </div>
                         {{filter_quests}}
-                    <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterQuestModal">{{filter_filter}}</button>
+                        <button class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#filterQuestModal">{{filter_filter}}</button>
                     </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_spawnpoints}}class="d-none"{{/hide_spawnpoints}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -139,6 +139,111 @@
                     <div class="mr-auto">
                         <button id="reset-pokemon-filter" type="button" class="btn btn-danger">{{filter_reset}}</button>
                         <button id="disable-all-pokemon-filter" type="button" class="btn btn-danger">{{filter_disable_all}}</button>
+                    </div>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{{filter_close}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="filterGymModal" tabindex="-1" role="dialog" aria-labelledby="filterGymModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterGymModalLabel">{{filter_gym_filter}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="table-filter-gym" class="table table-striped table-bordered dt-responsive display nowrap" style="position: center; width:100%">
+                        <thead>
+                            <tr>
+                                <th>{{filter_image}}</th>
+                                <th>{{filter_name}}</th>
+                                <th>#</th>
+                                <th>{{filter_filter}}</th>
+                                <th>{{filter_size_properties}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="mr-auto">
+                        <button id="reset-gym-filter" type="button" class="btn btn-danger">{{filter_reset}}</button>
+                        <button id="disable-all-gym-filter" type="button" class="btn btn-danger">{{filter_disable_all}}</button>
+                    </div>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{{filter_close}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="filterRaidModal" tabindex="-1" role="dialog" aria-labelledby="filterRaidModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterRaidModalLabel">{{filter_raid_filter}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="table-filter-raid" class="table table-striped table-bordered dt-responsive display nowrap" style="position: center; width:100%">
+                        <thead>
+                            <tr>
+                                <th>{{filter_image}}</th>
+                                <th>{{filter_name}}</th>
+                                <th>#</th>
+                                <th>{{filter_filter}}</th>
+                                <th>{{filter_size_properties}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="mr-auto">
+                        <button id="reset-raid-filter" type="button" class="btn btn-danger">{{filter_reset}}</button>
+                        <button id="disable-all-raid-filter" type="button" class="btn btn-danger">{{filter_disable_all}}</button>
+                    </div>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{{filter_close}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="filterPokestopModal" tabindex="-1" role="dialog" aria-labelledby="filterPokestopModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterPokestopModalLabel">{{filter_pokestop_filter}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="table-filter-pokestop" class="table table-striped table-bordered dt-responsive display nowrap" style="position: center; width:100%">
+                        <thead>
+                            <tr>
+                                <th>{{filter_image}}</th>
+                                <th>{{filter_name}}</th>
+                                <th>#</th>
+                                <th>{{filter_filter}}</th>
+                                <th>{{filter_size_properties}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="mr-auto">
+                        <button id="reset-pokestop-filter" type="button" class="btn btn-danger">{{filter_reset}}</button>
+                        <button id="disable-all-pokestop-filter" type="button" class="btn btn-danger">{{filter_disable_all}}</button>
                     </div>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">{{filter_close}}</button>
                 </div>
