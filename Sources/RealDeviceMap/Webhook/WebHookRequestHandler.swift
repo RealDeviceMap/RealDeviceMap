@@ -191,6 +191,11 @@ class WebHookRequestHandler {
                         
                         Log.info(message: "[WebHookRequestHandler] GMO is empty.")
                     } else {
+                        for cell in newCells {
+                            emptyCellsLock.lock()
+                            emptyCells[cell] = 0
+                            emptyCellsLock.unlock()
+                        }
                         isEmtpyGMO = false
                         wildPokemons += newWildPokemons
                         nearbyPokemons += newNearbyPokemons

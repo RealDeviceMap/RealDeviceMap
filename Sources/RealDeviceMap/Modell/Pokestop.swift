@@ -349,7 +349,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             
             let sql = """
                 UPDATE pokestop
-                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?
+                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?, deleted = false
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -456,7 +456,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id
             FROM pokestop
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"
@@ -570,7 +570,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id
             FROM pokestop
-            WHERE id IN \(inSQL)
+            WHERE id IN \(inSQL) AND deleted = false
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -621,7 +621,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id
             FROM pokestop
-            WHERE id = ?
+            WHERE id = ? AND deleted = false
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -727,7 +727,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         
         let sql = """
-            DELETE FROM pokestop
+            UPDATE pokestop
+            SET deleted = true
             WHERE cell_id = ? \(notInSQL)
         """
         
