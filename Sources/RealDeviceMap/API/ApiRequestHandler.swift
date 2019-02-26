@@ -530,7 +530,6 @@ class ApiRequestHandler {
                 </label>
                 </div>
                 """
-
                 raidData.append([
                     "id": [
                         "formatted": String(format: "%03d", i),
