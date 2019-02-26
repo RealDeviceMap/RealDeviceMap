@@ -621,7 +621,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id
             FROM pokestop
-            WHERE id = ? AND deleted = false
+            WHERE id = ?
         """
         
         let mysqlStmt = MySQLStmt(mysql)
