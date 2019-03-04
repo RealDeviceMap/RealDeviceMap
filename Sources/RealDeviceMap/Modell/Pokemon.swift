@@ -58,17 +58,17 @@ class Pokemon: JSONConvertibleObject, WebHookEvent {
             "verified": false,
             "last_modified_time": updated,
             "gender": gender ?? 0,
-            "cp": cp ?? 0,
+            "cp": cp ?? "",
             "form": form ?? 0,
             "costume": costume ?? 0,
-            "individual_attack": atkIv ?? 0,
-            "individual_defense": defIv ?? 0,
-            "individual_stamina": staIv ?? 0,
-            "move_1": move1 ?? 0,
-            "move_2": move2 ?? 0,
-            "weight": weight ?? 0,
-            "height": size ?? 0,
-            "weather": weather ?? 0
+            "individual_attack": atkIv ?? "",
+            "individual_defense": defIv ?? "",
+            "individual_stamina": staIv ?? "",
+            "move_1": move1 ?? "",
+            "move_2": move2 ?? "",
+            "weight": weight ?? "",
+            "height": size ?? "",
+            "weather": weather ?? ""
         ]
         return [
             "type": "pokemon",
