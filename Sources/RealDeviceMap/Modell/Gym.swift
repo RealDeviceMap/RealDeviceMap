@@ -220,7 +220,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         
         let oldGym: Gym?
         do {
-            oldGym = try Gym.getWithId(mysql: mysql, id: id)
+            oldGym = try Gym.getWithId(mysql: mysql, id: id, withDeleted: true)
         } catch {
             oldGym = nil
         }
@@ -413,17 +413,23 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
 
-    public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Gym? {
+    public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Gym? {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let withDeletedSQL: String
+        if withDeleted {
+            withDeletedSQL = ""
+        } else {
+            withDeletedSQL = "AND deleted = false"
+        }
         let sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id
             FROM gym
-            WHERE id = ?
+            WHERE id = ? \(withDeletedSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
