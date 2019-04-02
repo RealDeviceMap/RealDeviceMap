@@ -538,11 +538,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     
     public static func getIn(mysql: MySQL?=nil, ids: [String]) throws -> [Pokestop] {
         
-        if ids.count > 60000 {
+        if ids.count > 10000 {
             var result = [Pokestop]()
-            for i in 0..<(Int(ceil(Double(ids.count)/60000.0))) {
-                let start = 60000 * i
-                let end = min(60000 * (i+1) - 1, ids.count - 1)
+            for i in 0..<(Int(ceil(Double(ids.count)/10000.0))) {
+                let start = 10000 * i
+                let end = min(10000 * (i+1) - 1, ids.count - 1)
                 let splice = Array(ids[start...end])
                 if let spliceResult = try? getIn(mysql: mysql, ids: splice) {
                     result += spliceResult

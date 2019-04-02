@@ -130,11 +130,11 @@ class Cell: JSONConvertibleObject {
     
     public static func getInIDs(mysql: MySQL?=nil, ids: [UInt64]) throws -> [Cell] {
         
-        if ids.count > 60000 {
+        if ids.count > 10000 {
             var result = [Cell]()
-            for i in 0..<(Int(ceil(Double(ids.count)/60000.0))) {
-                let start = 60000 * i
-                let end = min(60000 * (i+1) - 1, ids.count - 1)
+            for i in 0..<(Int(ceil(Double(ids.count)/10000.0))) {
+                let start = 10000 * i
+                let end = min(10000 * (i+1) - 1, ids.count - 1)
                 let splice = Array(ids[start...end])
                 if let spliceResult = try? getInIDs(mysql: mysql, ids: splice) {
                     result += spliceResult
