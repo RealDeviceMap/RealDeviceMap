@@ -17,6 +17,8 @@ let pokemonFilterNew = {};
 let questFilter = {};
 let questFilterNew = {};
 
+let hiddenPokemonIds = [];
+
 let openedPokemon;
 let openedPokestop;
 let openedGym;
@@ -775,7 +777,7 @@ function loadData() {
 			const pokemon = data.data.pokemon;
             ts = Math.round((new Date()).getTime() / 1000);
             $.each(pokemon, function (index, pokemon) {
-				if (showPokemon && pokemon.expire_timestamp >= ts /*&& matchesPokemonFilter(pokemon.pokemon_id)*/) {
+				if (showPokemon && pokemon.expire_timestamp >= ts /*&& matchesPokemonFilter(pokemon.pokemon_id)*/ && !hiddenPokemonIds.includes(pokemon.id)) {
 					if (pokemon.updated > lastUpdateServer) {
 						lastUpdateServer = pokemon.updated;
 					}
@@ -801,10 +803,10 @@ function loadData() {
 							pokemon.lon += + lonOffset;
 						}
 
-						pokemon.marker = getPokemonMarker(pokemon, ts);
-						pokemonMarkers.push(pokemon);
-						startDespawnTimer(pokemon, ts);
-                        pokemon.marker.addTo(map);
+					    pokemon.marker = getPokemonMarker(pokemon, ts);
+					    pokemonMarkers.push(pokemon);
+					    startDespawnTimer(pokemon, ts);
+					    pokemon.marker.addTo(map);
 					} else {
 						if (oldPokemon.expire_timestamp !== pokemon.expire_timestamp){
 							oldPokemon.expire_timestamp = pokemon.expire_timestamp;
@@ -822,6 +824,10 @@ function loadData() {
 						}
                         if (oldPokemon.updated !== pokemon.updated){
                             oldPokemon.updated = pokemon.updated;
+                        }
+
+                        if (hiddenPokemonIds.includes(oldPokemon.id)) {
+                            map.removeLayer(oldPokemon.marker);
                         }
 					}
 				}
@@ -1107,9 +1113,37 @@ function getPokemonPopupContent(pokemon) {
     }
 
     content += '<br><a href="https://www.google.com/maps/place/'+pokemon.lat+','+pokemon.lon+'" target="_blank" title="Open in Google Maps"><b>Navigate</b></a>';
+    content += '<br><a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(' + pokemon.id + ');return false;"><b>Hide Pokemon</b></a>';
+    content += '<br><a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>Filter Pokemon</b></a>';
     content += '</center>';
 
 	return content
+}
+
+function setIndividualPokemonHidden(id) {
+    if (id > 0 && !hiddenPokemonIds.includes(id)) {
+        hiddenPokemonIds.push(id);
+        const pokemonMarker = pokemonMarkers.find(function (value) {
+            return id == value.id;
+        });
+
+        if (pokemonMarker === null) {
+            console.log("Failed to find pokemon marker", id);
+        } else {
+            map.removeLayer(pokemonMarker.marker);
+        }
+    }
+}
+
+function addPokemonFilter(pokemonId, show) {
+    pokemonFilter[pokemonId]["show"] = show;
+    store('pokemon_filter', JSON.stringify(pokemonFilter));
+
+    $.each(pokemonMarkers, function (index, pokemon) {
+        if (pokemon.pokemon_id === pokemonId) {
+            map.removeLayer(pokemon.marker);
+        }
+    });
 }
 
 function getPokestopPopupContent(pokestop) {
