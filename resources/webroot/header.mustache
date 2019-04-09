@@ -9,8 +9,34 @@
     <div class="collapse navbar-collapse" id="navbarText">
         <ul class="navbar-nav mr-auto">
             {{#show_dashboard}}
-                <li class="nav-item{{#page_is_dashboard}} active{{/page_is_dashboard}}">
-                    <a class="nav-link" href="/dashboard">{{nav_dashboard}}{{#page_is_dashboard}}<span class="sr-only">(current)</span>{{/page_is_dashboard}}</a>
+                <li class="nav-item dropdown{{#page_is_dashboard}} active{{/page_is_dashboard}}">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{nav_dashboard}}{{#page_is_dashboard}}<span class="sr-only">(current)</span>{{/page_is_dashboard}}
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a href="/dashboard" class="dropdown-item">{{nav_dashboard}}</a>
+
+                        <div class="dropdown-divider"></div>
+                        <h6 class="dropdown-header">General</h6>
+                        <a href="/dashboard/settings" class="dropdown-item">Settings</a>
+
+                        <div class="dropdown-divider"></div>
+                        <h6 class="dropdown-header">Scanning</h6>
+                        <a href="/dashboard/devices" class="dropdown-item">Devices</a>
+                        <a href="/dashboard/accounts" class="dropdown-item">Accounts</a>
+                        <a href="/dashboard/instances" class="dropdown-item">Instances</a>
+                        <a href="/dashboard/assignments" class="dropdown-item">Auto-Assignments</a>
+
+                        <div class="dropdown-divider"></div>
+                        <h6 class="dropdown-header">User Management</h6>
+                        <a href="/dashboard/users" class="dropdown-item">Users</a>
+                        <a href="/dashboard/groups" class="dropdown-item">Groups</a>
+                        <a href="/dashboard/discordrules" class="dropdown-item">Discord Rules</a>
+
+                        <div class="dropdown-divider"></div>
+                        <h6 class="dropdown-header">Misc</h6>
+                        <a href="/dashboard/clearquests" class="dropdown-item">Clear All Quests</a>
+                    </div>
                 </li>
             {{/show_dashboard}}
             {{#show_stats}}
