@@ -19,6 +19,10 @@
             <div class="form-group">
                 Accounts
                 <textarea class="form-control" rows="5" name="accounts" required>{{{accounts}}}</textarea>
+                <small tabindex="-1" id="form-control-help-block" class="form-text text-muted">
+                Format: username,password (Acceptable delimteres are: ',', ':', ';')<br/>
+                Note: Only use PTC accounts
+                </small>
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>

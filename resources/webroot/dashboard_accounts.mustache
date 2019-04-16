@@ -2,18 +2,38 @@
 
 <body>
 
-    <br>
-    <h1 align="center">Configure {{title}}'s Accounts!</h1>
-    <br>
-    <div class="w-75" style="float: none; margin: 0 auto;">
-        <h4 align="center">New Accounts: {{new_accounts_count}}</h4>
-        <h4 align="center">Accounts in Use: {{in_use_accounts_count}}</h4>
-        <h4 align="center">Accounts in Cooldown: {{cooldown_accounts_count}}</h4>
-        <h4 align="center">Accounts over Spin Limit: {{spin_limit_accounts_count}}</h4>
-        <h4 align="center">Accounts with Warning: {{warned_accounts_count}}</h4>
-        <h4 align="center">Failed Accounts: {{failed_accounts_count}}</h4>
-        <br><br>
-        <div style="text-align: center">
+    <h1 class="mt-3" align="center">Configure {{title}}'s Accounts!</h1>
+
+    <div class="w-75 mt-4" style="float: none; margin: 0 auto;">
+        <div class="card border-dark">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>New Accounts:</h6>
+                    <span class="badge badge-primary badge-pill">{{new_accounts_count}}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>Accounts in Use:</h6>
+                    <span class="badge badge-success badge-pill">{{in_use_accounts_count}}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>Accounts in Cooldown:</h6>
+                    <span class="badge badge-warning badge-pill">{{cooldown_accounts_count}}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>Accounts over Spin Limit:</h6>
+                    <span class="badge badge-warning badge-pill">{{spin_limit_accounts_count}}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>Accounts with Warning:</h6>
+                    <span class="badge badge-warning badge-pill">{{warned_accounts_count}}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <h6>Failed Accounts:</h6>
+                    <span class="badge badge-danger badge-pill">{{failed_accounts_count}}</span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-4 mb-5" style="text-align: center">
             <a href="/dashboard/accounts/add" role="button" class="btn btn-success">Add Accounts</a>
         </div>
     </div>
