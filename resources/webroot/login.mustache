@@ -19,6 +19,7 @@
                 <input type="password" class="form-control" id="password" name="password" value="{{password}}" required>
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
+            <input type="hidden" name="redirect" value="{{redirect}}">
             <button type="submit" class="btn btn-primary">{{login_login}}</button>
             {{#is_error}}<br><small class="text-danger">{{error}}</small>{{/is_error}}
         </form>
