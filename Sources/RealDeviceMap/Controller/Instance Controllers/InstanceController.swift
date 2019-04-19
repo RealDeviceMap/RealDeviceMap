@@ -129,7 +129,10 @@ class InstanceController {
                 let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
                     return UInt16(e)
                 }) ?? [UInt16]()
-                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel)
+                let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ?? (instance.data["scatter_pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
+                    return UInt16(e)
+                }) ?? [UInt16]()
+                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, scatterPokemon: scatterList)
             } else {
                 instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel)
             }

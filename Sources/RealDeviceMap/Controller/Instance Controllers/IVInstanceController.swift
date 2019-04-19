@@ -15,6 +15,8 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var scatterPokemon: [UInt16]
+    
     public var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
@@ -29,12 +31,13 @@ class IVInstanceController: InstanceControllerProto {
     private var count: UInt64 = 0
     private var shouldExit = false
     
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, scatterPokemon: [UInt16]) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
+        self.scatterPokemon = scatterPokemon
         
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {

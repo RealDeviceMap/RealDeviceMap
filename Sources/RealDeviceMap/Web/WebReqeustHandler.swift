@@ -1415,14 +1415,34 @@ class WebReqeustHandler {
         
         let timezoneOffset = Int(request.param(name: "timezone_offset") ?? "0" ) ?? 0
         let pokemonIDsText = request.param(name: "pokemon_ids")?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
+        let scatterPokemonIDsText = request.param(name: "scatter_pokemon_ids")?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
         
         var pokemonIDs = [UInt16]()
-        let pokemonIDsSplit = pokemonIDsText?.components(separatedBy: ",")
-        if pokemonIDsSplit != nil {
-            for pokemonIDText in pokemonIDsSplit! {
-                let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces).toUInt16()
-                if pokemonID != nil {
-                    pokemonIDs.append(pokemonID!)
+        if pokemonIDsText?.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
+            pokemonIDs = Array(1...999)
+        } else {
+            let pokemonIDsSplit = pokemonIDsText?.components(separatedBy: ",")
+            if pokemonIDsSplit != nil {
+                for pokemonIDText in pokemonIDsSplit! {
+                    let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces).toUInt16()
+                    if pokemonID != nil {
+                        pokemonIDs.append(pokemonID!)
+                    }
+                }
+            }
+        }
+        
+        var scatterPokemonIDs = [UInt16]()
+        if scatterPokemonIDsText?.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
+            scatterPokemonIDs = Array(1...999)
+        } else {
+            let scatterPokemonIDsSplit = scatterPokemonIDsText?.components(separatedBy: ",")
+            if scatterPokemonIDsSplit != nil {
+                for pokemonIDText in scatterPokemonIDsSplit! {
+                    let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces).toUInt16()
+                    if pokemonID != nil {
+                        scatterPokemonIDs.append(pokemonID!)
+                    }
                 }
             }
         }
@@ -1432,6 +1452,7 @@ class WebReqeustHandler {
         data["name"] = name
         data["area"] = area
         data["pokemon_ids"] = pokemonIDsText
+        data["scatter_pokemon_ids"] = scatterPokemonIDs
         data["min_level"] = minLevel
         data["max_level"] = maxLevel
         data["timezone_offset"] = timezoneOffset
@@ -1544,6 +1565,7 @@ class WebReqeustHandler {
 
                 if type == .pokemonIV {
                     oldInstance!.data["pokemon_ids"] = pokemonIDs
+                    oldInstance!.data["scatter_pokemon_ids"] = scatterPokemonIDs
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -1562,6 +1584,7 @@ class WebReqeustHandler {
             var instanceData: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
             if type == .pokemonIV {
                 instanceData["pokemon_ids"] = pokemonIDs
+                instanceData["scatter_pokemon_ids"] = scatterPokemonIDs
             }
             let instance = Instance(name: name, type: type!, data: instanceData)
             do {
@@ -1633,6 +1656,15 @@ class WebReqeustHandler {
                     text.append("\(id)\n")
                 }
                 data["pokemon_ids"] = text
+            }
+            
+            let scatterPokemonIDs = oldInstance!.data["scatter_pokemon_ids"] as? [Int]
+            if scatterPokemonIDs != nil {
+                var text = ""
+                for id in scatterPokemonIDs! {
+                    text.append("\(id)\n")
+                }
+                data["scatter_pokemon_ids"] = text
             }
             
             switch oldInstance!.type {
