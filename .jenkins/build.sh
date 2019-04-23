@@ -24,5 +24,5 @@ exit -1
 fi
 
 echo "Building deploy build..."
-docker image build -f .jenkins/Dockerfile_deploy -t realdevicemap/realdevicemap:$1 ${PWD}
+docker image build -f .jenkins/Dockerfile_deploy -t realdevicemap/realdevicemap-build:$1 ${PWD}
 echo "Building deploy image sucessfull"
