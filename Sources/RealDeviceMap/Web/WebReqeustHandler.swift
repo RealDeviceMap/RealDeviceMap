@@ -1563,7 +1563,7 @@ class WebReqeustHandler {
             if type == .pokemonIV {
                 instanceData["pokemon_ids"] = pokemonIDs
             }
-            let instance = Instance(name: name, type: type!, data: instanceData)
+            let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
                 try instance.create()
                 InstanceController.global.addInstance(instance: instance)

@@ -42,11 +42,13 @@ class Instance: Hashable {
     var name: String
     var type: InstanceType
     var data: [String: Any]
+    var count: Int64
 
-    init(name: String, type: InstanceType, data: [String: Any]) {
+    init(name: String, type: InstanceType, data: [String: Any], count: Int64) {
         self.name = name
         self.type = type
         self.data = data
+        self.count = count
     }
     
     public func create(mysql: MySQL?=nil) throws {
@@ -129,8 +131,13 @@ class Instance: Hashable {
         }
         
         let sql = """
-            SELECT name, type, data
-            FROM instance
+            SELECT name, type, data, count
+            FROM instance AS inst
+            LEFT JOIN (
+              SELECT COUNT(instance_name) AS count, instance_name
+              FROM device
+              GROUP BY instance_name
+            ) devices ON (inst.name = devices.instance_name)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -147,7 +154,8 @@ class Instance: Hashable {
             let name = result[0] as! String
             let type = InstanceType.fromString(result[1] as! String)!
             let data = (try! (result[2] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
-            instances.append(Instance(name: name, type: type, data: data))
+            let count = result[3] as! Int64
+            instances.append(Instance(name: name, type: type, data: data, count: count))
         }
         return instances
         
@@ -182,7 +190,7 @@ class Instance: Hashable {
         let result = results.next()!
             let type = InstanceType.fromString(result[0] as! String)!
             let data = (try! (result[1] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
-        return Instance(name: name, type: type, data: data)
+        return Instance(name: name, type: type, data: data, count: 0)
     
     }
     

@@ -479,6 +479,7 @@ class ApiRequestHandler {
                 for instance in instances! {
                     var instanceData = [String: Any]()
                     instanceData["name"] = instance.name
+                    instanceData["count"] = instance.count
                     switch instance.type {
                     case .circleRaid:
                         instanceData["type"] = "Circle Raid"
