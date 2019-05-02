@@ -1348,11 +1348,16 @@ function getQuestReward(reward) {
     } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
         return i18n('quest_reward_4_formatted', {'amount': info.amount, 'pokemon': getPokemonName(info.pokemon_id)});
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
-        if (info.shiny) {
-            return i18n('quest_reward_7_formatted', {'pokemon': getPokemonName(info.pokemon_id)}) + ' (Shiny)';
+        var string;
+        if (info.form_id !== 0 && info.form_id !== null) {
+            string = getFormName(info.form_id) + ' ' + getPokemonName(info.pokemon_id);
         } else {
-            return i18n('quest_reward_7_formatted', {'pokemon': getPokemonName(info.pokemon_id)});
+            string = getPokemonName(info.pokemon_id);
         }
+        if (info.shiny) {
+            string += ' (Shiny)';
+        }
+        return string;
     } else {
         return i18n('quest_reward_'+id);
     }
@@ -1497,7 +1502,16 @@ function getPokestopMarkerIcon(pokestop, ts) {
         } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
             rewardString = "i-3";
         } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
-            rewardString = "p"+info.pokemon_id;
+            if (info.form_id !== 0 && info.form_id !== null) {
+                const pokemonIdStringTmp = '' + info.pokemon_id + '-' + info.form_id;
+                if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+                    rewardString = 'p' + pokemonIdStringTmp;
+                } else {
+                    rewardString = 'p' + info.pokemon_id;
+                }
+            } else {
+                rewardString = 'p' + info.pokemon_id;
+            }
         } else {
             rewardString = "i0";
         }
