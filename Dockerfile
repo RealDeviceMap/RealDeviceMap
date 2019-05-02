@@ -38,4 +38,4 @@ FROM base
 
 COPY --from=build /build/.build/release/RealDeviceMap /app/RealDeviceMap
 COPY resources /app/resources
-CMD ["/app/RealDeviceMap"]
+CMD cd /app/ && ./RealDeviceMap
