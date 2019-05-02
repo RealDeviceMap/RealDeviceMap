@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd /app/
+echo "### Starting in Debug mode."
+./RealDeviceMap 2>&1 | tee run.log
+echo "### Stopped. Analyzing crash log (if any)."
+cat run.log | sed -n -e '/Fatal error/,$p' > crash.log
+./symbolicate-linux-fatal RealDeviceMap crash.log > crash.real.log
+echo "### Symbolicated stack trace (if any):"
+cat crash.real.log
