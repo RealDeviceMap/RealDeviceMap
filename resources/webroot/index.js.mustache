@@ -1954,12 +1954,7 @@ function getGymMarkerIcon(gym, ts) {
         size = (6 - gym.availble_slots);
     }
 
-    let raidLevel
-    if (gym.raid_is_exclusive) {
-        raidLevel = 'ex';
-    } else {
-        raidLevel = gym.raid_level;
-    }
+    let raidLevel = gym.raid_level;
     let icon;
     if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && showRaids && parseInt(gym.raid_level) > 0) {
         if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
@@ -1986,7 +1981,7 @@ function getGymMarkerIcon(gym, ts) {
             });
         } else {
             //Egg
-            var iconSize = getRaidSize(raidLevel == "ex" ? "ex" : "l" + raidLevel);
+            var iconSize = getRaidSize("l" + raidLevel);
             icon = L.icon({
                 iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_ue' + raidLevel + '.png',
                 iconSize: 		[iconSize, iconSize * 1.667],
@@ -1996,7 +1991,7 @@ function getGymMarkerIcon(gym, ts) {
         }
     } else if (gym.raid_end_timestamp >= ts && parseInt(gym.raid_level) > 0 && showRaids) {
         //Egg
-        var iconSize = getRaidSize(raidLevel == "ex" ? "ex" : "l" + raidLevel);
+        var iconSize = getRaidSize("l" + raidLevel);
         icon = L.icon({
             iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_e' + raidLevel + '.png',
             iconSize: 		[iconSize, iconSize * 1.667],
