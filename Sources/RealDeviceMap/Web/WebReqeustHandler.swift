@@ -24,6 +24,7 @@ class WebReqeustHandler {
     static var startLat: Double = 0
     static var startLon: Double = 0
     static var startZoom: Int = 14
+    static var minZoom: Int = 10
     static var maxZoom: Int = 18
     static var maxPokemonId: Int = 493
     static var title: String = "RealDeviceMap"
@@ -160,6 +161,7 @@ class WebReqeustHandler {
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             var zoom = request.urlVariables["zoom"]?.toInt()
+            var minZoom = request.urlVariables["min_zoom"]?.toInt()
             var maxZoom = request.urlVariables["max_zoom"]?.toInt()
             var lat = request.urlVariables["lat"]?.toDouble()
             var lon = request.urlVariables["lon"]?.toDouble()
@@ -189,6 +191,7 @@ class WebReqeustHandler {
             data["lat"] = lat ?? self.startLat
             data["lon"] = lon ?? self.startLon
             data["zoom"] = zoom ?? self.startZoom
+            data["min_zoom"] = minZoom ?? self.minZoom
             data["max_zoom"] = maxZoom ?? self.maxZoom //REVIEW: Probably not needed?
 
             // Localize
@@ -431,6 +434,7 @@ class WebReqeustHandler {
             data["start_lat"] = startLat
             data["start_lon"] = startLon
             data["start_zoom"] = startZoom
+            data["min_zoom"] = minZoom
             data["max_zoom"] = maxZoom
             data["max_pokemon_id"] = maxPokemonId
             data["locale_new"] = Localizer.locale
@@ -1039,6 +1043,7 @@ class WebReqeustHandler {
             data["start_lat"] = request.param(name: "lat")?.toDouble() ?? startLat
             data["start_lon"] = request.param(name: "lon")?.toDouble() ?? startLon
             data["start_zoom"] = request.param(name: "zoom")?.toUInt8() ?? startZoom
+            data["min_zoom"] = request.param(name: "min_zoom")?.toUInt8() ?? minZoom
             data["max_zoom"] = request.param(name: "max_zoom")?.toUInt8() ?? maxZoom
             data["max_pokemon_id"] = maxPokemonId
             data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
@@ -1250,6 +1255,7 @@ class WebReqeustHandler {
             let startLat = request.param(name: "start_lat")?.toDouble(),
             let startLon = request.param(name: "start_lon")?.toDouble(),
             let startZoom = request.param(name: "start_zoom")?.toInt(),
+            let minZoom = request.param(name: "min_zoom")?.toInt(),
             let maxZoom = request.param(name: "max_zoom")?.toInt(),
             let title = request.param(name: "title"),
             let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
@@ -1336,6 +1342,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "MAP_START_LAT", value: startLat.description)
             try DBController.global.setValueForKey(key: "MAP_START_LON", value: startLon.description)
             try DBController.global.setValueForKey(key: "MAP_START_ZOOM", value: startZoom.description)
+            try DBController.global.setValueForKey(key: "MAP_MIN_ZOOM", value: minZoom.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_ZOOM", value: maxZoom.description)
             try DBController.global.setValueForKey(key: "TITLE", value: title)
             try DBController.global.setValueForKey(key: "WEBHOOK_DELAY", value: webhookDelay.description)
@@ -1373,6 +1380,7 @@ class WebReqeustHandler {
         WebReqeustHandler.startLat = startLat
         WebReqeustHandler.startLon = startLon
         WebReqeustHandler.startZoom = startZoom
+        WebReqeustHandler.minZoom = minZoom
         WebReqeustHandler.maxZoom = maxZoom
         WebReqeustHandler.title = title
         WebReqeustHandler.maxPokemonId = maxPokemonId
