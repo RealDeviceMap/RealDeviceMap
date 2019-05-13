@@ -318,11 +318,8 @@ function loadStorage() {
                 defaultRaidFilter["l" + i] = {"show": true, "size": "normal"};
             }
         }
-        let j;
-        for (j = 1; j <= {{max_pokemon_id}}; j++) {
-            if (defaultRaidFilter["p" + j] === undefined) {
-                defaultRaidFilter["p" + j] = {"show": true, "size": "normal"};
-            }
+        if (defaultRaidFilter["hatched"] === undefined) {
+            defaultRaidFilter["hatched"] = {"show": true, "size": "normal"};
         }
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
@@ -335,11 +332,8 @@ function loadStorage() {
                 raidFilter["l" + i] = {"show": true, "size": "normal"};
             }
         }
-        let j;
-        for (j = 1; j <= {{max_pokemon_id}}; j++) {
-            if (raidFilter["p" + j] === undefined) {
-                raidFilter["p" + j] = {"show": true, "size": "normal"};
-            }
+        if (raidFilter["hatched"] === undefined) {
+            raidFilter["hatched"] = {"show": true, "size": "normal"};
         }
     }
 
@@ -503,10 +497,7 @@ function initMap() {
         for (i = 1; i <= 5; i++) {
             defaultRaidFilter["l" + i] = {"show": true, "size": "normal"};
         }
-        let j;
-        for (j = 1; j <= {{max_pokemon_id}}; j++) {
-            defaultRaidFilter["p" + j] = {"show": true, "size": "normal"};
-        }
+        defaultRaidFilter["hatched"] = {"show": true, "size": "normal"};
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
         raidFilterNew = defaultRaidFilter;
@@ -520,10 +511,7 @@ function initMap() {
         for (i = 1; i <= 5; i++) {
             defaultRaidFilter["l" + i] = {"show": false, "size": raidFilterNew["l" + i]["size"]};
         }
-        let j;
-        for (j = 1; j <= {{max_pokemon_id}}; j++) {
-            defaultRaidFilter["p" + j] = {"show": false, "size": raidFilterNew["p" + j]["size"]};
-        }
+        defaultRaidFilter["hatched"] = {"show": false, "size": raidFilterNew["hatched"]["size"]};
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
         raidFilterNew = defaultRaidFilter;
@@ -555,7 +543,7 @@ function initMap() {
         for (i = 0; i <= 3; i++) {
             defaultGymFilter["t" + i] = {"show": false, "size": gymFilterNew["t" + i]["size"]};
         }
-        defaultGymFilter["ex"] = {"show": false, "size": raidFilterNew["ex"]["size"]}
+        defaultGymFilter["ex"] = {"show": false, "size": gymFilterNew["ex"]["size"]}
         let j;
         for (j = 0; j <= 6; j++) {
             defaultGymFilter["s" + j] = {"show": false, "size": gymFilterNew["s" + j]["size"]};
@@ -884,11 +872,8 @@ function loadData() {
                 raidFilterExclude.push("l" + i);
             }
         }
-        let j;
-        for (j = 1; j <= {{max_pokemon_id}}; j++) {
-            if (raidFilter["p" + j]["show"] === false) {
-                raidFilterExclude.push("p" + j);
-            }
+        if (raidFilter["hatched"]["show"] !== false) {
+            raidFilterExclude.push("hatched");
         }
     }
 
@@ -2155,25 +2140,25 @@ function manageSelectButton(e, isNew) {
                 shouldShow = raidFilterNew["l" + id]["size"] === "huge";
                 break;
         }
-    } else if (type === "raid-pokemon") {
+    } else if (type === "raid-hatched") {
         switch (info) {
             case "hide":
-                shouldShow = raidFilterNew["p" + id]["show"] === false;
+                shouldShow = raidFilterNew[id]["show"] === false;
                 break;
             case "show":
-                shouldShow = raidFilterNew["p" + id]["show"] === true;
+                shouldShow = raidFilterNew[id]["show"] === true;
                 break;
             case "small":
-                shouldShow = raidFilterNew["p" + id]["size"] === "small";
+                shouldShow = raidFilterNew[id]["size"] === "small";
                 break;
             case "normal":
-                shouldShow = raidFilterNew["p" + id]["size"] === "normal";
+                shouldShow = raidFilterNew[id]["size"] === "normal";
                 break;
             case "large":
-                shouldShow = raidFilterNew["p" + id]["size"] === "large";
+                shouldShow = raidFilterNew[id]["size"] === "large";
                 break;
             case "huge":
-                shouldShow = raidFilterNew["p" + id]["size"] === "huge";
+                shouldShow = raidFilterNew[id]["size"] === "huge";
                 break;
         }
     } else if (type === "gym-team") {
@@ -2389,25 +2374,25 @@ function manageSelectButton(e, isNew) {
                         raidFilterNew["l" + id]["size"] = "huge";
                         break;
                 }
-            } else if (type === "raid-pokemon") {
+            } else if (type === "raid-hatched") {
                 switch (info) {
                     case "hide":
-                        raidFilterNew["p" + id]["show"] = false;
+                        raidFilterNew[id]["show"] = false;
                         break;
                     case "show":
-                        raidFilterNew["p" + id]["show"] = true;
+                        raidFilterNew[id]["show"] = true;
                         break;
                     case "small":
-                        raidFilterNew["p" + id]["size"] = "small";
+                        raidFilterNew[id]["size"] = "small";
                         break;
                     case "normal":
-                        raidFilterNew["p" + id]["size"] = "normal";
+                        raidFilterNew[id]["size"] = "normal";
                         break;
                     case "large":
-                        raidFilterNew["p" + id]["size"] = "large";
+                        raidFilterNew[id]["size"] = "large";
                         break;
                     case "huge":
-                        raidFilterNew["p" + id]["size"] = "huge";
+                        raidFilterNew[id]["size"] = "huge";
                         break;
                 }
             } else if (type === "gym-team") {
