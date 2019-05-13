@@ -66,8 +66,8 @@ Log.debug(message: "[MAIN] Loading Settings")
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
 WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
-WebReqeustHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")!.toInt()!
-WebReqeustHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")!.toInt()!
+WebReqeustHandler.minZoom = 10//try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")!.toInt()!
+WebReqeustHandler.maxZoom = 18//try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")!.toInt()!
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
