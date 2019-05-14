@@ -406,9 +406,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             }
             
             if (excludeRaidBoss) {
-                excludeRaidBossSQL = "AND ((raid_end_timestamp IS NULL OR raid_end_timestamp < UNIX_TIMESTAMP()) OR (raid_end_timestamp >= UNIX_TIMESTAMP() AND raid_pokemon_id IS NULL))";
+                excludeRaidBossSQL = "AND raid_pokemon_id = 0"
             } else {
-                excludeRaidBossSQL = "AND ((raid_end_timestamp IS NULL OR raid_end_timestamp < UNIX_TIMESTAMP()) OR (raid_end_timestamp >= UNIX_TIMESTAMP() AND raid_pokemon_id IS NOT NULL))";
+                excludeRaidBossSQL = ""
             }
         } else {
             excludeLevelSQL = ""
