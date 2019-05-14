@@ -414,15 +414,18 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeLevelSQL = ""
             excludeRaidBossSQL = ""
         }
-        
+
         if excludedTeams.isEmpty {
             excludeTeamSQL = ""
         } else {
             var sqlExcludeCreate = "AND (team_id NOT IN ("
-            for _ in excludedTeams {
-                sqlExcludeCreate += "?, "
+            for (index, _) in excludedTeams.enumerated() {
+                if (index == excludedTeams.count - 1) {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?))"
             excludeTeamSQL = sqlExcludeCreate
         }
         
