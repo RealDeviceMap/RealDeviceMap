@@ -534,7 +534,7 @@ class ApiRequestHandler {
                     "sort": id+200
                 ],
                 "name": Localizer.global.get(value: "filter_raid_boss"),
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/150.png\" style=\"height:50px; width:50px;\">", //TODO: Set actual icon
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/raid/raidboss.png\" style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
                 "type": raidOptionsString
