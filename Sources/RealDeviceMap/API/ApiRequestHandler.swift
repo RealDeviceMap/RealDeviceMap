@@ -533,7 +533,7 @@ class ApiRequestHandler {
                     "formatted": String(format: "%03d", id),
                     "sort": id+200
                 ],
-                "name": /*Localizer.global.get(value: "poke_\(i)")*/ "Raid Boss" , //TODO: Localize
+                "name": Localizer.global.get(value: "filter_raid_boss"),
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/150.png\" style=\"height:50px; width:50px;\">", //TODO: Set actual icon
                 "filter": filter,
                 "size": size,

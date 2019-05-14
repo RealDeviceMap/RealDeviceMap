@@ -1466,6 +1466,7 @@
         "filter_raid_level_5": "Level 5",
         "filter_raid_ex": "Only EX Raids",
 		"filter_raid_options": "Options",
+        "filter_raid_boss": "Raid Boss",
 		"filter_gym_team": "Team",
 		"filter_gym_team_0": "Neutral",
 		"filter_gym_team_1": "Mystic",
