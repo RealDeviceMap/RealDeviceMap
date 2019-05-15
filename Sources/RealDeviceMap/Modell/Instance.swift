@@ -154,7 +154,7 @@ class Instance: Hashable {
             let name = result[0] as! String
             let type = InstanceType.fromString(result[1] as! String)!
             let data = (try! (result[2] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
-            let count = result[3] as! Int64
+            let count = result[3] as! Int64? ?? 0
             instances.append(Instance(name: name, type: type, data: data, count: count))
         }
         return instances
