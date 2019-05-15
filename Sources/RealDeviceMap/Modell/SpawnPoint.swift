@@ -19,7 +19,8 @@ class SpawnPoint: JSONConvertibleObject{
             "id":id.toHexString()!,
             "lat":lat,
             "lon":lon,
-            "updated":updated ?? 1
+            "updated":updated ?? 1,
+            "despawn_second":despawnSecond as Any
         ]
     }
     

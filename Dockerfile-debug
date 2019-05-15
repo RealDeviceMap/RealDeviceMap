@@ -1,0 +1,44 @@
+## Base Image
+FROM perfectlysoft/perfectassistant:4.1 AS base
+
+# Perfect-COpenSSL
+RUN apt-get -y update && apt-get install -y libssl-dev
+
+# Perfect-libcurl
+RUN apt-get -y update && apt-get install -y libcurl4-openssl-dev
+
+# Perfect-mysqlclient-Linux
+RUN apt-get -y update && apt-get install -y libmysqlclient-dev && sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
+
+# Perfect-LinuxBridge
+RUN apt-get -y update && apt-get install -y uuid-dev && rm -rf /var/lib/apt/lists/*
+
+# ImageMagick for creating raid images
+RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /usr/local/bin
+
+# MySQL Client
+RUN apt-get -y update && apt-get install -y mysql-client-5.7
+
+
+## Build Image
+FROM base AS build
+
+WORKDIR /build
+COPY Package.swift Package.swift
+COPY Sources Sources
+#COPY Tests Tests
+#COPY resources resources
+RUN swift package update
+#RUN swift test -c debug
+RUN swift build -c debug
+
+
+## Executable Image
+FROM base
+
+COPY --from=build /build/.build/debug/RealDeviceMap /app/RealDeviceMap
+COPY resources /app/resources
+RUN cd /app && wget https://raw.githubusercontent.com/apple/swift/master/utils/symbolicate-linux-fatal && chmod +x symbolicate-linux-fatal
+COPY run-debug-docker /app/run-debug-docker
+RUN cd /app && chmod +x run-debug-docker
+CMD ["/app/run-debug-docker"]

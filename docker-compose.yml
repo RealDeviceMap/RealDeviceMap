@@ -8,8 +8,8 @@ services:
     depends_on:
       - db
     volumes:
-      - images:/perfect-deployed/realdevicemap/resources/webroot/static/img
-      - backups:/perfect-deployed/realdevicemap/backups
+      - images:/app/resources/webroot/static/img
+      - backups:/app/backups
 #     - /etc/localtime:/etc/localtime:ro
     ports:
       - 9000:9000
