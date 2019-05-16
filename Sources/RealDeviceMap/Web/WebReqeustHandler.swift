@@ -569,6 +569,25 @@ class WebReqeustHandler {
                     return
                 }
             }
+        case .dashboardAssignmentEdit:
+            let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
+            let tmp = uuid.replacingOccurrences(of: "\\\\-", with: "&tmp")
+            data["page_is_dashboard"] = true
+            data["old_name"] = uuid
+            data["page"] = "Dashboard - Edit Assignment"
+            if request.method == .get {
+                do {
+                    data = try editAssignmentGet(data: data, request: request, response: response, instanceUUID: tmp)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editAssignmentPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
         case .dashboardAssignmentDelete:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Assignment"
@@ -1932,6 +1951,138 @@ class WebReqeustHandler {
         response.completed(status: .seeOther)
         throw CompletedEarly()
         
+    }
+    
+    static func editAssignmentGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, instanceUUID: String) throws -> MustacheEvaluationContext.MapType {
+        
+        let selectedUUID = (request.urlVariables["uuid"] ?? "").decodeUrl()!
+        let tmp = selectedUUID.replacingOccurrences(of: "\\\\-", with: "\\-")
+        
+        let split = tmp.components(separatedBy: "\\-")
+        if split.count != 3 {
+            response.setBody(string: "Bad Request")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .badRequest)
+        } else {
+            let selectedInstance = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+            let selectedDevice = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+            let time = UInt32(split[2]) ?? 0
+        
+            var data = data
+            let instances: [Instance]
+            let devices: [Device]
+            do {
+                devices = try Device.getAll()
+                instances = try Instance.getAll()
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+        
+            var instancesData = [[String: Any]]()
+            for instance in instances {
+                instancesData.append(["name": instance.name, "selected": instance.name == selectedInstance])
+            }
+            data["instances"] = instancesData
+            var devicesData = [[String: Any]]()
+            for device in devices {
+                devicesData.append(["uuid": device.uuid, "selected": device.uuid == selectedDevice])
+            }
+            data["devices"] = devicesData
+            
+            let formattedTime: String
+            if time == 0 {
+                formattedTime = ""
+            } else {
+                let times = time.secondsToHoursMinutesSeconds()
+                formattedTime = "\(String(format: "%02d", times.hours)):\(String(format: "%02d", times.minutes)):\(String(format: "%02d", times.seconds))"
+            }
+            data["time"] = formattedTime
+            
+            if selectedDevice == nil || selectedInstance == nil {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+            }
+
+            return data;
+        }
+        
+        throw CompletedEarly()
+    }
+    
+    static func editAssignmentPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+        let selectedDevice = request.param(name: "device")
+        let selectedInstance = request.param(name: "instance")
+        let time = request.param(name: "time")
+        
+        var data = data
+
+        let timeInt: UInt32
+        if time == nil || time == "" {
+            timeInt = 0
+        } else {
+            let split = time!.components(separatedBy: ":")
+            if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(), let seconds = split[2].toInt() {
+                let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
+                if timeIntNew == 0 {
+                    timeInt = 1
+                } else {
+                    timeInt = timeIntNew
+                }
+            } else {
+                data["show_error"] = true
+                data["error"] = "Invalid Time."
+                return data
+            }
+        }
+        
+        if selectedDevice == nil || selectedInstance == nil {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+        
+        let selectedUUID = data["old_name"] as! String
+        let tmp = selectedUUID.replacingOccurrences(of: "\\\\-", with: "\\-")
+        
+        let split = tmp.components(separatedBy: "\\-")
+        if split.count != 3 {
+            response.setBody(string: "Bad Request")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .badRequest)
+        } else {
+            let oldInstanceName = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+            let oldDeviceUUID = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
+            let oldTime = UInt32(split[2]) ?? 0
+        
+            let oldAssignment: Assignment
+            do {
+                oldAssignment = try Assignment.getByUUID(instanceName: oldInstanceName, deviceUUID: oldDeviceUUID, time: oldTime)!
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+        
+            do {
+                let newAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt)
+                try newAssignment.save(oldInstanceName: oldInstanceName, oldDeviceUUID: oldDeviceUUID, oldTime: oldTime)
+                AssignmentController.global.editAssignment(oldAssignment: oldAssignment, newAssignment: newAssignment)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to assign Device."
+                return data
+            }
+        }
+        
+        response.redirect(path: "/dashboard/assignments")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
     }
     
     static func addAccounts(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {

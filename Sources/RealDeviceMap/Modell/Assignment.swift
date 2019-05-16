@@ -32,7 +32,7 @@ class Assignment: Equatable {
         let sql = """
                 UPDATE assignment
                 SET device_uuid = ?, instance_name = ?, time = ?
-                WHERE device_uuid = ?, instance_name = ?, time = ?
+                WHERE device_uuid = ? AND instance_name = ? AND time = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(deviceUUID)
@@ -145,6 +145,42 @@ class Assignment: Equatable {
             assignments.append(Assignment(instanceName: instanceName, deviceUUID: deviceUUID, time: time))
         }
         return assignments
+        
+    }
+    
+    public static func getByUUID(mysql: MySQL?=nil, instanceName: String, deviceUUID: String, time: UInt32) throws -> Assignment? {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[Assignment] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT device_uuid, instance_name, time
+            FROM assignment
+            WHERE device_uuid = ? AND instance_name = ? AND time = ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(deviceUUID)
+        mysqlStmt.bindParam(instanceName)
+        mysqlStmt.bindParam(time)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return nil
+        }
+        
+        let result = results.next()!
+        let deviceUUID = result[0] as! String
+        let instanceName = result[1] as! String
+        let assignmentTime = result[2] as! UInt32
+        return Assignment(instanceName: instanceName, deviceUUID: deviceUUID, time: assignmentTime)
         
     }
     

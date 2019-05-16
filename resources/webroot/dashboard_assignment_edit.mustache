@@ -1,0 +1,42 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Edit Auto-Assignment "{{old_name}}"!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Select Target Device
+                <select class="form-control" name="device" required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose a Device</option>
+                    {{#devices}}
+                        <option value="{{uuid}}" {{#selected}}selected{{/selected}}>{{uuid}}</option>
+                    {{/devices}}
+                </select>
+            </div>
+            <div class="form-group">
+                Select Destinaction Instance
+                <select class="form-control" name="instance" required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose a Instance</option>
+                    {{#instances}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/instances}}
+                </select>
+            </div>
+           <div class="form-group">
+                Time (Emtpy for "On Complete")
+                <input type="text" class="form-control" name="time" value="{{time}}" minlength="7" maxlength="8" placeholder="HH:MM:SS">
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+    <br>
+</body>

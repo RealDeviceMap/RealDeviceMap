@@ -1045,7 +1045,8 @@ class ApiRequestHandler {
                         assignmentData["time"] = ["timestamp": assignment.time as Any, "formatted": formattedTime]
                        
                         let instanceUUID = "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
-                        assignmentData["buttons"] = "<a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-danger\">Delete</a>"                    } else {
+                        assignmentData["buttons"] = "<a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-info\">Edit</a><a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-danger\">Delete</a>"
+                    } else {
                         assignmentData["time"] = assignment.time as Any
                     }
                     

@@ -76,6 +76,15 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.unlock()
     }
     
+    public func editAssignment(oldAssignment: Assignment, newAssignment: Assignment) {
+        assignmentsLock.lock();
+        if let index = assignments.index(of: oldAssignment) {
+            assignments.remove(at: index)
+        }
+        assignments.append(newAssignment);
+        assignmentsLock.unlock();
+    }
+    
     public func deleteAssignment(assignment: Assignment) {
         assignmentsLock.lock()
         if let index = assignments.index(of: assignment) {

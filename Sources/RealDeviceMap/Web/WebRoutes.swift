@@ -106,6 +106,9 @@ class WebRoutes {
             Route(methods: [.get, .post], uri: "/dashboard/assignment/add", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentAdd, requiredPerms: [.admin])
             }),
+            Route(methods: [.get, .post], uri: "/dashboard/assignment/edit/{uuid}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentEdit, requiredPerms: [.admin])
+            }),
             Route(methods: [.get, .post], uri: "/dashboard/assignment/delete/{uuid}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentDelete, requiredPerms: [.admin])
             }),
