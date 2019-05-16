@@ -600,7 +600,7 @@ class WebReqeustHandler {
                 let instanceName = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
                 let deviceUUID = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
                 let time = UInt32(split[2]) ?? 0
-                let assignment = Assignment(instanceName: instanceName, deviceUUID: deviceUUID, time: time)
+                let assignment = Assignment(instanceName: instanceName, deviceUUID: deviceUUID, time: time, enabled: false)
                 do {
                     try assignment.delete()
                 } catch {
@@ -1874,6 +1874,7 @@ class WebReqeustHandler {
         let selectedInstance = request.param(name: "instance")
         let time = request.param(name: "time")
         let onComplete = request.param(name: "oncomplete")
+        let enabled = request.param(name: "enabled")
         
         var data = data
         let instances: [Instance]
@@ -1925,7 +1926,8 @@ class WebReqeustHandler {
             return data
         }
         do {
-            let assignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt)
+            let assignmentEnabled = enabled == "checked"
+            let assignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt, enabled: assignmentEnabled)
             try assignment.create()
             AssignmentController.global.addAssignment(assignment: assignment)
         } catch {
@@ -2000,6 +2002,17 @@ class WebReqeustHandler {
                 formattedTime = "\(String(format: "%02d", times.hours)):\(String(format: "%02d", times.minutes)):\(String(format: "%02d", times.seconds))"
             }
             data["time"] = formattedTime
+            //TODO: Find better way to get enabled value
+            let assignment: Assignment
+            do {
+                assignment = try Assignment.getByUUID(instanceName: selectedInstance, deviceUUID: selectedDevice, time: time)!
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+            data["enabled"] = assignment.enabled ? "checked" : ""
             
             if selectedDevice == nil || selectedInstance == nil {
                 data["show_error"] = true
@@ -2017,6 +2030,7 @@ class WebReqeustHandler {
         let selectedDevice = request.param(name: "device")
         let selectedInstance = request.param(name: "instance")
         let time = request.param(name: "time")
+        let enabled = request.param(name: "enabled")
         
         var data = data
 
@@ -2069,8 +2083,9 @@ class WebReqeustHandler {
             }
         
             do {
-                let newAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt)
-                try newAssignment.save(oldInstanceName: oldInstanceName, oldDeviceUUID: oldDeviceUUID, oldTime: oldTime)
+                let assignmentEnabled = enabled == "checked";
+                let newAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt, enabled: assignmentEnabled)
+                try newAssignment.save(oldInstanceName: oldInstanceName, oldDeviceUUID: oldDeviceUUID, oldTime: oldTime, enabled: assignmentEnabled)
                 AssignmentController.global.editAssignment(oldAssignment: oldAssignment, newAssignment: newAssignment)
             } catch {
                 data["show_error"] = true

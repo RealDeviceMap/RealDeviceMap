@@ -1049,6 +1049,7 @@ class ApiRequestHandler {
                     } else {
                         assignmentData["time"] = assignment.time as Any
                     }
+                    assignmentData["enabled"] = assignment.enabled ? "Yes" : "No"
                     
                     jsonArray.append(assignmentData)
                 }
