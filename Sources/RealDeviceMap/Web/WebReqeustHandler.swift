@@ -573,7 +573,19 @@ class WebReqeustHandler {
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .badRequest)
             }
+        case .dashboardAssignmentsDeleteAll:
+            data["page_is_dashboard"] = true
             
+            do {
+                try! Assignment.deleteAll()
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+            }
+            response.redirect(path: "/dashboard/assignments")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
         case .dashboardAccounts:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"

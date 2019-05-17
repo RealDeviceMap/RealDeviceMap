@@ -96,6 +96,24 @@ class Assignment: Equatable {
         }
     }
 
+    public static func deleteAll(mysql: MySQL?=nil) throws {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[Assignment] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+            DELETE FROM assignment
+        """
+        
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
     
     public static func getAll(mysql: MySQL?=nil) throws -> [Assignment] {
         
