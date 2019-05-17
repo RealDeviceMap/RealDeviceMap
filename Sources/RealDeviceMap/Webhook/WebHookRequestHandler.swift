@@ -626,6 +626,25 @@ class WebHookRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if type == "error_26" {
+            do {
+                guard
+                    let device = try Device.getById(mysql: mysql, id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
+                    else {
+                        response.respondWithError(status: .notFound)
+                        return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "error_26"
+                    try account.save(mysql: mysql, update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else if type == "logged_out" {
             do {
                 guard
