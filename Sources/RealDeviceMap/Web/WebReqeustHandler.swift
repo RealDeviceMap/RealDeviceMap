@@ -1926,7 +1926,7 @@ class WebReqeustHandler {
             return data
         }
         do {
-            let assignmentEnabled = enabled == "checked"
+            let assignmentEnabled = enabled == "on"
             let assignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt, enabled: assignmentEnabled)
             try assignment.create()
             AssignmentController.global.addAssignment(assignment: assignment)
