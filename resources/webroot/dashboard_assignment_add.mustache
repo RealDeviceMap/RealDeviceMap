@@ -34,6 +34,10 @@
                 Time (Emtpy for "On Complete")
                 <input type="text" class="form-control" name="time" value="{{time}}" minlength="7" maxlength="8" placeholder="HH:MM:SS">
             </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="oncomplete">
+                <label class="form-check-label" for="oncomplete">Create On Complete Auto-Assignment</label>
+            </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>
         </form>
