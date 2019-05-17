@@ -5,12 +5,17 @@
 		$('.type-select').change(function() {
             if ($(this).val() === 'pokemon_iv') {
                 $('.pokemon_ids_text').removeClass('d-none');
+<<<<<<< HEAD
                 $('.scatter_pokemon_ids_text').removeClass('d-none');
                 $('#iv_queue_limit').removeClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
                 $('#iv_queue_limit').addClass('d-none');
+=======
+            } else {
+                $('.pokemon_ids_text').addClass('d-none');
+>>>>>>> Revert "Scatter Test"
             }
         });
     })
@@ -61,6 +66,7 @@
                 Pokemon IDs (first = highest priority)
                 <textarea class="form-control" rows="5" name="pokemon_ids">{{{pokemon_ids}}}</textarea>
             </div>
+<<<<<<< HEAD
             <div class="form-group scatter_pokemon_ids_text {{^pokemon_iv_selected}}d-none{{/pokemon_iv_selected}}">
                 Scatter Pokemon IDs ("*" for all, empty for none)
                 <textarea class="form-control" rows="5" name="scatter_pokemon_ids">{{{scatter_pokemon_ids}}}</textarea>
@@ -69,6 +75,8 @@
                 IV Queue Limit
                 <input type="number" class="form-control" name="iv_queue_limit" value="{{iv_queue_limit}}" step=1 min="1" max="9999" required>
             </div>
+=======
+>>>>>>> Revert "Scatter Test"
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>
         </form>

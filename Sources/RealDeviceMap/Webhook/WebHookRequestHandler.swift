@@ -294,6 +294,7 @@ class WebHookRequestHandler {
             data["pokemon_encounter_id"] = pokemonEncounterId!
         }
         
+<<<<<<< HEAD
         let listScatterPokemon = json["list_scatter_pokemon"] as? Bool ?? false
         if listScatterPokemon,
            pokemonCoords != nil,
@@ -335,6 +336,8 @@ class WebHookRequestHandler {
             data["scatter_pokemon"] = scatterPokemon
         }
         
+=======
+>>>>>>> Revert "Scatter Test"
         do {
             try response.respondWithData(data: data)
         } catch {
