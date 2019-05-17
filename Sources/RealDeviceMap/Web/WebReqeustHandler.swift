@@ -2083,7 +2083,7 @@ class WebReqeustHandler {
             }
         
             do {
-                let assignmentEnabled = enabled == "checked";
+                let assignmentEnabled = enabled == "on";
                 let newAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: timeInt, enabled: assignmentEnabled)
                 try newAssignment.save(oldInstanceName: oldInstanceName, oldDeviceUUID: oldDeviceUUID, oldTime: oldTime, enabled: assignmentEnabled)
                 AssignmentController.global.editAssignment(oldAssignment: oldAssignment, newAssignment: newAssignment)
