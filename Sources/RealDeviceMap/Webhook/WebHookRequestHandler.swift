@@ -438,6 +438,24 @@ class WebHookRequestHandler {
                     if pokemon != nil {
                         pokemon!.addEncounter(encounterData: encounter)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
+                    } else {
+                        let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude, longitude: encounter.wildPokemon.longitude)
+                        let center = S2LatLng(coord: centerCoord)
+                        let centerNormalizedPoint = center.normalized.point
+                        let circle = S2Cap(axis: centerNormalizedPoint, height: 0.0)
+                        let coverer = S2RegionCoverer()
+                        coverer.maxCells = 1
+                        coverer.maxLevel = 15
+                        coverer.minLevel = 15
+                        let cellIDs = coverer.getCovering(region: circle)
+                        if let cellID = cellIDs.first {
+                            let newPokemon = Pokemon(
+                                wildPokemon: encounter.wildPokemon,
+                                cellId: cellID.uid,
+                                timestampMs: UInt64(Date().timeIntervalSince1970 * 1000))
+                            newPokemon.addEncounter(encounterData: encounter)
+                            try? newPokemon.save(mysql: mysql, updateIV: true)
+                        }
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
