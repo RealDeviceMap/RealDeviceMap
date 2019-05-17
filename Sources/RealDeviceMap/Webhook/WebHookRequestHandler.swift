@@ -280,25 +280,6 @@ class WebHookRequestHandler {
             data["pokemon_encounter_id"] = pokemonEncounterId!
         }
         
-        let listScatterPokemon = json["list_scatter_pokemon"] as? Bool ?? false
-        if listScatterPokemon,
-           let uuid = json["uuid"] as? String,
-           let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) as? IVInstanceController {
-           
-            var scatterPokemon = [[String: Any]]()
-            for pokemon in wildPokemons {
-                let pokemonId = UInt16(pokemon.data.pokemonData.pokemonID.rawValue)
-                if controller.scatterPokemon.contains(pokemonId) {
-                    scatterPokemon.append([
-                        "lat": pokemon.data.latitude,
-                        "lon": pokemon.data.longitude,
-                        "pokemon_id": pokemonId
-                    ])
-                }
-            }
-            data["scatter_pokemon"] = scatterPokemon
-        }
-        
         do {
             try response.respondWithData(data: data)
         } catch {
