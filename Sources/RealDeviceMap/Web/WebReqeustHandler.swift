@@ -1875,6 +1875,7 @@ class WebReqeustHandler {
         let time = request.param(name: "time")
         let onComplete = request.param(name: "oncomplete")
         let enabled = request.param(name: "enabled")
+        let onComplete = request.param(name: "oncomplete")
         
         var data = data
         let instances: [Instance]
