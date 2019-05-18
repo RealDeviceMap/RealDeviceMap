@@ -207,6 +207,29 @@ $(function() {
 
     });
 
+    $('#exportSettings').on('click', function() {
+        var settings = {
+            gym: gymFilter,
+            raid: raidFilter,
+            pokemon: pokemonFilter,
+            quest: questFilter,
+            pokestop: pokestopFilter
+        };
+        var json = JSON.stringify(settings);
+        var blob = new Blob([json], {type: "application/json;chartset=utf-8"});
+        var el = document.createElement('a');
+        el.setAttribute('href', 'data:text/plain;chartset=utf-8,' + encodeURIComponent(json));
+        el.setAttribute('download', 'settings.json');
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        el.click();
+        document.body.removeChild(el);
+    });
+
+    $('#importSettings').on('click', function() {
+        $('#importSettingsFile').click();
+    });
+
     // If you see this: Don't tell anyone
     var d = new Date();
     if (d.getMonth() == 11 && d.getDate() >= 24) {
