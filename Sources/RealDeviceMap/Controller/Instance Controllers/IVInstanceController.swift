@@ -30,21 +30,14 @@ class IVInstanceController: InstanceControllerProto {
     private var shouldExit = false
     private var ivQueueLimit = 100
     
-<<<<<<< HEAD
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16]) {
-=======
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
->>>>>>> Revert "Scatter Test"
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
-<<<<<<< HEAD
         self.ivQueueLimit = ivQueueLimit
         self.scatterPokemon = scatterPokemon
-=======
->>>>>>> Revert "Scatter Test"
         
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
