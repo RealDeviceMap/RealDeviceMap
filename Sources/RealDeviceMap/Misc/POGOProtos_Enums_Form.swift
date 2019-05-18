@@ -129,6 +129,24 @@ extension POGOProtos_Enums_Form {
         .arceusDragon,
         .arceusDark,
         .arceusFairy,
+        .burmyPlant,
+        .burmySandy,
+        .burmyTrash,
+        .spinda08,
+        .spinda09,
+        .spinda10,
+        .spinda11,
+        .spinda12,
+        .spinda13,
+        .spinda14,
+        .spinda15,
+        .spinda16,
+        .spinda17,
+        .spinda18,
+        .spinda19,
+        .mewtwoA,
+        .mewtwoAIntro,
+        .mewtwoNormal,
     ]
     
     static var allFormsInString: [String] {
@@ -261,7 +279,28 @@ extension POGOProtos_Enums_Form {
         case .arceusDragon: return "493-115"
         case .arceusDark: return "493-116"
         case .arceusFairy: return "493-117"
-        default: return ""
+        case .burmyPlant: return "412-118"
+        case .burmySandy: return "412-119"
+        case .burmyTrash: return "412-120"
+        case .spinda08: return "327-121"
+        case .spinda09: return "327-122"
+        case .spinda10: return "327-123"
+        case .spinda11: return "327-124"
+        case .spinda12: return "327-125"
+        case .spinda13: return "327-126"
+        case .spinda14: return "327-127"
+        case .spinda15: return "327-128"
+        case .spinda16: return "327-129"
+        case .spinda17: return "327-130"
+        case .spinda18: return "327-131"
+        case .spinda19: return "327-132"
+        case .mewtwoA: return "150_133"
+        case .mewtwoAIntro: return "150_134"
+        case .mewtwoNormal: return "150_135"
+        case .unset:
+            return ""
+        case .UNRECOGNIZED(_):
+            return ""
         }
         
     }
