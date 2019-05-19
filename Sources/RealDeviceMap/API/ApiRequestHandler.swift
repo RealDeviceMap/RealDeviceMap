@@ -709,9 +709,8 @@ class ApiRequestHandler {
             
             var pokestopData = [[String: Any]]()
             
-            let pokestopLured: String
-            pokestopLured = Localizer.global.get(value: "filter_pokestop_lured")
-                
+            let pokestopLured = Localizer.global.get(value: "filter_pokestop_lured")
+            
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-off select-button-new" data-id="lured" data-type="pokestop-lured" data-info="hide">
@@ -722,7 +721,7 @@ class ApiRequestHandler {
             </label>
             </div>
             """
-                
+            
             let size = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="small">
@@ -739,7 +738,7 @@ class ApiRequestHandler {
             </label>
             </div>
             """
-                
+            
             pokestopData.append([
                 "id": [
                     "formatted": String(format: "%03d", 0),
@@ -750,7 +749,52 @@ class ApiRequestHandler {
                 "filter": filter,
                 "size": size,
                 "type": pokestopOptionsString
+            ])
+            
+            
+            for i in 1...4 {
+                let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                pokestopData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": pokestopLure,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": pokestopOptionsString
                 ])
+            }
         
             data["pokestop_filters"] = pokestopData
         }

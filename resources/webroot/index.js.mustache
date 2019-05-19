@@ -383,6 +383,11 @@ function loadStorage() {
         if (defaultPokestopFilter["lured"] === undefined) {
             defaultPokestopFilter["lured"] = {"show": false, "size": "normal"};
         }
+        for (var i = 1; i < 5; i++) {
+            if (defaultPokestopFilter["l" + i] === undefined) {
+                defaultPokestopFilter["l" + i] = {"show": true, "size": "normal"};
+            }
+        }
 
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilter = defaultPokestopFilter;
@@ -390,6 +395,11 @@ function loadStorage() {
         pokestopFilter = JSON.parse(pokestopFilterValue);
         if (pokestopFilter["lured"] === undefined) {
             pokestopFilter["lured"] = {"show": false, "size": "normal"};
+        }
+        for (var i = 1; i < 5; i++) {
+            if (pokestopFilter["l" + i] === undefined) {
+                pokestopFilter["l" + i] = {"show": true, "size": "normal"};
+            }
         }
     }
 }
@@ -558,7 +568,10 @@ function initMap() {
     $('#reset-pokestop-filter').on('click', function(event) {
         const defaultPokestopFilter = {};
         defaultPokestopFilter["lured"] = {"show": false, "size": pokestopFilterNew["lured"]["size"]};
-
+        for (var i = 1; i < 5; i++) {
+            defaultPokestopFilter["l" + i] = {"show": true, "size": pokestopFilterNew["l" + i]["size"]};
+        }
+        
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilterNew = defaultPokestopFilter;
 
@@ -568,6 +581,9 @@ function initMap() {
     $('#disable-all-pokestop-finder').on('click', function(event) {
         const defaultPokestopFilter = {};
         defaultPokestopFilter["lured"] = {"show": false, "size": pokestopFilterNew["lured"]["size"]};
+        for (var i = 1; i < 5; i++) {
+            defaultPokestopFilter["l" + i] = {"show": false, "size": pokestopFilterNew["l" + i]["size"]};
+        }
 
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilterNew = defaultPokestopFilter;
@@ -900,6 +916,11 @@ function loadData() {
     if (showPokestops) {
         if (pokestopFilter["lured"]["show"] !== false) {
             pokestopFilterExclude.push("lured");
+        }
+        for (var i = 1; i < 5; i++) {
+            if (pokestopFilter["l" + i]["show"] === false) {
+                pokestopFilterExclude.push("l" + i);
+            }
         }
     }
 
