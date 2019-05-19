@@ -154,7 +154,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             weather = wildPokemon.pokemonData.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
         }
         
-        if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs >= 0 {
+        if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
             expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
             expireTimestampVerified = true
         } else {
