@@ -209,11 +209,17 @@ $(function() {
 
     $('#exportSettings').on('click', function() {
         var settings = {
-            gym: gymFilter,
-            raid: raidFilter,
-            pokemon: pokemonFilter,
-            quest: questFilter,
-            pokestop: pokestopFilter
+            show_gyms: showGyms,
+            show_raids: showRaids,
+            show_pokemon: showPokemon,
+            show_quests: showQuests,
+            show_pokestops: showPokestops,
+            show_cells: showCells,
+            gym: gymFilterNew,
+            raid: raidFilterNew,
+            pokemon: pokemonFilterNew,
+            quest: questFilterNew,
+            pokestop: pokestopFilterNew
         };
         var json = JSON.stringify(settings);
         var blob = new Blob([json], {type: "application/json;chartset=utf-8"});
@@ -229,6 +235,8 @@ $(function() {
     $('#importSettings').on('click', function() {
         $('#importSettingsFile').click();
     });
+
+    document.getElementById('importSettingsFile').addEventListener('change', loadFilterSettings, false);
 
     // If you see this: Don't tell anyone
     var d = new Date();
@@ -3492,4 +3500,104 @@ function loadSpawnpointFilter() {
         dataTable.responsive.recalc();
         dataTable.columns.adjust();
     });
+}
+function loadFilterSettings(e) {
+    var file = e.target.files[0];
+    if (!file) {
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(file) {
+        var contents = file.target.result;
+        var obj = JSON.parse(contents);
+
+        showGyms = obj.show_gyms;
+        console.log("Gyms:", showGyms);
+        gymFilterNew = obj.gym;
+        store('show_gyms', showGyms);
+        store('gym_filter', JSON.stringify(gymFilterNew));
+
+        showRaids = obj.show_raids;
+        raidFilterNew = obj.raid;
+        store('show_raids', showRaids);
+        store('raid_filter', JSON.stringify(raidFilterNew));
+
+        showPokemon = obj.show_pokemon,
+        pokemonFilterNew = obj.pokemon;
+        store('show_pokemon', showRaids);
+        store('pokemon_filter', JSON.stringify(pokemonFilterNew));
+
+        showQuests = obj.show_quests;
+        questFilterNew = obj.quest;
+        store('show_quests', showRaids);
+        store('quest_filter', JSON.stringify(questFilterNew));
+
+        showPokestops = obj.show_pokestops;
+        console.log("Pokestops:", showPokestops);
+        pokestopFilterNew = obj.pokestop;
+        store('show_pokestops', showPokestops);
+        store('pokestop_filter', pokestopFilterNew);
+
+        if (showGyms) {
+            $('#show-gyms').addClass('active');
+            $('#hide-gyms').removeClass('active');
+        } else {
+            $('#hide-gyms').addClass('active');
+            $('#show-gyms').removeClass('active');
+        }
+
+        if (showRaids) {
+            $('#show-raids').addClass('active');
+            $('#hide-raids').removeClass('active');
+        } else {
+            $('#hide-raids').addClass('active');
+            $('#show-raids').removeClass('active');
+        }
+
+        if (showPokestops) {
+            $('#show-pokestops').addClass('active');
+            $('#hide-pokestops').removeClass('active');
+        } else {
+            $('#hide-pokestops').addClass('active');
+            $('#show-pokestops').removeClass('active');
+        }
+
+        if (showQuests) {
+            $('#show-quests').addClass('active');
+            $('#hide-quests').removeClass('active');
+        } else {
+            $('#hide-quests').addClass('active');
+            $('#show-quests').removeClass('active');
+        }
+
+        if (showPokemon) {
+            $('#show-pokemon').addClass('active');
+            $('#hide-pokemon').removeClass('active');
+        } else {
+            $('#hide-pokemon').addClass('active');
+            $('#show-pokemon').removeClass('active');
+        }
+
+        if (showSpawnpoints) {
+            $('#show-spawnpoints').addClass('active');
+            $('#hide-spawnpoints').removeClass('active');
+        } else {
+            $('#hide-spawnpoints').addClass('active');
+            $('#show-spawnpoints').removeClass('active');
+        }
+
+        if (showCells) {
+            $('#show-cells').addClass('active');
+            $('#hide-cells').removeClass('active');
+        } else {
+            $('#hide-cells').addClass('active');
+            $('#show-cells').removeClass('active');
+        }
+        
+        loadStorage();
+        loadData();
+
+        //TODO: Load UI settings
+    };
+    reader.readAsText(file);
 }
