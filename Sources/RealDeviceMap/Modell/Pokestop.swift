@@ -429,8 +429,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 if filter.contains(string: "lured") {
                     excludeAllButLured = true
                 } else if filter.contains(string: "l") {
-                    if let id = filter.stringByReplacing(string: "i", withString: "").toInt() {
-                        excludedLures.append(id)
+                    if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
+                        excludedLures.append(id + 500)
                     }
                 }
             }
@@ -489,7 +489,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if excludedLures.isEmpty {
             excludeLureSQL = ""
         } else {
-            var sqlExcludeCreate = "AND (ure_id = 0 OR lure_id NOT IN ("
+            var sqlExcludeCreate = "AND (lure_id NOT IN ("
             for _ in excludedLures {
                 sqlExcludeCreate += "?, "
             }

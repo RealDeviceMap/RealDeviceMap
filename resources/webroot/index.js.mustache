@@ -1263,7 +1263,8 @@ function getRaidSize(id) {
 }
 
 function getPokestopSize(lureId) {
-    const size = pokestopFilter["l" + lureId]["size"];
+    var lureIconId = getLureIconId(lureId);
+    const size = pokestopFilter["l" + lureIconId]["size"];
     if (size === "small") {
         return 20;
     } else if (size == "large") {
@@ -2266,6 +2267,27 @@ function manageSelectButton(e, isNew) {
                 shouldShow = pokestopFilterNew[id]["size"] === "huge";
                 break;
         }
+    } else if (type === "pokestop-lure") {
+        switch (info) {
+            case "hide":
+                shouldShow = pokestopFilterNew["l" + id]["show"] === false;
+                break;
+            case "show":
+                shouldShow = pokestopFilterNew["l" + id]["show"] === true;
+                break;
+            case "small":
+                shouldShow = pokestopFilterNew["l" + id]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = pokestopFilterNew["l" + id]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = pokestopFilterNew["l" + id]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = pokestopFilterNew["l" + id]["size"] === "huge";
+                break;
+        }
     } else {
         shouldShow = false;
     }
@@ -2498,6 +2520,27 @@ function manageSelectButton(e, isNew) {
                         break;
                     case "huge":
                         pokestopFilterNew[id]["size"] = "huge";
+                        break;
+                }
+            } else if (type === "pokestop-lure") {
+                switch (info) {
+                    case "hide":
+                        pokestopFilterNew["l" + id]["show"] = false;
+                        break;
+                    case "show":
+                        pokestopFilterNew["l" + id]["show"] = true;
+                        break;
+                    case "small":
+                        pokestopFilterNew["l" + id]["size"] = "small";
+                        break;
+                    case "normal":
+                        pokestopFilterNew["l" + id]["size"] = "normal";
+                        break;
+                    case "large":
+                        pokestopFilterNew["l" + id]["size"] = "large";
+                        break;
+                    case "huge":
+                        pokestopFilterNew["l" + id]["size"] = "huge";
                         break;
                 }
             }

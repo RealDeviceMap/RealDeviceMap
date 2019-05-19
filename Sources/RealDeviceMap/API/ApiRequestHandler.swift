@@ -757,10 +757,10 @@ class ApiRequestHandler {
                 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="hide">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="hide">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                 </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="show">
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="show">
                 <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                 </label>
                 </div>
@@ -768,16 +768,16 @@ class ApiRequestHandler {
                 
                 let size = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="small">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="small">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="normal">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="normal">
                 <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="large">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="large">
                 <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="l\(i)" data-type="pokestop-lured" data-info="huge">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="huge">
                 <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
                 </label>
                 </div>
