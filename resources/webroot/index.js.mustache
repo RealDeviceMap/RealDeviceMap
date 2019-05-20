@@ -214,6 +214,7 @@ $(function() {
             show_pokemon: showPokemon,
             show_quests: showQuests,
             show_pokestops: showPokestops,
+            show_spawnpoints: showSpawnpoints,
             show_cells: showCells,
             gym: gymFilterNew,
             raid: raidFilterNew,
@@ -2190,7 +2191,7 @@ function getGymMarkerIcon(gym, ts) {
 			}
 
             //Raid Boss
-            var iconSize = getRaidSize("p" + gym.raid_pokemon_id);
+            var iconSize = getRaidSize("hatched");
             icon = L.icon({
                 iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_' + pokemonIdString+ '.png',
                 iconSize: 		[iconSize, iconSize * 1.667],
@@ -3512,7 +3513,6 @@ function loadFilterSettings(e) {
         var obj = JSON.parse(contents);
 
         showGyms = obj.show_gyms;
-        console.log("Gyms:", showGyms);
         gymFilterNew = obj.gym;
         store('show_gyms', showGyms);
         store('gym_filter', JSON.stringify(gymFilterNew));
@@ -3533,10 +3533,15 @@ function loadFilterSettings(e) {
         store('quest_filter', JSON.stringify(questFilterNew));
 
         showPokestops = obj.show_pokestops;
-        console.log("Pokestops:", showPokestops);
         pokestopFilterNew = obj.pokestop;
         store('show_pokestops', showPokestops);
         store('pokestop_filter', pokestopFilterNew);
+
+        showSpawnpoints = obj.show_spawnpoints;
+        store('show_spawnpoints', showSpawnpoints);
+
+        showCells = obj.show_cells;
+        store('show_cells', showCells);
 
         if (showGyms) {
             $('#show-gyms').addClass('active');
@@ -3593,11 +3598,12 @@ function loadFilterSettings(e) {
             $('#hide-cells').addClass('active');
             $('#show-cells').removeClass('active');
         }
-        
-        loadStorage();
-        loadData();
 
-        //TODO: Load UI settings
+        $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false);
     };
     reader.readAsText(file);
 }
