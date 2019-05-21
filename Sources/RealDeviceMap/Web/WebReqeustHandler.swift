@@ -1823,8 +1823,8 @@ class WebReqeustHandler {
             data["error"] = "Failed to assign Device."
             return data
         }
-        let createOnComplete = onComplete == "on"
-        if createOnComplete {
+
+        if onComplete == "on" {
             do {
                 let onCompleteAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: 0)
                 try onCompleteAssignment.create()
