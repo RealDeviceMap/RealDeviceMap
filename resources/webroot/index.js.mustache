@@ -1592,7 +1592,7 @@ function getPokestopMarker(pokestop, ts) {
 }
 
 function getSpawnpointMarkerIcon(spawnpoint, ts) {
-    var iconId = spawnpoint.despawn_second > 0 ? 1 : 0;
+    var iconId = spawnpoint.despawn_second != null ? 1 : 0;
     const icon = L.icon({
         iconUrl:		'/static/img/spawnpoint/' + iconId + '.png',
         iconSize:		[10, 10],
@@ -1607,7 +1607,13 @@ function getSpawnpointMarker(spawnpoint, ts) {
         icon: getSpawnpointMarkerIcon(spawnpoint, ts),
         forceZIndex: 10
     });
-    marker.bindPopup('<center><h6><b>Spawnpoint</b></h6></center>');
+    var content = '<center><h6><b>Spawnpoint</b></h6></center>';
+    var hasTimer = spawnpoint.despawn_second != null;
+    if (hasTimer) {
+        var timer = Math.round(spawnpoint.despawn_second / 60);
+        content += '<br><b>Despawn Timer:</b> ' + timer + ' minutes';
+    }
+    marker.bindPopup(content);
     return marker;
 }
 
