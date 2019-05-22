@@ -100,17 +100,36 @@ class SpawnPoint: JSONConvertibleObject{
 
     }
     
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [SpawnPoint] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, spawnpointFilterExclude: [String]?=nil) throws -> [SpawnPoint] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        var excludedTypes = [Int]()
+        
+        if spawnpointFilterExclude != nil {
+            for filter in spawnpointFilterExclude! {
+                if filter.contains(string: "l") {
+                    if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
+                        excludedTypes.append(id)
+                    }
+                }
+            }
+        }
+        
+        let excludeTypeSQL: String
+        if excludedTypes.isEmpty {
+            excludeTypeSQL = ""
+        } else {
+            excludeTypeSQL = "AND (despawn_sec IS NOT NULL)"
+        }
+        
         let sql = """
             SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTypeSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -120,6 +139,8 @@ class SpawnPoint: JSONConvertibleObject{
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
+        
+        //mysqlStmt.bindParam(hasTimer)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")

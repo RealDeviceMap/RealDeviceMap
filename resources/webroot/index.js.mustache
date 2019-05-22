@@ -26,6 +26,9 @@ let gymFilterNew = {};
 let pokestopFilter = {};
 let pokestopFilterNew = {};
 
+let spawnpointFilter = {};
+let spawnpointFilterNew = {};
+
 let hiddenPokemonIds = [];
 
 let openedPokemon;
@@ -51,6 +54,7 @@ let questFilterLoaded = false;
 let raidFilterLoaded = false;
 let gymFilterLoaded = false;
 let pokestopFilterLoaded = false;
+let spawnpointFiltersLoaded = false;
 
 let tileLayer;
 
@@ -93,6 +97,7 @@ $(function() {
         raidFilterNew = $.extend(true, {}, raidFilter);
         gymFilterNew = $.extend(true, {}, gymFilter);
         pokestopFilterNew = $.extend(true, {}, pokestopFilter);
+        spawnpointFilterNew = $.extend(true, {}, spawnpointFilter);
 
         $('.select-button').each(function (button) {
             manageSelectButton($(this), false);
@@ -124,6 +129,11 @@ $(function() {
         if (!pokestopFilterLoaded) {
             pokestopFilterLoaded = true;
             loadPokestopFilter();
+        }
+
+        if (!spawnpointFilterLoaded) {
+            spawnpointFilterLoaded = true;
+            loadSpawnpointFilter();
         }
 
     });
@@ -402,6 +412,18 @@ function loadStorage() {
             }
         }
     }
+
+    //TODO: Init spawnpoint filter
+    const spawnpointFilterValue = retrieve('spawnpoint_filter');
+    if (spawnpointFilterValue === null) {
+        const defaultSpawnpointFilter = {};
+
+        store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
+        spawnpointFilter = defaultSpawnpointFilter;
+    } else {
+        spawnpointFilter = JSON.parse(spawnpointFilterValue);
+
+    }
 }
 
 function initMap() {
@@ -578,7 +600,7 @@ function initMap() {
         $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false);
     });
 
-    $('#disable-all-pokestop-finder').on('click', function(event) {
+    $('#disable-all-pokestop-filter').on('click', function(event) {
         const defaultPokestopFilter = {};
         defaultPokestopFilter["lured"] = {"show": false, "size": pokestopFilterNew["lured"]["size"]};
         for (var i = 1; i < 5; i++) {
@@ -589,6 +611,24 @@ function initMap() {
         pokestopFilterNew = defaultPokestopFilter;
 
         $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false);
+    });
+
+    $('#reset-spawnpoint-filter').on('click', function(event) {
+        const defaultSpawnpointFilter = {};
+
+        store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
+        spawnpointFilterNew = defaultSpawnpointFilter;
+
+        $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false);
+    });
+
+    $('#disable-all-spawnpoint-filter').on('click', function(event) {
+        const defaultSpawnpointFilter = {};
+
+        store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
+        spawnpointFilterNew = defaultSpawnpointFilter;
+
+        $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false);
     });
 
 	$('#saveSettings').on('click', function(event) {
@@ -704,6 +744,7 @@ function initMap() {
         gymFilter = gymFilterNew;
         pokestopFilter = pokestopFilterNew;
         raidFilter = raidFilterNew;
+        spawnpointFilter = spawnpointFilterNew
         //const raidFilterOld = $.extend(true, {}, raidFilter);
         const newGymMarkers = [];
         $.each(gymMarkers, function(index, gym) {
@@ -729,6 +770,7 @@ function initMap() {
         store('raid_filter',JSON.stringify(raidFilter));
         store('gym_filter', JSON.stringify(gymFilter));
         store('pokestop_filter', JSON.stringify(pokestopFilter));
+        store('spawnpoint_filter', JSON.stringify(spawnpointFilter));
         store('show_cells', newShowCells);
         showCells = newShowCells;
 
@@ -922,6 +964,11 @@ function loadData() {
                 pokestopFilterExclude.push("l" + i);
             }
         }
+    }
+
+    const spawnpointFilterExclude = [];
+    if (showSpawnpoints) {
+
     }
 
     const data = {
@@ -3113,6 +3160,94 @@ function loadPokestopFilter() {
 
     $('#filterPokestopModal').on("shown.bs.modal", function () {
         const dataTable= $('#table-filter-pokestop').DataTable();
+        dataTable.responsive.recalc();
+        dataTable.columns.adjust();
+    });
+}
+
+function loadSpawnpointFilter() {
+    const scrollHeight = $(document).height() * 0.5;
+    const table = $('#table-filter-spawnpoint').DataTable( {
+        "language": {
+            "search": i18n('filter_table_search'),
+            "emptyTable": i18n('filter_spawnpoint_table_empty'),
+            "zeroRecords": i18n('filter_spawnpoint_table_empty'),
+        },
+        rowGroup: {
+            dataSrc: "type"
+        },
+        "autoWidth": false,
+        "columns": [
+            { "data": "image", "width": "5%", "className": 'details-control'},
+            { "data": "name", "width": "15%" },
+            { "data": {
+                    _:    "id.formatted",
+                    sort: "id.sort"
+                }, "width": "5%" },
+            { "data": "filter" },
+            { "data": "size" }
+        ],
+        "ajax": {
+            "url": "/api/get_data?show_spawnpoint_filter=true",
+            "dataSrc": "data.spawnpoint_filters"
+        },
+        "info":     false,
+        "order": [[ 2, "asc" ]],
+        "search.caseInsensitive": true,
+        "columnDefs": [ {
+            "targets": [0,3,4],
+            "orderable": false
+        },{
+            "type": "num",
+            "targets": 2
+        } ],
+        "deferRender": true,
+        "scrollY": scrollHeight,
+        "scrollCollapse": false,
+        "scroller": true,
+        "lengthChange": false,
+        "dom": "lfrti",
+        "drawCallback": function( settings ) {
+            $('.lazy_load').each(function () {
+                var img = $(this);
+                img.removeClass("lazy_load");
+                img.attr('src', img.data('src'));
+            });
+
+            $('.select-button-new').each(function (button) {
+                manageSelectButton($(this), true);
+            });
+            $('.configure-button-new').each(function (button) {
+                manageConfigureButton($(this), true);
+            });
+        },
+        "responsive": true
+    });
+
+    $('#table-filter-spawnpoint tbody').on('click', 'td.details-control', function () {
+        $('.select-button-new').each(function (button) {
+            manageSelectButton($(this), true);
+        });
+        $('.configure-button-new').each(function (button) {
+            manageConfigureButton($(this), true);
+        });
+    } );
+
+    table.on( 'search.dt', function () {
+        $( "tr" ).each(function() {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('parent');
+
+            };
+        })
+    } );
+
+
+    $('#filterSpawnpointModal').on("shown.bs.modal", function () {
+        const dataTable= $('#table-filter-spawnpoint').DataTable();
         dataTable.responsive.recalc();
         dataTable.columns.adjust();
     });

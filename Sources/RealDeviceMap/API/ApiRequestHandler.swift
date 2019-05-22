@@ -43,6 +43,7 @@ class ApiRequestHandler {
         let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let gymFilterExclude = request.param(name: "gym_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let pokestopFilterExclude = request.param(name: "pokestop_filter_exclude")?.jsonDecodeForceTry() as? [String]
+        let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
@@ -54,6 +55,7 @@ class ApiRequestHandler {
         let showRaidFilter = request.param(name: "show_raid_filter")?.toBool() ?? false
         let showGymFilter = request.param(name: "show_gym_filter")?.toBool() ?? false
         let showPokestopFilter = request.param(name: "show_pokestop_filter")?.toBool() ?? false
+        let showSpawnpointFilter = request.param(name: "show_spawnpoint_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
@@ -146,7 +148,7 @@ class ApiRequestHandler {
             data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude, pokemonFilterIV: pokemonFilterIV)
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
-            data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+            data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, spawnpointFilterExclude: spawnpointFilterExclude)
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
@@ -797,6 +799,22 @@ class ApiRequestHandler {
             }
         
             data["pokestop_filters"] = pokestopData
+        }
+        
+        if permViewMap && showSpawnpointFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let spawnpointOptionsString = Localizer.global.get(value: "filter_spawnpoint_options")
+            
+            var spawnpointData = [[String: Any]]()
+            
+            data["spawnpoint_filters"] = spawnpointData
         }
         
         if showDevices && perms.contains(.admin) {
