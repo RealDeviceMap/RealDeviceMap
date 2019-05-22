@@ -811,8 +811,90 @@ class ApiRequestHandler {
             let hugeString = Localizer.global.get(value: "filter_huge")
             
             let spawnpointOptionsString = Localizer.global.get(value: "filter_spawnpoint_options")
+            let spawnpointWithTimerString = Localizer.global.get(value: "filter_spawnpoint_with_timer")
+            let spawnpointWithoutTimerString = Localizer.global.get(value: "filter_spawnpoint_without_timer")
             
             var spawnpointData = [[String: Any]]()
+            
+            var filter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            var size = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            spawnpointData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 0),
+                    "sort": 0
+                ],
+                "name": spawnpointWithoutTimerString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/0.png\" style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": size,
+                "type": spawnpointOptionsString
+            ])
+            
+            filter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            size = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            spawnpointData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 1),
+                    "sort": 1
+                ],
+                "name": spawnpointWithTimerString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/1.png\" style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": size,
+                "type": spawnpointOptionsString
+            ])
             
             data["spawnpoint_filters"] = spawnpointData
         }

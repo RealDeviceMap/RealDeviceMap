@@ -54,7 +54,7 @@ let questFilterLoaded = false;
 let raidFilterLoaded = false;
 let gymFilterLoaded = false;
 let pokestopFilterLoaded = false;
-let spawnpointFiltersLoaded = false;
+let spawnpointFilterLoaded = false;
 
 let tileLayer;
 
@@ -413,16 +413,26 @@ function loadStorage() {
         }
     }
 
-    //TODO: Init spawnpoint filter
     const spawnpointFilterValue = retrieve('spawnpoint_filter');
     if (spawnpointFilterValue === null) {
         const defaultSpawnpointFilter = {};
+        if (defaultSpawnpointFilter["no-timer"] === undefined) {
+            defaultSpawnpointFilter["no-timer"] = {"show": true, "size": "normal"};
+        }
+        if (defaultSpawnpointFilter["with-timer"] === undefined) {
+            defaultSpawnpointFilter["with-timer"] = {"show": true, "size": "normal"};
+        }
 
         store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
         spawnpointFilter = defaultSpawnpointFilter;
     } else {
         spawnpointFilter = JSON.parse(spawnpointFilterValue);
-
+        if (spawnpointFilter["no-timer"] === undefined) {
+            spawnpointFilter["no-timer"] = {"show": true, "size": "normal"};
+        }
+        if (spawnpointFilter["with-timer"] === undefined) {
+            spawnpointFilter["with-timer"] = {"show": true, "size": "normal"};
+        }
     }
 }
 
@@ -615,6 +625,8 @@ function initMap() {
 
     $('#reset-spawnpoint-filter').on('click', function(event) {
         const defaultSpawnpointFilter = {};
+        defaultSpawnpointFilter["no-timer"] = {"show": true, "size": spawnpointFilterNew["no-timer"]["size"]};
+        defaultSpawnpointFilter["with-timer"] = {"show": true, "size": spawnpointFilterNew["with-timer"]["size"]};
 
         store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
         spawnpointFilterNew = defaultSpawnpointFilter;
@@ -624,6 +636,8 @@ function initMap() {
 
     $('#disable-all-spawnpoint-filter').on('click', function(event) {
         const defaultSpawnpointFilter = {};
+        defaultSpawnpointFilter["no-timer"] = {"show": false, "size": spawnpointFilterNew["no-timer"]["size"]};
+        defaultSpawnpointFilter["with-timer"] = {"show": false, "size": spawnpointFilterNew["with-timer"]["size"]};
 
         store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
         spawnpointFilterNew = defaultSpawnpointFilter;
@@ -744,7 +758,7 @@ function initMap() {
         gymFilter = gymFilterNew;
         pokestopFilter = pokestopFilterNew;
         raidFilter = raidFilterNew;
-        spawnpointFilter = spawnpointFilterNew
+        spawnpointFilter = spawnpointFilterNew;
         //const raidFilterOld = $.extend(true, {}, raidFilter);
         const newGymMarkers = [];
         $.each(gymMarkers, function(index, gym) {
@@ -968,7 +982,12 @@ function loadData() {
 
     const spawnpointFilterExclude = [];
     if (showSpawnpoints) {
-
+        if (spawnpointFilter["no-timer"]["show"] === false) {
+            spawnpointFilterExclude.push("no-timer");
+        }
+        if (spawnpointFilter["with-timer"]["show"] === false) {
+            spawnpointFilterExclude.push("with-timer");
+        }
     }
 
     const data = {
@@ -988,6 +1007,7 @@ function loadData() {
         'raid_filter_exclude': JSON.stringify(raidFilterExclude),
         'gym_filter_exclude': JSON.stringify(gymFilterExclude),
         'pokestop_filter_exclude': JSON.stringify(pokestopFilterExclude),
+        'spawnpoint_filter_exclude': JSON.stringify(spawnpointFilterExclude),
         'show_spawnpoints': showSpawnpoints,
         'show_cells': showCells,
         'last_update': lastUpdateServer,
@@ -1322,6 +1342,8 @@ function getPokestopSize(lureId) {
         return 30;
     }
 }
+
+//TODO: Calculate spawnpoint size?
 
 // MARK: - Local Storage
 
@@ -1977,7 +1999,7 @@ function getPokestopMarker(pokestop, ts) {
 function getSpawnpointMarkerIcon(spawnpoint, ts) {
     var iconId = spawnpoint.despawn_second != null ? 1 : 0;
     const icon = L.icon({
-        iconUrl:		'/static/img/spawnpoint/' + iconId + '.png',
+        iconUrl:		'/static/img/spawnpoint/' + (spawnpoint.despawn_second != null ? 1 : 0) + '.png',
         iconSize:		[10, 10],
         iconAnchor:		[5, 5],
         popupAnchor:	[0, -5]
@@ -2335,6 +2357,27 @@ function manageSelectButton(e, isNew) {
                 shouldShow = pokestopFilterNew["l" + id]["size"] === "huge";
                 break;
         }
+    } else if (type === "spawnpoint-timer") {
+        switch (info) {
+            case "hide":
+                shouldShow = spawnpointFilterNew[id]["show"] === false;
+                break;
+            case "show":
+                shouldShow = spawnpointFilterNew[id]["show"] === true;
+                break;
+            case "small":
+                shouldShow = spawnpointFilterNew[id]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = spawnpointFilterNew[id]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = spawnpointFilterNew[id]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = spawnpointFilterNew[id]["size"] === "huge";
+                break;
+        }
     } else {
         shouldShow = false;
     }
@@ -2588,6 +2631,27 @@ function manageSelectButton(e, isNew) {
                         break;
                     case "huge":
                         pokestopFilterNew["l" + id]["size"] = "huge";
+                        break;
+                }
+            } else if (type === "spawnpoint-timer") {
+                switch (info) {
+                    case "hide":
+                        spawnpointFilterNew[id]["show"] = false;
+                        break;
+                    case "show":
+                        spawnpointFilterNew[id]["show"] = true;
+                        break;
+                    case "small":
+                        spawnpointFilterNew[id]["size"] = "small";
+                        break;
+                    case "normal":
+                        spawnpointFilterNew[id]["size"] = "normal";
+                        break;
+                    case "large":
+                        spawnpointFilterNew[id]["size"] = "large";
+                        break;
+                    case "huge":
+                        spawnpointFilterNew[id]["size"] = "huge";
                         break;
                 }
             }

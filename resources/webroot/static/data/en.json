@@ -42,12 +42,14 @@
 		"filter_raid_filter": "Raid Filter",
 		"filter_gym_filter": "Gym Filter",
 		"filter_pokestop_filter": "Pokestop Filter",
+		"filter_spawnpoint_filter": "Spawnpoint Filter",
 		"filter_table_search": "Search:",
 		"filter_pokemon_table_empty": "No matching Pokemon found",
 		"filter_quest_table_empty": "No matching Quests found",
 		"filter_raid_table_empty": "No matching Raids found",
 		"filter_gym_table_empty": "No matching Gyms found",
 		"filter_pokestop_table_empty": "No matching Pokestops found",
+		"filter_spawnpoint_table_empty": "No matching Spawnpoints found",
 		"filter_global_iv": "Global IV Limit",
         "filter_and": "And",
         "filter_or": "Or",
@@ -1486,6 +1488,9 @@
 		"filter_pokestop_lure_1": "Normal Lure",
         "filter_pokestop_lure_2": "Glacial Lure",
         "filter_pokestop_lure_3": "Mossy Lure",
-        "filter_pokestop_lure_4": "Magnetic Lure"
+		"filter_pokestop_lure_4": "Magnetic Lure",
+		"filter_spawnpoint_options": "Options",
+		"filter_spawnpoint_with_timer": "With Timer",
+		"filter_spawnpoint_without_timer": "Without Timer"
     }
 }

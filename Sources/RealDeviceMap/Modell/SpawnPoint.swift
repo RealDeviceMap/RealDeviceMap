@@ -107,29 +107,35 @@ class SpawnPoint: JSONConvertibleObject{
             throw DBController.DBError()
         }
         
-        var excludedTypes = [Int]()
-        
+        var excludeWithoutTimer = false
+        var excludeWithTimer = false        
         if spawnpointFilterExclude != nil {
             for filter in spawnpointFilterExclude! {
-                if filter.contains(string: "l") {
-                    if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
-                        excludedTypes.append(id)
-                    }
+                if filter.contains(string: "no-timer") {
+                    excludeWithoutTimer = true
+                } else if filter.contains(string: "with-timer") {
+                    excludeWithTimer = true
                 }
             }
         }
         
-        let excludeTypeSQL: String
-        if excludedTypes.isEmpty {
-            excludeTypeSQL = ""
+        let excludeWithoutTimerSQL: String
+        let excludeWithTimerSQL: String
+        if excludeWithoutTimer {
+            excludeWithoutTimerSQL = "AND (despawn_sec IS NOT NULL)"
         } else {
-            excludeTypeSQL = "AND (despawn_sec IS NOT NULL)"
+            excludeWithoutTimerSQL = ""
+        }
+        if excludeWithTimer {
+            excludeWithTimerSQL = "AND (despawn_sec IS NULL)"
+        } else {
+            excludeWithTimerSQL = ""
         }
         
         let sql = """
             SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTypeSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeWithoutTimerSQL) \(excludeWithTimerSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -139,8 +145,6 @@ class SpawnPoint: JSONConvertibleObject{
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
-        
-        //mysqlStmt.bindParam(hasTimer)
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
