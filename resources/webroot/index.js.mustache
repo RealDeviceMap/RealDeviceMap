@@ -220,7 +220,8 @@ $(function() {
             raid: raidFilterNew,
             pokemon: pokemonFilterNew,
             quest: questFilterNew,
-            pokestop: pokestopFilterNew
+            pokestop: pokestopFilterNew,
+            spawnpoint: spawnpointFilterNew
         };
         var json = JSON.stringify(settings);
         var blob = new Blob([json], {type: "application/json;chartset=utf-8"});
@@ -3538,7 +3539,9 @@ function loadFilterSettings(e) {
         store('pokestop_filter', pokestopFilterNew);
 
         showSpawnpoints = obj.show_spawnpoints;
+        spawnpointFilterNew = obj.spawnpoint;
         store('show_spawnpoints', showSpawnpoints);
+        store('spawnpoint_filter', spawnpointFilterNew)
 
         showCells = obj.show_cells;
         store('show_cells', showCells);
