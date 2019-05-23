@@ -119,7 +119,6 @@ class SpawnPoint: JSONConvertibleObject{
             }
         }
         
-        Log.debug(message: "Filter: ExcludeWithoutTimer: \(excludeWithoutTimer), ExcludeWithTimer: \(excludeWithTimer)")
         let excludeTimerSQL: String
         if !excludeWithoutTimer && !excludeWithTimer {
             excludeTimerSQL = ""
