@@ -119,23 +119,23 @@ class SpawnPoint: JSONConvertibleObject{
             }
         }
         
-        let excludeWithoutTimerSQL: String
-        let excludeWithTimerSQL: String
-        if excludeWithoutTimer {
-            excludeWithoutTimerSQL = "AND (despawn_sec IS NOT NULL)"
+        Log.debug(message: "Filter: ExcludeWithoutTimer: \(excludeWithoutTimer), ExcludeWithTimer: \(excludeWithTimer)")
+        let excludeTimerSQL: String
+        if !excludeWithoutTimer && !excludeWithTimer {
+            excludeTimerSQL = ""
+        } else if !excludeWithoutTimer && excludeWithTimer {
+            excludeTimerSQL = "AND (despawn_sec IS NULL)"
+        } else if excludeWithoutTimer && !excludeWithTimer {
+            excludeTimerSQL = "AND (despawn_sec IS NOT NULL)"
         } else {
-            excludeWithoutTimerSQL = ""
+            excludeTimerSQL = "AND (despawn_sec IS NULL AND despawn_sec IS NOT NULL)"
         }
-        if excludeWithTimer {
-            excludeWithTimerSQL = "AND (despawn_sec IS NULL)"
-        } else {
-            excludeWithTimerSQL = ""
-        }
+            
         
         let sql = """
             SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeWithoutTimerSQL) \(excludeWithTimerSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTimerSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)

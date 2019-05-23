@@ -755,6 +755,12 @@ function initMap() {
         });
         pokestopMarkers = newPokestopMarkers;
 
+        const newSpawnpointMarkers = [];
+        $.each(spawnpointMarkers, function (index, spawnpoint) {
+            map.removeLayer(spawnpoint.marker);
+        });
+        spawnpointMarkers = newSpawnpointMarkers;
+
         gymFilter = gymFilterNew;
         pokestopFilter = pokestopFilterNew;
         raidFilter = raidFilterNew;

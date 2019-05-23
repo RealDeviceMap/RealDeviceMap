@@ -829,7 +829,7 @@ class ApiRequestHandler {
             
             var size = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer data-info="small">
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="small">
             <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
             </label>
             <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="normal">
