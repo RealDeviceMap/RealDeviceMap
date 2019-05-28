@@ -653,7 +653,22 @@ class WebReqeustHandler {
                     response.completed(status: .internalServerError)
                     return
                 }
-                
+            } else if request.param(name: "clear_quests") == "true" {
+                do {
+                    let instance = try Instance.getByName(name: instanceName)!
+                    if instance.type == .autoQuest {
+                        try instance.clearQuests()
+                    }
+                    response.redirect(path: "/dashboard/instances")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    return
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
             } else if request.method == .post {
                 do {
                     data = try addEditInstance(data: data, request: request, response: response, instanceName: instanceName)
