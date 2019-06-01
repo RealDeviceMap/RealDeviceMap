@@ -188,7 +188,7 @@ class WebReqeustHandler {
             data["lon"] = lon ?? self.startLon
             data["zoom"] = zoom ?? self.startZoom
             
-            data["show_areas"] = perms.contains(.viewMap)
+            data["show_areas"] = perms.contains(.viewMap) && !self.cities.isEmpty
             data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
             for area in self.cities {
