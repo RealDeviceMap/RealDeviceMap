@@ -2652,3 +2652,7 @@ class WebReqeustHandler {
     }
     
 }
+
+struct Area {
+    let city: String
+}
