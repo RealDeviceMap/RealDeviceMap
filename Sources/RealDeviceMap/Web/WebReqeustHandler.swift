@@ -60,7 +60,7 @@ class WebReqeustHandler {
         data["title"] = title
 
         // Localize Navbar
-        let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
+        let navLoc = ["nav_dashboard", "nav_areas", "nav_stats", "nav_logout", "nav_register", "nav_login"]
         for loc in navLoc {
             data[loc] = localizer.get(value: loc)
         }
@@ -187,6 +187,15 @@ class WebReqeustHandler {
             data["lat"] = lat ?? self.startLat
             data["lon"] = lon ?? self.startLon
             data["zoom"] = zoom ?? self.startZoom
+            
+            data["show_areas"] = perms.contains(.viewMap)
+            data["page_is_areas"] = true
+            var areas = [Any]()
+            for area in self.cities {
+                let name = area.key.prefix(1).uppercased() + area.key.lowercased().dropFirst()
+                areas.append(["area": name])
+            }
+            data["areas"] = areas
 
             // Localize
             let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells", "filter_select_mapstyle", "filter_mapstyle"]
@@ -2405,4 +2414,8 @@ class WebReqeustHandler {
         return (perms, username)
     }
     
+}
+
+struct Area {
+    let city: String
 }
