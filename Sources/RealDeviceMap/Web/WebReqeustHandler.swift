@@ -189,7 +189,7 @@ class WebReqeustHandler {
             data["zoom"] = zoom ?? self.startZoom
             
             data["show_areas"] = perms.contains(.viewMap)
-            data["page_is_areas"] = true
+            data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
             for area in self.cities {
                 let name = area.key.prefix(1).uppercased() + area.key.lowercased().dropFirst()
