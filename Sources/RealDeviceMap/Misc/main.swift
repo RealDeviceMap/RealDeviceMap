@@ -69,7 +69,6 @@ WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_
 WebReqeustHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")?.toInt() ?? 10
 WebReqeustHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")?.toInt() ?? 18
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
-WebReqeustHandler.ivQueueLimit = try! DBController.global.getValueForKey(key: "IV_QUEUE_LIMIT")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
 WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?.jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()

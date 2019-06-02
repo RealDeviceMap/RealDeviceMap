@@ -454,7 +454,6 @@ class WebReqeustHandler {
             data["min_zoom"] = minZoom
             data["max_zoom"] = maxZoom
             data["max_pokemon_id"] = maxPokemonId
-            data["iv_queue_limit"] = ivQueueLimit
             data["locale_new"] = Localizer.locale
             data["enable_register_new"] = enableRegister
             data["enable_clearing"] = WebHookRequestHandler.enableClearing
@@ -1442,7 +1441,6 @@ class WebReqeustHandler {
         WebReqeustHandler.maxZoom = maxZoom
         WebReqeustHandler.title = title
         WebReqeustHandler.maxPokemonId = maxPokemonId
-        WebReqeustHandler.ivQueueLimit = ivQueueLimit
         WebReqeustHandler.enableRegister = enableRegister
         WebReqeustHandler.tileservers = tileservers
         WebReqeustHandler.cities = citySettings
