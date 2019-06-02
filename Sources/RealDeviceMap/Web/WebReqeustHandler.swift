@@ -1097,8 +1097,6 @@ class WebReqeustHandler {
             data["min_zoom"] = request.param(name: "min_zoom")?.toUInt8() ?? minZoom
             data["max_zoom"] = request.param(name: "max_zoom")?.toUInt8() ?? maxZoom
             data["max_pokemon_id"] = maxPokemonId
-            data["google_analytics_id"] = googleAnalyticsId
-            data["google_adsense_id"] = googleAdSenseId
             data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
             data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
             data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "").replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
