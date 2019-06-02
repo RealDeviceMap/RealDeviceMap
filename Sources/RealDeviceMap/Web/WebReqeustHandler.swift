@@ -60,6 +60,8 @@ class WebReqeustHandler {
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
         data["title"] = title
+        data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
+        data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
 
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_stats", "nav_logout", "nav_register", "nav_login"]
@@ -1040,8 +1042,6 @@ class WebReqeustHandler {
             data["start_lon"] = request.param(name: "lon")?.toDouble() ?? startLon
             data["start_zoom"] = request.param(name: "zoom")?.toUInt8() ?? startZoom
             data["max_pokemon_id"] = maxPokemonId
-            data["google_analytics_id"] = googleAnalyticsId
-            data["google_adsense_id"] = googleAdSenseId
             data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
             data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
             data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "").replacingOccurrences(of: "\\\"", with: "\\\\\"").replacingOccurrences(of: "'", with: "\\'").replacingOccurrences(of: "\"", with: "\\\"")
