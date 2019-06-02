@@ -310,8 +310,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             firstSeenTimestamp = updated
             
-            WebHookController.global.addPokemonEvent(pokemon: self)
-            InstanceController.global.gotPokemon(pokemon: self)
             let sql = """
                 INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight, size, gender, form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?)
@@ -452,6 +450,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
+        }
+        
+        if oldPokemon == nil {
+            WebHookController.global.addPokemonEvent(pokemon: self)
+            InstanceController.global.gotPokemon(pokemon: self)
+            if self.atkIv != nil {
+                InstanceController.global.gotIV(pokemon: self)
+            }
         }
         
     }
