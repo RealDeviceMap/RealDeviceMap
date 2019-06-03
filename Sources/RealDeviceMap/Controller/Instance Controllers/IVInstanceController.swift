@@ -36,6 +36,7 @@ class IVInstanceController: InstanceControllerProto {
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
+        self.ivQueueLimit = ivQueueLimit
         
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
