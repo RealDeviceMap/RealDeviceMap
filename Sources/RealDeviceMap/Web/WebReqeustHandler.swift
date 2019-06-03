@@ -25,7 +25,6 @@ class WebReqeustHandler {
     static var startLon: Double = 0
     static var startZoom: Int = 14
     static var maxPokemonId: Int = 493
-    static var ivQueueLimit: Int = 100
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = ""
     static var avilableItemJson: String = ""
@@ -1429,7 +1428,7 @@ class WebReqeustHandler {
         }
         
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
-        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "100" ) ?? WebReqeustHandler.ivQueueLimit
+        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "100" ) ?? 100
         
         data["name"] = name
         data["area"] = area
@@ -1631,7 +1630,7 @@ class WebReqeustHandler {
             data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 0
             data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
-            data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? WebReqeustHandler.ivQueueLimit
+            data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {

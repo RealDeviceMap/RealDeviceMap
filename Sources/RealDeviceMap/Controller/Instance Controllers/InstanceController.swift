@@ -129,7 +129,7 @@ class InstanceController {
                 let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
                     return UInt16(e)
                 }) ?? [UInt16]()
-                let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? WebReqeustHandler.ivQueueLimit
+                let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? 100
                 instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit)
             } else {
                 instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel)
