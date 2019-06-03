@@ -192,7 +192,7 @@ class WebReqeustHandler {
             data["lon"] = lon ?? self.startLon
             data["zoom"] = zoom ?? self.startZoom
             data["min_zoom"] = minZoom ?? self.minZoom
-            data["max_zoom"] = maxZoom ?? self.maxZoom //REVIEW: Probably not needed?
+            data["max_zoom"] = maxZoom ?? self.maxZoom
 
             // Localize
             let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter", "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name", "filter_quest_filter", "filter_cells", "filter_select_mapstyle", "filter_mapstyle"]
