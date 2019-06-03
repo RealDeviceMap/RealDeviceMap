@@ -824,6 +824,76 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         
     }
     
+    public static func clearQuests(mysql: MySQL?=nil, instance: Instance) throws {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        var areaString = ""
+        let areaType1 = instance.data["area"] as? [[String: Double]]
+        let areaType2 = instance.data["area"] as? [[[String: Double]]]
+        if areaType1 != nil {
+            for coordLine in areaType1! {
+                let lat = coordLine["lat"]
+                let lon = coordLine["lon"]
+                areaString += "\(lat!),\(lon!)\n"
+            }
+        } else if areaType2 != nil {
+            for geofence in areaType2! {
+                for coordLine in geofence {
+                    let lat = coordLine["lat"]
+                    let lon = coordLine["lon"]
+                    areaString += "\(lat!),\(lon!)\n"
+                }
+            }
+        }
+        
+        let coords = Pokestop.flattenCoords(area: areaString)
+        let sql = """
+            UPDATE pokestop
+            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL, quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+            WHERE ST_CONTAINS(
+                ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
+                POINT(pokestop.lat, pokestop.lon)
+            ) AND quest_type IS NOT NULL
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        Log.debug(message: "SQL: \(sql)")
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return
+        }
+    }
+    
+    public static func flattenCoords(area: String) -> String {
+        var coords = ""
+        var firstCoord = ""
+        let areaRows = area.components(separatedBy: "\n")
+        for (index, areaRow) in areaRows.enumerated() {
+            let rowSplit = areaRow.components(separatedBy: ",")
+            if rowSplit.count == 2 {
+                let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
+                if lat != nil && lon != nil {
+                    let coord = "\(lat!) \(lon!)"
+                    if index == 0 {
+                        firstCoord = coord
+                    }
+                    coords += "\(coord),"
+                }
+            }
+        }
+        return coords + firstCoord
+    }
+    
     public static func clearOld(mysql: MySQL?=nil, ids: [String], cellId: UInt64) throws -> UInt {
         
         guard let mysql = mysql ?? DBController.global.mysql else {

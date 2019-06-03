@@ -657,7 +657,7 @@ class WebReqeustHandler {
                 do {
                     let instance = try Instance.getByName(name: instanceName)!
                     if instance.type == .autoQuest {
-                        try instance.clearQuests()
+                        try Pokestop.clearQuests(instance: instance)
                     }
                     response.redirect(path: "/dashboard/instances")
                     sessionDriver.save(session: request.session!)
