@@ -27,7 +27,6 @@ class WebReqeustHandler {
     static var minZoom: Int = 10
     static var maxZoom: Int = 18
     static var maxPokemonId: Int = 493
-    static var ivQueueLimit: Int = 100
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = ""
     static var avilableItemJson: String = ""
