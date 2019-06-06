@@ -34,10 +34,11 @@ class ImageGenerator {
         
         let thread = Threading.getQueue(type: .serial)
         
+        let composeMethod: String
         if ProcessInfo.processInfo.environment["IMAGEGEN_OVER"] == nil {
-            let composeMethod = "over"
+            composeMethod = "over"
         } else {
-            let composeMethod = "dst-over"
+            composeMethod = "dst-over"
         }
         thread.dispatch {
             

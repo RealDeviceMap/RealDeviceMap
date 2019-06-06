@@ -129,15 +129,11 @@ class InstanceController {
                 let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
                     return UInt16(e)
                 }) ?? [UInt16]()
-<<<<<<< HEAD
                 let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? 100
-                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit)
-=======
                 let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ?? (instance.data["scatter_pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
                     return UInt16(e)
                 }) ?? [UInt16]()
-                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, scatterPokemon: scatterList)
->>>>>>> parent of 1eb177c... Revert "Scatter Test"
+                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList)
             } else {
                 instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel)
             }
