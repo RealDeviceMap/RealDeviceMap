@@ -1791,6 +1791,7 @@ class WebReqeustHandler {
         let selectedDevice = request.param(name: "device")
         let selectedInstance = request.param(name: "instance")
         let time = request.param(name: "time")
+        let onComplete = request.param(name: "oncomplete")
         
         var data = data
         let instances: [Instance]
@@ -1849,6 +1850,18 @@ class WebReqeustHandler {
             data["show_error"] = true
             data["error"] = "Failed to assign Device."
             return data
+        }
+
+        if onComplete == "on" {
+            do {
+                let onCompleteAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: 0)
+                try onCompleteAssignment.create()
+                AssignmentController.global.addAssignment(assignment: onCompleteAssignment)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to assign Device."
+                return data
+            }
         }
         
         response.redirect(path: "/dashboard/assignments")
