@@ -28,13 +28,15 @@ class IVInstanceController: InstanceControllerProto {
     private var startDate: Date?
     private var count: UInt64 = 0
     private var shouldExit = false
+    private var ivQueueLimit = 100
     
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8) {
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, ivQueueLimit: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
+        self.ivQueueLimit = ivQueueLimit
         
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
@@ -161,9 +163,9 @@ class IVInstanceController: InstanceControllerProto {
             
             let index = lastIndexOf(pokemonId: pokemon.pokemonId)
             
-            if pokemonQueue.count >= 100 && index == nil {
+            if pokemonQueue.count >= ivQueueLimit && index == nil {
                 Log.warning(message: "[IVInstanceController] Queue is full!")
-            } else if pokemonQueue.count >= 100 {
+            } else if pokemonQueue.count >= ivQueueLimit {
                 pokemonQueue.insert(pokemon, at: index!)
                 _ = pokemonQueue.popLast()
             } else if index != nil {

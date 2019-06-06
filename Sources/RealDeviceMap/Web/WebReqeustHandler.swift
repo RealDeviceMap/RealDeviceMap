@@ -1456,6 +1456,7 @@ class WebReqeustHandler {
         }
         
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
+        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "100" ) ?? 100
         
         data["name"] = name
         data["area"] = area
@@ -1463,6 +1464,7 @@ class WebReqeustHandler {
         data["min_level"] = minLevel
         data["max_level"] = maxLevel
         data["timezone_offset"] = timezoneOffset
+        data["iv_queue_limit"] = ivQueueLimit
         
         if type == nil {
             data["nothing_selected"] = true
@@ -1572,6 +1574,7 @@ class WebReqeustHandler {
 
                 if type == .pokemonIV {
                     oldInstance!.data["pokemon_ids"] = pokemonIDs
+                    oldInstance!.data["iv_queue_limit"] = ivQueueLimit
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -1590,6 +1593,7 @@ class WebReqeustHandler {
             var instanceData: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
             if type == .pokemonIV {
                 instanceData["pokemon_ids"] = pokemonIDs
+                instanceData["iv_queue_limit"] = ivQueueLimit
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
@@ -1654,6 +1658,8 @@ class WebReqeustHandler {
             data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 0
             data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
+            data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
+            
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {
                 var text = ""
