@@ -111,7 +111,8 @@ $(function() {
         }
         tileLayer = L.tileLayer(avilableTileservers[selectedTileserver]['url'], {
             attribution: avilableTileservers[selectedTileserver]['attribution'],
-            maxZoom: 18,
+            minZoom: {{min_zoom}},
+            maxZoom: {{max_zoom}},
             scale: scale,
             hq: L.Browser.retina,
         });
@@ -275,7 +276,8 @@ function initMap() {
     }
     tileLayer = L.tileLayer(avilableTileservers[selectedTileserver]['url'], {
 		attribution: avilableTileservers[selectedTileserver]['attribution'],
-		maxZoom: 18,
+		minZoom: {{min_zoom}},
+		maxZoom: {{max_zoom}},
         scale: scale,
         hq: L.Browser.retina,
 	});
