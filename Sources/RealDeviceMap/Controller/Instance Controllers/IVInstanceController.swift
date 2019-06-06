@@ -15,6 +15,8 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var scatterPokemon: [UInt16]
+    
     public var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
@@ -30,14 +32,29 @@ class IVInstanceController: InstanceControllerProto {
     private var shouldExit = false
     private var ivQueueLimit = 100
     
+<<<<<<< HEAD
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16]) {
+=======
+<<<<<<< HEAD
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, ivQueueLimit: Int) {
+=======
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, scatterPokemon: [UInt16]) {
+>>>>>>> parent of 1eb177c... Revert "Scatter Test"
+>>>>>>> Testing
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
+<<<<<<< HEAD
         self.ivQueueLimit = ivQueueLimit
+<<<<<<< HEAD
         self.scatterPokemon = scatterPokemon
+=======
+=======
+        self.scatterPokemon = scatterPokemon
+>>>>>>> parent of 1eb177c... Revert "Scatter Test"
+>>>>>>> Testing
         
         checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
