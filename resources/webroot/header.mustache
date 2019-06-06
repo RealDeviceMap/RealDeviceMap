@@ -39,6 +39,19 @@
                     </div>
                 </li>
             {{/show_dashboard}}
+            {{#show_areas}}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="areasDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{nav_areas}}{{#page_is_areas}}<span class="sr-only">(current)</span>{{/page_is_areas}}
+                    </a>
+                    <div class="dropdown-menu scrollable-menu" aria-labelledby="areasDropdown">
+                        <h6 class="dropdown-header">{{nav_areas}}</h6>
+                        {{#areas}}
+                            <a href="/@/{{area}}" class="dropdown-item">{{area}}</a>
+                        {{/areas}}
+                    </div>
+                </li>
+            {{/show_areas}}
             {{#show_stats}}
                 <li class="nav-item{{#page_is_stats}} active{{/page_is_stats}}">
                     <a class="nav-link" href="/stats">{{nav_stats}}{{#page_is_stats}}<span class="sr-only">(current)</span>{{/page_is_stats}}</a>

@@ -1,6 +1,7 @@
 {
 	"values": {
-        "nav_dashboard": "Dashboard",
+		"nav_dashboard": "Dashboard",
+		"nav_areas": "Areas",
         "nav_stats": "Stats",
         "nav_logout": "Logout",
         "nav_register": "Register",
