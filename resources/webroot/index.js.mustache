@@ -134,6 +134,20 @@ $(function() {
         $('#map').append(snow)
     }
 
+    if ("{{google_analytics_id}}" !== false) {
+        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};
+        ga.l=+new Date;
+        ga('create', '{{google_analytics_id}}', 'auto');
+        ga('send', 'pageview');
+    }
+
+    if ("{{google_adsense_id}}" !== false) {
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: '{{google_adsense_id}}',
+            enable_page_level_ads: true
+        });
+    }
+
 });
 
 // MARK: - Setup

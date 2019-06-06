@@ -33,6 +33,8 @@ class WebReqeustHandler {
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
+    static var googleAnalyticsId: String?
+    static var googleAdSenseId: String?
     
     static var oauthDiscordRedirectURL: String?
     static var oauthDiscordClientID: String?
@@ -60,6 +62,8 @@ class WebReqeustHandler {
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
         data["title"] = title
+        data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
+        data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
 
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_areas", "nav_stats", "nav_logout", "nav_register", "nav_login"]
@@ -455,6 +459,8 @@ class WebReqeustHandler {
             data["pokestop_lure_time"] = Pokestop.lureTime
             data["ex_raid_boss_id"] = Gym.exRaidBossId ?? 0
             data["ex_raid_boss_form"] = Gym.exRaidBossForm ?? 0
+            data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
+            data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
             data["mailer_base_uri"] = MailController.baseURI
             data["mailer_name"] = MailController.fromName
             data["mailer_email"] = MailController.fromAddress
@@ -1292,6 +1298,9 @@ class WebReqeustHandler {
             return data
         }
         
+        let googleAnalyticsId = request.param(name: "google_analytics_id")
+        let googleAdSenseId = request.param(name: "google_adsense_id")
+        
         let webhookDelay = request.param(name: "webhook_delay")?.toDouble() ?? 5.0
         let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
@@ -1377,6 +1386,8 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
             try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "GOOGLE_ANALYTICS_ID", value: googleAnalyticsId ?? "")
+            try DBController.global.setValueForKey(key: "GOOGLE_ADSENSE_ID", value: googleAdSenseId ?? "")
             try DBController.global.setValueForKey(key: "MAILER_URL", value: mailerURL ?? "")
             try DBController.global.setValueForKey(key: "MAILER_USERNAME", value: mailerUsername ?? "")
             try DBController.global.setValueForKey(key: "MAILER_PASSWORD", value: mailerPassword ?? "")
@@ -1407,6 +1418,8 @@ class WebReqeustHandler {
         WebReqeustHandler.enableRegister = enableRegister
         WebReqeustHandler.tileservers = tileservers
         WebReqeustHandler.cities = citySettings
+        WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
+        WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
