@@ -33,6 +33,12 @@ class ImageGenerator {
         }
         
         let thread = Threading.getQueue(type: .serial)
+        
+        if ProcessInfo.processInfo.environment["IMAGEGEN_OVER"] == nil {
+            let composeMethod = "over"
+        } else {
+            let composeMethod = "dst-over"
+        }
         thread.dispatch {
             
             if raidDir.exists && gymDir.exists && eggDir.exists && unkownEggDir.exists && pokemonDir.exists {
@@ -55,7 +61,7 @@ class ImageGenerator {
                         let newFile = File(raidDir.path + gymId + "_e" + eggLevel + ".png")
                         if !newFile.exists {
                             Log.debug(message: "[ImageGenerator] Creating image for gym \(gymId) and egg \(eggLevel)")
-                            combineImages(image1: eggFile.path, image2: gymFile.path, output: newFile.path)
+                            combineImages(image1: eggFile.path, image2: gymFile.path, method: composeMethod, output: newFile.path)
                         }
                     }
                     try! unkownEggDir.forEachEntry { (unkownEggFilename) in
@@ -67,7 +73,7 @@ class ImageGenerator {
                         let newFile = File(raidDir.path + gymId + "_ue" + eggLevel + ".png")
                         if !newFile.exists {
                             Log.debug(message: "[ImageGenerator] Creating image for gym \(gymId) and unkown egg \(eggLevel)")
-                            combineImages(image1: unkownEggFile.path, image2: gymFile.path, output: newFile.path)
+                            combineImages(image1: unkownEggFile.path, image2: gymFile.path, method: composeMethod, output: newFile.path)
                         }
                     }
                     try! pokemonDir.forEachEntry { (pokemonFilename) in
@@ -79,7 +85,7 @@ class ImageGenerator {
                         let newFile = File(raidDir.path + gymId + "_" + pokemonId + ".png")
                         if !newFile.exists {
                             Log.debug(message: "[ImageGenerator] Creating image for gym \(gymId) and pokemon \(pokemonId)")
-                            combineImages(image1: pokemonFile.path, image2: gymFile.path, output: newFile.path)
+                            combineImages(image1: pokemonFile.path, image2: gymFile.path, method: composeMethod, output: newFile.path)
                         }
                     }
                 }
@@ -123,7 +129,7 @@ class ImageGenerator {
                         let newFile = File(questDir.path + pokestopId + "_i" + itemId + ".png")
                         if !newFile.exists {
                             Log.debug(message: "[ImageGenerator] Creating quest for stop \(pokestopId) and item \(itemId)")
-                            combineImages(image1: itemFile.path, image2: pokestopFile.path, output: newFile.path)
+                            combineImages(image1: itemFile.path, image2: pokestopFile.path, method: composeMethod, output: newFile.path)
                         }
                     }
                     
@@ -136,7 +142,7 @@ class ImageGenerator {
                         let newFile = File(questDir.path + pokestopId + "_p" + pokemonId + ".png")
                         if !newFile.exists {
                             Log.debug(message: "[ImageGenerator] Creating quest for stop \(pokestopId) and pokemon \(pokemonId)")
-                            combineImages(image1: pokemonFile.path, image2: pokestopFile.path, output: newFile.path)
+                            combineImages(image1: pokemonFile.path, image2: pokestopFile.path, method: composeMethod, output: newFile.path)
                         }
                     }
                 }
@@ -164,10 +170,10 @@ class ImageGenerator {
         }
     }
     
-    private static func combineImages(image1: String, image2: String, output: String) {
+    private static func combineImages(image1: String, image2: String, method: String, output: String) {
         _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "tmp1.png").run()
         _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "tmp2.png").run()
-        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-compose", "over", "-composite", output).run()
+        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-compose", method, "-composite", output).run()
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
