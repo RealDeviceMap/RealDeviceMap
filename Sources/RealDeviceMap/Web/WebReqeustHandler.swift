@@ -1942,7 +1942,7 @@ class WebReqeustHandler {
 
         if onComplete == "on" {
             do {
-                let onCompleteAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: 0)
+                let onCompleteAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!, time: 0, enabled: true)
                 try onCompleteAssignment.create()
                 AssignmentController.global.addAssignment(assignment: onCompleteAssignment)
             } catch {
