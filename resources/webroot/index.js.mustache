@@ -328,8 +328,10 @@ function loadStorage() {
                 defaultRaidFilter["l" + i] = {"show": true, "size": "normal"};
             }
         }
-        if (defaultRaidFilter["hatched"] === undefined) {
-            defaultRaidFilter["hatched"] = {"show": true, "size": "normal"};
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (defaultRaidFilter["p" + i] === undefined) {
+                defaultRaidFilter["p" + i] = {"show": true, "size": "normal"};
+            }
         }
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
@@ -342,8 +344,10 @@ function loadStorage() {
                 raidFilter["l" + i] = {"show": true, "size": "normal"};
             }
         }
-        if (raidFilter["hatched"] === undefined) {
-            raidFilter["hatched"] = {"show": true, "size": "normal"};
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (raidFilter["p" + i] === undefined) {
+                raidFilter["p" + i] = {"show": true, "size": "normal"};
+            }
         }
     }
 
@@ -359,10 +363,9 @@ function loadStorage() {
         if (defaultGymFilter["ex"] === undefined) {
             defaultGymFilter["ex"] = {"show": false, "size": "normal"};
         }
-        let j;
-        for (j = 0; j <= 6; j++) {
-            if (defaultGymFilter["s" + j] === undefined) {
-                defaultGymFilter["s" + j] = {"show": true, "size": "normal"};
+        for (i = 0; i <= 6; i++) {
+            if (defaultGymFilter["s" + i] === undefined) {
+                defaultGymFilter["s" + i] = {"show": true, "size": "normal"};
             }
         }
 
@@ -379,10 +382,9 @@ function loadStorage() {
         if (gymFilter["ex"] === undefined) {
             gymFilter["ex"] = {"show": false, "size": "normal"};
         }
-        let j;
-        for (j = 0; j <= 6; j++) {
-            if (gymFilter["s" + j] === undefined) {
-                gymFilter["s" + j] = {"show": true, "size": "normal"};
+        for (i = 0; i <= 6; i++) {
+            if (gymFilter["s" + i] === undefined) {
+                gymFilter["s" + i] = {"show": true, "size": "normal"};
             }
         }
     }
@@ -539,7 +541,9 @@ function initMap() {
         for (i = 1; i <= 5; i++) {
             defaultRaidFilter["l" + i] = {"show": true, "size": "normal"};
         }
-        defaultRaidFilter["hatched"] = {"show": true, "size": "normal"};
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultRaidFilter["p" + i] = {"show": true, "size": "normal"};
+        }
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
         raidFilterNew = defaultRaidFilter;
@@ -553,7 +557,9 @@ function initMap() {
         for (i = 1; i <= 5; i++) {
             defaultRaidFilter["l" + i] = {"show": false, "size": raidFilterNew["l" + i]["size"]};
         }
-        defaultRaidFilter["hatched"] = {"show": false, "size": raidFilterNew["hatched"]["size"]};
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            defaultRaidFilter["p" + i] = {"show": false, "size": "normal"};
+        }
 
         store('raid_filter', JSON.stringify(defaultRaidFilter));
         raidFilterNew = defaultRaidFilter;
@@ -568,9 +574,8 @@ function initMap() {
             defaultGymFilter["t" + i] = {"show": true, "size": gymFilterNew["t" + i]["size"]};
         }
         defaultGymFilter["ex"] = {"show": false, "size": "normal"};
-        let j;
-        for (j = 0; j <= 6; j++) {
-            defaultGymFilter["s" + j] = {"show": true, "size": gymFilterNew["s" + j]["size"]};
+        for (i = 0; i <= 6; i++) {
+            defaultGymFilter["s" + i] = {"show": true, "size": gymFilterNew["s" + i]["size"]};
         }
 
         store('gym_filter', JSON.stringify(defaultGymFilter));
@@ -586,9 +591,8 @@ function initMap() {
             defaultGymFilter["t" + i] = {"show": false, "size": gymFilterNew["t" + i]["size"]};
         }
         defaultGymFilter["ex"] = {"show": false, "size": gymFilterNew["ex"]["size"]}
-        let j;
-        for (j = 0; j <= 6; j++) {
-            defaultGymFilter["s" + j] = {"show": false, "size": gymFilterNew["s" + j]["size"]};
+        for (i = 0; i <= 6; i++) {
+            defaultGymFilter["s" + i] = {"show": false, "size": gymFilterNew["s" + i]["size"]};
         }
 
         store('gym_filter', JSON.stringify(defaultGymFilter));
@@ -950,8 +954,10 @@ function loadData() {
                 raidFilterExclude.push("l" + i);
             }
         }
-        if (raidFilter["hatched"]["show"] !== false) {
-            raidFilterExclude.push("hatched");
+        for (i = 1; i <= {{max_pokemon_id}}; i++) {
+            if (raidFilter["p" + i]["show"] === false) {
+                raidFilterExclude.push("p" + i);
+            }
         }
     }
 
@@ -966,10 +972,9 @@ function loadData() {
         if (gymFilter["ex"]["show"] !== false) {
             gymFilterExclude.push("ex");
         }
-        let j;
-        for (j = 0; j <= 6; j++) {
-            if (gymFilter["s" + j]["show"] === false) {
-                gymFilterExclude.push("s" + j);
+        for (i = 0; i <= 6; i++) {
+            if (gymFilter["s" + i]["show"] === false) {
+                gymFilterExclude.push("s" + i);
             }
         }
     }
@@ -979,7 +984,8 @@ function loadData() {
         if (pokestopFilter["lured"]["show"] !== false) {
             pokestopFilterExclude.push("lured");
         }
-        for (var i = 1; i < 5; i++) {
+        let i;
+        for (i = 1; i < 5; i++) {
             if (pokestopFilter["l" + i]["show"] === false) {
                 pokestopFilterExclude.push("l" + i);
             }
@@ -2005,7 +2011,7 @@ function getPokestopMarker(pokestop, ts) {
 function getSpawnpointMarkerIcon(spawnpoint, ts) {
     var iconId = spawnpoint.despawn_second != null ? 1 : 0;
     const icon = L.icon({
-        iconUrl:		'/static/img/spawnpoint/' + (spawnpoint.despawn_second != null ? 1 : 0) + '.png',
+        iconUrl:		'/static/img/spawnpoint/' + iconId + '.png',
         iconSize:		[10, 10],
         iconAnchor:		[5, 5],
         popupAnchor:	[0, -5]
@@ -2237,25 +2243,25 @@ function manageSelectButton(e, isNew) {
                 shouldShow = raidFilterNew["l" + id]["size"] === "huge";
                 break;
         }
-    } else if (type === "raid-hatched") {
+    } else if (type === "raid-pokemon") {
         switch (info) {
             case "hide":
-                shouldShow = raidFilterNew[id]["show"] === false;
+                shouldShow = raidFilterNew["p" + id]["show"] === false;
                 break;
             case "show":
-                shouldShow = raidFilterNew[id]["show"] === true;
+                shouldShow = raidFilterNew["p" + id]["show"] === true;
                 break;
             case "small":
-                shouldShow = raidFilterNew[id]["size"] === "small";
+                shouldShow = raidFilterNew["p" + id]["size"] === "small";
                 break;
             case "normal":
-                shouldShow = raidFilterNew[id]["size"] === "normal";
+                shouldShow = raidFilterNew["p" + id]["size"] === "normal";
                 break;
             case "large":
-                shouldShow = raidFilterNew[id]["size"] === "large";
+                shouldShow = raidFilterNew["p" + id]["size"] === "large";
                 break;
             case "huge":
-                shouldShow = raidFilterNew[id]["size"] === "huge";
+                shouldShow = raidFilterNew["p" + id]["size"] === "huge";
                 break;
         }
     } else if (type === "gym-team") {
@@ -2513,25 +2519,25 @@ function manageSelectButton(e, isNew) {
                         raidFilterNew["l" + id]["size"] = "huge";
                         break;
                 }
-            } else if (type === "raid-hatched") {
+            } else if (type === "raid-pokemon") {
                 switch (info) {
                     case "hide":
-                        raidFilterNew[id]["show"] = false;
+                        raidFilterNew["p" + id]["show"] = false;
                         break;
                     case "show":
-                        raidFilterNew[id]["show"] = true;
+                        raidFilterNew["p" + id]["show"] = true;
                         break;
                     case "small":
-                        raidFilterNew[id]["size"] = "small";
+                        raidFilterNew["p" + id]["size"] = "small";
                         break;
                     case "normal":
-                        raidFilterNew[id]["size"] = "normal";
+                        raidFilterNew["p" + id]["size"] = "normal";
                         break;
                     case "large":
-                        raidFilterNew[id]["size"] = "large";
+                        raidFilterNew["p" + id]["size"] = "large";
                         break;
                     case "huge":
-                        raidFilterNew[id]["size"] = "huge";
+                        raidFilterNew["p" + id]["size"] = "huge";
                         break;
                 }
             } else if (type === "gym-team") {

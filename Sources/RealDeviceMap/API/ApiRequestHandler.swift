@@ -450,15 +450,14 @@ class ApiRequestHandler {
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
             
-            let raidOptionsString = Localizer.global.get(value: "filter_raid_options")
-            //let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
+            let raidLevelsString = Localizer.global.get(value: "filter_raid_levels")
+            let pokemonString = Localizer.global.get(value: "filter_pokemon")
             
             var raidData = [[String: Any]]()
             //Level
             for i in 1...5 {
                 
-                let raidLevel: String
-                raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
+                let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
                 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -497,50 +496,53 @@ class ApiRequestHandler {
                     "image": "<img class=\"lazy_load\" data-src=\"/static/img/egg/\(i).png\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
-                    "type": raidOptionsString
+                    "type": raidLevelsString
                 ])
             }
             
-            let filter = """
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-off select-button-new" data-id="hatched" data-type="raid-hatched" data-info="hide">
-            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-            </label>
-            <label class="btn btn-sm btn-on select-button-new" data-id="hatched" data-type="raid-hatched" data-info="show">
-            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-            </label>
-            </div>
-            """
+            //Pokemon
+            for i in 1...WebReqeustHandler.maxPokemonId {
             
-            let size = """
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-size select-button-new" data-id="hatched" data-type="raid-hatched" data-info="small">
-            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="hatched" data-type="raid-hatched" data-info="normal">
-            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="hatched" data-type="raid-hatched" data-info="large">
-            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="hatched" data-type="raid-hatched" data-info="huge">
-            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-            </label>
-            </div>
-            """
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
             
-            let id = 6;
-            raidData.append([
-                "id": [
-                    "formatted": String(format: "%03d", id),
-                    "sort": id+200
-                ],
-                "name": Localizer.global.get(value: "filter_raid_boss"),
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/raid/raidboss.png\" style=\"height:50px; width:50px;\">",
-                "filter": filter,
-                "size": size,
-                "type": raidOptionsString
-            ])
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+
+                raidData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+200
+                    ],
+                    "name": Localizer.global.get(value: "poke_\(i)"),
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": pokemonString
+                ])
+            }
             
             data["raid_filters"] = raidData
         }
@@ -562,8 +564,7 @@ class ApiRequestHandler {
             //Team
             for i in 0...3 {
                 
-                let gymTeam: String
-                gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
+                let gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
                 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -606,7 +607,7 @@ class ApiRequestHandler {
                 ])
             }
             
-            // Ex Raids
+            // EX raid eligible gyms
             let exFilter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-off select-button-new" data-id="ex" data-type="gym-ex" data-info="hide">
@@ -649,8 +650,7 @@ class ApiRequestHandler {
             
             //Available slots
             for i in 0...6 {
-                let availableSlots: String
-                availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
+                let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
                 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">

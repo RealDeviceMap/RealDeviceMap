@@ -354,7 +354,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         
         var excludedLevels = [Int]()
-        var excludeRaidBoss = true
+        var excludedPokemon = [Int]()
         var excludeAllButEx = false
         var excludedTeams = [Int]()
         var excludedAvailableSlots = [Int]()
@@ -365,8 +365,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
                         excludedLevels.append(id)
                     }
-                } else if (filter.contains(string: "hatched")) {
-                    excludeRaidBoss = false
+                } else if (filter.contains(string: "p")) {
+                    if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
+                       excludedPokemon.append(id)
+                    }
                 }
             }
         }
@@ -388,7 +390,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         
         let excludeLevelSQL: String
-        let excludeRaidBossSQL: String
+        let excludePokemonSQL: String
         let excludeAllButExSQL: String
         let excludeTeamSQL: String
         let excludeAvailableSlotsSQL: String
@@ -397,7 +399,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             if excludedLevels.isEmpty {
                 excludeLevelSQL = ""
             } else {
-                var sqlExcludeCreate = "AND ((raid_end_timestamp IS NULL OR raid_end_timestamp < UNIX_TIMESTAMP()) OR (raid_end_timestamp >= UNIX_TIMESTAMP() AND raid_level NOT IN ("
+                var sqlExcludeCreate = "AND (raid_level NOT IN ("
                 for _ in 1..<excludedLevels.count {
                     sqlExcludeCreate += "?, "
                 }
@@ -405,14 +407,19 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 excludeLevelSQL = sqlExcludeCreate
             }
             
-            if (excludeRaidBoss) {
-                excludeRaidBossSQL = "AND raid_pokemon_id = 0"
+            if excludedPokemon.isEmpty {
+                excludePokemonSQL = ""
             } else {
-                excludeRaidBossSQL = ""
+                var sqlExcludeCreate = "AND (raid_pokemon_id NOT IN ("
+                for _ in 1..<excludedPokemon.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludePokemonSQL = sqlExcludeCreate
             }
         } else {
             excludeLevelSQL = ""
-            excludeRaidBossSQL = ""
+            excludePokemonSQL = ""
         }
 
         if excludedTeams.isEmpty {
@@ -449,7 +456,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         var sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id, total_cp
             FROM gym
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeLevelSQL) \(excludeRaidBossSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL) \(excludeAllButExSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL) \(excludeAllButExSQL)
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"
@@ -466,11 +473,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         for id in excludedLevels {
             mysqlStmt.bindParam(id)
         }
-        /*
         for id in excludedPokemon {
             mysqlStmt.bindParam(id)
         }
-        */
         for id in excludedTeams {
             mysqlStmt.bindParam(id)
         }
