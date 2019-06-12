@@ -1641,15 +1641,8 @@ class WebReqeustHandler {
 
                 if type == .pokemonIV {
                     oldInstance!.data["pokemon_ids"] = pokemonIDs
-<<<<<<< HEAD
                     oldInstance!.data["iv_queue_limit"] = ivQueueLimit
-<<<<<<< HEAD
                     oldInstance!.data["scatter_pokemon_ids"] = scatterPokemonIDs
-=======
-=======
-                    oldInstance!.data["scatter_pokemon_ids"] = scatterPokemonIDs
->>>>>>> parent of 1eb177c... Revert "Scatter Test"
->>>>>>> Testing
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -1668,15 +1661,9 @@ class WebReqeustHandler {
             var instanceData: [String : Any] = ["area" : newCoords, "timezone_offset": timezoneOffset, "min_level": minLevel, "max_level": maxLevel]
             if type == .pokemonIV {
                 instanceData["pokemon_ids"] = pokemonIDs
-<<<<<<< HEAD
                 instanceData["iv_queue_limit"] = ivQueueLimit
-<<<<<<< HEAD
                 instanceData["scatter_pokemon_ids"] = scatterPokemonIDs
-=======
-=======
                 instanceData["scatter_pokemon_ids"] = scatterPokemonIDs
->>>>>>> parent of 1eb177c... Revert "Scatter Test"
->>>>>>> Testing
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
