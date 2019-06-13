@@ -403,7 +403,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 for _ in 1..<excludedLevels.count {
                     sqlExcludeCreate += "?, "
                 }
-                sqlExcludeCreate += "?)))"
+                sqlExcludeCreate += "?))"
                 excludeLevelSQL = sqlExcludeCreate
             }
             
