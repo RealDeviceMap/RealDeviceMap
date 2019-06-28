@@ -116,9 +116,9 @@ class WebHookRequestHandler {
             } else if let ggi = rawData["GymGetInfoResponse"] as? String {
                 data = Data(base64Encoded: ggi) ?? Data()
                 method = 156
-            } else if let dataString = rawData["data"] as? String {
+            } else if let dataString = rawData["data"] as? String ?? rawData["payload"] as? String {
                 data = Data(base64Encoded: dataString) ?? Data()
-                method = rawData["method"] as? Int ?? 106
+                method = rawData["method"] as? Int ?? rawData["type"] as? Int ?? 106
             } else {
                 continue
             }
