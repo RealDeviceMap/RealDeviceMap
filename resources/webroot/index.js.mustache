@@ -44,6 +44,53 @@ let tileLayer;
 
 $(function() {
 
+    L.Marker.addInitHook(function() {
+        if (this.options.virtual) {
+            this.on('add', function() {
+                this._updateIconVisibility = function() {
+                    if (!this._map) {
+                        return;
+                    }
+                    var map = this._map;
+                    var isVisible = map.getBounds().contains(this.getLatLng());
+                    var wasVisible = this._wasVisible;
+                    var icon = this._icon;
+                    var iconParent = this._iconParent;
+                    var shadow = this._shadow;
+                    var shadowParent = this._shadowParent;
+
+                    if (!iconParent) {
+                        iconParent = this._iconParent = icon.parentNode;
+                    }
+                    if (shadow && !shadowParent) {
+                        shadowParent = this._shadowParent = shadow.parentNode;
+                    }
+
+                    if (isVisible != wasVisible) {
+                        if (isVisible) {
+                            iconParent.appendChild(icon);
+                            if (shadow) {
+                                shadowParent.appendChild(shadow);
+                            }
+                        } else {
+                            iconParent.removeChild(icon);
+                            if (shadow) {
+                                shadowParent.removeChild(shadow);
+                            }
+                      }
+
+                      this._wasVisible = isVisible;
+
+                    }
+                  };
+
+                  this._map.on('resize moveend zoomend', this._updateIconVisibility, this);
+                  this._updateIconVisibility();
+            }, this);
+        }
+    });
+
+
     $.getJSON( "/static/data/{{{locale}}}.json", {_: '{{{locale_last_modified}}}'}, function( data ) {
         i18n.translator.add(data);
     });
@@ -282,7 +329,11 @@ function loadStorage() {
 
 function initMap() {
 
-	map = L.map('map').setView([{{start_lat}}, {{start_lon}}], {{start_zoom}});
+    map = L.map('map', {
+        preferCanvas: true,
+        updateWhenIdle: true,
+        updateWhenZooming: false
+    }).setView([{{start_lat}}, {{start_lon}}], {{start_zoom}});
 
 	let scale = "";
 	if (L.Browser.retina) {
@@ -1492,7 +1543,8 @@ function getPokemonMarkerIcon(pokemon, ts) {
 function getPokemonMarker(pokemon, ts) {
     const marker = L.marker([pokemon.lat, pokemon.lon], {
         icon: getPokemonMarkerIcon(pokemon, ts),
-        forceZIndex: 40 + getPokemonIndex(pokemon.pokemon_id)
+        forceZIndex: 40 + getPokemonIndex(pokemon.pokemon_id),
+        virtual: true
     });
     marker.bindPopup('');
     marker.on('popupopen', function (popup) {
@@ -1601,7 +1653,8 @@ function getPokestopMarker(pokestop, ts) {
 
     const marker = L.marker([pokestop.lat, pokestop.lon], {
         icon: getPokestopMarkerIcon(pokestop, ts),
-        forceZIndex: 20 + zIndex
+        forceZIndex: 20 + zIndex,
+        virtual: true
     });
     marker.bindPopup(pokestop.name);
     marker.on('popupopen', function (popup) {
@@ -1625,7 +1678,8 @@ function getSpawnpointMarkerIcon(spawnpoint, ts) {
 function getSpawnpointMarker(spawnpoint, ts) {
     const marker = L.marker([spawnpoint.lat, spawnpoint.lon], {
         icon: getSpawnpointMarkerIcon(spawnpoint, ts),
-        forceZIndex: 10
+        forceZIndex: 10,
+        virtual: true
     });
     var content = '<center><h6><b>Spawnpoint</b></h6></center>';
     var hasTimer = spawnpoint.despawn_second != null;
@@ -1710,7 +1764,8 @@ function getGymMarker(gym, ts) {
 
     const marker = L.marker([gym.lat, gym.lon], {
         icon: getGymMarkerIcon(gym, ts),
-        forceZIndex: 30 + zIndex
+        forceZIndex: 30 + zIndex,
+        virtual: true
     });
     marker.bindPopup(gym.name);
     marker.on('popupopen', function (popup) {
