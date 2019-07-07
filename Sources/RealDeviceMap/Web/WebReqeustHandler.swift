@@ -165,8 +165,6 @@ class WebReqeustHandler {
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             var zoom = request.urlVariables["zoom"]?.toInt()
-            var minZoom = request.urlVariables["min_zoom"]?.toInt()
-            var maxZoom = request.urlVariables["max_zoom"]?.toInt()
             var lat = request.urlVariables["lat"]?.toDouble()
             var lon = request.urlVariables["lon"]?.toDouble()
             var city = request.urlVariables["city"]
@@ -192,11 +190,17 @@ class WebReqeustHandler {
                 }
             }
             
+            if (zoom ?? startZoom) > maxZoom {
+                zoom = maxZoom
+            } else if (zoom ?? startZoom) < minZoom {
+                zoom = minZoom
+            }
+            
             data["lat"] = lat ?? self.startLat
             data["lon"] = lon ?? self.startLon
             data["zoom"] = zoom ?? self.startZoom
-            data["min_zoom"] = minZoom ?? self.minZoom
-            data["max_zoom"] = maxZoom ?? self.maxZoom
+            data["min_zoom"] = self.minZoom
+            data["max_zoom"] = self.maxZoom
             data["show_areas"] = perms.contains(.viewMap) && !self.cities.isEmpty
             data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
