@@ -603,7 +603,7 @@ class WebReqeustHandler {
             data["page_is_dashboard"] = true
             
             do {
-                try! Assignment.deleteAll()
+                try Assignment.deleteAll()
             } catch {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)

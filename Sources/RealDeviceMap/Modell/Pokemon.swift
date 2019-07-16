@@ -276,6 +276,45 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         self.level = level
         
+        if self.spawnId == nil {
+            let spawnId = UInt64(encounterData.wildPokemon.spawnPointID, radix: 16)
+            self.spawnId = spawnId
+            self.lat = encounterData.wildPokemon.latitude
+            self.lat = encounterData.wildPokemon.latitude
+
+            if !expireTimestampVerified && spawnId != nil {
+                let spawnpoint: SpawnPoint?
+                do {
+                    spawnpoint = try SpawnPoint.getWithId(id: spawnId!)
+                } catch {
+                    spawnpoint = nil
+                }
+                if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
+                    let date = Date()
+                    
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "mm:ss"
+                    let formattedDate = formatter.string(from: date)
+                    
+                    let split = formattedDate.components(separatedBy: ":")
+                    let minute = Int(split[0])!
+                    let second = Int(split[1])!
+                    let secondOfHour = second + minute * 60
+                    
+                    let depsawnOffset: Int
+                    if despawnSecond < secondOfHour {
+                        depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
+                    } else {
+                        depsawnOffset = Int(despawnSecond) - secondOfHour
+                    }
+                    
+                    self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
+                    self.expireTimestampVerified = true
+                }
+            }
+            
+        }
+        
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
         
