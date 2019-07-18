@@ -28,6 +28,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         //.itemIncenseSpicy,
         //.itemIncenseCool,
         //.itemIncenseFloral,
+        //.itemIncenseBelugaBox,
         .itemTroyDisk,
         .itemTroyDiskGlacial,
         .itemTroyDiskMossy,
@@ -63,6 +64,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         //.itemLegendaryRaidTicket,
         .itemStarPiece,
         //.itemFriendGiftBox
+        //.itemTeamChange
     ]
     
 }
