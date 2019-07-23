@@ -1166,7 +1166,11 @@ function loadData() {
 
 					if (pokestop.lure_expire_timestamp === null) {
 						pokestop.lure_expire_timestamp = 0;
-					}
+                    }
+                    
+                    if (pokestop.incident_expire_timestamp === null) {
+                        pokestop.incident_expire_timestamp = 0;
+                    }
 
 					if (oldPokestop === undefined) {
 						pokestop.marker = getPokestopMarker(pokestop, ts);
@@ -1174,16 +1178,25 @@ function loadData() {
                         pokestop.marker.addTo(map);
 						if (pokestop.lure_expire_timestamp >= ts) {
 							pokestop.willUpdate = true;
-							startPokestopTimer(pokestop, ts)
+							startPokestopTimer(pokestop, pokestop.lure_expire_timestamp, ts);
 						} else {
 							pokestop.willUpdate = false
-						}
+                        }
+                        if (pokestop.incident_expire_timestamp >= ts) {
+                            pokestop.willUpdate = true;
+                            startPokestopTimer(pokestop, pokestop.incident_expire_timestamp, ts);
+                        }
 					} else {
 						if (oldPokestop.lure_expire_timestamp !== pokestop.lure_expire_timestamp) {
 							oldPokestop.lure_expire_timestamp = pokestop.lure_expire_timestamp;
                             oldPokestop.lure_id = pokestop.lure_id;
 							oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
-						}
+                        }
+                        if (oldPokestop.incident_expire_timestamp !== pokestop.incident_expire_timestamp) {
+                            oldPokestop.incident_expire_timestamp = pokestop.incident_expire_timestamp;
+                            oldPokestop.pokestopDisplay = pokestop.pokestopDisplay;
+                            oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
+                        }
 
                         oldPokestop.updated = pokestop.updated;
                         oldPokestop.last_modified_timestamp = pokestop.last_modified_timestamp;
@@ -1199,8 +1212,12 @@ function loadData() {
 						}
 						if (oldPokestop.willUpdate === false && oldPokestop.lure_expire_timestamp >= ts) {
 							oldPokestop.willUpdate = true;
-							startPokestopTimer(oldPokestop, ts)
-						}
+							startPokestopTimer(oldPokestop, oldPokestop.lure_expire_timestamp, ts)
+                        }
+                        if (oldPokestop.willUpdate === false && oldPokestop.incident_expire_timestamp >= ts) {
+                            oldPokestop.willUpdate = true;
+                            startPokestopTimer(oldPokestop, oldPokestop.incident_expire_timestamp, ts);
+                        }
 					}
 				}
 
@@ -1489,7 +1506,7 @@ function startRaidTimer(gym, ts) {
 		}, (gym.raid_battle_timestamp - ts) * 1000);
 }
 
-function startPokestopTimer(pokestop, ts) {
+function startPokestopTimer(pokestop, expire_timestamp, ts) {
     setTimeout(
 		function() {
             const ts2 = Math.round((new Date()).getTime() / 1000);
@@ -1499,13 +1516,13 @@ function startPokestopTimer(pokestop, ts) {
 			if (realPokestop === undefined) {
 				return;
 			}
-			if (pokestop.lure_expire_timestamp - 10 >= ts2) {
-                startPokestopTimer(realPokestop, ts2);
+			if (expire_timestamp - 10 >= ts2) {
+                startPokestopTimer(realPokestop, expire_timestamp, ts2);
 			} else {
                 realPokestop.willUpdate = false;
 				realPokestop.marker.setIcon(getPokestopMarkerIcon(realPokestop, ts2 + 10));
 			}
-		}, (pokestop.lure_expire_timestamp - ts) * 1000);
+		}, (expire_timestamp - ts) * 1000);
 }
 
 // MARK: - Popups
@@ -1624,6 +1641,7 @@ function addPokemonFilter(pokemonId, show) {
 function getPokestopPopupContent(pokestop) {
 	const now = new Date();
     const lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000);
+    const invasionExpireDate = new Date(pokestop.incident_expire_timestamp * 1000);
 
 	let content = '<center>';
 	if (pokestop.name === null || pokestop.name === "") {
@@ -1639,7 +1657,12 @@ function getPokestopPopupContent(pokestop) {
 	if (lureExpireDate >= now) {
         content += '<b>Lure Type:</b> ' + getLureTypeName(pokestop.lure_id) + '<br>';
 		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>';
-	}
+    }
+    
+    if (invasionExpireDate >= now) {
+        content += '<b>Team Rocket Invasion</b><br>';
+        content += '<b>End Time:</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>';
+    }
 
 	if (pokestop.quest_type !== null) {
 	    let conditions = pokestop.quest_conditions;
@@ -1994,41 +2017,43 @@ function getPokestopMarkerIcon(pokestop, ts) {
         }
         const size = getQuestSize(rewardString);
 
-
+        let lureId;
         if (pokestop.lure_expire_timestamp >= ts) {
-            var lureIconId = getLureIconId(pokestop.lure_id);
-            icon = L.icon({
-                iconUrl: '/static/img/quest/' + lureIconId + '_' + rewardString + '.png',
-                iconSize: 		[size       , size * 1.667  ],
-                iconAnchor: 	[size / 2   , size * 1.567  ],
-                popupAnchor: 	[0          , size * -1.567 ]
-            });
+            lureId = getLureIconId(pokestop.lure_id);
         } else {
-            icon = L.icon({
-                iconUrl: '/static/img/quest/0_'+ rewardString +'.png',
-                iconSize: 		[size       , size * 1.667  ],
-                iconAnchor: 	[size / 2   , size * 1.567  ],
-                popupAnchor: 	[0          , size * -1.567 ]
-            });
+            lureId = 0;
         }
+        let invasionString;
+        if (pokestop.incident_expire_timestamp >= ts) {
+            invasionString = "i";
+        } else {
+            invasionString = "";
+        }
+        icon = L.icon({
+            iconUrl: '/static/img/quest/'+invasionString+lureId+'_'+rewardString+'.png',
+            iconSize: 		[size       , size * 1.667  ],
+            iconAnchor: 	[size / 2   , size * 1.567  ],
+            popupAnchor: 	[0          , size * -1.567 ]
+        });
     } else {
+        let lureId;
         if (pokestop.lure_expire_timestamp >= ts) {
-            var lureIconId = getLureIconId(pokestop.lure_id);
-            const size = getPokestopSize(pokestop.lure_id);
-            icon = L.icon({
-                iconUrl: '/static/img/pokestop/' + lureIconId + '.png',
-                iconSize:       [size       , size       ],
-                iconAnchor:     [size / 2   , size       ],
-                popupAnchor:    [0          , -(size / 2)]
-            });
+            lureId = getLureIconId(pokestop.lure_id);
         } else {
-            icon = L.icon({
-                iconUrl: '/static/img/pokestop/0.png',
-                iconSize: [30, 30],
-                iconAnchor: [15, 27],
-                popupAnchor: [0, -27]
-            });
+            lureId = 0;
         }
+        let invasionString;
+        if (pokestop.incident_expire_timestamp >= ts) {
+            invasionString = "i";
+        } else {
+            invasionString = "";
+        }
+        icon = L.icon({
+            iconUrl: '/static/img/pokestop/'+invasionString+lureId+'.png',
+            iconSize: 		[30, 30],
+            iconAnchor: 	[15, 27],
+            popupAnchor: 	[0, -27]
+        });
     }
 	return icon;
 }
