@@ -1559,8 +1559,20 @@ function getPokestopMarkerIcon(pokestop, ts) {
         const size = getQuestSize(rewardString);
 
         if (pokestop.incident_expire_timestamp >= ts) {
+            let lureId;
+            if (pokestop.lure_expire_timestamp >= ts) {
+                lureId = getLureIconId(pokestop.lure_id);
+            } else {
+                lureId = 0;
+            }
+            let invasionString;
+            if (pokestop.incident_expire_timestamp >= ts) {
+                invasionString = "i";
+            } else {
+                invasionString = "";
+            }
             icon = L.icon({
-                iconUrl: '/static/img/pokestop/i.png',
+                iconUrl: '/static/img/quest/'+invasionString+lureId+'_'+rewardString+'.png',
                 iconSize: 		[size       , size * 1.667  ],
                 iconAnchor: 	[size / 2   , size * 1.567  ],
                 popupAnchor: 	[0          , size * -1.567 ]
@@ -1583,8 +1595,20 @@ function getPokestopMarkerIcon(pokestop, ts) {
         }
     } else {
         if (pokestop.incident_expire_timestamp >= ts) {
+            let lureId;
+            if (pokestop.lure_expire_timestamp >= ts) {
+                lureId = getLureIconId(pokestop.lure_id);
+            } else {
+                lureId = 0;
+            }
+            let invasionString;
+            if (pokestop.incident_expire_timestamp >= ts) {
+                invasionString = "i";
+            } else {
+                invasionString = "";
+            }
             icon = L.icon({
-                iconUrl: '/static/img/pokestop/i.png',
+                iconUrl: '/static/img/quest/'+invasionString+lureId+'.png',
                 iconSize: 		[size       , size * 1.667  ],
                 iconAnchor: 	[size / 2   , size * 1.567  ],
                 popupAnchor: 	[0          , size * -1.567 ]
