@@ -1487,6 +1487,7 @@
         "filter_pokestop_lure_2": "Glacial Lure",
         "filter_pokestop_lure_3": "Mossy Lure",
 		"filter_pokestop_lure_4": "Magnetic Lure",
+		"filter_pokestop_invasion": "Only Team Rocket Invasions",
 		"filter_spawnpoint_options": "Options",
 		"filter_spawnpoint_with_timer": "With Timer",
 		"filter_spawnpoint_without_timer": "Without Timer"

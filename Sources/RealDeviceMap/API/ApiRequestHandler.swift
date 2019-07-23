@@ -712,6 +712,7 @@ class ApiRequestHandler {
             var pokestopData = [[String: Any]]()
             
             let pokestopLured = Localizer.global.get(value: "filter_pokestop_lured")
+            let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
             
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -797,6 +798,46 @@ class ApiRequestHandler {
                     "type": pokestopOptionsString
                 ])
             }
+            
+            let trFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            let trSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 5),
+                    "sort": 5
+                ],
+                "name": pokestopInvasion,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i.png\" style=\"height:50px; width:50px;\">",
+                "filter": trFilter,
+                "size": trSize,
+                "type": pokestopOptionsString
+                ])
         
             data["pokestop_filters"] = pokestopData
         }

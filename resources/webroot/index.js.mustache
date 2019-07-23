@@ -400,6 +400,9 @@ function loadStorage() {
                 defaultPokestopFilter["l" + i] = {"show": true, "size": "normal"};
             }
         }
+        if (defaultPokestopFilter["invasion"] === undefined) {
+            defaultPokestopFilter["invasion"] = {"show": false, "size": "normal"};
+        }
 
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilter = defaultPokestopFilter;
@@ -412,6 +415,9 @@ function loadStorage() {
             if (pokestopFilter["l" + i] === undefined) {
                 pokestopFilter["l" + i] = {"show": true, "size": "normal"};
             }
+        }
+        if (pokestopFilter["invasion"] === undefined) {
+            pokestopFilter["invasion"] = {"show": false, "size": "normal"};
         }
     }
 
@@ -607,6 +613,7 @@ function initMap() {
         for (var i = 1; i < 5; i++) {
             defaultPokestopFilter["l" + i] = {"show": true, "size": pokestopFilterNew["l" + i]["size"]};
         }
+        defaultPokestopFilter["invasion"] = {"show": false, "size": pokestopFilterNew["invasion"]["size"]};
         
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilterNew = defaultPokestopFilter;
@@ -620,6 +627,7 @@ function initMap() {
         for (var i = 1; i < 5; i++) {
             defaultPokestopFilter["l" + i] = {"show": false, "size": pokestopFilterNew["l" + i]["size"]};
         }
+        defaultPokestopFilter["invasion"] = {"show": false, "size": pokestopFilterNew["invasion"]["size"]};
 
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilterNew = defaultPokestopFilter;
@@ -989,6 +997,9 @@ function loadData() {
             if (pokestopFilter["l" + i]["show"] === false) {
                 pokestopFilterExclude.push("l" + i);
             }
+        }
+        if (pokestopFilter["invasion"]["show"] !== false) {
+            pokestopFilterExclude.push("invasion");
         }
     }
 
@@ -2369,6 +2380,27 @@ function manageSelectButton(e, isNew) {
                 shouldShow = pokestopFilterNew["l" + id]["size"] === "huge";
                 break;
         }
+    } else if (type === "pokestop-invasion") {
+        switch (info) {
+            case "hide":
+                shouldShow = pokestopFilterNew["invasion"]["show"] === false;
+                break;
+            case "show":
+                shouldShow = pokestopFilterNew["invasion"]["show"] === true;
+                break;
+            case "small":
+                shouldShow = pokestopFilterNew["invasion"]["size"] === "small";
+                break;
+            case "normal":
+                shouldShow = pokestopFilterNew["invasion"]["size"] === "normal";
+                break;
+            case "large":
+                shouldShow = pokestopFilterNew["invasion"]["size"] === "large";
+                break;
+            case "huge":
+                shouldShow = pokestopFilterNew["invasion"]["size"] === "huge";
+                break;
+        }
     } else if (type === "spawnpoint-timer") {
         switch (info) {
             case "hide":
@@ -2643,6 +2675,27 @@ function manageSelectButton(e, isNew) {
                         break;
                     case "huge":
                         pokestopFilterNew["l" + id]["size"] = "huge";
+                        break;
+                }
+            } else if (type === "pokestop-invasion") {
+                switch (info) {
+                    case "hide":
+                        pokestopFilterNew["invasion"]["show"] = false;
+                        break;
+                    case "show":
+                        pokestopFilterNew["invasion"]["show"] = true;
+                        break;
+                    case "small":
+                        pokestopFilterNew["invasion"]["size"] = "small";
+                        break;
+                    case "normal":
+                        pokestopFilterNew["invasion"]["size"] = "normal";
+                        break;
+                    case "large":
+                        pokestopFilterNew["invasion"]["size"] = "large";
+                        break;
+                    case "huge":
+                        pokestopFilterNew["invasion"]["size"] = "huge";
                         break;
                 }
             } else if (type === "spawnpoint-timer") {

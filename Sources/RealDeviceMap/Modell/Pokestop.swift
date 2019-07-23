@@ -405,6 +405,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         var excludedItems = [Int]()
         var excludedLures = [Int]()
         var excludeAllButLured = Bool()
+        var excludeAllButInvasion = Bool()
         
         if showQuests && questsOnly && questFilterExclude != nil {
             for filter in questFilterExclude! {
@@ -432,6 +433,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
                         excludedLures.append(id + 500)
                     }
+                } else if filter.contains(string: "invasion") {
+                    excludeAllButInvasion = true
                 }
             }
         }
@@ -441,6 +444,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludeItemSQL: String
         let excludeLureSQL: String
         let excludeAllButLuredSQL: String
+        let excludeAllButInvasionSQL: String
         if showQuests && questsOnly {
             if excludedTypes.isEmpty {
                 excludeTypeSQL = ""
@@ -497,10 +501,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeLureSQL = sqlExcludeCreate
         }
         
+        if excludeAllButInvasion {
+            excludeAllButInvasionSQL = "AND (incident_expire_timestamp >= UNIX_TIMESTAMP())"
+        } else {
+            excludeAllButInvasionSQL = ""
+        }
+        
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id
             FROM pokestop
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludeAllButLuredSQL) \(excludeLureSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludeAllButLuredSQL) \(excludeLureSQL) \(excludeAllButInvasionSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"
