@@ -833,7 +833,7 @@ class ApiRequestHandler {
                     "sort": 5
                 ],
                 "name": pokestopInvasion,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i.png\" style=\"height:50px; width:50px;\">",
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i0.png\" style=\"height:50px; width:50px;\">",
                 "filter": trFilter,
                 "size": trSize,
                 "type": pokestopOptionsString
