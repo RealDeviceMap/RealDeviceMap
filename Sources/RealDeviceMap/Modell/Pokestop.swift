@@ -58,6 +58,25 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "type": "quest",
                 "message": message
             ]
+        } else if type == "invasion" {
+            let message: [String: Any] = [
+                "pokestop_id":id,
+                "latitude":lat,
+                "longitude":lon,
+                "name":name ?? "Unknown",
+                "url":url ?? "",
+                "lure_expiration":lureExpireTimestamp ?? 0,
+                "last_modified":lastModifiedTimestamp ?? 0,
+                "enabled":enabled ?? true,
+                "lure_id":lureId ?? 0,
+                "pokestop_display":pokestopDisplay ?? 0,
+                "incident_expire_timestamp":incidentExpireTimestamp ?? 0,
+                "updated": updated ?? 1
+            ]
+            return [
+                "type": "invasion",
+                "message": message
+            ]
         } else {
             let message: [String: Any] = [
                 "pokestop_id":id,
