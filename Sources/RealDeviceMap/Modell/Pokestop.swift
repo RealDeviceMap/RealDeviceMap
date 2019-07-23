@@ -696,7 +696,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let cellId = result[15] as? UInt64
         let lureId = result[16] as? Int16
         let pokestopDisplay = result[17] as? UInt16
-        let incidentExpireTimestamp = result[18] as? UIn64
+        let incidentExpireTimestamp = result[18] as? UInt64
 
         return Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp)
 
