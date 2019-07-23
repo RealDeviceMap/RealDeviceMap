@@ -167,7 +167,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         if fortData.hasPokestopDisplay {
             self.pokestopDisplay = UInt16(fortData.pokestopDisplay.characterDisplay.style.rawValue)
-            self.incidentExpireTimestamp = UInt64(fortData.pokestopDisplay.incidentExpirationMs)
+            self.incidentExpireTimestamp = UInt64(fortData.pokestopDisplay.incidentExpirationMs / 1000)
         }
         self.cellId = cellId
         
@@ -378,6 +378,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             }
             if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
                 WebHookController.global.addLureEvent(pokestop: self)
+            }
+            if oldPokestop!.incidentExpireTimestamp ?? 0 < self.incidentExpireTimestamp ?? 0 {
+                WebHookController.global.addInvasionEvent(pokestop: self)
             }
             if updateQuest && questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
                 WebHookController.global.addQuestEvent(pokestop: self)
