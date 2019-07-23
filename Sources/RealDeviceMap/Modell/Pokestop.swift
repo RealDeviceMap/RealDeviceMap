@@ -123,9 +123,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var cellId: UInt64?
     var lureId: Int16?
     var pokestopDisplay: UInt16?
-    var incidentExpireTimestamp: UInt64?
+    var incidentExpireTimestamp: UInt32?
     
-    init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?, lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?, questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?, questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?, pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt64?) {
+    init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?, lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?, questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?, questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?, pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -167,7 +167,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         if fortData.hasPokestopDisplay {
             self.pokestopDisplay = UInt16(fortData.pokestopDisplay.characterDisplay.style.rawValue)
-            self.incidentExpireTimestamp = UInt64(fortData.pokestopDisplay.incidentExpirationMs / 1000)
+            self.incidentExpireTimestamp = UInt32(fortData.pokestopDisplay.incidentExpirationMs / 1000)
         }
         self.cellId = cellId
         
@@ -579,7 +579,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let cellId = result[15] as? UInt64
             let lureId = result[16] as? Int16
             let pokestopDisplay = result[17] as? UInt16
-            let incidentExpireTimestamp = result[18] as? UInt64
+            let incidentExpireTimestamp = result[18] as? UInt32
             
             pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp))
         }
@@ -657,7 +657,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let cellId = result[15] as? UInt64
             let lureId = result[16] as? Int16
             let pokestopDisplay = result[17] as? UInt16
-            let incidentExpireTimestamp = result[18] as? UInt64
+            let incidentExpireTimestamp = result[18] as? UInt32
             
             pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp))
         }
@@ -718,7 +718,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let cellId = result[15] as? UInt64
         let lureId = result[16] as? Int16
         let pokestopDisplay = result[17] as? UInt16
-        let incidentExpireTimestamp = result[18] as? UInt64
+        let incidentExpireTimestamp = result[18] as? UInt32
 
         return Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp)
 
