@@ -100,17 +100,41 @@ class SpawnPoint: JSONConvertibleObject{
 
     }
     
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32) throws -> [SpawnPoint] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, spawnpointFilterExclude: [String]?=nil) throws -> [SpawnPoint] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        var excludeWithoutTimer = false
+        var excludeWithTimer = false        
+        if spawnpointFilterExclude != nil {
+            for filter in spawnpointFilterExclude! {
+                if filter.contains(string: "no-timer") {
+                    excludeWithoutTimer = true
+                } else if filter.contains(string: "with-timer") {
+                    excludeWithTimer = true
+                }
+            }
+        }
+        
+        let excludeTimerSQL: String
+        if !excludeWithoutTimer && !excludeWithTimer {
+            excludeTimerSQL = ""
+        } else if !excludeWithoutTimer && excludeWithTimer {
+            excludeTimerSQL = "AND (despawn_sec IS NULL)"
+        } else if excludeWithoutTimer && !excludeWithTimer {
+            excludeTimerSQL = "AND (despawn_sec IS NOT NULL)"
+        } else {
+            excludeTimerSQL = "AND (despawn_sec IS NULL AND despawn_sec IS NOT NULL)"
+        }
+            
+        
         let sql = """
             SELECT id, lat, lon, updated, despawn_sec
             FROM spawnpoint
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ?
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTimerSQL)
         """
         
         let mysqlStmt = MySQLStmt(mysql)

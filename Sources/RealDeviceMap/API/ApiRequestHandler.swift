@@ -40,6 +40,10 @@ class ApiRequestHandler {
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
+        let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
+        let gymFilterExclude = request.param(name: "gym_filter_exclude")?.jsonDecodeForceTry() as? [String]
+        let pokestopFilterExclude = request.param(name: "pokestop_filter_exclude")?.jsonDecodeForceTry() as? [String]
+        let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
@@ -48,6 +52,10 @@ class ApiRequestHandler {
         let showGroups =  request.param(name: "show_groups")?.toBool() ?? false
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
         let showQuestFilter = request.param(name: "show_quest_filter")?.toBool() ?? false
+        let showRaidFilter = request.param(name: "show_raid_filter")?.toBool() ?? false
+        let showGymFilter = request.param(name: "show_gym_filter")?.toBool() ?? false
+        let showPokestopFilter = request.param(name: "show_pokestop_filter")?.toBool() ?? false
+        let showSpawnpointFilter = request.param(name: "show_spawnpoint_filter")?.toBool() ?? false
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
@@ -128,19 +136,19 @@ class ApiRequestHandler {
         let permShowRaid = perms.contains(.viewMapRaid)
         let permShowGym = perms.contains(.viewMapGym)
         if isPost && (permViewMap && (showGyms && permShowGym || showRaids && permShowRaid)) {
-            data["gyms"] = try? Gym.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, raidsOnly: !showGyms, showRaids: permShowRaid)
+            data["gyms"] = try? Gym.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude, gymFilterExclude: gymFilterExclude)
         }
         let permShowStops = perms.contains(.viewMapPokestop)
         let permShowQuests =  perms.contains(.viewMapQuest)
         if isPost && (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
-            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, questFilterExclude: questFilterExclude)
+            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, questFilterExclude: questFilterExclude, pokestopFilterExclude: pokestopFilterExclude)
         }
         let permShowIV = perms.contains(.viewMapIV)
         if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon){
             data["pokemon"] = try? Pokemon.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude, pokemonFilterIV: pokemonFilterIV)
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
-            data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+            data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, spawnpointFilterExclude: spawnpointFilterExclude)
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
@@ -431,6 +439,505 @@ class ApiRequestHandler {
                     ])
             }
             data["quest_filters"] = questData
+        }
+        
+        if permViewMap && showRaidFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let raidLevelsString = Localizer.global.get(value: "filter_raid_levels")
+            let pokemonString = Localizer.global.get(value: "filter_pokemon")
+            
+            var raidData = [[String: Any]]()
+            //Level
+            for i in 1...5 {
+                
+                let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="raid-level" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="raid-level" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-level" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-level" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-level" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-level" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                raidData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": raidLevel,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/egg/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": raidLevelsString
+                ])
+            }
+            
+            //Pokemon
+            for i in 1...WebReqeustHandler.maxPokemonId {
+            
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+            
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="raid-pokemon" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+
+                raidData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+200
+                    ],
+                    "name": Localizer.global.get(value: "poke_\(i)"),
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": pokemonString
+                ])
+            }
+            
+            data["raid_filters"] = raidData
+        }
+        
+        if permViewMap && showGymFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let gymTeamString = Localizer.global.get(value: "filter_gym_team")
+            let gymOptionsString = Localizer.global.get(value: "filter_gym_options")
+            let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
+            
+            var gymData = [[String: Any]]()
+            //Team
+            for i in 0...3 {
+                
+                let gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="gym-team" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="gym-team" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-team" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-team" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-team" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-team" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                gymData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": gymTeam,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i)_\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": gymTeamString
+                ])
+            }
+            
+            // EX raid eligible gyms
+            let exFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ex" data-type="gym-ex" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="ex" data-type="gym-ex" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            let exSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ex" data-type="gym-ex" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ex" data-type="gym-ex" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ex" data-type="gym-ex" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ex" data-type="gym-ex" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 5), //Need a better way to display, new section?
+                    "sort": 5
+                ],
+                "name": Localizer.global.get(value: "filter_raid_ex") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/1403.png\" style=\"height:50px; width:50px;\">",
+                "filter": exFilter,
+                "size": exSize,
+                "type": gymOptionsString
+            ])
+            
+            //Available slots
+            for i in 0...6 {
+                let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="gym-slots" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="gym-slots" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-slots" data-info="small" disabled>
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-slots" data-info="normal" disabled>
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-slots" data-info="large" disabled>
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="gym-slots" data-info="huge" disabled>
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                let team = (UInt16.random % 3) + 1
+                
+                gymData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+100
+                    ],
+                    "name": availableSlots,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(6 - i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": availableSlotsString
+                ])
+            }
+            
+            data["gym_filters"] = gymData
+        }
+        
+        if permViewMap && showPokestopFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let pokestopOptionsString = Localizer.global.get(value: "filter_pokestop_options")
+            
+            var pokestopData = [[String: Any]]()
+            
+            let pokestopLured = Localizer.global.get(value: "filter_pokestop_lured")
+            let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
+            
+            let filter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="lured" data-type="pokestop-lured" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="lured" data-type="pokestop-lured" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            let size = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 0),
+                    "sort": 0
+                ],
+                "name": pokestopLured,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/1.png\" style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": size,
+                "type": pokestopOptionsString
+            ])
+            
+            
+            for i in 1...4 {
+                let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
+                
+                let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+                
+                let size = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)" data-type="pokestop-lure" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+                
+                pokestopData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": pokestopLure,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/\(i).png\" style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": pokestopOptionsString
+                ])
+            }
+            
+            let trFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            let trSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="invasion" data-type="pokestop-invasion" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 5),
+                    "sort": 5
+                ],
+                "name": pokestopInvasion,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i.png\" style=\"height:50px; width:50px;\">",
+                "filter": trFilter,
+                "size": trSize,
+                "type": pokestopOptionsString
+                ])
+        
+            data["pokestop_filters"] = pokestopData
+        }
+        
+        if permViewMap && showSpawnpointFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+            
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+            
+            let spawnpointOptionsString = Localizer.global.get(value: "filter_spawnpoint_options")
+            let spawnpointWithTimerString = Localizer.global.get(value: "filter_spawnpoint_with_timer")
+            let spawnpointWithoutTimerString = Localizer.global.get(value: "filter_spawnpoint_without_timer")
+            
+            var spawnpointData = [[String: Any]]()
+            
+            var filter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            var size = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="no-timer" data-type="spawnpoint-timer" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            spawnpointData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 0),
+                    "sort": 0
+                ],
+                "name": spawnpointWithoutTimerString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/0.png\" style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": size,
+                "type": spawnpointOptionsString
+            ])
+            
+            filter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+            
+            size = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="with-timer" data-type="spawnpoint-timer" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+            
+            spawnpointData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 1),
+                    "sort": 1
+                ],
+                "name": spawnpointWithTimerString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/1.png\" style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": size,
+                "type": spawnpointOptionsString
+            ])
+            
+            data["spawnpoint_filters"] = spawnpointData
         }
         
         if showDevices && perms.contains(.admin) {

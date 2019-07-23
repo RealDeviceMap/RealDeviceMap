@@ -393,7 +393,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool, questFilterExclude: [String]?=nil) throws -> [Pokestop] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, questsOnly: Bool, showQuests: Bool, questFilterExclude: [String]?=nil, pokestopFilterExclude: [String]?=nil) throws -> [Pokestop] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
@@ -403,6 +403,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         var excludedTypes = [Int]()
         var excludedPokemon = [Int]()
         var excludedItems = [Int]()
+        var excludedLures = [Int]()
+        var excludeAllButLured = Bool()
+        var excludeAllButInvasion = Bool()
         
         if showQuests && questsOnly && questFilterExclude != nil {
             for filter in questFilterExclude! {
@@ -421,10 +424,27 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 }
             }
         }
+        
+        if pokestopFilterExclude != nil {
+            for filter in pokestopFilterExclude! {
+                if filter.contains(string: "lured") {
+                    excludeAllButLured = true
+                } else if filter.contains(string: "l") {
+                    if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
+                        excludedLures.append(id + 500)
+                    }
+                } else if filter.contains(string: "invasion") {
+                    excludeAllButInvasion = true
+                }
+            }
+        }
 
         let excludeTypeSQL: String
         let excludePokemonSQL: String
         let excludeItemSQL: String
+        let excludeLureSQL: String
+        let excludeAllButLuredSQL: String
+        let excludeAllButInvasionSQL: String
         if showQuests && questsOnly {
             if excludedTypes.isEmpty {
                 excludeTypeSQL = ""
@@ -463,11 +483,34 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePokemonSQL = ""
             excludeItemSQL = ""
         }
+
+        if excludeAllButLured {
+            excludeAllButLuredSQL = "AND (lure_expire_timestamp >= UNIX_TIMESTAMP())"
+        } else {
+            excludeAllButLuredSQL = ""
+        }
+        
+        if excludedLures.isEmpty {
+            excludeLureSQL = ""
+        } else {
+            var sqlExcludeCreate = "AND (lure_id NOT IN ("
+            for _ in excludedLures {
+                sqlExcludeCreate += "?, "
+            }
+            sqlExcludeCreate += "?))"
+            excludeLureSQL = sqlExcludeCreate
+        }
+        
+        if excludeAllButInvasion {
+            excludeAllButInvasionSQL = "AND (incident_expire_timestamp >= UNIX_TIMESTAMP())"
+        } else {
+            excludeAllButInvasionSQL = ""
+        }
         
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id
             FROM pokestop
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL)
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludeAllButLuredSQL) \(excludeLureSQL) \(excludeAllButInvasionSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"
@@ -493,6 +536,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             mysqlStmt.bindParam(id)
         }
         for id in excludedItems {
+            mysqlStmt.bindParam(id)
+        }
+        for id in excludedLures {
             mysqlStmt.bindParam(id)
         }
         

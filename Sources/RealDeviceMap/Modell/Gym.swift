@@ -346,17 +346,117 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
     
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, raidsOnly: Bool, showRaids: Bool) throws -> [Gym] {
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32, raidsOnly: Bool, showRaids: Bool, raidFilterExclude: [String]?=nil, gymFilterExclude: [String]?=nil) throws -> [Gym] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        var excludedLevels = [Int]()
+        var excludedPokemon = [Int]()
+        var excludeAllButEx = false
+        var excludedTeams = [Int]()
+        var excludedAvailableSlots = [Int]()
+        
+        if showRaids && raidFilterExclude != nil {
+            for filter in raidFilterExclude! {
+                if filter.contains(string: "l") {
+                    if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
+                        excludedLevels.append(id)
+                    }
+                } else if (filter.contains(string: "p")) {
+                    if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
+                       excludedPokemon.append(id)
+                    }
+                }
+            }
+        }
+        
+        if gymFilterExclude != nil {
+            for filter in gymFilterExclude! {
+                if filter.contains(string: "t") {
+                    if let id = filter.stringByReplacing(string: "t", withString: "").toInt() {
+                        excludedTeams.append(id)
+                    }
+                } else if filter.contains(string: "s") {
+                    if let id = filter.stringByReplacing(string: "s", withString: "").toInt() {
+                        excludedAvailableSlots.append(id)
+                    }
+                } else if filter.contains(string: "ex") {
+                    excludeAllButEx = true
+                }
+            }
+        }
+        
+        let excludeLevelSQL: String
+        let excludePokemonSQL: String
+        let excludeAllButExSQL: String
+        let excludeTeamSQL: String
+        let excludeAvailableSlotsSQL: String
+        
+        if showRaids {
+            if excludedLevels.isEmpty {
+                excludeLevelSQL = ""
+            } else {
+                var sqlExcludeCreate = "AND (raid_level NOT IN ("
+                for _ in 1..<excludedLevels.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludeLevelSQL = sqlExcludeCreate
+            }
+            
+            if excludedPokemon.isEmpty {
+                excludePokemonSQL = ""
+            } else {
+                var sqlExcludeCreate = "AND (raid_pokemon_id NOT IN ("
+                for _ in 1..<excludedPokemon.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?))"
+                excludePokemonSQL = sqlExcludeCreate
+            }
+        } else {
+            excludeLevelSQL = ""
+            excludePokemonSQL = ""
+        }
+
+        if excludedTeams.isEmpty {
+            excludeTeamSQL = ""
+        } else {
+            var sqlExcludeCreate = "AND (team_id NOT IN ("
+            for (index, _) in excludedTeams.enumerated() {
+                if (index == excludedTeams.count - 1) {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
+            }
+            excludeTeamSQL = sqlExcludeCreate
+        }
+        
+        if excludedAvailableSlots.isEmpty {
+            excludeAvailableSlotsSQL = ""
+        } else {
+            var sqlExcludeCreate = "AND (availble_slots NOT IN ("
+            for _ in excludedAvailableSlots {
+                sqlExcludeCreate += "?, "
+            }
+            sqlExcludeCreate += "?))"
+            excludeAvailableSlotsSQL = sqlExcludeCreate
+        }
+        
+        if excludeAllButEx {
+            excludeAllButExSQL = "AND (ex_raid_eligible = 1)"
+        } else {
+            excludeAllButExSQL = ""
+        }
+        
         var sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_cp, raid_is_exclusive, cell_id, total_cp
             FROM gym
-            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
+            WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL) \(excludeAllButExSQL)
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"
@@ -369,6 +469,19 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
+        
+        for id in excludedLevels {
+            mysqlStmt.bindParam(id)
+        }
+        for id in excludedPokemon {
+            mysqlStmt.bindParam(id)
+        }
+        for id in excludedTeams {
+            mysqlStmt.bindParam(id)
+        }
+        for id in excludedAvailableSlots {
+            mysqlStmt.bindParam(id)
+        }
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
