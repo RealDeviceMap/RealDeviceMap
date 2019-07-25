@@ -439,8 +439,8 @@ function loadStorage() {
     const pokestopFilterValue = retrieve('pokestop_filter');
     if (pokestopFilterValue === null) {
         const defaultPokestopFilter = {};
-        if (defaultPokestopFilter["lured"] === undefined) {
-            defaultPokestopFilter["lured"] = {"show": false, "size": "normal"};
+        if (defaultPokestopFilter["normal"] === undefined) {
+            defaultPokestopFilter["normal"] = {"show": true, "size": "normal"};
         }
         for (var i = 1; i < 5; i++) {
             if (defaultPokestopFilter["l" + i] === undefined) {
@@ -448,15 +448,15 @@ function loadStorage() {
             }
         }
         if (defaultPokestopFilter["invasion"] === undefined) {
-            defaultPokestopFilter["invasion"] = {"show": false, "size": "normal"};
+            defaultPokestopFilter["invasion"] = {"show": true, "size": "normal"};
         }
 
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilter = defaultPokestopFilter;
     } else {
         pokestopFilter = JSON.parse(pokestopFilterValue);
-        if (pokestopFilter["lured"] === undefined) {
-            pokestopFilter["lured"] = {"show": false, "size": "normal"};
+        if (pokestopFilter["normal"] === undefined) {
+            pokestopFilter["normal"] = {"show": true, "size": "normal"};
         }
         for (var i = 1; i < 5; i++) {
             if (pokestopFilter["l" + i] === undefined) {
@@ -464,7 +464,7 @@ function loadStorage() {
             }
         }
         if (pokestopFilter["invasion"] === undefined) {
-            pokestopFilter["invasion"] = {"show": false, "size": "normal"};
+            pokestopFilter["invasion"] = {"show": true, "size": "normal"};
         }
     }
 
@@ -660,11 +660,11 @@ function initMap() {
 
     $('#reset-pokestop-filter').on('click', function(event) {
         const defaultPokestopFilter = {};
-        defaultPokestopFilter["lured"] = {"show": false, "size": pokestopFilterNew["lured"]["size"]};
+        defaultPokestopFilter["normal"] = {"show": true, "size": pokestopFilterNew["normal"]["size"]};
         for (var i = 1; i < 5; i++) {
             defaultPokestopFilter["l" + i] = {"show": true, "size": pokestopFilterNew["l" + i]["size"]};
         }
-        defaultPokestopFilter["invasion"] = {"show": false, "size": pokestopFilterNew["invasion"]["size"]};
+        defaultPokestopFilter["invasion"] = {"show": true, "size": pokestopFilterNew["invasion"]["size"]};
         
         store('pokestop_filter', JSON.stringify(defaultPokestopFilter));
         pokestopFilterNew = defaultPokestopFilter;
@@ -674,7 +674,7 @@ function initMap() {
 
     $('#disable-all-pokestop-filter').on('click', function(event) {
         const defaultPokestopFilter = {};
-        defaultPokestopFilter["lured"] = {"show": false, "size": pokestopFilterNew["lured"]["size"]};
+        defaultPokestopFilter["normal"] = {"show": false, "size": pokestopFilterNew["normal"]["size"]};
         for (var i = 1; i < 5; i++) {
             defaultPokestopFilter["l" + i] = {"show": false, "size": pokestopFilterNew["l" + i]["size"]};
         }
@@ -1040,8 +1040,8 @@ function loadData() {
 
     const pokestopFilterExclude = [];
     if (showPokestops) {
-        if (pokestopFilter["lured"]["show"] !== false) {
-            pokestopFilterExclude.push("lured");
+        if (pokestopFilter["normal"]["show"] === false) {
+            pokestopFilterExclude.push("normal");
         }
         let i;
         for (i = 1; i < 5; i++) {
@@ -1049,7 +1049,7 @@ function loadData() {
                 pokestopFilterExclude.push("l" + i);
             }
         }
-        if (pokestopFilter["invasion"]["show"] !== false) {
+        if (pokestopFilter["invasion"]["show"] === false) {
             pokestopFilterExclude.push("invasion");
         }
     }
@@ -2418,7 +2418,7 @@ function manageSelectButton(e, isNew) {
                 shouldShow = gymFilterNew["s" + id]["size"] === "huge";
                 break;
         }
-    } else if (type === "pokestop-lured") {
+    } else if (type === "pokestop-normal") {
         switch (info) {
             case "hide":
                 shouldShow = pokestopFilterNew[id]["show"] === false;
@@ -2463,22 +2463,22 @@ function manageSelectButton(e, isNew) {
     } else if (type === "pokestop-invasion") {
         switch (info) {
             case "hide":
-                shouldShow = pokestopFilterNew["invasion"]["show"] === false;
+                shouldShow = pokestopFilterNew[id]["show"] === false;
                 break;
             case "show":
-                shouldShow = pokestopFilterNew["invasion"]["show"] === true;
+                shouldShow = pokestopFilterNew[id]["show"] === true;
                 break;
             case "small":
-                shouldShow = pokestopFilterNew["invasion"]["size"] === "small";
+                shouldShow = pokestopFilterNew[id]["size"] === "small";
                 break;
             case "normal":
-                shouldShow = pokestopFilterNew["invasion"]["size"] === "normal";
+                shouldShow = pokestopFilterNew[id]["size"] === "normal";
                 break;
             case "large":
-                shouldShow = pokestopFilterNew["invasion"]["size"] === "large";
+                shouldShow = pokestopFilterNew[id]["size"] === "large";
                 break;
             case "huge":
-                shouldShow = pokestopFilterNew["invasion"]["size"] === "huge";
+                shouldShow = pokestopFilterNew[id]["size"] === "huge";
                 break;
         }
     } else if (type === "spawnpoint-timer") {
@@ -2715,7 +2715,7 @@ function manageSelectButton(e, isNew) {
                         gymFilterNew["s" + id]["size"] = "huge";
                         break;
                 }
-            } else if (type === "pokestop-lured") {
+            } else if (type === "pokestop-normal") {
                 switch (info) {
                     case "hide":
                         pokestopFilterNew[id]["show"] = false;
@@ -2760,22 +2760,22 @@ function manageSelectButton(e, isNew) {
             } else if (type === "pokestop-invasion") {
                 switch (info) {
                     case "hide":
-                        pokestopFilterNew["invasion"]["show"] = false;
+                        pokestopFilterNew[id]["show"] = false;
                         break;
                     case "show":
-                        pokestopFilterNew["invasion"]["show"] = true;
+                        pokestopFilterNew[id]["show"] = true;
                         break;
                     case "small":
-                        pokestopFilterNew["invasion"]["size"] = "small";
+                        pokestopFilterNew[id]["size"] = "small";
                         break;
                     case "normal":
-                        pokestopFilterNew["invasion"]["size"] = "normal";
+                        pokestopFilterNew[id]["size"] = "normal";
                         break;
                     case "large":
-                        pokestopFilterNew["invasion"]["size"] = "large";
+                        pokestopFilterNew[id]["size"] = "large";
                         break;
                     case "huge":
-                        pokestopFilterNew["invasion"]["size"] = "huge";
+                        pokestopFilterNew[id]["size"] = "huge";
                         break;
                 }
             } else if (type === "spawnpoint-timer") {

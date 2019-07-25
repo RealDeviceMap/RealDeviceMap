@@ -711,15 +711,15 @@ class ApiRequestHandler {
             
             var pokestopData = [[String: Any]]()
             
-            let pokestopLured = Localizer.global.get(value: "filter_pokestop_lured")
+            let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
             
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-off select-button-new" data-id="lured" data-type="pokestop-lured" data-info="hide">
+            <label class="btn btn-sm btn-off select-button-new" data-id="normal" data-type="pokestop-normal" data-info="hide">
             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
             </label>
-            <label class="btn btn-sm btn-on select-button-new" data-id="lured" data-type="pokestop-lured" data-info="show">
+            <label class="btn btn-sm btn-on select-button-new" data-id="normal" data-type="pokestop-normal" data-info="show">
             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
             </label>
             </div>
@@ -727,16 +727,16 @@ class ApiRequestHandler {
             
             let size = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="small">
+            <label class="btn btn-sm btn-size select-button-new" data-id="normal" data-type="pokestop-normal" data-info="small">
             <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="normal">
+            <label class="btn btn-sm btn-size select-button-new" data-id="normal" data-type="pokestop-normal" data-info="normal">
             <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="large">
+            <label class="btn btn-sm btn-size select-button-new" data-id="normal" data-type="pokestop-normal" data-info="large">
             <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="lured" data-type="pokestop-lured" data-info="huge">
+            <label class="btn btn-sm btn-size select-button-new" data-id="normal" data-type="pokestop-normal" data-info="huge">
             <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
             </label>
             </div>
@@ -747,8 +747,8 @@ class ApiRequestHandler {
                     "formatted": String(format: "%03d", 0),
                     "sort": 0
                 ],
-                "name": pokestopLured,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/1.png\" style=\"height:50px; width:50px;\">",
+                "name": pokestopNormal,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\" style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
                 "type": pokestopOptionsString
