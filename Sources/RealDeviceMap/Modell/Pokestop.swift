@@ -526,7 +526,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if excludedLures.isEmpty {
                 excludeLureSQL = ""
             } else {
-                var sqlExcludeCreate = "(lure_id NOT IN ("
+                var sqlExcludeCreate = "AND (lure_id NOT IN ("
                 for _ in excludedLures {
                     sqlExcludeCreate += "?, "
                 }
@@ -534,7 +534,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 excludeLureSQL = sqlExcludeCreate
             }
 
-            let hasLureSQL = "(lure_expire_timestamp IS NOT NULL AND lure_expire_timestamp >= UNIX_TIMESTAMP() AND \(excludeLureSQL))"
+            let hasLureSQL = "(lure_expire_timestamp IS NOT NULL AND lure_expire_timestamp >= UNIX_TIMESTAMP() \(excludeLureSQL))"
             let hasNoLureSQL = "(lure_expire_timestamp IS NULL OR lure_expire_timestamp < UNIX_TIMESTAMP())"
             let hasInvasionSQL = "(incident_expire_timestamp IS NOT NULL AND incident_expire_timestamp >= UNIX_TIMESTAMP())"
             let hasNoInvasionSQL = "(incident_expire_timestamp IS NULL OR incident_expire_timestamp < UNIX_TIMESTAMP())"
