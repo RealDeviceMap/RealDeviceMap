@@ -1657,12 +1657,12 @@ function getPokestopPopupContent(pokestop) {
     }
 
 	if (lureExpireDate >= now) {
-        content += '<b>Lure Type:</b> ' + getLureTypeName(pokestop.lure_id) + '<br>';
+        content += '<b>Lure Type:</b> ' + getLureName(pokestop.lure_id) + '<br>';
 		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>';
     }
     
     if (invasionExpireDate >= now) {
-        var gruntType = getGruntType(pokestop.grunt_type);
+        var gruntType = getGruntName(pokestop.grunt_type);
         content += '<b>Team Rocket Invasion</b><br>';
         content += '<b>Grunt Type:</b> ' + gruntType + '<br>';
         content += '<b>End Time:</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>';
@@ -1836,6 +1836,14 @@ function getQuestName(questId, amount) {
 
 function getItemName(itemId) {
     return i18n('item_'+itemId);
+}
+
+function getLureName(lureId) {
+    return i18n('lure_'+lureId);
+}
+
+function getGruntName(gruntId) {
+    return i18n('grunt_'+gruntId);
 }
 
 function getQuestReward(reward) {
@@ -2928,68 +2936,6 @@ function getLureIconId(lureId) {
     }
     return 1;
 }
-
-function getLureTypeName(lureId) {
-    switch (lureId) {
-        case 501:
-            return "Normal";
-        case 502:
-            return "Glacial";
-        case 503:
-            return "Mossy";
-        case 504:
-            return "Magnetic";
-    }
-    return "Unknown";
-}
-
-function getGruntType(gruntId) {
-    switch (gruntId) {
-        case 0: return "None";
-        case 1: return "Blanche";
-        case 2: return "Candela";
-        case 3: return "Spark";
-        case 4: return "Male Grunt";
-        case 5: return "Female Grunt";
-        case 6: return "Bug - Female Grunt";
-        case 7: return "Bug - Male Grunt";
-        case 8: return "Darkness - Female Grunt";
-        case 9: return "Darkness - Male Grunt";
-        case 10: return "Dark - Female Grunt";
-        case 11: return "Dark - Male Grunt";
-        case 12: return "Dragon - Female Grunt";
-        case 13: return "Dragon - Male Grunt";
-        case 14: return "Fairy - Female Grunt";
-        case 15: return "Fairy - Male Grunt";
-        case 16: return "Fighting - Female Grunt";
-        case 17: return "Fighting - Male Grunt";
-        case 18: return "Fire - Female Grunt";
-        case 19: return "Fire - Male Grunt";    
-        case 20: return "Flying - Female Grunt";
-        case 21: return "Flying - Male Grunt";
-        case 22: return "Grass - Female Grunt";
-        case 23: return "Grass - Male Grunt";
-        case 24: return "Ground - Female Grunt";
-        case 25: return "Ground - Male Grunt";
-        case 26: return "Ice - Female Grunt";
-        case 27: return "Ice - Male Grunt";
-        case 28: return "Metal - Female Grunt";
-        case 29: return "Metal - Male Grunt";
-        case 30: return "Normal - Female Grunt";
-        case 31: return "Normal - Male Grunt";
-        case 32: return "Poison - Female Grunt";
-        case 33: return "Poison - Male Grunt";
-        case 34: return "Psychic - Female Grunt";
-        case 35: return "Psychic - Male Grunt";
-        case 36: return "Rock - Female Grunt";
-        case 37: return "Rock - Male Grunt";
-        case 38: return "Water - Female Grunt";
-        case 39: return "Water - Male Grunt";
-        case 40: return "Player Team Leader";    
-        default: return "Unknown";                       
-    }
-}
-
 
 // MARK: - Init Filter
 
