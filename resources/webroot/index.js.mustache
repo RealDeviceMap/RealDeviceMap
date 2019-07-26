@@ -2192,7 +2192,7 @@ function getGymMarkerIcon(gym, ts) {
 			}
 
             //Raid Boss
-            var iconSize = getRaidSize("hatched");
+            var iconSize = getRaidSize("p" + gym.raid_pokemon_id);
             icon = L.icon({
                 iconUrl: 		'/static/img/raid/'+ gym.team_id + '_' + size + '_' + pokemonIdString+ '.png',
                 iconSize: 		[iconSize, iconSize * 1.667],
