@@ -400,7 +400,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             
             let sql = """
                 UPDATE pokestop
-                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?, lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, deleted = false
+                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?, lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?, deleted = false
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
