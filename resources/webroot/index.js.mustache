@@ -1624,7 +1624,7 @@ function getPokemonPopupContent(pokemon) {
             '</div>' +  //END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">';
             var pkmn = pokemonDb[pokemon.pokemon_id];
-            if (pkmn !== null) {
+            if (pkmn !== undefined && pkmn !== null) {
                 var types = pkmn.types;
                 if (types !== null && types.length > 0) {
                     content += '<div class="col">';
@@ -1893,7 +1893,7 @@ function getGymPopupContent(gym) {
                 '<div class="row" style="margin:auto;">';
                 if (hasRaidBoss && isRaidBattle) {
                     var pkmn = pokemonDb[gym.raid_pokemon_id];
-                    if (pkmn !== null) {
+                    if (pkmn !== undefined && pkmn !== null) {
                         var types = pkmn.types;
                         if (types !== null && types.length > 0) {
                             content += '<div class="col text-nowrap">';
