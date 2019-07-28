@@ -207,6 +207,39 @@ $(function() {
 
     });
 
+    $('#exportSettings').on('click', function() {
+        var settings = {
+            show_gyms: showGyms,
+            show_raids: showRaids,
+            show_pokemon: showPokemon,
+            show_quests: showQuests,
+            show_pokestops: showPokestops,
+            show_spawnpoints: showSpawnpoints,
+            show_cells: showCells,
+            gym: gymFilterNew,
+            raid: raidFilterNew,
+            pokemon: pokemonFilterNew,
+            quest: questFilterNew,
+            pokestop: pokestopFilterNew,
+            spawnpoint: spawnpointFilterNew
+        };
+        var json = JSON.stringify(settings);
+        var blob = new Blob([json], {type: "application/json;chartset=utf-8"});
+        var el = document.createElement('a');
+        el.setAttribute('href', 'data:text/plain;chartset=utf-8,' + encodeURIComponent(json));
+        el.setAttribute('download', 'settings.json');
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        el.click();
+        document.body.removeChild(el);
+    });
+
+    $('#importSettings').on('click', function() {
+        $('#importSettingsFile').click();
+    });
+
+    document.getElementById('importSettingsFile').addEventListener('change', loadFilterSettings, false);
+
     // If you see this: Don't tell anyone
     var d = new Date();
     if (d.getMonth() == 11 && d.getDate() >= 24) {
@@ -3465,4 +3498,112 @@ function loadSpawnpointFilter() {
         dataTable.responsive.recalc();
         dataTable.columns.adjust();
     });
+}
+function loadFilterSettings(e) {
+    var file = e.target.files[0];
+    if (!file) {
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(file) {
+        var contents = file.target.result;
+        var obj = JSON.parse(contents);
+
+        showGyms = obj.show_gyms;
+        gymFilterNew = obj.gym;
+        store('show_gyms', showGyms);
+        store('gym_filter', JSON.stringify(gymFilterNew));
+
+        showRaids = obj.show_raids;
+        raidFilterNew = obj.raid;
+        store('show_raids', showRaids);
+        store('raid_filter', JSON.stringify(raidFilterNew));
+
+        showPokemon = obj.show_pokemon,
+        pokemonFilterNew = obj.pokemon;
+        store('show_pokemon', showRaids);
+        store('pokemon_filter', JSON.stringify(pokemonFilterNew));
+
+        showQuests = obj.show_quests;
+        questFilterNew = obj.quest;
+        store('show_quests', showRaids);
+        store('quest_filter', JSON.stringify(questFilterNew));
+
+        showPokestops = obj.show_pokestops;
+        pokestopFilterNew = obj.pokestop;
+        store('show_pokestops', showPokestops);
+        store('pokestop_filter', pokestopFilterNew);
+
+        showSpawnpoints = obj.show_spawnpoints;
+        spawnpointFilterNew = obj.spawnpoint;
+        store('show_spawnpoints', showSpawnpoints);
+        store('spawnpoint_filter', spawnpointFilterNew)
+
+        showCells = obj.show_cells;
+        store('show_cells', showCells);
+
+        if (showGyms) {
+            $('#show-gyms').addClass('active');
+            $('#hide-gyms').removeClass('active');
+        } else {
+            $('#hide-gyms').addClass('active');
+            $('#show-gyms').removeClass('active');
+        }
+
+        if (showRaids) {
+            $('#show-raids').addClass('active');
+            $('#hide-raids').removeClass('active');
+        } else {
+            $('#hide-raids').addClass('active');
+            $('#show-raids').removeClass('active');
+        }
+
+        if (showPokestops) {
+            $('#show-pokestops').addClass('active');
+            $('#hide-pokestops').removeClass('active');
+        } else {
+            $('#hide-pokestops').addClass('active');
+            $('#show-pokestops').removeClass('active');
+        }
+
+        if (showQuests) {
+            $('#show-quests').addClass('active');
+            $('#hide-quests').removeClass('active');
+        } else {
+            $('#hide-quests').addClass('active');
+            $('#show-quests').removeClass('active');
+        }
+
+        if (showPokemon) {
+            $('#show-pokemon').addClass('active');
+            $('#hide-pokemon').removeClass('active');
+        } else {
+            $('#hide-pokemon').addClass('active');
+            $('#show-pokemon').removeClass('active');
+        }
+
+        if (showSpawnpoints) {
+            $('#show-spawnpoints').addClass('active');
+            $('#hide-spawnpoints').removeClass('active');
+        } else {
+            $('#hide-spawnpoints').addClass('active');
+            $('#show-spawnpoints').removeClass('active');
+        }
+
+        if (showCells) {
+            $('#show-cells').addClass('active');
+            $('#hide-cells').removeClass('active');
+        } else {
+            $('#hide-cells').addClass('active');
+            $('#show-cells').removeClass('active');
+        }
+
+        $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false);
+        $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false);
+    };
+    reader.readAsText(file);
 }

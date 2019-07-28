@@ -62,6 +62,8 @@
 		"filter_xp": "XP",
 		"filter_candy": "Candy",
 		"filter_cells": "Cells",
+		"filter_export": "Export",
+		"filter_import": "Import",
         "filter_mapstyle": "Map-Style",
         "filter_select_mapstyle": "Select Map-Style",
         "filter_level": "Level",
