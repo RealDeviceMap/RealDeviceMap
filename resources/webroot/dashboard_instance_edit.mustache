@@ -6,11 +6,19 @@
             if ($(this).val() === 'pokemon_iv') {
                 $('.pokemon_ids_text').removeClass('d-none');
                 $('.scatter_pokemon_ids_text').removeClass('d-none');
-                $('.iv_queue_limit_text').removeClass('d-none');
+                $('#iv_queue_limit').removeClass('d-none');
+                $('.clear_quests_form').addClass('d-none');
+            } else if ($(this).val() === 'auto_quest') {
+                $('.pokemon_ids_text').addClass('d-none');
+                $('.scatter_pokemon_ids_text').addClass('d-none');
+                $('#iv_queue_limit').addClass('d-none');
+                $('.clear_quests_form').removeClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
-                $('.iv_queue_limit_text').addClass('d-none');
+                $('#iv_queue_limit').addClass('d-none');
+                $('.clear_quests_form').addClass('d-none');
+>>>>>>> mr30
             }
         });
     })
@@ -78,6 +86,14 @@
             <input type="hidden" name="delete" value="true">
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
+        <br>
+        {{#auto_quest_selected}}
+        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to clear all quests for instance {{old_name}}?)');" class="clear_quests_form">
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <input type="hidden" name="clear_quests" value="true">
+            <button type="submit" class="btn btn-danger">Clear Quests</button>
+        </form>
+        {{/auto_quest_selected}}
     </div>
     <br>
 </body>
