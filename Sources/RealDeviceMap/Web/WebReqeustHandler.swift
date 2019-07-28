@@ -1941,7 +1941,7 @@ class WebReqeustHandler {
             }
         }
         
-        if selectedDevice == nil || selectedInstance == nil {
+        if selectedDevice == nil || selectedDevice == "" || selectedInstance == nil || selectedInstance == "" {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
