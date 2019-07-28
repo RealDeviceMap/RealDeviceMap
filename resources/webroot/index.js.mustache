@@ -721,8 +721,8 @@ function initMap() {
 
     $('#reset-spawnpoint-filter').on('click', function(event) {
         const defaultSpawnpointFilter = {};
-        defaultSpawnpointFilter["no-timer"] = {"show": true, "size": spawnpointFilterNew["no-timer"]["size"]};
-        defaultSpawnpointFilter["with-timer"] = {"show": true, "size": spawnpointFilterNew["with-timer"]["size"]};
+        defaultSpawnpointFilter["no-timer"] = {"show": true, "size": "normal"};
+        defaultSpawnpointFilter["with-timer"] = {"show": true, "size": "normal"};
 
         store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter));
         spawnpointFilterNew = defaultSpawnpointFilter;
@@ -3532,12 +3532,12 @@ function loadFilterSettings(e) {
         showPokestops = obj.show_pokestops;
         pokestopFilterNew = obj.pokestop;
         store('show_pokestops', showPokestops);
-        store('pokestop_filter', pokestopFilterNew);
+        store('pokestop_filter', JSON.stringify(pokestopFilterNew));
 
         showSpawnpoints = obj.show_spawnpoints;
         spawnpointFilterNew = obj.spawnpoint;
         store('show_spawnpoints', showSpawnpoints);
-        store('spawnpoint_filter', spawnpointFilterNew)
+        store('spawnpoint_filter', JSON.stringify(spawnpointFilterNew));
 
         showCells = obj.show_cells;
         store('show_cells', showCells);
