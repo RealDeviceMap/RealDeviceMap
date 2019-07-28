@@ -1816,7 +1816,7 @@ function getPokestopPopupContent(pokestop) {
 
     content += 
         '<br>' +
-        '<div class="row">' +
+        '<div class="row text-center">' +
             '<div class="col">' +
                 '<a href="https://www.google.com/maps/place/'+pokestop.lat+','+pokestop.lon+'" target="_blank" title="Open in Google Maps">' +
                     '<img src="/static/img/navigation/gmaps.png" height="32" width="32">' +
@@ -1859,7 +1859,7 @@ function getGymPopupContent(gym) {
             '<span class="text-nowrap"><h6><b>' + gymName + '</b></h6></span>' +
         '</div>' +
         '<div class="col-6 col-md-4 center-vertical">' + 
-            '<div style="float:right; margin-right:5px;">' +
+            '<div style="float:right; margin: auto;">' +
                 '<img src="/static/img/team/' + gym.team_id + '.png" height="32" width="32">' +
             '</div>' +
         '</div>' +
@@ -1868,7 +1868,7 @@ function getGymPopupContent(gym) {
     if (isRaid) {
         var hasRaidBoss = gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null;
         var pokemonName;
-        if (hasRaidBoss) {
+        if (hasRaidBoss && isRaidBattle) {
             if (gym.raid_pokemon_form !== 0 && gym.raid_pokemon_form !== null) {
                 pokemonName = getFormName(gym.raid_pokemon_form) + ' ' + getPokemonName(gym.raid_pokemon_id);
             } else {
@@ -1876,12 +1876,14 @@ function getGymPopupContent(gym) {
             }
     	} else if (isRaidBattle) {
             pokemonName = "Unknown Raid Boss";
+        } else {
+            pokemonName = "Level " + gym.raid_level + " Egg";
         }
         content +=
         '<div class="row" style="margin:auto;">' + //START 1ST ROW
             '<div class="col-6 col-md-4">' + //START 1ST COL
                 '<div class="row" style="margin:auto;">';
-                if (hasRaidBoss) {
+                if (hasRaidBoss && isRaidBattle) {
                     content += '<img src="/static/img/pokemon/' + gym.raid_pokemon_id + '.png" height="64" width="64">';
                 } else {
                     content += '<img src="/static/img/egg/' + gym.raid_level + '.png" height="64" width="64">';
@@ -1889,17 +1891,20 @@ function getGymPopupContent(gym) {
                 content +=
                 '</div>' +  //END POKEMON ROW
                 '<div class="row" style="margin:auto;">';
-                if (hasRaidBoss) {
-                    var types = pokemonDb[gym.raid_pokemon_id].types;
-                    if (types !== null && types.length > 0) {
-                        content += '<div class="col text-nowrap">';
-                        if (types.length === 2) {
-                            content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">&nbsp;';
-                            content += '<img src="/static/img/type/' + types[1].type.toLowerCase() + '.png" height="16" width="16">';
-                        } else {
-                            content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">';
+                if (hasRaidBoss && isRaidBattle) {
+                    var pkmn = pokemonDb[gym.raid_pokemon_id];
+                    if (pkmn !== null) {
+                        var types = pkmn.types;
+                        if (types !== null && types.length > 0) {
+                            content += '<div class="col text-nowrap">';
+                            if (types.length === 2) {
+                                content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">&nbsp;';
+                                content += '<img src="/static/img/type/' + types[1].type.toLowerCase() + '.png" height="16" width="16">';
+                            } else {
+                                content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">';
+                            }
+                            content += '</div>';
                         }
-                        content += '</div>';
                     }
                 }
                 content += 
@@ -1907,21 +1912,29 @@ function getGymPopupContent(gym) {
             '</div>' + //END 1ST COLUMN
             '<div class="col-12 col-md-8 text-nowrap">' + //START 2ND COL
                 '<h7><b>' + pokemonName + '</b></h7><br>';
-                if (gym.raid_pokemon_cp !== null) {
-                    if (gym.raid_is_exclusive) {
-                        content += '<b>Level:</b> EX<br>';
-                    } else {
-                        content += '<b>Level:</b> ' + gym.raid_level + '<br>';
+                if (hasRaidBoss && isRaidBattle) {
+                    if (gym.raid_pokemon_cp !== null) {
+                        if (gym.raid_is_exclusive) {
+                            content += '<b>Level:</b> EX<br>';
+                        } else {
+                            content += '<b>Level:</b> ' + gym.raid_level + '<br>';
+                        }
                     }
-                }
-                if (gym.raid_pokemon_move_1 !== null) {
-                    content += '<b>Fast:</b> ' + getMoveName(gym.raid_pokemon_move_1) + '<br>';
-                }
-                if (gym.raid_pokemon_move_2 !== null) {
-                    content += '<b>Charge:</b> ' + getMoveName(gym.raid_pokemon_move_2) + '<br>';
-                }
-                if (gym.raid_pokemon_form !== null && gym.raid_pokemon_form > 0) {
-                    content += '<b>Form:</b> ' + getFormName(gym.raid_pokemon_form) + '<br>';
+                    if (gym.raid_pokemon_move_1 !== null) {
+                        var move1 = getMoveName(gym.raid_pokemon_move_1);
+                        if (move1 !== null) {
+                            content += '<b>Fast:</b> ' + move1 + '<br>';
+                        }
+                    }
+                    if (gym.raid_pokemon_move_2 !== null) {
+                        var move2 = getMoveName(gym.raid_pokemon_move_2);
+                        if (move2 !== null) {
+                            content += '<b>Charge:</b> ' + move2 + '<br>';
+                        }
+                    }
+                    if (gym.raid_pokemon_form !== null && gym.raid_pokemon_form > 0) {
+                        content += '<b>Form:</b> ' + getFormName(gym.raid_pokemon_form) + '<br>';
+                    }
                 }
                 if (gym.ex_raid_eligible) {
                     content += '<img src="/static/img/egg/ex.png" height="24" width="32">';
@@ -2310,7 +2323,7 @@ function getPokestopMarkerIcon(pokestop, ts) {
         icon = L.icon({
             iconUrl: '/static/img/pokestop/'+invasionString+lureId+'.png',
             iconSize: 		[size       , size /** 1.667*/  ],
-            iconAnchor: 	[size / 2   , size * 1.567  ],
+            iconAnchor: 	[size / 2   , size /** 1.567*/  ],
             popupAnchor: 	[0          , size * -1.567 ]
         });
     }
@@ -3713,6 +3726,7 @@ function loadSpawnpointFilter() {
         dataTable.columns.adjust();
     });
 }
+
 function loadFilterSettings(e) {
     var file = e.target.files[0];
     if (!file) {
