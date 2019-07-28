@@ -542,6 +542,7 @@ class WebReqeustHandler {
                 data["min_level"] = 0
                 data["max_level"] = 29
                 data["timezone_offset"] = 0
+                data["iv_queue_limit"] = 100
                 data["nothing_selected"] = true
             }
         case .dashboardInstanceIVQueue:
