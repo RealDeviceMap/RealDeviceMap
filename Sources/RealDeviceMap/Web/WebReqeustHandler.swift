@@ -163,6 +163,8 @@ class WebReqeustHandler {
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
+            //data["hide_lures"] = !perms.contains(.viewMapLure)
+            //data["hide_invasions"] = !perms.contains(.viewMapInvasion)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             var zoom = request.urlVariables["zoom"]?.toInt()
             var lat = request.urlVariables["lat"]?.toDouble()
@@ -2140,6 +2142,8 @@ class WebReqeustHandler {
         let permViewMapRaid = request.param(name: "perm_view_map_raid") != nil
         let permViewMapPokestop = request.param(name: "perm_view_map_pokestop") != nil
         let permViewMapQuest = request.param(name: "perm_view_map_quest") != nil
+        let permViewMapLure = request.param(name: "perm_view_map_lure") != nil
+        let permViewMapInvasion = request.param(name: "perm_view_map_invasion") != nil
         let permViewMapPokemon = request.param(name: "perm_view_map_pokemon") != nil
         let permViewMapIV = request.param(name: "perm_view_map_iv") != nil
         let permViewMapSpawnpoint = request.param(name: "perm_view_map_spawnpoint") != nil
@@ -2154,6 +2158,8 @@ class WebReqeustHandler {
         data["perm_view_map_raid"] = permViewMapRaid
         data["perm_view_map_pokestop"] = permViewMapPokestop
         data["perm_view_map_quest"] = permViewMapQuest
+        data["perm_view_map_lure"] = permViewMapLure
+        data["perm_view_map_invasion"] = permViewMapInvasion
         data["perm_view_map_pokemon"] = permViewMapPokemon
         data["perm_view_map_iv"] = permViewMapIV
         data["perm_view_map_spawnpoint"] = permViewMapSpawnpoint
@@ -2187,6 +2193,12 @@ class WebReqeustHandler {
         }
         if permViewMapQuest {
             perms.append(.viewMapQuest)
+        }
+        if permViewMapLure {
+            perms.append(.viewMapLure)
+        }
+        if permViewMapInvasion {
+            perms.append(.viewMapInvasion)
         }
         if permViewMapIV {
             perms.append(.viewMapIV)
@@ -2256,6 +2268,8 @@ class WebReqeustHandler {
         data["perm_view_map_raid"] = perms.contains(.viewMapRaid)
         data["perm_view_map_pokestop"] = perms.contains(.viewMapPokestop)
         data["perm_view_map_quest"] = perms.contains(.viewMapQuest)
+        data["perm_view_map_lure"] = perms.contains(.viewMapLure)
+        data["perm_view_map_invasion"] = perms.contains(.viewMapInvasion)
         data["perm_view_map_pokemon"] = perms.contains(.viewMapPokemon)
         data["perm_view_map_iv"] = perms.contains(.viewMapIV)
         data["perm_view_map_spawnpoint"] = perms.contains(.viewMapSpawnpoint)
