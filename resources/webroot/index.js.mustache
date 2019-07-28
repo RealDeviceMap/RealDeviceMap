@@ -1196,7 +1196,8 @@ function loadData() {
                         }
                         if (oldPokestop.incident_expire_timestamp !== pokestop.incident_expire_timestamp) {
                             oldPokestop.incident_expire_timestamp = pokestop.incident_expire_timestamp;
-                            oldPokestop.pokestopDisplay = pokestop.pokestopDisplay;
+                            oldPokestop.pokestop_display = pokestop.pokestop_display;
+                            oldPokestop.grunt_type = pokestop.grunt_type;
                             oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts));
                         }
 
@@ -1656,12 +1657,14 @@ function getPokestopPopupContent(pokestop) {
     }
 
 	if (lureExpireDate >= now) {
-        content += '<b>Lure Type:</b> ' + getLureTypeName(pokestop.lure_id) + '<br>';
+        content += '<b>Lure Type:</b> ' + getLureName(pokestop.lure_id) + '<br>';
 		content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>';
     }
     
     if (invasionExpireDate >= now) {
+        var gruntType = getGruntName(pokestop.grunt_type);
         content += '<b>Team Rocket Invasion</b><br>';
+        content += '<b>Grunt Type:</b> ' + gruntType + '<br>';
         content += '<b>End Time:</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>';
     }
 
@@ -1833,6 +1836,14 @@ function getQuestName(questId, amount) {
 
 function getItemName(itemId) {
     return i18n('item_'+itemId);
+}
+
+function getLureName(lureId) {
+    return i18n('lure_'+lureId);
+}
+
+function getGruntName(gruntId) {
+    return i18n('grunt_'+gruntId);
 }
 
 function getQuestReward(reward) {
@@ -2925,21 +2936,6 @@ function getLureIconId(lureId) {
     }
     return 1;
 }
-
-function getLureTypeName(lureId) {
-    switch (lureId) {
-        case 501:
-            return "Normal";
-        case 502:
-            return "Glacial";
-        case 503:
-            return "Mossy";
-        case 504:
-            return "Magnetic";
-    }
-    return "Unknown";
-}
-
 
 // MARK: - Init Filter
 
