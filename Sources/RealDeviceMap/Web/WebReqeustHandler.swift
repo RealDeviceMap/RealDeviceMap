@@ -1328,7 +1328,6 @@ class WebReqeustHandler {
             let defaultTimeUnseen = request.param(name: "pokemon_time_new")?.toUInt32(),
             let defaultTimeReseen = request.param(name: "pokemon_time_old")?.toUInt32(),
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
-            let ivQueueLimit = request.param(name: "iv_queue_limit")?.toInt(),
             let locale = request.param(name: "locale_new")?.lowercased(),
             let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
             let exRaidBossId = request.param(name: "ex_raid_boss_id")?.toUInt16(),
@@ -1342,7 +1341,7 @@ class WebReqeustHandler {
         
         let googleAnalyticsId = request.param(name: "google_analytics_id")
         let googleAdSenseId = request.param(name: "google_adsense_id")
-        
+    
         let webhookDelay = request.param(name: "webhook_delay")?.toDouble() ?? 5.0
         let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
         let webhookUrls = webhookUrlsString.components(separatedBy: ";")
@@ -1424,7 +1423,6 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "GYM_EX_BOSS_ID", value: exRaidBossId.description)
             try DBController.global.setValueForKey(key: "GYM_EX_BOSS_FORM", value: exRaidBossForm.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
-            try DBController.global.setValueForKey(key: "IV_QUEUE_LIMIT", value: ivQueueLimit.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
