@@ -22,12 +22,13 @@
                     _:    "time.formatted",
                     sort: "time.timestamp"
                 } },
+                { "data": "enabled" },
                 { "data": "buttons" }
             ],
 			"info":     false,
 			"order": [[ 2, "asc" ]],
             "columnDefs": [ {
-				"targets": [3],
+				"targets": [4],
 				"orderable": false
 			}],
 			"search.caseInsensitive": true,
@@ -42,6 +43,7 @@
     <h1 align="center">Configure {{title}}'s Auto-Assignments!</h1>
     <br>
     <div style="width:90%; margin-left:calc(5%);">
+        <a href="/dashboard/assignment/delete_all" role="button" style="float: right;" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete ALL of your auto-assignments? This action is irreversible and cannot be undone without backups.')">Delete All Assignments</a>
         <a href="/dashboard/assignment/add" role="button" style="float: right;" class="btn btn-success">Add New Assignment</a>
         <div style="width:50px; height:auto; display:inline;"></div>
         <a href="/dashboard/assignment/delete_all" role="button" style="float: right; margin-right:5px;" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete ALL of your auto-assignments? This action is irreversible and cannot be undone without backups.')">Delete All Assignments</a>
@@ -52,6 +54,7 @@
                 <th>Instance Name</th>
                 <th>Device UUID</th>
                 <th>Time</th>
+                <th>Enabled</td>
                 <th width="5%"></th>
             </tr>
             </thead>

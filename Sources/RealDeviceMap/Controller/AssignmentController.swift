@@ -54,7 +54,7 @@ class AssignmentController: InstanceControllerDelegate {
                     
                     for assignment in assignments {
                         
-                        if assignment.time != 0 && now >= assignment.time && lastUpdate < assignment.time {
+                        if assignment.enabled && assignment.time != 0 && now >= assignment.time && lastUpdate < assignment.time {
                             self.triggerAssignment(assignment: assignment)
                         }
                         
@@ -74,6 +74,15 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.lock()
         assignments.append(assignment)
         assignmentsLock.unlock()
+    }
+    
+    public func editAssignment(oldAssignment: Assignment, newAssignment: Assignment) {
+        assignmentsLock.lock();
+        if let index = assignments.index(of: oldAssignment) {
+            assignments.remove(at: index)
+        }
+        assignments.append(newAssignment);
+        assignmentsLock.unlock();
     }
     
     public func deleteAssignment(assignment: Assignment) {
@@ -143,7 +152,7 @@ class AssignmentController: InstanceControllerDelegate {
             
             let deviceUUIDs = InstanceController.global.getDeviceUUIDsInInstance(instanceName: name)
             
-            if assignment.time == 0 && deviceUUIDs.contains(assignment.deviceUUID) {
+            if assignment.enabled && assignment.time == 0 && deviceUUIDs.contains(assignment.deviceUUID) {
                 triggerAssignment(assignment: assignment)
                 return
             }
