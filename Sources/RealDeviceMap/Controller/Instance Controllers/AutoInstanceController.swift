@@ -160,7 +160,7 @@ class AutoInstanceController: InstanceControllerProto {
             for polygon in multiPolygon.polygons {
                 
                 if let bounds = BoundingBox(from: polygon.outerRing.coordinates),
-                    let stops = try? Pokestop.getAll(minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude, minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude, updated: 0, questsOnly: false, showQuests: true) {
+                    let stops = try? Pokestop.getAll(minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude, minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude, updated: 0, questsOnly: false, showQuests: true, showLures: true, showInvasions: true) {
                     
                     for stop in stops {
                         let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)

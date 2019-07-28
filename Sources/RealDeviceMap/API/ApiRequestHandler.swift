@@ -140,8 +140,10 @@ class ApiRequestHandler {
         }
         let permShowStops = perms.contains(.viewMapPokestop)
         let permShowQuests =  perms.contains(.viewMapQuest)
+        let permShowLures = perms.contains(.viewMapLure)
+        let permShowInvasions = perms.contains(.viewMapInvasion)
         if isPost && (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
-            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, questFilterExclude: questFilterExclude, pokestopFilterExclude: pokestopFilterExclude)
+            data["pokestops"] = try? Pokestop.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, questsOnly: !showPokestops, showQuests: permShowQuests, showLures: permShowLures, showInvasions: permShowInvasions, questFilterExclude: questFilterExclude, pokestopFilterExclude: pokestopFilterExclude)
         }
         let permShowIV = perms.contains(.viewMapIV)
         if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon){
@@ -1154,6 +1156,10 @@ class ApiRequestHandler {
                                 permName = "IV"
                             case .viewMapCell:
                                 permName = "Cell"
+                            case .viewMapLure:
+                                permName = "Lure"
+                            case .viewMapInvasion:
+                                permName = "Invasion"
                             }
                             
                             if permsString == "" {
