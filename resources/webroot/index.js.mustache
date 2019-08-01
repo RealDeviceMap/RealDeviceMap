@@ -10,6 +10,7 @@ let gymMarkers = [];
 let pokemonMarkers = [];
 let spawnpointMarkers = [];
 let cellMarkers = [];
+let deviceMarkers = [];
 
 let pokemonFilter = {};
 let pokemonFilterNew = {};
@@ -35,6 +36,7 @@ let openedPokemon;
 let openedPokestop;
 let openedGym;
 let openedCell;
+let openedDevice;
 
 let showPokestops;
 let showQuests;
@@ -43,6 +45,7 @@ let showRaids;
 let showPokemon;
 let showSpawnpoints;
 let showCells;
+let showDevices;
 
 let avilableForms = [];
 let avilableItems = [];
@@ -55,6 +58,9 @@ let raidFilterLoaded = false;
 let gymFilterLoaded = false;
 let pokestopFilterLoaded = false;
 let spawnpointFilterLoaded = false;
+
+let deviceOnlineIcon;
+let deviceOfflineIcon;
 
 let tileLayer;
 
@@ -108,6 +114,18 @@ $(function() {
         }
     });
 
+    deviceOnlineIcon = L.icon({
+        iconUrl:		'/static/img/device/0.png',
+        iconSize: 		[30       , 30 /** 1.667*/ ],
+        iconAnchor: 	[30 / 2   , 30 / 2 ],
+        popupAnchor: 	[0        , 30 * -1.567 ]
+    });
+    deviceOfflineIcon = L.icon({
+        iconUrl:		'/static/img/device/1.png',
+        iconSize: 		[30       , 30 /** 1.667*/ ],
+        iconAnchor: 	[30 / 2   , 30 / 2 ],
+        popupAnchor: 	[0        , 30 * -1.567 ]
+    });
 
     $.getJSON( "/static/data/{{{locale}}}.json", {_: '{{{locale_last_modified}}}'}, function( data ) {
         i18n.translator.add(data);
@@ -345,6 +363,14 @@ function loadStorage() {
         showCells = false;
     } else {
         showCells = (showCellsValue === 'true');
+    }
+
+    const showDevicesValue = retrieve('show_devices');
+    if (showDevicesValue === null) {
+        store('show_devices', false);
+        showDevices = false;
+    } else {
+        showDevices = (showDevicesValue === 'true');
     }
 
     const pokemonFilterValue = retrieve('pokemon_filter');
@@ -759,6 +785,7 @@ function initMap() {
         const newShowPokemon = $('#show-pokemon').hasClass('active');
         const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active');
         const newShowCells = $('#show-cells').hasClass('active');
+        const newShowDevices = $('#show-devices').hasClass('active');
 
         const ts = Math.round((new Date()).getTime() / 1000);
 
@@ -815,6 +842,12 @@ function initMap() {
                 map.removeLayer(cell.marker);
             });
             cellMarkers = [];
+        }
+        if (newShowDevices !== showDevices && newShowDevices === false) {
+            $.each(deviceMarkers, function (index, device) {
+                map.removeLayer(device.marker);
+            });
+            deviceMarkers = [];
         }
 
         pokemonFilter = pokemonFilterNew;
@@ -895,6 +928,8 @@ function initMap() {
         store('spawnpoint_filter', JSON.stringify(spawnpointFilter));
         store('show_cells', newShowCells);
         showCells = newShowCells;
+        showDevices = newShowDevices;
+        store('show_devices', newShowDevices);
 
 		lastUpdateServer = 0;
 		loadData();
@@ -969,6 +1004,14 @@ function initMap() {
                     $('#show-cells').removeClass('active');
                 }
 
+                if (retrieve('show_devices') == 'true') {
+                    $('#show-devices').addClass('active');
+                    $('#hide-devices').removeClass('active');
+                } else {
+                    $('#hide-devices').addClass('active');
+                    $('#show-devices').removeClass('active');
+                }
+
 				$('#settingsModal').modal('show');
 			};
 
@@ -991,6 +1034,7 @@ function initMap() {
 	setInterval(loadData, 5000);
 	setInterval(updateOpenedPopupLoop, 1000);
     setInterval(updateCellsLoop, 10000);
+    setInterval(updateDevicesLoop, 10000);
 }
 
 // MARK: - Date Loading
@@ -1123,6 +1167,7 @@ function loadData() {
         'spawnpoint_filter_exclude': JSON.stringify(spawnpointFilterExclude),
         'show_spawnpoints': showSpawnpoints,
         'show_cells': showCells,
+        'show_active_devices': showDevices,
         'last_update': lastUpdateServer,
         '_csrf': "{{csrf}}"
 	};
@@ -1341,6 +1386,29 @@ function loadData() {
                         spawnpoint.marker = getSpawnpointMarker(spawnpoint, ts);
                         spawnpointMarkers.push(spawnpoint);
                         spawnpoint.marker.addTo(map);
+                    }
+                }
+            });
+
+            const devices = data.data.active_devices;
+            $.each(devices, function (index, device) {
+                if (showDevices) {
+                    if (device.last_seen > lastUpdateServer) {
+                        lastUpdateServer = device.last_seen;
+                    }
+                    const oldDevice = deviceMarkers.find(function (value) {
+                        return device.uuid === value.uuid;
+                    })
+
+                    if (oldDevice === undefined) {
+                        device.marker = getDeviceMarker(device, ts);
+                        deviceMarkers.push(device);
+                        device.marker.addTo(map);
+                    } else {
+                        var isOffline = isDeviceOffline(device, ts);
+                        oldDevice.marker.setIcon(isOffline ? deviceOfflineIcon : deviceOnlineIcon);
+                        oldDevice.last_lat = device.last_lat;
+                        oldDevice.last_lon = device.last_lon;
                     }
                 }
             });
@@ -1581,12 +1649,22 @@ function updateOpenedPopupLoop() {
     if (openedCell !== undefined) {
         openedCell.marker._popup.setContent(getCellPopupContent(openedCell));
     }
+    if (openedDevice !== undefined) {
+        openedDevice.marker._popup.setContent(getDevicePopupContent(openedDevice));
+    }
 }
 
 function updateCellsLoop() {
     const ts = Math.round((new Date()).getTime() / 1000);
     $.each(cellMarkers, function (index, cell) {
         cell.marker.setStyle(getCellStyle(cell, ts));
+    });
+}
+
+function updateDevicesLoop() {
+    $.each(deviceMarkers, function (index, device) {
+        var newLatLng = new L.LatLng(device.last_lat, device.last_lon);
+        device.marker.setLatLng(newLatLng);
     });
 }
 
@@ -2483,6 +2561,43 @@ function getGymMarker(gym, ts) {
 
     return marker
 
+}
+
+function getDeviceMarkerIcon(device, ts) {
+    var isOffline = isDeviceOffline(device, ts);
+    return isOffline ? deviceOfflineIcon : deviceOnlineIcon;
+}
+
+function getDeviceMarker(device, ts) {
+    const marker = L.marker([device.last_lat || 1.0, device.last_lon || 1.0], {
+        icon: getDeviceMarkerIcon(device, ts),
+        forceZIndex: 10,
+        virtual: true
+    });
+    marker.bindPopup('');
+    marker.on('popupopen', function (popup) {
+        openedDevice = device;
+        marker._popup.setContent(getDevicePopupContent(device));
+    });
+    return marker;
+}
+
+function getDevicePopupContent(device) {
+    const lastSeenDate = new Date(device.last_seen * 1000);
+    var lastSeen = lastSeenDate.toLocaleTimeString() + ' (' + getTimeSince(lastSeenDate) + ')';
+    let ts = Math.round((new Date()).getTime() / 1000);
+    var isOffline = isDeviceOffline(device, ts);
+    var content = '<center><h6><b>' + device.uuid + '</b></h6></center><br>' +
+        '<b>Instance:</b> ' + device.instance_name + '<br>' +
+        '<b>Last Seen:</b> ' + lastSeen + '<br>' +
+        '<b>Status:</b> ' + (isOffline ? 'Offline' : 'Online');
+    return content;
+}
+
+function isDeviceOffline(device, ts) {
+    var delta = 15 * 60;
+    var isOffline = device.last_seen > (ts - delta) ? 0 : 1;
+    return isOffline;
 }
 
 // MARK: - Misc
