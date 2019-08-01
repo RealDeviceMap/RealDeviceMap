@@ -45,7 +45,7 @@ class Device : JSONConvertibleObject, Hashable {
         self.lastLon = lastLon;
     }
     
-    public static func touch(mysql: MySQL?=nil, uuid: String, host: String, seen: Int) throws {
+    public static func touch(mysql: MySQL?=nil, uuid: String, host: String) throws {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
@@ -55,12 +55,11 @@ class Device : JSONConvertibleObject, Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET last_host = ?, last_seen = ?
+                SET last_host = ?
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(host)
-        mysqlStmt.bindParam(seen)
         mysqlStmt.bindParam(uuid)
         
         guard mysqlStmt.execute() else {
@@ -210,7 +209,7 @@ class Device : JSONConvertibleObject, Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET last_lat = ?, last_lon = ?
+                SET last_lat = ?, last_lon = ?, last_seen = UNIX_TIMESTAMP()
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)

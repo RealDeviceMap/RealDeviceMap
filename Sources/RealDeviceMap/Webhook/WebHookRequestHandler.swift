@@ -581,7 +581,6 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
         } else if type == "heartbeat" {
-            let now = Int(Date().timeIntervalSince1970)
             let host: String
             if let remoteAddress = request.connection.remoteAddress {
                 host = remoteAddress.host + ":" + remoteAddress.port.description
@@ -589,7 +588,7 @@ class WebHookRequestHandler {
                 host = "?"
             }
             do {
-                try Device.touch(mysql: mysql, uuid: uuid, host: host, seen: now)
+                try Device.touch(mysql: mysql, uuid: uuid, host: host)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
