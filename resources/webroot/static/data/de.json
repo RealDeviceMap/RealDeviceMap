@@ -66,6 +66,7 @@
 		"filter_mapstyle": "Map-Style",
 		"filter_select_mapstyle": "Map-Style wählen",
 		"filter_level": "Level",
+		"filter_devices": "Geräte",
 		"register_title": "Bei %{name} registrieren!",
 		"register_username": "Nutzername",
 		"register_email": "Email",
