@@ -1331,7 +1331,7 @@ class WebReqeustHandler {
             let locale = request.param(name: "locale_new")?.lowercased(),
             let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
             let exRaidBossId = request.param(name: "ex_raid_boss_id")?.toUInt16(),
-            let exRaidBossForm = request.param(name: "ex_raid_boss_form")?.toUInt8(),
+            let exRaidBossForm = request.param(name: "ex_raid_boss_form")?.toUInt16(),
             let pokestopLureTime = request.param(name: "pokestop_lure_time")?.toUInt32(),
             let cities = request.param(name: "cities")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
             else {
