@@ -99,6 +99,18 @@
                         {{filter_cells}}
                         <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
                     </div>
+                    <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_devices}}class="d-none"{{/hide_devices}}>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label id="hide-devices" class="btn btn-sm btn-off">
+                                <input type="radio" name="options" id="hide" autocomplete="off" checked>{{filter_hide}}
+                            </label>
+                            <label id="show-devices" class="btn btn-sm btn-on">
+                                <input type="radio" name="options" id="show" autocomplete="off">{{filter_show}}
+                            </label>
+                        </div>
+                        {{filter_devices}}
+                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                    </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" class="text-center">
                         <button type="button" id="exportSettings" class="btn btn-primary">{{filter_export}}</button>
                         <button type="button" id="importSettings" class="btn btn-primary">{{filter_import}}</button>

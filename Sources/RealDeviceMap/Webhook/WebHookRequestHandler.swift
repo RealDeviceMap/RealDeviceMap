@@ -78,8 +78,13 @@ class WebHookRequestHandler {
             return
         }
     
+        let uuid = json["uuid"] as? String
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
+        if uuid != nil && latTarget != nil && lonTarget != nil {
+            try? Device.setLastLocation(uuid: uuid!, lat: latTarget!, lon: lonTarget!);
+        }
+        
         let pokemonEncounterId = json["pokemon_encounter_id"] as? String
         let pokemonEncounterIdForEncounter = json["pokemon_encounter_id_for_encounter"] as? String
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
@@ -92,6 +97,8 @@ class WebHookRequestHandler {
         var quests = [POGOProtos_Data_Quests_Quest]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         var cells = [UInt64]()
+        
+        //TODO: Set device last_lat and last_lon
         
         var isEmtpyGMO = true
         var isInvalidGMO = true
@@ -560,7 +567,7 @@ class WebHookRequestHandler {
                 }
                 
                 if device == nil {
-                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil)
+                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil, lastLat: 0.0, lastLon: 0.0)
                     try newDevice.create(mysql: mysql)
                     try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                 } else {

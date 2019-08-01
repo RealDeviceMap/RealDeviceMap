@@ -47,6 +47,7 @@ class ApiRequestHandler {
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
+        let showActiveDevices = request.param(name: "show_active_devices")?.toBool() ?? false
         let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
         let showUsers =  request.param(name: "show_users")?.toBool() ?? false
         let showGroups =  request.param(name: "show_groups")?.toBool() ?? false
@@ -151,6 +152,9 @@ class ApiRequestHandler {
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint){
             data["spawnpoints"] = try? SpawnPoint.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate, spawnpointFilterExclude: spawnpointFilterExclude)
+        }
+        if isPost && permViewMap && showActiveDevices && perms.contains(.viewMapDevice){
+            data["active_devices"] = try? Device.getAll(mysql: mysql)
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
@@ -1161,6 +1165,8 @@ class ApiRequestHandler {
                                 permName = "Lure"
                             case .viewMapInvasion:
                                 permName = "Invasion"
+                            case .viewMapDevice:
+                                permName = "Device"
                             }
                             
                             if permsString == "" {
