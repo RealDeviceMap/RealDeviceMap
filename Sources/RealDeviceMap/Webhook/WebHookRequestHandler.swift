@@ -82,7 +82,7 @@ class WebHookRequestHandler {
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
-            try? Device.setLastLocation(uuid: uuid!, lat: latTarget!, lon: lonTarget!);
+            try? Device.setLastLocation(mysql: mysql, uuid: uuid!, lat: latTarget!, lon: lonTarget!);
         }
         
         let pokemonEncounterId = json["pokemon_encounter_id"] as? String
