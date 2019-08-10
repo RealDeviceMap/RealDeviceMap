@@ -144,7 +144,7 @@ extension POGOProtos_Enums_Form {
         .spinda18,
         .spinda19,
         .mewtwoA,
-        .mewtwoAIntro,
+        //.mewtwoAIntro,
         .mewtwoNormal,
         .rattataShadow,
         .rattataPurified,
@@ -319,17 +319,17 @@ extension POGOProtos_Enums_Form {
         .laprasShadow,
         .laprasPurified,
         .pikachuNormal,
-        .pikachuNoevolve,
+        //.pikachuNoevolve,
         .wurmpleNormal,
-        .wurmpleNoevolve,
+        //.wurmpleNoevolve,
         .wobbuffetNormal,
-        .wobbuffetNoevolve,
-        .bulbasaurNoevolve,
-        .charmanderNoevolve,
-        .charizardNoevolve,
-        .squirtleNoevolve,
-        .blastoiseNoevolve,
-        .raticateNoevolve,
+        //.wobbuffetNoevolve,
+        //.bulbasaurNoevolve,
+        //.charmanderNoevolve,
+        //.charizardNoevolve,
+        //.squirtleNoevolve,
+        //.blastoiseNoevolve,
+        //.raticateNoevolve,
         .cacneaNormal,
         .cacneaShadow,
         .cacneaPurified,
@@ -559,6 +559,65 @@ extension POGOProtos_Enums_Form {
         .moltresNormal,
         .moltresShadow,
         .moltresPurified,
+        .kangaskhanNormal,
+        .kangaskhanShadow,
+        .kangaskhanPurified,
+        .diglettShadow,
+        .diglettPurified,
+        .dugtrioShadow,
+        .dugtrioPurified,
+        .rhyhornNormal,
+        .rhyhornShadow,
+        .rhyhornPurified,
+        .rhydonNormal,
+        .rhydonShadow,
+        .rhydonPurified,
+        .rhyperiorNormal,
+        .rhyperiorShadow,
+        .rhyperiorPurified,
+        .murkrowNormal,
+        .murkrowShadow,
+        .murkrowPurified,
+        .honchkrowNormal,
+        .honchkrowShadow,
+        .honchkrowPurified,
+        .gibleNormal,
+        .gibleShadow,
+        .giblePurified,
+        .gabiteNormal,
+        .gabiteShadow,
+        .gabitePurified,
+        .garchompNormal,
+        .garchompShadow,
+        .garchompPurified,
+        .krabbyNormal,
+        .krabbyShadow,
+        .krabbyPurified,
+        .kinglerNormal,
+        .kinglerShadow,
+        .kinglerPurified,
+        .shellderNormal,
+        .shellderShadow,
+        .shellderPurified,
+        .cloysterNormal,
+        .cloysterShadow,
+        .cloysterPurified,
+        .geodudeShadow,
+        .geodudePurified,
+        .gravelerShadow,
+        .gravelerPurified,
+        .golemShadow,
+        .golemPurified,
+        .hippopotasNormal,
+        .hippopotasShadow,
+        .hippopotasPurified,
+        .hippowdonNormal,
+        .hippowdonShadow,
+        .hippowdonPurified,
+        .pikachuFall,
+        .squirtleFall,
+        .charmanderFall,
+        .bulbasaurFall
     ]
     
     static var allFormsInString: [String] {
@@ -706,7 +765,7 @@ extension POGOProtos_Enums_Form {
         case .spinda18: return ["327-131"]
         case .spinda19: return ["327-132"]
         case .mewtwoA: return ["150-133"]
-        case .mewtwoAIntro: return ["150-134"]
+        //case .mewtwoAIntro: return ["150-134"]
         case .mewtwoNormal: return ["150-135"]
         case .rattataShadow: return ["19-153"]
         case .rattataPurified: return ["19-154"]
@@ -881,17 +940,17 @@ extension POGOProtos_Enums_Form {
         case .laprasShadow: return ["131-323"]
         case .laprasPurified: return ["131-324"]
         case .pikachuNormal: return ["25-598"]
-        case .pikachuNoevolve: return ["25-599"]
+        //case .pikachuNoevolve: return ["25-599"]
         case .wurmpleNormal: return ["265-600"]
-        case .wurmpleNoevolve: return ["265-601"]
+        //case .wurmpleNoevolve: return ["265-601"]
         case .wobbuffetNormal: return ["202-602"]
-        case .wobbuffetNoevolve: return ["202-603"]
-        case .bulbasaurNoevolve: return ["1-604"]
-        case .charmanderNoevolve: return ["4-605"]
-        case .charizardNoevolve: return ["6-606"]
-        case .squirtleNoevolve: return ["7-607"]
-        case .blastoiseNoevolve: return ["9-608"]
-        case .raticateNoevolve: return ["20-609"]
+            //case .wobbuffetNoevolve: return ["202-603"]
+            //case .bulbasaurNoevolve: return ["1-604"]
+            //case .charmanderNoevolve: return ["4-605"]
+            //case .charizardNoevolve: return ["6-606"]
+            //case .squirtleNoevolve: return ["7-607"]
+            //case .blastoiseNoevolve: return ["9-608"]
+        //case .raticateNoevolve: return ["20-609"]
         case .cacneaNormal: return ["331-610"]
         case .cacneaShadow: return ["331-611"]
         case .cacneaPurified: return ["331-612"]
@@ -1121,6 +1180,65 @@ extension POGOProtos_Enums_Form {
         case .moltresNormal: return ["146-836"]
         case .moltresShadow: return ["146-837"]
         case .moltresPurified: return ["146-838"]
+        case .kangaskhanNormal: return ["115-839"]
+        case .kangaskhanShadow: return ["115-840"]
+        case .kangaskhanPurified: return ["115-841"]
+        case .diglettShadow: return ["50-842"]
+        case .diglettPurified: return ["50-843"]
+        case .dugtrioShadow: return ["51-844"]
+        case .dugtrioPurified: return ["51-845"]
+        case .rhyhornNormal: return ["111-846"]
+        case .rhyhornShadow: return ["111-847"]
+        case .rhyhornPurified: return ["111-848"]
+        case .rhydonNormal: return ["112-849"]
+        case .rhydonShadow: return  ["112-850"]
+        case .rhydonPurified: return  ["112-851"]
+        case .rhyperiorNormal: return ["464-852"]
+        case .rhyperiorShadow: return ["464-853"]
+        case .rhyperiorPurified: return ["464-854"]
+        case .murkrowNormal: return ["198-855"]
+        case .murkrowShadow: return ["198-856"]
+        case .murkrowPurified: return ["198-857"]
+        case .honchkrowNormal: return ["430-858"]
+        case .honchkrowShadow: return ["430-859"]
+        case .honchkrowPurified: return ["430-860"]
+        case .gibleNormal: return ["443-861"]
+        case .gibleShadow: return ["443-862"]
+        case .giblePurified: return ["443-863"]
+        case .gabiteNormal: return ["444-864"]
+        case .gabiteShadow: return ["444-865"]
+        case .gabitePurified: return ["444-866"]
+        case .garchompNormal: return ["445-867"]
+        case .garchompShadow: return ["445-868"]
+        case .garchompPurified: return ["445-869"]
+        case .krabbyNormal: return ["98-870"]
+        case .krabbyShadow: return ["98-871"]
+        case .krabbyPurified: return ["98-872"]
+        case .kinglerNormal: return ["99-873"]
+        case .kinglerShadow: return ["99-874"]
+        case .kinglerPurified: return ["99-875"]
+        case .shellderNormal: return ["90-876"]
+        case .shellderShadow: return ["90-877"]
+        case .shellderPurified: return ["90-878"]
+        case .cloysterNormal: return ["91-879"]
+        case .cloysterShadow: return ["91-880"]
+        case .cloysterPurified: return ["91-881"]
+        case .geodudeShadow: return ["74-882"]
+        case .geodudePurified: return ["74-883"]
+        case .gravelerShadow: return ["75-884"]
+        case .gravelerPurified: return ["75-885"]
+        case .golemShadow: return ["76-886"]
+        case .golemPurified: return ["76-887"]
+        case .hippopotasNormal: return ["449-888"]
+        case .hippopotasShadow: return ["449-889"]
+        case .hippopotasPurified: return ["449-890"]
+        case .hippowdonNormal: return ["450-891"]
+        case .hippowdonShadow: return ["450-892"]
+        case .hippowdonPurified: return ["450-893"]
+        case .pikachuFall: return ["25-894"]
+        case .squirtleFall: return ["7-895"]
+        case .charmanderFall: return ["4-896"]
+        case .bulbasaurFall: return ["1-897"]
         case .unset: return []
         case .UNRECOGNIZED: return []
         }
