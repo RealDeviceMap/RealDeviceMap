@@ -35,6 +35,7 @@ class WebReqeustHandler {
     static var cities = [String: [String: Any]]()
     static var googleAnalyticsId: String?
     static var googleAdSenseId: String?
+    static var statsUrl: String?
     
     static var oauthDiscordRedirectURL: String?
     static var oauthDiscordClientID: String?
@@ -131,11 +132,12 @@ class WebReqeustHandler {
             }
         }
         
-        /*if perms.contains(.viewStats) {
-            data["show_stats"] = true
-        }*/
+        if perms.contains(.viewStats) {
+            //data["show_stats"] = true
+            data["stats_url"] = WebReqeustHandler.statsUrl
+        }
  
-        if  perms.contains(.admin) {
+        if perms.contains(.admin) {
             data["show_dashboard"] = true
         }
         
@@ -482,6 +484,7 @@ class WebReqeustHandler {
             data["discord_redirect_url"] = WebReqeustHandler.oauthDiscordRedirectURL
             data["discord_client_id"] = WebReqeustHandler.oauthDiscordClientID
             data["discord_client_secret"] = WebReqeustHandler.oauthDiscordClientSecret
+            data["stats_url"] = WebReqeustHandler.statsUrl
 
             var tileserverString = ""
             
@@ -1363,6 +1366,7 @@ class WebReqeustHandler {
         let oauthDiscordRedirectURL = request.param(name: "discord_redirect_url")
         let oauthDiscordClientID = request.param(name: "discord_client_id")
         let oauthDiscordClientSecret = request.param(name: "discord_client_secret")
+        let statsUrl = request.param(name: "stats_url")
         
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
@@ -1445,6 +1449,7 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "DISCORD_CLIENT_ID", value: oauthDiscordClientID ?? "")
             try DBController.global.setValueForKey(key: "DISCORD_CLIENT_SECRET", value: oauthDiscordClientSecret ?? "")
             try DBController.global.setValueForKey(key: "CITIES", value: citySettings.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "STATS_URL", value: statsUrl ?? "")
         } catch {
             data["show_error"] = true
             return data
@@ -1483,6 +1488,7 @@ class WebReqeustHandler {
         WebReqeustHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
         WebReqeustHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
         WebReqeustHandler.oauthDiscordClientID = oauthDiscordClientID
+        WebReqeustHandler.statsUrl = statsUrl
         
         data["title"] = title
         data["show_success"] = true
