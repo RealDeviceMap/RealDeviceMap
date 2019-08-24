@@ -42,10 +42,11 @@ class WebHookRequestHandler {
         
         let json: [String: Any]
         do {
-            guard let jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
+            guard var jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
                 response.respondWithError(status: .badRequest)
                 return
             }
+            if jsonOpt["payload"] != nil { jsonOpt["contents"] = [jsonOpt] }
             json = jsonOpt
         } catch {
             response.respondWithError(status: .badRequest)
