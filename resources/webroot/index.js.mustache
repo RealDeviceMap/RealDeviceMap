@@ -1681,6 +1681,8 @@ function getPokemonPopupContent(pokemon) {
         pokemonName = getPokemonName(pokemon.pokemon_id);
     }
 
+    let pokemonIcon = getPokemonIconString(pokemon.pokemon_id, pokemon.form);
+
     content += 
     '<div class="row">' + //START 1ST ROW
         '<div class="col-12 col-md-8 center-vertical text-nowrap">' +
@@ -1699,7 +1701,7 @@ function getPokemonPopupContent(pokemon) {
     '<div class="row">' + //START 2ND ROW
         '<div class="' + (hasIV ? 'col-6 col-md-4' : 'col text-center') + '">' +
             '<div class="row' + (hasIV ? '' : 'text-center') + '" style="margin: auto;">' + 
-                '<img src="/static/img/pokemon/'+pokemon.pokemon_id+'.png" height="64" width="64">' +
+                '<img src="/static/img/pokemon/'+pokemonIcon+'.png" height="64" width="64">' +
             '</div>' +  //END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">';
             var pkmn = pokemonDb[pokemon.pokemon_id];
@@ -1958,12 +1960,13 @@ function getGymPopupContent(gym) {
         } else {
             pokemonName = "Level " + gym.raid_level + " Egg";
         }
+        let pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form);
         content +=
         '<div class="row" style="margin:auto;">' + //START 1ST ROW
             '<div class="col-6 col-md-4">' + //START 1ST COL
                 '<div class="row" style="margin:auto;">';
                 if (hasRaidBoss && isRaidBattle) {
-                    content += '<img src="/static/img/pokemon/' + gym.raid_pokemon_id + '.png" height="64" width="64">';
+                    content += '<img src="/static/img/pokemon/' + pokemonIcon + '.png" height="64" width="64">';
                 } else {
                     content += '<img src="/static/img/egg/' + gym.raid_level + '.png" height="64" width="64">';
                 }
@@ -2328,18 +2331,7 @@ function getCellStyle(cell, ts) {
 function getPokemonMarkerIcon(pokemon, ts) {
 	const size = getPokemonSize(pokemon.pokemon_id);
 
-    let pokemonIdString;
-    if (pokemon.form !== 0 && pokemon.form !== null) {
-        const pokemonIdStringTmp = '' + pokemon.pokemon_id + '-' + pokemon.form;
-        if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
-            pokemonIdString = pokemonIdStringTmp;
-        } else {
-            pokemonIdString = '' + pokemon.pokemon_id;
-        }
-    } else {
-        pokemonIdString = '' + pokemon.pokemon_id;
-    }
-
+    let pokemonIdString = getPokemonIconString(pokemon.pokemon_id, pokemon.form);
     const icon = L.icon({
         iconUrl: 		'/static/img/pokemon/' + pokemonIdString + '.png',
         iconSize:    	[size, size],
@@ -2524,18 +2516,7 @@ function getGymMarkerIcon(gym, ts) {
     if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && showRaids && parseInt(gym.raid_level) > 0) {
         if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
 
-        	let pokemonIdString;
-        	if (gym.raid_pokemon_form !== 0 && gym.raid_pokemon_form !== null) {
-        		const pokemonIdStringTmp = '' + gym.raid_pokemon_id + '-' + gym.raid_pokemon_form;
-        		if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
-                    pokemonIdString = pokemonIdStringTmp;
-				} else {
-                    pokemonIdString = '' + gym.raid_pokemon_id;
-                }
-			} else {
-        		pokemonIdString = '' + gym.raid_pokemon_id;
-			}
-
+        	let pokemonIdString = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form);
             //Raid Boss
             var iconSize = getRaidSize("p" + gym.raid_pokemon_id);
             icon = L.icon({
@@ -3347,6 +3328,21 @@ function getSize(size) {
     if (size < 2.25) return "Normal";
     if (size <= 2.5) return "Large";
     return "Big";
+}
+
+function getPokemonIconString(pokemonId, pokemonForm) {
+    let pokemonIdString;
+    if (pokemonForm !== 0 && pokemonForm !== null) {
+        const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm;
+        if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+            pokemonIdString = pokemonIdStringTmp;
+        } else {
+            pokemonIdString = '' + pokemonId;
+        }
+    } else {
+        pokemonIdString = '' + pokemonId;
+    }
+    return pokemonIdString;
 }
 
 // MARK: - Init Filter
