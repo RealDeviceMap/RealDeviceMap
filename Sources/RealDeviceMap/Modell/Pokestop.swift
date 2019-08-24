@@ -256,11 +256,37 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     infoData["throw_type_id"] = info.throwType.rawValue
                 }
                 infoData["hit"] = info.hit
+            case .withLocation:
+                let info = conditionData.withLocation
+                infoData["cell_ids"] = info.s2CellID
+            case .withDistance:
+                let info = conditionData.withDistance
+                infoData["distance"] = info.distanceKm
+            case .withPokemonAlignment:
+                let info = conditionData.withPokemonAlignment
+                infoData["alignment_ids"] = info.alignment.map({ (alignment) -> Int in
+                    return alignment.rawValue
+                })
+            case .withInvasionCharacter:
+                let info = conditionData.withInvasionCharacter
+                infoData["character_category_ids"] = info.category.map({ (category) -> Int in
+                    return category.rawValue
+                })
+            case .withNpcCombat:
+                let info = conditionData.withNpcCombat
+                infoData["win"] = info.requiresWin
+                infoData["trainer_ids"] = info.combatNpcTrainerID
+            case .withPvpCombat:
+                let info = conditionData.withPvpCombat
+                infoData["win"] = info.requiresWin
+                infoData["template_ids"] = info.combatLeagueTemplateID
+            case .withPlayerLevel:
+                let info = conditionData.withPlayerLevel
+                infoData["level"] = info.level
             case .withWinGymBattleStatus: break
             case .withSuperEffectiveCharge: break
             case .withUniquePokestop: break
             case .withQuestContext: break
-            case .withPlayerLevel: break
             case .withWinBattleStatus: break
             case .withCurveBall: break
             case .withNewFriend: break
@@ -268,8 +294,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withWeatherBoost: break
             case .withDailyCaptureBonus: break
             case .withDailySpinBonus: break
-            default:
-                break
+            case .withUniquePokemon: break
+            case .unset: break
+            case .UNRECOGNIZED(_): break
             }
             
             if !infoData.isEmpty {
@@ -313,7 +340,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["shiny"] = info.pokemonDisplay.shiny
             case .avatarClothing: break
             case .quest: break
-            default: break
+            case .unset: break
+            case .UNRECOGNIZED(_): break
             }
             
             reward["info"] = infoData

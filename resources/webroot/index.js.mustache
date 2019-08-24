@@ -2177,6 +2177,14 @@ function getWeatherIcon(weatherId) {
     return i18n('weather_icon_'+weatherId);
 }
 
+function getAlignmentName(alignmentId) {
+    return i18n('alignment_'+alignmentId);
+}
+
+function getCharacterCategoryName(characterCategoryId) {
+    return i18n('character_category_'+characterCategoryId);
+}
+
 function getQuestReward(reward) {
     const id = reward.type;
     const info = reward.info;
@@ -2258,6 +2266,34 @@ function getQuestCondition(condition) {
         return i18n('quest_condition_11_formatted', {'item': getItemName(info.item_id)});
     } else if (id === 14 && info !== undefined && info.throw_type_id !== undefined) {
         return i18n('quest_condition_14_formatted', {'throw_type': getThrowType(info.throw_type_id)});
+    } else if (id === 26 && info !== undefined && info.alignment_ids !== undefined) {
+        let alignmentsString = '';
+        $.each(info.alignment_ids, function (index, alignment) {
+            let formatted;
+            if (index === 0) {
+                formatted = '';
+            } else if (index === info.alignment_ids.length - 1) {
+                formatted = ' or ';
+            } else {
+                formatted = ', ';
+            }
+            alignmentsString += formatted + getAlignmentName(alignment);
+        });
+        return i18n('quest_condition_26_formatted', {'alignments': alignmentsString});
+    } else if (id === 27 && info !== undefined && info.character_category_ids !== undefined) {
+        let categoriesString = '';
+        $.each(info.character_category_ids, function (index, characterCategory) {
+            let formatted;
+            if (index === 0) {
+                formatted = '';
+            } else if (index === info.character_category_ids.length - 1) {
+                formatted = ' or ';
+            } else {
+                formatted = ', ';
+            }
+            categoriesString += formatted + getCharacterCategoryName(characterCategory);
+        });
+        return i18n('quest_condition_27_formatted', {'categories': categoriesString});
     } else {
         return i18n('quest_condition_'+id);
     }
