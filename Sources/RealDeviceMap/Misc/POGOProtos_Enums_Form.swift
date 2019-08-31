@@ -1254,7 +1254,7 @@ extension POGOProtos_Enums_Form {
         case .darmanitanZen: return ["555_139"]
         case .tornadusIncarnate: return ["641_140"]
         case .tornadusTherian: return ["641_141"]
-        case .thundurusIncarnate: return ["642_141"]
+        case .thundurusIncarnate: return ["642_142"]
         case .thundurusTherian: return ["642_143"]
         case .landorusIncarnate: return ["645_144"]
         case .landorusTherian: return ["645_145"]
