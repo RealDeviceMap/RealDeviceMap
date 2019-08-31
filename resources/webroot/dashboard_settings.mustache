@@ -161,6 +161,20 @@
                 Statistics Url
                 <input type="text" class="form-control" name="stats_url" value="{{stats_url}}">
             </div>
+            <br>
+            <h4>Device API</h4>
+            <div class="form-group">
+                Device Endpoint Whitelist (separated by ";", empty=No Whitelist)
+                <input type="text" class="form-control" name="deviceapi_host_whitelist" value="{{deviceapi_host_whitelist}}">
+            </div>
+            <div class="checkbox">
+            <label><input type="checkbox" name="deviceapi_host_whitelist_uses_proxy" value="deviceapi_host_whitelist_uses_proxy" {{#deviceapi_host_whitelist_uses_proxy}}checked{{/deviceapi_host_whitelist_uses_proxy}}> Device Endpoint is behind proxy (Apache/NGINX/etc.)</label>
+            </div>
+            <div class="form-group">
+                Device Endpoint Secret (empty=No Secret)
+                <input type="text" class="form-control" name="deviceapi_secret" value="{{deviceapi_secret}}">
+            </div>
+            <br>
             <h4>Misc</h4>
             <div class="checkbox">
                 <label><input type="checkbox" name="enable_clearing" value="enable_clearing" {{#enable_clearing}}checked{{/enable_clearing}}> Enable Clearing of removed Pokestops/Gyms</label>

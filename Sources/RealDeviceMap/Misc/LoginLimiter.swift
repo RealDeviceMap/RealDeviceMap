@@ -18,7 +18,7 @@ class LoginLimiter {
     let tokenLock = Threading.Lock()
     var token = [String: [Date]]()
     
-    private init() {}
+    internal init() {}
     
     func allowed(host: String) -> Bool {
         failedLock.lock()

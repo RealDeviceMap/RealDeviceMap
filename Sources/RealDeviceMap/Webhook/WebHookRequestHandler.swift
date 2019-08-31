@@ -20,6 +20,11 @@ import S2Geometry
 class WebHookRequestHandler {
     
     static var enableClearing = false
+    static var hostWhitelist: [String]?
+    static var hostWhitelistUsesProxy: Bool = false
+    static var loginSecret: String?
+
+    private static var limiter = LoginLimiter()
     
     private static var levelCacheLock = Threading.Lock()
     private static var levelCache = [String: Int]()
@@ -28,6 +33,40 @@ class WebHookRequestHandler {
     private static var emptyCells = [UInt64: Int]()
         
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
+        
+        if let hostWhitelist = hostWhitelist {
+            let host: String
+            let ff = request.header(.xForwardedFor) ?? ""
+            if ff.isEmpty || !hostWhitelistUsesProxy {
+                host = request.remoteAddress.host
+            } else {
+                host = ff
+            }
+
+            guard hostWhitelist.contains(host) else {
+                return response.respondWithError(status: .unauthorized)
+            }
+        }
+        
+        if let loginSecret = loginSecret {
+            let host: String
+            let ff = request.header(.xForwardedFor) ?? ""
+            if ff.isEmpty || !hostWhitelistUsesProxy {
+                host = request.remoteAddress.host
+            } else {
+                host = ff
+            }
+            
+            guard WebHookRequestHandler.limiter.allowed(host: host) else {
+                return response.respondWithError(status: .unauthorized)
+            }
+            
+            let loginSecretHeader = request.header(.authorization)
+            guard loginSecretHeader == "Bearer \(loginSecret)" else {
+                WebHookRequestHandler.limiter.failed(host: host)
+                return response.respondWithError(status: .unauthorized)
+            }
+        }
         
         switch type {
         case .controler:
