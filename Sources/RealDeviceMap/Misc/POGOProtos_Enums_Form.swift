@@ -144,8 +144,24 @@ extension POGOProtos_Enums_Form {
         .spinda18,
         .spinda19,
         .mewtwoA,
-        //.mewtwoAIntro,
         .mewtwoNormal,
+        .basculinRedStriped,
+        .basculinBlueStriped,
+        .darmanitanStandard,
+        .darmanitanZen,
+        .tornadusIncarnate,
+        .tornadusTherian,
+        .thundurusIncarnate,
+        .thundurusTherian,
+        .landorusIncarnate,
+        .landorusTherian,
+        .kyuremNormal,
+        .kyuremBlack,
+        .kyuremWhite,
+        .keldeoOrdinary,
+        .keldeoResolute,
+        .meloettaAria,
+        .meloettaPirouette,
         .rattataShadow,
         .rattataPurified,
         .raticateShadow,
@@ -318,18 +334,22 @@ extension POGOProtos_Enums_Form {
         .laprasNormal,
         .laprasShadow,
         .laprasPurified,
+        .deerlingSpring,
+        .deerlingSummer,
+        .deerlingAutumn,
+        .deerlingWinter,
+        .sawsbuckSpring,
+        .sawsbuckSummer,
+        .sawsbuckAutumn,
+        .sawsbuckWinter,
+        .genesectNormal,
+        .genesectShock,
+        .genesectBurn,
+        .genesectChill,
+        .genesectDouse,
         .pikachuNormal,
-        //.pikachuNoevolve,
         .wurmpleNormal,
-        //.wurmpleNoevolve,
         .wobbuffetNormal,
-        //.wobbuffetNoevolve,
-        //.bulbasaurNoevolve,
-        //.charmanderNoevolve,
-        //.charizardNoevolve,
-        //.squirtleNoevolve,
-        //.blastoiseNoevolve,
-        //.raticateNoevolve,
         .cacneaNormal,
         .cacneaShadow,
         .cacneaPurified,
@@ -614,10 +634,13 @@ extension POGOProtos_Enums_Form {
         .hippowdonNormal,
         .hippowdonShadow,
         .hippowdonPurified,
-        .pikachuFall,
-        .squirtleFall,
-        .charmanderFall,
-        .bulbasaurFall
+        .pikachuFall2019,
+        .squirtleFall2019,
+        .charmanderFall2019,
+        .bulbasaurFall2019,
+        .pinsirNormal,
+        .pinsirShadow,
+        .pinsirPurified,
     ]
     
     static var allFormsInString: [String] {
@@ -765,7 +788,6 @@ extension POGOProtos_Enums_Form {
         case .spinda18: return ["327-131"]
         case .spinda19: return ["327-132"]
         case .mewtwoA: return ["150-133"]
-        //case .mewtwoAIntro: return ["150-134"]
         case .mewtwoNormal: return ["150-135"]
         case .rattataShadow: return ["19-153"]
         case .rattataPurified: return ["19-154"]
@@ -940,17 +962,8 @@ extension POGOProtos_Enums_Form {
         case .laprasShadow: return ["131-323"]
         case .laprasPurified: return ["131-324"]
         case .pikachuNormal: return ["25-598"]
-        //case .pikachuNoevolve: return ["25-599"]
         case .wurmpleNormal: return ["265-600"]
-        //case .wurmpleNoevolve: return ["265-601"]
         case .wobbuffetNormal: return ["202-602"]
-            //case .wobbuffetNoevolve: return ["202-603"]
-            //case .bulbasaurNoevolve: return ["1-604"]
-            //case .charmanderNoevolve: return ["4-605"]
-            //case .charizardNoevolve: return ["6-606"]
-            //case .squirtleNoevolve: return ["7-607"]
-            //case .blastoiseNoevolve: return ["9-608"]
-        //case .raticateNoevolve: return ["20-609"]
         case .cacneaNormal: return ["331-610"]
         case .cacneaShadow: return ["331-611"]
         case .cacneaPurified: return ["331-612"]
@@ -1235,10 +1248,43 @@ extension POGOProtos_Enums_Form {
         case .hippowdonNormal: return ["450-891"]
         case .hippowdonShadow: return ["450-892"]
         case .hippowdonPurified: return ["450-893"]
-        case .pikachuFall: return ["25-894"]
-        case .squirtleFall: return ["7-895"]
-        case .charmanderFall: return ["4-896"]
-        case .bulbasaurFall: return ["1-897"]
+        case .basculinRedStriped: return ["550_136"]
+        case .basculinBlueStriped: return ["550_137"]
+        case .darmanitanStandard: return ["555_138"]
+        case .darmanitanZen: return ["555_139"]
+        case .tornadusIncarnate: return ["641_140"]
+        case .tornadusTherian: return ["641_141"]
+        case .thundurusIncarnate: return ["642_141"]
+        case .thundurusTherian: return ["642_143"]
+        case .landorusIncarnate: return ["645_144"]
+        case .landorusTherian: return ["645_145"]
+        case .kyuremNormal: return ["646_146"]
+        case .kyuremBlack: return ["646_147"]
+        case .kyuremWhite: return ["646_148"]
+        case .keldeoOrdinary: return ["647_149"]
+        case .keldeoResolute: return ["647_150"]
+        case .meloettaAria: return ["648_151"]
+        case .meloettaPirouette: return ["648_152"]
+        case .deerlingSpring: return ["585_585"]
+        case .deerlingSummer: return ["585_586"]
+        case .deerlingAutumn: return ["585_587"]
+        case .deerlingWinter: return ["585_588"]
+        case .sawsbuckSpring: return ["586_589"]
+        case .sawsbuckSummer: return ["586_590"]
+        case .sawsbuckAutumn: return ["586_591"]
+        case .sawsbuckWinter: return ["586_592"]
+        case .genesectNormal: return ["649_593"]
+        case .genesectShock: return ["649_594"]
+        case .genesectBurn: return ["649_595"]
+        case .genesectChill: return ["649_596"]
+        case .genesectDouse: return ["649_597"]
+        case .pikachuFall2019: return ["25_894"]
+        case .squirtleFall2019: return ["7_895"]
+        case .charmanderFall2019: return ["4_896"]
+        case .bulbasaurFall2019: return ["1_897"]
+        case .pinsirNormal: return ["127_898"]
+        case .pinsirShadow: return ["127_899"]
+        case .pinsirPurified: return ["127_900"]
         case .unset: return []
         case .UNRECOGNIZED: return []
         }
