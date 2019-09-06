@@ -10,11 +10,14 @@ import PerfectHTTP
 
 class WebStaticReqeustHandler {
     
+    private static let staticFileHandler = StaticFileHandler(documentRoot: "\(projectroot)/resources/webroot")
+    
     private init() {}
     
     static func handle(request: HTTPRequest, _ response: HTTPResponse) {
-        let documentRoot = "\(projectroot)/resources/webroot"
-        let staticFileHandler = StaticFileHandler(documentRoot: documentRoot)
+        if request.path.hasSuffix(".png") || request.path.hasSuffix(".jpg") {
+            response.setHeader(.cacheControl, value: "max-age=604800, must-revalidate")
+        }
         staticFileHandler.handleRequest(request: request, response: response)
         response.completed()
     }
