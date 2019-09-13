@@ -25,12 +25,12 @@ FROM base AS build
 
 WORKDIR /build
 COPY Package.swift Package.swift
-COPY Sources Sources
-#COPY Tests Tests
-#COPY resources resources
 RUN swift package update
-#RUN swift test -c debug
-RUN swift build -c release
+COPY .emptysources Sources
+RUN swift build -c debug
+RUN rm -rf Sources
+COPY Sources Sources
+RUN swift build -c debug
 
 
 ## Executable Image
