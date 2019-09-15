@@ -27,10 +27,10 @@ WORKDIR /build
 COPY Package.swift Package.swift
 RUN swift package update
 COPY .emptysources Sources
-RUN swift build -c debug
+RUN swift build -c release
 RUN rm -rf Sources
 COPY Sources Sources
-RUN swift build -c debug
+RUN swift build -c release
 
 
 ## Executable Image
