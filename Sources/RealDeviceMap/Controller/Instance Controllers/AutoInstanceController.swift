@@ -12,11 +12,11 @@ import Turf
 import S2Geometry
 
 class AutoInstanceController: InstanceControllerProto {
-        
+
     enum AutoType {
         case quest
     }
-    
+
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
@@ -34,55 +34,57 @@ class AutoInstanceController: InstanceControllerProto {
     private var bootstrappLock = Threading.Lock()
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
-    
+    private var spinLimit: Int
+
     private static let cooldownDataArray = [0.3: 0.16, 1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 7, 15: 9, 20: 12, 25: 15, 30: 17, 35: 18, 45: 20, 50: 20, 60: 21, 70: 23, 80: 24, 90: 25, 100: 26, 125: 29, 150: 32, 175: 34, 201: 37, 250: 41, 300: 46, 328: 48, 350: 50, 400: 54, 450: 58, 500: 62, 550: 66, 600: 70, 650: 74, 700: 77, 751: 82, 802: 84, 839: 88, 897: 90, 900: 91, 948: 95, 1007: 98, 1020: 102, 1100: 104, 1180: 109, 1200: 111, 1221: 113, 1300: 117, 1344: 119, Double(Int.max): 120].sorted { (lhs, rhs) -> Bool in
         lhs.key < rhs.key
     }
-    
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int, minLevel: UInt8, maxLevel: UInt8) {
+
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int, minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.type = type
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
+        self.spinLimit = spinLimit
         update()
-        
+
         bootstrap()
         if type == .quest {
             questClearerQueue = Threading.getQueue(name: "\(name)-quest-clearer", type: .serial)
             questClearerQueue!.dispatch {
-                
+
                 while !self.shouldExit {
-                    
+
                     let date = Date()
                     let formatter = DateFormatter()
                     formatter.dateFormat = "HH:mm:ss"
                     formatter.timeZone = TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone
                     let formattedDate = formatter.string(from: date)
-                    
+
                     let split = formattedDate.components(separatedBy: ":")
                     let hour = Int(split[0])!
                     let minute = Int(split[1])!
                     let second = Int(split[2])!
-                    
+
                     let timeLeft = (23 - hour) * 3600 + (59 - minute) * 60 + (60 - second)
                     let at = date.addingTimeInterval(TimeInterval(timeLeft))
                     Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests in \(timeLeft)s at \(formatter.string(from: at)) (Currently: \(formatter.string(from: date)))")
-                    
+
                     if timeLeft > 0 {
                         Threading.sleep(seconds: Double(timeLeft))
                         if self.shouldExit {
                             return
                         }
-                        
+
                         self.stopsLock.lock()
                         if self.allStops == nil {
                             Log.debug(message: "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
                             self.stopsLock.unlock()
                             continue
                         }
-                        
+
                         Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids")
                         let ids = self.allStops!.map({ (stop) -> String in
                             return stop.id
@@ -105,12 +107,12 @@ class AutoInstanceController: InstanceControllerProto {
                         self.update()
                     }
                 }
-                
+
             }
         }
-        
+
     }
-    
+
     private func bootstrap() {
         Log.debug(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
         let start = Date()
@@ -145,23 +147,23 @@ class AutoInstanceController: InstanceControllerProto {
         bootstrappCellIDs = missingCellIDs
         bootstrappTotalCount = totalCount
         bootstrappLock.unlock()
-        
+
     }
-    
+
     deinit {
         stop()
     }
-    
+
     private func update() {
         switch type {
         case .quest:
             stopsLock.lock()
             self.allStops = [Pokestop]()
             for polygon in multiPolygon.polygons {
-                
+
                 if let bounds = BoundingBox(from: polygon.outerRing.coordinates),
                     let stops = try? Pokestop.getAll(minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude, minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude, updated: 0, questsOnly: false, showQuests: true, showLures: true, showInvasions: true) {
-                    
+
                     for stop in stops {
                         let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
                         if polygon.contains(coord, ignoreBoundary: false) {
@@ -169,7 +171,7 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                 }
-                
+
             }
             self.todayStops = [Pokestop]()
             self.todayStopsTries = [Pokestop: UInt8]()
@@ -179,38 +181,38 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
             stopsLock.unlock()
-            
+
         }
     }
-    
+
     private func encounterCooldown(distM: Double) -> UInt32 {
-        
+
         let dist = distM / 1000
-        
-        
+
+
         for data in AutoInstanceController.cooldownDataArray {
             if data.key >= dist {
                 return UInt32(data.value * 60)
             }
         }
         return 0
-    
+
     }
-    
+
     func getTask(uuid: String, username: String?) -> [String : Any] {
-        
+
         switch type {
         case .quest:
-            
+
             bootstrappLock.lock()
             if !bootstrappCellIDs.isEmpty {
-                
+
                 if let target = bootstrappCellIDs.popLast() {
                     bootstrappLock.unlock()
-                    
+
                     let cell = S2Cell(cellId: target)
                     let center = S2LatLng(point: cell.center)
-                    
+
                     // Get all cells touching a 630 (-5m for error) circle at center
                     let coord = center.coord
                     let radians = 0.00009799064306948 // 625m
@@ -221,7 +223,7 @@ class AutoInstanceController: InstanceControllerProto {
                     coverer.maxLevel = 15
                     coverer.minLevel = 15
                     let cellIDs = coverer.getCovering(region: circle)
-                    
+
                     bootstrappLock.lock()
                     for cellID in cellIDs {
                         if let index = bootstrappCellIDs.index(of: cellID) {
@@ -241,22 +243,22 @@ class AutoInstanceController: InstanceControllerProto {
                     } else {
                         bootstrappLock.unlock()
                     }
-                    
-                    
+
+
                     return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
                 } else {
                     bootstrappLock.unlock()
                     return [String: Any]()
                 }
-                
+
             } else {
                 bootstrappLock.unlock()
-            
+
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
                     return [String : Any]()
                 }
-                
+
                 stopsLock.lock()
                 if todayStops == nil {
                     todayStops = [Pokestop]()
@@ -283,7 +285,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Threading.sleep(seconds: 1.0)
                         }
                     }
-                    
+
                     for stop in newStops {
                         let count = todayStopsTries![stop] ?? 0
                         if stop.questType == nil && stop.enabled == true && count <= 5 {
@@ -297,12 +299,12 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
                 stopsLock.unlock()
-            
+
                 var lastLat: Double?
                 var lastLon: Double?
                 var lastTime: UInt32?
                 var account: Account?
-                
+
                 do {
                     if username != nil, let accountT = try Account.getWithUsername(mysql: mysql, username: username!) {
                         account = accountT
@@ -315,34 +317,33 @@ class AutoInstanceController: InstanceControllerProto {
                         lastTime = UInt32(try DBController.global.getValueForKey(key: "AIC_\(uuid)_last_time") ?? "")
                     }
                 } catch { }
-                
+
                 if username != nil && account != nil {
-                    if account!.spins >= 500 {
+                    if account!.spins >= spinLimit {
                         return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                     } else {
                         try? Account.spin(mysql: mysql, username: username!)
                     }
                 }
-                
+
                 let newLon: Double
                 let newLat: Double
                 var encounterTime: UInt32
                 let pokestop: Pokestop
-                
+
                 if lastLat != nil && lastLon != nil {
-                    
+
                     let current = CLLocationCoordinate2D(latitude: lastLat!, longitude: lastLon!)
-                    
+
                     var closest: Pokestop?
-                    var closestDistance: Double = 9999999999999999
-                    
+                    var closestDistance: Double = 10000000000000000
                     stopsLock.lock()
                     let todayStopsC = todayStops
                     stopsLock.unlock()
                     if todayStopsC!.isEmpty {
                         return [String: Any]()
                     }
-                    
+
                     for stop in todayStopsC! {
                         let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
                         let dist = current.distance(to: coord)
@@ -351,11 +352,11 @@ class AutoInstanceController: InstanceControllerProto {
                             closestDistance = dist
                         }
                     }
-                    
+
                     if closest == nil {
                          return [String: Any]()
                     }
-                    
+
                     newLon = closest!.lon
                     newLat = closest!.lat
                     pokestop = closest!
@@ -369,7 +370,7 @@ class AutoInstanceController: InstanceControllerProto {
                         } else {
                             encounterTime = encounterTimeT
                         }
-                        
+
                         if encounterTime - now >= 7200 {
                             encounterTime = now + 7200
                         }
@@ -393,7 +394,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     stopsLock.unlock()
                 }
-                
+
                 stopsLock.lock()
                 if todayStopsTries![pokestop] == nil {
                     todayStopsTries![pokestop] = 1
@@ -401,7 +402,7 @@ class AutoInstanceController: InstanceControllerProto {
                     todayStopsTries![pokestop]! += 1
                 }
                 stopsLock.unlock()
-                
+
                 if username != nil && account != nil {
                     try? Account.didEncounter(mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime)
                 } else {
@@ -409,7 +410,7 @@ class AutoInstanceController: InstanceControllerProto {
                     try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lon", value: newLon.description)
                     try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_time", value: encounterTime.description)
                 }
-                
+
                 let delayT = Int(Date(timeIntervalSince1970: Double(encounterTime)).timeIntervalSinceNow)
                 let delay: Int
                 if delayT < 0 {
@@ -417,7 +418,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     delay = delayT + 1
                 }
-                
+
                 stopsLock.lock()
                 if todayStops!.isEmpty {
                     let ids = self.allStops!.map({ (stop) -> String in
@@ -434,7 +435,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Threading.sleep(seconds: 1.0)
                         }
                     }
-                    
+
                     stopsLock.lock()
                     for stop in newStops {
                         if stop.questType == nil && stop.enabled == true {
@@ -449,13 +450,13 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.unlock()
                 }
-                
+
                 return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay": delay, "min_level": minLevel, "max_level": maxLevel]
             }
         }
 
     }
-    
+
     func getStatus(formatted: Bool) -> JSONConvertible? {
         switch type {
         case .quest:
@@ -464,7 +465,7 @@ class AutoInstanceController: InstanceControllerProto {
                 let totalCount = bootstrappTotalCount
                 let count = totalCount - bootstrappCellIDs.count
                 bootstrappLock.unlock()
-                
+
                 let percentage: Double
                 if totalCount > 0 {
                     percentage = Double(count) / Double(totalCount) * 100
@@ -489,7 +490,7 @@ class AutoInstanceController: InstanceControllerProto {
                     return stop.id
                 })
                 stopsLock.unlock()
-                
+
                 if let stops = try? Pokestop.getIn(ids: ids) {
                     for stop in stops {
                         if stop.questType != nil {
@@ -497,12 +498,12 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                 }
-                
+
                 stopsLock.lock()
                 let maxCount = self.allStops?.count ?? 0
                 let currentCount = maxCount - (self.todayStops?.count ?? 0)
                 stopsLock.unlock()
-                
+
                 let percentage: Double
                 if maxCount > 0 {
                     percentage = Double(currentCount) / Double(maxCount) * 100
@@ -529,11 +530,11 @@ class AutoInstanceController: InstanceControllerProto {
             }
         }
     }
-    
+
     func reload() {
         update()
     }
-    
+
     func stop() {
         self.shouldExit = true
         if questClearerQueue != nil {

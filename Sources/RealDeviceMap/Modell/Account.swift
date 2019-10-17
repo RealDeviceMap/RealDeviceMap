@@ -10,7 +10,7 @@ import PerfectLib
 import PerfectMySQL
 
 class Account {
-    
+
     var username: String
     var password: String
     var level: UInt8
@@ -21,7 +21,7 @@ class Account {
     var lastEncounterLon: Double?
     var lastEncounterTime: UInt32?
     var spins: UInt16
-    
+
     init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?, lastEncounterTime: UInt32?, spins: UInt16) {
         self.username = username
         self.password = password
@@ -40,14 +40,14 @@ class Account {
         }
         self.spins = spins
     }
-    
+
     public func save(mysql: MySQL?=nil, update: Bool) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let oldAccount: Account?
         do {
             oldAccount = try Account.getWithUsername(mysql: mysql, username: username)
@@ -55,18 +55,18 @@ class Account {
             oldAccount = nil
         }
         let mysqlStmt = MySQLStmt(mysql)
-        
+
         if oldAccount == nil {
-            
+
             let sql = """
                 INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
-            
+
             mysqlStmt.bindParam(username)
         } else if update {
-            
+
             if lastEncounterLat == nil && oldAccount!.lastEncounterLat != nil {
                 self.lastEncounterLat = oldAccount!.lastEncounterLat!
             }
@@ -88,7 +88,7 @@ class Account {
             if spins < oldAccount!.spins {
                 self.spins = oldAccount!.spins
             }
-            
+
             let sql = """
                 UPDATE account
                 SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?
@@ -98,7 +98,7 @@ class Account {
         } else {
             return
         }
-        
+
         mysqlStmt.bindParam(password)
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(firstWarningTimestamp)
@@ -112,20 +112,20 @@ class Account {
         if oldAccount != nil {
             mysqlStmt.bindParam(username)
         }
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
-    
+
     public static func setLevel(mysql: MySQL?=nil, username: String, level: Int) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE account
@@ -135,20 +135,20 @@ class Account {
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(username)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
-    
+
     public static func didEncounter(mysql: MySQL?=nil, username: String, lon: Double, lat: Double, time: UInt32) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE account
@@ -160,20 +160,20 @@ class Account {
         mysqlStmt.bindParam(lon)
         mysqlStmt.bindParam(time)
         mysqlStmt.bindParam(username)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
-    
+
     public static func spin(mysql: MySQL?=nil, username: String) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE account
@@ -182,27 +182,27 @@ class Account {
             """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(username)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
-    
+
     public static func clearSpins(mysql: MySQL?=nil) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE account
                 SET spins = 0
             """
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -210,12 +210,12 @@ class Account {
     }
 
     public static func getNewAccount(mysql: MySQL?=nil, minLevel: Int, maxLevel: Int) throws -> Account? {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins
             FROM account
@@ -224,12 +224,12 @@ class Account {
             ORDER BY level DESC, RAND()
             LIMIT 1
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLevel)
         mysqlStmt.bindParam(maxLevel)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -238,9 +238,9 @@ class Account {
         if results.numRows == 0 {
             return nil
         }
-        
+
         let result = results.next()!
-        
+
         let username = result[0] as! String
         let password = result[1] as! String
         let level = result[2] as! UInt8
@@ -251,27 +251,27 @@ class Account {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
-        
+
         return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins)
     }
-    
+
     public static func getWithUsername(mysql: MySQL?=nil, username: String) throws -> Account? {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins
             FROM account
             WHERE username = ?
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(username)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -280,9 +280,9 @@ class Account {
         if results.numRows == 0 {
             return nil
         }
-        
+
         let result = results.next()!
-        
+
         let username = result[0] as! String
         let password = result[1] as! String
         let level = result[2] as! UInt8
@@ -293,27 +293,27 @@ class Account {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
-        
+
         return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins)
     }
-    
+
     public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND spins < 400)
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -321,26 +321,26 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
-    
+
     public static func getCooldownCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             WHERE last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) < 7200
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -348,26 +348,26 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
 
     public static func getSpinLimitCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             WHERE spins >= 500
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -375,27 +375,55 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
-    
-    public static func getInUseCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
+    public static func getLevelCount(mysql: MySQL?=nil, level: Int) throws -> Int64 {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
+        let sql = """
+            SELECT COUNT(*)
+            FROM account
+            WHERE level >= ?
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(level)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        let result = results.next()!
+        let count = result[0] as! Int64
+
+        return count
+    }
+
+    public static func getInUseCount(mysql: MySQL?=nil) throws -> Int64 {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE device.uuid IS NOT NULL
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -403,26 +431,26 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
 
     public static func getWarnedCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             WHERE failed IS NULL AND first_warning_timestamp IS NOT NULL
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -430,26 +458,26 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
-    
+
     public static func getFailedCount(mysql: MySQL?=nil) throws -> Int64 {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
             SELECT COUNT(*)
             FROM account
             WHERE failed IS NOT NULL
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -457,8 +485,8 @@ class Account {
         let results = mysqlStmt.results()
         let result = results.next()!
         let count = result[0] as! Int64
-        
+
         return count
     }
-    
+
 }

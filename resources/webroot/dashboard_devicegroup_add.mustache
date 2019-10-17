@@ -1,0 +1,42 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Add a new Device Group to {{title}}!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Name
+                <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="30">
+            </div>
+            <div class="form-group">
+                Select Instance
+                <select class="form-control" name="instance" required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose an Instance</option>
+                    {{#instances}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/instances}}
+                </select>
+            </div>
+            <div class="form-group">
+                Select Device(s)
+                <select class="form-control" style="height: 400px" name="devices" multiple required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Device(s)</option>
+                    {{#devices}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/devices}}
+                </select>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+    <br>
+</body>

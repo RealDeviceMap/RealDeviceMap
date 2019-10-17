@@ -7,6 +7,7 @@
 
 import Foundation
 import POGOProtos
+import PerfectLib
 
 extension POGOProtos_Enums_Form {
     
@@ -641,6 +642,49 @@ extension POGOProtos_Enums_Form {
         .pinsirNormal,
         .pinsirShadow,
         .pinsirPurified,
+        .pikachuVs2019,
+        .onixNormal,
+        .onixShadow,
+        .onixPurified,
+        .steelixNormal,
+        .steelixShadow,
+        .steelixPurified,
+        .shuppetNormal,
+        .shuppetShadow,
+        .shuppetPurified,
+        .banetteNormal,
+        .banetteShadow,
+        .banettePurified,
+        .duskullNormal,
+        .duskullShadow,
+        .duskullPurified,
+        .dusclopsNormal,
+        .dusclopsShadow,
+        .dusclopsPurified,
+        .dusknoirNormal,
+        .dusknoirShadow,
+        .dusknoirPurified,
+        .sableyeNormal,
+        .sableyeShadow,
+        .sableyePurified,
+        .snoruntNormal,
+        .snoruntShadow,
+        .snoruntPurified,
+        .glalieNormal,
+        .glalieShadow,
+        .glaliePurified,
+        .snoverNormal,
+        .snoverShadow,
+        .snoverPurified,
+        .abomasnowNormal,
+        .abomasnowShadow,
+        .abomasnowPurified,
+        .delibirdNormal,
+        .delibirdShadow,
+        .delibirdPurified,
+        .stantlerNormal,
+        .stantlerShadow,
+        .stantlerPurified,
     ]
     
     static var allFormsInString: [String] {
@@ -1285,8 +1329,53 @@ extension POGOProtos_Enums_Form {
         case .pinsirNormal: return ["127-898"]
         case .pinsirShadow: return ["127-899"]
         case .pinsirPurified: return ["127-900"]
+        case .pikachuVs2019: return ["25-901"]
+        case .onixNormal: return ["95-902"]
+        case .onixShadow: return ["95-903"]
+        case .onixPurified: return ["95-904"]
+        case .steelixNormal: return ["208-905"]
+        case .steelixShadow: return ["208-906"]
+        case .steelixPurified: return ["208-907"]
+        case .shuppetNormal: return ["353-908"]
+        case .shuppetShadow: return ["353-909"]
+        case .shuppetPurified: return ["353-910"]
+        case .banetteNormal: return ["354-911"]
+        case .banetteShadow: return ["354-912"]
+        case .banettePurified: return ["354-913"]
+        case .duskullNormal: return ["355-914"]
+        case .duskullShadow: return ["355-915"]
+        case .duskullPurified: return ["355-916"]
+        case .dusclopsNormal: return ["356-917"]
+        case .dusclopsShadow: return ["356-918"]
+        case .dusclopsPurified: return ["356-919"]
+        case .dusknoirNormal: return ["477-920"]
+        case .dusknoirShadow: return ["477-921"]
+        case .dusknoirPurified: return ["477-922"]
+        case .sableyeNormal: return ["302-923"]
+        case .sableyeShadow: return ["302-924"]
+        case .sableyePurified: return ["302-925"]
+        case .snoruntNormal: return ["361-926"]
+        case .snoruntShadow: return ["361-927"]
+        case .snoruntPurified: return ["361-928"]
+        case .glalieNormal: return ["362-929"]
+        case .glalieShadow: return ["362-930"]
+        case .glaliePurified: return ["362-931"]
+        case .snoverNormal: return ["459-932"]
+        case .snoverShadow: return ["459-933"]
+        case .snoverPurified: return ["459-934"]
+        case .abomasnowNormal: return ["460-935"]
+        case .abomasnowShadow: return ["460-936"]
+        case .abomasnowPurified: return ["460-937"]
+        case .delibirdNormal: return ["225-938"]
+        case .delibirdShadow: return ["225-939"]
+        case .delibirdPurified: return ["225-940"]
+        case .stantlerNormal: return ["234-941"]
+        case .stantlerShadow: return ["234-942"]
+        case .stantlerPurified: return ["234-943"]
         case .unset: return []
         case .UNRECOGNIZED: return []
+        default:
+            Log.warning(message: "Missing form string for form: \(self.rawValue)")
         }
     }
     

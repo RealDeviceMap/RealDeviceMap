@@ -32,39 +32,39 @@ extension InstanceControllerProto {
 }
 
 class InstanceController {
-    
+
     public private(set) static var global = InstanceController()
-    
+
     public static func setup() throws {
-        
+
         let instances = try Instance.getAll()
         let devices = try Device.getAll()
-        
+
         for instance in instances {
             global.addInstance(instance: instance)
         }
         for device in devices {
             global.addDevice(device: device)
         }
-        
+
     }
-    
+
     private init() { }
-    
+
     private var instancesByInstanceName = [String: InstanceControllerProto]()
     private var devicesByDeviceUUID = [String: Device]()
 
     public func getInstanceController(instanceName: String) -> InstanceControllerProto? {
         return instancesByInstanceName[instanceName]
     }
-    
+
     public func getInstanceController(deviceUUID: String) -> InstanceControllerProto? {
         guard let device = devicesByDeviceUUID[deviceUUID], let instanceName = device.instanceName else {
             return nil
         }
         return instancesByInstanceName[instanceName]
     }
-    
+
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
         switch instance.type {
@@ -84,7 +84,7 @@ class InstanceController {
             }
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            
+
             if instance.type == .circlePokemon {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
             } else if instance.type == .circleRaid {
@@ -112,7 +112,7 @@ class InstanceController {
                 }
             }
             let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0
-            
+
             var areaArrayEmptyInner = [[[CLLocationCoordinate2D]]]()
             for coords in areaArray {
                 var polyCoords = [CLLocationCoordinate2D]()
@@ -121,10 +121,10 @@ class InstanceController {
                 }
                 areaArrayEmptyInner.append([polyCoords])
             }
-            
+
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            
+
             if instance.type == .pokemonIV {
                 let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
                     return UInt16(e)
@@ -135,20 +135,21 @@ class InstanceController {
                 }) ?? [UInt16]()
                 instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList)
             } else {
-                instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel)
+                let spinLimit = instance.data["spin_limit"] as? Int ?? 500
+                instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit)
             }
         }
         instanceController.delegate = AssignmentController.global
         instancesByInstanceName[instance.name] = instanceController
     }
-    
+
     public func reloadAllInstances() {
         for instance in instancesByInstanceName {
             instance.value.reload()
         }
         try? AssignmentController.global.setup()
     }
-    
+
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
         let oldInstance = instancesByInstanceName[oldInstanceName]
         if oldInstance != nil {
@@ -164,7 +165,7 @@ class InstanceController {
         }
         addInstance(instance: newInstance)
     }
-    
+
     public func removeInstance(instance: Instance) {
         instancesByInstanceName[instance.name]?.stop()
         instancesByInstanceName[instance.name] = nil
@@ -175,7 +176,7 @@ class InstanceController {
         }
         try? AssignmentController.global.setup()
     }
-    
+
     public func removeInstance(instanceName: String) {
         instancesByInstanceName[instanceName]?.stop()
         instancesByInstanceName[instanceName] = nil
@@ -186,29 +187,29 @@ class InstanceController {
         }
         try? AssignmentController.global.setup()
     }
-    
+
     public func addDevice(device: Device) {
         if device.instanceName != nil && instancesByInstanceName[device.instanceName!] != nil {
             devicesByDeviceUUID[device.uuid] = device
         }
         try? AssignmentController.global.setup()
     }
-    
+
     public func reloadDevice(newDevice: Device, oldDeviceUUID: String) {
         removeDevice(deviceUUID: oldDeviceUUID)
         addDevice(device: newDevice)
     }
-    
+
     public func removeDevice(device: Device) {
         devicesByDeviceUUID[device.uuid] = nil
         try? AssignmentController.global.setup()
     }
-    
+
     public func removeDevice(deviceUUID: String) {
         devicesByDeviceUUID[deviceUUID] = nil
         try? AssignmentController.global.setup()
     }
-    
+
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
         var deviceUUIDS = [String]()
         for device in devicesByDeviceUUID {
@@ -218,7 +219,7 @@ class InstanceController {
         }
         return deviceUUIDS
     }
-    
+
     public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
         if let instanceProto = instancesByInstanceName[instance.name] {
             return instanceProto.getStatus(formatted: formatted)
@@ -230,7 +231,7 @@ class InstanceController {
             }
         }
     }
-    
+
     public func gotPokemon(pokemon: Pokemon) {
         for instance in instancesByInstanceName {
             if let instance = instance.value as? IVInstanceController {
@@ -238,7 +239,7 @@ class InstanceController {
             }
         }
     }
-    
+
     public func gotIV(pokemon: Pokemon) {
         for instance in instancesByInstanceName {
             if let instance = instance.value as? IVInstanceController {
@@ -246,12 +247,12 @@ class InstanceController {
             }
         }
     }
-    
+
     public func getIVQueue(name: String) -> [Pokemon] {
         if let instance = instancesByInstanceName[name] as? IVInstanceController {
             return instance.getQueue()
         }
         return [Pokemon]()
     }
-    
+
 }

@@ -7,10 +7,12 @@
                 $('.pokemon_ids_text').removeClass('d-none');
                 $('.scatter_pokemon_ids_text').removeClass('d-none');
                 $('.iv_queue_limit_text').removeClass('d-none');
+                $('.spin_limit_text').addClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
                 $('.iv_queue_limit_text').addClass('d-none');
+                $('.spin_limit_text').removeClass('d-none');
             }
         });
     })
@@ -68,6 +70,10 @@
             <div class="form-group iv_queue_limit_text {{^pokemon_iv_selected}}d-none{{/pokemon_iv_selected}}">
                 IV Queue Limit
                 <input type="number" class="form-control hidden" name="iv_queue_limit" value="{{iv_queue_limit}}" step=1 min="1" max="9999" required>
+            </div>
+            <div class="form-group spin_limit_text {{^auto_quest_selected}}d-none{{/auto_quest_selected}}">
+                Spin Limit
+                <input type="number" class="form-control" name="spin_limit" value="{{spin_limit}}" step=1 min="1" max="3500" required>
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>

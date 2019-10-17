@@ -23,6 +23,7 @@ class WebHookRequestHandler {
     static var hostWhitelist: [String]?
     static var hostWhitelistUsesProxy: Bool = false
     static var loginSecret: String?
+    static var dittoDisguises: [UInt16]?
 
     private static var limiter = LoginLimiter()
     
@@ -99,15 +100,16 @@ class WebHookRequestHandler {
         }
         
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        if let username = json["username"] as? String, trainerLevel > 0 {
+        let username = json["username"] as? String
+        if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
-            let oldLevel = levelCache[username]
+            let oldLevel = levelCache[username!]
             levelCacheLock.unlock()
             if oldLevel != trainerLevel {
                 do {
-                    try Account.setLevel(mysql: mysql, username: username, level: trainerLevel)
+                    try Account.setLevel(mysql: mysql, username: username!, level: trainerLevel)
                     levelCacheLock.lock()
-                    levelCache[username] = trainerLevel
+                    levelCache[username!] = trainerLevel
                     levelCacheLock.unlock()
                 } catch {}
             }
@@ -131,19 +133,19 @@ class WebHookRequestHandler {
         
         var wildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon, timestampMs: UInt64)]()
         var nearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
+        var clientWeathers =  [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
         var forts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var gymInfos = [POGOProtos_Networking_Responses_GymGetInfoResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         var cells = [UInt64]()
-        
-        //TODO: Set device last_lat and last_lon
-        
+
         var isEmtpyGMO = true
         var isInvalidGMO = true
         var containsGMO = false
-
+        var isMadData = false
+		
         for rawData in contents {
             
             let data: Data
@@ -163,9 +165,14 @@ class WebHookRequestHandler {
             } else if let ggi = rawData["GymGetInfoResponse"] as? String {
                 data = Data(base64Encoded: ggi) ?? Data()
                 method = 156
-            } else if let dataString = rawData["data"] as? String ?? rawData["payload"] as? String {
+            } else if let dataString = rawData["data"] as? String {
                 data = Data(base64Encoded: dataString) ?? Data()
-                method = rawData["method"] as? Int ?? rawData["type"] as? Int ?? 106
+                method = rawData["method"] as? Int ?? 106
+            } else if let madString = rawData["payload"] as? String {
+				data = Data(base64Encoded: madString) ?? Data()
+				method = rawData["type"] as? Int ?? 106
+				isMadData = true
+				//Log.info(message: "[WebHookRequestHandler] PogoDroid Raw Data Type: \(method)")
             } else {
                 continue
             }
@@ -179,7 +186,7 @@ class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
                 }
-            } else if method == 102 && trainerLevel >= 30 {
+            } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
                 if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
                     encounters.append(er)
                 } else {
@@ -204,6 +211,7 @@ class WebHookRequestHandler {
                     
                     var newWildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon, timestampMs: UInt64)]()
                     var newNearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
+                    var newClientWeathers = [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
                     var newForts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
                     var newCells = [UInt64]()
                     
@@ -220,7 +228,11 @@ class WebHookRequestHandler {
                         }
                         newCells.append(mapCell.s2CellID)
                     }
-                    
+
+                    for wmapCell in gmo.clientWeather {
+                        newClientWeathers.append((cell: wmapCell.s2CellID, data: wmapCell))
+                    }
+
                     if newWildPokemons.isEmpty && newNearbyPokemons.isEmpty && newForts.isEmpty {
                         for cell in newCells {
                             emptyCellsLock.lock()
@@ -249,6 +261,7 @@ class WebHookRequestHandler {
                         nearbyPokemons += newNearbyPokemons
                         forts += newForts
                         cells += newCells
+                        clientWeathers += newClientWeathers
                     }
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed GetMapObjectsResponse")
@@ -410,17 +423,28 @@ class WebHookRequestHandler {
                 }
                 
             }
-            
+
+            let startclientWeathers = Date()
+			for conditions in clientWeathers {
+				let ws2cell = S2Cell(cellId: S2CellId(id: conditions.cell))
+				let wlat = ws2cell.capBound.rectBound.center.lat.degrees
+				let wlon = ws2cell.capBound.rectBound.center.lng.degrees
+				let wlevel = ws2cell.level
+                let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel), latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
+				try? weather.save(mysql: mysql, update: true)
+			}
+			Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s")
+
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
-                let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell, timestampMs: wildPokemon.timestampMs)
+                let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell, timestampMs: wildPokemon.timestampMs, username: username)
                 try? pokemon.save(mysql: mysql)
             }
             Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
             
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell)
+                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
             Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
@@ -519,7 +543,7 @@ class WebHookRequestHandler {
                         pokemon = nil
                     }
                     if pokemon != nil {
-                        pokemon!.addEncounter(encounterData: encounter)
+                        pokemon!.addEncounter(encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
                         let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude, longitude: encounter.wildPokemon.longitude)
@@ -535,8 +559,9 @@ class WebHookRequestHandler {
                             let newPokemon = Pokemon(
                                 wildPokemon: encounter.wildPokemon,
                                 cellId: cellID.uid,
-                                timestampMs: UInt64(Date().timeIntervalSince1970 * 1000))
-                            newPokemon.addEncounter(encounterData: encounter)
+                                timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
+                                username: username)
+                            newPokemon.addEncounter(encounterData: encounter, username: username)
                             try? newPokemon.save(mysql: mysql, updateIV: true)
                         }
                     }
@@ -607,7 +632,7 @@ class WebHookRequestHandler {
                 }
                 
                 if device == nil {
-                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil, lastLat: 0.0, lastLon: 0.0)
+                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
                     try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
                 } else {

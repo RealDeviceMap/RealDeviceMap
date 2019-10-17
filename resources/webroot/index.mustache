@@ -99,6 +99,18 @@
                         {{filter_cells}}
                         <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
                     </div>
+                    <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_weathers}}class="d-none"{{/hide_weathers}}>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label id="hide-weathers" class="btn btn-sm btn-off">
+                                <input type="radio" name="options" id="hide" autocomplete="off" checked>{{filter_hide}}
+                            </label>
+                            <label id="show-weathers" class="btn btn-sm btn-on">
+                                <input type="radio" name="options" id="show" autocomplete="off">{{filter_show}}
+                            </label>
+                        </div>
+                        {{filter_weathers}}
+                        <button class="btn btn-sm btn-primary float-right disabled">{{filter_filter}}</button>
+                    </div>
                     <div style="height:31px; margin-top: 10px; margin-bottom: 10px" {{#hide_devices}}class="d-none"{{/hide_devices}}>
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
                             <label id="hide-devices" class="btn btn-sm btn-off">
