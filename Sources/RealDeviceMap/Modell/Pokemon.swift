@@ -45,7 +45,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "size": size as Any,
             "weather": weather as Any,
             "shiny": shiny as Any,
-            "username": username as Any,
+            //"username": username as Any,
             "pokestop_id": pokestopId as Any,
             "costume": costume as Any,
             "updated": updated ?? 1,
