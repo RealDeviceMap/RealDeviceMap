@@ -230,26 +230,28 @@ class DBController {
             
             if ProcessInfo.processInfo.environment["NO_BACKUP"] == nil {
             
-                var allTables = [
+                let allTables = [
                     "account": true,
                     "assignment": true,
                     "device": true,
+                    "device_group": true,
+                    "discord_rule": true,
                     "group": true,
                     "gym": true,
-                    "gyms": true,
                     "instance": true,
                     "metadata": true,
                     "pokemon": true,
                     "pokemon_stats": false,
+                    "pokemon_shiny_stats": false,
                     "pokestop": true,
                     "quest_stats": false,
                     "raid_stats": false,
-                    "spawnpoint": true,
-                    "user": true,
-                    "web_session": true,
                     "s2cell": true,
+                    "spawnpoint": true,
                     "token": true,
-                    "discord_rule": true
+                    "user": true,
+                    "weather": true,
+                    "web_session": true,
                 ]
                 
                 var tablesShema = ""

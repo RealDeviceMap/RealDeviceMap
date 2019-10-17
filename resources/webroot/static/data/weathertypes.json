@@ -1,0 +1,34 @@
+{
+    "0": {
+        "types": [],
+        "name": "None"
+    },
+    "1": {
+        "types": ["Fire","Grass","Ground"],
+        "name": "Clear"
+    },
+    "2": {
+        "types": ["Water","Electric","Bug"],
+        "name": "Rain"
+    },
+    "3": {
+        "types": ["Normal","Rock"],
+        "name": "Partly Cloudy"
+    },
+    "4": {
+        "types": ["Fairy","Fighting","Poison"],
+        "name": "Cloudy"
+    },
+    "5": {
+        "types": ["Dragon","Flying","Psychic"],
+        "name": "Windy"
+    },
+    "6": {
+        "types": ["Ice","Steel"],
+        "name": "Snow"
+    },
+    "7" : {
+        "types": ["Dark","Ghost"],
+        "name": "Fog"
+    }
+}
