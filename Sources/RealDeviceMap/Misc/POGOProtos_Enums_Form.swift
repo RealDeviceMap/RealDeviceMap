@@ -685,6 +685,11 @@ extension POGOProtos_Enums_Form {
         .stantlerNormal,
         .stantlerShadow,
         .stantlerPurified,
+        .weezingGalarian,
+        .zigzagoonNormal,
+        .zigzagoonGalarian,
+        .linooneNormal,
+        .linooneGalarian
     ]
     
     static var allFormsInString: [String] {
@@ -1372,6 +1377,11 @@ extension POGOProtos_Enums_Form {
         case .stantlerNormal: return ["234-941"]
         case .stantlerShadow: return ["234-942"]
         case .stantlerPurified: return ["234-943"]
+        case .weezingGalarian: return ["110-944"]
+        case .zigzagoonNormal: return ["263-945"]
+        case .zigzagoonGalarian: return ["263-946"]
+        case .linooneNormal: return ["264-947"]
+        case .linooneGalarian: return ["264-948"]
         case .unset: return []
         case .UNRECOGNIZED: return []
         default:
