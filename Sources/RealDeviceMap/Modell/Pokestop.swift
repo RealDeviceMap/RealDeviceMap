@@ -173,7 +173,12 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             self.pokestopDisplay = UInt16(fortData.pokestopDisplay.characterDisplay.style.rawValue)
             self.incidentExpireTimestamp = UInt32(fortData.pokestopDisplay.incidentExpirationMs / 1000)
             self.gruntType = UInt16(fortData.pokestopDisplay.characterDisplay.character.rawValue)
+        } else if fortData.pokestopDisplays.count != 0 {
+            self.pokestopDisplay = UInt16(fortData.pokestopDisplays[0].characterDisplay.style.rawValue)
+            self.incidentExpireTimestamp = UInt32(fortData.pokestopDisplays[0].incidentExpirationMs / 1000)
+            self.gruntType = UInt16(fortData.pokestopDisplays[0].characterDisplay.character.rawValue)
         }
+
         self.cellId = cellId
         
     }
