@@ -21,8 +21,15 @@ class Account {
     var lastEncounterLon: Double?
     var lastEncounterTime: UInt32?
     var spins: UInt16
+    var creationTimestampMs: UInt64?
+    var warn: Bool?
+    var warnExpireMs: UInt64?
+    var warnMessageAcknowledged: Bool?
+    var suspendedMessageAcknowledged: Bool?
+    var wasSuspended: Bool?	
+    var banned: Bool?
 
-    init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?, lastEncounterTime: UInt32?, spins: UInt16) {
+    init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?, lastEncounterTime: UInt32?, spins: UInt16, creationTimestampMs: UInt64?, warn: Bool?, warnExpireMs: UInt64?, warnMessageAcknowledged: Bool?, suspendedMessageAcknowledged: Bool?, wasSuspended: Bool?, banned: Bool?) {
         self.username = username
         self.password = password
         self.level = level
@@ -39,6 +46,13 @@ class Account {
             self.lastEncounterTime = lastEncounterTime
         }
         self.spins = spins
+        self.creationTimestampMs = creationTimestampMs
+        self.warn = warn
+        self.warnExpireMs = warnExpireMs
+        self.warnMessageAcknowledged = warnMessageAcknowledged
+        self.suspendedMessageAcknowledged = suspendedMessageAcknowledged
+        self.wasSuspended = wasSuspended
+        self.banned = banned
     }
 
     public func save(mysql: MySQL?=nil, update: Bool) throws {
@@ -59,8 +73,8 @@ class Account {
         if oldAccount == nil {
 
             let sql = """
-                INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
 
@@ -88,10 +102,31 @@ class Account {
             if spins < oldAccount!.spins {
                 self.spins = oldAccount!.spins
             }
-
+            if creationTimestampMs == nil && oldAccount!.creationTimestampMs != nil {
+                self.creationTimestampMs = oldAccount!.creationTimestampMs!
+            }
+            if warn == nil && oldAccount!.warn != nil {
+                self.warn = oldAccount!.warn!
+            }
+            if warnExpireMs == nil && oldAccount!.warnExpireMs != nil {
+                self.warnExpireMs = oldAccount!.warnExpireMs!
+            }
+            if warnMessageAcknowledged == nil && oldAccount!.warnMessageAcknowledged != nil {
+                self.warnMessageAcknowledged = oldAccount!.warnMessageAcknowledged!
+            }
+            if suspendedMessageAcknowledged == nil && oldAccount!.suspendedMessageAcknowledged != nil {
+                self.suspendedMessageAcknowledged = oldAccount!.suspendedMessageAcknowledged!
+            }
+            if wasSuspended == nil && oldAccount!.wasSuspended != nil {
+                self.wasSuspended = oldAccount!.wasSuspended!
+            }
+            if banned == nil && oldAccount!.banned != nil {
+                self.banned = oldAccount!.banned!
+            }
+			
             let sql = """
                 UPDATE account
-                SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?
+                SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?, creationTimestampMs = ?, warn = ?, warnExpireMs = ?, warnMessageAcknowledged = ?, suspendedMessageAcknowledged = ?, wasSuspended = ?, banned = ?
                 WHERE username = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -108,6 +143,13 @@ class Account {
         mysqlStmt.bindParam(lastEncounterLon)
         mysqlStmt.bindParam(lastEncounterTime)
         mysqlStmt.bindParam(spins)
+        mysqlStmt.bindParam(creationTimestampMs)
+        mysqlStmt.bindParam(warn)
+        mysqlStmt.bindParam(warnExpireMs)
+        mysqlStmt.bindParam(warnMessageAcknowledged)
+        mysqlStmt.bindParam(suspendedMessageAcknowledged)
+        mysqlStmt.bindParam(wasSuspended)
+        mysqlStmt.bindParam(banned)
 
         if oldAccount != nil {
             mysqlStmt.bindParam(username)
@@ -142,6 +184,38 @@ class Account {
         }
     }
 
+    public static func setStatus(mysql: MySQL?=nil, username: String, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, creationTimestampMs: UInt64?, warn: Bool?, warnExpireMs: UInt64?, warnMessageAcknowledged: Bool?, suspendedMessageAcknowledged: Bool?, wasSuspended: Bool?, banned: Bool?) throws {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                UPDATE account
+                SET first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, creationTimestampMs = ?, warn = ?, warnExpireMs = ?, warnMessageAcknowledged = ?, suspendedMessageAcknowledged = ?, wasSuspended = ?, banned = ?
+                WHERE username = ?
+            """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(firstWarningTimestamp)
+        mysqlStmt.bindParam(failedTimestamp)
+        mysqlStmt.bindParam(failed)
+        mysqlStmt.bindParam(creationTimestampMs)
+        mysqlStmt.bindParam(warn)
+        mysqlStmt.bindParam(warnExpireMs)
+        mysqlStmt.bindParam(warnMessageAcknowledged)
+        mysqlStmt.bindParam(suspendedMessageAcknowledged)
+        mysqlStmt.bindParam(wasSuspended)
+        mysqlStmt.bindParam(banned)
+        mysqlStmt.bindParam(username)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+	
     public static func didEncounter(mysql: MySQL?=nil, username: String, lon: Double, lat: Double, time: UInt32) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -217,7 +291,7 @@ class Account {
         }
 
         let sql = """
-            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND level >= ? AND level <= ? AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() -  CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND spins < 400)
@@ -251,8 +325,15 @@ class Account {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
+		let creationTimestampMs = result[10] as? UInt64
+		let warn = result[11] as? Bool
+		let warnExpireMs = result[12] as? UInt64
+		let warnMessageAcknowledged = result[13] as? Bool
+		let suspendedMessageAcknowledged = result[14] as? Bool
+		let wasSuspended = result[15] as? Bool
+		let banned = result[16] as? Bool
 
-        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins)
+        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins, creationTimestampMs: creationTimestampMs, warn: warn, warnExpireMs: warnExpireMs, warnMessageAcknowledged: warnMessageAcknowledged, suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned)
     }
 
     public static func getWithUsername(mysql: MySQL?=nil, username: String) throws -> Account? {
@@ -263,7 +344,7 @@ class Account {
         }
 
         let sql = """
-            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned
             FROM account
             WHERE username = ?
         """
@@ -293,8 +374,15 @@ class Account {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
+        let creationTimestampMs = result[10] as? UInt64
+        let warn = result[11] as? Bool
+        let warnExpireMs = result[12] as? UInt64
+        let warnMessageAcknowledged = result[13] as? Bool
+        let suspendedMessageAcknowledged = result[14] as? Bool
+        let wasSuspended = result[15] as? Bool
+        let banned = result[16] as? Bool
 
-        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins)
+        return Account(username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat, lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins, creationTimestampMs: creationTimestampMs, warn: warn, warnExpireMs: warnExpireMs, warnMessageAcknowledged: warnMessageAcknowledged, suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned)
     }
 
     public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {

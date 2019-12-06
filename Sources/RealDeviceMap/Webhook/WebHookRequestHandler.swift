@@ -139,6 +139,7 @@ class WebHookRequestHandler {
         var gymInfos = [POGOProtos_Networking_Responses_GymGetInfoResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
+        var playerdatas = [POGOProtos_Networking_Responses_GetPlayerResponse]()
         var cells = [UInt64]()
 
         var isEmtpyGMO = true
@@ -150,7 +151,10 @@ class WebHookRequestHandler {
             
             let data: Data
             let method: Int
-            if let gmo = rawData["GetMapObjects"] as? String {
+            if let prr = rawData["GetPlayerResponse"] as? String {
+                data = Data(base64Encoded: prr) ?? Data()
+                method = 2
+            } else if let gmo = rawData["GetMapObjects"] as? String {
                 data = Data(base64Encoded: gmo) ?? Data()
                 method = 106
             } else if let er = rawData["EncounterResponse"] as? String {
@@ -176,8 +180,15 @@ class WebHookRequestHandler {
             } else {
                 continue
             }
-            
-            if method == 101 {
+
+            if method == 2 {
+                if let prr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
+                    playerdatas.append(prr)
+					//Log.info(message: "[WebHookRequestHandler] PLAYERDATA: \(playerdatas)")
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] Malformed GetPlayerResponse")
+                }
+            } else if method == 101 {
                 if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         let quest = fsr.challengeQuest.quest
@@ -449,6 +460,39 @@ class WebHookRequestHandler {
             }
             Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 
+            if !playerdatas.isEmpty {
+                let start = Date()
+                for playerdata in playerdatas {
+                    //Log.debug(message: "[WebHookRequestHandler] \(playerdata)") 
+                    let account: Account?
+					let creationTimestampMs = UInt64(playerdata.playerData.creationTimestampMs) / 1000
+					let warnExpireMs = UInt64(playerdata.warnExpireMs) / 1000
+					var failed: String?
+					var firstWarningTimestamp: UInt32?
+					var failedTimestamp: UInt32?
+					do {
+                        account = try Account.getWithUsername(mysql: mysql, username: username!)
+						failed = account?.failed
+                    } catch {
+                        account = nil
+                    }
+                    if account != nil {
+						if playerdata.warn == true {
+							failed = "GPR_RED_WARNING"
+							firstWarningTimestamp = UInt32(warnExpireMs - 604800) // Expiry - 7 Days
+							failedTimestamp = firstWarningTimestamp // GPR Red Warning Rest Account
+							Log.debug(message: "[WebHookRequestHandler] AccountName: \(username!) - UserName: \(playerdata.playerData.username) - Red Warning: \(playerdata.warn)")
+						}
+						if playerdata.banned == true {
+							failed = "GPR_BANNED"
+							Log.debug(message: "[WebHookRequestHandler] AccountName: \(username!) - UserName: \(playerdata.playerData.username) - Banned: \(playerdata.banned)")
+						}
+                        try? Account.setStatus(mysql: mysql, username: username!, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, creationTimestampMs: creationTimestampMs, warn: playerdata.warn, warnExpireMs: warnExpireMs, warnMessageAcknowledged: playerdata.warnMessageAcknowledged, suspendedMessageAcknowledged: playerdata.suspendedMessageAcknowledged, wasSuspended: playerdata.wasSuspended, banned: playerdata.banned)
+                    }
+                }
+                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+			
             let startForts = Date()
             for fort in forts {
                 if fort.data.type == .gym {
