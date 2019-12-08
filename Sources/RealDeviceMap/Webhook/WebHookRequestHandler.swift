@@ -414,7 +414,25 @@ class WebHookRequestHandler {
         
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
-            
+
+            if !playerdatas.isEmpty {
+                let start = Date()
+                for playerdata in playerdatas {
+                    //Log.debug(message: "[WebHookRequestHandler] \(playerdata)") 
+					let account: Account?
+					do {
+                        account = try Account.getWithUsername(mysql: mysql, username: username!)
+                    } catch {
+                        account = nil
+                    }
+                    if account != nil {
+						account!.responseInfo(accountData: playerdata)
+                        try? account!.save(mysql: mysql, update: true)
+                    }
+                }
+                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+
             var gymIdsPerCell = [UInt64: [String]]()
             var stopsIdsPerCell = [UInt64: [String]]()
             
@@ -457,40 +475,6 @@ class WebHookRequestHandler {
             for nearbyPokemon in nearbyPokemons {
                 let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
-            }
-            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
-
-            if !playerdatas.isEmpty {
-                let start = Date()
-                for playerdata in playerdatas {
-                    //Log.debug(message: "[WebHookRequestHandler] \(playerdata)") 
-                    let account: Account?
-					let creationTimestampMs = UInt64(playerdata.playerData.creationTimestampMs) / 1000
-					let warnExpireMs = UInt64(playerdata.warnExpireMs) / 1000
-					var failed: String?
-					var firstWarningTimestamp: UInt32?
-					var failedTimestamp: UInt32?
-					do {
-                        account = try Account.getWithUsername(mysql: mysql, username: username!)
-						failed = account?.failed
-                    } catch {
-                        account = nil
-                    }
-                    if account != nil {
-						if playerdata.warn == true {
-							failed = "GPR_RED_WARNING"
-							firstWarningTimestamp = UInt32(warnExpireMs - 604800) // Expiry - 7 Days
-							failedTimestamp = firstWarningTimestamp // GPR Red Warning Rest Account
-							Log.debug(message: "[WebHookRequestHandler] AccountName: \(username!) - UserName: \(playerdata.playerData.username) - Red Warning: \(playerdata.warn)")
-						}
-						if playerdata.banned == true {
-							failed = "GPR_BANNED"
-							Log.debug(message: "[WebHookRequestHandler] AccountName: \(username!) - UserName: \(playerdata.playerData.username) - Banned: \(playerdata.banned)")
-						}
-                        try? Account.setStatus(mysql: mysql, username: username!, firstWarningTimestamp: firstWarningTimestamp, failedTimestamp: failedTimestamp, failed: failed, creationTimestampMs: creationTimestampMs, warn: playerdata.warn, warnExpireMs: warnExpireMs, warnMessageAcknowledged: playerdata.warnMessageAcknowledged, suspendedMessageAcknowledged: playerdata.suspendedMessageAcknowledged, wasSuspended: playerdata.wasSuspended, banned: playerdata.banned)
-                    }
-                }
-                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
 			
             let startForts = Date()

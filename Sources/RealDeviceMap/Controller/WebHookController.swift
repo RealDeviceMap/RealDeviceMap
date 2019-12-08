@@ -40,6 +40,8 @@ class WebHookController {
     private var raidEvents = [String: Gym]()
     private var weatherEventLock = Threading.Lock()
     private var weatherEvents = [Int64: Weather]()
+    private var accountEventLock = Threading.Lock()
+    private var accountEvents = [String: Account]()
     
     private var queue: ThreadQueue?
     
@@ -122,6 +124,14 @@ class WebHookController {
             weatherEventLock.unlock()
         }
     }
+
+    public func addAccountEvent(account: Account) {
+        if !self.webhookURLStrings.isEmpty {
+            accountEventLock.lock()
+            accountEvents[account.username] = account
+            accountEventLock.unlock()
+        }
+    }
     
     public func start() {
         
@@ -201,7 +211,14 @@ class WebHookController {
                             events.append(weatherEvent.value.getWebhookValues(type: "weather"))
                         }
                         self.weatherEvents = [Int64: Weather]()
-                        self.weatherEventLock.unlock()                        
+                        self.weatherEventLock.unlock()
+
+                        self.accountEventLock.lock()
+                        for accountEvent in self.accountEvents {
+                            events.append(accountEvent.value.getWebhookValues(type: "account"))
+                        }
+                        self.accountEvents = [String: Account]()
+                        self.accountEventLock.unlock()                         
                         
                         if !events.isEmpty {
                             for url in self.webhookURLStrings {

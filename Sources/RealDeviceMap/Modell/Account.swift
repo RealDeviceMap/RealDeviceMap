@@ -8,9 +8,34 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import POGOProtos
 
-class Account {
+class Account: WebHookEvent {
 
+    func getWebhookValues(type: String) -> [String : Any] {
+
+        let message: [String: Any] = [
+            "username": username,
+            "level": level,
+            "firstWarningTimestamp": firstWarningTimestamp ?? "None",
+            "failedTimestamp": failedTimestamp ?? "None",
+            "failed": failed ?? "None",
+            "lastEncounterTime": lastEncounterTime ?? "None",
+            "spins": spins as Any,
+            "creationTimestampMs": creationTimestampMs ?? "None",
+            "warn": warn ?? 0,
+            "warnExpireMs": warnExpireMs ?? "None",
+            "warnMessageAcknowledged": warnMessageAcknowledged ?? 0,
+            "suspendedMessageAcknowledged": suspendedMessageAcknowledged ?? 0,
+            "wasSuspended": wasSuspended ?? 0,
+            "banned": banned ?? 0
+        ]
+        return [
+            "type": "account",
+            "message": message
+        ]
+    }
+	
     var username: String
     var password: String
     var level: UInt8
@@ -55,6 +80,29 @@ class Account {
         self.banned = banned
     }
 
+    public func responseInfo(accountData: POGOProtos_Networking_Responses_GetPlayerResponse) {
+        //Log.debug(message: "[ACCOUNT] \(accountData).")
+        self.creationTimestampMs = UInt64(accountData.playerData.creationTimestampMs) / 1000
+        self.warn = accountData.warn
+        self.warnExpireMs = UInt64(accountData.warnExpireMs) / 1000
+        self.warnMessageAcknowledged = accountData.warnMessageAcknowledged
+        self.suspendedMessageAcknowledged = accountData.suspendedMessageAcknowledged
+        self.wasSuspended = accountData.wasSuspended
+        self.banned = accountData.banned
+
+        if accountData.warn == true {
+            self.failed = "GPR_RED_WARNING"
+            self.firstWarningTimestamp = UInt32(accountData.warnExpireMs - 604800) 	// Expiry - 7 Days
+            self.failedTimestamp = self.firstWarningTimestamp 						// GPR Red Warning Rest Account
+            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
+        }
+        if accountData.banned == true {
+            self.failed = "GPR_BANNED"
+            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
+        }		
+
+    }
+	
     public func save(mysql: MySQL?=nil, update: Bool) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -123,6 +171,7 @@ class Account {
             if banned == nil && oldAccount!.banned != nil {
                 self.banned = oldAccount!.banned!
             }
+            WebHookController.global.addAccountEvent(account: self)
 			
             let sql = """
                 UPDATE account
@@ -176,38 +225,6 @@ class Account {
             """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(level)
-        mysqlStmt.bindParam(username)
-
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-    }
-
-    public static func setStatus(mysql: MySQL?=nil, username: String, firstWarningTimestamp: UInt32?, failedTimestamp: UInt32?, failed: String?, creationTimestampMs: UInt64?, warn: Bool?, warnExpireMs: UInt64?, warnMessageAcknowledged: Bool?, suspendedMessageAcknowledged: Bool?, wasSuspended: Bool?, banned: Bool?) throws {
-
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[ACCOUNT] Failed to connect to database.")
-            throw DBController.DBError()
-        }
-
-        let mysqlStmt = MySQLStmt(mysql)
-        let sql = """
-                UPDATE account
-                SET first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, creationTimestampMs = ?, warn = ?, warnExpireMs = ?, warnMessageAcknowledged = ?, suspendedMessageAcknowledged = ?, wasSuspended = ?, banned = ?
-                WHERE username = ?
-            """
-        _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(firstWarningTimestamp)
-        mysqlStmt.bindParam(failedTimestamp)
-        mysqlStmt.bindParam(failed)
-        mysqlStmt.bindParam(creationTimestampMs)
-        mysqlStmt.bindParam(warn)
-        mysqlStmt.bindParam(warnExpireMs)
-        mysqlStmt.bindParam(warnMessageAcknowledged)
-        mysqlStmt.bindParam(suspendedMessageAcknowledged)
-        mysqlStmt.bindParam(wasSuspended)
-        mysqlStmt.bindParam(banned)
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
