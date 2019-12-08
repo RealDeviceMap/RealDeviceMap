@@ -92,12 +92,18 @@ class Account: WebHookEvent {
 
         if accountData.warn == true {
             self.failed = "GPR_RED_WARNING"
-            self.firstWarningTimestamp = UInt32(accountData.warnExpireMs - 604800) 	// Expiry - 7 Days
-            self.failedTimestamp = self.firstWarningTimestamp 						// GPR Red Warning Rest Account
+			if self.firstWarningTimestamp == nil {
+                self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
+                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+			}
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
+			if self.firstWarningTimestamp == nil {
+                self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
+                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+			}
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
         }		
 
