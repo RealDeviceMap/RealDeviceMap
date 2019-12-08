@@ -476,6 +476,7 @@ class WebHookRequestHandler {
                 let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
+            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
 			
             let startForts = Date()
             for fort in forts {
