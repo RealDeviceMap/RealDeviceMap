@@ -1,5 +1,7 @@
 {{> header}}
 
+<!--TODO: Better stat graphs/charts-->
+
 <style>
 a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
 /* Neutral */
@@ -29,15 +31,163 @@ a.instinct:hover * { color:black; }
             enableTime: true
         });
 
+        var pieOptions = {
+            responsive: true,
+            legend: false,
+            tooltips: true,
+            elements: {
+                arc: {
+                    backgroundColor: colorize.bind(null, false, false),
+                    hoverBackgroundColor: hoverColorize
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        };
+
+        var barOptions = {
+            legend: {
+                position: 'bottom',
+            },
+            tooltips: true,
+            title: {
+                display: true,
+                text: 'IV Spread'
+            },
+            tooltips: { mode: "nearest", intersect: false, },
+            hover: { mode: "nearest", intersect: true },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        stepSize: 25
+                    }
+                }]
+            },
+            elements: {
+                rectangle: {
+                    backgroundColor: colorize.bind(null, false, false),
+                    borderColor: colorize.bind(null, true, false),
+                    borderWidth: 2
+                }
+            }
+        };
+
+        var donutOptions = {
+            responsive: true,
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Level Spread'
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        };
+
+        var scanChart = new Chart('scanChart', {
+            type: 'pie',
+            data: {
+                datasets: [],
+                labels: [
+                    'Seen',
+                    'Scanned'
+                ]
+            },
+            options: pieOptions
+        });
+
+        var levelChart = new Chart('levelChart', {
+            type: 'doughnut',
+            data: {
+                datasets: [],
+                labels: [
+                    'Level 01-09',
+                    'Level 10-19',
+                    'Level 20-29',
+                    'Level 30-35'
+                ]
+            },
+            options: donutOptions
+        });
+
+        var ivChart = new Chart('ivChart', {
+            type: 'bar',
+            data: {
+                datasets: []
+            },
+            options: barOptions
+        });
+
         $("#filter-pokemon-comday").on('change', function() {
             var start = $("#filter-date-start").val();
             var end = $("#filter-date-end").val();
             var pokemonId = this.value;
             console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
+            $.get({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
+                console.log("Result:", result);
+                $("#pkmn-title").text(result.data.evo1_name + " Scans");
+                $("#total-seen").text(numberWithCommas(result.data.stats[0] || 0) + " seen");
+                $("#total-scanned").text(numberWithCommas(result.data.stats[3] || 0) + " scanned");
+                $("#iv100").text(result.data.stats[1] || 0);
+                $("#iv90").text(result.data.stats[5] || 0);
+                $("#iv0").text(result.data.stats[2] || 0);
+                $("#total-male").text(numberWithCommas(result.data.stats[10] || 0) + " (" + Math.round((result.data.stats[10] / result.data.stats[0]) * 100, 2) + "%)");
+                $("#total-female").text(numberWithCommas(result.data.stats[11] || 0) + " (" + Math.round((result.data.stats[11] / result.data.stats[0]) * 100, 2) + "%)");
+                //TODO: Check if pokemon is a 3 stage evo
+                $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
+                $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
+                $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
+                $("#evo1-text").text(result.data.evo1_name);
+                $("#evo2-text").text(result.data.evo2_name);
+                $("#evo3-text").text(result.data.evo3_name);
+
+                removeDataset(scanChart);
+                var scanData = {
+                  data: [result.data.stats[0] || 0, result.data.stats[3] || 0],
+                  backgroundColor: [
+                    'green',
+                    'blue'
+                  ],
+                  label: 'Seen'
+                };
+                addDataset(scanChart, scanData);
+
+                removeDataset(levelChart);
+                var levelData = {
+                    data: [
+                        result.data.stats[13] || 0,
+                        result.data.stats[14] || 0,
+                        result.data.stats[15] || 0,
+                        result.data.stats[16] || 0
+                    ],
+                    backgroundColor: [
+                        'red',
+                        'yellow',
+                        'green',
+                        'blue'
+                    ],
+                    label: 'Levels'
+                };
+                addDataset(levelChart, levelData);
+
+                removeDataset(ivChart);
+                addDataset(ivChart, { data: [result.data.stats[2]], backgroundColor: 'black', label: '0% IV' });
+                addDataset(ivChart, { data: [result.data.stats[6]], backgroundColor: 'red', label: '1-49% IV' });
+                addDataset(ivChart, { data: [result.data.stats[7]], backgroundColor: 'blue', label: '50-79% IV' });
+                addDataset(ivChart, { data: [result.data.stats[8]], backgroundColor: 'yellow', label: '80-89% IV' });
+                addDataset(ivChart, { data: [result.data.stats[9]], backgroundColor: 'orange', label: '90-99% IV' });
+                addDataset(ivChart, { data: [result.data.stats[1]], backgroundColor: 'green', label: '100% IV' });
+            }});
         });
 
         $.get({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
-            console.log("Result:", result);
+            //console.log("Result:", result);
             if (result == null) {
                 console.log("Failed to parse result value.");
                 return;
@@ -68,6 +218,21 @@ a.instinct:hover * { color:black; }
         }});
     } );
 
+function addDataset(chart, data) {
+  chart.data.datasets.push(data);
+  chart.update();
+}
+
+function removeDataset(chart) {
+  //chart.data.datasets.shift();
+  chart.data.datasets = [];
+  //chart.data.labels.pop();
+  //chart.data.datasets.forEach((dataset) => {
+  //  dataset.data.pop();
+  //});
+  chart.update();
+}
+
 function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -81,6 +246,25 @@ function updateCounter(name, value) {
             $(name).text(numberWithCommas(Math.round(this.counter)));
         }
     });
+}
+
+function colorize(opaque, hover, ctx) {
+    var v = ctx.dataset.data[ctx.dataIndex];
+    var c = v < -50 ? '#D60000'
+        : v < 0 ? '#F46300'
+        : v < 50 ? '#0358B6'
+        : '#44DE28';
+    var opacity = hover ? 1 - Math.abs(v / 150) - 0.2 : 1 - Math.abs(v / 150);
+    return opaque ? c : transparentize(c, opacity);
+}
+
+function hoverColorize(ctx) {
+    return colorize(false, true, ctx);
+}
+
+function transparentize(color, opacity) {
+	var alpha = opacity === undefined ? 0.5 : 1 - opacity;
+	return Color(color).alpha(alpha).rgbString();
 }
 </script>
 

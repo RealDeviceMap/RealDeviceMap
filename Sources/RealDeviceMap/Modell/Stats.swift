@@ -471,4 +471,102 @@ class Stats: JSONConvertibleObject {
         
     }
     
+    public static func getCommDayStats(mysql: MySQL?=nil, pokemonId: UInt16, start: String, end: String) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT
+          COUNT(id) AS total,
+          SUM(iv = 100) AS iv100,
+          SUM(iv = 0) AS iv0,
+          SUM(iv > 0) AS with_iv,
+          SUM(iv IS NULL) AS without_iv,
+          SUM(iv > 90 AND iv < 100) AS iv90,
+          SUM(iv >= 1 AND iv < 50) AS iv_1_49,
+          SUM(iv >= 50 AND iv < 80) AS iv_50_79,
+          SUM(iv >= 80 AND iv < 90) AS iv_80_89,
+          SUM(iv >= 90 AND iv < 100) AS iv_90_99,
+          SUM(gender = 1) AS male,
+          SUM(gender = 2) AS female,
+          SUM(gender = 3) AS genderless,
+          SUM(level >= 1 AND level <= 9) AS level_1_9,
+          SUM(level >= 10 AND level <= 19) AS level_10_19,
+          SUM(level >= 20 AND level <= 29) AS level_20_29,
+          SUM(level >= 30 AND level <= 35) AS level_30_35
+        FROM
+          pokemon
+        WHERE
+          pokemon_id = ?
+          AND first_seen_timestamp >= ?
+          AND first_seen_timestamp <= ?
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        mysqlStmt.bindParam(pokemonId)
+        mysqlStmt.bindParam(start)
+        mysqlStmt.bindParam(end)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let total = result[0] as! Int64
+            let iv100 = Int64(result[1] as! String) ?? 0
+            let iv0 = Int64(result[2] as! String) ?? 0
+            let withIV = Int64(result[3] as! String) ?? 0
+            let withoutIV = Int64(result[4] as! String) ?? 0
+            let iv90 = Int64(result[5] as! String) ?? 0
+            
+            let iv_1_49 = Int64(result[6] as! String) ?? 0
+            let iv_50_79 = Int64(result[7] as! String) ?? 0
+            let iv_80_89 = Int64(result[8] as! String) ?? 0
+            let iv_90_99 = Int64(result[9] as! String) ?? 0
+            
+            let male = Int64(result[10] as! String) ?? 0
+            let female = Int64(result[11] as! String) ?? 0
+            let genderless = Int64(result[12] as! String) ?? 0
+            
+            let level_1_9 = Int64(result[13] as! String) ?? 0
+            let level_10_19 = Int64(result[14] as! String) ?? 0
+            let level_20_29 = Int64(result[15] as! String) ?? 0
+            let level_30_35 = Int64(result[16] as! String) ?? 0
+            
+            stats.append(total)
+            stats.append(iv100)
+            stats.append(iv0)
+            stats.append(withIV)
+            stats.append(withoutIV)
+            stats.append(iv90)
+            
+            stats.append(iv_1_49)
+            stats.append(iv_50_79)
+            stats.append(iv_80_89)
+            stats.append(iv_90_99)
+            
+            stats.append(male)
+            stats.append(female)
+            stats.append(genderless)
+            
+            stats.append(level_1_9)
+            stats.append(level_10_19)
+            stats.append(level_20_29)
+            stats.append(level_30_35)
+            
+        }
+        
+        return stats
+        
+    }
+    
 }
