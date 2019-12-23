@@ -1,0 +1,407 @@
+{{> header}}
+
+<!--TODO: Use ajax to get stats-->
+
+<style>
+a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
+/* Neutral */
+a.neutral i,.neutral h4.list-group-item-heading { color:#dddddd; }
+a.neutral:hover { background-color:#dddddd; }
+a.neutral:hover * { color:#FFF; }
+/* Valor */
+a.valor i,.valor h4.list-group-item-heading { color:#dd4b39; }
+a.valor:hover { background-color:#dd4b39; }
+a.valor:hover * { color:#FFF; }
+/* Mystic */
+a.mystic i,.mystic h4.list-group-item-heading { color:#3b5998; }
+a.mystic:hover { background-color:#3b5998; }
+a.mystic:hover * { color:#FFF; }
+/* Instinct */
+a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
+a.instinct:hover { background-color:#FFF444; }
+a.instinct:hover * { color:black; }
+</style>
+
+<h2 class="page-header text-center">{{title}}"s {{title_stats}}</h2>
+<ul class="nav nav-pills mb-3 justify-content-center" role="tablist">
+  <li class="nav-item"><a class="nav-link active" id="overview-tab" role="tab" aria-controls="overview" aria-selected="true" data-toggle="pill" href="#overview">Overview</a></li>
+  <li class="nav-item"><a class="nav-link" id="pokemon-tab" role="tab" aria-controls="pokemon" aria-selected="false" data-toggle="pill" href="#pokemon">Pokemon</a></li>
+  <li class="nav-item"><a class="nav-link" id="raids-tab" role="tab" aria-controls="raids" aria-selected="false" data-toggle="pill" href="#raids">Raids</a></li>
+  <li class="nav-item"><a class="nav-link" id="quests-tab" role="tab" aria-controls="quests" aria-selected="false" data-toggle="pill" href="#quests">Quests</a></li>
+  <li class="nav-item"><a class="nav-link" id="invasions-tab" role="tab" aria-controls="invasions" aria-selected="false" data-toggle="pill" href="#invasions">Invasions</a></li>
+  <li class="nav-item"><a class="nav-link" id="commday-tab" role="tab" aria-controls="commday" aria-selected="false" data-toggle="pill" href="#commday">Comm. Day</a></li>
+</ul>
+
+<div class="tab-content container">
+  <!-- Start Overview Tab -->
+  <div id="overview" class="tab-pane fade show active" role="tabpanel" aria-labelledby="overview-tab">
+
+<h2 class="page-header text-center">Overview</h2>
+<div class="card text-center p-1 m-3">
+  <div class="card-header bg-dark text-light"><b>Overview</b></div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading pokemon-count">{{pokemon_active}}</h4>
+              <p class="list-group-item-text">Active Pokemon</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading gym-count">{{gyms_total}}</h4>
+              <p class="list-group-item-text">Total Gyms</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/item/1402.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading raids-count">{{gyms_raids}}</h4>
+              <p class="list-group-item-text">Active Raids</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/pokestop/0.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading pokestop-count">{{pokestops_total}}</h4>
+              <p class="list-group-item-text">Pokestops</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card text-center p-1 m-3">
+  <div class="card-header bg-dark text-light"><b>Pokemon</b></div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading total-pokemon-count">{{pokemon_total}}</h4>
+              <p class="list-group-item-text">Total Pokemon</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading pokemon-count">{{pokemon_active}}</h4>
+              <p class="list-group-item-text">Active Pokemon</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading total-iv-count">{{pokemon_iv_total}}</h4>
+              <p class="list-group-item-text">Total IVs</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item">
+              <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading active-iv-count">{{pokemon_iv_active}}</h4>
+              <p class="list-group-item-text">Active with IVs</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card text-center p-1 m-3">
+  <div class="card-header bg-dark text-light"><b>Teams</b></div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item neutral">
+              <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading neutral-gyms-count">{{gyms_neutral}}</h4>
+              <p class="list-group-item-text">Neutral Gyms</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item valor">
+              <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading valor-gyms-count">{{gyms_valor}}</h4>
+              <p class="list-group-item-text">Valor Gyms</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item mystic">
+              <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading mystic-gyms-count">{{gyms_mystic}}</h4>
+              <p class="list-group-item-text">Mystic Gyms</p>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="list-group">
+            <a class="list-group-item instinct">
+              <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading instinct-gyms-count">{{gyms_instinct}}</h4>
+              <p class="list-group-item-text">Instinct Gyms</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card text-center p-1 m-3">
+  <div class="card-header bg-dark text-light"><b>Pokestops</b></div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/pokestop/i0.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading invasion-count">{{pokestops_invasions}}</h4>
+            <p class="list-group-item-text" data-i18n="dashboard_pokestops_invasions">Invasions</p>
+          </a>
+        </div>
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/pokestop/1.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading lured-pokestop-count">{{pokestops_lures_normal}}</h4>
+            <p class="list-group-item-text">Normal Lures</p>
+          </a>
+        </div>
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/pokestop/2.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading lured-glacial-pokestop-count">{{pokestops_lures_glacial}}</h4>
+            <p class="list-group-item-text">Glacial Lures</p>
+          </a>
+        </div>
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/pokestop/3.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading lured-mossy-pokestop-count">{{pokestops_lures_mossy}}</h4>
+            <p class="list-group-item-text">Mossy Lures</p>
+          </a>
+        </div>
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/pokestop/4.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading lured-magnetic-pokestop-count">{{pokestops_lures_magnetic}}</h4>
+            <p class="list-group-item-text">Magnetic Lures</p>
+          </a>
+        </div>
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/item/0.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading quest-pokestop-count">{{pokestops_quests}}</h4>
+            <p class="list-group-item-text">Field Research</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card text-center p-1 m-3">
+  <div class="card-header bg-dark text-light"><b>Spawnpoint Timers</b></div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading spawnpoint-count">{{spawnpoints_total}}</h4>
+            <p class="list-group-item-text">Total</p>
+          </a>
+        </div>
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/spawnpoint/1.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading found-spawnpoint-count">{{spawnpoints_found}}</h4>
+            <p class="list-group-item-text">Found</p>
+          </a>
+        </div>
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading missing-spawnpoint-count">{{spawnpoints_missing}}</h4>
+            <p class="list-group-item-text">Missing</p>
+          </a>
+        </div>
+        <!--
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/images/percentage.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading percentage-spawnpoint-count">{{spawnpoints_percent}}%</h4>
+            <p class="list-group-item-text">Percentage</p>
+          </a>
+        </div>
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/images/30min.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading timer-30-min-count">{{spawnpoints_min30}}%</h4>
+            <p class="list-group-item-text">30 min timers</p>
+          </a>
+        </div>
+        <div class="col-lg-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/images/60min.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading timer-60-min-count">{{spawnpoints_min60}}%</h4>
+            <p class="list-group-item-text">60 min timers</p>
+          </a>
+        </div>
+        -->
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+  <!-- End Overview Tab -->
+
+  <!-- Start Pokemon Tab -->
+  <div id="pokemon" class="tab-pane fade" role="tabpanel" aria-labelledby="pokemon-tab">
+    <h2 class="page-header text-center">Pokemon</h2>
+    <div class="row justify-content-center">
+    {{#pokemon}}
+    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
+        <p class="card-text text-nowrap">
+          Seen:
+          <span id="pkmn-seen-{{id}}">{{count}}</span><br>
+          Shiny:
+          <span id="pkmn-shiny-{{id}}">{{shiny}}</span>
+        </p>
+      </div>
+    </div>
+    {{/pokemon}}
+    </div>
+  </div>
+  <!-- End Pokemon Tab -->
+
+  <!-- Start Raids Tab -->
+  <div id="raids" class="tab-pane fade" role="tabpanel" aria-labelledby="raids-tab">
+    <h2 class="page-header text-center">Eggs</h2>
+    <div class="row justify-content-center">
+    {{#eggs}}
+    <div id="raid-level-{{level}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/egg/{{level}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>Level {{level}}</b></span>
+        <p class="card-text text-nowrap">
+          Total:
+          <span id="raid-egg-count-{{level}}">{{count}}</span>
+        </p>
+      </div>
+    </div>
+    {{/eggs}}
+    </div>
+    <br>
+    <h2 class="page-header text-center">Raids</h2>
+    <div class="row justify-content-center">
+    {{#raids}}
+    <div id="raid-pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>#{{id}}</b></span>
+        <p class="card-text text-nowrap">
+          Total:
+          <span id="raid-pkmn-count-{{id}}">{{count}}</span>
+        </p>
+      </div>
+    </div>
+    {{/raids}}
+    </div>
+  </div>
+  <!-- End Raids Tab -->
+
+  <!-- Start Quests Tab -->
+  <div id="quests" class="tab-pane fade" role="tabpanel" aria-labelledby="quests-tab">
+    <h2 class="page-header text-center">Quests Item Rewards</h2>
+    <div class="row justify-content-center">
+    {{#quests_items}}
+    <div id="item-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/item/{{type}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>{{type}}</b></span>
+        <p class="card-text text-nowrap">
+          Total:
+          <span id="reward-type-{{type}}">{{count}}</span>
+        </p>
+      </div>
+    </div>
+    {{/quests_items}}
+    </div>
+    <br>
+    <h2 class="page-header text-center">Quests Pokemon Rewards</h2>
+    <div class="row justify-content-center">
+    {{#quests_pokemon}}
+    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>{{id}}</b></span>
+        <p class="card-text text-nowrap">
+          Total:
+          <span id="reward-pkmn-{{id}}">{{count}}</span>
+        </p>
+      </div>
+    </div>
+    {{/quests_pokemon}}
+    </div>
+  </div>
+  <!-- End Quests Tab -->
+
+  <!-- Start Invasions Tab -->
+  <div id="invasions" class="tab-pane fade" role="tabpanel" aria-labelledby="invasions-tab">
+    <h2 class="page-header text-center">Invasions</h2>
+    <div class="row justify-content-center">
+    {{#invasions}}
+    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/grunt_type/{{type}}.png"" width="48" height="48">
+      <div class="card-body">
+        <span class="text-nowrap"><b>{{name}}</b></span>
+        <p class="card-text text-nowrap">
+          Total:
+          <span id="grunt-type-{{type}}">{{count}}</span>
+        </p>
+      </div>
+    </div>
+    {{/invasions}}
+    </div>
+  </div>
+  <!-- End Invasions Tab -->
+
+  <!-- Start Community Day Tab -->
+  <div id="commday" class="tab-pane fade" role="tabpanel" aria-labelledby="commday-tab">
+    <h2 class="page-header text-center">Community Day</h2>
+      <p></p>
+  </div>
+  <!-- End Community Day Tab -->
+</div>
+
+{{> footer}}

@@ -17,6 +17,7 @@ class WebServer {
         case home = "index.mustache"
         case homeJs = "index.js.mustache"
         case homeCss = "index.css.mustache"
+        case stats = "stats.mustache"
         case setup = "setup.mustache"
         case login = "login.mustache"
         case oauthDiscord = "oauth_discord.mustache"
