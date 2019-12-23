@@ -133,7 +133,7 @@ class WebReqeustHandler {
         }
 
         if perms.contains(.viewStats) {
-            //data["show_stats"] = true
+            data["show_stats"] = true
             data["stats_url"] = WebReqeustHandler.statsUrl
         }
 
@@ -225,6 +225,7 @@ class WebReqeustHandler {
         case .stats:
             if perms.contains(.viewStats) {
                 data["page_is_stats"] = true
+                data["show_stats"] = true
                 data["title"] = title
                 data["page"] = localizer.get(value: "title_stats")
                 
