@@ -24,35 +24,35 @@ class Stats: JSONConvertibleObject {
         let invasionStats = try? Stats.getInvasionStats()
         let spawnpointStats = try? Stats.getSpawnpointStats()
         return [
-            "pokemon_total": (pokemonStats?[0] ?? 0).withCommas(),
-            "pokemon_active": (pokemonStats?[1] ?? 0).withCommas(),
-            "pokemon_iv_total": (pokemonStats?[2] ?? 0).withCommas(),
-            "pokemon_iv_active": (pokemonStats?[3] ?? 0).withCommas(),
-            "pokestops_total": (pokestopStats?[0] ?? 0).withCommas(),
-            "pokestops_lures_normal": (pokestopStats?[1] ?? 0).withCommas(),
-            "pokestops_lures_glacial": (pokestopStats?[2] ?? 0).withCommas(),
-            "pokestops_lures_mossy": (pokestopStats?[3] ?? 0).withCommas(),
-            "pokestops_lures_magnetic": (pokestopStats?[4] ?? 0).withCommas(),
-            "pokestops_invasions": (pokestopStats?[5] ?? 0).withCommas(),
-            "pokestops_quests": (pokestopStats?[6] ?? 0).withCommas(),
-            "gyms_total": (gymStats?[0] ?? 0).withCommas(),
-            "gyms_neutral": (gymStats?[1] ?? 0).withCommas(),
-            "gyms_mystic": (gymStats?[2] ?? 0).withCommas(),
-            "gyms_valor": (gymStats?[3] ?? 0).withCommas(),
-            "gyms_instinct": (gymStats?[4] ?? 0).withCommas(),
-            "gyms_raids": (gymStats?[5] ?? 0).withCommas(),
+            "pokemon_total": (pokemonStats?[0] ?? 0),
+            "pokemon_active": (pokemonStats?[1] ?? 0),
+            "pokemon_iv_total": (pokemonStats?[2] ?? 0),
+            "pokemon_iv_active": (pokemonStats?[3] ?? 0),
+            "pokestops_total": (pokestopStats?[0] ?? 0),
+            "pokestops_lures_normal": (pokestopStats?[1] ?? 0),
+            "pokestops_lures_glacial": (pokestopStats?[2] ?? 0),
+            "pokestops_lures_mossy": (pokestopStats?[3] ?? 0),
+            "pokestops_lures_magnetic": (pokestopStats?[4] ?? 0),
+            "pokestops_invasions": (pokestopStats?[5] ?? 0),
+            "pokestops_quests": (pokestopStats?[6] ?? 0),
+            "gyms_total": (gymStats?[0] ?? 0),
+            "gyms_neutral": (gymStats?[1] ?? 0),
+            "gyms_mystic": (gymStats?[2] ?? 0),
+            "gyms_valor": (gymStats?[3] ?? 0),
+            "gyms_instinct": (gymStats?[4] ?? 0),
+            "gyms_raids": (gymStats?[5] ?? 0),
             "pokemon_stats": pokemonIVStats as Any,
             "raid_stats": raidStats as Any,
             "egg_stats": eggStats as Any,
             "quest_item_stats": questItemStats as Any,
             "quest_pokemon_stats": questPokemonStats as Any,
             "invasion_stats": invasionStats as Any,
-            "spawnpoints_total": (spawnpointStats?[0] ?? 0).withCommas(),
-            "spawnpoints_found": (spawnpointStats?[1] ?? 0).withCommas(),
-            "spawnpoints_missing": (spawnpointStats?[2] ?? 0).withCommas(),
+            "spawnpoints_total": (spawnpointStats?[0] ?? 0),
+            "spawnpoints_found": (spawnpointStats?[1] ?? 0),
+            "spawnpoints_missing": (spawnpointStats?[2] ?? 0),
             "spawnpoints_percent": 0,
-            "spawnpoints_min30": (spawnpointStats?[3] ?? 0).withCommas(),
-            "spawnpoints_min60": (spawnpointStats?[4] ?? 0).withCommas()
+            "spawnpoints_min30": (spawnpointStats?[3] ?? 0),
+            "spawnpoints_min60": (spawnpointStats?[4] ?? 0)
         ]
     }
     
@@ -88,8 +88,9 @@ class Stats: JSONConvertibleObject {
             let pokemonId = result[1] as! UInt16
             let shiny = (result[2] as! Int32)
             let count = (result[3] as! Int32)
+            let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "name": pokemonId, "shiny": shiny.withCommas(), "count": count.withCommas()])
+            stats.append(["id": pokemonId, "name": name, "shiny": shiny.withCommas(), "count": count.withCommas()])
             
         }
         return stats
@@ -167,8 +168,9 @@ class Stats: JSONConvertibleObject {
             
             let pokemonId = result[0] as! UInt16
             let count = result[1] as! Int64
+            let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "count": count.withCommas()])
+            stats.append(["id": pokemonId, "name": name, "count": count.withCommas()])
             
         }
         return stats
@@ -291,8 +293,9 @@ class Stats: JSONConvertibleObject {
             
             let questType = result[0] as! UInt16
             let count = result[1] as! Int64
+            let name = Localizer.global.get(value: "item_\(questType)")
             
-            stats.append(["type": questType, "count": count.withCommas()])
+            stats.append(["type": questType, "name": name, "count": count.withCommas()])
             
         }
         return stats
@@ -327,8 +330,9 @@ class Stats: JSONConvertibleObject {
             
             let pokemonId = result[0] as! UInt16
             let count = result[1] as! Int64
+            let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "count": count.withCommas()])
+            stats.append(["id": pokemonId, "name": name, "count": count.withCommas()])
             
         }
         return stats
@@ -363,8 +367,9 @@ class Stats: JSONConvertibleObject {
             
             let gruntType = result[0] as! UInt16
             let count = result[1] as! Int64
+            let name = Localizer.global.get(value: "grunt_\(gruntType)")
             
-            stats.append(["type": gruntType, "name": Localizer.global.get(value: "grunt_\(gruntType)"), "count": count.withCommas()])
+            stats.append(["type": gruntType, "name": name, "count": count.withCommas()])
             
         }
         return stats

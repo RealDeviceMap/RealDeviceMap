@@ -223,48 +223,30 @@ class WebReqeustHandler {
                 data[loc] = localizer.get(value: loc)
             }
         case .stats:
-            data["page_is_stats"] = true
-            data["title"] = title
-            data["page"] = localizer.get(value: "title_stats")
+            if perms.contains(.viewStats) {
+                data["page_is_stats"] = true
+                data["title"] = title
+                data["page"] = localizer.get(value: "title_stats")
+                
+                data["pokemon"] = try? Stats.getPokemonIVStats()
+                data["raids"] = try? Stats.getRaidStats()
+                data["eggs"] = try? Stats.getRaidEggStats()
+                data["quests_items"] = try? Stats.getQuestItemStats()
+                data["quests_pokemon"] = try? Stats.getQuestPokemonStats()
+                data["invasions"] = try? Stats.getInvasionStats()
+                var ids = [[String: Any]]()
+                for id in 1...WebReqeustHandler.maxPokemonId {
+                    let name = Localizer.global.get(value: "poke_\(id)")
+                    ids.append(["id": id, "name": name])
+                }
+                data["pokemon_ids"] = ids
             
-            var stats = Stats().getJSONValues()
-            data["pokemon_total"] = stats["pokemon_total"]
-            data["pokemon_active"] = stats["pokemon_active"]
-            data["pokemon_iv_total"] = stats["pokemon_iv_total"]
-            data["pokemon_iv_active"] = stats["pokemon_iv_active"]
-            data["pokestops_total"] = stats["pokestops_total"]
-            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
-            data["pokestops_lures_glacial"] = stats["pokestops_lures_glacial"]
-            data["pokestops_lures_mossy"] = stats["pokestops_lures_mossy"]
-            data["pokestops_lures_magnetic"] = stats["pokestops_lures_magnetic"]
-            data["pokestops_quests"] = stats["pokestops_quests"]
-            data["pokestops_invasions"] = stats["pokestops_invasions"]
-            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
-            data["gyms_total"] = stats["gyms_total"]
-            data["gyms_neutral"] = stats["gyms_neutral"]
-            data["gyms_mystic"] = stats["gyms_mystic"]
-            data["gyms_valor"] = stats["gyms_valor"]
-            data["gyms_instinct"] = stats["gyms_instinct"]
-            data["gyms_raids"] = stats["gyms_raids"]
-            data["pokemon"] = stats["pokemon_stats"]
-            data["raids"] = stats["raid_stats"]
-            data["eggs"] = stats["egg_stats"]
-            data["quests_items"] = stats["quest_item_stats"]
-            data["quests_pokemon"] = stats["quest_pokemon_stats"]
-            data["invasions"] = stats["invasion_stats"]
-            data["spawnpoints_total"] = stats["spawnpoints_total"]
-            data["spawnpoints_found"] = stats["spawnpoints_found"]
-            data["spawnpoints_missing"] = stats["spawnpoints_missing"]
-            data["spawnpoints_percent"] = stats["spawnpoints_percent"]
-            data["spawnpoints_min30"] = stats["spawnpoints_min30"]
-            data["spawnpoints_min60"] = stats["spawnpoints_min60"]
-            
-            // Localize
-            let statLoc = ["title_stats"]
-            for loc in statLoc {
-                data[loc] = localizer.get(value: loc)
+                // Localize
+                let statLoc = ["title_stats"]
+                for loc in statLoc {
+                    data[loc] = localizer.get(value: loc)
+                }
             }
-            
         case .confirmemail:
             data["page_is_profile"] = true
             data["page"] = localizer.get(value: "title_confirmmail")

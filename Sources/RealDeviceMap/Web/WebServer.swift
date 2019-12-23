@@ -61,6 +61,7 @@ class WebServer {
     
     public enum APIPage {
         case getData
+        case getStats
     }
     
     private init() {}

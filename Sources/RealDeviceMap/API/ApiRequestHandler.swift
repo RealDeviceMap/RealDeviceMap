@@ -22,6 +22,120 @@ class ApiRequestHandler {
         switch route {
         case .getData:
             handleGetData(request: request, response: response)
+        case .getStats:
+            handleGetStats(request: request, response: response)
+        }
+    }
+    
+    private static func handleGetStats(request: HTTPRequest, response: HTTPResponse) {
+        
+        //let formatted =  request.param(name: "formatted")?.toBool() ?? false
+        let dashboard = request.param(name: "dashboard")?.toBool() ?? false
+        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
+        let perms = tmp.perms
+        let username = tmp.username
+        
+        if username == nil || username == "", let authorization = request.header(.authorization) {
+            let base64String = authorization.replacingOccurrences(of: "Basic ", with: "")
+            if let data = Data(base64Encoded: base64String),  let string = String(data: data, encoding: .utf8) {
+                let split = string.components(separatedBy: ":")
+                if split.count == 2 {
+                    if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
+                        let user: User
+                        do {
+                            let host: String
+                            let ff = request.header(.xForwardedFor) ?? ""
+                            if ff.isEmpty {
+                                host = request.remoteAddress.host
+                            } else {
+                                host = ff
+                            }
+                            if usernameEmail.contains("@") {
+                                user = try User.login(email: usernameEmail, password: password, host: host)
+                            } else {
+                                user = try User.login(username: usernameEmail, password: password, host: host)
+                            }
+                        } catch {
+                            if error is DBController.DBError {
+                                response.respondWithError(status: .internalServerError)
+                                return
+                            } else {
+                                let registerError = error as! User.LoginError
+                                switch registerError.type {
+                                case .limited:
+                                    fallthrough
+                                case .usernamePasswordInvalid:
+                                    response.respondWithError(status: .unauthorized)
+                                    return
+                                case .undefined:
+                                    response.respondWithError(status: .internalServerError)
+                                    return
+                                }
+                            }
+                        }
+                        
+                        request.session?.userid = user.username
+                        if user.group != nil {
+                            request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
+                        }
+                        sessionDriver.save(session: request.session!)
+                        handleGetData(request: request, response: response)
+                        return
+                    }
+                }
+                
+            }
+        }
+        
+        let permViewMap = perms.contains(.viewMap)
+        let permViewStats = perms.contains(.viewStats)
+        
+        guard let mysql = DBController.global.mysql else {
+            response.respondWithError(status: .internalServerError)
+            return
+        }
+        
+        var data = [String: Any]()
+        if dashboard && permViewMap && permViewStats {
+            var stats = Stats().getJSONValues()
+            data["pokemon_total"] = stats["pokemon_total"]
+            data["pokemon_active"] = stats["pokemon_active"]
+            data["pokemon_iv_total"] = stats["pokemon_iv_total"]
+            data["pokemon_iv_active"] = stats["pokemon_iv_active"]
+            data["pokestops_total"] = stats["pokestops_total"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["pokestops_lures_glacial"] = stats["pokestops_lures_glacial"]
+            data["pokestops_lures_mossy"] = stats["pokestops_lures_mossy"]
+            data["pokestops_lures_magnetic"] = stats["pokestops_lures_magnetic"]
+            data["pokestops_quests"] = stats["pokestops_quests"]
+            data["pokestops_invasions"] = stats["pokestops_invasions"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["gyms_total"] = stats["gyms_total"]
+            data["gyms_neutral"] = stats["gyms_neutral"]
+            data["gyms_mystic"] = stats["gyms_mystic"]
+            data["gyms_valor"] = stats["gyms_valor"]
+            data["gyms_instinct"] = stats["gyms_instinct"]
+            data["gyms_raids"] = stats["gyms_raids"]
+            data["pokemon"] = stats["pokemon_stats"]
+            data["raids"] = stats["raid_stats"]
+            data["eggs"] = stats["egg_stats"]
+            data["quests_items"] = stats["quest_item_stats"]
+            data["quests_pokemon"] = stats["quest_pokemon_stats"]
+            data["invasions"] = stats["invasion_stats"]
+            data["spawnpoints_total"] = stats["spawnpoints_total"]
+            data["spawnpoints_found"] = stats["spawnpoints_found"]
+            data["spawnpoints_missing"] = stats["spawnpoints_missing"]
+            data["spawnpoints_percent"] = stats["spawnpoints_percent"]
+            data["spawnpoints_min30"] = stats["spawnpoints_min30"]
+            data["spawnpoints_min60"] = stats["spawnpoints_min60"]
+        }
+        data["timestamp"] = Int(Date().timeIntervalSince1970)
+        
+        do {
+            try response.respondWithData(data: data)
+        } catch {
+            response.respondWithError(status: .internalServerError)
+            return
         }
     }
     

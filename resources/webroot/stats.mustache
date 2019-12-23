@@ -1,7 +1,5 @@
 {{> header}}
 
-<!--TODO: Use ajax to get stats-->
-
 <style>
 a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
 /* Neutral */
@@ -21,6 +19,70 @@ a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
 a.instinct:hover { background-color:#FFF444; }
 a.instinct:hover * { color:black; }
 </style>
+
+<script>
+	$(document).ready(function() {
+        $("[data-toggle='datetimepicker']").flatpickr({
+            altInput: true,
+            altFormat: "F j, Y h\:00 K",
+            dateFormat: "U",//"Y-m-d h K",
+            enableTime: true
+        });
+
+        $("#filter-pokemon-comday").on('change', function() {
+            var start = $("#filter-date-start").val();
+            var end = $("#filter-date-end").val();
+            var pokemonId = this.value;
+            console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
+        });
+
+        $.get({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse result value.");
+                return;
+            }
+            updateCounter(".total-pokemon-count", result.data.pokemon_total);
+            updateCounter(".pokemon-count", result.data.pokemon_active);
+            updateCounter(".total-iv-count", result.data.pokemon_iv_total);
+            updateCounter(".active-iv-count", result.data.pokemon_iv_active);
+
+            updateCounter(".gyms-count", result.data.gyms_total);
+            updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
+            updateCounter(".mystic-gyms-count", result.data.gyms_mystic);
+            updateCounter(".valor-gyms-count", result.data.gyms_valor);
+            updateCounter(".instinct-gyms-count", result.data.gyms_instinct);
+            updateCounter(".raids-count", result.data.gyms_raids);
+
+            updateCounter(".pokestop-count", result.data.pokestops_total);
+            updateCounter(".lured-pokestop-count", result.data.pokestops_lures_normal);
+            updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
+            updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
+            updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
+            updateCounter(".invasions-count", result.data.pokestops_invasions);
+            updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
+
+            updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
+            updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
+            updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
+        }});
+    } );
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function updateCounter(name, value) {
+    $({ counter: 0 }).animate({ counter: value }, {
+        duration: 1500,
+        easing: 'swing', // can be anything
+        step: function() { // called on every step
+            // Update the element's text with rounded-up value:
+            $(name).text(numberWithCommas(Math.round(this.counter)));
+        }
+    });
+}
+</script>
 
 <h2 class="page-header text-center">{{title}}"s {{title_stats}}</h2>
 <ul class="nav nav-pills mb-3 justify-content-center" role="tablist">
@@ -46,7 +108,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading pokemon-count">{{pokemon_active}}</h4>
+              <h4 class="list-group-item-heading pokemon-count">0</h4>
               <p class="list-group-item-text">Active Pokemon</p>
             </a>
           </div>
@@ -55,7 +117,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading gym-count">{{gyms_total}}</h4>
+              <h4 class="list-group-item-heading gyms-count">0</h4>
               <p class="list-group-item-text">Total Gyms</p>
             </a>
           </div>
@@ -64,7 +126,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1402.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading raids-count">{{gyms_raids}}</h4>
+              <h4 class="list-group-item-heading raids-count">0</h4>
               <p class="list-group-item-text">Active Raids</p>
             </a>
           </div>
@@ -73,7 +135,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/pokestop/0.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading pokestop-count">{{pokestops_total}}</h4>
+              <h4 class="list-group-item-heading pokestop-count">0</h4>
               <p class="list-group-item-text">Pokestops</p>
             </a>
           </div>
@@ -91,7 +153,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading total-pokemon-count">{{pokemon_total}}</h4>
+              <h4 class="list-group-item-heading total-pokemon-count">0</h4>
               <p class="list-group-item-text">Total Pokemon</p>
             </a>
           </div>
@@ -100,7 +162,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading pokemon-count">{{pokemon_active}}</h4>
+              <h4 class="list-group-item-heading pokemon-count">0</h4>
               <p class="list-group-item-text">Active Pokemon</p>
             </a>
           </div>
@@ -109,7 +171,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading total-iv-count">{{pokemon_iv_total}}</h4>
+              <h4 class="list-group-item-heading total-iv-count">0</h4>
               <p class="list-group-item-text">Total IVs</p>
             </a>
           </div>
@@ -118,7 +180,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading active-iv-count">{{pokemon_iv_active}}</h4>
+              <h4 class="list-group-item-heading active-iv-count">0</h4>
               <p class="list-group-item-text">Active with IVs</p>
             </a>
           </div>
@@ -137,7 +199,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item neutral">
               <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading neutral-gyms-count">{{gyms_neutral}}</h4>
+              <h4 class="list-group-item-heading neutral-gyms-count">0</h4>
               <p class="list-group-item-text">Neutral Gyms</p>
             </a>
           </div>
@@ -146,7 +208,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item valor">
               <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading valor-gyms-count">{{gyms_valor}}</h4>
+              <h4 class="list-group-item-heading valor-gyms-count">0</h4>
               <p class="list-group-item-text">Valor Gyms</p>
             </a>
           </div>
@@ -155,7 +217,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item mystic">
               <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading mystic-gyms-count">{{gyms_mystic}}</h4>
+              <h4 class="list-group-item-heading mystic-gyms-count">0</h4>
               <p class="list-group-item-text">Mystic Gyms</p>
             </a>
           </div>
@@ -164,7 +226,7 @@ a.instinct:hover * { color:black; }
           <div class="list-group">
             <a class="list-group-item instinct">
               <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading instinct-gyms-count">{{gyms_instinct}}</h4>
+              <h4 class="list-group-item-heading instinct-gyms-count">0</h4>
               <p class="list-group-item-text">Instinct Gyms</p>
             </a>
           </div>
@@ -181,42 +243,42 @@ a.instinct:hover * { color:black; }
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/i0.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading invasion-count">{{pokestops_invasions}}</h4>
-            <p class="list-group-item-text" data-i18n="dashboard_pokestops_invasions">Invasions</p>
+            <h4 class="list-group-item-heading invasions-count">0</h4>
+            <p class="list-group-item-text">Invasions</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/1.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading lured-pokestop-count">{{pokestops_lures_normal}}</h4>
+            <h4 class="list-group-item-heading lured-pokestop-count">0</h4>
             <p class="list-group-item-text">Normal Lures</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/2.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading lured-glacial-pokestop-count">{{pokestops_lures_glacial}}</h4>
+            <h4 class="list-group-item-heading lured-glacial-pokestop-count">0</h4>
             <p class="list-group-item-text">Glacial Lures</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/3.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading lured-mossy-pokestop-count">{{pokestops_lures_mossy}}</h4>
+            <h4 class="list-group-item-heading lured-mossy-pokestop-count">0</h4>
             <p class="list-group-item-text">Mossy Lures</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/4.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading lured-magnetic-pokestop-count">{{pokestops_lures_magnetic}}</h4>
+            <h4 class="list-group-item-heading lured-magnetic-pokestop-count">0</h4>
             <p class="list-group-item-text">Magnetic Lures</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/item/0.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading quest-pokestop-count">{{pokestops_quests}}</h4>
+            <h4 class="list-group-item-heading quest-pokestop-count">0</h4>
             <p class="list-group-item-text">Field Research</p>
           </a>
         </div>
@@ -233,21 +295,21 @@ a.instinct:hover * { color:black; }
         <div class="col-lg-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading spawnpoint-count">{{spawnpoints_total}}</h4>
+            <h4 class="list-group-item-heading spawnpoint-count">0</h4>
             <p class="list-group-item-text">Total</p>
           </a>
         </div>
         <div class="col-lg-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/1.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading found-spawnpoint-count">{{spawnpoints_found}}</h4>
+            <h4 class="list-group-item-heading found-spawnpoint-count">0</h4>
             <p class="list-group-item-text">Found</p>
           </a>
         </div>
         <div class="col-lg-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading missing-spawnpoint-count">{{spawnpoints_missing}}</h4>
+            <h4 class="list-group-item-heading missing-spawnpoint-count">0</h4>
             <p class="list-group-item-text">Missing</p>
           </a>
         </div>
@@ -328,7 +390,7 @@ a.instinct:hover * { color:black; }
     <div id="raid-pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>#{{id}}</b></span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
         <p class="card-text text-nowrap">
           Total:
           <span id="raid-pkmn-count-{{id}}">{{count}}</span>
@@ -348,7 +410,7 @@ a.instinct:hover * { color:black; }
     <div id="item-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/item/{{type}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{type}}</b></span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{type}}</span>
         <p class="card-text text-nowrap">
           Total:
           <span id="reward-type-{{type}}">{{count}}</span>
@@ -364,7 +426,7 @@ a.instinct:hover * { color:black; }
     <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{id}}</b></span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
         <p class="card-text text-nowrap">
           Total:
           <span id="reward-pkmn-{{id}}">{{count}}</span>
@@ -399,7 +461,87 @@ a.instinct:hover * { color:black; }
   <!-- Start Community Day Tab -->
   <div id="commday" class="tab-pane fade" role="tabpanel" aria-labelledby="commday-tab">
     <h2 class="page-header text-center">Community Day</h2>
-      <p></p>
+    <div class="row">
+      <div class="input-group mb-4">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-date">Start Date</label>
+        </div>
+        <input id="filter-date-start" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-date">End Date</label>
+        </div>
+        <input id="filter-date-end" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-pokemon-comday">Pokemon</label>
+        </div>
+        <select id="filter-pokemon-comday" class="custom-select">
+          <option disabled selected>Select</option>
+            {{#pokemon_ids}}
+                <option value="{{id}}">{{name}}</option>
+            {{/pokemon_ids}}
+        </select>
+      </div>
+    </div>
+
+    <div id="comday-stats" class="container" style="background: white">
+    <div class="row m-2">
+      <div class="col-md-5">
+        <div class="row p-2">
+          <div class="col" style="background: white">
+            <h4 id="pkmn-title">Scans</h4>
+            <div class="row p-2">
+              <div class="col-lg-6">
+                <div class="wrapper"><canvas id="scanChart"></canvas></div>
+              </div>
+              <div class="col-lg-6 justify-content-right">
+                <h5 id="total-seen">0 seen</h5>
+                <h6 id="total-scanned">0 scanned</h6>
+              </div>
+            </div>
+            <div class="row p-2">
+              <div class="col" style="background: white">
+                <span><b>100% IV:</b><span id="iv100">0</span></span>
+                <span><b>90% IV:</b><span id="iv90">0</span></span>
+                <span><b>0% IV:</b><span id="iv0">0</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row p-2">
+          <div class="col" style="background: white">
+            <div class="wrapper"><canvas id="levelChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7 p-2" style="background: white">
+        <div class="wrapper"><canvas id="ivChart"></canvas></div>
+      </div>
+    </div>
+    <div class="row p-2 m-2">
+      <div class="col-md-4" style="background: white">
+        <h3>Sex</h3>
+        <span><span id="total-male">0</span> male spawns</span><br>
+        <span><span id="total-female">0</span> female spawns</span>
+      </div>
+      <div class="col-md-8" style="background: white">
+        <div class="row text-center">
+          <div class="col-4">
+            <img id="evo1" src="#" height=72 width=72/><br>
+            <b id="evo1-text"></b>
+          </div>
+          <div class="col-4">
+            <img id="evo2" src="#" height=72 width=72/><br>
+            <b id="evo2-text"></b>
+          </div>
+          <div class="col-4 justify-content-end">
+            <img id="evo3" src="#" height=72 width=72/><br>
+            <b id="evo3-text"></b>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
   </div>
   <!-- End Community Day Tab -->
 </div>
