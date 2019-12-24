@@ -1,7 +1,9 @@
 {{> header}}
 
 <!--TODO: Better stat graphs/charts-->
-<!--TODO: Fix date picker conflict-->
+<!--TODO: Spawnpoint icons-->
+<!--TODO: IV icons-->
+<!--TODO: Move js and css to separate files-->
 
 <style>
 a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
@@ -336,7 +338,7 @@ function filterQuests() {
         $("#quest-item-stats-table").html(html);
         result.data.quest_item_stats.forEach(function(stat) {
             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/item/" + stat.item_id + ".png' width='48' height='48'>";
+            html +=   "<img src='./static/img/item/" + (stat.item_id == 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
             html +=   "<div class='card-body'>";
             html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.item_id + "</span>";
             html +=     "<p class='card-text text-nowrap'>";
@@ -350,6 +352,7 @@ function filterQuests() {
         html = "";
         $("#quest-pokemon-stats-table").html(html);
         result.data.quest_pokemon_stats.forEach(function(stat) {
+            if (stat.pokemon_id > 0) {
             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
             html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
             html +=   "<div class='card-body'>";
@@ -359,6 +362,7 @@ function filterQuests() {
             html +=     "</p>";
             html +=   "</div>";
             html += "</div>";
+            }
         });
         $("#quest-pokemon-stats-table").html(html);
     }});
