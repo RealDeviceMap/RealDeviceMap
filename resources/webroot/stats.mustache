@@ -680,7 +680,7 @@ function transparentize(color, opacity) {
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-pokemon-date">Date</label>
+          <label class="input-group-text" for="filter-pokemon-date">{{stats_date}}</label>
         </div>
         <input id="filter-pokemon-date" type="text" class="form-control" data-toggle="datepicker">
       </div>
@@ -719,13 +719,13 @@ function transparentize(color, opacity) {
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-raids-date">Date</label>
+          <label class="input-group-text" for="filter-raids-date">{{stats_date}}</label>
         </div>
         <input id="filter-raids-date" type="text" class="form-control" data-toggle="datepicker">
       </div>
     </div>
 
-    <h3 class="page-header text-center">Eggs</h3>
+    <h3 class="page-header text-center">{{stats_eggs}}</h3>
     <div id="egg-stats-table" class="row justify-content-center">
     {{#eggs}}
     <div class="col-sm-2 col-sd-offset-1 text-center">
@@ -741,7 +741,7 @@ function transparentize(color, opacity) {
     {{/eggs}}
     </div>
     <br>
-    <h3 class="page-header text-center">Raids</h3>
+    <h3 class="page-header text-center">{{stats_raids}}</h3>
     <div id="raid-stats-table" class="row justify-content-center">
     {{#raids}}
     <div class="col-sm-2 col-sd-offset-1 text-center">
@@ -764,13 +764,13 @@ function transparentize(color, opacity) {
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-quests-date">Date</label>
+          <label class="input-group-text" for="filter-quests-date">{{stats_date}}</label>
         </div>
         <input id="filter-quests-date" type="text" class="form-control" data-toggle="datepicker">
       </div>
     </div>
 
-    <h3 class="page-header text-center">Quests Item Rewards</h3>
+    <h3 class="page-header text-center">{{stats_quests_item_rewards}}</h3>
     <div id="quest-item-stats-table" class="row justify-content-center">
     {{#quests_items}}
     <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
@@ -786,7 +786,7 @@ function transparentize(color, opacity) {
     {{/quests_items}}
     </div>
     <br>
-    <h3 class="page-header text-center">Quests Pokemon Rewards</h3>
+    <h3 class="page-header text-center">{{stats_quests_pokemon_rewards}}</h3>
     <div id="quest-pokemon-stats-table" class="row justify-content-center">
     {{#quests_pokemon}}
     <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
@@ -806,7 +806,7 @@ function transparentize(color, opacity) {
 
   <!-- Start Invasions Tab -->
   <div id="invasions" class="tab-pane fade" role="tabpanel" aria-labelledby="invasions-tab">
-    <h3 class="page-header text-center">Invasions</h3>
+    <h3 class="page-header text-center">{{stats_invasions}}</h3>
     <div class="row justify-content-center">
     {{#invasions}}
     <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
