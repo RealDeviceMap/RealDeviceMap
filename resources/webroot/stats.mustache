@@ -25,27 +25,15 @@ a.instinct:hover * { color:black; }
 
 <script>
 $(document).ready(function() {
-    //var $j = jQuery.noConflict(); //TODO: Fix
     $("[data-toggle='datetimepicker']").flatpickr({
         altInput: true,
         altFormat: "F j, Y h\:00 K",
         dateFormat: "U",//"Y-m-d h K",
         enableTime: true
     });
-    /*
-    $("[data-toggle='datepicker']").datepicker({
-        autoHide: true,
-        yearFirst: true,
-        format: "yyyy-mm-dd",
-        zIndex: 2048,
-    });
-    */
     $("#filter-pokemon-date").change(filterPokemon);
     $("#filter-raids-date").change(filterRaids);
     $("#filter-quests-date").change(filterQuests);
-    //$("#filter-pokemon-date").datepicker("setDate", new Date());
-    //$("#filter-raids-date").datepicker("setDate", new Date());
-    //$("#filter-quests-date").datepicker("setDate", new Date());
 
     var pieOptions = {
         responsive: true,
@@ -254,10 +242,19 @@ function getCommDayStats(pokemonId, start, end) {
     }});
 }
 
+function unixToDate(unixTimestamp) {
+    var date = new Date(unixTimestamp * 1000);
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    var day = date.getDate();
+    var formatted = year + "-" + month + "-" + day;
+    return formatted;
+}
+
 function filterPokemon() {
     var date = $("#filter-pokemon-date").val();
-    console.log("Date:", date);
-    $.ajax({ url: "/api/get_stats?pokemon=true&date=" + (date || "2019-12-20"), success: function(result) {
+    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    $.ajax({ url: "/api/get_stats?pokemon=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
         console.log("Result:", result);
         if (result == null) {
             console.log("Failed to parse pokemon stats.");
@@ -283,8 +280,9 @@ function filterPokemon() {
 
 function filterRaids() {
     var date = $("#filter-raids-date").val();
-    console.log("Date:", date);
-    $.ajax({ url: "/api/get_stats?raids=true&date=" + (date || "2019-12-20"), success: function(result) {
+    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    console.log("Date:", formattedDate);
+    $.ajax({ url: "/api/get_stats?raids=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
         console.log("Result:", result);
         if (result == null) {
             console.log("Failed to parse raid stats.");
@@ -325,8 +323,9 @@ function filterRaids() {
 
 function filterQuests() {
     var date = $("#filter-quests-date").val();
-    console.log("Date:", date);
-    $.ajax({ url: "/api/get_stats?quests=true&date=" + (date || "2019-12-20"), success: function(result) {
+    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    console.log("Date:", formattedDate);
+    $.ajax({ url: "/api/get_stats?quests=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
         console.log("Result:", result);
         if (result == null) {
             console.log("Failed to parse quest stats.");
@@ -429,7 +428,7 @@ function transparentize(color, opacity) {
   <!-- Start Overview Tab -->
   <div id="overview" class="tab-pane fade show active" role="tabpanel" aria-labelledby="overview-tab">
 
-<h2 class="page-header text-center">{{stats_overview}}</h2>
+<h3 class="page-header text-center">{{stats_overview}}</h3>
 <div class="card text-center p-1 m-3">
   <div class="card-header bg-dark text-light"><b>{{stats_overview}}</b></div>
   <div class="card-body">
@@ -682,7 +681,7 @@ function transparentize(color, opacity) {
         <div class="input-group-prepend">
           <label class="input-group-text" for="filter-pokemon-date">{{stats_date}}</label>
         </div>
-        <input id="filter-pokemon-date" type="text" class="form-control" data-toggle="datepicker">
+        <input id="filter-pokemon-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
       <!--
       <div class="input-group mb-3">
@@ -721,7 +720,7 @@ function transparentize(color, opacity) {
         <div class="input-group-prepend">
           <label class="input-group-text" for="filter-raids-date">{{stats_date}}</label>
         </div>
-        <input id="filter-raids-date" type="text" class="form-control" data-toggle="datepicker">
+                <input id="filter-raids-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
     </div>
 
@@ -766,7 +765,7 @@ function transparentize(color, opacity) {
         <div class="input-group-prepend">
           <label class="input-group-text" for="filter-quests-date">{{stats_date}}</label>
         </div>
-        <input id="filter-quests-date" type="text" class="form-control" data-toggle="datepicker">
+        <input id="filter-quests-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
     </div>
 
