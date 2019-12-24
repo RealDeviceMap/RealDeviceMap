@@ -64,13 +64,14 @@ class Stats: JSONConvertibleObject {
         }
         
         let sql = """
-        SELECT iv.date, iv.pokemon_id, shiny.count as shiny, iv.count
-        FROM pokemon_iv_stats iv
+        SELECT x.date, x.pokemon_id, shiny.count as shiny, iv.count
+        FROM pokemon_stats x
           LEFT JOIN pokemon_shiny_stats shiny
-          ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
+          ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
+          LEFT JOIN pokemon_iv_stats iv
+          ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
         WHERE
-          iv.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d") AND
-          shiny.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+          x.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -87,8 +88,8 @@ class Stats: JSONConvertibleObject {
             
             let date = result[0] as! String
             let pokemonId = result[1] as! UInt16
-            let shiny = result[2] as! Int32
-            let count = result[3] as! Int32
+            let shiny = result[2] as? Int32 ?? 0
+            let count = result[3] as? Int32 ?? 0
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
             stats.append([
@@ -315,7 +316,7 @@ class Stats: JSONConvertibleObject {
             let itemId = result[2] as! UInt16
             let count = result[3] as! Int32
             let name = itemId == 0
-                ? "Stardust" //TODO: Localize Stardust
+                ? Localizer.global.get(value: "quest_reward_\(rewardType)")
                 : Localizer.global.get(value: "item_\(itemId)")
             
             stats.append([

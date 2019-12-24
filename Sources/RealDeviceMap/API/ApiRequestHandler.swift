@@ -1436,14 +1436,14 @@ class ApiRequestHandler {
             data["spawnpoints_min60"] = stats["spawnpoints_min60"]
         } else if commday && permViewMap && permViewStats {
             if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
-                let stats = try? Stats.getCommDayStats(pokemonId: pokemonId, start: start, end: end)
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
                 let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
                 let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
                 let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
                 data["pokemon_id"] = pokemonId
-                data["evo1_name"] = "\(evo1Name) #(\(pokemonId))"
-                data["evo2_name"] = "\(evo2Name) #(\(pokemonId + 1))"
-                data["evo3_name"] = "\(evo3Name) #(\(pokemonId + 2))"
+                data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
+                data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
+                data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
                 data["start"] = start
                 data["end"] = end
                 data["stats"] = stats

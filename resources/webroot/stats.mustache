@@ -124,6 +124,7 @@ $(document).ready(function() {
         options: barOptions
     });
 
+    $("#comday-stats").hide();
     $("#filter-pokemon-comday").on('change', function() {
         var start = $("#filter-date-start").val();
         var end = $("#filter-date-end").val();
@@ -131,6 +132,7 @@ $(document).ready(function() {
         console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
         $.ajax({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
             console.log("Result:", result);
+            $("#comday-stats").show();
             $("#pkmn-title").text(result.data.evo1_name + " Scans");
             $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
             $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
@@ -674,7 +676,7 @@ function transparentize(color, opacity) {
       </div>
     </div>
 
-    <div id="comday-stats" class="container" style="background: white">
+    <div id="comday-stats" class="container">
     <div class="row m-2">
       <div class="col-md-5">
         <div class="row p-2">
@@ -685,15 +687,15 @@ function transparentize(color, opacity) {
                 <div class="wrapper"><canvas id="scanChart"></canvas></div>
               </div>
               <div class="col-lg-6 justify-content-right">
-                <h5 id="total-seen">0 seen</h5>
-                <h6 id="total-scanned">0 scanned</h6>
+                <h5 id="total-seen">0 {{stats_seen}}</h5>
+                <h6 id="total-scanned">0 {{stats_scanned}}</h6>
               </div>
             </div>
             <div class="row p-2">
               <div class="col" style="background: white">
-                <span><b>100% IV:</b><span id="iv100">0</span></span>
-                <span><b>90% IV:</b><span id="iv90">0</span></span>
-                <span><b>0% IV:</b><span id="iv0">0</span></span>
+                <span><b>{{stats_100iv}}</b><span id="iv100">0</span></span>
+                <span><b>{{stats_90iv}}</b><span id="iv90">0</span></span>
+                <span><b>{{stats_0iv}}</b><span id="iv0">0</span></span>
               </div>
             </div>
           </div>
@@ -711,8 +713,8 @@ function transparentize(color, opacity) {
     <div class="row p-2 m-2">
       <div class="col-md-4" style="background: white">
         <h3>{{stats_sex}}</h3>
-        <span><span id="total-male">0</span> male spawns</span><br>
-        <span><span id="total-female">0</span> female spawns</span>
+        <span><span id="total-male">0</span> {{stats_male_spawns}}</span><br>
+        <span><span id="total-female">0</span> {{stats_female_spawns}}</span>
       </div>
       <div class="col-md-8" style="background: white">
         <div class="row text-center">
