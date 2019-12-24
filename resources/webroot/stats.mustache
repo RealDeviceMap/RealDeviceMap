@@ -143,7 +143,6 @@ $(document).ready(function() {
     filterPokemon();
     filterRaids();
     filterQuests();
-});
 
 function getDashboardStats() {
     $.ajax({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
@@ -416,6 +415,8 @@ function transparentize(color, opacity) {
 	  var alpha = opacity === undefined ? 0.5 : 1 - opacity;
 	  return Color(color).alpha(alpha).rgbString();
 }
+
+});
 </script>
 
 <h2 class="page-header text-center">{{title}}'s {{title_stats}}</h2>
