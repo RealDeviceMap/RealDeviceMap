@@ -1441,9 +1441,9 @@ class ApiRequestHandler {
                 let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
                 let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
                 data["pokemon_id"] = pokemonId
-                data["evo1_name"] = evo1Name
-                data["evo2_name"] = evo2Name
-                data["evo3_name"] = evo3Name
+                data["evo1_name"] = "\(evo1Name) #(\(pokemonId))"
+                data["evo2_name"] = "\(evo2Name) #(\(pokemonId + 1))"
+                data["evo3_name"] = "\(evo3Name) #(\(pokemonId + 2))"
                 data["start"] = start
                 data["end"] = end
                 data["stats"] = stats

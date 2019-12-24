@@ -85,12 +85,19 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
+            let date = result[0] as! String
             let pokemonId = result[1] as! UInt16
-            let shiny = (result[2] as! Int32)
-            let count = (result[3] as! Int32)
+            let shiny = result[2] as! Int32
+            let count = result[3] as! Int32
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "name": name, "shiny": shiny.withCommas(), "count": count.withCommas()])
+            stats.append([
+                "date": date,
+                "id": pokemonId,
+                "name": name,
+                "shiny": shiny.withCommas(),
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -148,10 +155,9 @@ class Stats: JSONConvertibleObject {
         }
         
         let sql = """
-        SELECT raid_pokemon_id, COUNT(*) AS total
-        FROM gym
-        WHERE raid_pokemon_id > 0 AND raid_end_timestamp > UNIX_TIMESTAMP()
-        GROUP BY raid_pokemon_id
+        SELECT date, pokemon_id, count, level
+        FROM raid_stats
+        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -166,11 +172,19 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let pokemonId = result[0] as! UInt16
-            let count = result[1] as! Int64
+            let date = result[0] as! String
+            let pokemonId = result[1] as! UInt16
+            let count = result[2] as! Int32
+            let level = result[3] as! UInt16
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "name": name, "count": count.withCommas()])
+            stats.append([
+                "date": date,
+                "pokemon_id": pokemonId,
+                "name": name,
+                "level": level,
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -185,10 +199,10 @@ class Stats: JSONConvertibleObject {
         }
         
         let sql = """
-        SELECT raid_level, COUNT(*) AS total
-        FROM gym
-        WHERE raid_level > 0 AND raid_end_timestamp > UNIX_TIMESTAMP()
-        GROUP BY raid_level
+        SELECT date, level, count
+        FROM raid_stats
+        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        GROUP BY level
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -203,10 +217,15 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let level = result[0] as! UInt8
-            let count = result[1] as! Int64
+            let date = result[0] as! String
+            let level = result[1] as! UInt16
+            let count = result[2] as! Int32
             
-            stats.append(["level": level, "count": count.withCommas()])
+            stats.append([
+                "date": date,
+                "level": level,
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -273,10 +292,10 @@ class Stats: JSONConvertibleObject {
         }
         
         let sql = """
-        SELECT quest_item_id, COUNT(*) AS total
-        FROM pokestop
-        WHERE quest_item_id IS NOT NULL
-        GROUP BY quest_item_id
+        SELECT date, reward_type, item_id, count
+        FROM quest_stats
+        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        GROUP BY item_id
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -291,11 +310,21 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let questType = result[0] as! UInt16
-            let count = result[1] as! Int64
-            let name = Localizer.global.get(value: "item_\(questType)")
+            let date = result[0] as! String
+            let rewardType = result[1] as! UInt16
+            let itemId = result[2] as! UInt16
+            let count = result[3] as! Int32
+            let name = itemId == 0
+                ? "Stardust" //TODO: Localize Stardust
+                : Localizer.global.get(value: "item_\(itemId)")
             
-            stats.append(["type": questType, "name": name, "count": count.withCommas()])
+            stats.append([
+                "date": date,
+                "reward_type": rewardType,
+                "item_id": itemId,
+                "name": name,
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -310,10 +339,10 @@ class Stats: JSONConvertibleObject {
         }
         
         let sql = """
-        SELECT quest_pokemon_id, COUNT(*) AS total
-        FROM pokestop
-        WHERE quest_pokemon_id IS NOT NULL
-        GROUP BY quest_pokemon_id
+        SELECT date, reward_type, pokemon_id, count
+        FROM quest_stats
+        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        GROUP BY pokemon_id
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -328,11 +357,19 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let pokemonId = result[0] as! UInt16
-            let count = result[1] as! Int64
+            let date = result[0] as! String
+            let rewardType = result[1] as! UInt16
+            let pokemonId = result[2] as! UInt16
+            let count = result[3] as! Int32
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
-            stats.append(["id": pokemonId, "name": name, "count": count.withCommas()])
+            stats.append([
+                "date": date,
+                "reward_type": rewardType,
+                "pokemon_id": pokemonId,
+                "name": name,
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -369,7 +406,11 @@ class Stats: JSONConvertibleObject {
             let count = result[1] as! Int64
             let name = Localizer.global.get(value: "grunt_\(gruntType)")
             
-            stats.append(["type": gruntType, "name": name, "count": count.withCommas()])
+            stats.append([
+                "type": gruntType,
+                "name": name,
+                "count": count.withCommas()
+            ])
             
         }
         return stats
@@ -471,7 +512,7 @@ class Stats: JSONConvertibleObject {
         
     }
     
-    public static func getCommDayStats(mysql: MySQL?=nil, pokemonId: UInt16, start: String, end: String) throws -> [Any] {
+    public static func getCommDayStats(mysql: MySQL?=nil, pokemonId: UInt16, start: String, end: String) throws -> [String: Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -481,15 +522,20 @@ class Stats: JSONConvertibleObject {
         let sql = """
         SELECT
           COUNT(id) AS total,
-          SUM(iv = 100) AS iv100,
-          SUM(iv = 0) AS iv0,
           SUM(iv > 0) AS with_iv,
           SUM(iv IS NULL) AS without_iv,
-          SUM(iv > 90 AND iv < 100) AS iv90,
-          SUM(iv >= 1 AND iv < 50) AS iv_1_49,
-          SUM(iv >= 50 AND iv < 80) AS iv_50_79,
+          SUM(iv = 0) AS iv_0,
+          SUM(iv >= 1 AND iv < 10) AS iv_1_9,
+          SUM(iv >= 10 AND iv < 20) AS iv_10_19,
+          SUM(iv >= 20 AND iv < 30) AS iv_20_29,
+          SUM(iv >= 30 AND iv < 40) AS iv_30_39,
+          SUM(iv >= 40 AND iv < 50) AS iv_40_49,
+          SUM(iv >= 50 AND iv < 60) AS iv_50_59,
+          SUM(iv >= 60 AND iv < 70) AS iv_60_69,
+          SUM(iv >= 70 AND iv < 80) AS iv_70_79,
           SUM(iv >= 80 AND iv < 90) AS iv_80_89,
           SUM(iv >= 90 AND iv < 100) AS iv_90_99,
+          SUM(iv = 100) AS iv_100,
           SUM(gender = 1) AS male,
           SUM(gender = 2) AS female,
           SUM(gender = 3) AS genderless,
@@ -518,50 +564,34 @@ class Stats: JSONConvertibleObject {
         }
         let results = mysqlStmt.results()
         
-        var stats = [Any]()
+        var stats = [String: Any]()
         while let result = results.next() {
             
-            let total = result[0] as! Int64
-            let iv100 = Int64(result[1] as! String) ?? 0
-            let iv0 = Int64(result[2] as! String) ?? 0
-            let withIV = Int64(result[3] as! String) ?? 0
-            let withoutIV = Int64(result[4] as! String) ?? 0
-            let iv90 = Int64(result[5] as! String) ?? 0
+            stats["total"] = result[0] as! Int64
+            stats["with_iv"] = Int64(result[1] as! String) ?? 0
+            stats["without_iv"] = Int64(result[2] as! String) ?? 0
+
+            stats["iv_0"] = Int64(result[3] as! String) ?? 0
+            stats["iv_1_9"] = Int64(result[4] as! String) ?? 0
+            stats["iv_10_19"] = Int64(result[5] as! String) ?? 0
+            stats["iv_20_29"] = Int64(result[6] as! String) ?? 0
+            stats["iv_30_39"] = Int64(result[7] as! String) ?? 0
+            stats["iv_40_49"] = Int64(result[8] as! String) ?? 0
+            stats["iv_50_59"] = Int64(result[9] as! String) ?? 0
+            stats["iv_60_69"] = Int64(result[10] as! String) ?? 0
+            stats["iv_70_79"] = Int64(result[11] as! String) ?? 0
+            stats["iv_80_89"] = Int64(result[12] as! String) ?? 0
+            stats["iv_90_99"] = Int64(result[13] as! String) ?? 0
+            stats["iv_100"] = Int64(result[14] as! String) ?? 0
             
-            let iv_1_49 = Int64(result[6] as! String) ?? 0
-            let iv_50_79 = Int64(result[7] as! String) ?? 0
-            let iv_80_89 = Int64(result[8] as! String) ?? 0
-            let iv_90_99 = Int64(result[9] as! String) ?? 0
+            stats["male"] = Int64(result[15] as! String) ?? 0
+            stats["female"] = Int64(result[16] as! String) ?? 0
+            stats["genderless"] = Int64(result[17] as! String) ?? 0
             
-            let male = Int64(result[10] as! String) ?? 0
-            let female = Int64(result[11] as! String) ?? 0
-            let genderless = Int64(result[12] as! String) ?? 0
-            
-            let level_1_9 = Int64(result[13] as! String) ?? 0
-            let level_10_19 = Int64(result[14] as! String) ?? 0
-            let level_20_29 = Int64(result[15] as! String) ?? 0
-            let level_30_35 = Int64(result[16] as! String) ?? 0
-            
-            stats.append(total)
-            stats.append(iv100)
-            stats.append(iv0)
-            stats.append(withIV)
-            stats.append(withoutIV)
-            stats.append(iv90)
-            
-            stats.append(iv_1_49)
-            stats.append(iv_50_79)
-            stats.append(iv_80_89)
-            stats.append(iv_90_99)
-            
-            stats.append(male)
-            stats.append(female)
-            stats.append(genderless)
-            
-            stats.append(level_1_9)
-            stats.append(level_10_19)
-            stats.append(level_20_29)
-            stats.append(level_30_35)
+            stats["level_1_9"] = Int64(result[18] as! String) ?? 0
+            stats["level_10_19"] = Int64(result[19] as! String) ?? 0
+            stats["level_20_29"] = Int64(result[20] as! String) ?? 0
+            stats["level_30_35"] = Int64(result[21] as! String) ?? 0
             
         }
         

@@ -23,200 +23,207 @@ a.instinct:hover * { color:black; }
 </style>
 
 <script>
-	$(document).ready(function() {
-        $("[data-toggle='datetimepicker']").flatpickr({
-            altInput: true,
-            altFormat: "F j, Y h\:00 K",
-            dateFormat: "U",//"Y-m-d h K",
-            enableTime: true
-        });
+$(document).ready(function() {
+    $("[data-toggle='datetimepicker']").flatpickr({
+        altInput: true,
+        altFormat: "F j, Y h\:00 K",
+        dateFormat: "U",//"Y-m-d h K",
+        enableTime: true
+    });
 
-        var pieOptions = {
-            responsive: true,
-            legend: false,
-            tooltips: true,
-            elements: {
-                arc: {
-                    backgroundColor: colorize.bind(null, false, false),
-                    hoverBackgroundColor: hoverColorize
+    var pieOptions = {
+        responsive: true,
+        legend: false,
+        tooltips: true,
+        elements: {
+            arc: {
+                backgroundColor: colorize.bind(null, false, false),
+                hoverBackgroundColor: hoverColorize
+            }
+        },
+        animation: {
+            animateScale: true,
+            animateRotate: true
+        }
+    };
+
+    var barOptions = {
+        legend: {
+            position: 'bottom',
+        },
+        tooltips: true,
+        title: {
+            display: true,
+            text: 'IV Spread'
+        },
+        tooltips: { mode: "nearest", intersect: false, },
+        hover: { mode: "nearest", intersect: true },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    stepSize: 25
                 }
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
+            }]
+        },
+        elements: {
+            rectangle: {
+                backgroundColor: colorize.bind(null, false, false),
+                borderColor: colorize.bind(null, true, false),
+                borderWidth: 2
             }
-        };
+        }
+    };
 
-        var barOptions = {
-            legend: {
-                position: 'bottom',
-            },
-            tooltips: true,
-            title: {
-                display: true,
-                text: 'IV Spread'
-            },
-            tooltips: { mode: "nearest", intersect: false, },
-            hover: { mode: "nearest", intersect: true },
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize: 25
-                    }
-                }]
-            },
-            elements: {
-                rectangle: {
-                    backgroundColor: colorize.bind(null, false, false),
-                    borderColor: colorize.bind(null, true, false),
-                    borderWidth: 2
-                }
-            }
-        };
+    var donutOptions = {
+        responsive: true,
+        legend: {
+            position: 'top',
+        },
+        title: {
+            display: true,
+            text: 'Level Spread'
+        },
+        animation: {
+            animateScale: true,
+            animateRotate: true
+        }
+    };
 
-        var donutOptions = {
-            responsive: true,
-            legend: {
-                position: 'top',
-            },
-            title: {
-                display: true,
-                text: 'Level Spread'
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            }
-        };
+    var scanChart = new Chart('scanChart', {
+        type: 'pie',
+        data: {
+            datasets: [],
+            labels: [
+                'Seen',
+                'Scanned'
+            ]
+        },
+        options: pieOptions
+    });
 
-        var scanChart = new Chart('scanChart', {
-            type: 'pie',
-            data: {
-                datasets: [],
-                labels: [
-                    'Seen',
-                    'Scanned'
-                ]
-            },
-            options: pieOptions
-        });
+    var levelChart = new Chart('levelChart', {
+        type: 'doughnut',
+        data: {
+            datasets: [],
+            labels: [
+                'Level 01-09',
+                'Level 10-19',
+                'Level 20-29',
+                'Level 30-35'
+            ]
+        },
+        options: donutOptions
+    });
 
-        var levelChart = new Chart('levelChart', {
-            type: 'doughnut',
-            data: {
-                datasets: [],
-                labels: [
-                    'Level 01-09',
-                    'Level 10-19',
-                    'Level 20-29',
-                    'Level 30-35'
-                ]
-            },
-            options: donutOptions
-        });
+    var ivChart = new Chart('ivChart', {
+        type: 'bar',
+        data: {
+            datasets: []
+        },
+        options: barOptions
+    });
 
-        var ivChart = new Chart('ivChart', {
-            type: 'bar',
-            data: {
-                datasets: []
-            },
-            options: barOptions
-        });
+    $("#filter-pokemon-comday").on('change', function() {
+        var start = $("#filter-date-start").val();
+        var end = $("#filter-date-end").val();
+        var pokemonId = this.value;
+        console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
+        $.ajax({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
+            console.log("Result:", result);
+            $("#pkmn-title").text(result.data.evo1_name + " Scans");
+            $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
+            $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
+            $("#iv100").text(result.data.stats.iv_100 || 0);
+            $("#iv90").text(result.data.stats.iv_90_99 || 0);
+            $("#iv0").text(result.data.stats.iv_0 || 0);
+            $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
+            $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
+            //TODO: Check if pokemon is a 3 stage evo
+            $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
+            $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
+            $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
+            $("#evo1-text").text(result.data.evo1_name);
+            $("#evo2-text").text(result.data.evo2_name);
+            $("#evo3-text").text(result.data.evo3_name);
 
-        $("#filter-pokemon-comday").on('change', function() {
-            var start = $("#filter-date-start").val();
-            var end = $("#filter-date-end").val();
-            var pokemonId = this.value;
-            console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
-            $.get({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
-                console.log("Result:", result);
-                $("#pkmn-title").text(result.data.evo1_name + " Scans");
-                $("#total-seen").text(numberWithCommas(result.data.stats[0] || 0) + " seen");
-                $("#total-scanned").text(numberWithCommas(result.data.stats[3] || 0) + " scanned");
-                $("#iv100").text(result.data.stats[1] || 0);
-                $("#iv90").text(result.data.stats[5] || 0);
-                $("#iv0").text(result.data.stats[2] || 0);
-                $("#total-male").text(numberWithCommas(result.data.stats[10] || 0) + " (" + Math.round((result.data.stats[10] / result.data.stats[0]) * 100, 2) + "%)");
-                $("#total-female").text(numberWithCommas(result.data.stats[11] || 0) + " (" + Math.round((result.data.stats[11] / result.data.stats[0]) * 100, 2) + "%)");
-                //TODO: Check if pokemon is a 3 stage evo
-                $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
-                $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
-                $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
-                $("#evo1-text").text(result.data.evo1_name);
-                $("#evo2-text").text(result.data.evo2_name);
-                $("#evo3-text").text(result.data.evo3_name);
+            removeDataset(scanChart);
+            var scanData = {
+              data: [result.data.stats.total || 0, result.data.stats.with_iv || 0],
+              backgroundColor: [
+                'green',
+                'blue'
+              ],
+              label: 'Seen'
+            };
+            addDataset(scanChart, scanData);
 
-                removeDataset(scanChart);
-                var scanData = {
-                  data: [result.data.stats[0] || 0, result.data.stats[3] || 0],
-                  backgroundColor: [
+            removeDataset(levelChart);
+            var levelData = {
+                data: [
+                    result.data.stats.level_1_9 || 0,
+                    result.data.stats.level_10_19 || 0,
+                    result.data.stats.level_20_29 || 0,
+                    result.data.stats.level_30_35 || 0
+                ],
+                backgroundColor: [
+                    'red',
+                    'yellow',
                     'green',
                     'blue'
-                  ],
-                  label: 'Seen'
-                };
-                addDataset(scanChart, scanData);
+                ],
+                label: 'Levels'
+            };
+            addDataset(levelChart, levelData);
 
-                removeDataset(levelChart);
-                var levelData = {
-                    data: [
-                        result.data.stats[13] || 0,
-                        result.data.stats[14] || 0,
-                        result.data.stats[15] || 0,
-                        result.data.stats[16] || 0
-                    ],
-                    backgroundColor: [
-                        'red',
-                        'yellow',
-                        'green',
-                        'blue'
-                    ],
-                    label: 'Levels'
-                };
-                addDataset(levelChart, levelData);
+            removeDataset(ivChart);
 
-                removeDataset(ivChart);
-                addDataset(ivChart, { data: [result.data.stats[2]], backgroundColor: 'black', label: '0% IV' });
-                addDataset(ivChart, { data: [result.data.stats[6]], backgroundColor: 'red', label: '1-49% IV' });
-                addDataset(ivChart, { data: [result.data.stats[7]], backgroundColor: 'blue', label: '50-79% IV' });
-                addDataset(ivChart, { data: [result.data.stats[8]], backgroundColor: 'yellow', label: '80-89% IV' });
-                addDataset(ivChart, { data: [result.data.stats[9]], backgroundColor: 'orange', label: '90-99% IV' });
-                addDataset(ivChart, { data: [result.data.stats[1]], backgroundColor: 'green', label: '100% IV' });
-            }});
-        });
-
-        $.get({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
-            //console.log("Result:", result);
-            if (result == null) {
-                console.log("Failed to parse result value.");
-                return;
-            }
-            updateCounter(".total-pokemon-count", result.data.pokemon_total);
-            updateCounter(".pokemon-count", result.data.pokemon_active);
-            updateCounter(".total-iv-count", result.data.pokemon_iv_total);
-            updateCounter(".active-iv-count", result.data.pokemon_iv_active);
-
-            updateCounter(".gyms-count", result.data.gyms_total);
-            updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
-            updateCounter(".mystic-gyms-count", result.data.gyms_mystic);
-            updateCounter(".valor-gyms-count", result.data.gyms_valor);
-            updateCounter(".instinct-gyms-count", result.data.gyms_instinct);
-            updateCounter(".raids-count", result.data.gyms_raids);
-
-            updateCounter(".pokestop-count", result.data.pokestops_total);
-            updateCounter(".lured-pokestop-count", result.data.pokestops_lures_normal);
-            updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
-            updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
-            updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
-            updateCounter(".invasions-count", result.data.pokestops_invasions);
-            updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
-
-            updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
-            updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
-            updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
+            addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
         }});
-    } );
+    });
+
+    $.ajax({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
+        console.log("Result:", result);
+        if (result == null) {
+            console.log("Failed to parse result value.");
+            return;
+        }
+        updateCounter(".total-pokemon-count", result.data.pokemon_total);
+        updateCounter(".pokemon-count", result.data.pokemon_active);
+        updateCounter(".total-iv-count", result.data.pokemon_iv_total);
+        updateCounter(".active-iv-count", result.data.pokemon_iv_active);
+
+        updateCounter(".gyms-count", result.data.gyms_total);
+        updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
+        updateCounter(".mystic-gyms-count", result.data.gyms_mystic);
+        updateCounter(".valor-gyms-count", result.data.gyms_valor);
+        updateCounter(".instinct-gyms-count", result.data.gyms_instinct);
+        updateCounter(".raids-count", result.data.gyms_raids);
+
+        updateCounter(".pokestop-count", result.data.pokestops_total);
+        updateCounter(".lured-pokestop-count", result.data.pokestops_lures_normal);
+        updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
+        updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
+        updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
+        updateCounter(".invasions-count", result.data.pokestops_invasions);
+        updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
+
+        updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
+        updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
+        updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
+    }});
+});
 
 function addDataset(chart, data) {
   chart.data.datasets.push(data);
@@ -270,21 +277,21 @@ function transparentize(color, opacity) {
 
 <h2 class="page-header text-center">{{title}}"s {{title_stats}}</h2>
 <ul class="nav nav-pills mb-3 justify-content-center" role="tablist">
-  <li class="nav-item"><a class="nav-link active" id="overview-tab" role="tab" aria-controls="overview" aria-selected="true" data-toggle="pill" href="#overview">Overview</a></li>
-  <li class="nav-item"><a class="nav-link" id="pokemon-tab" role="tab" aria-controls="pokemon" aria-selected="false" data-toggle="pill" href="#pokemon">Pokemon</a></li>
-  <li class="nav-item"><a class="nav-link" id="raids-tab" role="tab" aria-controls="raids" aria-selected="false" data-toggle="pill" href="#raids">Raids</a></li>
-  <li class="nav-item"><a class="nav-link" id="quests-tab" role="tab" aria-controls="quests" aria-selected="false" data-toggle="pill" href="#quests">Quests</a></li>
-  <li class="nav-item"><a class="nav-link" id="invasions-tab" role="tab" aria-controls="invasions" aria-selected="false" data-toggle="pill" href="#invasions">Invasions</a></li>
-  <li class="nav-item"><a class="nav-link" id="commday-tab" role="tab" aria-controls="commday" aria-selected="false" data-toggle="pill" href="#commday">Comm. Day</a></li>
+  <li class="nav-item"><a class="nav-link active" id="overview-tab" role="tab" aria-controls="overview" aria-selected="true" data-toggle="pill" href="#overview">{{stats_tab_overview}}</a></li>
+  <li class="nav-item"><a class="nav-link" id="pokemon-tab" role="tab" aria-controls="pokemon" aria-selected="false" data-toggle="pill" href="#pokemon">{{stats_tab_pokemon}}</a></li>
+  <li class="nav-item"><a class="nav-link" id="raids-tab" role="tab" aria-controls="raids" aria-selected="false" data-toggle="pill" href="#raids">{{stats_tab_raids}}</a></li>
+  <li class="nav-item"><a class="nav-link" id="quests-tab" role="tab" aria-controls="quests" aria-selected="false" data-toggle="pill" href="#quests">{{stats_tab_quests}}</a></li>
+  <li class="nav-item"><a class="nav-link" id="invasions-tab" role="tab" aria-controls="invasions" aria-selected="false" data-toggle="pill" href="#invasions">{{stats_tab_invasions}}</a></li>
+  <li class="nav-item"><a class="nav-link" id="commday-tab" role="tab" aria-controls="commday" aria-selected="false" data-toggle="pill" href="#commday">{{stats_tab_commday}}</a></li>
 </ul>
 
 <div class="tab-content container">
   <!-- Start Overview Tab -->
   <div id="overview" class="tab-pane fade show active" role="tabpanel" aria-labelledby="overview-tab">
 
-<h2 class="page-header text-center">Overview</h2>
+<h2 class="page-header text-center">{{stats_overview}}</h2>
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Overview</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_overview}}</b></div>
   <div class="card-body">
     <div class="container">
       <div class="row">
@@ -293,7 +300,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading pokemon-count">0</h4>
-              <p class="list-group-item-text">Active Pokemon</p>
+              <p class="list-group-item-text">{{stats_active_pokemon}}</p>
             </a>
           </div>
         </div>
@@ -302,7 +309,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading gyms-count">0</h4>
-              <p class="list-group-item-text">Total Gyms</p>
+              <p class="list-group-item-text">{{stats_total_gyms}}</p>
             </a>
           </div>
         </div>
@@ -311,7 +318,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1402.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading raids-count">0</h4>
-              <p class="list-group-item-text">Active Raids</p>
+              <p class="list-group-item-text">{{stats_active_raids}}</p>
             </a>
           </div>
         </div>
@@ -320,7 +327,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/pokestop/0.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading pokestop-count">0</h4>
-              <p class="list-group-item-text">Pokestops</p>
+              <p class="list-group-item-text">{{stats_total_pokestops}}</p>
             </a>
           </div>
         </div>
@@ -329,7 +336,7 @@ function transparentize(color, opacity) {
   </div>
 </div>
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Pokemon</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_pokemon}}</b></div>
   <div class="card-body">
     <div class="container">
       <div class="row">
@@ -338,7 +345,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading total-pokemon-count">0</h4>
-              <p class="list-group-item-text">Total Pokemon</p>
+              <p class="list-group-item-text">{{stats_total_pokemon}}</p>
             </a>
           </div>
         </div>
@@ -347,7 +354,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading pokemon-count">0</h4>
-              <p class="list-group-item-text">Active Pokemon</p>
+              <p class="list-group-item-text">{{stats_active_pokemon}}</p>
             </a>
           </div>
         </div>
@@ -356,7 +363,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading total-iv-count">0</h4>
-              <p class="list-group-item-text">Total IVs</p>
+              <p class="list-group-item-text">{{stats_total_ivs}}</p>
             </a>
           </div>
         </div>
@@ -365,7 +372,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/100.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading active-iv-count">0</h4>
-              <p class="list-group-item-text">Active with IVs</p>
+              <p class="list-group-item-text">{{stats_active_ivs}}</p>
             </a>
           </div>
         </div>
@@ -384,7 +391,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item neutral">
               <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading neutral-gyms-count">0</h4>
-              <p class="list-group-item-text">Neutral Gyms</p>
+              <p class="list-group-item-text">{{stats_neutral_gyms}}</p>
             </a>
           </div>
         </div>
@@ -393,7 +400,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item valor">
               <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading valor-gyms-count">0</h4>
-              <p class="list-group-item-text">Valor Gyms</p>
+              <p class="list-group-item-text">{{stats_valor_gyms}}</p>
             </a>
           </div>
         </div>
@@ -402,7 +409,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item mystic">
               <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading mystic-gyms-count">0</h4>
-              <p class="list-group-item-text">Mystic Gyms</p>
+              <p class="list-group-item-text">{{stats_mystic_gyms}}</p>
             </a>
           </div>
         </div>
@@ -411,7 +418,7 @@ function transparentize(color, opacity) {
             <a class="list-group-item instinct">
               <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
               <h4 class="list-group-item-heading instinct-gyms-count">0</h4>
-              <p class="list-group-item-text">Instinct Gyms</p>
+              <p class="list-group-item-text">{{stats_instinct_gyms}}</p>
             </a>
           </div>
         </div>
@@ -420,7 +427,7 @@ function transparentize(color, opacity) {
   </div>
 </div>
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Pokestops</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_pokestops}}</b></div>
   <div class="card-body">
     <div class="container">
       <div class="row">
@@ -428,42 +435,42 @@ function transparentize(color, opacity) {
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/i0.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading invasions-count">0</h4>
-            <p class="list-group-item-text">Invasions</p>
+            <p class="list-group-item-text">{{stats_invasions}}</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/1.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading lured-pokestop-count">0</h4>
-            <p class="list-group-item-text">Normal Lures</p>
+            <p class="list-group-item-text">{{stats_normal_lures}}</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/2.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading lured-glacial-pokestop-count">0</h4>
-            <p class="list-group-item-text">Glacial Lures</p>
+            <p class="list-group-item-text">{{stats_glacial_lures}}</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/3.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading lured-mossy-pokestop-count">0</h4>
-            <p class="list-group-item-text">Mossy Lures</p>
+            <p class="list-group-item-text">{{stats_mossy_lures}}</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/4.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading lured-magnetic-pokestop-count">0</h4>
-            <p class="list-group-item-text">Magnetic Lures</p>
+            <p class="list-group-item-text">{{stats_magnetic_lures}}</p>
           </a>
         </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/item/0.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading quest-pokestop-count">0</h4>
-            <p class="list-group-item-text">Field Research</p>
+            <p class="list-group-item-text">{{stats_field_research}}</p>
           </a>
         </div>
       </div>
@@ -472,7 +479,7 @@ function transparentize(color, opacity) {
 </div>
 
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Spawnpoint Timers</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_spawnpoint_timers}}</b></div>
   <div class="card-body">
     <div class="container">
       <div class="row">
@@ -480,21 +487,21 @@ function transparentize(color, opacity) {
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading spawnpoint-count">0</h4>
-            <p class="list-group-item-text">Total</p>
+            <p class="list-group-item-text">{{stats_spawnpoint_total}}</p>
           </a>
         </div>
         <div class="col-lg-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/1.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading found-spawnpoint-count">0</h4>
-            <p class="list-group-item-text">Found</p>
+            <p class="list-group-item-text">{{stats_spawnpoint_found}}</p>
           </a>
         </div>
         <div class="col-lg-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading missing-spawnpoint-count">0</h4>
-            <p class="list-group-item-text">Missing</p>
+            <p class="list-group-item-text">{{stats_spawnpoint_missing}}</p>
           </a>
         </div>
         <!--
@@ -530,7 +537,7 @@ function transparentize(color, opacity) {
 
   <!-- Start Pokemon Tab -->
   <div id="pokemon" class="tab-pane fade" role="tabpanel" aria-labelledby="pokemon-tab">
-    <h2 class="page-header text-center">Pokemon</h2>
+    <h2 class="page-header text-center">{{stats_pokemon}}</h2>
     <div class="row justify-content-center">
     {{#pokemon}}
     <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
@@ -571,13 +578,13 @@ function transparentize(color, opacity) {
     <h2 class="page-header text-center">Raids</h2>
     <div class="row justify-content-center">
     {{#raids}}
-    <div id="raid-pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+    <div id="raid-pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
         <p class="card-text text-nowrap">
           Total:
-          <span id="raid-pkmn-count-{{id}}">{{count}}</span>
+          <span id="raid-pkmn-count-{{pokemon_id}}">{{count}}</span>
         </p>
       </div>
     </div>
@@ -591,13 +598,13 @@ function transparentize(color, opacity) {
     <h2 class="page-header text-center">Quests Item Rewards</h2>
     <div class="row justify-content-center">
     {{#quests_items}}
-    <div id="item-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/item/{{type}}.png"" width="48" height="48">
+    <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/item/{{item_id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{type}}</span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{item_id}}</span>
         <p class="card-text text-nowrap">
           Total:
-          <span id="reward-type-{{type}}">{{count}}</span>
+          <span id="reward-type-{{item_id}}">{{count}}</span>
         </p>
       </div>
     </div>
@@ -607,13 +614,13 @@ function transparentize(color, opacity) {
     <h2 class="page-header text-center">Quests Pokemon Rewards</h2>
     <div class="row justify-content-center">
     {{#quests_pokemon}}
-    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+    <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
         <p class="card-text text-nowrap">
           Total:
-          <span id="reward-pkmn-{{id}}">{{count}}</span>
+          <span id="reward-pkmn-{{pokemon_id}}">{{count}}</span>
         </p>
       </div>
     </div>
@@ -644,22 +651,22 @@ function transparentize(color, opacity) {
 
   <!-- Start Community Day Tab -->
   <div id="commday" class="tab-pane fade" role="tabpanel" aria-labelledby="commday-tab">
-    <h2 class="page-header text-center">Community Day</h2>
+    <h2 class="page-header text-center">{{stats_community_day}}</h2>
     <div class="row">
       <div class="input-group mb-4">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-date">Start Date</label>
+          <label class="input-group-text" for="filter-date">{{stats_filter_start_date}}</label>
         </div>
         <input id="filter-date-start" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-date">End Date</label>
+          <label class="input-group-text" for="filter-date">{{stats_filter_end_date}}</label>
         </div>
         <input id="filter-date-end" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
         <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-pokemon-comday">Pokemon</label>
+          <label class="input-group-text" for="filter-pokemon-comday">{{stats_pokemon}}</label>
         </div>
         <select id="filter-pokemon-comday" class="custom-select">
-          <option disabled selected>Select</option>
+          <option disabled selected>{{stats_filter_select}}</option>
             {{#pokemon_ids}}
                 <option value="{{id}}">{{name}}</option>
             {{/pokemon_ids}}
@@ -672,7 +679,7 @@ function transparentize(color, opacity) {
       <div class="col-md-5">
         <div class="row p-2">
           <div class="col" style="background: white">
-            <h4 id="pkmn-title">Scans</h4>
+            <h4 id="pkmn-title">{{stats_scans}}</h4>
             <div class="row p-2">
               <div class="col-lg-6">
                 <div class="wrapper"><canvas id="scanChart"></canvas></div>
@@ -703,7 +710,7 @@ function transparentize(color, opacity) {
     </div>
     <div class="row p-2 m-2">
       <div class="col-md-4" style="background: white">
-        <h3>Sex</h3>
+        <h3>{{stats_sex}}</h3>
         <span><span id="total-male">0</span> male spawns</span><br>
         <span><span id="total-female">0</span> female spawns</span>
       </div>
