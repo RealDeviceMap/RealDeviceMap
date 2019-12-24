@@ -1,6 +1,7 @@
 {{> header}}
 
 <!--TODO: Better stat graphs/charts-->
+<!--TODO: Fix date picker conflict-->
 
 <style>
 a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
@@ -24,12 +25,27 @@ a.instinct:hover * { color:black; }
 
 <script>
 $(document).ready(function() {
+    //var $j = jQuery.noConflict(); //TODO: Fix
     $("[data-toggle='datetimepicker']").flatpickr({
         altInput: true,
         altFormat: "F j, Y h\:00 K",
         dateFormat: "U",//"Y-m-d h K",
         enableTime: true
     });
+    /*
+    $("[data-toggle='datepicker']").datepicker({
+        autoHide: true,
+        yearFirst: true,
+        format: "yyyy-mm-dd",
+        zIndex: 2048,
+    });
+    */
+    $("#filter-pokemon-date").change(filterPokemon);
+    $("#filter-raids-date").change(filterRaids);
+    $("#filter-quests-date").change(filterQuests);
+    //$("#filter-pokemon-date").datepicker("setDate", new Date());
+    //$("#filter-raids-date").datepicker("setDate", new Date());
+    //$("#filter-quests-date").datepicker("setDate", new Date());
 
     var pieOptions = {
         responsive: true,
@@ -130,71 +146,16 @@ $(document).ready(function() {
         var end = $("#filter-date-end").val();
         var pokemonId = this.value;
         console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
-        $.ajax({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
-            console.log("Result:", result);
-            $("#comday-stats").show();
-            $("#pkmn-title").text(result.data.evo1_name + " Scans");
-            $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
-            $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
-            $("#iv100").text(result.data.stats.iv_100 || 0);
-            $("#iv90").text(result.data.stats.iv_90_99 || 0);
-            $("#iv0").text(result.data.stats.iv_0 || 0);
-            $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
-            $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
-            //TODO: Check if pokemon is a 3 stage evo
-            $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
-            $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
-            $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
-            $("#evo1-text").text(result.data.evo1_name);
-            $("#evo2-text").text(result.data.evo2_name);
-            $("#evo3-text").text(result.data.evo3_name);
-
-            removeDataset(scanChart);
-            var scanData = {
-              data: [result.data.stats.total || 0, result.data.stats.with_iv || 0],
-              backgroundColor: [
-                'green',
-                'blue'
-              ],
-              label: 'Seen'
-            };
-            addDataset(scanChart, scanData);
-
-            removeDataset(levelChart);
-            var levelData = {
-                data: [
-                    result.data.stats.level_1_9 || 0,
-                    result.data.stats.level_10_19 || 0,
-                    result.data.stats.level_20_29 || 0,
-                    result.data.stats.level_30_35 || 0
-                ],
-                backgroundColor: [
-                    'red',
-                    'yellow',
-                    'green',
-                    'blue'
-                ],
-                label: 'Levels'
-            };
-            addDataset(levelChart, levelData);
-
-            removeDataset(ivChart);
-
-            addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
-        }});
+        getCommDayStats(pokemonId, start, end);
     });
 
+    getDashboardStats();
+    filterPokemon();
+    filterRaids();
+    filterQuests();
+});
+
+function getDashboardStats() {
     $.ajax({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
         console.log("Result:", result);
         if (result == null) {
@@ -225,7 +186,184 @@ $(document).ready(function() {
         updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
         updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
     }});
-});
+}
+
+function getCommDayStats(pokemonId, start, end) {
+    $.ajax({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
+        console.log("Result:", result);
+        $("#comday-stats").show();
+        $("#pkmn-title").text(result.data.evo1_name + " Scans");
+        $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
+        $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
+        $("#iv100").text(result.data.stats.iv_100 || 0);
+        $("#iv90").text(result.data.stats.iv_90_99 || 0);
+        $("#iv0").text(result.data.stats.iv_0 || 0);
+        $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
+        $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
+        //TODO: Check if pokemon is a 3 stage evo
+        $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
+        $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
+        $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
+        $("#evo1-text").text(result.data.evo1_name);
+        $("#evo2-text").text(result.data.evo2_name);
+        $("#evo3-text").text(result.data.evo3_name);
+
+        removeDataset(scanChart);
+        var scanData = {
+          data: [result.data.stats.total || 0, result.data.stats.with_iv || 0],
+          backgroundColor: [
+            'green',
+            'blue'
+          ],
+          label: 'Seen'
+        };
+        addDataset(scanChart, scanData);
+
+        removeDataset(levelChart);
+        var levelData = {
+            data: [
+                result.data.stats.level_1_9 || 0,
+                result.data.stats.level_10_19 || 0,
+                result.data.stats.level_20_29 || 0,
+                result.data.stats.level_30_35 || 0
+            ],
+            backgroundColor: [
+                'red',
+                'yellow',
+                'green',
+                'blue'
+            ],
+            label: 'Levels'
+        };
+        addDataset(levelChart, levelData);
+
+        removeDataset(ivChart);
+
+        addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
+        addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
+    }});
+}
+
+function filterPokemon() {
+    var date = $("#filter-pokemon-date").val();
+    console.log("Date:", date);
+    $.ajax({ url: "/api/get_stats?pokemon=true&date=" + (date || "2019-12-20"), success: function(result) {
+        console.log("Result:", result);
+        if (result == null) {
+            console.log("Failed to parse pokemon stats.");
+            return;
+        }
+        var html = "";
+        $("#pokemon-stats-table").html(html);
+        result.data.stats.forEach(function(stat) {
+            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png'' width='48' height='48'>";
+            html +=   "<div class='card-body'>";
+            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+            html +=     "<p class='card-text text-nowrap'>";
+            html +=       "Seen: <span>" + stat.count + "</span><br>";
+            html +=       "Shiny: <span>" + stat.shiny + "</span>";
+            html +=     "</p>";
+            html +=   "</div>";
+            html += "</div>";
+        });
+        $("#pokemon-stats-table").html(html);
+    }});
+}
+
+function filterRaids() {
+    var date = $("#filter-raids-date").val();
+    console.log("Date:", date);
+    $.ajax({ url: "/api/get_stats?raids=true&date=" + (date || "2019-12-20"), success: function(result) {
+        console.log("Result:", result);
+        if (result == null) {
+            console.log("Failed to parse raid stats.");
+            return;
+        }
+
+        var html = "";
+        $("#raid-stats-table").html(html);
+        result.data.raid_stats.forEach(function(stat) {
+            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+            html +=   "<div class='card-body'>";
+            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+            html +=     "<p class='card-text text-nowrap'>";
+            html +=       "Total: <span>" + stat.count + "</span>";
+            html +=     "</p>";
+            html +=   "</div>";
+            html += "</div>";
+        });
+        $("#raid-stats-table").html(html);
+
+        html = "";
+        $("#egg-stats-table").html(html);
+        result.data.egg_stats.forEach(function(stat) {
+            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+            html +=   "<img src='./static/img/egg/" + stat.level + ".png' width='48' height='48'>";
+            html +=   "<div class='card-body'>";
+            html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
+            html +=     "<p class='card-text text-nowrap'>";
+            html +=       "Total: <span>" + stat.count + "</span>";
+            html +=     "</p>";
+            html +=   "</div>";
+            html += "</div>";
+        });
+        $("#egg-stats-table").html(html);
+    }});
+}
+
+function filterQuests() {
+    var date = $("#filter-quests-date").val();
+    console.log("Date:", date);
+    $.ajax({ url: "/api/get_stats?quests=true&date=" + (date || "2019-12-20"), success: function(result) {
+        console.log("Result:", result);
+        if (result == null) {
+            console.log("Failed to parse quest stats.");
+            return;
+        }
+
+        var html = "";
+        $("#quest-item-stats-table").html(html);
+        result.data.quest_item_stats.forEach(function(stat) {
+            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+            html +=   "<img src='./static/img/item/" + stat.item_id + ".png' width='48' height='48'>";
+            html +=   "<div class='card-body'>";
+            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.item_id + "</span>";
+            html +=     "<p class='card-text text-nowrap'>";
+            html +=       "Total: <span>" + stat.count + "</span>";
+            html +=     "</p>";
+            html +=   "</div>";
+            html += "</div>";
+        });
+        $("#quest-item-stats-table").html(html);
+
+        html = "";
+        $("#quest-pokemon-stats-table").html(html);
+        result.data.quest_pokemon_stats.forEach(function(stat) {
+            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+            html +=   "<div class='card-body'>";
+            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+            html +=     "<p class='card-text text-nowrap'>";
+            html +=       "Total: <span>" + stat.count + "</span>";
+            html +=     "</p>";
+            html +=   "</div>";
+            html += "</div>";
+        });
+        $("#quest-pokemon-stats-table").html(html);
+    }});
+}
 
 function addDataset(chart, data) {
   chart.data.datasets.push(data);
@@ -233,17 +371,17 @@ function addDataset(chart, data) {
 }
 
 function removeDataset(chart) {
-  //chart.data.datasets.shift();
-  chart.data.datasets = [];
-  //chart.data.labels.pop();
-  //chart.data.datasets.forEach((dataset) => {
-  //  dataset.data.pop();
-  //});
-  chart.update();
+    //chart.data.datasets.shift();
+    chart.data.datasets = [];
+    //chart.data.labels.pop();
+    //chart.data.datasets.forEach((dataset) => {
+    //  dataset.data.pop();
+    //});
+    chart.update();
 }
 
 function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function updateCounter(name, value) {
@@ -272,12 +410,12 @@ function hoverColorize(ctx) {
 }
 
 function transparentize(color, opacity) {
-	var alpha = opacity === undefined ? 0.5 : 1 - opacity;
-	return Color(color).alpha(alpha).rgbString();
+	  var alpha = opacity === undefined ? 0.5 : 1 - opacity;
+	  return Color(color).alpha(alpha).rgbString();
 }
 </script>
 
-<h2 class="page-header text-center">{{title}}"s {{title_stats}}</h2>
+<h2 class="page-header text-center">{{title}}'s {{title_stats}}</h2>
 <ul class="nav nav-pills mb-3 justify-content-center" role="tablist">
   <li class="nav-item"><a class="nav-link active" id="overview-tab" role="tab" aria-controls="overview" aria-selected="true" data-toggle="pill" href="#overview">{{stats_tab_overview}}</a></li>
   <li class="nav-item"><a class="nav-link" id="pokemon-tab" role="tab" aria-controls="pokemon" aria-selected="false" data-toggle="pill" href="#pokemon">{{stats_tab_pokemon}}</a></li>
@@ -539,18 +677,35 @@ function transparentize(color, opacity) {
 
   <!-- Start Pokemon Tab -->
   <div id="pokemon" class="tab-pane fade" role="tabpanel" aria-labelledby="pokemon-tab">
-    <h2 class="page-header text-center">{{stats_pokemon}}</h2>
-    <div class="row justify-content-center">
+    <div class="row">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-pokemon-date">Date</label>
+        </div>
+        <input id="filter-pokemon-date" type="text" class="form-control" data-toggle="datepicker">
+      </div>
+      <!--
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="search-input">Search Pokemon</label>
+        </div>
+        <input type="text" id="filter-pokemon" class="form-control input-lg" onkeyup="filterPokemon()" placeholder="Search by name.." title="Type in a name">
+      </div>
+      -->
+    </div>
+
+    <h3 class="page-header text-center">{{stats_pokemon}}</h3>
+    <div id="pokemon-stats-table" class="row justify-content-center">
     {{#pokemon}}
-    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{id}}.png"" width="48" height="48">
+    <div class="col-sm-2 col-sd-offset-1 text-center">
+      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{id}}</span>
+        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
         <p class="card-text text-nowrap">
           Seen:
-          <span id="pkmn-seen-{{id}}">{{count}}</span><br>
+          <span>{{count}}</span><br>
           Shiny:
-          <span id="pkmn-shiny-{{id}}">{{shiny}}</span>
+          <span>{{shiny}}</span>
         </p>
       </div>
     </div>
@@ -561,32 +716,41 @@ function transparentize(color, opacity) {
 
   <!-- Start Raids Tab -->
   <div id="raids" class="tab-pane fade" role="tabpanel" aria-labelledby="raids-tab">
-    <h2 class="page-header text-center">Eggs</h2>
-    <div class="row justify-content-center">
+    <div class="row">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-raids-date">Date</label>
+        </div>
+        <input id="filter-raids-date" type="text" class="form-control" data-toggle="datepicker">
+      </div>
+    </div>
+
+    <h3 class="page-header text-center">Eggs</h3>
+    <div id="egg-stats-table" class="row justify-content-center">
     {{#eggs}}
-    <div id="raid-level-{{level}}" class="col-sm-2 col-sd-offset-1 text-center">
+    <div class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/egg/{{level}}.png"" width="48" height="48">
       <div class="card-body">
         <span class="text-nowrap"><b>Level {{level}}</b></span>
         <p class="card-text text-nowrap">
           Total:
-          <span id="raid-egg-count-{{level}}">{{count}}</span>
+          <span>{{count}}</span>
         </p>
       </div>
     </div>
     {{/eggs}}
     </div>
     <br>
-    <h2 class="page-header text-center">Raids</h2>
-    <div class="row justify-content-center">
+    <h3 class="page-header text-center">Raids</h3>
+    <div id="raid-stats-table" class="row justify-content-center">
     {{#raids}}
-    <div id="raid-pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+    <div class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
       <div class="card-body">
         <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
         <p class="card-text text-nowrap">
           Total:
-          <span id="raid-pkmn-count-{{pokemon_id}}">{{count}}</span>
+          <span>{{count}}</span>
         </p>
       </div>
     </div>
@@ -597,8 +761,17 @@ function transparentize(color, opacity) {
 
   <!-- Start Quests Tab -->
   <div id="quests" class="tab-pane fade" role="tabpanel" aria-labelledby="quests-tab">
-    <h2 class="page-header text-center">Quests Item Rewards</h2>
-    <div class="row justify-content-center">
+    <div class="row">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="filter-quests-date">Date</label>
+        </div>
+        <input id="filter-quests-date" type="text" class="form-control" data-toggle="datepicker">
+      </div>
+    </div>
+
+    <h3 class="page-header text-center">Quests Item Rewards</h3>
+    <div id="quest-item-stats-table" class="row justify-content-center">
     {{#quests_items}}
     <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/item/{{item_id}}.png"" width="48" height="48">
@@ -613,8 +786,8 @@ function transparentize(color, opacity) {
     {{/quests_items}}
     </div>
     <br>
-    <h2 class="page-header text-center">Quests Pokemon Rewards</h2>
-    <div class="row justify-content-center">
+    <h3 class="page-header text-center">Quests Pokemon Rewards</h3>
+    <div id="quest-pokemon-stats-table" class="row justify-content-center">
     {{#quests_pokemon}}
     <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
       <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
@@ -633,7 +806,7 @@ function transparentize(color, opacity) {
 
   <!-- Start Invasions Tab -->
   <div id="invasions" class="tab-pane fade" role="tabpanel" aria-labelledby="invasions-tab">
-    <h2 class="page-header text-center">Invasions</h2>
+    <h3 class="page-header text-center">Invasions</h3>
     <div class="row justify-content-center">
     {{#invasions}}
     <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
@@ -653,7 +826,7 @@ function transparentize(color, opacity) {
 
   <!-- Start Community Day Tab -->
   <div id="commday" class="tab-pane fade" role="tabpanel" aria-labelledby="commday-tab">
-    <h2 class="page-header text-center">{{stats_community_day}}</h2>
+    <h3 class="page-header text-center">{{stats_community_day}}</h3>
     <div class="row">
       <div class="input-group mb-4">
         <div class="input-group-prepend">

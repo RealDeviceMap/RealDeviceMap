@@ -1333,6 +1333,10 @@ class ApiRequestHandler {
         
         //let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let dashboard = request.param(name: "dashboard")?.toBool() ?? false
+        let pokemon = request.param(name: "pokemon")?.toBool() ?? false
+        let raids = request.param(name: "raids")?.toBool() ?? false
+        let quests = request.param(name: "quests")?.toBool() ?? false
+        let date = request.param(name: "date") ?? ""
         let commday = request.param(name: "commday")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
         let start = request.param(name: "start") ?? ""
@@ -1401,8 +1405,14 @@ class ApiRequestHandler {
             return
         }
         
+        if !(permViewMap && permViewStats) {
+            //Invalid permissions
+            response.respondWithError(status: .seeOther)
+            return
+        }
+        
         var data = [String: Any]()
-        if dashboard && permViewMap && permViewStats {
+        if dashboard {
             var stats = Stats().getJSONValues()
             data["pokemon_total"] = stats["pokemon_total"]
             data["pokemon_active"] = stats["pokemon_active"]
@@ -1422,19 +1432,25 @@ class ApiRequestHandler {
             data["gyms_valor"] = stats["gyms_valor"]
             data["gyms_instinct"] = stats["gyms_instinct"]
             data["gyms_raids"] = stats["gyms_raids"]
-            //data["pokemon"] = stats["pokemon_stats"]
-            //data["raids"] = stats["raid_stats"]
-            //data["eggs"] = stats["egg_stats"]
-            //data["quests_items"] = stats["quest_item_stats"]
-            //data["quests_pokemon"] = stats["quest_pokemon_stats"]
-            //data["invasions"] = stats["invasion_stats"]
             data["spawnpoints_total"] = stats["spawnpoints_total"]
             data["spawnpoints_found"] = stats["spawnpoints_found"]
             data["spawnpoints_missing"] = stats["spawnpoints_missing"]
             data["spawnpoints_percent"] = stats["spawnpoints_percent"]
             data["spawnpoints_min30"] = stats["spawnpoints_min30"]
             data["spawnpoints_min60"] = stats["spawnpoints_min60"]
-        } else if commday && permViewMap && permViewStats {
+        } else if pokemon {
+            let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
+            data["date"] = date
+            data["stats"] = stats
+        } else if raids {
+            data["date"] = date
+            data["raid_stats"] = try? Stats.getRaidStats(mysql: mysql, date: date)
+            data["egg_stats"] = try? Stats.getRaidEggStats(mysql: mysql, date: date)
+        } else if quests {
+            data["date"] = date
+            data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
+            data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
+        } else if commday {
             if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
                 let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
                 let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")

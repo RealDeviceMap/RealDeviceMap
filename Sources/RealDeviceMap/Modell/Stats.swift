@@ -56,13 +56,14 @@ class Stats: JSONConvertibleObject {
         ]
     }
     
-    public static func getPokemonIVStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
         SELECT x.date, x.pokemon_id, shiny.count as shiny, iv.count
         FROM pokemon_stats x
@@ -71,11 +72,15 @@ class Stats: JSONConvertibleObject {
           LEFT JOIN pokemon_iv_stats iv
           ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
         WHERE
-          x.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+          x.date = \(when)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -94,7 +99,7 @@ class Stats: JSONConvertibleObject {
             
             stats.append([
                 "date": date,
-                "id": pokemonId,
+                "pokemon_id": pokemonId,
                 "name": name,
                 "shiny": shiny.withCommas(),
                 "count": count.withCommas()
@@ -148,21 +153,31 @@ class Stats: JSONConvertibleObject {
         
     }
     
-    public static func getRaidStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getRaidStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
-        let sql = """
+        var sql = """
         SELECT date, pokemon_id, count, level
         FROM raid_stats
-        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        WHERE date =
         """
+        
+        if date == nil {
+            sql = "\(sql) FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')"
+        } else {
+            sql = "\(sql) ?"
+        }
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -192,22 +207,27 @@ class Stats: JSONConvertibleObject {
         
     }
     
-    public static func getRaidEggStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getRaidEggStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
         SELECT date, level, count
         FROM raid_stats
-        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        WHERE date = \(when)
         GROUP BY level
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -285,22 +305,27 @@ class Stats: JSONConvertibleObject {
         
     }
     
-    public static func getQuestItemStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getQuestItemStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
         SELECT date, reward_type, item_id, count
         FROM quest_stats
-        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        WHERE date = \(when)
         GROUP BY item_id
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -332,22 +357,27 @@ class Stats: JSONConvertibleObject {
         
     }
 
-    public static func getQuestPokemonStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getQuestPokemonStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
         SELECT date, reward_type, pokemon_id, count
         FROM quest_stats
-        WHERE date=FROM_UNIXTIME(UNIX_TIMESTAMP(), "%Y-%m-%d")
+        WHERE date = \(when)
         GROUP BY pokemon_id
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
