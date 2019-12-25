@@ -145,101 +145,121 @@ $(document).ready(function() {
     filterQuests();
 
 function getDashboardStats() {
-    $.ajax({ url: "/api/get_stats?dashboard=true&formatted=true", success: function(result) {
-        console.log("Result:", result);
-        if (result == null) {
-            console.log("Failed to parse result value.");
-            return;
-        }
-        updateCounter(".total-pokemon-count", result.data.pokemon_total);
-        updateCounter(".pokemon-count", result.data.pokemon_active);
-        updateCounter(".total-iv-count", result.data.pokemon_iv_total);
-        updateCounter(".active-iv-count", result.data.pokemon_iv_active);
-
-        updateCounter(".gyms-count", result.data.gyms_total);
-        updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
-        updateCounter(".mystic-gyms-count", result.data.gyms_mystic);
-        updateCounter(".valor-gyms-count", result.data.gyms_valor);
-        updateCounter(".instinct-gyms-count", result.data.gyms_instinct);
-        updateCounter(".raids-count", result.data.gyms_raids);
-
-        updateCounter(".pokestop-count", result.data.pokestops_total);
-        updateCounter(".lured-pokestop-count", result.data.pokestops_lures_normal);
-        updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
-        updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
-        updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
-        updateCounter(".invasions-count", result.data.pokestops_invasions);
-        updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
-
-        updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
-        updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
-        updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
+    var data = {
+        'dashboard': true,
+        'formatted': true,
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats", 
+        data: data, 
+        type: "POST", 
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse result value.");
+                return;
+            }
+            updateCounter(".total-pokemon-count", result.data.pokemon_total);
+            updateCounter(".pokemon-count", result.data.pokemon_active);
+            updateCounter(".total-iv-count", result.data.pokemon_iv_total);
+            updateCounter(".active-iv-count", result.data.pokemon_iv_active);
+    
+            updateCounter(".gyms-count", result.data.gyms_total);
+            updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
+            updateCounter(".mystic-gyms-count", result.data.gyms_mystic);
+            updateCounter(".valor-gyms-count", result.data.gyms_valor);
+            updateCounter(".instinct-gyms-count", result.data.gyms_instinct);
+            updateCounter(".raids-count", result.data.gyms_raids);
+    
+            updateCounter(".pokestop-count", result.data.pokestops_total);
+            updateCounter(".lured-pokestop-count", result.data.pokestops_lures_normal);
+            updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
+            updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
+            updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
+            updateCounter(".invasions-count", result.data.pokestops_invasions);
+            updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
+    
+            updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
+            updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
+            updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
     }});
 }
 
 function getCommDayStats(pokemonId, start, end) {
-    $.ajax({ url: "/api/get_stats?commday=true&pokemon_id="+pokemonId+"&start="+start+"&end="+end, success: function(result) {
-        console.log("Result:", result);
-        $("#comday-stats").show();
-        $("#pkmn-title").text(result.data.evo1_name + " Scans");
-        $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
-        $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
-        $("#iv100").text(result.data.stats.iv_100 || 0);
-        $("#iv90").text(result.data.stats.iv_90_99 || 0);
-        $("#iv0").text(result.data.stats.iv_0 || 0);
-        $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
-        $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
-        //TODO: Check if pokemon is a 3 stage evo
-        $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
-        $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
-        $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
-        $("#evo1-text").text(result.data.evo1_name);
-        $("#evo2-text").text(result.data.evo2_name);
-        $("#evo3-text").text(result.data.evo3_name);
-
-        removeDataset(scanChart);
-        var scanData = {
-          data: [result.data.stats.total || 0, result.data.stats.with_iv || 0],
-          backgroundColor: [
-            'green',
-            'blue'
-          ],
-          label: 'Seen'
-        };
-        addDataset(scanChart, scanData);
-
-        removeDataset(levelChart);
-        var levelData = {
-            data: [
-                result.data.stats.level_1_9 || 0,
-                result.data.stats.level_10_19 || 0,
-                result.data.stats.level_20_29 || 0,
-                result.data.stats.level_30_35 || 0
-            ],
-            backgroundColor: [
-                'red',
-                'yellow',
+    var data = {
+        'commday': true,
+        'pokemon_id': pokemonId,
+        'start': start,
+        'end': end,
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats", 
+        data: data, 
+        type: "POST", 
+        success: function(result) {
+            console.log("Result:", result);
+            $("#comday-stats").show();
+            $("#pkmn-title").text(result.data.evo1_name + " Scans");
+            $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
+            $("#total-scanned").text(numberWithCommas(result.data.stats.with_iv || 0) + " scanned");
+            $("#iv100").text(result.data.stats.iv_100 || 0);
+            $("#iv90").text(result.data.stats.iv_90_99 || 0);
+            $("#iv0").text(result.data.stats.iv_0 || 0);
+            $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
+            $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
+            //TODO: Check if pokemon is a 3 stage evo
+            $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
+            $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
+            $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
+            $("#evo1-text").text(result.data.evo1_name);
+            $("#evo2-text").text(result.data.evo2_name);
+            $("#evo3-text").text(result.data.evo3_name);
+    
+            removeDataset(scanChart);
+            var scanData = {
+              data: [result.data.stats.total || 0, result.data.stats.with_iv || 0],
+              backgroundColor: [
                 'green',
                 'blue'
-            ],
-            label: 'Levels'
-        };
-        addDataset(levelChart, levelData);
-
-        removeDataset(ivChart);
-
-        addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
-        addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
+              ],
+              label: 'Seen'
+            };
+            addDataset(scanChart, scanData);
+    
+            removeDataset(levelChart);
+            var levelData = {
+                data: [
+                    result.data.stats.level_1_9 || 0,
+                    result.data.stats.level_10_19 || 0,
+                    result.data.stats.level_20_29 || 0,
+                    result.data.stats.level_30_35 || 0
+                ],
+                backgroundColor: [
+                    'red',
+                    'yellow',
+                    'green',
+                    'blue'
+                ],
+                label: 'Levels'
+            };
+            addDataset(levelChart, levelData);
+    
+            removeDataset(ivChart);
+    
+            addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
     }});
 }
 
@@ -255,27 +275,36 @@ function unixToDate(unixTimestamp) {
 function filterPokemon() {
     var date = $("#filter-pokemon-date").val();
     var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
-    $.ajax({ url: "/api/get_stats?pokemon=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
-        console.log("Result:", result);
-        if (result == null) {
-            console.log("Failed to parse pokemon stats.");
-            return;
-        }
-        var html = "";
-        $("#pokemon-stats-table").html(html);
-        result.data.stats.forEach(function(stat) {
-            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png'' width='48' height='48'>";
-            html +=   "<div class='card-body'>";
-            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-            html +=     "<p class='card-text text-nowrap'>";
-            html +=       "Seen: <span>" + stat.count + "</span><br>";
-            html +=       "Shiny: <span>" + stat.shiny + "</span>";
-            html +=     "</p>";
-            html +=   "</div>";
-            html += "</div>";
-        });
-        $("#pokemon-stats-table").html(html);
+    var data = {
+        'pokemon': true,
+        'date': (formattedDate || "2019-12-20"),
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse pokemon stats.");
+                return;
+            }
+            var html = "";
+            $("#pokemon-stats-table").html(html);
+            result.data.stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png'' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Seen: <span>" + stat.count + "</span><br>";
+                html +=       "Shiny: <span>" + stat.shiny + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+            });
+            $("#pokemon-stats-table").html(html);
     }});
 }
 
@@ -283,42 +312,51 @@ function filterRaids() {
     var date = $("#filter-raids-date").val();
     var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
     console.log("Date:", formattedDate);
-    $.ajax({ url: "/api/get_stats?raids=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
-        console.log("Result:", result);
-        if (result == null) {
-            console.log("Failed to parse raid stats.");
-            return;
-        }
-
-        var html = "";
-        $("#raid-stats-table").html(html);
-        result.data.raid_stats.forEach(function(stat) {
-            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
-            html +=   "<div class='card-body'>";
-            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-            html +=     "<p class='card-text text-nowrap'>";
-            html +=       "Total: <span>" + stat.count + "</span>";
-            html +=     "</p>";
-            html +=   "</div>";
-            html += "</div>";
-        });
-        $("#raid-stats-table").html(html);
-
-        html = "";
-        $("#egg-stats-table").html(html);
-        result.data.egg_stats.forEach(function(stat) {
-            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/egg/" + stat.level + ".png' width='48' height='48'>";
-            html +=   "<div class='card-body'>";
-            html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
-            html +=     "<p class='card-text text-nowrap'>";
-            html +=       "Total: <span>" + stat.count + "</span>";
-            html +=     "</p>";
-            html +=   "</div>";
-            html += "</div>";
-        });
-        $("#egg-stats-table").html(html);
+    var data = {
+        'raids': true,
+        'date': (formattedDate || "2019-12-20"),
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats",
+        data: data,
+        type: "POST", 
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse raid stats.");
+                return;
+            }
+    
+            var html = "";
+            $("#raid-stats-table").html(html);
+            result.data.raid_stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Total: <span>" + stat.count + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+            });
+            $("#raid-stats-table").html(html);
+    
+            html = "";
+            $("#egg-stats-table").html(html);
+            result.data.egg_stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/egg/" + stat.level + ".png' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Total: <span>" + stat.count + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+            });
+            $("#egg-stats-table").html(html);
     }});
 }
 
@@ -326,44 +364,53 @@ function filterQuests() {
     var date = $("#filter-quests-date").val();
     var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
     console.log("Date:", formattedDate);
-    $.ajax({ url: "/api/get_stats?quests=true&date=" + (formattedDate || "2019-12-20"), success: function(result) {
-        console.log("Result:", result);
-        if (result == null) {
-            console.log("Failed to parse quest stats.");
-            return;
-        }
-
-        var html = "";
-        $("#quest-item-stats-table").html(html);
-        result.data.quest_item_stats.forEach(function(stat) {
-            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/item/" + (stat.item_id == 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
-            html +=   "<div class='card-body'>";
-            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.item_id + "</span>";
-            html +=     "<p class='card-text text-nowrap'>";
-            html +=       "Total: <span>" + stat.count + "</span>";
-            html +=     "</p>";
-            html +=   "</div>";
-            html += "</div>";
-        });
-        $("#quest-item-stats-table").html(html);
-
-        html = "";
-        $("#quest-pokemon-stats-table").html(html);
-        result.data.quest_pokemon_stats.forEach(function(stat) {
-            if (stat.pokemon_id > 0) {
-            html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-            html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
-            html +=   "<div class='card-body'>";
-            html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-            html +=     "<p class='card-text text-nowrap'>";
-            html +=       "Total: <span>" + stat.count + "</span>";
-            html +=     "</p>";
-            html +=   "</div>";
-            html += "</div>";
+    var data = {
+        'quests': true,
+        'date': (formattedDate || "2019-12-20"),
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse quest stats.");
+                return;
             }
-        });
-        $("#quest-pokemon-stats-table").html(html);
+    
+            var html = "";
+            $("#quest-item-stats-table").html(html);
+            result.data.quest_item_stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/item/" + (stat.item_id == 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.item_id + "</span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Total: <span>" + stat.count + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+            });
+            $("#quest-item-stats-table").html(html);
+    
+            html = "";
+            $("#quest-pokemon-stats-table").html(html);
+            result.data.quest_pokemon_stats.forEach(function(stat) {
+                if (stat.pokemon_id > 0) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Total: <span>" + stat.count + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+                }
+            });
+            $("#quest-pokemon-stats-table").html(html);
     }});
 }
 
