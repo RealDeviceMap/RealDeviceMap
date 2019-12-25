@@ -160,17 +160,12 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
         
-        var sql = """
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let sql = """
         SELECT date, pokemon_id, count, level
         FROM raid_stats
-        WHERE date =
+        WHERE date = \(when)
         """
-        
-        if date == nil {
-            sql = "\(sql) FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')"
-        } else {
-            sql = "\(sql) ?"
-        }
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
