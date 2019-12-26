@@ -655,6 +655,20 @@ class WebReqeustHandler {
                     return
                 }
             }
+        case .dashboardAssignmentStart:
+            let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
+            let split = uuid.components(separatedBy: "\\-")
+            if split.count >= 2 {
+                let instanceName = split[0].unscaped()
+                let deviceUUID = split[1].unscaped()
+                let device = try! Device.getById(id: deviceUUID)
+                device!.instanceName = instanceName
+                try? device!.save(oldUUID: device!.uuid)
+                InstanceController.global.reloadDevice(newDevice: device!, oldDeviceUUID: deviceUUID)
+                response.redirect(path: "/dashboard/assignments")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            }
         case .dashboardAssignmentDelete:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Assignment"
