@@ -1336,6 +1336,7 @@ class ApiRequestHandler {
         let pokemon = request.param(name: "pokemon")?.toBool() ?? false
         let raids = request.param(name: "raids")?.toBool() ?? false
         let quests = request.param(name: "quests")?.toBool() ?? false
+        let top10 = request.param(name: "top10")?.toBool() ?? false
         let date = request.param(name: "date") ?? ""
         let commday = request.param(name: "commday")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
@@ -1438,6 +1439,11 @@ class ApiRequestHandler {
             data["spawnpoints_percent"] = stats["spawnpoints_percent"]
             data["spawnpoints_min30"] = stats["spawnpoints_min30"]
             data["spawnpoints_min60"] = stats["spawnpoints_min60"]
+        } else if top10 {
+            let lifetime = try? Stats.getTopPokemonStats(lifetime: true)
+            let today = try? Stats.getTopPokemonStats(lifetime: false)
+            data["lifetime"] = lifetime
+            data["today"] = today
         } else if pokemon {
             let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
             data["date"] = date

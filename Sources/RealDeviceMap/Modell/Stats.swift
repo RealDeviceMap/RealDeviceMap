@@ -12,7 +12,6 @@ import PerfectMySQL
 class Stats: JSONConvertibleObject {
     
     override func getJSONValues() -> [String : Any] {
-        //TODO: Faster way to get stats
         let pokemonStats = try? Stats.getPokemonStats()
         let pokemonIVStats = try? Stats.getPokemonIVStats()
         let raidStats = try? Stats.getRaidStats()
@@ -54,6 +53,77 @@ class Stats: JSONConvertibleObject {
             "spawnpoints_min30": (spawnpointStats?[3] ?? 0),
             "spawnpoints_min60": (spawnpointStats?[4] ?? 0)
         ]
+    }
+    
+    public static func getTopPokemonStats(mysql: MySQL?=nil, lifetime: Bool) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql: String
+        if lifetime {
+            sql = """
+            SELECT x.date, x.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
+            FROM pokemon_stats x
+              LEFT JOIN pokemon_shiny_stats shiny
+              ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
+              LEFT JOIN pokemon_iv_stats iv
+              ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
+            GROUP BY pokemon_id
+            ORDER BY count DESC
+            LIMIT 10
+            """
+        } else {
+            sql = """
+            SELECT x.date, x.pokemon_id, shiny.count AS shiny, iv.count
+            FROM pokemon_stats x
+              LEFT JOIN pokemon_shiny_stats shiny
+              ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
+              LEFT JOIN pokemon_iv_stats iv
+              ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
+            WHERE x.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+            ORDER BY count DESC
+            LIMIT 10
+            """
+        }
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let date = result[0] as! String
+            let pokemonId = result[1] as! UInt16
+            let shiny: Int
+            let count: Int
+            if lifetime {
+                shiny = Int(result[2] as? String ?? "0") ?? 0
+                count = Int(result[3] as? String ?? "0") ?? 0
+            } else {
+                shiny = Int(result[2] as? Int32 ?? 0)
+                count = Int(result[3] as! Int32)
+            }
+            let name = Localizer.global.get(value: "poke_\(pokemonId)")
+            
+            stats.append([
+                "date": date,
+                "pokemon_id": pokemonId,
+                "name": name,
+                "shiny": shiny.withCommas(),
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
     }
     
     public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
