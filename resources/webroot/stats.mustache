@@ -588,10 +588,10 @@ function getHistoricalQuestStats() {
 
 function filterPokemon() {
     var date = $("#filter-pokemon-date").val();
-    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    var formattedDate = unixToDate(date);
     var data = {
         'pokemon': true,
-        'date': (formattedDate || "2019-12-20"),
+        'date': formattedDate,
         '_csrf': "{{csrf}}"
     };
     $.ajax({ 
@@ -625,11 +625,11 @@ function filterPokemon() {
 
 function filterRaids() {
     var date = $("#filter-raids-date").val();
-    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    var formattedDate = unixToDate(date);
     console.log("Date:", formattedDate);
     var data = {
         'raids': true,
-        'date': (formattedDate || "2019-12-20"),
+        'date': formattedDate,
         '_csrf': "{{csrf}}"
     };
     $.ajax({ 
@@ -677,11 +677,11 @@ function filterRaids() {
 
 function filterQuests() {
     var date = $("#filter-quests-date").val();
-    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    var formattedDate = unixToDate(date);
     console.log("Date:", formattedDate);
     var data = {
         'quests': true,
-        'date': (formattedDate || "2019-12-20"),
+        'date': formattedDate,
         '_csrf': "{{csrf}}"
     };
     $.ajax({
