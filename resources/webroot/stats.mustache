@@ -99,7 +99,7 @@ $(document).ready(function() {
     var donutOptions = {
         responsive: true,
         legend: {
-            position: 'top',
+            position: 'left',
         },
         title: {
             display: true,
@@ -141,7 +141,7 @@ $(document).ready(function() {
     });
 
     var levelChart = new Chart('levelChart', {
-        type: 'doughnut',
+        type: 'pie', //'doughnut',
         data: {
             datasets: [],
             labels: [
