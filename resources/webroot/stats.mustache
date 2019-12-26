@@ -6,23 +6,23 @@
 <!--TODO: Move js and css to separate files-->
 
 <style>
-a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
-/* Neutral */
-a.neutral i,.neutral h4.list-group-item-heading { color:#dddddd; }
-a.neutral:hover { background-color:#dddddd; }
-a.neutral:hover * { color:#FFF; }
-/* Valor */
-a.valor i,.valor h4.list-group-item-heading { color:#dd4b39; }
-a.valor:hover { background-color:#dd4b39; }
-a.valor:hover * { color:#FFF; }
-/* Mystic */
-a.mystic i,.mystic h4.list-group-item-heading { color:#3b5998; }
-a.mystic:hover { background-color:#3b5998; }
-a.mystic:hover * { color:#FFF; }
-/* Instinct */
-a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
-a.instinct:hover { background-color:#FFF444; }
-a.instinct:hover * { color:black; }
+    a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
+    /* Neutral */
+    a.neutral i,.neutral h4.list-group-item-heading { color:#dddddd; }
+    a.neutral:hover { background-color:#dddddd; }
+    a.neutral:hover * { color:#FFF; }
+    /* Valor */
+    a.valor i,.valor h4.list-group-item-heading { color:#dd4b39; }
+    a.valor:hover { background-color:#dd4b39; }
+    a.valor:hover * { color:#FFF; }
+    /* Mystic */
+    a.mystic i,.mystic h4.list-group-item-heading { color:#3b5998; }
+    a.mystic:hover { background-color:#3b5998; }
+    a.mystic:hover * { color:#FFF; }
+    /* Instinct */
+    a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
+    a.instinct:hover { background-color:#FFF444; }
+    a.instinct:hover * { color:black; }
 </style>
 
 <script>
@@ -81,6 +81,38 @@ $(document).ready(function() {
         }
     };
 
+    var lineOptions = {
+        legend: {
+            position: 'bottom',
+        },
+        tooltips: true,
+        title: {
+            display: true,
+            text: ""
+        },
+        tooltips: { mode: "nearest", intersect: false, },
+        hover: { mode: "nearest", intersect: true },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    type: "logarithmic"
+                }
+            }]
+        },
+        elements: {
+            rectangle: {
+                backgroundColor: "black",
+                borderColor: "black",
+                borderWidth: 0.5
+            }
+        }
+    };
+
     var donutOptions = {
         responsive: true,
         legend: {
@@ -130,6 +162,34 @@ $(document).ready(function() {
         options: barOptions
     });
 
+    var pokemonChart = new Chart('pokemonChart', {
+        type: 'bar',
+        data: {
+            datasets: []
+        },
+        options: lineOptions
+    });
+
+    var raidChart = new Chart('raidChart', {
+        type: 'bar',
+        data: {
+            datasets: []
+        },
+        options: lineOptions
+    });
+
+    var questChart = new Chart('questChart', {
+        type: 'bar',
+        data: {
+            datasets: []
+        },
+        options: lineOptions
+    });
+
+    pokemonChart.options.title.text = "Historical Pokemon Statistics";
+    raidChart.options.title.text = "Historical Raid Statistics";
+    questChart.options.title.text = "Historical Quest Statistics";
+
     $("#comday-stats").hide();
     $("#filter-pokemon-comday").on('change', function() {
         var start = $("#filter-date-start").val();
@@ -142,6 +202,9 @@ $(document).ready(function() {
     getDashboardStats();
     getTopPokemonStats();
     getTopPokemonIVStats();
+    getHistoricalPokemonStats();
+    getHistoricalRaidStats();
+    getHistoricalQuestStats();
     filterPokemon();
     filterRaids();
     filterQuests();
@@ -369,15 +432,6 @@ function getCommDayStats(pokemonId, start, end) {
     }});
 }
 
-function unixToDate(unixTimestamp) {
-    var date = new Date(unixTimestamp * 1000);
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    var day = date.getDate();
-    var formatted = year + "-" + month + "-" + day;
-    return formatted;
-}
-
 function filterPokemon() {
     var date = $("#filter-pokemon-date").val();
     var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
@@ -411,7 +465,125 @@ function filterPokemon() {
                 html += "</div>";
             });
             $("#pokemon-stats-table").html(html);
-    }});
+        }
+    });
+}
+
+function getHistoricalPokemonStats() {
+    var data = {
+        'pokemon': true,
+        'date': "lifetime",
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse pokemon stats.");
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(result.data.stats, function(key, value) {
+                labels.push(value.date);
+                var value = parseInt(value.count.replace(/,/g, ""));                
+                values.push(value);
+            });
+            removeDataset(pokemonChart);
+            var obj = { 
+                labels: labels, 
+                datasets: [{
+                    data: values,
+                    backgroundColor: "dodgerblue",
+                    label: "Pokemon",
+                    fill: true
+                }]
+            };
+            pokemonChart.data = obj;
+            pokemonChart.update();
+        }
+    });
+}
+
+function getHistoricalRaidStats() {
+    var data = {
+        'raids': true,
+        'date': "lifetime",
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse raid stats.");
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(result.data.stats, function(key, value) {
+                labels.push(value.date);
+                var value = parseInt(value.count.replace(/,/g, ""));                
+                values.push(value);
+            });
+            removeDataset(raidChart);
+            var obj = { 
+                labels: labels, 
+                datasets: [{
+                    data: values,
+                    backgroundColor: "orange",
+                    label: "Raids",
+                    fill: true
+                }]
+            };
+            raidChart.data = obj;
+            raidChart.update();
+        }
+    });
+}
+
+function getHistoricalQuestStats() {
+    var data = {
+        'quests': true,
+        'date': "lifetime",
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("HISTORIC STATS Result:", result);
+            if (result == null) {
+                console.log("Failed to parse raid stats.");
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(result.data.stats, function(key, value) {
+                labels.push(value.date);
+                var value = parseInt(value.count.replace(/,/g, ""));                
+                values.push(value);
+            });
+            removeDataset(questChart);
+            var obj = { 
+                labels: labels, 
+                datasets: [{
+                    data: values,
+                    backgroundColor: "limegreen",
+                    label: "Quests",
+                    fill: true
+                }]
+            };
+            questChart.data = obj;
+            questChart.update();
+        }
+    });
 }
 
 function filterRaids() {
@@ -567,6 +739,15 @@ function hoverColorize(ctx) {
 function transparentize(color, opacity) {
 	  var alpha = opacity === undefined ? 0.5 : 1 - opacity;
 	  return Color(color).alpha(alpha).rgbString();
+}
+
+function unixToDate(unixTimestamp) {
+    var date = new Date(unixTimestamp * 1000);
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    var day = date.getDate();
+    var formatted = year + "-" + month + "-" + day;
+    return formatted;
 }
 
 });
@@ -868,6 +1049,11 @@ function transparentize(color, opacity) {
 
   <!-- Start Pokemon Tab -->
   <div id="pokemon" class="tab-pane fade" role="tabpanel" aria-labelledby="pokemon-tab">
+    <h3 class="page-header text-center">{{stats_pokemon}}</h3>
+    <div class="text-center">
+      <canvas id="pokemonChart"></canvas>
+    </div>
+    <br>
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
@@ -885,73 +1071,95 @@ function transparentize(color, opacity) {
       -->
     </div>
 
-    <h3 class="page-header text-center">{{stats_pokemon}}</h3>
-    <div id="pokemon-stats-table" class="row justify-content-center">
-    {{#pokemon}}
-    <div class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_pokemon}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
-        <p class="card-text text-nowrap">
-          Seen:
-          <span>{{count}}</span><br>
-          Shiny:
-          <span>{{shiny}}</span>
-        </p>
+        <div id="pokemon-stats-table" class="row justify-content-center">
+        {{#pokemon}}
+        <div class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
+            <p class="card-text text-nowrap">
+              Seen:
+              <span>{{count}}</span><br>
+              Shiny:
+              <span>{{shiny}}</span>
+            </p>
+          </div>
+        </div>
+        {{/pokemon}}
+        </div>
       </div>
-    </div>
-    {{/pokemon}}
     </div>
   </div>
   <!-- End Pokemon Tab -->
 
   <!-- Start Raids Tab -->
   <div id="raids" class="tab-pane fade" role="tabpanel" aria-labelledby="raids-tab">
+    <h3 class="page-header text-center">{{stats_raids}}</h3>
+    <div class="text-center">
+      <canvas id="raidChart"></canvas>
+    </div>
+    <br>
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
           <label class="input-group-text" for="filter-raids-date">{{stats_date}}</label>
         </div>
-                <input id="filter-raids-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
+        <input id="filter-raids-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
     </div>
 
-    <h3 class="page-header text-center">{{stats_eggs}}</h3>
-    <div id="egg-stats-table" class="row justify-content-center">
-    {{#eggs}}
-    <div class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/egg/{{level}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_eggs}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>Level {{level}}</b></span>
-        <p class="card-text text-nowrap">
-          Total:
-          <span>{{count}}</span>
-        </p>
+        <div id="egg-stats-table" class="row justify-content-center">
+        {{#eggs}}
+        <div class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/egg/{{level}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>Level {{level}}</b></span>
+            <p class="card-text text-nowrap">
+              Total:
+              <span>{{count}}</span>
+            </p>
+          </div>
+        </div>
+        {{/eggs}}
+        </div>
       </div>
-    </div>
-    {{/eggs}}
     </div>
     <br>
-    <h3 class="page-header text-center">{{stats_raids}}</h3>
-    <div id="raid-stats-table" class="row justify-content-center">
-    {{#raids}}
-    <div class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_raids}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
-        <p class="card-text text-nowrap">
-          Total:
-          <span>{{count}}</span>
-        </p>
+        <div id="raid-stats-table" class="row justify-content-center">
+        {{#raids}}
+        <div class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
+            <p class="card-text text-nowrap">
+              Total:
+              <span>{{count}}</span>
+            </p>
+          </div>
+        </div>
+        {{/raids}}
+        </div>
       </div>
-    </div>
-    {{/raids}}
     </div>
   </div>
   <!-- End Raids Tab -->
 
   <!-- Start Quests Tab -->
   <div id="quests" class="tab-pane fade" role="tabpanel" aria-labelledby="quests-tab">
+    <h3 class="page-header text-center">{{stats_quests}}</h3>
+    <div class="text-center">
+      <canvas id="questChart"></canvas>
+    </div>
+    <br>
     <div class="row">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
@@ -961,37 +1169,45 @@ function transparentize(color, opacity) {
       </div>
     </div>
 
-    <h3 class="page-header text-center">{{stats_quests_item_rewards}}</h3>
-    <div id="quest-item-stats-table" class="row justify-content-center">
-    {{#quests_items}}
-    <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/item/{{item_id}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_quests_item_rewards}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{item_id}}</span>
-        <p class="card-text text-nowrap">
-          Total:
-          <span id="reward-type-{{item_id}}">{{count}}</span>
-        </p>
+        <div id="quest-item-stats-table" class="row justify-content-center">
+        {{#quests_items}}
+        <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/item/{{item_id}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>{{name}}</b></span>
+            <p class="card-text text-nowrap">
+              Total:
+              <span id="reward-type-{{item_id}}">{{count}}</span>
+            </p>
+          </div>
+        </div>
+        {{/quests_items}}
+        </div>
       </div>
-    </div>
-    {{/quests_items}}
     </div>
     <br>
-    <h3 class="page-header text-center">{{stats_quests_pokemon_rewards}}</h3>
-    <div id="quest-pokemon-stats-table" class="row justify-content-center">
-    {{#quests_pokemon}}
-    <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_quests_pokemon_rewards}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
-        <p class="card-text text-nowrap">
-          Total:
-          <span id="reward-pkmn-{{pokemon_id}}">{{count}}</span>
-        </p>
-      </div>
+        <div id="quest-pokemon-stats-table" class="row justify-content-center">
+        {{#quests_pokemon}}
+        <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/pokemon/{{pokemon_id}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
+            <p class="card-text text-nowrap">
+              Total:
+              <span id="reward-pkmn-{{pokemon_id}}">{{count}}</span>
+            </p>
+          </div>
+        </div>
+        {{/quests_pokemon}}
+        </div>
     </div>
-    {{/quests_pokemon}}
-    </div>
+  </div>
   </div>
   <!-- End Quests Tab -->
 

@@ -1442,25 +1442,38 @@ class ApiRequestHandler {
             data["spawnpoints_min30"] = stats["spawnpoints_min30"]
             data["spawnpoints_min60"] = stats["spawnpoints_min60"]
         } else if top10 {
-            let lifetime = try? Stats.getTopPokemonStats(lifetime: true)
-            let today = try? Stats.getTopPokemonStats(lifetime: false)
+            let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: true)
+            let today = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: false)
             data["lifetime"] = lifetime
             data["today"] = today
         } else if top10iv {
-            let top10_100iv = try? Stats.getTopPokemonIVStats(iv: iv)
+            let top10_100iv = try? Stats.getTopPokemonIVStats(mysql: mysql, iv: iv)
             data["top10_100iv"] = top10_100iv
         } else if pokemon {
-            let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
-            data["date"] = date
-            data["stats"] = stats
+            if date == "lifetime" {
+                let stats = try? Stats.getAllPokemonStats(mysql: mysql)
+                data["stats"] = stats
+            } else {
+                let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
+                data["date"] = date
+                data["stats"] = stats
+            }
         } else if raids {
-            data["date"] = date
-            data["raid_stats"] = try? Stats.getRaidStats(mysql: mysql, date: date)
-            data["egg_stats"] = try? Stats.getRaidEggStats(mysql: mysql, date: date)
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllRaidStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["raid_stats"] = try? Stats.getRaidStats(mysql: mysql, date: date)
+                data["egg_stats"] = try? Stats.getRaidEggStats(mysql: mysql, date: date)
+            }
         } else if quests {
-            data["date"] = date
-            data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
-            data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllQuestStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
+                data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
+            }
         } else if commday {
             if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
                 let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)

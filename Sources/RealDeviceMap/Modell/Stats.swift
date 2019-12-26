@@ -174,6 +174,117 @@ class Stats: JSONConvertibleObject {
         return stats
     }
     
+    public static func getAllPokemonStats(mysql: MySQL?=nil) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT date, SUM(count) as count
+        FROM `pokemon_stats`
+        GROUP BY date
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let date = result[0] as! String
+            let count = Int(result[1] as? String ?? "0") ?? 0
+            
+            stats.append([
+                "date": date,
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
+    }
+    
+    public static func getAllRaidStats(mysql: MySQL?=nil) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT date, SUM(count) as count
+        FROM `raid_stats`
+        GROUP BY date
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let date = result[0] as! String
+            let count = Int(result[1] as? String ?? "0") ?? 0
+            
+            stats.append([
+                "date": date,
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
+    }
+    
+    public static func getAllQuestStats(mysql: MySQL?=nil) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT date, SUM(count) as count
+        FROM `quest_stats`
+        GROUP BY date
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let date = result[0] as! String
+            let count = Int(result[1] as? String ?? "0") ?? 0
+            
+            stats.append([
+                "date": date,
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
+    }
+    
     public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
