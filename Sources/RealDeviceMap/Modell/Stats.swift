@@ -126,6 +126,54 @@ class Stats: JSONConvertibleObject {
         return stats
     }
     
+    public static func getTopPokemonIVStats(mysql: MySQL?=nil, iv: Double?=100) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT pokemon_id, iv, COUNT(iv) as count
+        FROM `pokemon`
+        WHERE
+          first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 24 HOUR) AND
+          iv = ?
+        GROUP BY pokemon_id
+        ORDER BY count DESC
+        LIMIT 10
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        mysqlStmt.bindParam(iv)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let pokemonId = result[0] as! UInt16
+            let iv = result[1] as! Float
+            let count = result[2] as! Int64
+            let name = Localizer.global.get(value: "poke_\(pokemonId)")
+            
+            stats.append([
+                "pokemon_id": pokemonId,
+                "iv": iv,
+                "name": name,
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
+    }
+    
     public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -141,8 +189,7 @@ class Stats: JSONConvertibleObject {
           ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
           LEFT JOIN pokemon_iv_stats iv
           ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
-        WHERE
-          x.date = \(when)
+        WHERE x.date = \(when)
         """
         
         let mysqlStmt = MySQLStmt(mysql)

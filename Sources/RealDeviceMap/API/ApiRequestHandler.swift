@@ -1337,6 +1337,8 @@ class ApiRequestHandler {
         let raids = request.param(name: "raids")?.toBool() ?? false
         let quests = request.param(name: "quests")?.toBool() ?? false
         let top10 = request.param(name: "top10")?.toBool() ?? false
+        let top10iv = request.param(name: "top10iv")?.toBool() ?? false
+        let iv = request.param(name: "iv")?.toDouble() ?? 0
         let date = request.param(name: "date") ?? ""
         let commday = request.param(name: "commday")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
@@ -1444,6 +1446,9 @@ class ApiRequestHandler {
             let today = try? Stats.getTopPokemonStats(lifetime: false)
             data["lifetime"] = lifetime
             data["today"] = today
+        } else if top10iv {
+            let top10_100iv = try? Stats.getTopPokemonIVStats(iv: iv)
+            data["top10_100iv"] = top10_100iv
         } else if pokemon {
             let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
             data["date"] = date

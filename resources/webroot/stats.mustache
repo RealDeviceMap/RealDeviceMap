@@ -141,6 +141,7 @@ $(document).ready(function() {
 
     getDashboardStats();
     getTopPokemonStats();
+    getTopPokemonIVStats();
     filterPokemon();
     filterRaids();
     filterQuests();
@@ -245,6 +246,48 @@ function getTopPokemonStats() {
                 }
             });
             $('#top-10-pokemon-today').html(html);
+        }
+    });
+}
+
+function getTopPokemonIVStats() {
+    var data = {
+        'top10iv': true,
+        'iv': '100',
+        'formatted': true,
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats", 
+        data: data, 
+        type: "POST", 
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse result value.");
+                return;
+            }
+
+            html = "";
+            count = 0;
+            $('#top-10-iv-today').html(html);
+            $.each(result.data.top10_100iv, function(key, value) {
+                if (count == 0) {
+                    html += "<div class='row justify-content-center'>";
+                }
+                html += "<div class='col-md-2" + (count == 0 ? " col-md-offset-1" : "") + "'>";
+                html +=   "<img src='./static/img/pokemon/" + value.pokemon_id + ".png' width='64' height='64'>";
+                html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
+                html +=   "<span class='text-nowrap'>" + value.count + " 100%</span>";
+                html += "</div>";
+                if (count == 4) {
+                    html += "</div>";
+                    count = 0;
+                } else {
+                    count++;
+                }
+            });
+            $('#top-10-iv-today').html(html);
         }
     });
 }
@@ -638,12 +681,9 @@ function transparentize(color, opacity) {
   <div class="card-body text-center p-1 m-3">
   <div class="card-header bg-dark text-light"><b>Top 10 Pokemon</b></div>
     <ul class="nav nav-tabs justify-content-center" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">Lifetime</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">Today</a>
-      </li>
+      <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">Lifetime</a></li>
+      <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">Today</a></li>
+      <li class="nav-item"><a class="nav-link" id="top10-iv-today-tab" data-toggle="tab" href="#top10-iv-today" role="tab" aria-controls="top10-iv-today" aria-selected="false">IV Today</a></li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane fade show active" id="top10-lifetime" role="tabpanel" aria-labelledby="top10-lifetime-tab">
@@ -657,6 +697,13 @@ function transparentize(color, opacity) {
         <div class="card-body">
           <div class="container">
             <div id="top-10-pokemon-today" class="row justify-content-center"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="top10-iv-today" role="tabpanel" aria-labelledby="top10-iv-today-tab">
+        <div class="card-body">
+          <div class="container">
+            <div id="top-10-iv-today" class="row justify-content-center"></div>
           </div>
         </div>
       </div>
