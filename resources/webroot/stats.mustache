@@ -415,7 +415,6 @@ function getCommDayStats(pokemonId, start, end) {
             $("#iv0").text(result.data.stats.iv_0 || 0);
             $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
             $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
-            //TODO: Check if pokemon is a 3 stage evo
             $("#evo1").attr("src", "./static/img/pokemon/"+result.data.pokemon_id+".png");
             $("#evo2").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 1)+".png");
             $("#evo3").attr("src", "./static/img/pokemon/"+(parseInt(result.data.pokemon_id) + 2)+".png");
