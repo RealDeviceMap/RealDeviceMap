@@ -622,7 +622,9 @@ function filterPokemon() {
                 html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
                 html +=     "<p class='card-text text-nowrap'>";
                 html +=       "Seen: <span>" + stat.count + "</span><br>";
-                html +=       "Shiny: <span>" + stat.shiny + "</span>";
+                if (stat.shiny > 0) {
+                    html +=   "Shiny: <span>" + stat.shiny + "</span>";
+                }
                 html +=     "</p>";
                 html +=   "</div>";
                 html += "</div>";
