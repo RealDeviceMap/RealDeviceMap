@@ -25,11 +25,20 @@ class ImageGenerator {
         let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
         let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
         let questDir = Dir("\(projectroot)/resources/webroot/static/img/quest/")
+        let gruntDir = Dir("\(projectroot)/resources/webroot/static/img/grunt/")
+        let invasionDir = Dir("\(projectroot)/resources/webroot/static/img/invasion/")
+        let questInvasionDir = Dir("\(projectroot)/resources/webroot/static/img/quest_invasion/")
         if !raidDir.exists {
             try! raidDir.create()
         }
         if !questDir.exists {
             try! questDir.create()
+        }
+        if !invasionDir.exists {
+            try! invasionDir.create()
+        }
+        if !questInvasionDir.exists {
+            try! questInvasionDir.create()
         }
         
         let thread = Threading.getQueue(type: .serial)
@@ -165,6 +174,72 @@ class ImageGenerator {
                 }
             }
             
+            if questDir.exists, pokestopDir.exists {
+                Log.info(message: "[ImageGenerator] Creating Invasion Images...")
+                try! pokestopDir.forEachEntry { (pokestopFilename) in
+                    if !pokestopFilename.contains(".png") || !pokestopFilename.hasPrefix("i") {
+                        return
+                    }
+                    let pokestopFile = File(pokestopDir.path + pokestopFilename)
+                    let pokestopId = pokestopFilename.replacingOccurrences(of: ".png", with: "")
+                    
+                    try! gruntDir.forEachEntry { (gruntFilename) in
+                        if !gruntFilename.contains(".png") {
+                            return
+                        }
+                        let gruntFile = File(gruntDir.path + gruntFilename)
+                        let gruntId = gruntFilename.replacingOccurrences(of: ".png", with: "")
+                        let newFile = File(invasionDir.path + pokestopId + "_" + gruntId + ".png")
+                        if !newFile.exists {
+                            Log.debug(message: "[ImageGenerator] Creating invasion for stop \(pokestopId) and grunt \(gruntId)")
+                            combineImagesGrunt(image1: pokestopFile.path, image2: gruntFile.path, output: newFile.path)
+                        }
+                    }
+                }
+                Log.info(message: "[ImageGenerator] Invasion images created.")
+            } else {
+                Log.warning(message: "[ImageGenerator] Not generating Invasion Images (missing Dirs)")
+                if !gruntDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(gruntDir.path)")
+                }
+                if !pokestopDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokestopDir.path)")
+                }
+            }
+            
+            if gruntDir.exists, questDir.exists {
+                Log.info(message: "[ImageGenerator] Creating Quest Invasion Images...")
+                try! questDir.forEachEntry { (questFilename) in
+                    if !questFilename.contains(".png") || !questFilename.hasPrefix("i") {
+                        return
+                    }
+                    let questFile = File(questDir.path + questFilename)
+                    let questId = questFilename.replacingOccurrences(of: ".png", with: "")
+                    
+                    try! gruntDir.forEachEntry { (gruntFilename) in
+                        if !gruntFilename.contains(".png") {
+                            return
+                        }
+                        let gruntFile = File(gruntDir.path + gruntFilename)
+                        let gruntId = gruntFilename.replacingOccurrences(of: ".png", with: "")
+                        let newFile = File(questInvasionDir.path + questId + "_" + gruntId + ".png")
+                        if !newFile.exists {
+                            Log.debug(message: "[ImageGenerator] Creating invasion for quest \(questId) and grunt \(gruntId)")
+                            combineImagesGruntQuest(image1: questFile.path, image2: gruntFile.path, output: newFile.path)
+                        }
+                    }
+                }
+                Log.info(message: "[ImageGenerator] Quest Invasion images created.")
+            } else {
+                Log.warning(message: "[ImageGenerator] Not generating Quest Invasion Images (missing Dirs)")
+                if !gruntDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(gruntDir.path)")
+                }
+                if !questDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(questDir.path)")
+                }
+            }
+            
             Threading.destroyQueue(thread)
 
             
@@ -179,4 +254,19 @@ class ImageGenerator {
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
     
+    private static func combineImagesGrunt(image1: String, image2: String, output: String) {
+        _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x96", "-gravity", "center", "tmp1.png").run()
+        _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
+        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0-19", "-compose", "over", "-composite", output).run()
+        _ = Shell("rm", "-f", "tmp1.png").run()
+        _ = Shell("rm", "-f", "tmp2.png").run()
+    }
+    
+    private static func combineImagesGruntQuest(image1: String, image2: String, output: String) {
+        _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x160", "-gravity", "center", "tmp1.png").run()
+        _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
+        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0+13", "-compose", "over", "-composite", output).run()
+        _ = Shell("rm", "-f", "tmp1.png").run()
+        _ = Shell("rm", "-f", "tmp2.png").run()
+    }
 }

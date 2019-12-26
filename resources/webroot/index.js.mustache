@@ -1854,9 +1854,11 @@ function startPokestopTimer(pokestop, expire_timestamp, ts) {
 			if (expire_timestamp - 10 >= ts2) {
                 startPokestopTimer(realPokestop, expire_timestamp, ts2);
 			} else {
-                realPokestop.willUpdate = false;
-				realPokestop.marker.setIcon(getPokestopMarkerIcon(realPokestop, ts2 + 10));
-			}
+                pokestopMarkers = pokestopMarkers.filter(function( obj ) {
+                    return obj.id !== realPokestop.id;
+                });
+                map.removeLayer(realPokestop.marker);
+            }
 		}, (expire_timestamp - ts) * 1000);
 }
 
@@ -2784,13 +2786,19 @@ function getPokestopMarkerIcon(pokestop, ts) {
             lureId = 0;
         }
         let invasionString;
-        if (pokestop.incident_expire_timestamp >= ts) {
+        let invasionStringEnd;
+        let folder;
+        if (pokestopFilter["invasion"]["show"] === true && pokestop.incident_expire_timestamp >= ts) {
             invasionString = "i";
+            invasionStringEnd = "_" + pokestop.grunt_type;
+            folder = "quest_invasion";
         } else {
             invasionString = "";
+            invasionStringEnd = "";
+            folder = "quest";
         }
         icon = L.icon({
-            iconUrl: '/static/img/quest/'+invasionString+lureId+'_'+rewardString+'.png',
+            iconUrl: '/static/img/'+folder+'/'+invasionString+lureId+'_'+rewardString+invasionStringEnd+'.png',
             iconSize: 		[size       , size * 1.667  ],
             iconAnchor: 	[size / 2   , size * 1.567  ],
             popupAnchor: 	[0          , size * -1.567 ]
@@ -2803,10 +2811,16 @@ function getPokestopMarkerIcon(pokestop, ts) {
             lureId = 0;
         }
         let invasionString;
-        if (pokestop.incident_expire_timestamp >= ts) {
+        let invasionStringEnd;
+        let folder;
+        if (pokestopFilter["invasion"]["show"] === true && pokestop.incident_expire_timestamp >= ts) {
             invasionString = "i";
+            invasionStringEnd = "_" + pokestop.grunt_type;
+            folder = "invasion";
         } else {
             invasionString = "";
+            invasionStringEnd = "";
+            folder = "pokestop";
         }
 
         var sizeId = "normal";
@@ -2817,7 +2831,7 @@ function getPokestopMarkerIcon(pokestop, ts) {
         }
         const size = getPokestopSize(sizeId);
         icon = L.icon({
-            iconUrl: '/static/img/pokestop/'+invasionString+lureId+'.png',
+            iconUrl: '/static/img/'+folder+'/'+invasionString+lureId+invasionStringEnd+'.png',
             iconSize: 		[size       , size /** 1.667*/  ],
             iconAnchor: 	[size / 2   , size /** 1.567*/  ],
             popupAnchor: 	[0          , size * -1.567 ]
