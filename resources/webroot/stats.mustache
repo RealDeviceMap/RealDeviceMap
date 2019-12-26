@@ -182,6 +182,14 @@ $(document).ready(function() {
         options: lineOptions
     });
 
+    var invasionChart = new Chart('invasionChart', {
+        type: 'bar',
+        data: {
+            datasets: []
+        },
+        options: lineOptions
+    });
+
     var teamChart = new Chart('teamChart', {
         type: 'pie',
         data: {
@@ -199,6 +207,7 @@ $(document).ready(function() {
     pokemonChart.options.title.text = "Historical Pokemon Statistics";
     raidChart.options.title.text = "Historical Raid Statistics";
     questChart.options.title.text = "Historical Quest Statistics";
+    invasionChart.options.title.text = "Active Invasion Statistics";
 
     $("#comday-stats").hide();
     $("#filter-pokemon-comday").on('change', function() {
@@ -218,6 +227,7 @@ $(document).ready(function() {
     filterPokemon();
     filterRaids();
     filterQuests();
+    filterInvasions();
 
 function getDashboardStats() {
     var data = {
@@ -488,7 +498,7 @@ function getHistoricalPokemonStats() {
             var values = [];
             $.each(result.data.stats, function(key, value) {
                 labels.push(value.date);
-                var value = parseInt(value.count.replace(/,/g, ""));                
+                var value = parseInt(strip(value.count));
                 values.push(value);
             });
             removeDataset(pokemonChart);
@@ -527,7 +537,7 @@ function getHistoricalRaidStats() {
             var values = [];
             $.each(result.data.stats, function(key, value) {
                 labels.push(value.date);
-                var value = parseInt(value.count.replace(/,/g, ""));                
+                var value = parseInt(strip(value.count));
                 values.push(value);
             });
             removeDataset(raidChart);
@@ -566,7 +576,7 @@ function getHistoricalQuestStats() {
             var values = [];
             $.each(result.data.stats, function(key, value) {
                 labels.push(value.date);
-                var value = parseInt(value.count.replace(/,/g, ""));                
+                var value = parseInt(strip(value.count));
                 values.push(value);
             });
             removeDataset(questChart);
@@ -727,6 +737,45 @@ function filterQuests() {
             $("#quest-pokemon-stats-table").html(html);
     }});
 }
+
+function filterInvasions() {
+    var data = {
+        'invasions': true,
+        'formatted': true,
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse invasion stats.");
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(result.data.stats, function(key, value) {
+                labels.push(value.name);
+                var value = parseInt(strip(value.count));
+                values.push(value);
+            });
+            removeDataset(invasionChart);
+            var obj = { 
+                labels: labels, 
+                datasets: [{
+                    data: values,
+                    backgroundColor: "red",
+                    label: "Invasions",
+                    fill: true
+                }]
+            };
+            invasionChart.data = obj;
+            invasionChart.update();
+    }});
+}
+
 });
 </script>
 
@@ -1248,6 +1297,10 @@ function filterQuests() {
   <!-- Start Invasions Tab -->
   <div id="invasions" class="tab-pane fade" role="tabpanel" aria-labelledby="invasions-tab">
     <h3 class="page-header text-center">{{stats_invasions}}</h3>
+    <div class="text-center">
+      <canvas id="invasionChart"></canvas>
+    </div>
+    <br>
     <div class="card text-center p-1 m-3">
       <div class="card-header bg-dark text-light"><b>{{stats_grunt_types}}</b></div>
       <div class="card-body">

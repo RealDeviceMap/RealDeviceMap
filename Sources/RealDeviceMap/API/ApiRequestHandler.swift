@@ -1336,6 +1336,7 @@ class ApiRequestHandler {
         let pokemon = request.param(name: "pokemon")?.toBool() ?? false
         let raids = request.param(name: "raids")?.toBool() ?? false
         let quests = request.param(name: "quests")?.toBool() ?? false
+        let invasions = request.param(name: "invasions")?.toBool() ?? false
         let top10 = request.param(name: "top10")?.toBool() ?? false
         let top10iv = request.param(name: "top10iv")?.toBool() ?? false
         let iv = request.param(name: "iv")?.toDouble() ?? 0
@@ -1408,6 +1409,12 @@ class ApiRequestHandler {
             return
         }
         
+        let isPost = request.method == .post
+        if !isPost {
+            //Only process POST requests
+            return
+        }
+        
         if !(permViewMap && permViewStats) {
             //Invalid permissions
             response.respondWithError(status: .seeOther)
@@ -1476,6 +1483,8 @@ class ApiRequestHandler {
                 data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
                 data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
             }
+        } else if invasions {
+            data["stats"] = try? Stats.getInvasionStats(mysql: mysql)
         } else if commday {
             if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
                 let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
