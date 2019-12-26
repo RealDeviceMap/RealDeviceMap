@@ -1421,6 +1421,11 @@ class ApiRequestHandler {
             data["pokemon_active"] = stats["pokemon_active"]
             data["pokemon_iv_total"] = stats["pokemon_iv_total"]
             data["pokemon_iv_active"] = stats["pokemon_iv_active"]
+            data["pokemon_active_100iv"] = stats["pokemon_active_100iv"]
+            data["pokemon_active_90iv"] = stats["pokemon_active_90iv"]
+            data["pokemon_active_0iv"] = stats["pokemon_active_0iv"]
+            data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
+            data["pokemon_active_shiny"] = stats["pokemon_active_shiny"]
             data["pokestops_total"] = stats["pokestops_total"]
             data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
             data["pokestops_lures_glacial"] = stats["pokestops_lures_glacial"]
@@ -1438,9 +1443,6 @@ class ApiRequestHandler {
             data["spawnpoints_total"] = stats["spawnpoints_total"]
             data["spawnpoints_found"] = stats["spawnpoints_found"]
             data["spawnpoints_missing"] = stats["spawnpoints_missing"]
-            data["spawnpoints_percent"] = stats["spawnpoints_percent"]
-            data["spawnpoints_min30"] = stats["spawnpoints_min30"]
-            data["spawnpoints_min60"] = stats["spawnpoints_min60"]
         } else if top10 {
             let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: true)
             let today = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: false)

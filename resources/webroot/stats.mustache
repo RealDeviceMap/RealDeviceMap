@@ -1,9 +1,8 @@
 {{> header}}
 
 <!--TODO: Better stat graphs/charts-->
-<!--TODO: Spawnpoint icons-->
 <!--TODO: IV icons-->
-<!--TODO: Move js to separate files-->
+<!--TODO: Speed up dashboard stats-->
 
 <link rel="stylesheet" text="text/css" href="./static/css/stats.css">
 <script text="text/javascript" src="./static/js/utils.js"></script>
@@ -244,6 +243,11 @@ function getDashboardStats() {
             updateCounter(".pokemon-count", result.data.pokemon_active);
             updateCounter(".total-iv-count", result.data.pokemon_iv_total);
             updateCounter(".active-iv-count", result.data.pokemon_iv_active);
+            updateCounter(".active-100iv-count", result.data.pokemon_active_100iv);
+            updateCounter(".active-90iv-count", result.data.pokemon_active_90iv);
+            updateCounter(".active-0iv-count", result.data.pokemon_active_0iv);
+            updateCounter(".total-shiny-count", result.data.pokemon_total_shiny);
+            updateCounter(".active-shiny-count", result.data.pokemon_active_shiny);
     
             updateCounter(".gyms-count", result.data.gyms_total);
             updateCounter(".neutral-gyms-count", result.data.gyms_neutral);
@@ -263,6 +267,7 @@ function getDashboardStats() {
             updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
             updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
             updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
+            updateCounter(".percentage-spawnpoint-count", (result.data.spawnpoints_found / result.data.spawnpoints_total) * 100);
 
             var values = [
                 result.data.gyms_neutral,
@@ -750,7 +755,7 @@ function filterQuests() {
   <div class="card-body">
     <div class="container">
       <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-3 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
@@ -759,7 +764,7 @@ function filterQuests() {
             </a>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
@@ -768,7 +773,7 @@ function filterQuests() {
             </a>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1402.png" width="64" height="64"/></h3>
@@ -777,7 +782,7 @@ function filterQuests() {
             </a>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/pokestop/0.png" width="64" height="64"/></h3>
@@ -795,7 +800,7 @@ function filterQuests() {
   <div class="card-body">
     <div class="container">
       <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-4 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
@@ -804,16 +809,7 @@ function filterQuests() {
             </a>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="list-group">
-            <a class="list-group-item">
-              <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading pokemon-count">0</h4>
-              <p class="list-group-item-text">{{stats_active_pokemon}}</p>
-            </a>
-          </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-4 p-1">
           <div class="list-group">
             <a class="list-group-item">
               <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
@@ -822,12 +818,12 @@ function filterQuests() {
             </a>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4 p-1">
           <div class="list-group">
             <a class="list-group-item">
-              <h3 class="pull-right"><img src="./static/img/item/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading active-iv-count">0</h4>
-              <p class="list-group-item-text">{{stats_active_ivs}}</p>
+              <h3 class="pull-right"><img src="./static/img/misc/sparkles.png" width="64" height="64"/></h3>
+              <h4 class="list-group-item-heading total-shiny-count">0</h4>
+              <p class="list-group-item-text">{{stats_total_shiny}}</p>
             </a>
           </div>
         </div>
@@ -835,9 +831,35 @@ function filterQuests() {
     </div>
   </div>
 
+  <div class="card-body text-center p-1 m-3">
+    <div class="card-header bg-dark text-light"><b>{{stats_active_iv_statistics}}</b></div>
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{stats_active_ivs}}
+        <span class="badge badge-primary badge-pill active-iv-count">0</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{stats_active_100iv}}
+        <span class="badge badge-primary badge-pill active-100iv-count">0</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{stats_active_90iv}}
+        <span class="badge badge-primary badge-pill active-90iv-count">0</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{stats_active_0iv}}
+        <span class="badge badge-primary badge-pill active-0iv-count">0</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{stats_active_shiny}}
+        <span class="badge badge-primary badge-pill active-shiny-count">0</span>
+      </li>
+    </ul>
+  </div>
+
   <!-- Start Top 10 -->
   <div class="card-body text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Top 10 Pokemon</b></div>
+    <div class="card-header bg-dark text-light"><b>{{stats_top10_pokemon}}</b></div>
     <ul class="nav nav-tabs justify-content-center" role="tablist">
       <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">Lifetime</a></li>
       <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">Today</a></li>
@@ -868,10 +890,11 @@ function filterQuests() {
     </div>
   </div>
   <!-- End Top 10 -->
+
 </div>
 
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>Teams</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_teams}}</b></div>
   <div class="card-body">
     <div class="container">
     <div class="row">
@@ -879,9 +902,9 @@ function filterQuests() {
         <canvas id="teamChart"></canvas>
         <br>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-8 p-1">
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-6 p-1 ">
             <div class="list-group">
               <a class="list-group-item neutral">
                 <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
@@ -890,7 +913,7 @@ function filterQuests() {
               </a>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6 p-1">
             <div class="list-group">
               <a class="list-group-item valor">
                 <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
@@ -901,7 +924,7 @@ function filterQuests() {
           </div>
         </div>
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-6 p-1">
             <div class="list-group">
               <a class="list-group-item mystic">
                 <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
@@ -910,7 +933,7 @@ function filterQuests() {
               </a>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6 p-1">
             <div class="list-group">
               <a class="list-group-item instinct">
                 <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
@@ -982,50 +1005,34 @@ function filterQuests() {
   <div class="card-body">
     <div class="container">
       <div class="row">
-        <div class="col-lg-4 p-1">
+        <div class="col-lg-3 p-1">
           <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
+            <h3 class="pull-right"><img src="./static/img/misc/spawnpoint.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading spawnpoint-count">0</h4>
             <p class="list-group-item-text">{{stats_spawnpoint_total}}</p>
           </a>
         </div>
-        <div class="col-lg-4 p-1">
+        <div class="col-lg-3 p-1">
           <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/img/spawnpoint/1.png" width="64" height="64"/></h3>
+            <h3 class="pull-right"><img src="./static/img/misc/found.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading found-spawnpoint-count">0</h4>
             <p class="list-group-item-text">{{stats_spawnpoint_found}}</p>
           </a>
         </div>
-        <div class="col-lg-4 p-1">
+        <div class="col-lg-3 p-1">
           <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/img/spawnpoint/0.png" width="64" height="64"/></h3>
+            <h3 class="pull-right"><img src="./static/img/misc/missing.png" width="64" height="64"/></h3>
             <h4 class="list-group-item-heading missing-spawnpoint-count">0</h4>
             <p class="list-group-item-text">{{stats_spawnpoint_missing}}</p>
           </a>
         </div>
-        <!--
-        <div class="col-lg-4 p-1">
+        <div class="col-lg-3 p-1">
           <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/images/percentage.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading percentage-spawnpoint-count">{{spawnpoints_percent}}%</h4>
-            <p class="list-group-item-text">Percentage</p>
+            <h3 class="pull-right"><img src="./static/img/misc/percentage.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading percentage-spawnpoint-count">0%</h4>
+            <p class="list-group-item-text">{{stats_spawnpoint_percentage}}</p>
           </a>
         </div>
-        <div class="col-lg-4 p-1">
-          <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/images/30min.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading timer-30-min-count">{{spawnpoints_min30}}%</h4>
-            <p class="list-group-item-text">30 min timers</p>
-          </a>
-        </div>
-        <div class="col-lg-4 p-1">
-          <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/images/60min.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading timer-60-min-count">{{spawnpoints_min60}}%</h4>
-            <p class="list-group-item-text">60 min timers</p>
-          </a>
-        </div>
-        -->
       </div>
     </div>
   </div>
@@ -1041,21 +1048,26 @@ function filterQuests() {
       <canvas id="pokemonChart"></canvas>
     </div>
     <br>
-    <div class="row">
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-pokemon-date">{{stats_date}}</label>
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_filters}}</b></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-pokemon-date">{{stats_date}}</label>
+            </div>
+            <input id="filter-pokemon-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
+          </div>
+          
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="search-input">Search Pokemon</label>
+            </div>
+            <input type="text" id="filter-pokemon" class="form-control input-lg" onkeyup="filterPokemon()" placeholder="Search by name.." title="Type in a name">
+          </div>
+          
         </div>
-        <input id="filter-pokemon-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
-      <!--
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="search-input">Search Pokemon</label>
-        </div>
-        <input type="text" id="filter-pokemon" class="form-control input-lg" onkeyup="filterPokemon()" placeholder="Search by name.." title="Type in a name">
-      </div>
-      -->
     </div>
 
     <div class="card text-center p-1 m-3">
@@ -1089,12 +1101,17 @@ function filterQuests() {
       <canvas id="raidChart"></canvas>
     </div>
     <br>
-    <div class="row">
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-raids-date">{{stats_date}}</label>
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_filters}}</b></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-raids-date">{{stats_date}}</label>
+            </div>
+            <input id="filter-raids-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
+          </div>
         </div>
-        <input id="filter-raids-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
     </div>
 
@@ -1147,12 +1164,17 @@ function filterQuests() {
       <canvas id="questChart"></canvas>
     </div>
     <br>
-    <div class="row">
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-quests-date">{{stats_date}}</label>
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_filters}}</b></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-quests-date">{{stats_date}}</label>
+            </div>
+            <input id="filter-quests-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
+          </div>
         </div>
-        <input id="filter-quests-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
       </div>
     </div>
 
@@ -1226,25 +1248,30 @@ function filterQuests() {
   <!-- Start Community Day Tab -->
   <div id="commday" class="tab-pane fade" role="tabpanel" aria-labelledby="commday-tab">
     <h3 class="page-header text-center">{{stats_community_day}}</h3>
-    <div class="row">
-      <div class="input-group mb-4">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-date">{{stats_filter_start_date}}</label>
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_filters}}</b></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="input-group mb-4">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-date">{{stats_filter_start_date}}</label>
+            </div>
+            <input id="filter-date-start" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-date">{{stats_filter_end_date}}</label>
+            </div>
+            <input id="filter-date-end" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-pokemon-comday">{{stats_pokemon}}</label>
+            </div>
+            <select id="filter-pokemon-comday" class="custom-select">
+              <option disabled selected>{{stats_filter_select}}</option>
+                {{#pokemon_ids}}
+                    <option value="{{id}}">{{name}}</option>
+                {{/pokemon_ids}}
+            </select>
+          </div>
         </div>
-        <input id="filter-date-start" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-date">{{stats_filter_end_date}}</label>
-        </div>
-        <input id="filter-date-end" class="flatpickr" placeholder="Select Date & Time.." data-toggle="datetimepicker">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="filter-pokemon-comday">{{stats_pokemon}}</label>
-        </div>
-        <select id="filter-pokemon-comday" class="custom-select">
-          <option disabled selected>{{stats_filter_select}}</option>
-            {{#pokemon_ids}}
-                <option value="{{id}}">{{name}}</option>
-            {{/pokemon_ids}}
-        </select>
       </div>
     </div>
 

@@ -3532,6 +3532,7 @@
 		"stats_spawnpoint_total": "Total",
 		"stats_spawnpoint_found": "Found",
 		"stats_spawnpoint_missing": "Missing",
+		"stats_spawnpoint_percentage": "Percentage",
 		"stats_community_day": "Community Day",
 		"stats_filter_start_date": "Start Date",
 		"stats_filter_end_date": "End Date",
@@ -3552,6 +3553,14 @@
 		"stats_quests_item_rewards": "Item Rewards",
 		"stats_quests_pokemon_rewards": "Pokemon Rewards",
 		"stats_grunt_types": "Grunt Types",
-		"stats_statistics": "Statistics"
+		"stats_statistics": "Statistics",
+		"stats_active_100iv": "100% IV Pokemon",
+		"stats_active_90iv": "90% IV Pokemon",
+		"stats_active_0iv": "0% IV Pokemon",
+		"stats_total_shiny": "Total Shiny Pokemon",
+		"stats_active_shiny": "Shiny Pokemon",
+		"stats_active_iv_statistics": "Active IV Statistics",
+		"stats_top10_pokemon": "Top 10 Pokemon",
+		"stats_filters": "Filters"
 	}
 }

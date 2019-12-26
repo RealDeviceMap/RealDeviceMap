@@ -27,6 +27,11 @@ class Stats: JSONConvertibleObject {
             "pokemon_active": (pokemonStats?[1] ?? 0),
             "pokemon_iv_total": (pokemonStats?[2] ?? 0),
             "pokemon_iv_active": (pokemonStats?[3] ?? 0),
+            "pokemon_active_100iv": (pokemonStats?[4] ?? 0),
+            "pokemon_active_90iv": (pokemonStats?[5] ?? 0),
+            "pokemon_active_0iv": (pokemonStats?[6] ?? 0),
+            "pokemon_total_shiny": (pokemonStats?[7] ?? 0),
+            "pokemon_active_shiny": (pokemonStats?[8] ?? 0),
             "pokestops_total": (pokestopStats?[0] ?? 0),
             "pokestops_lures_normal": (pokestopStats?[1] ?? 0),
             "pokestops_lures_glacial": (pokestopStats?[2] ?? 0),
@@ -48,10 +53,7 @@ class Stats: JSONConvertibleObject {
             "invasion_stats": invasionStats as Any,
             "spawnpoints_total": (spawnpointStats?[0] ?? 0),
             "spawnpoints_found": (spawnpointStats?[1] ?? 0),
-            "spawnpoints_missing": (spawnpointStats?[2] ?? 0),
-            "spawnpoints_percent": 0,
-            "spawnpoints_min30": (spawnpointStats?[3] ?? 0),
-            "spawnpoints_min60": (spawnpointStats?[4] ?? 0)
+            "spawnpoints_missing": (spawnpointStats?[2] ?? 0)
         ]
     }
     
@@ -350,7 +352,12 @@ class Stats: JSONConvertibleObject {
           COUNT(id) AS total,
           SUM(expire_timestamp >= UNIX_TIMESTAMP()) AS active,
           SUM(iv IS NOT NULL) AS iv_total,
-          SUM(iv IS NOT NULL && expire_timestamp >= UNIX_TIMESTAMP()) AS iv_active
+          SUM(iv IS NOT NULL AND expire_timestamp >= UNIX_TIMESTAMP()) AS iv_active,
+          SUM(iv = 100 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_100iv,
+          SUM(iv >= 90 AND iv < 100 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_90iv,
+          SUM(iv = 0 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_0iv,
+          SUM(shiny = 1) AS total_shiny,
+          SUM(shiny = 1 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_shiny
         FROM pokemon
         """
         
@@ -370,11 +377,21 @@ class Stats: JSONConvertibleObject {
             let active = Int64(result[1] as! String) ?? 0
             let ivTotal = Int64(result[2] as! String) ?? 0
             let ivActive = Int64(result[3] as! String) ?? 0
+            let active100iv = Int64(result[4] as! String) ?? 0
+            let active90iv = Int64(result[5] as! String) ?? 0
+            let active0iv = Int64(result[6] as! String) ?? 0
+            let totalShiny = Int64(result[7] as! String) ?? 0
+            let activeShiny = Int64(result[8] as! String) ?? 0
             
             stats.append(total)
             stats.append(active)
             stats.append(ivTotal)
             stats.append(ivActive)
+            stats.append(active100iv)
+            stats.append(active90iv)
+            stats.append(active0iv)
+            stats.append(totalShiny)
+            stats.append(activeShiny)
             
         }
         return stats
