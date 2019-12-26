@@ -347,18 +347,25 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
         
+        //Thanks Flo
         let sql = """
-        SELECT
-          COUNT(id) AS total,
-          SUM(expire_timestamp >= UNIX_TIMESTAMP()) AS active,
-          SUM(iv IS NOT NULL) AS iv_total,
-          SUM(iv IS NOT NULL AND expire_timestamp >= UNIX_TIMESTAMP()) AS iv_active,
-          SUM(iv = 100 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_100iv,
-          SUM(iv >= 90 AND iv < 100 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_90iv,
-          SUM(iv = 0 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_0iv,
-          SUM(shiny = 1) AS total_shiny,
-          SUM(shiny = 1 AND expire_timestamp >= UNIX_TIMESTAMP()) AS active_shiny
-        FROM pokemon
+        SELECT * FROM (
+            SELECT SUM(count) AS total
+            FROM pokemon_stats
+        ) AS A
+        JOIN (
+            SELECT SUM(count) AS iv_total
+            FROM pokemon_iv_stats
+        ) AS B
+        JOIN (
+            SELECT SUM(count) AS total_shiny
+            FROM pokemon_shiny_stats
+        ) AS C
+        JOIN (
+            SELECT COUNT(id) AS active, COUNT(iv) AS iv_active, SUM(iv = 100) AS active_100iv, SUM(iv >= 90 AND iv < 100) AS active_90iv, SUM(iv = 0) AS active_0iv, SUM(shiny = 1) AS active_shiny
+            FROM pokemon
+            WHERE expire_timestamp >= UNIX_TIMESTAMP()
+        ) AS D
         """
         
         let mysqlStmt = MySQLStmt(mysql)
@@ -373,15 +380,15 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
             
-            let total = result[0] as! Int64
-            let active = Int64(result[1] as! String) ?? 0
-            let ivTotal = Int64(result[2] as! String) ?? 0
-            let ivActive = Int64(result[3] as! String) ?? 0
-            let active100iv = Int64(result[4] as! String) ?? 0
-            let active90iv = Int64(result[5] as! String) ?? 0
-            let active0iv = Int64(result[6] as! String) ?? 0
-            let totalShiny = Int64(result[7] as! String) ?? 0
-            let activeShiny = Int64(result[8] as! String) ?? 0
+            let total = Int64(result[0] as? String ?? "0") ?? 0
+            let ivTotal = Int64(result[1] as? String ?? "0") ?? 0
+            let totalShiny = Int64(result[2] as? String ?? "0") ?? 0
+            let active = result[3] as? Int64 ?? 0
+            let ivActive = result[4] as? Int64 ?? 0
+            let active100iv = Int64(result[5] as? String ?? "0") ?? 0
+            let active90iv = Int64(result[6] as? String ?? "0") ?? 0
+            let active0iv = Int64(result[7] as? String ?? "0") ?? 0
+            let activeShiny = Int64(result[8] as? String ?? "0") ?? 0
             
             stats.append(total)
             stats.append(active)
