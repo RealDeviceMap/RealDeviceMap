@@ -309,15 +309,15 @@ function getTopPokemonStats() {
             count = 0;
             $('#top-10-pokemon-lifetime').html(html);
             $.each(result.data.lifetime, function(key, value) {
-                if (count == 0) {
+                if (count === 0) {
                     html += "<div class='row justify-content-center'>";
                 }
-                html += "<div class='col-md-2" + (count == 0 ? " col-md-offset-1" : "") + "'>";
+                html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
                 html +=   "<img src='./static/img/pokemon/" + value.pokemon_id + ".png' width='64' height='64'>";
                 html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                 html +=   "<span class='text-nowrap'>" + value.shiny + "/" + value.count + "</span>";
                 html += "</div>";
-                if (count == 4) {
+                if (count === 4) {
                     html += "</div>";
                     count = 0;
                 } else {
@@ -330,15 +330,15 @@ function getTopPokemonStats() {
             count = 0;
             $('#top-10-pokemon-today').html(html);
             $.each(result.data.today, function(key, value) {
-                if (count == 0) {
+                if (count === 0) {
                     html += "<div class='row justify-content-center'>";
                 }
-                html += "<div class='col-md-2" + (count == 0 ? " col-md-offset-1" : "") + "'>";
+                html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
                 html +=   "<img src='./static/img/pokemon/" + value.pokemon_id + ".png' width='64' height='64'>";
                 html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                 html +=   "<span class='text-nowrap'>" + value.shiny + "/" + value.count + "</span>";
                 html += "</div>";
-                if (count == 4) {
+                if (count === 4) {
                     html += "</div>";
                     count = 0;
                 } else {
@@ -372,15 +372,15 @@ function getTopPokemonIVStats() {
             count = 0;
             $('#top-10-iv-today').html(html);
             $.each(result.data.top10_100iv, function(key, value) {
-                if (count == 0) {
+                if (count === 0) {
                     html += "<div class='row justify-content-center'>";
                 }
-                html += "<div class='col-md-2" + (count == 0 ? " col-md-offset-1" : "") + "'>";
+                html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
                 html +=   "<img src='./static/img/pokemon/" + value.pokemon_id + ".png' width='64' height='64'>";
                 html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                 html +=   "<span class='text-nowrap'>" + value.count + " 100%</span>";
                 html += "</div>";
-                if (count == 4) {
+                if (count === 4) {
                     html += "</div>";
                     count = 0;
                 } else {
@@ -557,7 +557,7 @@ function getHistoricalQuestStats() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("HISTORIC STATS Result:", result);
+            console.log("Result:", result);
             if (result == null) {
                 console.log("Failed to parse raid stats.");
                 return;
@@ -698,7 +698,7 @@ function filterQuests() {
             $("#quest-item-stats-table").html(html);
             result.data.quest_item_stats.forEach(function(stat) {
                 html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/item/" + (stat.item_id == 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
+                html +=   "<img src='./static/img/item/" + (stat.item_id === 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
                 html +=   "<div class='card-body'>";
                 html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
                 html +=     "<p class='card-text text-nowrap'>";
