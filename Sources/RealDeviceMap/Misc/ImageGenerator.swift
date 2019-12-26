@@ -174,7 +174,7 @@ class ImageGenerator {
                 }
             }
             
-            if qruntDir.exists, pokestopDir.exists {
+            if gruntDir.exists, pokestopDir.exists {
                 Log.info(message: "[ImageGenerator] Creating Invasion Images...")
                 try! pokestopDir.forEachEntry { (pokestopFilename) in
                     if !pokestopFilename.contains(".png") || !pokestopFilename.hasPrefix("i") {
