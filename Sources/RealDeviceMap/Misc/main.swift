@@ -146,13 +146,17 @@ WebHookController.global.start()
 // Load Forms
 Log.debug(message: "[MAIN] Loading Avilable Forms")
 var avilableForms = [String]()
-for file in try! FileManager().contentsOfDirectory(atPath: "\(projectroot)/resources/webroot/static/img/pokemon") {
-    let split = file.components(separatedBy: "-")
-    if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-        avilableForms.append("\(pokemonID)-\(formID)")
+do {
+    for file in try FileManager().contentsOfDirectory(atPath: "\(projectroot)/resources/webroot/static/img/pokemon") {
+        let split = file.components(separatedBy: "-")
+        if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
+            avilableForms.append("\(pokemonID)-\(formID)")
+        }
     }
+    WebReqeustHandler.avilableFormsJson = try avilableForms.jsonEncodedString()
+} catch {
+    Log.error(message: "Failed to load forms. Frontend will only display default forms.")
 }
-WebReqeustHandler.avilableFormsJson = try! avilableForms.jsonEncodedString()
 
 Log.debug(message: "[MAIN] Loading Avilable Items")
 var aviableItems = [-3, -2, -1]
