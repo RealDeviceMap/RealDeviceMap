@@ -892,17 +892,16 @@ function filterQuests() {
   <!-- End Top 10 -->
 
 </div>
-
 <div class="card text-center p-1 m-3">
-  <div class="card-header bg-dark text-light"><b>{{stats_teams}}</b></div>
+  <div class="card-header bg-dark text-light"><b>{{stats_gyms}}</b></div>
   <div class="card-body">
     <div class="container">
-    <div class="row">
-      <div class="col-md-4" style="margin-top:auto; margin-bottom:auto;">
-        <canvas id="teamChart"></canvas>
-        <br>
-      </div>
-      <div class="col-md-8 p-1">
+      <div class="row">
+        <div class="col-md-4" style="margin-top:auto; margin-bottom:auto;">
+          <canvas id="teamChart"></canvas>
+          <br>
+        </div>
+        <div class="col-md-8 p-1">
         <div class="row">
           <div class="col-md-6 p-1 ">
             <div class="list-group">
@@ -943,8 +942,25 @@ function filterQuests() {
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+      <br>
+      <div class="row justify-content-center container">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-dark text-light"><b>{{stats_new_gyms}}</b></div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush">
+              {{#new_gyms}}
+                <li class="list-group-item">
+                  <a href="https://maps.google.com/maps?q={{lat}},{{lon}}">{{name}} {{id}}</a>
+                </li>
+              {{/new_gyms}}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -953,6 +969,13 @@ function filterQuests() {
   <div class="card-body">
     <div class="container">
       <div class="row">
+        <div class="col-md-4 p-1">
+          <a class="list-group-item">
+            <h3 class="pull-right"><img src="./static/img/item/0.png" width="64" height="64"/></h3>
+            <h4 class="list-group-item-heading quest-pokestop-count">0</h4>
+            <p class="list-group-item-text">{{stats_field_research}}</p>
+          </a>
+        </div>
         <div class="col-md-4 p-1">
           <a class="list-group-item">
             <h3 class="pull-right"><img src="./static/img/pokestop/i0.png" width="64" height="64"/></h3>
@@ -988,18 +1011,27 @@ function filterQuests() {
             <p class="list-group-item-text">{{stats_magnetic_lures}}</p>
           </a>
         </div>
-        <div class="col-md-4 p-1">
-          <a class="list-group-item">
-            <h3 class="pull-right"><img src="./static/img/item/0.png" width="64" height="64"/></h3>
-            <h4 class="list-group-item-heading quest-pokestop-count">0</h4>
-            <p class="list-group-item-text">{{stats_field_research}}</p>
-          </a>
+      </div>
+      <br>
+      <div class="row justify-content-center container">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-dark text-light"><b>{{stats_new_pokestops}}</b></div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush">
+              {{#new_pokestops}}
+                <li class="list-group-item">
+                  <a href="https://maps.google.com/maps?q={{lat}},{{lon}}">{{name}} {{id}}</a>
+                </li>
+              {{/new_pokestops}}
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 <div class="card text-center p-1 m-3">
   <div class="card-header bg-dark text-light"><b>{{stats_spawnpoint_timers}}</b></div>
   <div class="card-body">
@@ -1058,14 +1090,14 @@ function filterQuests() {
             </div>
             <input id="filter-pokemon-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
           </div>
-          
+          <!--
           <div class="input-group mb-3">
             <div class="input-group-prepend">
               <label class="input-group-text" for="search-input">Search Pokemon</label>
             </div>
             <input type="text" id="filter-pokemon" class="form-control input-lg" onkeyup="filterPokemon()" placeholder="Search by name.." title="Type in a name">
           </div>
-          
+          -->
         </div>
       </div>
     </div>

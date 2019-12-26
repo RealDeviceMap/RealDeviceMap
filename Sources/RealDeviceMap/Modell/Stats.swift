@@ -783,6 +783,103 @@ class Stats: JSONConvertibleObject {
         
     }
     
+    public static func getNewPokestops(mysql: MySQL?=nil, hours: Int?=24) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT id, lat, lon, name, url, first_seen_timestamp
+        FROM `pokestop`
+        WHERE first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL ? HOUR)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        mysqlStmt.bindParam(hours ?? 24)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let id = result[0] as! String
+            let lat = result[1] as! Double
+            let lon = result[2] as! Double
+            let name = result[3] as? String
+            let url = result[4] as? String
+            let firstSeen = result[5] as? UInt32
+            
+            stats.append([
+                "id": id,
+                "lat": lat,
+                "lon": lon,
+                "name": name ?? "",
+                "url": url ?? "",
+                "first_seen": firstSeen ?? 0
+            ])
+            
+        }
+        return stats
+        
+    }
+    
+    public static func getNewGyms(mysql: MySQL?=nil, hours: Int?=24) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT id, lat, lon, name, url, first_seen_timestamp
+        FROM `gym`
+        WHERE first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL ? HOUR)
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        mysqlStmt.bindParam(hours ?? 24)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let id = result[0] as! String
+            let lat = result[1] as! Double
+            let lon = result[2] as! Double
+            let name = result[3] as? String
+            let url = result[4] as? String
+            let firstSeen = result[5] as? UInt32
+            
+            stats.append([
+                "id": id,
+                "lat": lat,
+                "lon": lon,
+                "name": name ?? "",
+                "url": url ?? "",
+                "first_seen": firstSeen ?? 0
+            ])
+            
+        }
+        return stats
+        
+    }
+    
+    
     public static func getCommDayStats(mysql: MySQL?=nil, pokemonId: UInt16, start: String, end: String) throws -> [String: Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {

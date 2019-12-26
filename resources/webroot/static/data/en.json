@@ -3516,7 +3516,7 @@
 		"stats_total_pokemon": "Total Pokemon",
 		"stats_total_ivs": "Total IVs",
 		"stats_active_ivs": "Active with IVs",
-		"stats_teams": "Teams",
+		"stats_gyms": "Gyms",
 		"stats_neutral_gyms": "Neutral Gyms",
 		"stats_valor_gyms": "Valor Gyms",
 		"stats_mystic_gyms": "Mystic Gyms",
@@ -3561,6 +3561,8 @@
 		"stats_active_shiny": "Shiny Pokemon",
 		"stats_active_iv_statistics": "Active IV Statistics",
 		"stats_top10_pokemon": "Top 10 Pokemon",
-		"stats_filters": "Filters"
+		"stats_filters": "Filters",
+		"stats_new_pokestops": "New Pokestops (Last 24 Hours)",
+		"stats_new_gyms": "New Gyms (Last 24 Hours)"
 	}
 }
