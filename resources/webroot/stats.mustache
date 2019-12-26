@@ -459,16 +459,16 @@ function getCommDayStats(pokemonId, start, end) {
             removeDataset(ivChart);
     
             addDataset(ivChart, { data: [result.data.stats.iv_0], backgroundColor: 'black', label: '0% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'red', label: '1-9% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_1_9], backgroundColor: 'brown', label: '1-9% IV' });
             addDataset(ivChart, { data: [result.data.stats.iv_10_19], backgroundColor: 'pink', label: '10-19% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'brown', label: '20-29% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_20_29], backgroundColor: 'gray', label: '20-29% IV' });
             addDataset(ivChart, { data: [result.data.stats.iv_30_39], backgroundColor: 'purple', label: '30-39% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'gray', label: '40-49% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'olive', label: '50-59% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'magenta', label: '60-69% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'blue', label: '70-79% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_40_49], backgroundColor: 'blue', label: '40-49% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_50_59], backgroundColor: 'red', label: '50-59% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_60_69], backgroundColor: 'orange', label: '60-69% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_70_79], backgroundColor: 'lime', label: '70-79% IV' });
             addDataset(ivChart, { data: [result.data.stats.iv_80_89], backgroundColor: 'yellow', label: '80-89% IV' });
-            addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'orange', label: '90-99% IV' });
+            addDataset(ivChart, { data: [result.data.stats.iv_90_99], backgroundColor: 'magenta', label: '90-99% IV' });
             addDataset(ivChart, { data: [result.data.stats.iv_100], backgroundColor: 'green', label: '100% IV' });
     }});
 }

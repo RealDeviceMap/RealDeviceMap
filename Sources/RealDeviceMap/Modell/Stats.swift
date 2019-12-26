@@ -935,31 +935,31 @@ class Stats: JSONConvertibleObject {
         var stats = [String: Any]()
         while let result = results.next() {
             
-            stats["total"] = result[0] as! Int64
-            stats["with_iv"] = Int64(result[1] as! String) ?? 0
-            stats["without_iv"] = Int64(result[2] as! String) ?? 0
+            stats["total"] = result[0] as? Int64 ?? 0
+            stats["with_iv"] = Int64(result[1] as? String ?? "0") ?? 0
+            stats["without_iv"] = Int64(result[2] as? String ?? "0") ?? 0
 
-            stats["iv_0"] = Int64(result[3] as! String) ?? 0
-            stats["iv_1_9"] = Int64(result[4] as! String) ?? 0
-            stats["iv_10_19"] = Int64(result[5] as! String) ?? 0
-            stats["iv_20_29"] = Int64(result[6] as! String) ?? 0
-            stats["iv_30_39"] = Int64(result[7] as! String) ?? 0
-            stats["iv_40_49"] = Int64(result[8] as! String) ?? 0
-            stats["iv_50_59"] = Int64(result[9] as! String) ?? 0
-            stats["iv_60_69"] = Int64(result[10] as! String) ?? 0
-            stats["iv_70_79"] = Int64(result[11] as! String) ?? 0
-            stats["iv_80_89"] = Int64(result[12] as! String) ?? 0
-            stats["iv_90_99"] = Int64(result[13] as! String) ?? 0
-            stats["iv_100"] = Int64(result[14] as! String) ?? 0
+            stats["iv_0"] = Int64(result[3] as? String ?? "0") ?? 0
+            stats["iv_1_9"] = Int64(result[4] as? String ?? "0") ?? 0
+            stats["iv_10_19"] = Int64(result[5] as? String ?? "0") ?? 0
+            stats["iv_20_29"] = Int64(result[6] as? String ?? "0") ?? 0
+            stats["iv_30_39"] = Int64(result[7] as? String ?? "0") ?? 0
+            stats["iv_40_49"] = Int64(result[8] as? String ?? "0") ?? 0
+            stats["iv_50_59"] = Int64(result[9] as? String ?? "0") ?? 0
+            stats["iv_60_69"] = Int64(result[10] as? String ?? "0") ?? 0
+            stats["iv_70_79"] = Int64(result[11] as? String ?? "0") ?? 0
+            stats["iv_80_89"] = Int64(result[12] as? String ?? "0") ?? 0
+            stats["iv_90_99"] = Int64(result[13] as? String ?? "0") ?? 0
+            stats["iv_100"] = Int64(result[14] as? String ?? "0") ?? 0
             
-            stats["male"] = Int64(result[15] as! String) ?? 0
-            stats["female"] = Int64(result[16] as! String) ?? 0
-            stats["genderless"] = Int64(result[17] as! String) ?? 0
+            stats["male"] = Int64(result[15] as? String ?? "0") ?? 0
+            stats["female"] = Int64(result[16] as? String ?? "0") ?? 0
+            stats["genderless"] = Int64(result[17] as? String ?? "0") ?? 0
             
-            stats["level_1_9"] = Int64(result[18] as! String) ?? 0
-            stats["level_10_19"] = Int64(result[19] as! String) ?? 0
-            stats["level_20_29"] = Int64(result[20] as! String) ?? 0
-            stats["level_30_35"] = Int64(result[21] as! String) ?? 0
+            stats["level_1_9"] = Int64(result[18] as? String ?? "0") ?? 0
+            stats["level_10_19"] = Int64(result[19] as? String ?? "0") ?? 0
+            stats["level_20_29"] = Int64(result[20] as? String ?? "0") ?? 0
+            stats["level_30_35"] = Int64(result[21] as? String ?? "0") ?? 0
             
         }
         
