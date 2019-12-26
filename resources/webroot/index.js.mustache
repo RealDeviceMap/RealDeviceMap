@@ -10,6 +10,9 @@ let gymMarkers = [];
 let pokemonMarkers = [];
 let spawnpointMarkers = [];
 let cellMarkers = [];
+let submissionPlacementCellMarkers = [];
+let submissionPlacementRingMarkers = [];
+let submissionTypeCellMarkers = [];
 let weatherMarkers = [];
 let deviceMarkers = [];
 
@@ -37,6 +40,7 @@ let openedPokemon;
 let openedPokestop;
 let openedGym;
 let openedCell;
+let openedSubmissionTypeCell;
 let openedWeather;
 let openedDevice;
 
@@ -248,6 +252,7 @@ $(function() {
             show_pokestops: showPokestops,
             show_spawnpoints: showSpawnpoints,
             show_cells: showCells,
+            show_submission_cells: showSubmissionCells,
             show_weathers: showWeathers,
             gym: gymFilterNew,
             raid: raidFilterNew,
@@ -366,6 +371,14 @@ function loadStorage() {
         showPokemon = (showPokemonValue === 'true');
     }
 
+    const showSubmissionCellsValue = retrieve('show_submission_cells');
+    if (showSubmissionCellsValue === null) {
+        store('show_submission_cells', false);
+        showSubmissionCells = false;
+    } else {
+        showSubmissionCells = (showSubmissionCellsValue === 'true');
+    }
+    
     const showCellsValue = retrieve('show_cells');
     if (showCellsValue === null) {
         store('show_cells', false);
@@ -813,6 +826,7 @@ function initMap() {
         const newShowPokemon = $('#show-pokemon').hasClass('active');
         const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active');
         const newShowCells = $('#show-cells').hasClass('active');
+        const newShowSubmissionCells = $('#show-submission-cells').hasClass('active');
         const newShowWeathers = $('#show-weathers').hasClass('active');
         const newShowDevices = $('#show-devices').hasClass('active');
 
@@ -873,6 +887,20 @@ function initMap() {
                 map.removeLayer(cell.marker);
             });
             cellMarkers = [];
+        }
+        if (newShowSubmissionCells !== showSubmissionCells && newShowSubmissionCells === false) {
+            $.each(submissionPlacementCellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            submissionPlacementCellMarkers = [];
+            $.each(submissionPlacementRingMarkers, function (index, ring) {
+                map.removeLayer(ring.marker);
+            });
+            submissionPlacementRingMarkers = [];
+            $.each(submissionTypeCellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            submissionTypeCellMarkers = [];
         }
         if (newShowWeathers !== showWeathers && newShowWeathers === false) {
             $.each(weatherMarkers, function (index, weather) {
@@ -970,6 +998,8 @@ function initMap() {
         store('spawnpoint_filter', JSON.stringify(spawnpointFilter));
         store('show_cells', newShowCells);
         showCells = newShowCells;
+        store('show_submission_cells', newShowSubmissionCells);
+        showSubmissionCells = newShowSubmissionCells;
         store('show_weathers', newShowWeathers);
         showWeathers = newShowWeathers;
         showDevices = newShowDevices;
@@ -1047,6 +1077,14 @@ function initMap() {
                     $('#hide-cells').addClass('active');
                     $('#show-cells').removeClass('active');
                 }
+                
+                if (retrieve('show_submission_cells') == 'true') {
+                    $('#show-submission-cells').addClass('active');
+                    $('#hide-submission-cells').removeClass('active');
+                } else {
+                    $('#hide-submission-cells').addClass('active');
+                    $('#show-submission-cells').removeClass('active');
+                }
 
                 if (retrieve('show_weathers') == 'true') {
                     $('#show-weathers').addClass('active');
@@ -1073,6 +1111,32 @@ function initMap() {
 	map.addControl(new customControlSettings());
 
 	map.on('zoomend', function() {
+ 
+        if (showCells && map.getZoom() < 13) {
+            $.each(cellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            cellMarkers = [];
+        }
+
+        if (showSubmissionCells && map.getZoom() < 16) {
+            $.each(submissionPlacementCellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            submissionPlacementCellMarkers = [];
+            $.each(submissionPlacementRingMarkers, function (index, ring) {
+                map.removeLayer(ring.marker);
+            });
+            submissionPlacementRingMarkers = [];
+        }
+
+        if (showSubmissionCells && map.getZoom() < 14) {
+            $.each(submissionTypeCellMarkers, function (index, cell) {
+                map.removeLayer(cell.marker);
+            });
+            submissionTypeCellMarkers = [];
+        }
+ 
 		lastUpdateServer = 0;
 		loadData();
 	});
@@ -1223,7 +1287,9 @@ function loadData() {
         'pokestop_filter_exclude': JSON.stringify(pokestopFilterExclude),
         'spawnpoint_filter_exclude': JSON.stringify(spawnpointFilterExclude),
         'show_spawnpoints': showSpawnpoints,
-        'show_cells': showCells,
+        'show_cells': showCells && map.getZoom() >= 13,
+        'show_submission_placement_cells': showSubmissionCells && map.getZoom() >= 16,
+        'show_submission_type_cells': showSubmissionCells && map.getZoom() >= 14,
         'show_weathers': showWeathers,
         'show_active_devices': showDevices,
         'last_update': lastUpdateServer,
@@ -1480,7 +1546,7 @@ function loadData() {
 
             const cells = data.data.cells;
             $.each(cells, function (index, cell) {
-                if (showCells) {
+                if (showCells && map.getZoom() >= 13) {
                     if (cell.updated > lastUpdateServer) {
                         lastUpdateServer = cell.updated;
                     }
@@ -1495,6 +1561,71 @@ function loadData() {
                     } else {
                         oldCell.updated = cell.updated;
                         oldCell.marker.setStyle(getCellStyle(cell, ts));
+                    }
+                }
+            });
+            
+            const submissionTypeCells = data.data.submission_type_cells;
+            $.each(submissionTypeCells, function (index, cell) {
+                if (showSubmissionCells && map.getZoom() >= 14) {
+                    if (lastUpdateServer == 0) {
+                        lastUpdateServer = 1
+                    }
+
+                    const oldCell = submissionTypeCellMarkers.find(function (value) {
+                        return cell.id === value.id ;
+                    });
+
+                    if (oldCell === undefined) {
+                        cell.marker = getSubmissionTypeCellMarker(cell, ts);
+                        submissionTypeCellMarkers.push(cell);
+                        cell.marker.addTo(map);
+                    } else {
+                        oldCell.updated = cell.updated;
+                        oldCell.marker.setStyle(getSubmissionTypeCellStyle(cell, ts));
+                    }
+                }
+            });
+            
+            const submissionPlacementCells = data.data.submission_placement_cells;
+            $.each(submissionPlacementCells, function (index, cell) {
+                if (showSubmissionCells && map.getZoom() >= 16) {
+                    if (lastUpdateServer == 0) {
+                        lastUpdateServer = 1
+                    }
+
+                    const oldCell = submissionPlacementCellMarkers.find(function (value) {
+                        return cell.id === value.id ;
+                    });
+
+                    if (oldCell === undefined) {
+                        cell.marker = getSubmissionPlacementCellMarker(cell, ts);
+                        submissionPlacementCellMarkers.push(cell);
+                        cell.marker.addTo(map);
+                    } else {
+                        oldCell.updated = cell.updated;
+                        oldCell.marker.setStyle(getSubmissionPlacementCellStyle(cell, ts));
+                    }
+                }
+            });
+            
+            const submissionPlacementRings = data.data.submission_placement_rings;
+            $.each(submissionPlacementRings, function (index, ring) {
+                if (showSubmissionCells && map.getZoom() >= 16) {
+                    if (lastUpdateServer == 0) {
+                        lastUpdateServer = 1
+                    }
+                    const oldRing = submissionPlacementRingMarkers.find(function (value) {
+                        return ring.id === value.id ;
+                    });
+
+                    if (oldRing === undefined) {
+                        ring.marker = getSubmissionPlacementRingMarker(ring, ts);
+                        submissionPlacementRingMarkers.push(ring);
+                        ring.marker.addTo(map);
+                    } else {
+                        oldRing.updated = ring.updated;
+                        oldRing.marker.setStyle(getSubmissionPlacementRingStyle(ring, ts));
                     }
                 }
             });
@@ -1743,6 +1874,9 @@ function updateOpenedPopupLoop() {
 	}
     if (openedCell !== undefined) {
         openedCell.marker._popup.setContent(getCellPopupContent(openedCell));
+    }
+    if (openedSubmissionTypeCell !== undefined) {
+        openedSubmissionTypeCell.marker._popup.setContent(getSubmissionTypeCellPopupContent(openedSubmissionTypeCell));
     }
     if (openedWeather !== undefined) {
         openedWeather.marker._popup.setContent(getWeatherPopupContent(openedWeather));
@@ -2236,6 +2370,31 @@ function getCellPopupContent(cell) {
     return content;
 }
 
+function getSubmissionTypeCellPopupContent(cell) {
+    let content = '<center>';
+    content += '<h6><b>Level '+cell.level+' S2 Cell</b></h6>';
+    content += '<b>Id:</b> '+cell.id+'<br>';
+    content += '<b>Total Count:</b> '+ cell.count +'<br>';
+    content += '<b>Pokestop Count:</b> '+ cell.count_pokestops +'<br>';
+    content += '<b>Gym Count:</b> '+ cell.count_gyms + '<br>';
+    
+    let gymThreshold = [ 2, 6 , 20 ];
+
+    if (cell.count_gyms < 3) {
+        content += '<b>Submissions untill Gym:</b> ' + (gymThreshold[cell.count_gyms] - cell.count);
+    } else {
+        content += '<b>Submissions untill Gym:</b> Never';
+    }
+    
+    if ((cell.count == 1 && cell.count_gyms < 1) || (cell.count == 5 && cell.count_gyms < 2) || (cell.count == 19 && cell.count_gyms < 3)) {
+        content += '<br><b>Next submission will cause a Gym!';
+    }
+    
+
+    content += '</center>';
+    return content;
+}
+
 function degreesToCardinal(d) {
     var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
         'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
@@ -2457,7 +2616,7 @@ function getQuestCondition(condition) {
 // MARK: - Markers
 
 function getCellMarker(cell, ts) {
-    const polygon = L.polygon(cell.polygon);
+    const polygon = L.polygon(cell.polygon, { forceZIndex: 1 });
     polygon.setStyle(getCellStyle(cell, ts));
     polygon.bindPopup(getCellPopupContent(cell));
     polygon.on('popupopen', function (popup) {
@@ -2476,7 +2635,63 @@ function getCellStyle(cell, ts) {
         value = Math.min((ago - 150) / 750, 1);
     }
     const hue = ((1-value)*120).toString(10);
-    return {fillColor: ["hsl(",hue,",100%,50%)"].join(""), color: "black", opacity: 0.75, fillOpacity: 0.5};
+    return {fillColor: ["hsl(",hue,",100%,50%)"].join(""), color: "black", opacity: 0.75, fillOpacity: 0.5, weight: 0.5};
+}
+
+function getSubmissionPlacementCellMarker(cell, ts) {
+    const polygon = L.polygon(cell.polygon, { forceZIndex: 2, interactive: false });
+    polygon.setStyle(getSubmissionPlacementCellStyle(cell, ts));
+    return polygon;
+}
+
+function getSubmissionPlacementCellStyle(cell, ts) {
+    if (cell.blocked) {
+        return {fillColor: "black", color: "black", opacity: 0.75, fillOpacity: 0.25, weight: 0.1};
+    } else {
+        return {fillColor: "green", color: "black", opacity: 0.75, fillOpacity: 0.0, weight: 0.1};
+    }
+}
+
+function getSubmissionPlacementRingMarker(ring, ts) {
+    const circle = L.circle([ring.lat, ring.lon], {
+        radius: ring.radius,
+        forceZIndex: 4,
+        interactive: false
+    });
+    circle.setStyle(getSubmissionPlacementRingStyle(ring, ts));
+    return circle;
+}
+
+function getSubmissionPlacementRingStyle(cell, ts) {
+    return {fillColor: "blue", color: "black", opacity: 0.75, fillOpacity: 0.25, weight: 0.1};
+}
+
+function getSubmissionTypeCellMarker(cell, ts) {
+    const polygon = L.polygon(cell.polygon, { forceZIndex: 3 });
+    polygon.setStyle(getSubmissionTypeCellStyle(cell, ts));
+    polygon.bindPopup(getSubmissionTypeCellPopupContent(cell));
+    polygon.bindTooltip(''+cell.count+'',{
+	    permanent: true,
+	    direction: "center",
+	    className: 'labelstyle'
+    })
+    polygon.on('popupopen', function (popup) {
+        openedSubmissionTypeCell = cell;
+        polygon._popup.setContent(getSubmissionTypeCellPopupContent(cell));
+    });
+    return polygon;
+}
+
+function getSubmissionTypeCellStyle(cell, ts) {
+    if ((cell.count == 1 && cell.count_gyms < 1) || (cell.count == 5 && cell.count_gyms < 2) || (cell.count == 19 && cell.count_gyms < 3)) {
+        return {fillColor: "red", color: "red", opacity: 0.75, fillOpacity: 0.5, weight: 0.75};
+    } else if ((cell.count == 4 && cell.count_gyms < 2) || (cell.count == 18 && cell.count_gyms < 3)) {
+	    return {fillColor: "orange", color: "red", opacity: 0.75, fillOpacity: 0.5, weight: 0.75};
+    } else if (cell.count >= 20) {
+        return {fillColor: "black", color: "black", opacity: 0.75, fillOpacity: 0.25, weight: 0.75};
+    } else {
+        return {fillColor: "blue", color: "black", opacity: 0.75, fillOpacity: 0.0, weight: 0.75};
+    }
 }
 
 function getWeatherMarker(weather, ts) {
@@ -2499,7 +2714,7 @@ function getWeatherStyle(weather, ts) {
         value = Math.min((ago - 150) / 1800, 1);
     }
     const hue = ((1-value)*120).toString(10);
-    return {fillColor: ["hsl(",hue,",100%,50%)"].join(""), color: "black", opacity: 0.75, fillOpacity: 0.5};
+    return {fillColor: ["hsl(",hue,",100%,50%)"].join(""), color: "black", opacity: 0.75, fillOpacity: 0.5, weight: 1.0};
 }
 
 function getPokemonMarkerIcon(pokemon, ts) {
@@ -4161,6 +4376,9 @@ function loadFilterSettings(e) {
 
         showCells = obj.show_cells;
         store('show_cells', showCells);
+        
+        showSubmissionCells = obj.show_submission_cells;
+        store('show_submission_cells"', showSubmissionCells);
 
         showWeathers = obj.show_weathers;
         store('show_weathers', showWeathers);
@@ -4220,6 +4438,15 @@ function loadFilterSettings(e) {
             $('#hide-cells').addClass('active');
             $('#show-cells').removeClass('active');
         }
+        
+        if (showSubmissionCells) {
+            $('#show-submission-cells').addClass('active');
+            $('#hide-submission-cells').removeClass('active');
+        } else {
+            $('#hide-submission-cells').addClass('active');
+            $('#show-submission-cells').removeClass('active');
+        }
+
 
         if (showWeathers) {
             $('#show-weathers').addClass('active');
