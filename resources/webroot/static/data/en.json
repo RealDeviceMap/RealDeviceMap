@@ -3550,6 +3550,8 @@
 		"stats_raids": "Raids",
 		"stats_quests": "Field Research Quests",
 		"stats_quests_item_rewards": "Item Rewards",
-		"stats_quests_pokemon_rewards": "Pokemon Rewards"
+		"stats_quests_pokemon_rewards": "Pokemon Rewards",
+		"stats_grunt_types": "Grunt Types",
+		"stats_statistics": "Statistics"
 	}
 }

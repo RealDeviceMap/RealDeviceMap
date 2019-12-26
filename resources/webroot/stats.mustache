@@ -3,30 +3,14 @@
 <!--TODO: Better stat graphs/charts-->
 <!--TODO: Spawnpoint icons-->
 <!--TODO: IV icons-->
-<!--TODO: Move js and css to separate files-->
+<!--TODO: Move js to separate files-->
 
-<style>
-    a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
-    /* Neutral */
-    a.neutral i,.neutral h4.list-group-item-heading { color:#dddddd; }
-    a.neutral:hover { background-color:#dddddd; }
-    a.neutral:hover * { color:#FFF; }
-    /* Valor */
-    a.valor i,.valor h4.list-group-item-heading { color:#dd4b39; }
-    a.valor:hover { background-color:#dd4b39; }
-    a.valor:hover * { color:#FFF; }
-    /* Mystic */
-    a.mystic i,.mystic h4.list-group-item-heading { color:#3b5998; }
-    a.mystic:hover { background-color:#3b5998; }
-    a.mystic:hover * { color:#FFF; }
-    /* Instinct */
-    a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
-    a.instinct:hover { background-color:#FFF444; }
-    a.instinct:hover * { color:black; }
-</style>
+<link rel="stylesheet" text="text/css" href="./static/css/stats.css">
+<script text="text/javascript" src="./static/js/utils.js"></script>
 
 <script>
 $(document).ready(function() {
+    var csrf = "{{csrf}}";
     $("[data-toggle='datetimepicker']").flatpickr({
         altInput: true,
         altFormat: "F j, Y h\:00 K",
@@ -128,6 +112,23 @@ $(document).ready(function() {
         }
     };
 
+    var teamOptions = {
+        responsive: true,
+        legend: false,
+        tooltips: { mode: "nearest", intersect: false, },
+        hover: { mode: "nearest", intersect: true },
+        elements: {
+            arc: {
+                backgroundColor: colorize.bind(null, false, false),
+                hoverBackgroundColor: hoverColorize
+            }
+        },
+        animation: {
+            animateScale: true,
+            animateRotate: true
+        }
+    };
+
     var scanChart = new Chart('scanChart', {
         type: 'pie',
         data: {
@@ -184,6 +185,20 @@ $(document).ready(function() {
             datasets: []
         },
         options: lineOptions
+    });
+
+    var teamChart = new Chart('teamChart', {
+        type: 'pie',
+        data: {
+            datasets: [],
+            labels: [
+                'Neutral',
+                'Mystic',
+                'Valor',
+                'Instinct'
+            ]
+        },
+        options: teamOptions
     });
 
     pokemonChart.options.title.text = "Historical Pokemon Statistics";
@@ -248,7 +263,28 @@ function getDashboardStats() {
             updateCounter(".spawnpoint-count", result.data.spawnpoints_total);
             updateCounter(".found-spawnpoint-count", result.data.spawnpoints_found);
             updateCounter(".missing-spawnpoint-count", result.data.spawnpoints_missing);
-    }});
+
+            var values = [
+                result.data.gyms_neutral,
+                result.data.gyms_mystic,
+                result.data.gyms_valor,
+                result.data.gyms_instinct
+            ];
+            var colors = [
+                "gray",
+                "blue",
+                "red",
+                "yellow"
+            ];
+
+            removeDataset(teamChart);
+            addDataset(teamChart, {
+                data: values,
+                backgroundColor: colors,
+                label: "Teams"
+            });
+        }
+    });
 }
 
 function getTopPokemonStats() {
@@ -432,43 +468,6 @@ function getCommDayStats(pokemonId, start, end) {
     }});
 }
 
-function filterPokemon() {
-    var date = $("#filter-pokemon-date").val();
-    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
-    var data = {
-        'pokemon': true,
-        'date': (formattedDate || "2019-12-20"),
-        '_csrf': "{{csrf}}"
-    };
-    $.ajax({ 
-        url: "/api/get_stats",
-        data: data,
-        type: "POST",
-        success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
-                console.log("Failed to parse pokemon stats.");
-                return;
-            }
-            var html = "";
-            $("#pokemon-stats-table").html(html);
-            result.data.stats.forEach(function(stat) {
-                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png'' width='48' height='48'>";
-                html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-                html +=     "<p class='card-text text-nowrap'>";
-                html +=       "Seen: <span>" + stat.count + "</span><br>";
-                html +=       "Shiny: <span>" + stat.shiny + "</span>";
-                html +=     "</p>";
-                html +=   "</div>";
-                html += "</div>";
-            });
-            $("#pokemon-stats-table").html(html);
-        }
-    });
-}
-
 function getHistoricalPokemonStats() {
     var data = {
         'pokemon': true,
@@ -586,6 +585,43 @@ function getHistoricalQuestStats() {
     });
 }
 
+function filterPokemon() {
+    var date = $("#filter-pokemon-date").val();
+    var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
+    var data = {
+        'pokemon': true,
+        'date': (formattedDate || "2019-12-20"),
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({ 
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse pokemon stats.");
+                return;
+            }
+            var html = "";
+            $("#pokemon-stats-table").html(html);
+            result.data.stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png'' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Seen: <span>" + stat.count + "</span><br>";
+                html +=       "Shiny: <span>" + stat.shiny + "</span>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
+            });
+            $("#pokemon-stats-table").html(html);
+        }
+    });
+}
+
 function filterRaids() {
     var date = $("#filter-raids-date").val();
     var formattedDate = unixToDate(date /*TODO: Get todays unix timestamp*/);
@@ -664,7 +700,7 @@ function filterQuests() {
                 html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
                 html +=   "<img src='./static/img/item/" + (stat.item_id == 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
                 html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.item_id + "</span>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
                 html +=     "<p class='card-text text-nowrap'>";
                 html +=       "Total: <span>" + stat.count + "</span>";
                 html +=     "</p>";
@@ -691,65 +727,6 @@ function filterQuests() {
             $("#quest-pokemon-stats-table").html(html);
     }});
 }
-
-function addDataset(chart, data) {
-  chart.data.datasets.push(data);
-  chart.update();
-}
-
-function removeDataset(chart) {
-    //chart.data.datasets.shift();
-    chart.data.datasets = [];
-    //chart.data.labels.pop();
-    //chart.data.datasets.forEach((dataset) => {
-    //  dataset.data.pop();
-    //});
-    chart.update();
-}
-
-function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function updateCounter(name, value) {
-    $({ counter: 0 }).animate({ counter: value }, {
-        duration: 1500,
-        easing: 'swing', // can be anything
-        step: function() { // called on every step
-            // Update the element's text with rounded-up value:
-            $(name).text(numberWithCommas(Math.round(this.counter)));
-        }
-    });
-}
-
-function colorize(opaque, hover, ctx) {
-    var v = ctx.dataset.data[ctx.dataIndex];
-    var c = v < -50 ? '#D60000'
-        : v < 0 ? '#F46300'
-        : v < 50 ? '#0358B6'
-        : '#44DE28';
-    var opacity = hover ? 1 - Math.abs(v / 150) - 0.2 : 1 - Math.abs(v / 150);
-    return opaque ? c : transparentize(c, opacity);
-}
-
-function hoverColorize(ctx) {
-    return colorize(false, true, ctx);
-}
-
-function transparentize(color, opacity) {
-	  var alpha = opacity === undefined ? 0.5 : 1 - opacity;
-	  return Color(color).alpha(alpha).rgbString();
-}
-
-function unixToDate(unixTimestamp) {
-    var date = new Date(unixTimestamp * 1000);
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    var day = date.getDate();
-    var formatted = year + "-" + month + "-" + day;
-    return formatted;
-}
-
 });
 </script>
 
@@ -897,44 +874,54 @@ function unixToDate(unixTimestamp) {
   <div class="card-header bg-dark text-light"><b>Teams</b></div>
   <div class="card-body">
     <div class="container">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="list-group">
-            <a class="list-group-item neutral">
-              <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading neutral-gyms-count">0</h4>
-              <p class="list-group-item-text">{{stats_neutral_gyms}}</p>
-            </a>
+    <div class="row">
+      <div class="col-md-4" style="margin-top:auto; margin-bottom:auto;">
+        <canvas id="teamChart"></canvas>
+        <br>
+      </div>
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="list-group">
+              <a class="list-group-item neutral">
+                <h3 class="pull-right"><img src="./static/img/team/0.png" width="64" height="64"/></h3>
+                <h4 class="list-group-item-heading neutral-gyms-count">0</h4>
+                <p class="list-group-item-text">{{stats_neutral_gyms}}</p>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="list-group">
+              <a class="list-group-item valor">
+                <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
+                <h4 class="list-group-item-heading valor-gyms-count">0</h4>
+                <p class="list-group-item-text">{{stats_valor_gyms}}</p>
+              </a>
+            </div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="list-group">
-            <a class="list-group-item valor">
-              <h3 class="pull-right"><img src="./static/img/team/2.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading valor-gyms-count">0</h4>
-              <p class="list-group-item-text">{{stats_valor_gyms}}</p>
-            </a>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="list-group">
+              <a class="list-group-item mystic">
+                <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
+                <h4 class="list-group-item-heading mystic-gyms-count">0</h4>
+                <p class="list-group-item-text">{{stats_mystic_gyms}}</p>
+              </a>
+            </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="list-group">
-            <a class="list-group-item mystic">
-              <h3 class="pull-right"><img src="./static/img/team/1.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading mystic-gyms-count">0</h4>
-              <p class="list-group-item-text">{{stats_mystic_gyms}}</p>
-            </a>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="list-group">
-            <a class="list-group-item instinct">
-              <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
-              <h4 class="list-group-item-heading instinct-gyms-count">0</h4>
-              <p class="list-group-item-text">{{stats_instinct_gyms}}</p>
-            </a>
+          <div class="col-md-6">
+            <div class="list-group">
+              <a class="list-group-item instinct">
+                <h3 class="pull-right"><img src="./static/img/team/3.png" width="64" height="64"/></h3>
+                <h4 class="list-group-item-heading instinct-gyms-count">0</h4>
+                <p class="list-group-item-text">{{stats_instinct_gyms}}</p>
+              </a>
+            </div>
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </div>
@@ -1214,19 +1201,24 @@ function unixToDate(unixTimestamp) {
   <!-- Start Invasions Tab -->
   <div id="invasions" class="tab-pane fade" role="tabpanel" aria-labelledby="invasions-tab">
     <h3 class="page-header text-center">{{stats_invasions}}</h3>
-    <div class="row justify-content-center">
-    {{#invasions}}
-    <div id="pkmn-{{id}}" class="col-sm-2 col-sd-offset-1 text-center">
-      <img src="./static/img/grunt_type/{{type}}.png"" width="48" height="48">
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_grunt_types}}</b></div>
       <div class="card-body">
-        <span class="text-nowrap"><b>{{name}}</b></span>
-        <p class="card-text text-nowrap">
-          Total:
-          <span id="grunt-type-{{type}}">{{count}}</span>
-        </p>
+        <div class="row justify-content-center">
+        {{#invasions}}
+        <div id="pkmn-{{id}}" class="col-sm-3 col-sd-offset-1 text-center">
+          <img src="./static/img/grunt_type/{{type}}.png"" width="48" height="48">
+          <div class="card-body">
+            <span class="text-nowrap"><b>{{name}}</b></span>
+            <p class="card-text text-nowrap">
+              Total:
+              <span id="grunt-type-{{type}}">{{count}}</span>
+            </p>
+          </div>
+        </div>
+        {{/invasions}}
+        </div>
       </div>
-    </div>
-    {{/invasions}}
     </div>
   </div>
   <!-- End Invasions Tab -->
@@ -1256,63 +1248,68 @@ function unixToDate(unixTimestamp) {
       </div>
     </div>
 
-    <div id="comday-stats" class="container">
-    <div class="row m-2">
-      <div class="col-md-5">
-        <div class="row p-2">
-          <div class="col" style="background: white">
-            <h4 id="pkmn-title">{{stats_scans}}</h4>
+    <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_statistics}}</b></div>
+      <div class="card-body">
+        <div id="comday-stats" class="container">
+        <div class="row m-2">
+          <div class="col-md-5">
             <div class="row p-2">
-              <div class="col-lg-6">
-                <div class="wrapper"><canvas id="scanChart"></canvas></div>
-              </div>
-              <div class="col-lg-6 justify-content-right">
-                <h5 id="total-seen">0 {{stats_seen}}</h5>
-                <h6 id="total-scanned">0 {{stats_scanned}}</h6>
+              <div class="col" style="background: white">
+                <h4 id="pkmn-title">{{stats_scans}}</h4>
+                <div class="row p-2">
+                  <div class="col-lg-6">
+                    <div class="wrapper"><canvas id="scanChart"></canvas></div>
+                  </div>
+                  <div class="col-lg-6 justify-content-right">
+                    <h5 id="total-seen">0 {{stats_seen}}</h5>
+                    <h6 id="total-scanned">0 {{stats_scanned}}</h6>
+                  </div>
+                </div>
+                <div class="row p-2">
+                  <div class="col" style="background: white">
+                    <span><b>{{stats_100iv}}</b><span id="iv100">0</span></span>
+                    <span><b>{{stats_90iv}}</b><span id="iv90">0</span></span>
+                    <span><b>{{stats_0iv}}</b><span id="iv0">0</span></span>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="row p-2">
               <div class="col" style="background: white">
-                <span><b>{{stats_100iv}}</b><span id="iv100">0</span></span>
-                <span><b>{{stats_90iv}}</b><span id="iv90">0</span></span>
-                <span><b>{{stats_0iv}}</b><span id="iv0">0</span></span>
+                <div class="wrapper"><canvas id="levelChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7 p-2" style="background: white">
+            <div class="wrapper"><canvas id="ivChart"></canvas></div>
+          </div>
+        </div>
+        <div class="row p-2 m-2">
+          <div class="col-md-4" style="background: white">
+            <h3>{{stats_sex}}</h3>
+            <span><span id="total-male">0</span> {{stats_male_spawns}}</span><br>
+            <span><span id="total-female">0</span> {{stats_female_spawns}}</span>
+          </div>
+          <div class="col-md-8" style="background: white">
+            <div class="row text-center">
+              <div class="col-4">
+                <img id="evo1" src="#" height=72 width=72/><br>
+                <b id="evo1-text"></b>
+              </div>
+              <div class="col-4">
+                <img id="evo2" src="#" height=72 width=72/><br>
+                <b id="evo2-text"></b>
+              </div>
+              <div class="col-4 justify-content-end">
+                <img id="evo3" src="#" height=72 width=72/><br>
+                <b id="evo3-text"></b>
               </div>
             </div>
           </div>
         </div>
-        <div class="row p-2">
-          <div class="col" style="background: white">
-            <div class="wrapper"><canvas id="levelChart"></canvas></div>
-          </div>
         </div>
       </div>
-      <div class="col-md-7 p-2" style="background: white">
-        <div class="wrapper"><canvas id="ivChart"></canvas></div>
-      </div>
-    </div>
-    <div class="row p-2 m-2">
-      <div class="col-md-4" style="background: white">
-        <h3>{{stats_sex}}</h3>
-        <span><span id="total-male">0</span> {{stats_male_spawns}}</span><br>
-        <span><span id="total-female">0</span> {{stats_female_spawns}}</span>
-      </div>
-      <div class="col-md-8" style="background: white">
-        <div class="row text-center">
-          <div class="col-4">
-            <img id="evo1" src="#" height=72 width=72/><br>
-            <b id="evo1-text"></b>
-          </div>
-          <div class="col-4">
-            <img id="evo2" src="#" height=72 width=72/><br>
-            <b id="evo2-text"></b>
-          </div>
-          <div class="col-4 justify-content-end">
-            <img id="evo3" src="#" height=72 width=72/><br>
-            <b id="evo3-text"></b>
-          </div>
-        </div>
-      </div>
-    </div>
     </div>
 
   </div>
