@@ -1484,7 +1484,11 @@ class ApiRequestHandler {
                 data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
             }
         } else if invasions {
-            data["stats"] = try? Stats.getInvasionStats(mysql: mysql)
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllInvasionStats(mysql: mysql)
+            } else {
+                data["stats"] = try? Stats.getInvasionStats(mysql: mysql, date: date)
+            }
         } else if commday {
             if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
                 let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)

@@ -287,6 +287,43 @@ class Stats: JSONConvertibleObject {
         return stats
     }
     
+    public static func getAllInvasionStats(mysql: MySQL?=nil) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[STATS] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+        SELECT date, SUM(count) as count
+        FROM `invasion_stats`
+        GROUP BY date
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            
+            let date = result[0] as! String
+            let count = Int(result[1] as? String ?? "0") ?? 0
+            
+            stats.append([
+                "date": date,
+                "count": count.withCommas()
+            ])
+            
+        }
+        return stats
+    }
+    
     public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -654,22 +691,26 @@ class Stats: JSONConvertibleObject {
         
     }
     
-    public static func getInvasionStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getInvasionStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
             throw DBController.DBError()
         }
         
+        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
-        SELECT grunt_type, COUNT(*) AS total
-        FROM pokestop
-        WHERE incident_expire_timestamp >= UNIX_TIMESTAMP()
-        GROUP BY grunt_type
+        SELECT date, grunt_type, count
+        FROM invasion_stats
+        WHERE date = \(when)
         """
         
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        
+        if date != nil {
+            mysqlStmt.bindParam(date)
+        }
         
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -680,12 +721,14 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let gruntType = result[0] as! UInt16
-            let count = result[1] as! Int64
+            let date = result[0] as! String
+            let gruntType = result[1] as! UInt16
+            let count = result[2] as! Int32
             let name = Localizer.global.get(value: "grunt_\(gruntType)")
             
             stats.append([
-                "type": gruntType,
+                "date": date,
+                "grunt_type": gruntType,
                 "name": name,
                 "count": count.withCommas()
             ])

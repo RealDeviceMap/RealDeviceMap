@@ -15,6 +15,7 @@ $(document).ready(function() {
     $("#filter-pokemon-date").change(filterPokemon);
     $("#filter-raids-date").change(filterRaids);
     $("#filter-quests-date").change(filterQuests);
+    $("#filter-invasions-date").change(filterInvasions);
 
     var pieOptions = {
         responsive: true,
@@ -207,7 +208,7 @@ $(document).ready(function() {
     pokemonChart.options.title.text = "Historical Pokemon Statistics";
     raidChart.options.title.text = "Historical Raid Statistics";
     questChart.options.title.text = "Historical Quest Statistics";
-    invasionChart.options.title.text = "Active Invasion Statistics";
+    invasionChart.options.title.text = "Historical Invasion Statistics";
 
     $("#comday-stats").hide();
     $("#filter-pokemon-comday").on('change', function() {
@@ -224,6 +225,7 @@ $(document).ready(function() {
     getHistoricalPokemonStats();
     getHistoricalRaidStats();
     getHistoricalQuestStats();
+    getHistoricalInvasionStats();
     filterPokemon();
     filterRaids();
     filterQuests();
@@ -494,6 +496,10 @@ function getHistoricalPokemonStats() {
                 console.log("Failed to parse pokemon stats.");
                 return;
             }
+            if (result.data.stats == null) {
+                console.log("Failed to parse pokemon stats.");
+                return;
+            }
             var labels = [];
             var values = [];
             $.each(result.data.stats, function(key, value) {
@@ -533,6 +539,10 @@ function getHistoricalRaidStats() {
                 console.log("Failed to parse raid stats.");
                 return;
             }
+            if (result.data.stats == null) {
+                console.log("Failed to parse raid stats.");
+                return;
+            }
             var labels = [];
             var values = [];
             $.each(result.data.stats, function(key, value) {
@@ -569,7 +579,11 @@ function getHistoricalQuestStats() {
         success: function(result) {
             console.log("Result:", result);
             if (result == null) {
-                console.log("Failed to parse raid stats.");
+                console.log("Failed to parse quest stats.");
+                return;
+            }
+            if (result.data.stats == null) {
+                console.log("Failed to parse pokemon stats.");
                 return;
             }
             var labels = [];
@@ -591,6 +605,49 @@ function getHistoricalQuestStats() {
             };
             questChart.data = obj;
             questChart.update();
+        }
+    });
+}
+
+function getHistoricalInvasionStats() {
+    var data = {
+        'invasions': true,
+        'date': "lifetime",
+        '_csrf': "{{csrf}}"
+    };
+    $.ajax({
+        url: "/api/get_stats",
+        data: data,
+        type: "POST",
+        success: function(result) {
+            console.log("Result:", result);
+            if (result == null) {
+                console.log("Failed to parse invasion stats.");
+                return;
+            }
+            if (result.data.stats == null) {
+                console.log("Failed to parse pokemon stats.");
+                return;
+            }
+            var labels = [];
+            var values = [];
+            $.each(result.data.stats, function(key, value) {
+                labels.push(value.name);
+                var value = parseInt(strip(value.count));
+                values.push(value);
+            });
+            removeDataset(invasionChart);
+            var obj = { 
+                labels: labels, 
+                datasets: [{
+                    data: values,
+                    backgroundColor: "red",
+                    label: "Invasions",
+                    fill: true
+                }]
+            };
+            invasionChart.data = obj;
+            invasionChart.update();
         }
     });
 }
@@ -653,37 +710,39 @@ function filterRaids() {
                 console.log("Failed to parse raid stats.");
                 return;
             }
-    
             var html = "";
-            $("#raid-stats-table").html(html);
-            result.data.raid_stats.forEach(function(stat) {
-                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
-                html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-                html +=     "<p class='card-text text-nowrap'>";
-                html +=       "Total: <span>" + stat.count + "</span><br>";
-                html +=       "Level: <span>" + stat.level + "</span>";
-                html +=     "</p>";
-                html +=   "</div>";
-                html += "</div>";
-            });
-            $("#raid-stats-table").html(html);
-    
-            html = "";
-            $("#egg-stats-table").html(html);
-            result.data.egg_stats.forEach(function(stat) {
-                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/egg/" + stat.level + ".png' width='48' height='48'>";
-                html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
-                html +=     "<p class='card-text text-nowrap'>";
-                html +=       "Total: <span>" + stat.count + "</span>";
-                html +=     "</p>";
-                html +=   "</div>";
-                html += "</div>";
-            });
-            $("#egg-stats-table").html(html);
+            if (result.data.raid_stats != null) {
+                $("#raid-stats-table").html(html);
+                result.data.raid_stats.forEach(function(stat) {
+                    html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                    html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+                    html +=   "<div class='card-body'>";
+                    html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                    html +=     "<p class='card-text text-nowrap'>";
+                    html +=       "Total: <span>" + stat.count + "</span><br>";
+                    html +=       "Level: <span>" + stat.level + "</span>";
+                    html +=     "</p>";
+                    html +=   "</div>";
+                    html += "</div>";
+                });
+                $("#raid-stats-table").html(html);
+            }
+            if (result.data.egg_stats != null) {
+                html = "";
+                $("#egg-stats-table").html(html);
+                result.data.egg_stats.forEach(function(stat) {
+                    html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                    html +=   "<img src='./static/img/egg/" + stat.level + ".png' width='48' height='48'>";
+                    html +=   "<div class='card-body'>";
+                    html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
+                    html +=     "<p class='card-text text-nowrap'>";
+                    html +=       "Total: <span>" + stat.count + "</span>";
+                    html +=     "</p>";
+                    html +=   "</div>";
+                    html += "</div>";
+                });
+                $("#egg-stats-table").html(html);
+            }
     }});
 }
 
@@ -708,46 +767,52 @@ function filterQuests() {
             }
     
             var html = "";
-            $("#quest-item-stats-table").html(html);
-            result.data.quest_item_stats.forEach(function(stat) {
-                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/item/" + (stat.item_id === 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
-                html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
-                html +=     "<p class='card-text text-nowrap'>";
-                html +=       "Total: <span>" + stat.count + "</span>";
-                html +=     "</p>";
-                html +=   "</div>";
-                html += "</div>";
-            });
-            $("#quest-item-stats-table").html(html);
-    
-            html = "";
-            $("#quest-pokemon-stats-table").html(html);
-            result.data.quest_pokemon_stats.forEach(function(stat) {
-                if (stat.pokemon_id > 0) {
-                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
-                html +=   "<div class='card-body'>";
-                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
-                html +=     "<p class='card-text text-nowrap'>";
-                html +=       "Total: <span>" + stat.count + "</span>";
-                html +=     "</p>";
-                html +=   "</div>";
-                html += "</div>";
-                }
-            });
-            $("#quest-pokemon-stats-table").html(html);
-    }});
+            if (result.data.quest_item_stats != null) {
+                $("#quest-item-stats-table").html(html);
+                result.data.quest_item_stats.forEach(function(stat) {
+                    html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                    html +=   "<img src='./static/img/item/" + (stat.item_id === 0 ? -1 : stat.item_id) + ".png' width='48' height='48'>";
+                    html +=   "<div class='card-body'>";
+                    html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
+                    html +=     "<p class='card-text text-nowrap'>";
+                    html +=       "Total: <span>" + stat.count + "</span>";
+                    html +=     "</p>";
+                    html +=   "</div>";
+                    html += "</div>";
+                });
+                $("#quest-item-stats-table").html(html);
+            }
+            if (result.data.quest_pokemon_stats != null) {
+                html = "";
+                $("#quest-pokemon-stats-table").html(html);
+                result.data.quest_pokemon_stats.forEach(function(stat) {
+                    if (stat.pokemon_id > 0) {
+                        html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                        html +=   "<img src='./static/img/pokemon/" + stat.pokemon_id + ".png' width='48' height='48'>";
+                        html +=   "<div class='card-body'>";
+                        html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
+                        html +=     "<p class='card-text text-nowrap'>";
+                        html +=       "Total: <span>" + stat.count + "</span>";
+                        html +=     "</p>";
+                        html +=   "</div>";
+                        html += "</div>";
+                    }
+                });
+                $("#quest-pokemon-stats-table").html(html);
+            }
+        }
+    });
 }
 
 function filterInvasions() {
+    var date = $("#filter-invasions-date").val();
+    var formattedDate = unixToDate(date);
     var data = {
         'invasions': true,
-        'formatted': true,
+        'date': formattedDate,
         '_csrf': "{{csrf}}"
     };
-    $.ajax({
+    $.ajax({ 
         url: "/api/get_stats",
         data: data,
         type: "POST",
@@ -757,26 +822,22 @@ function filterInvasions() {
                 console.log("Failed to parse invasion stats.");
                 return;
             }
-            var labels = [];
-            var values = [];
-            $.each(result.data.stats, function(key, value) {
-                labels.push(value.name);
-                var value = parseInt(strip(value.count));
-                values.push(value);
+            var html = "";
+            $("#invasion-stats-table").html(html);
+            result.data.stats.forEach(function(stat) {
+                html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
+                html +=   "<img src='./static/img/grunt/" + stat.grunt_type + ".png'' width='48' height='48'>";
+                html +=   "<div class='card-body'>";
+                html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
+                html +=     "<p class='card-text text-nowrap'>";
+                html +=       "Total: <span>" + stat.count + "</span><br>";
+                html +=     "</p>";
+                html +=   "</div>";
+                html += "</div>";
             });
-            removeDataset(invasionChart);
-            var obj = { 
-                labels: labels, 
-                datasets: [{
-                    data: values,
-                    backgroundColor: "red",
-                    label: "Invasions",
-                    fill: true
-                }]
-            };
-            invasionChart.data = obj;
-            invasionChart.update();
-    }});
+            $("#invasion-stats-table").html(html);
+        }
+    });
 }
 
 });
@@ -1305,17 +1366,30 @@ function filterInvasions() {
     </div>
     <br>
     <div class="card text-center p-1 m-3">
+      <div class="card-header bg-dark text-light"><b>{{stats_filters}}</b></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="filter-invasions-date">{{stats_date}}</label>
+            </div>
+            <input id="filter-invasions-date" class="flatpickr" placeholder="Select Date.." data-toggle="datetimepicker">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card text-center p-1 m-3">
       <div class="card-header bg-dark text-light"><b>{{stats_grunt_types}}</b></div>
       <div class="card-body">
-        <div class="row justify-content-center">
+        <div id="invasion-stats-table" class="row justify-content-center">
         {{#invasions}}
-        <div id="pkmn-{{id}}" class="col-sm-3 col-sd-offset-1 text-center">
-          <img src="./static/img/grunt/{{type}}.png" width="48" height="48">
+        <div id="invasion-{{grunt_type}}" class="col-sm-2 col-sd-offset-1 text-center">
+          <img src="./static/img/grunt/{{grunt_type}}.png"" width="48" height="48">
           <div class="card-body">
             <span class="text-nowrap"><b>{{name}}</b></span>
             <p class="card-text text-nowrap">
               Total:
-              <span id="grunt-type-{{type}}">{{count}}</span>
+              <span id="invasion-type-{{grunt_type}}">{{count}}</span>
             </p>
           </div>
         </div>
