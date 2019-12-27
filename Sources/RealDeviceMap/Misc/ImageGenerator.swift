@@ -247,25 +247,25 @@ class ImageGenerator {
     }
     
     private static func combineImages(image1: String, image2: String, method: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "tmp1.png").run()
-        _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "tmp2.png").run()
-        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-compose", method, "-composite", output).run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "tmp1.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none", "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "tmp2.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png", "-gravity", "center", "-compose", method, "-composite", output).run()
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
     
     private static func combineImagesGrunt(image1: String, image2: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x96", "-gravity", "center", "tmp1.png").run()
-        _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
-        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0-19", "-compose", "over", "-composite", output).run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none", "-resize", "96x96", "-gravity", "center", "tmp1.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0-19", "-compose", "over", "-composite", output).run()
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
     
     private static func combineImagesGruntQuest(image1: String, image2: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", image1, "-background", "none", "-resize", "96x160", "-gravity", "center", "tmp1.png").run()
-        _ = Shell("/usr/local/bin/convert", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
-        _ = Shell("/usr/local/bin/convert", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0+13", "-compose", "over", "-composite", output).run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none", "-resize", "96x160", "-gravity", "center", "tmp1.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none", "-resize", "64x64", "-gravity", "center", "tmp2.png").run()
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png", "-gravity", "center", "-geometry", "+0+13", "-compose", "over", "-composite", output).run()
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
