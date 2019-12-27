@@ -632,7 +632,7 @@ function getHistoricalInvasionStats() {
             var labels = [];
             var values = [];
             $.each(result.data.stats, function(key, value) {
-                labels.push(value.name);
+                labels.push(value.date);
                 var value = parseInt(strip(value.count));
                 values.push(value);
             });
