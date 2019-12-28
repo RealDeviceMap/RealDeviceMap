@@ -57,7 +57,7 @@ class Stats: JSONConvertibleObject {
         ]
     }
     
-    public static func getTopPokemonStats(mysql: MySQL?=nil, lifetime: Bool) throws -> [Any] {
+    public static func getTopPokemonStats(mysql: MySQL?=nil, lifetime: Bool, limit: Int?=10) throws -> [Any] {
         
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -75,7 +75,7 @@ class Stats: JSONConvertibleObject {
               ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
             GROUP BY pokemon_id
             ORDER BY count DESC
-            LIMIT 10
+            LIMIT \(limit ?? 10)
             """
         } else {
             sql = """
@@ -87,7 +87,7 @@ class Stats: JSONConvertibleObject {
               ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
             WHERE x.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
             ORDER BY count DESC
-            LIMIT 10
+            LIMIT \(limit ?? 10)
             """
         }
         
