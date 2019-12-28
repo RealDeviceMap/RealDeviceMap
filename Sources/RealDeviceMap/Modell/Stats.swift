@@ -67,25 +67,22 @@ class Stats: JSONConvertibleObject {
         let sql: String
         if lifetime {
             sql = """
-            SELECT x.date, x.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
-            FROM pokemon_stats x
+            SELECT iv.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
+            FROM pokemon_iv_stats iv
               LEFT JOIN pokemon_shiny_stats shiny
-              ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
-              LEFT JOIN pokemon_iv_stats iv
-              ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
-            GROUP BY pokemon_id
+              ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
+            GROUP BY iv.pokemon_id
             ORDER BY count DESC
             LIMIT \(limit ?? 10)
             """
         } else {
             sql = """
-            SELECT x.date, x.pokemon_id, shiny.count AS shiny, iv.count
-            FROM pokemon_stats x
+            SELECT iv.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
+            FROM pokemon_iv_stats iv
               LEFT JOIN pokemon_shiny_stats shiny
-              ON x.date = shiny.date AND x.pokemon_id = shiny.pokemon_id
-              LEFT JOIN pokemon_iv_stats iv
-              ON x.date = iv.date AND x.pokemon_id = iv.pokemon_id
-            WHERE x.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+              ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
+            WHERE iv.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+            GROUP BY iv.pokemon_id
             ORDER BY count DESC
             LIMIT \(limit ?? 10)
             """
@@ -103,21 +100,12 @@ class Stats: JSONConvertibleObject {
         var stats = [Any]()
         while let result = results.next() {
             
-            let date = result[0] as! String
-            let pokemonId = result[1] as! UInt16
-            let shiny: Int
-            let count: Int
-            if lifetime {
-                shiny = Int(result[2] as? String ?? "0") ?? 0
-                count = Int(result[3] as? String ?? "0") ?? 0
-            } else {
-                shiny = Int(result[2] as? Int32 ?? 0)
-                count = Int(result[3] as! Int32)
-            }
+            let pokemonId = result[0] as! UInt16
+            let shiny = Int(result[1] as? String ?? "0") ?? 0
+            let count = Int(result[2] as? String ?? "0") ?? 0
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
             stats.append([
-                "date": date,
                 "pokemon_id": pokemonId,
                 "name": name,
                 "shiny": shiny.withCommas(),
@@ -138,8 +126,7 @@ class Stats: JSONConvertibleObject {
         let sql = """
         SELECT pokemon_id, iv, COUNT(iv) as count
         FROM `pokemon`
-        WHERE
-          first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 24 HOUR) AND
+        WHERE first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 24 HOUR) AND
           iv = ?
         GROUP BY pokemon_id
         ORDER BY count DESC
@@ -674,7 +661,7 @@ class Stats: JSONConvertibleObject {
             
             let date = result[0] as! String
             let pokemonId = result[1] as! UInt16
-            let count = result[2] as! Int32
+            let count = Int64(result[2] as? String ?? "0") ?? 0
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
             stats.append([
