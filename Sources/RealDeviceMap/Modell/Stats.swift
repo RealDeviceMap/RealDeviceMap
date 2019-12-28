@@ -598,9 +598,9 @@ class Stats: JSONConvertibleObject {
         
         let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
-        SELECT date, reward_type, item_id, count
+        SELECT date, reward_type, item_id, SUM(count) AS count
         FROM quest_stats
-        WHERE date = \(when)
+        WHERE date = \(when) AND reward_type != 7
         GROUP BY item_id
         """
         
@@ -623,7 +623,7 @@ class Stats: JSONConvertibleObject {
             let date = result[0] as! String
             let rewardType = result[1] as! UInt16
             let itemId = result[2] as! UInt16
-            let count = result[3] as! Int32
+            let count = Int64(result[3] as? String ?? "0") ?? 0
             let name = itemId == 0
                 ? Localizer.global.get(value: "quest_reward_\(rewardType)")
                 : Localizer.global.get(value: "item_\(itemId)")
@@ -650,7 +650,7 @@ class Stats: JSONConvertibleObject {
         
         let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
         let sql = """
-        SELECT date, reward_type, pokemon_id, count
+        SELECT date, pokemon_id, SUM(count) AS count
         FROM quest_stats
         WHERE date = \(when)
         GROUP BY pokemon_id
@@ -673,14 +673,12 @@ class Stats: JSONConvertibleObject {
         while let result = results.next() {
             
             let date = result[0] as! String
-            let rewardType = result[1] as! UInt16
-            let pokemonId = result[2] as! UInt16
-            let count = result[3] as! Int32
+            let pokemonId = result[1] as! UInt16
+            let count = result[2] as! Int32
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
             
             stats.append([
                 "date": date,
-                "reward_type": rewardType,
                 "pokemon_id": pokemonId,
                 "name": name,
                 "count": count.withCommas()
