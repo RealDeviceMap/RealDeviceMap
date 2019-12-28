@@ -316,6 +316,10 @@ function getTopPokemonStats() {
                 console.log("Failed to parse result value.");
                 return;
             }
+            if (result.data.lifetime == null || result.data.today == null) {
+                console.log("Failed to parse result value.");
+                return;                
+            }
 
             html = "";
             count = 0;
@@ -376,6 +380,10 @@ function getTopPokemonIVStats() {
         success: function(result) {
             console.log("Result:", result);
             if (result == null) {
+                console.log("Failed to parse result value.");
+                return;
+            }
+            if (result.data.top10_100iv == null) {
                 console.log("Failed to parse result value.");
                 return;
             }
@@ -583,7 +591,7 @@ function getHistoricalQuestStats() {
                 return;
             }
             if (result.data.stats == null) {
-                console.log("Failed to parse pokemon stats.");
+                console.log("Failed to parse quest stats.");
                 return;
             }
             var labels = [];
@@ -626,7 +634,7 @@ function getHistoricalInvasionStats() {
                 return;
             }
             if (result.data.stats == null) {
-                console.log("Failed to parse pokemon stats.");
+                console.log("Failed to parse invasion stats.");
                 return;
             }
             var labels = [];
