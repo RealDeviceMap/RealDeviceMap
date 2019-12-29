@@ -8,6 +8,18 @@ $(document).ready(function() {
     var csrf = "{{csrf}}";
     $("[data-toggle='datetimepicker']").flatpickr({
         altInput: true,
+        altFormat: "F j, Y",
+        dateFormat: "Y-m-d",
+        enableTime: false
+    });
+    $("#filter-date-start").flatpickr({
+        altInput: true,
+        altFormat: "F j, Y h\:00 K",
+        dateFormat: "U",//"Y-m-d h K",
+        enableTime: true
+    });
+    $("#filter-date-end").flatpickr({
+        altInput: true,
         altFormat: "F j, Y h\:00 K",
         dateFormat: "U",//"Y-m-d h K",
         enableTime: true
@@ -662,10 +674,9 @@ function getHistoricalInvasionStats() {
 
 function filterPokemon() {
     var date = $("#filter-pokemon-date").val();
-    var formattedDate = unixToDate(date);
     var data = {
         'pokemon': true,
-        'date': formattedDate,
+        'date': date,
         '_csrf': "{{csrf}}"
     };
     $.ajax({ 
@@ -701,11 +712,9 @@ function filterPokemon() {
 
 function filterRaids() {
     var date = $("#filter-raids-date").val();
-    var formattedDate = unixToDate(date);
-    console.log("Date:", formattedDate);
     var data = {
         'raids': true,
-        'date': formattedDate,
+        'date': date,
         '_csrf': "{{csrf}}"
     };
     $.ajax({ 
@@ -756,11 +765,9 @@ function filterRaids() {
 
 function filterQuests() {
     var date = $("#filter-quests-date").val();
-    var formattedDate = unixToDate(date);
-    console.log("Date:", formattedDate);
     var data = {
         'quests': true,
-        'date': formattedDate,
+        'date': date,
         '_csrf': "{{csrf}}"
     };
     $.ajax({
@@ -814,10 +821,9 @@ function filterQuests() {
 
 function filterInvasions() {
     var date = $("#filter-invasions-date").val();
-    var formattedDate = unixToDate(date);
     var data = {
         'invasions': true,
-        'date': formattedDate,
+        'date': date,
         '_csrf': "{{csrf}}"
     };
     $.ajax({ 
