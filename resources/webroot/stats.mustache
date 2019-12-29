@@ -227,7 +227,6 @@ $(document).ready(function() {
         var start = $("#filter-date-start").val();
         var end = $("#filter-date-end").val();
         var pokemonId = this.value;
-        console.log("Start:", start, "End:", end, "Pokemon:", pokemonId);
         getCommDayStats(pokemonId, start, end);
     });
 
@@ -254,8 +253,7 @@ function getDashboardStats() {
         data: data, 
         type: "POST", 
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse result value.");
                 return;
             }
@@ -323,12 +321,11 @@ function getTopPokemonStats() {
         data: data, 
         type: "POST", 
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse result value.");
                 return;
             }
-            if (result.data.lifetime == null || result.data.today == null) {
+            if (result.data.lifetime === null || result.data.today === null) {
                 console.log("Failed to parse result value.");
                 return;                
             }
@@ -390,12 +387,11 @@ function getTopPokemonIVStats() {
         data: data, 
         type: "POST", 
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse result value.");
                 return;
             }
-            if (result.data.top10_100iv == null) {
+            if (result.data.top10_100iv === null) {
                 console.log("Failed to parse result value.");
                 return;
             }
@@ -437,7 +433,11 @@ function getCommDayStats(pokemonId, start, end) {
         data: data, 
         type: "POST", 
         success: function(result) {
-            console.log("Result:", result);
+            if (result === null) {
+                console.log("Failed to parse result value.");
+                return;
+            }
+
             $("#comday-stats").show();
             $("#pkmn-title").text(result.data.evo1_name + " Scans");
             $("#total-seen").text(numberWithCommas(result.data.stats.total || 0) + " seen");
@@ -511,12 +511,11 @@ function getHistoricalPokemonStats() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse pokemon stats.");
                 return;
             }
-            if (result.data.stats == null) {
+            if (result.data.stats === null) {
                 console.log("Failed to parse pokemon stats.");
                 return;
             }
@@ -554,12 +553,11 @@ function getHistoricalRaidStats() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse raid stats.");
                 return;
             }
-            if (result.data.stats == null) {
+            if (result.data.stats === null) {
                 console.log("Failed to parse raid stats.");
                 return;
             }
@@ -597,12 +595,11 @@ function getHistoricalQuestStats() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse quest stats.");
                 return;
             }
-            if (result.data.stats == null) {
+            if (result.data.stats === null) {
                 console.log("Failed to parse quest stats.");
                 return;
             }
@@ -640,12 +637,11 @@ function getHistoricalInvasionStats() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse invasion stats.");
                 return;
             }
-            if (result.data.stats == null) {
+            if (result.data.stats === null) {
                 console.log("Failed to parse invasion stats.");
                 return;
             }
@@ -684,8 +680,7 @@ function filterPokemon() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse pokemon stats.");
                 return;
             }
@@ -722,8 +717,7 @@ function filterRaids() {
         data: data,
         type: "POST", 
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse raid stats.");
                 return;
             }
@@ -775,8 +769,7 @@ function filterQuests() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse quest stats.");
                 return;
             }
@@ -831,8 +824,7 @@ function filterInvasions() {
         data: data,
         type: "POST",
         success: function(result) {
-            console.log("Result:", result);
-            if (result == null) {
+            if (result === null) {
                 console.log("Failed to parse invasion stats.");
                 return;
             }
