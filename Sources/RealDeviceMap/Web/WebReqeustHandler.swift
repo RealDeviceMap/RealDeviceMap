@@ -715,13 +715,13 @@ class WebReqeustHandler {
         case .dashboardAccounts:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
-            data["new_accounts_count"] = (try? Account.getNewCount()) ?? "?"
-            data["in_use_accounts_count"] = (try? Account.getInUseCount()) ?? "?"
-            data["warned_accounts_count"] = (try? Account.getWarnedCount()) ?? "?"
-            data["failed_accounts_count"] = (try? Account.getFailedCount()) ?? "?"
-            data["cooldown_accounts_count"] = (try? Account.getCooldownCount()) ?? "?"
-            data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount()) ?? "?"
-            data["iv_accounts_count"] = (try? Account.getLevelCount(level: 30)) ?? "?"
+            data["new_accounts_count"] = (try? Account.getNewCount().withCommas()) ?? "?"
+            data["in_use_accounts_count"] = (try? Account.getInUseCount().withCommas()) ?? "?"
+            data["warned_accounts_count"] = (try? Account.getWarnedCount().withCommas()) ?? "?"
+            data["failed_accounts_count"] = (try? Account.getFailedCount().withCommas()) ?? "?"
+            data["cooldown_accounts_count"] = (try? Account.getCooldownCount().withCommas()) ?? "?"
+            data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount().withCommas()) ?? "?"
+            data["iv_accounts_count"] = (try? Account.getLevelCount(level: 30).withCommas()) ?? "?"
             data["stats"] = (try? Account.getStats()) ?? ""
             data["ban_stats"] = (try? Account.getWarningBannedStats()) ?? ""
         case .dashboardAccountsAdd:
