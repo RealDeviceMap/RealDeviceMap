@@ -28,8 +28,8 @@ class WebReqeustHandler {
     static var maxZoom: Int = 18
     static var maxPokemonId: Int = 493
     static var title: String = "RealDeviceMap"
-    static var avilableFormsJson: String = ""
-    static var avilableItemJson: String = ""
+    static var avilableFormsJson: String = "[]"
+    static var avilableItemJson: String = "[]"
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
