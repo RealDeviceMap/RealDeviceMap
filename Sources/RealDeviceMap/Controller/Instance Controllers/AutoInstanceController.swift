@@ -319,7 +319,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } catch { }
 
                 if username != nil && account != nil {
-                    if account!.spins >= spinLimit {
+                    if account!.spins >= spinLimit || account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
                         return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                     } else {
                         try? Account.spin(mysql: mysql, username: username!)
