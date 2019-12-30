@@ -499,7 +499,7 @@ class Account {
         let sql = """
             SELECT
               level,
-              COUNT(*) as total,
+              COUNT(level) as total,
               SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
               SUM(failed = 'banned') as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
