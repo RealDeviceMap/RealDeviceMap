@@ -3,43 +3,182 @@
 <body>
 
     <h1 class="mt-3" align="center">Configure {{title}}'s Accounts!</h1>
-
-    <div class="w-75 mt-4" style="float: none; margin: 0 auto;">
-        <div class="card border-dark">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>New Accounts:</h6>
-                    <span class="badge badge-primary badge-pill">{{new_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Accounts in Use:</h6>
-                    <span class="badge badge-success badge-pill">{{in_use_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Accounts in Cooldown:</h6>
-                    <span class="badge badge-warning badge-pill">{{cooldown_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Accounts over Spin Limit:</h6>
-                    <span class="badge badge-warning badge-pill">{{spin_limit_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Accounts with Warning:</h6>
-                    <span class="badge badge-warning badge-pill">{{warned_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Accounts over Level 30</h6>
-                    <span class="badge badge-info badge-pill">{{iv_accounts_count}}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h6>Failed Accounts:</h6>
-                    <span class="badge badge-danger badge-pill">{{failed_accounts_count}}</span>
-                </li>
-            </ul>
+    <center>
+    <div class="card text-center p-1 m-3 w-75 mt-4">
+      <div class="card-header bg-dark text-light"><b>Accounts Overview</b></div>
+      <div class="card-body">
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: dodgerblue;">{{new_accounts_count}}</h4>
+                  <p class="list-group-item-text">New Accounts</p>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: limegreen;">{{in_use_accounts_count}}</h4>
+                  <p class="list-group-item-text">Accounts in Use</p>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: red;">{{failed_accounts_count}}</h4>
+                  <p class="list-group-item-text">Failed Accounts</p>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: teal;">{{iv_accounts_count}}</h4>
+                  <p class="list-group-item-text">Total over Level 30</p>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="row justify-content-center">
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: orange;">{{warned_accounts_count}}</h4>
+                  <p class="list-group-item-text">Total with Warning</p>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: orange;">{{cooldown_accounts_count}}</h4>
+                  <p class="list-group-item-text">Total in Cooldown</p>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: orange;">{{spin_limit_accounts_count}}</h4>
+                  <p class="list-group-item-text">Over Spin Limit</p>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="mt-4 mb-5" style="text-align: center">
-            <a href="/dashboard/accounts/add" role="button" class="btn btn-success">Add Accounts</a>
-        </div>
+      </div>
     </div>
+
+    {{#ban_stats}}
+    <div class="row justify-content-center w-75 mt-2"><!-- Start Row -->
+      <div class="col-lg-6">
+        <div class="card text-center" style="float: right; width: 100%;">
+          <div class="card-header bg-dark text-light"><b>Ban Statistics</b></div>
+          <div class="card-body">
+            <div class="container">
+              <div class="row justify-content-center text-nowrap">
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: red;">{{banned_7days}}</h4>
+                      <p class="list-group-item-text">Bans Last 7 Days</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: red;">{{banned_14days}}</h4>
+                      <p class="list-group-item-text">Bans Last 14 Days</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: red;">{{banned_30days}}</h4>
+                      <p class="list-group-item-text">Bans Last 30 Days</p>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card text-center" style="float: left; width: 100%;">
+          <div class="card-header bg-dark text-light"><b>Warning Statistics</b></div>
+          <div class="card-body">
+            <div class="container">
+              <div class="row justify-content-center text-nowrap">
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: orange;">{{warning_7days}}</h4>
+                      <p class="list-group-item-text">Warnings Last 7 Days</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: orange;">{{warning_14days}}</h4>
+                      <p class="list-group-item-text">Warnings Last 14 Days</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-3 p-1">
+                  <div class="list-group">
+                    <a class="list-group-item">
+                      <h4 class="list-group-item-heading" style="color: orange;">{{warning_30days}}</h4>
+                      <p class="list-group-item-text">Warnings Last 30 Days</p>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- End Row -->
+    </div>
+
     <br>
+    <div class="w-75 mt-4 text-center">
+        <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width: 100%; float: center; margin: 0 auto;">
+            <thead class="bg-dark text-light">
+            <tr>
+                <th>Level</th>
+                <th>Total</th>
+                <th>Good</th>
+                <th>Banned</th>
+                <th>Warning</th>
+                <th>Invalid</th>
+                <th>Other</th>
+                <th>Cooldown</th>
+                <th>Spin Limit</th>
+            </tr>
+            </thead>
+            <tbody>
+                {{#stats}}
+                <tr>
+                    <td><b>{{level}}</b></td>
+                    <td><span class="badge badge-primary badge-pill">{{total}}</span></td>
+                    <td><span class="badge badge-success badge-pill">{{good}}</span></td>
+                    <td><span class="badge badge-danger badge-pill">{{banned}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{warning}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{invalid}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{other}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{cooldown}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{spin_limit}}</span></td>
+                </tr>
+                {{/stats}}
+            </tbody>
+        </table>
+    </div>
+    </center>
 </body>
