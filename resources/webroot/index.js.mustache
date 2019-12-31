@@ -280,7 +280,7 @@ $(function() {
 
     // If you see this: Don't tell anyone
     var d = new Date();
-    if (d.getMonth() == 11 && d.getDate() >= 24) {
+    if (d.getMonth() === 11 && d.getDate() >= 24 && d.getDate() <= 30) {
         const snow = '<div class="winter-is-coming">\n' +
             '            <div class="snow snow--near"></div>\n' +
             '            <div class="snow snow--near snow--alt"></div>\n' +
@@ -292,6 +292,14 @@ $(function() {
         $('#map').append(snow)
     }
 
+    if (d.getMonth() === 11 && d.getDate() >= 31 || d.getMonth() === 1 && d.getDate() <= 2) {
+		const fireworks = '<div class="pyro">' +
+			'<div class="before"></div>' +
+			'<div class="after"></div>' +
+			'</div>'
+		$('#map').append(fireworks)
+    }
+	
     if ("{{google_analytics_id}}" !== false) {
         window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};
         ga.l=+new Date;
