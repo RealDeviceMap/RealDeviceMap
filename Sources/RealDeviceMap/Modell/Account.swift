@@ -81,7 +81,7 @@ class Account: WebHookEvent {
     }
 
     public func responseInfo(accountData: POGOProtos_Networking_Responses_GetPlayerResponse) {
-        //Log.debug(message: "[ACCOUNT] \(accountData).")
+
         self.creationTimestampMs = UInt64(accountData.playerData.creationTimestampMs) / 1000
         self.warn = accountData.warn
         self.warnExpireMs = UInt64(accountData.warnExpireMs) / 1000

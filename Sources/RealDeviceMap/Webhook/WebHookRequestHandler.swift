@@ -185,7 +185,6 @@ class WebHookRequestHandler {
             if method == 2 {
                 if let prr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
                     playerdatas.append(prr)
-					//Log.info(message: "[WebHookRequestHandler] PLAYERDATA: \(playerdatas)")
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed GetPlayerResponse")
                 }
@@ -416,10 +415,9 @@ class WebHookRequestHandler {
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
 
-            if !playerdatas.isEmpty {
+            if !playerdatas.isEmpty && username != nil {
                 let start = Date()
-                for playerdata in playerdatas {
-                    //Log.debug(message: "[WebHookRequestHandler] \(playerdata)") 
+                for playerdata in playerdatas { 
 					let account: Account?
 					do {
                         account = try Account.getWithUsername(mysql: mysql, username: username!)
