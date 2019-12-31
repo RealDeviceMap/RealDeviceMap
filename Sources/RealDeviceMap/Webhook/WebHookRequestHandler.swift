@@ -100,7 +100,7 @@ class WebHookRequestHandler {
         }
         
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        let username = json["username"] as? String
+        var username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -176,6 +176,7 @@ class WebHookRequestHandler {
 				data = Data(base64Encoded: madString) ?? Data()
 				method = rawData["type"] as? Int ?? 106
 				isMadData = true
+				username = "PogoDroid"
 				//Log.info(message: "[WebHookRequestHandler] PogoDroid Raw Data Type: \(method)")
             } else {
                 continue

@@ -1,14 +1,11 @@
-ALTER TABLE `account`
-ADD COLUMN `creationTimestampMs` int(11) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `warn` tinyint(1) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `warnExpireMs` int(11) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `warnMessageAcknowledged` tinyint(1) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `suspendedMessageAcknowledged` tinyint(1) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `wasSuspended` tinyint(1) unsigned DEFAULT NULL;
-ALTER TABLE `account`
-ADD COLUMN `banned` tinyint(1) unsigned DEFAULT NULL;
+ALTER TABLE `group`
+ADD COLUMN `perm_view_map_submission_cell` tinyint(1) unsigned NOT NULL;
+
+UPDATE `group`
+SET `perm_view_map_submission_cell` = `perm_view_map_pokestop`;
+
+ALTER TABLE gym
+ADD COLUMN `sponsor_id` smallint unsigned DEFAULT NULL;
+
+ALTER TABLE pokestop
+ADD COLUMN `sponsor_id` smallint unsigned DEFAULT NULL;

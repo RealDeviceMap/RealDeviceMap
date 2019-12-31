@@ -114,6 +114,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var lastModifiedTimestamp: UInt32?
     var name: String?
     var url: String?
+    var sponsorId: UInt16?
     var updated: UInt32?
     
     var questType: UInt32?
@@ -128,7 +129,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var incidentExpireTimestamp: UInt32?
     var gruntType: UInt16?
     
-    init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?, lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?, questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?, questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?, pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?) {
+    init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?, lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?, questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?, questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?, pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -149,6 +150,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.pokestopDisplay = pokestopDisplay
         self.incidentExpireTimestamp = incidentExpireTimestamp
         self.gruntType = gruntType
+        self.sponsorId = sponsorId
     }
         
     init(fortData: POGOProtos_Map_Fort_FortData, cellId: UInt64) {
@@ -156,6 +158,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.id = fortData.id
         self.lat = fortData.latitude
         self.lon = fortData.longitude
+        if fortData.sponsor != .unsetSponsor {
+            self.sponsorId = UInt16(fortData.sponsor.rawValue)
+        }
         self.enabled = fortData.enabled
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.activeFortModifier.contains(.itemTroyDisk) ||
@@ -288,6 +293,13 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withPlayerLevel:
                 let info = conditionData.withPlayerLevel
                 infoData["level"] = info.level
+            case .withBuddy:
+                let info = conditionData.withBuddy
+                infoData["min_buddy_level"] = info.minBuddyLevel
+                infoData["must_be_on_map"] = info.mustBeOnMap
+            case .withDailyBuddyAffection:
+                let info = conditionData.withDailyBuddyAffection
+                infoData["min_buddy_affection_earned_today"] = info.minBuddyAffectionEarnedToday
             case .withWinGymBattleStatus: break
             case .withSuperEffectiveCharge: break
             case .withUniquePokestop: break
@@ -300,6 +312,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withDailyCaptureBonus: break
             case .withDailySpinBonus: break
             case .withUniquePokemon: break
+            case .withBuddyInterestingPoi: break
             case .unset: break
             case .UNRECOGNIZED(_): break
             }
@@ -387,8 +400,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 WebHookController.global.addInvasionEvent(pokestop: self)
             }
             let sql = """
-                INSERT INTO pokestop (id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type, quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type, updated, first_seen_timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                INSERT INTO pokestop (id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type, quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, updated, first_seen_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
@@ -433,7 +446,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             
             let sql = """
                 UPDATE pokestop
-                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?, lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?, deleted = false
+                SET lat = ? , lon = ? , name = ? , url = ? , enabled = ? , lure_expire_timestamp = ? , last_modified_timestamp = ? , updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?, lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?, deleted = false, sponsor_id = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -459,6 +472,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(pokestopDisplay)
         mysqlStmt.bindParam(incidentExpireTimestamp)
         mysqlStmt.bindParam(gruntType)
+        mysqlStmt.bindParam(sponsorId)
         
         if oldPokestop != nil {
             mysqlStmt.bindParam(id)
@@ -595,7 +609,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
  
         var sql = """
-            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type
+            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id
             FROM pokestop
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludePokestopSQL)
         """
@@ -695,8 +709,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 incidentExpireTimestamp = nil
                 gruntType = nil
             }
+            let sponsorId = result[20] as? UInt16
 
-            pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType))
+            pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId))
         }
         return pokestops
         
@@ -734,7 +749,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         
         
         let sql = """
-            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type
+            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id
             FROM pokestop
             WHERE id IN \(inSQL) AND deleted = false
         """
@@ -774,8 +789,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let pokestopDisplay = result[17] as? UInt16
             let incidentExpireTimestamp = result[18] as? UInt32
             let gruntType = result[19] as? UInt16
+            let sponsorId = result[20] as? UInt16
             
-            pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType))
+            pokestops.append(Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId))
         }
         return pokestops
         
@@ -795,7 +811,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             withDeletedSQL = "AND deleted = false"
         }
         let sql = """
-            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type
+            SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id
             FROM pokestop
             WHERE id = ? \(withDeletedSQL)
         """
@@ -836,8 +852,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let pokestopDisplay = result[17] as? UInt16
         let incidentExpireTimestamp = result[18] as? UInt32
         let gruntType = result[19] as? UInt16
+        let sponsorId = result[20] as? UInt16
 
-        return Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType)
+        return Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled, lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp, questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay, incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId)
 
     }
     

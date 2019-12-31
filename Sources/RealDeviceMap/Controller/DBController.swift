@@ -246,6 +246,7 @@ class DBController {
                     "pokestop": true,
                     "quest_stats": false,
                     "raid_stats": false,
+                    "invasion_stats": false,
                     "s2cell": true,
                     "spawnpoint": true,
                     "token": true,

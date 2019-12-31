@@ -46,6 +46,8 @@ class ApiRequestHandler {
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
+        let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
+        let showSubmissionTypeCells = request.param(name: "show_submission_type_cells")?.toBool() ?? false
         let showWeathers = request.param(name: "show_weathers")?.toBool() ?? false
         let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
         let showActiveDevices = request.param(name: "show_active_devices")?.toBool() ?? false
@@ -65,7 +67,7 @@ class ApiRequestHandler {
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         
-        if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints || showCells || showWeathers) &&
+        if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints || showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
             response.respondWithError(status: .badRequest)
             return
@@ -160,6 +162,14 @@ class ApiRequestHandler {
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
+        }
+        if lastUpdate == 0 && isPost && showSubmissionPlacementCells && perms.contains(.viewMapSubmissionCells) {
+            let result = try? SubmissionPlacementCell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!)
+            data["submission_placement_cells"] = result?.cells
+            data["submission_placement_rings"] = result?.rings
+        }
+        if lastUpdate == 0 && isPost && showSubmissionTypeCells && perms.contains(.viewMapSubmissionCells) {
+            data["submission_type_cells"] = try? SubmissionTypeCell.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!)
         }
         if isPost && showWeathers && perms.contains(.viewMapWeather) {
 			data["weather"] = try? Weather.getAll(mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate)
@@ -1124,7 +1134,7 @@ class ApiRequestHandler {
                         assignmentData["time"] = ["timestamp": assignment.time as Any, "formatted": formattedTime]
                        
                         let instanceUUID = "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
-                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit</a><a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
+                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a href=\"/dashboard/assignment/start/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-success\">Start</a><a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit</a><a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
                     } else {
                         assignmentData["time"] = assignment.time as Any
                     }
@@ -1234,7 +1244,7 @@ class ApiRequestHandler {
                             case .viewMapIV:
                                 permName = "IV"
                             case .viewMapCell:
-                                permName = "Cell"
+                                permName = "Scann-Cell"
                             case .viewMapWeather:
                                 permName = "Weather"
                             case .viewMapLure:
@@ -1243,6 +1253,8 @@ class ApiRequestHandler {
                                 permName = "Invasion"
                             case .viewMapDevice:
                                 permName = "Device"
+                            case .viewMapSubmissionCells:
+                                permName = "Submission-Cell"
                             }
                             
                             if permsString == "" {

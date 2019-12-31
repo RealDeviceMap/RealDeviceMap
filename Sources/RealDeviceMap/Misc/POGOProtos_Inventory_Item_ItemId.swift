@@ -11,7 +11,6 @@ import POGOProtos
 extension POGOProtos_Inventory_Item_ItemId {
 
     public static var allAvilable: [POGOProtos_Inventory_Item_ItemId] = [
-        //.itemUnknown,
         .itemPokeBall,
         .itemGreatBall,
         .itemUltraBall,
@@ -56,6 +55,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         .itemDragonScale,
         .itemUpGrade,
         .itemGen4EvolutionStone,
+        .itemGen5EvolutionStone,
         .itemMoveRerollFastAttack,
         .itemMoveRerollSpecialAttack,
         .itemRareCandy,
@@ -63,8 +63,13 @@ extension POGOProtos_Inventory_Item_ItemId {
         //.itemPaidRaidTicket,
         //.itemLegendaryRaidTicket,
         .itemStarPiece,
-        //.itemFriendGiftBox
-        //.itemTeamChange
-    ]
+        //.itemFriendGiftBox,
+        //.itemTeamChange,
+        //.itemVsSeekerBattleNow,
+        //.itemLeaderMapFragment,
+        //.itemLeaderMap,
+        //.itemGiovanniMap,
+        //.itemGlobalEventTicket,
+     ]
     
 }
