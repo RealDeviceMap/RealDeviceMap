@@ -292,7 +292,7 @@ $(function() {
         $('#map').append(snow)
     }
 
-    if (d.getMonth() === 11 && d.getDate() >= 31 || d.getMonth() === 1 && d.getDate() <= 2) {
+    if ((d.getMonth() === 11 && d.getDate() >= 31) || (d.getMonth() === 0 && d.getDate() <= 1)) {
 		const fireworks = '<div class="pyro">' +
 			'<div class="before"></div>' +
 			'<div class="after"></div>' +
