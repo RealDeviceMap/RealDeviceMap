@@ -295,7 +295,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["level"] = info.level
             case .withBuddy:
                 let info = conditionData.withBuddy
-                infoData["min_buddy_level"] = info.minBuddyLevel
+                infoData["min_buddy_level"] = info.minBuddyLevel.rawValue
                 infoData["must_be_on_map"] = info.mustBeOnMap
             case .withDailyBuddyAffection:
                 let info = conditionData.withDailyBuddyAffection
