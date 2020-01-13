@@ -17,17 +17,17 @@ class Account: WebHookEvent {
         let message: [String: Any] = [
             "username": username,
             "level": level,
-            "firstWarningTimestamp": firstWarningTimestamp ?? 0,
-            "failedTimestamp": failedTimestamp ?? 0,
+            "first_warning_timestamp": firstWarningTimestamp ?? 0,
+            "failed_timestamp": failedTimestamp ?? 0,
             "failed": failed ?? "None",
-            "lastEncounterTime": lastEncounterTime ?? 0,
+            "last_encounter_time": lastEncounterTime ?? 0,
             "spins": spins as Any,
-            "creationTimestampMs": creationTimestampMs ?? 0,
+            "creation_timestamp_ms": creationTimestampMs ?? 0,
             "warn": warn ?? 0,
-            "warnExpireMs": warnExpireMs ?? 0,
-            "warnMessageAcknowledged": warnMessageAcknowledged ?? 0,
-            "suspendedMessageAcknowledged": suspendedMessageAcknowledged ?? 0,
-            "wasSuspended": wasSuspended ?? 0,
+            "warn_expire_ms": warnExpireMs ?? 0,
+            "warn_message_acknowledged": warnMessageAcknowledged ?? 0,
+            "suspended_message_acknowledged": suspendedMessageAcknowledged ?? 0,
+            "was_suspended": wasSuspended ?? 0,
             "banned": banned ?? 0
         ]
         return [
@@ -127,7 +127,7 @@ class Account: WebHookEvent {
         if oldAccount == nil {
 
             let sql = """
-                INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned)
+                INSERT INTO account (username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp_ms, warn, warn_expire_ms, warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -181,7 +181,7 @@ class Account: WebHookEvent {
 			
             let sql = """
                 UPDATE account
-                SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?, creationTimestampMs = ?, warn = ?, warnExpireMs = ?, warnMessageAcknowledged = ?, suspendedMessageAcknowledged = ?, wasSuspended = ?, banned = ?
+                SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?, last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?, creation_timestamp_ms = ?, warn = ?, warn_expire_ms = ?, warn_message_acknowledged = ?, suspended_message_acknowledged = ?, was_suspended = ?, banned = ?
                 WHERE username = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -314,7 +314,7 @@ class Account: WebHookEvent {
         }
 
         let sql = """
-            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp_ms, warn, warn_expire_ms, warn_message_acknowledged, suspended_Mmessage_acknowledged, was_suspended, banned
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND level >= ? AND level <= ? AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() -  CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND spins < 400)
@@ -367,7 +367,7 @@ class Account: WebHookEvent {
         }
 
         let sql = """
-            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creationTimestampMs, warn, warnExpireMs, warnMessageAcknowledged, suspendedMessageAcknowledged, wasSuspended, banned
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp_ms, warn, warn_expire_ms, warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned
             FROM account
             WHERE username = ?
         """
