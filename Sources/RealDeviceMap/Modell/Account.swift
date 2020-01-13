@@ -314,7 +314,7 @@ class Account: WebHookEvent {
         }
 
         let sql = """
-            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp_ms, warn, warn_expire_ms, warn_message_acknowledged, suspended_Mmessage_acknowledged, was_suspended, banned
+            SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp_ms, warn, warn_expire_ms, warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE first_warning_timestamp is NULL AND failed_timestamp is NULL and device.uuid IS NULL AND level >= ? AND level <= ? AND failed IS NULL AND (last_encounter_time IS NULL OR UNIX_TIMESTAMP() -  CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND spins < 400)
