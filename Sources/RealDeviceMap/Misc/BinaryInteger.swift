@@ -28,7 +28,7 @@ public extension BinaryInteger {
         return Int8(self)
     }
     func toString() -> String {
-        return String(self)
+        return self.description
     }
     func toUInt8Checked() -> UInt8? {
         if self >= UInt8.min && self <= UInt8.max {
