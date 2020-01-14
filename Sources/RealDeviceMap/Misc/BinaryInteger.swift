@@ -47,9 +47,17 @@ public extension BinaryInteger {
         return (UInt8(self / 3600), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))
     }
     func withCommas() -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = NumberFormatter.Style.decimal
-        return formatter.string(from: self as! NSNumber) ?? ""
+        let charArray = Array(self.toString()).reversed()
+        var charWithCommasArray = [Character]()
+        var index = 1
+        for char in charArray {
+            charWithCommasArray.append(char)
+            if index % 3 == 0 && index != charArray.count {
+                charWithCommasArray.append(".")
+            }
+            index += 1
+        }
+        return String(charWithCommasArray.reversed())
     }
 }
 
