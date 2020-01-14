@@ -598,5 +598,113 @@ class Account: WebHookEvent {
 
         return count
     }
+    
+    public static func getStats(mysql: MySQL?=nil) throws -> [Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT
+              level,
+              COUNT(level) as total,
+              SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
+              SUM(failed = 'banned') as banned,
+              SUM(first_warning_timestamp IS NOT NULL) as warning,
+              SUM(failed = 'invalid_credentials') as invalid_creds,
+              SUM(failed != 'banned' AND failed != 'invalid_credentials') as other,
+              SUM(last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) < 7200) as cooldown,
+              SUM(spins >= 500) as spin_limit
+            FROM account
+            GROUP BY level
+            ORDER BY level DESC
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [Any]()
+        while let result = results.next() {
+            let level = result[0] as! UInt8
+            let total = result[1] as! Int64
+            let good = Int64(result[2] as? String ?? "0") ?? 0
+            let banned = Int64(result[3] as? String ?? "0") ?? 0
+            let warning = Int64(result[4] as? String ?? "0") ?? 0
+            let invalid = Int64(result[5] as? String ?? "0") ?? 0
+            let other = Int64(result[6] as? String ?? "0") ?? 0
+            let cooldown = Int64(result[7] as? String ?? "0") ?? 0
+            let spinLimit = Int64(result[8] as? String ?? "0") ?? 0
+            
+            stats.append([
+                "level": level,
+                "total": total.withCommas(),
+                "good": good.withCommas(),
+                "banned": banned.withCommas(),
+                "warning": warning.withCommas(),
+                "invalid": invalid.withCommas(),
+                "other": other.withCommas(),
+                "cooldown": cooldown.withCommas(),
+                "spin_limit": spinLimit.withCommas(),
+            ])
+            
+        }
+        
+        return stats
+    }
+    
+    public static func getWarningBannedStats(mysql: MySQL?=nil) throws -> [String: Any] {
+        
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        
+        let sql = """
+            SELECT
+              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as banned_7days,
+              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as banned_14days,
+              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as banned_30days,
+              SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as warning_7days,
+              SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as warning_14days,
+              SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as warning_30days
+            FROM account
+        """
+        
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        
+        var stats = [String: Any]()
+        while let result = results.next() {
+            let banned7days = Int64(result[0] as? String ?? "0") ?? 0
+            let banned14days = Int64(result[1] as? String ?? "0") ?? 0
+            let banned30days = Int64(result[2] as? String ?? "0") ?? 0
+            let warning7days = Int64(result[3] as? String ?? "0") ?? 0
+            let warning14days = Int64(result[4] as? String ?? "0") ?? 0
+            let warning30days = Int64(result[5] as? String ?? "0") ?? 0
+            
+            stats["banned_7days"] = banned7days.withCommas()
+            stats["banned_14days"] = banned14days.withCommas()
+            stats["banned_30days"] = banned30days.withCommas()
+            stats["warning_7days"] = warning7days.withCommas()
+            stats["warning_14days"] = warning14days.withCommas()
+            stats["warning_30days"] = warning30days.withCommas()
+        }
+        
+        return stats
+    }
 
 }
