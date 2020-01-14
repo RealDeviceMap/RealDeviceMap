@@ -1,0 +1,60 @@
+//
+//  BinaryInteger.swift
+//  RealDeviceMap
+//
+//  Created by Florian Kostenzer on 14.01.20.
+//
+
+import Foundation
+
+public extension BinaryInteger {
+    
+    func toUInt32() -> UInt32 {
+        return UInt32(self)
+    }
+    func toUInt16() -> UInt16 {
+        return UInt16(self)
+    }
+    func toUInt8() -> UInt8 {
+        return UInt8(self)
+    }
+    func toInt32() -> Int32 {
+        return Int32(self)
+    }
+    func toInt16() -> Int16 {
+        return Int16(self)
+    }
+    func toInt8() -> Int8 {
+        return Int8(self)
+    }
+    func toString() -> String {
+        return String(self)
+    }
+    func toUInt8Checked() -> UInt8? {
+        if self >= UInt8.min && self <= UInt8.max {
+            return UInt8(self)
+        }
+        return nil
+    }
+    func toBool() -> Bool {
+        if self == 0 {
+            return false
+        } else {
+            return true
+        }
+    }
+    func secondsToHoursMinutesSeconds() -> (hours: UInt8, minutes: UInt8, seconds: UInt8) {
+        return (UInt8(self / 3600), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))
+    }
+    func withCommas() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = NumberFormatter.Style.decimal
+        return formatter.string(from: self as! NSNumber) ?? ""
+    }
+}
+
+extension BinaryInteger where Self: CVarArg {
+    func toHexString() -> String? {
+        return String(format:"%02X", self)
+    }
+}
