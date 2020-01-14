@@ -53,7 +53,7 @@ public extension BinaryInteger {
         for char in charArray {
             charWithCommasArray.append(char)
             if index % 3 == 0 && index != charArray.count {
-                charWithCommasArray.append(".")
+                charWithCommasArray.append(",")
             }
             index += 1
         }
