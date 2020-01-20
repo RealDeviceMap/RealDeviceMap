@@ -1,0 +1,10 @@
+included:
+ - Sources
+disabled_rules:
+- nesting
+- legacy_hashing
+identifier_name:
+  excluded:
+    - i
+    - id
+    - cp

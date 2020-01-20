@@ -8,7 +8,7 @@
 import Foundation
 
 public extension BinaryInteger {
-    
+
     func toUInt32() -> UInt32 {
         return UInt32(self)
     }
@@ -43,6 +43,7 @@ public extension BinaryInteger {
             return true
         }
     }
+    // swiftlint:disable:next large_tuple
     func secondsToHoursMinutesSeconds() -> (hours: UInt8, minutes: UInt8, seconds: UInt8) {
         return (UInt8(self / 3600), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))
     }
@@ -63,6 +64,6 @@ public extension BinaryInteger {
 
 extension BinaryInteger where Self: CVarArg {
     func toHexString() -> String? {
-        return String(format:"%02X", self)
+        return String(format: "%02X", self)
     }
 }

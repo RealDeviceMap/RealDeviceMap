@@ -62,7 +62,7 @@ extension POGOProtos_Inventory_Item_ItemId {
         .itemFreeRaidTicket,
         //.itemPaidRaidTicket,
         //.itemLegendaryRaidTicket,
-        .itemStarPiece,
+        .itemStarPiece
         //.itemFriendGiftBox,
         //.itemTeamChange,
         //.itemVsSeekerBattleNow,
@@ -71,5 +71,5 @@ extension POGOProtos_Inventory_Item_ItemId {
         //.itemGiovanniMap,
         //.itemGlobalEventTicket,
      ]
-    
+
 }

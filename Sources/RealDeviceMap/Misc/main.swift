@@ -4,6 +4,7 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
+//  swiftlint:disable force_try
 
 import Foundation
 import PerfectLib
@@ -17,7 +18,6 @@ let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.work
 #else
 let projectroot = Dir.workingDir.path
 #endif
-
 
 // Check if /backups exists
 let backups = Dir("\(projectroot)/backups")
@@ -72,31 +72,47 @@ WebReqeustHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MA
 WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
 WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
 WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
-WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?.jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
+WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
+    .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
 WebReqeustHandler.googleAnalyticsId = try! DBController.global.getValueForKey(key: "GOOGLE_ANALYTICS_ID") ?? ""
 WebReqeustHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
-WebReqeustHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?.emptyToNil()
+WebReqeustHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?
+    .emptyToNil()
 WebReqeustHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?.emptyToNil()
-WebReqeustHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?.emptyToNil()
+WebReqeustHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?
+    .emptyToNil()
 WebReqeustHandler.statsUrl = try! DBController.global.getValueForKey(key: "STATS_URL") ?? ""
-WebHookRequestHandler.hostWhitelist = try! DBController.global.getValueForKey(key: "DEVICEAPI_HOST_WHITELIST")?.emptyToNil()?.components(separatedBy: ";")
-WebHookRequestHandler.hostWhitelistUsesProxy = try! DBController.global.getValueForKey(key: "DEVICEAPI_HOST_WHITELIST_USES_PROXY")?.toBool() ?? false
+WebHookRequestHandler.hostWhitelist = try! DBController.global.getValueForKey(key: "DEVICEAPI_HOST_WHITELIST")?
+    .emptyToNil()?.components(separatedBy: ";")
+WebHookRequestHandler.hostWhitelistUsesProxy = try! DBController.global.getValueForKey(
+    key: "DEVICEAPI_HOST_WHITELIST_USES_PROXY"
+)?.toBool() ?? false
 WebHookRequestHandler.loginSecret = try! DBController.global.getValueForKey(key: "DEVICEAPI_SECRET")?.emptyToNil()
-WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?.components(separatedBy: ",").map({ (s) -> UInt16 in
-    return s.toUInt16() ?? 0
+WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?
+    .components(separatedBy: ",").map({ (string) -> UInt16 in
+    return string.toUInt16() ?? 0
 }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] //Default ditto disguises
 
-if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: String]  {
+if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?
+    .jsonDecodeForceTry() as? [String: String] {
     var tileservers = [String: [String: String]]()
     for tileserver in tileserversOld {
-        tileservers[tileserver.key] = ["url": tileserver.value, "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"]
+        tileservers[tileserver.key] = [
+            "url": tileserver.value,
+            "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"
+        ]
     }
     WebReqeustHandler.tileservers = tileservers
 } else {
-    WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?.jsonDecodeForceTry() as? [String: [String:String]] ?? ["Default": ["url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"]]
+    WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?
+        .jsonDecodeForceTry() as? [String: [String: String]] ?? [
+            "Default": [
+                "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">" +
+                               "OpenStreetMap</a> contributors"
+            ]
+        ]
 }
-
-
 
 Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 
@@ -108,11 +124,13 @@ Pokestop.lureTime = try! DBController.global.getValueForKey(key: "POKESTOP_LURE_
 Gym.exRaidBossId = try! DBController.global.getValueForKey(key: "GYM_EX_BOSS_ID")?.toUInt16()
 Gym.exRaidBossForm = try! DBController.global.getValueForKey(key: "GYM_EX_BOSS_FORM")?.toUInt16()
 
-WebHookRequestHandler.enableClearing = try! DBController.global.getValueForKey(key: "ENABLE_CLEARING")?.toBool() ?? false
+WebHookRequestHandler.enableClearing = try! DBController.global.getValueForKey(key: "ENABLE_CLEARING")?
+    .toBool() ?? false
 
-DiscordController.global.guilds = try! DBController.global.getValueForKey(key: "DISCORD_GUILD_IDS")?.components(separatedBy: ";").map({ (s) -> UInt64 in
- return s.toUInt64() ?? 0
- }) ?? [UInt64]()
+DiscordController.global.guilds = try! DBController.global.getValueForKey(key: "DISCORD_GUILD_IDS")?
+    .components(separatedBy: ";").map({ (string) -> UInt64 in
+    return string.toUInt64() ?? 0
+}) ?? [UInt64]()
 DiscordController.global.token = try! DBController.global.getValueForKey(key: "DISCORD_TOKEN") ?? ""
 
 MailController.clientURL = try! DBController.global.getValueForKey(key: "MAILER_URL")

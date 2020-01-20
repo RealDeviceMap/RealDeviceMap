@@ -11,13 +11,13 @@ import PerfectThread
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
-    
+
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
     public private(set) var scatterPokemon: [UInt16]
-    
-    public var delegate: InstanceControllerDelegate?
+
+    public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
     private var pokemonList: [UInt16]
@@ -31,8 +31,9 @@ class IVInstanceController: InstanceControllerProto {
     private var count: UInt64 = 0
     private var shouldExit = false
     private var ivQueueLimit = 100
-    
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8, maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16]) {
+
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8,
+         maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16]) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -40,12 +41,12 @@ class IVInstanceController: InstanceControllerProto {
         self.pokemonList = pokemonList
         self.ivQueueLimit = ivQueueLimit
         self.scatterPokemon = scatterPokemon
-        
-        checkScannedThreadingQueue = Threading.getQueue(name:  "\(name)-check-scanned", type: .serial)
+
+        checkScannedThreadingQueue = Threading.getQueue(name: "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
-            
+
             while !self.shouldExit {
-                
+
                 self.scannedPokemonLock.lock()
                 if self.scannedPokemon.isEmpty {
                     self.scannedPokemonLock.unlock()
@@ -84,23 +85,23 @@ class IVInstanceController: InstanceControllerProto {
                             Log.debug(message: "[IVInstanceController] Checked Pokemon has IV")
                         }
                     }
-                    
+
                 }
-                
+
             }
-            
+
         }
     }
-    
+
     deinit {
         stop()
     }
-    
-    func getTask(uuid: String, username: String?) -> [String : Any] {
+
+    func getTask(uuid: String, username: String?) -> [String: Any] {
 
 		guard let mysql = DBController.global.mysql else {
 			Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-			return [String : Any]()
+			return [String: Any]()
 		}
 
 		do {
@@ -121,20 +122,21 @@ class IVInstanceController: InstanceControllerProto {
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
-        
+
         if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
             return getTask(uuid: uuid, username: username)
         }
-        
+
         scannedPokemonLock.lock()
         scannedPokemon.append((Date(), pokemon))
         scannedPokemonLock.unlock()
-        
-        return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id, "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
+
+        return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
+                "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
     }
-    
+
     func getStatus(formatted: Bool) -> JSONConvertible? {
-        
+
         let ivh: Int?
         self.statsLock.lock()
         if self.startDate != nil {
@@ -150,39 +152,41 @@ class IVInstanceController: InstanceControllerProto {
             } else {
                 ivhString = "\(ivh!)"
             }
-            return "<a href=\"/dashboard/instance/ivqueue/\(name.encodeUrl() ?? "")\">Queue</a>: \(pokemonQueue.count), IV/h: \(ivhString)"
+            return "<a href=\"/dashboard/instance/ivqueue/\(name.encodeUrl() ?? "")\">Queue" +
+                   "</a>: \(pokemonQueue.count), IV/h: \(ivhString)"
         } else {
             return ["iv_per_hour": ivh]
         }
     }
-    
+
     func reload() {}
-    
+
     func stop() {
         self.shouldExit = true
         if checkScannedThreadingQueue != nil {
             Threading.destroyQueue(checkScannedThreadingQueue!)
         }
     }
-    
+
     func getQueue() -> [Pokemon] {
         pokemonLock.lock()
         let pokemon = self.pokemonQueue
         pokemonLock.unlock()
         return pokemon
     }
-    
+
     func addPokemon(pokemon: Pokemon) {
-        if pokemonList.contains(pokemon.pokemonId) && multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
+        if pokemonList.contains(pokemon.pokemonId) &&
+           multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
-            
+
             if pokemonQueue.contains(pokemon) {
                 pokemonLock.unlock()
                 return
             }
-            
+
             let index = lastIndexOf(pokemonId: pokemon.pokemonId)
-            
+
             if pokemonQueue.count >= ivQueueLimit && index == nil {
                 Log.warning(message: "[IVInstanceController] Queue is full!")
             } else if pokemonQueue.count >= ivQueueLimit {
@@ -195,19 +199,19 @@ class IVInstanceController: InstanceControllerProto {
             }
             pokemonLock.unlock()
         }
-        
+
     }
-    
+
     func gotIV(pokemon: Pokemon) {
-        
+
         if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
-        
+
             pokemonLock.lock()
             if let index = pokemonQueue.index(of: pokemon) {
                 pokemonQueue.remove(at: index)
             }
             pokemonLock.unlock()
-            
+
             self.statsLock.lock()
             if self.startDate == nil {
                 self.startDate = Date()
@@ -219,14 +223,14 @@ class IVInstanceController: InstanceControllerProto {
                 self.count += 1
             }
             self.statsLock.unlock()
-            
+
         }
     }
 
     private func lastIndexOf(pokemonId: UInt16) -> Int? {
-        
+
         let targetPriority = pokemonList.index(of: pokemonId)!
-        
+
         var i = 0
         for pokemon in pokemonQueue {
             let priority = pokemonList.index(of: pokemon.pokemonId)!
@@ -235,9 +239,9 @@ class IVInstanceController: InstanceControllerProto {
             }
             i += 1
         }
-        
+
         return nil
-        
+
     }
-    
+
 }

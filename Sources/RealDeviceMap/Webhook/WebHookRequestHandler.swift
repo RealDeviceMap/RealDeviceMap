@@ -4,6 +4,8 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
@@ -11,14 +13,13 @@ import PerfectHTTP
 import PerfectMustache
 import PerfectSession
 import PerfectThread
-import Foundation
 import SwiftProtobuf
 import POGOProtos
 import Turf
 import S2Geometry
 
 class WebHookRequestHandler {
-    
+
     static var enableClearing = false
     static var hostWhitelist: [String]?
     static var hostWhitelistUsesProxy: Bool = false
@@ -26,63 +27,63 @@ class WebHookRequestHandler {
     static var dittoDisguises: [UInt16]?
 
     private static var limiter = LoginLimiter()
-    
+
     private static var levelCacheLock = Threading.Lock()
     private static var levelCache = [String: Int]()
-    
+
     private static var emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
-        
+
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
-        
+
         if let hostWhitelist = hostWhitelist {
             let host: String
-            let ff = request.header(.xForwardedFor) ?? ""
-            if ff.isEmpty || !hostWhitelistUsesProxy {
+            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
+            if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
                 host = request.remoteAddress.host
             } else {
-                host = ff
+                host = forwardedForHeader
             }
 
             guard hostWhitelist.contains(host) else {
                 return response.respondWithError(status: .unauthorized)
             }
         }
-        
+
         if let loginSecret = loginSecret {
             let host: String
-            let ff = request.header(.xForwardedFor) ?? ""
-            if ff.isEmpty || !hostWhitelistUsesProxy {
+            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
+            if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
                 host = request.remoteAddress.host
             } else {
-                host = ff
+                host = forwardedForHeader
             }
-            
+
             guard WebHookRequestHandler.limiter.allowed(host: host) else {
                 return response.respondWithError(status: .unauthorized)
             }
-            
+
             let loginSecretHeader = request.header(.authorization)
             guard loginSecretHeader == "Bearer \(loginSecret)" else {
                 WebHookRequestHandler.limiter.failed(host: host)
                 return response.respondWithError(status: .unauthorized)
             }
         }
-        
+
         switch type {
         case .controler:
             controlerHandler(request: request, response: response)
         case .raw:
             rawHandler(request: request, response: response)
         }
-        
+
     }
-    
+
     static func rawHandler(request: HTTPRequest, response: HTTPResponse) {
-        
+
         let json: [String: Any]
         do {
-            guard var jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String : Any] else {
+            guard var jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String: Any] else {
                 response.respondWithError(status: .badRequest)
                 return
             }
@@ -92,13 +93,13 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
-        
+
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
-        
+
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         var username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
@@ -114,23 +115,25 @@ class WebHookRequestHandler {
                 } catch {}
             }
         }
-        
-        guard let contents = json["contents"] as? [[String: Any]] ?? json["protos"] as? [[String: Any]] ?? json["gmo"] as? [[String: Any]] else {
+
+        guard let contents = json["contents"] as? [[String: Any]] ??
+                             json["protos"] as? [[String: Any]] ??
+                             json["gmo"] as? [[String: Any]] else {
             response.respondWithError(status: .badRequest)
             return
         }
-    
+
         let uuid = json["uuid"] as? String
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
-            try? Device.setLastLocation(mysql: mysql, uuid: uuid!, lat: latTarget!, lon: lonTarget!);
+            try? Device.setLastLocation(mysql: mysql, uuid: uuid!, lat: latTarget!, lon: lonTarget!)
         }
-        
+
         let pokemonEncounterId = json["pokemon_encounter_id"] as? String
         let pokemonEncounterIdForEncounter = json["pokemon_encounter_id_for_encounter"] as? String
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
-        
+
         var wildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon, timestampMs: UInt64)]()
         var nearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
         var clientWeathers =  [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
@@ -146,9 +149,9 @@ class WebHookRequestHandler {
         var isInvalidGMO = true
         var containsGMO = false
         var isMadData = false
-		
+
         for rawData in contents {
-            
+
             let data: Data
             let method: Int
             if let prr = rawData["GetPlayerResponse"] as? String {
@@ -157,8 +160,8 @@ class WebHookRequestHandler {
             } else if let gmo = rawData["GetMapObjects"] as? String {
                 data = Data(base64Encoded: gmo) ?? Data()
                 method = 106
-            } else if let er = rawData["EncounterResponse"] as? String {
-                data = Data(base64Encoded: er) ?? Data()
+            } else if let enr = rawData["EncounterResponse"] as? String {
+                data = Data(base64Encoded: enr) ?? Data()
                 method = 102
             } else if let fdr = rawData["FortDetailsResponse"] as? String {
                 data = Data(base64Encoded: fdr) ?? Data()
@@ -198,8 +201,8 @@ class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
                 }
             } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
-                if let er = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
-                    encounters.append(er)
+                if let enr = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
+                    encounters.append(enr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed EncounterResponse")
                 }
@@ -219,17 +222,19 @@ class WebHookRequestHandler {
                 containsGMO = true
                 if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
                     isInvalidGMO = false
-                    
-                    var newWildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon, timestampMs: UInt64)]()
+
+                    var newWildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon,
+                                            timestampMs: UInt64)]()
                     var newNearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
                     var newClientWeathers = [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
                     var newForts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
                     var newCells = [UInt64]()
-                    
+
                     for mapCell in gmo.mapCells {
                         let timestampMs = UInt64(mapCell.currentTimestampMs)
                         for wildPokemon in mapCell.wildPokemons {
-                            newWildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon, timestampMs: timestampMs))
+                            newWildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon,
+                                                    timestampMs: timestampMs))
                         }
                         for nearbyPokemon in mapCell.nearbyPokemons {
                             newNearbyPokemons.append((cell: mapCell.s2CellID, data: nearbyPokemon))
@@ -255,11 +260,14 @@ class WebHookRequestHandler {
                             }
                             emptyCellsLock.unlock()
                             if count == 3 {
-                                Log.debug(message: "[WebHookRequestHandler] Cell \(cell) was empty 3 times in a row. Asuming empty.")
+                                Log.debug(
+                                    message: "[WebHookRequestHandler] Cell \(cell) was empty 3 times in a row. " +
+                                             "Asuming empty."
+                                )
                                 cells.append(cell)
                             }
                         }
-                        
+
                         Log.info(message: "[WebHookRequestHandler] GMO is empty.")
                     } else {
                         for cell in newCells {
@@ -279,7 +287,7 @@ class WebHookRequestHandler {
                 }
             }
         }
-        
+
         let targetCoord: CLLocationCoordinate2D?
         var inArea = false
         if latTarget != nil && lonTarget != nil {
@@ -287,9 +295,9 @@ class WebHookRequestHandler {
         } else {
             targetCoord = nil
         }
-        
+
         var pokemonCoords: CLLocationCoordinate2D?
-        
+
         if targetCoord != nil {
             for fort in forts {
                 if !inArea {
@@ -306,7 +314,8 @@ class WebHookRequestHandler {
             for pokemon in wildPokemons {
                 if targetCoord != nil {
                     if !inArea {
-                        let coord = CLLocationCoordinate2D(latitude: pokemon.data.latitude, longitude: pokemon.data.longitude)
+                        let coord = CLLocationCoordinate2D(latitude: pokemon.data.latitude,
+                                                           longitude: pokemon.data.longitude)
                         if coord.distance(to: targetCoord!) <= targetMaxDistance {
                             inArea = true
                         }
@@ -317,7 +326,8 @@ class WebHookRequestHandler {
                 if pokemonEncounterId != nil {
                     if pokemonCoords == nil {
                         if pokemon.data.encounterID.description == pokemonEncounterId {
-                            pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.data.latitude, longitude: pokemon.data.longitude)
+                            pokemonCoords = CLLocationCoordinate2D(latitude: pokemon.data.latitude,
+                                                                   longitude: pokemon.data.longitude)
                         }
                     } else if pokemonCoords != nil && inArea {
                         break
@@ -338,22 +348,25 @@ class WebHookRequestHandler {
                 }
             }
         }
-        
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count, "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any, "only_empty_gmos": containsGMO && isEmtpyGMO, "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO]
+
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count,
+                    "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any,
+                    "only_empty_gmos": containsGMO && isEmtpyGMO,
+                    "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO
+        ]
 
         if pokemonEncounterIdForEncounter != nil {
             //If the UIC sets pokemon_encounter_id_for_encounter,
             //only return encounters != 0 if we actually encounter that target.
             //"Guaranteed scan"
-            data["encounters"] = 0;
-            for encounter in encounters {
-                if (encounter.wildPokemon.encounterID.description == pokemonEncounterIdForEncounter){
-                    //We actually encountered the target.
-                    data["encounters"] = 1;
-                }
+            data["encounters"] = 0
+            for encounter in encounters where
+                encounter.wildPokemon.encounterID.description == pokemonEncounterIdForEncounter {
+                //We actually encountered the target.
+                data["encounters"] = 1
             }
         }
-        
+
         if latTarget != nil && lonTarget != nil {
             data["in_area"] = inArea
             data["lat_target"] = latTarget!
@@ -364,35 +377,35 @@ class WebHookRequestHandler {
             data["pokemon_lon"] = pokemonCoords!.longitude
             data["pokemon_encounter_id"] = pokemonEncounterId!
         }
-        
+
         let listScatterPokemon = json["list_scatter_pokemon"] as? Bool ?? false
         if listScatterPokemon,
            pokemonCoords != nil,
            pokemonEncounterId != nil,
            let uuid = json["uuid"] as? String,
            let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) as? IVInstanceController {
-           
+
             var scatterPokemon = [[String: Any]]()
-            
+
             for pokemon in wildPokemons {
                 //Don't return the main query in the scattershot list
                 if pokemon.data.encounterID.description == pokemonEncounterId {
                     continue
                 }
-                
+
                 let pokemonId = UInt16(pokemon.data.pokemonData.pokemonID.rawValue)
                 do {
                     let oldPokemon = try Pokemon.getWithId(mysql: mysql, id: pokemon.data.encounterID.description)
-                    if (oldPokemon != nil && oldPokemon!.atkIv != nil) {
+                    if oldPokemon != nil && oldPokemon!.atkIv != nil {
                         //Skip going to mons already with IVs.
                         continue
                     }
                 } catch {}
-                
+
                 let coords = CLLocationCoordinate2D(latitude: pokemon.data
                     .latitude, longitude: pokemon.data.longitude)
                 let distance = pokemonCoords!.distance(to: coords)
-                
+
                 // Only Encounter pokemon within 35m of initial pokemon scann
                 if distance <= 35 && controller.scatterPokemon.contains(pokemonId) {
                     scatterPokemon.append([
@@ -405,19 +418,19 @@ class WebHookRequestHandler {
 
             data["scatter_pokemon"] = scatterPokemon
         }
-        
+
         do {
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
         }
-        
+
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
 
             if !playerdatas.isEmpty && username != nil {
                 let start = Date()
-                for playerdata in playerdatas { 
+                for playerdata in playerdatas {
 					let account: Account?
 					do {
                         account = try Account.getWithUsername(mysql: mysql, username: username!)
@@ -429,12 +442,13 @@ class WebHookRequestHandler {
                         try? account!.save(mysql: mysql, update: true)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
 
             var gymIdsPerCell = [UInt64: [String]]()
             var stopsIdsPerCell = [UInt64: [String]]()
-            
+
             for cellId in cells {
                 let s2cell = S2Cell(cellId: S2CellId(uid: cellId))
                 let lat = s2cell.capBound.rectBound.center.lat.degrees
@@ -442,14 +456,14 @@ class WebHookRequestHandler {
                 let level = s2cell.level
                 let cell = Cell(id: cellId, level: UInt8(level), centerLat: lat, centerLon: lon, updated: nil)
                 try? cell.save(mysql: mysql, update: true)
-                
+
                 if gymIdsPerCell[cellId] == nil {
                     gymIdsPerCell[cellId] = [String]()
                 }
                 if stopsIdsPerCell[cellId] == nil {
                     stopsIdsPerCell[cellId] = [String]()
                 }
-                
+
             }
 
             let startclientWeathers = Date()
@@ -458,25 +472,31 @@ class WebHookRequestHandler {
 				let wlat = ws2cell.capBound.rectBound.center.lat.degrees
 				let wlon = ws2cell.capBound.rectBound.center.lng.degrees
 				let wlevel = ws2cell.level
-                let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel), latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
+                let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel),
+                                      latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
 				try? weather.save(mysql: mysql, update: true)
 			}
-			Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s")
+			Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) " +
+                               "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s")
 
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
-                let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell, timestampMs: wildPokemon.timestampMs, username: username)
+                let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell,
+                                      timestampMs: wildPokemon.timestampMs, username: username)
                 try? pokemon.save(mysql: mysql)
             }
-            Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
-            
+            Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in " +
+                               "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data, cellId: nearbyPokemon.cell, username: username)
+                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data,
+                                           cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
-            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
-			
+            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in " +
+                               "\(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+
             let startForts = Date()
             for fort in forts {
                 if fort.data.type == .gym {
@@ -495,8 +515,9 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
-            
+            Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in " +
+                               "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+
             if !fortDetails.isEmpty {
                 let start = Date()
                 for fort in fortDetails {
@@ -524,9 +545,10 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            
+
             if !gymInfos.isEmpty {
                 let start = Date()
                 for gymInfo in gymInfos {
@@ -541,9 +563,10 @@ class WebHookRequestHandler {
                         try? gym!.save(mysql: mysql)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            
+
             if !quests.isEmpty {
                 let start = Date()
                 for quest in quests {
@@ -558,9 +581,10 @@ class WebHookRequestHandler {
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            
+
             if !encounters.isEmpty {
                 let start = Date()
                 for encounter in encounters {
@@ -574,7 +598,8 @@ class WebHookRequestHandler {
                         pokemon!.addEncounter(encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
-                        let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude, longitude: encounter.wildPokemon.longitude)
+                        let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude,
+                                                                 longitude: encounter.wildPokemon.longitude)
                         let center = S2LatLng(coord: centerCoord)
                         let centerNormalizedPoint = center.normalized.point
                         let circle = S2Cap(axis: centerNormalizedPoint, height: 0.0)
@@ -594,29 +619,32 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            
+
             if enableClearing {
                 for gymId in gymIdsPerCell {
-                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key), cleared != 0 {
+                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key),
+                       cleared != 0 {
                         Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Gyms.")
                     }
                 }
                 for stopId in stopsIdsPerCell {
-                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key), cleared != 0 {
+                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key),
+                       cleared != 0 {
                         Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Pokestops.")
                     }
                 }
             }
-            
+
             Threading.destroyQueue(queue)
         }
-        
+
     }
 
     static func controlerHandler(request: HTTPRequest, response: HTTPResponse) {
-        
+
         let jsonO: [String: Any]?
         let typeO: String?
         let uuidO: String?
@@ -628,12 +656,12 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
-        
+
         guard let type = typeO, let uuid = uuidO else {
             response.respondWithError(status: .badRequest)
             return
         }
-                
+
         let username = jsonO?["username"] as? String
         let minLevel = jsonO?["min_level"] as? Int ?? 0
         let maxLevel = jsonO?["max_level"] as? Int ?? 29
@@ -643,7 +671,7 @@ class WebHookRequestHandler {
             response.respondWithError(status: .internalServerError)
             return
         }
-        
+
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
@@ -658,16 +686,23 @@ class WebHookRequestHandler {
                         firstWarningTimestamp = nil
                     }
                 }
-                
+
                 if device == nil {
-                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0, accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
+                    let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
+                                           accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
-                    try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
+                    try response.respondWithData(
+                        data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
+                    )
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any])
+                        try response.respondWithData(
+                            data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
+                        )
                     } else {
-                        try response.respondWithData(data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any])
+                        try response.respondWithData(
+                            data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any]
+                        )
                     }
                 }
             } catch {
@@ -698,7 +733,7 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .notFound)
             }
         } else if type == "get_account" {
-            
+
             do {
                 guard
                     let device = try Device.getById(mysql: mysql, id: uuid),
@@ -710,17 +745,27 @@ class WebHookRequestHandler {
                 if device.accountUsername != nil {
                     do {
                         let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
-                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil && oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: ["username": oldAccount!.username, "password": oldAccount!.password, "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any, "level": oldAccount!.level])
+                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil &&
+                           oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
+                            try response.respondWithData(data: [
+                                "username": oldAccount!.username,
+                                "password": oldAccount!.password,
+                                "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any,
+                                "level": oldAccount!.level
+                            ])
                             return
                         }
                     } catch { }
                 }
-                
+
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
-                try response.respondWithData(data: ["username": account.username, "password": account.password, "first_warning_timestamp": account.firstWarningTimestamp as Any])
-            
+                try response.respondWithData(data: [
+                    "username": account.username,
+                    "password": account.password,
+                    "first_warning_timestamp": account.firstWarningTimestamp as Any
+                ])
+
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
@@ -835,7 +880,7 @@ class WebHookRequestHandler {
             Log.debug(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
             response.respondWithError(status: .badRequest)
         }
-        
+
     }
-    
+
 }
