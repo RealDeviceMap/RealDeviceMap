@@ -15,12 +15,12 @@ class CircleInstanceController: InstanceControllerProto {
         case pokemon
         case raid
     }
-    
+
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
-    public var delegate: InstanceControllerDelegate?
-    
+    public weak var delegate: InstanceControllerDelegate?
+
     private let type: CircleType
     private let coords: [Coord]
     private var lastIndex: Int = 0
@@ -36,14 +36,14 @@ class CircleInstanceController: InstanceControllerProto {
         self.type = type
         self.lastCompletedTime = Date()
     }
-    
-    func getTask(uuid: String, username: String?) -> [String : Any] {
-		
+
+    func getTask(uuid: String, username: String?) -> [String: Any] {
+
 		guard let mysql = DBController.global.mysql else {
 			Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-			return [String : Any]()
+			return [String: Any]()
 		}
-		
+
 		do {
 			if username != nil {
 				let account = try Account.getWithUsername(mysql: mysql, username: username!)
@@ -54,7 +54,7 @@ class CircleInstanceController: InstanceControllerProto {
 				}
 			}
 		} catch { }
-		       
+
         lock.lock()
         let currentIndex = self.lastIndex
         if lastIndex + 1 == coords.count {
@@ -62,22 +62,24 @@ class CircleInstanceController: InstanceControllerProto {
             lastCompletedTime = Date()
             lastIndex = 0
         } else {
-            lastIndex = lastIndex + 1
+            lastIndex += 1
         }
         lock.unlock()
-        
+
         let currentCoord = coords[currentIndex]
-        
+
         if type == .pokemon {
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                    "min_level": minLevel, "max_level": maxLevel]
         } else {
-            return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+            return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                    "min_level": minLevel, "max_level": maxLevel]
         }
-        
+
     }
-    
+
     func getStatus(formatted: Bool) -> JSONConvertible? {
-        
+
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))
             if formatted {
@@ -92,7 +94,7 @@ class CircleInstanceController: InstanceControllerProto {
                 return nil
             }
         }
-        
+
     }
 
     func reload() {
@@ -100,7 +102,7 @@ class CircleInstanceController: InstanceControllerProto {
         lastIndex = 0
         lock.unlock()
     }
-    
+
     func stop() {}
-    
+
 }

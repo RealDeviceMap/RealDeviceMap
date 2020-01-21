@@ -9,22 +9,22 @@ import Foundation
 import PerfectLib
 
 class Localizer {
-    
+
     public static let global = Localizer()
     public static var locale = "en" {
         didSet {
             global.load()
         }
     }
-    
+
     public var timeZone = NSTimeZone.default
     public private(set) var lastModified: Int = 0
 
     private var cachedData = [String: String]()
     private var cachedDataEn = [String: String]()
-    
+
     private init() {}
-    
+
     private func load() {
         let file = File("\(projectroot)/resources/webroot/static/data/\(Localizer.locale).json")
         lastModified = file.modificationTime
@@ -55,11 +55,11 @@ class Localizer {
             } catch {}
         }
     }
- 
+
     func get(value: String) -> String {
         return cachedData[value] ?? cachedDataEn[value] ?? value
     }
-    
+
     func get(value: String, replace: [String: String]) -> String {
         var value = cachedData[value] ?? cachedDataEn[value] ?? value
         for repl in replace {
@@ -67,5 +67,5 @@ class Localizer {
         }
         return value
     }
-    
+
 }

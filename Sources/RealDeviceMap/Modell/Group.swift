@@ -4,6 +4,8 @@
 //
 //  Created by Florian Kostenzer on 24.09.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast
 
 import Foundation
 import PerfectLib
@@ -11,7 +13,7 @@ import PerfectMySQL
 import PerfectThread
 
 struct Group {
-    
+
     enum Perm: UInt32 {
         case viewMap = 0
         case viewMapRaid = 1
@@ -31,53 +33,52 @@ struct Group {
         case viewMapDevice = 15
         case viewMapSubmissionCells = 16
 
-        static var all: [Perm] = [.viewMap, .viewMapRaid, .viewMapPokemon, .viewStats, .admin, .viewMapGym, .viewMapPokestop, .viewMapSpawnpoint, .viewMapQuest, .viewMapIV, .viewMapCell, .viewMapWeather, .viewMapLure, .viewMapInvasion, .viewMapDevice, .viewMapSubmissionCells]
-        
-        
+        static var all: [Perm] = [
+            .viewMap, .viewMapRaid, .viewMapPokemon, .viewStats, .admin, .viewMapGym, .viewMapPokestop,
+            .viewMapSpawnpoint, .viewMapQuest, .viewMapIV, .viewMapCell, .viewMapWeather, .viewMapLure,
+            .viewMapInvasion, .viewMapDevice, .viewMapSubmissionCells
+        ]
+
         static func permsToNumber(perms: [Perm]) -> UInt32 {
             var number: UInt32 = 0
             for perm in perms {
                 number += UInt32(pow(2, Double(perm.rawValue)))
             }
-            
+
             return number
         }
-        
+
         static func numberToPerms(number: UInt32) -> [Perm] {
             let numberString = String(String(number, radix: 2).reversed())
             var perms = [Perm]()
-            
-            for perm in all {
-                if numberString.count > perm.rawValue {
-                    if numberString[Int(perm.rawValue)] == "1" {
-                        perms.append(perm)
-                    }
-                }
+
+            for perm in all where numberString.count > perm.rawValue && numberString[Int(perm.rawValue)] == "1" {
+                perms.append(perm)
             }
-            
+
             return perms
         }
     }
-    
+
     var name: String
     var perms: [Perm]
-    
+
     private static var cacheLock = Threading.Lock()
     private static var cachedGroups = [String: Group]()
-    
+
     public static func getFromCache(groupName: String) -> Group? {
         cacheLock.lock()
         let group = cachedGroups[groupName]
         cacheLock.unlock()
         return group
     }
-    
+
     private static func storeInCache(group: Group) {
         cacheLock.lock()
         cachedGroups[group.name] = group
         cacheLock.unlock()
     }
-    
+
     private static func renameInCache(newName: String, oldName: String) {
         cacheLock.lock()
         if var group = cachedGroups[oldName] {
@@ -88,13 +89,13 @@ struct Group {
         DiscordController.global.updateGroupName(oldName: oldName, newName: newName)
         cacheLock.unlock()
     }
-    
+
     private static func removeInCache(name: String) {
         cacheLock.lock()
         cachedGroups[name] = nil
         cacheLock.unlock()
     }
-    
+
     public static func setup() throws {
         let all = try getAll()
         cachedGroups = [String: Group]()
@@ -102,24 +103,27 @@ struct Group {
             cachedGroups[group.name] = group
         }
     }
-    
+
     public static func getWithName(mysql: MySQL?=nil, name: String) throws -> Group? {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
-            SELECT perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest, perm_view_map_iv, perm_view_map_cell, perm_view_map_weather, perm_view_map_lure, perm_view_map_invasion, perm_view_map_device, perm_view_map_submission_cell
+            SELECT perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin,
+                   perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest,
+                   perm_view_map_iv, perm_view_map_cell, perm_view_map_weather, perm_view_map_lure,
+                   perm_view_map_invasion, perm_view_map_device, perm_view_map_submission_cell
             FROM `group`
             WHERE name = ?
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -128,9 +132,9 @@ struct Group {
         if results.numRows == 0 {
             return nil
         }
-        
+
         let result = results.next()!
-                
+
         let permViewMap = (result[0] as? UInt8)!.toBool()
         let permViewMapRaid = (result[1] as? UInt8)!.toBool()
         let permViewMapPokemon = (result[2] as? UInt8)!.toBool()
@@ -197,26 +201,29 @@ struct Group {
         if permViewMapSubmissionCells {
             perms.append(.viewMapSubmissionCells)
         }
-        
+
         return Group(name: name, perms: perms)
-        
+
     }
-    
+
     public static func getAll(mysql: MySQL?=nil) throws -> [Group] {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
-            SELECT name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest, perm_view_map_iv, perm_view_map_cell, perm_view_map_weather, perm_view_map_lure, perm_view_map_invasion, perm_view_map_device, perm_view_map_submission_cell
+            SELECT name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin,
+                   perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest,
+                   perm_view_map_iv, perm_view_map_cell, perm_view_map_weather, perm_view_map_lure,
+                   perm_view_map_invasion, perm_view_map_device, perm_view_map_submission_cell
             FROM `group`
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -292,71 +299,75 @@ struct Group {
             if permViewMapSubmissionCells {
                 perms.append(.viewMapSubmissionCells)
             }
-            
+
             groups.append(Group(name: name, perms: perms))
         }
-        
+
         return groups
     }
-    
+
     public func rename(mysql: MySQL?=nil, oldName: String) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
         UPDATE `group`
         SET name = ?
         WHERE name = ?
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
         mysqlStmt.bindParam(oldName)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        
+
         Group.renameInCache(newName: name, oldName: oldName)
     }
-    
+
     public func delete(mysql: MySQL?=nil) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
         DELETE FROM `group`
         WHERE name = ?
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        
+
         Group.removeInCache(name: name)
     }
 
-    
     public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GROUP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         var sql = """
-        INSERT INTO `group` (name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin, perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest, perm_view_map_iv, perm_view_map_cell, perm_view_map_weather, perm_view_map_lure, perm_view_map_invasion, perm_view_map_device, perm_view_map_submission_cell)
+        INSERT INTO `group` (
+            name, perm_view_map, perm_view_map_raid, perm_view_map_pokemon, perm_view_stats, perm_admin,
+            perm_view_map_gym, perm_view_map_pokestop, perm_view_map_spawnpoint, perm_view_map_quest, perm_view_map_iv,
+            perm_view_map_cell, perm_view_map_weather, perm_view_map_lure, perm_view_map_invasion, perm_view_map_device,
+            perm_view_map_submission_cell
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         if update {
@@ -380,11 +391,11 @@ struct Group {
                 perm_view_map_submission_cell=VALUES(perm_view_map_submission_cell)
             """
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
-        
+
         mysqlStmt.bindParam(perms.contains(.viewMap))
         mysqlStmt.bindParam(perms.contains(.viewMapRaid))
         mysqlStmt.bindParam(perms.contains(.viewMapPokemon))
@@ -401,14 +412,14 @@ struct Group {
         mysqlStmt.bindParam(perms.contains(.viewMapInvasion))
         mysqlStmt.bindParam(perms.contains(.viewMapDevice))
         mysqlStmt.bindParam(perms.contains(.viewMapSubmissionCells))
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[GROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        
+
         Group.storeInCache(group: self)
-        
+
     }
-    
+
 }

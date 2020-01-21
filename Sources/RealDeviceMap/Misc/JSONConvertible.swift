@@ -8,9 +8,9 @@
 import PerfectLib
 
 extension JSONConvertible {
-    
+
     func jsonEncodeForceTry() -> String? {
-        
+
         do {
             let result = try self.jsonEncodedString()
             if result == "null" {
@@ -21,7 +21,7 @@ extension JSONConvertible {
         } catch {
             return nil
         }
-        
+
     }
-    
+
 }

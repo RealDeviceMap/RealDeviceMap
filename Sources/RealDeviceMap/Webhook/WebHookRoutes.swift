@@ -9,9 +9,9 @@ import PerfectLib
 import PerfectHTTP
 
 class WebHookRoutes {
-    
+
     private init() {}
-    
+
     public static var routes: [Route] {
         let routes = [
             Route(method: .post, uri: "/raw", handler: { (request, response) in
@@ -23,5 +23,5 @@ class WebHookRoutes {
         ]
         return routes
     }
-    
+
 }

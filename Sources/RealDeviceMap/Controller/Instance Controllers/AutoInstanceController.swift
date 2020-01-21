@@ -4,6 +4,8 @@
 //
 //  Created by Florian Kostenzer on 23.10.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
@@ -20,7 +22,7 @@ class AutoInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
-    public var delegate: InstanceControllerDelegate?
+    public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
     private var type: AutoType
@@ -36,11 +38,19 @@ class AutoInstanceController: InstanceControllerProto {
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
 
-    private static let cooldownDataArray = [0.3: 0.16, 1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 7, 15: 9, 20: 12, 25: 15, 30: 17, 35: 18, 45: 20, 50: 20, 60: 21, 70: 23, 80: 24, 90: 25, 100: 26, 125: 29, 150: 32, 175: 34, 201: 37, 250: 41, 300: 46, 328: 48, 350: 50, 400: 54, 450: 58, 500: 62, 550: 66, 600: 70, 650: 74, 700: 77, 751: 82, 802: 84, 839: 88, 897: 90, 900: 91, 948: 95, 1007: 98, 1020: 102, 1100: 104, 1180: 109, 1200: 111, 1221: 113, 1300: 117, 1344: 119, Double(Int.max): 120].sorted { (lhs, rhs) -> Bool in
+    private static let cooldownDataArray = [
+        0.3: 0.16, 1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 7, 15: 9, 20: 12, 25: 15, 30: 17, 35: 18, 45: 20,
+        50: 20, 60: 21, 70: 23, 80: 24, 90: 25, 100: 26, 125: 29, 150: 32, 175: 34, 201: 37,
+        250: 41, 300: 46, 328: 48, 350: 50, 400: 54, 450: 58,
+        500: 62, 550: 66, 600: 70, 650: 74, 700: 77, 751: 82, 802: 84, 839: 88, 897: 90, 900: 91, 948: 95,
+        1007: 98, 1020: 102, 1100: 104, 1180: 109, 1200: 111, 1221: 113, 1300: 117, 1344: 119,
+        Double(Int.max): 120
+    ].sorted { (lhs, rhs) -> Bool in
         lhs.key < rhs.key
     }
 
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int, minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
+         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -69,8 +79,11 @@ class AutoInstanceController: InstanceControllerProto {
                     let second = Int(split[2])!
 
                     let timeLeft = (23 - hour) * 3600 + (59 - minute) * 60 + (60 - second)
-                    let at = date.addingTimeInterval(TimeInterval(timeLeft))
-                    Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests in \(timeLeft)s at \(formatter.string(from: at)) (Currently: \(formatter.string(from: date)))")
+                    let atTDate = date.addingTimeInterval(TimeInterval(timeLeft))
+                    Log.debug(message:
+                        "[AutoInstanceController] [\(name)] Clearing Quests in \(timeLeft)s at " +
+                        "\(formatter.string(from: atTDate)) (Currently: \(formatter.string(from: date)))"
+                    )
 
                     if timeLeft > 0 {
                         Threading.sleep(seconds: Double(timeLeft))
@@ -142,7 +155,10 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         }
-        Log.debug(message: "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s")
+        Log.debug(message:
+            "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) " +
+            "after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
+        )
         bootstrappLock.lock()
         bootstrappCellIDs = missingCellIDs
         bootstrappTotalCount = totalCount
@@ -162,7 +178,10 @@ class AutoInstanceController: InstanceControllerProto {
             for polygon in multiPolygon.polygons {
 
                 if let bounds = BoundingBox(from: polygon.outerRing.coordinates),
-                    let stops = try? Pokestop.getAll(minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude, minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude, updated: 0, questsOnly: false, showQuests: true, showLures: true, showInvasions: true) {
+                    let stops = try? Pokestop.getAll(
+                        minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude,
+                        minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude,
+                        updated: 0, questsOnly: false, showQuests: true, showLures: true, showInvasions: true) {
 
                     for stop in stops {
                         let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
@@ -189,17 +208,14 @@ class AutoInstanceController: InstanceControllerProto {
 
         let dist = distM / 1000
 
-
-        for data in AutoInstanceController.cooldownDataArray {
-            if data.key >= dist {
-                return UInt32(data.value * 60)
-            }
+        for data in AutoInstanceController.cooldownDataArray where data.key >= dist {
+            return UInt32(data.value * 60)
         }
         return 0
 
     }
 
-    func getTask(uuid: String, username: String?) -> [String : Any] {
+    func getTask(uuid: String, username: String?) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -244,7 +260,6 @@ class AutoInstanceController: InstanceControllerProto {
                         bootstrappLock.unlock()
                     }
 
-
                     return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
                 } else {
                     bootstrappLock.unlock()
@@ -256,7 +271,7 @@ class AutoInstanceController: InstanceControllerProto {
 
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-                    return [String : Any]()
+                    return [String: Any]()
                 }
 
                 stopsLock.lock()
@@ -295,7 +310,7 @@ class AutoInstanceController: InstanceControllerProto {
                     if todayStops!.isEmpty {
                         stopsLock.unlock()
                         delegate?.instanceControllerDone(name: name)
-                        return [String : Any]()
+                        return [String: Any]()
                     }
                 }
                 stopsLock.unlock()
@@ -319,7 +334,9 @@ class AutoInstanceController: InstanceControllerProto {
                 } catch { }
 
                 if username != nil && account != nil {
-                    if account!.spins >= spinLimit || account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
+                    if account!.spins >= spinLimit ||
+                       account!.failed == "GPR_RED_WARNING" ||
+                       account!.failed == "GPR_BANNED" {
                         return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                     } else {
                         try? Account.spin(mysql: mysql, username: username!)
@@ -404,11 +421,15 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.unlock()
 
                 if username != nil && account != nil {
-                    try? Account.didEncounter(mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime)
+                    try? Account.didEncounter(
+                        mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime
+                    )
                 } else {
                     try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lat", value: newLat.description)
                     try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lon", value: newLon.description)
-                    try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_time", value: encounterTime.description)
+                    try? DBController.global.setValueForKey(
+                        key: "AIC_\(uuid)_last_time", value: encounterTime.description
+                    )
                 }
 
                 let delayT = Int(Date(timeIntervalSince1970: Double(encounterTime)).timeIntervalSinceNow)
@@ -451,7 +472,8 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
 
-                return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay": delay, "min_level": minLevel, "max_level": maxLevel]
+                return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay":
+                        delay, "min_level": minLevel, "max_level": maxLevel]
             }
         }
 
@@ -479,7 +501,7 @@ class AutoInstanceController: InstanceControllerProto {
                         "bootstrapping": [
                             "current_count": count,
                             "total_count": totalCount
-                        ],
+                        ]
                     ]
                 }
             } else {
@@ -492,10 +514,8 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.unlock()
 
                 if let stops = try? Pokestop.getIn(ids: ids) {
-                    for stop in stops {
-                        if stop.questType != nil {
-                            currentCountDb += 1
-                        }
+                    for stop in stops where stop.questType != nil {
+                        currentCountDb += 1
                     }
                 }
 
@@ -517,7 +537,9 @@ class AutoInstanceController: InstanceControllerProto {
                     percentageReal = 100
                 }
                 if formatted {
-                    return "Done: \(currentCountDb)|\(currentCount)/\(maxCount) (\(percentageReal.rounded(toStringWithDecimals: 1))|\(percentage.rounded(toStringWithDecimals: 1))%)"
+                    return "Done: \(currentCountDb)|\(currentCount)/\(maxCount) " +
+                        "(\(percentageReal.rounded(toStringWithDecimals: 1))|" +
+                        "\(percentage.rounded(toStringWithDecimals: 1))%)"
                 } else {
                     return [
                         "quests": [

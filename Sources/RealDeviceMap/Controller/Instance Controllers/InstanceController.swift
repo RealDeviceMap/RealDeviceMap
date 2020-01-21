@@ -4,13 +4,15 @@
 //
 //  Created by Florian Kostenzer on 30.09.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
 import PerfectThread
 import Turf
 
-protocol InstanceControllerDelegate {
+protocol InstanceControllerDelegate: class {
     func instanceControllerDone(name: String)
 }
 
@@ -26,7 +28,7 @@ protocol InstanceControllerProto {
 }
 
 extension InstanceControllerProto {
-    static func == (lhs: InstanceControllerProto, rhs:InstanceControllerProto) -> Bool {
+    static func == (lhs: InstanceControllerProto, rhs: InstanceControllerProto) -> Bool {
         return lhs.name == rhs.name
     }
 }
@@ -68,16 +70,12 @@ class InstanceController {
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
         switch instance.type {
-        case .circleSmartRaid:
-            fallthrough
-        case .circlePokemon:
-            fallthrough
-        case .circleRaid:
+        case .circleSmartRaid, .circlePokemon, .circleRaid:
             var coordsArray = [Coord]()
             if instance.data["area"] as? [Coord] != nil {
-                coordsArray = instance.data["area"] as! [Coord]
+                coordsArray = instance.data["area"] as? [Coord] ?? [Coord]()
             } else {
-                let coords = instance.data["area"] as! [[String: Double]]
+                let coords = instance.data["area"] as? [[String: Double]] ?? [[String: Double]]()
                 for coord in coords {
                     coordsArray.append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
                 }
@@ -86,24 +84,25 @@ class InstanceController {
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
 
             if instance.type == .circlePokemon {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
+                                                              type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
             } else if instance.type == .circleRaid {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray, type: .raid, minLevel: minLevel, maxLevel: maxLevel)
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
+                                                              type: .raid, minLevel: minLevel, maxLevel: maxLevel)
             } else {
-                instanceController = CircleSmartRaidInstanceController(name: instance.name, coords: coordsArray, minLevel: minLevel, maxLevel: maxLevel)
+                instanceController = CircleSmartRaidInstanceController(name: instance.name, coords: coordsArray,
+                                                                       minLevel: minLevel, maxLevel: maxLevel)
             }
-        case .pokemonIV:
-            fallthrough
-        case .autoQuest:
+        case .pokemonIV, .autoQuest:
             var areaArray = [[Coord]]()
             if instance.data["area"] as? [[Coord]] != nil {
-                areaArray = instance.data["area"] as! [[Coord]]
+                areaArray = instance.data["area"] as? [[Coord]] ?? [[Coord]]()
             } else {
-                let areas = instance.data["area"] as! [[[String: Double]]]
+                let areas = instance.data["area"] as? [[[String: Double]]] ?? [[[String: Double]]]()
                 var i = 0
                 for coords in areas {
                     for coord in coords {
-                        while areaArray.count != i + 1{
+                        while areaArray.count != i + 1 {
                             areaArray.append([Coord]())
                         }
                         areaArray[i].append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
@@ -126,17 +125,25 @@ class InstanceController {
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
 
             if instance.type == .pokemonIV {
-                let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ?? (instance.data["pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
-                    return UInt16(e)
+                let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ??
+                                  (instance.data["pokemon_ids"] as? [Int])?.map({ (int) -> UInt16 in
+                    return UInt16(int)
                 }) ?? [UInt16]()
                 let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? 100
-                let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ?? (instance.data["scatter_pokemon_ids"] as? [Int])?.map({ (e) -> UInt16 in
-                    return UInt16(e)
+                let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ??
+                                  (instance.data["scatter_pokemon_ids"] as? [Int])?.map({ (int) -> UInt16 in
+                    return UInt16(int)
                 }) ?? [UInt16]()
-                instanceController = IVInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList, minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList)
+                instanceController = IVInstanceController(
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList,
+                    minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList
+                )
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 500
-                instanceController = AutoInstanceController(name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest, timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit)
+                instanceController = AutoInstanceController(
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
+                    timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit
+                )
             }
         }
         instanceController.delegate = AssignmentController.global
@@ -153,12 +160,10 @@ class InstanceController {
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
         let oldInstance = instancesByInstanceName[oldInstanceName]
         if oldInstance != nil {
-            for row in devicesByDeviceUUID {
-                if row.value.instanceName == oldInstance!.name {
-                    let device = row.value
-                    device.instanceName = newInstance.name
-                    devicesByDeviceUUID[row.key] = device
-                }
+            for row in devicesByDeviceUUID where row.value.instanceName == oldInstance!.name {
+                let device = row.value
+                device.instanceName = newInstance.name
+                devicesByDeviceUUID[row.key] = device
             }
             instancesByInstanceName[oldInstanceName]?.stop()
             instancesByInstanceName[oldInstanceName] = nil
@@ -169,10 +174,8 @@ class InstanceController {
     public func removeInstance(instance: Instance) {
         instancesByInstanceName[instance.name]?.stop()
         instancesByInstanceName[instance.name] = nil
-        for device in devicesByDeviceUUID {
-            if device.value.instanceName == instance.name {
-                devicesByDeviceUUID[device.key] = nil
-            }
+        for device in devicesByDeviceUUID where device.value.instanceName == instance.name {
+            devicesByDeviceUUID[device.key] = nil
         }
         try? AssignmentController.global.setup()
     }
@@ -180,10 +183,8 @@ class InstanceController {
     public func removeInstance(instanceName: String) {
         instancesByInstanceName[instanceName]?.stop()
         instancesByInstanceName[instanceName] = nil
-        for device in devicesByDeviceUUID {
-            if device.value.instanceName == instanceName {
-                devicesByDeviceUUID[device.key] = nil
-            }
+        for device in devicesByDeviceUUID where device.value.instanceName == instanceName {
+            devicesByDeviceUUID[device.key] = nil
         }
         try? AssignmentController.global.setup()
     }
@@ -212,10 +213,8 @@ class InstanceController {
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
         var deviceUUIDS = [String]()
-        for device in devicesByDeviceUUID {
-            if device.value.instanceName == instanceName {
-                deviceUUIDS.append(device.key)
-            }
+        for device in devicesByDeviceUUID where device.value.instanceName == instanceName {
+            deviceUUIDS.append(device.key)
         }
         return deviceUUIDS
     }

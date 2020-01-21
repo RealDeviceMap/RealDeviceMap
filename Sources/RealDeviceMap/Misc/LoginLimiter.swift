@@ -9,17 +9,17 @@ import Foundation
 import PerfectThread
 
 class LoginLimiter {
-    
+
     static let global = LoginLimiter()
-    
+
     let failedLock = Threading.Lock()
     var failed = [String: [Date]]()
-    
+
     let tokenLock = Threading.Lock()
     var token = [String: [Date]]()
-    
+
     internal init() {}
-    
+
     func allowed(host: String) -> Bool {
         failedLock.lock()
         if failed[host] == nil {
@@ -37,7 +37,7 @@ class LoginLimiter {
         failedLock.unlock()
         return realTimes.count < 5
     }
-    
+
     func failed(host: String) {
         failedLock.lock()
         if failed[host] == nil {
@@ -47,7 +47,7 @@ class LoginLimiter {
         }
         failedLock.unlock()
     }
-    
+
     func tokenAllowed(host: String) -> Bool {
         tokenLock.lock()
         if token[host] == nil {
@@ -65,7 +65,7 @@ class LoginLimiter {
         tokenLock.unlock()
         return realTimes.count < 15
     }
-    
+
     func tokenTry(host: String) {
         tokenLock.lock()
         if token[host] == nil {
@@ -75,5 +75,5 @@ class LoginLimiter {
         }
         tokenLock.unlock()
     }
-    
+
 }

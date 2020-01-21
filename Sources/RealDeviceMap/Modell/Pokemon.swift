@@ -4,6 +4,8 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast
 
 import Foundation
 import PerfectLib
@@ -12,11 +14,11 @@ import POGOProtos
 import Regex
 
 class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConvertible {
-    
+
     var description: String {
         return pokemonId.description
     }
-    
+
     static var defaultTimeUnseen: UInt32 = 1200
     static var defaultTimeReseen: UInt32 = 600
     static var dittoPokemonId: UInt16 = 132
@@ -24,8 +26,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var weatherBoostMinIvStat: UInt8 = 4
 
     class ParsingError: Error {}
-    
-    override func getJSONValues() -> [String : Any] {
+
+    override func getJSONValues() -> [String: Any] {
         return [
             "id": id,
             "pokemon_id": pokemonId,
@@ -55,8 +57,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "display_pokemon_id": displayPokemonId as Any
         ]
     }
-    
-    func getWebhookValues(type: String) -> [String : Any] {
+
+    func getWebhookValues(type: String) -> [String: Any] {
         let message: [String: Any] = [
             "spawnpoint_id": spawnId?.toHexString() ?? "None",
             "pokestop_id": pokestopId ?? "None",
@@ -90,11 +92,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "message": message
         ]
     }
-    
+
     public var hashValue: Int {
         return id.hashValue
     }
-    
+
     var id: String
     var pokemonId: UInt16
     var lat: Double
@@ -124,8 +126,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     var expireTimestampVerified: Bool
     var isDitto: Bool = false
     var displayPokemonId: UInt16?
-    
-    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?, atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?, cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, displayPokemonId: UInt16?, weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32?, updated: UInt32?, changed: UInt32?, cellId: UInt64?, expireTimestampVerified: Bool) {
+
+    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
+         atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
+         cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?, displayPokemonId: UInt16?,
+         weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32?,
+         updated: UInt32?, changed: UInt32?, cellId: UInt64?, expireTimestampVerified: Bool) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -155,9 +161,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.expireTimestampVerified = expireTimestampVerified
         self.displayPokemonId = displayPokemonId
     }
-        
-    init(mysql: MySQL?=nil, wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64, timestampMs: UInt64, username: String?) {
-        
+
+    init(mysql: MySQL?=nil, wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64,
+         timestampMs: UInt64, username: String?) {
+
         id = wildPokemon.encounterID.description
         pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
         lat = wildPokemon.latitude
@@ -172,14 +179,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             //shiny = wildPokemon.pokemonData.pokemonDisplay.shiny
         }
         self.username = username
-        
+
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
             expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
             expireTimestampVerified = true
         } else {
             expireTimestampVerified = false
         }
-        
+
         if !expireTimestampVerified && spawnId != nil {
             let spawnpoint: SpawnPoint?
             do {
@@ -189,35 +196,36 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-                
+
                 let formatter = DateFormatter()
                 formatter.dateFormat = "mm:ss"
                 let formattedDate = formatter.string(from: date)
-                
+
                 let split = formattedDate.components(separatedBy: ":")
                 let minute = Int(split[0])!
                 let second = Int(split[1])!
                 let secondOfHour = second + minute * 60
-                
+
                 let depsawnOffset: Int
                 if despawnSecond < secondOfHour {
                     depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
                 } else {
                     depsawnOffset = Int(despawnSecond) - secondOfHour
                 }
-                
+
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
             }
         }
-        
+
         self.spawnId = spawnId
         self.cellId = cellId
-        
+
     }
-    
-    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon, cellId: UInt64, username: String?) throws {
-        
+
+    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon, cellId: UInt64,
+         username: String?) throws {
+
         let id = nearbyPokemon.encounterID.description
         let pokemonId = nearbyPokemon.pokemonID.rawValue.toUInt16()
         let pokestopId = nearbyPokemon.fortID
@@ -230,38 +238,38 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             //shiny = wildPokemon.pokemonData.pokemonDisplay.shiny
         }
         self.username = username
-        
+
         let sql = """
                 SELECT lat, lon
                 FROM pokestop
                 WHERE id = ?;
             """
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        
+
         mysqlStmt.bindParam(pokestopId)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        
+
         let results = mysqlStmt.results()
-        
+
         if results.numRows == 0 {
             throw ParsingError()
         }
-        
+
         let result = results.next()
         let lat = result![0] as! Double
         let lon = result![1] as! Double
-        
+
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -269,14 +277,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.pokestopId = pokestopId
         self.gender = gender
         self.form = form
-        
+
         self.cellId = cellId
         self.expireTimestampVerified = false
 
     }
-    
+
     public func addEncounter(encounterData: POGOProtos_Networking_Responses_EncounterResponse, username: String?) {
-        
+
         self.pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
         self.cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
         self.move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
@@ -300,17 +308,17 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         self.level = level
         self.isDitto = Pokemon.isDittoDisguised(pokemonId: self.pokemonId,
-                                                level:     self.level ?? 0,
-                                                weather:   self.weather ?? 0,
-                                                atkIv:     self.atkIv ?? 0,
-                                                defIv:     self.defIv ?? 0,
-                                                staIv:     self.staIv ?? 0
+                                                level: self.level ?? 0,
+                                                weather: self.weather ?? 0,
+                                                atkIv: self.atkIv ?? 0,
+                                                defIv: self.defIv ?? 0,
+                                                staIv: self.staIv ?? 0
         )
         if self.isDitto {
             Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(self.pokemonId)")
             self.setDittoAttributes(displayPokemonId: self.pokemonId)
         }
-        
+
         if self.spawnId == nil {
             let spawnId = UInt64(encounterData.wildPokemon.spawnPointID, radix: 16)
             self.spawnId = spawnId
@@ -326,45 +334,48 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 }
                 if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
                     let date = Date()
-                    
+
                     let formatter = DateFormatter()
                     formatter.dateFormat = "mm:ss"
                     let formattedDate = formatter.string(from: date)
-                    
+
                     let split = formattedDate.components(separatedBy: ":")
                     let minute = Int(split[0])!
                     let second = Int(split[1])!
                     let secondOfHour = second + minute * 60
-                    
+
                     let depsawnOffset: Int
                     if despawnSecond < secondOfHour {
                         depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
                     } else {
                         depsawnOffset = Int(despawnSecond) - secondOfHour
                     }
-                    
+
                     self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                     self.expireTimestampVerified = true
                 }
             }
-            
+
         }
-        
+
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
-        
+
     }
-    
+
     public static func shouldUpdate(old: Pokemon, new: Pokemon) -> Bool {
         let now = UInt32(Date().timeIntervalSince1970)
-        
+
         if (old.pokemonId != new.pokemonId) && (old.pokemonId != Pokemon.dittoPokemonId) {
             return true
         } else if (old.spawnId == nil && new.spawnId != nil) || (old.pokestopId == nil && new.pokestopId != nil) {
             return true
-        } else if (old.expireTimestampVerified == false && new.expireTimestampVerified == true) || (old.expireTimestampVerified == true && new.expireTimestampVerified == true && ( old.expireTimestamp != new.expireTimestamp) ) {
+        } else if (old.expireTimestampVerified == false && new.expireTimestampVerified == true) ||
+                  (old.expireTimestampVerified == true && new.expireTimestampVerified == true &&
+                    (old.expireTimestamp != new.expireTimestamp)
+                  ) {
             return true
-        } else if (old.weather != new.weather) {
+        } else if old.weather != new.weather {
            return true
         } else if (new.atkIv != nil) && (old.atkIv == nil || old.atkIv != new.atkIv) {
             return true
@@ -373,18 +384,18 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
     }
 
-    public func save(mysql: MySQL?=nil, updateIV:Bool=false) throws {
-        
+    public func save(mysql: MySQL?=nil, updateIV: Bool=false) throws {
+
         var bindFirstSeen: Bool
         var bindChangedTimestamp: Bool
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         updated = UInt32(Date().timeIntervalSince1970)
-        
+
         let oldPokemon: Pokemon?
         do {
             oldPokemon = try Pokemon.getWithId(mysql: mysql, id: id)
@@ -392,27 +403,34 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             oldPokemon = nil
         }
         let mysqlStmt = MySQLStmt(mysql)
-        
+
         if oldPokemon == nil {
             bindFirstSeen = false
             bindChangedTimestamp = false
-            
+
             if self.expireTimestamp == nil {
                 self.expireTimestamp = UInt32(Date().timeIntervalSince1970) + Pokemon.defaultTimeUnseen
             }
             firstSeenTimestamp = updated
-            
+
             let sql = """
-                INSERT INTO pokemon (id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight, size, display_pokemon_id, shiny, username, gender, form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?)
+                INSERT INTO pokemon (
+                    id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
+                    level, weight, size, display_pokemon_id, shiny, username, gender, form, weather, costume,
+                    pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified
+                )
+                VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?
+                )
             """
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
             bindFirstSeen = true
-            
+
             self.firstSeenTimestamp = oldPokemon!.firstSeenTimestamp
-            
+
             if self.expireTimestamp == nil {
                 let now = Date()
                 let oldExpireDate = Date(timeIntervalSince1970: Double(oldPokemon!.expireTimestamp ?? 0))
@@ -429,26 +447,31 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
             if oldPokemon!.pokemonId != self.pokemonId {
                 if oldPokemon!.pokemonId != Pokemon.dittoPokemonId {
-                    Log.debug(message: "[POKEMON] Pokemon \(id) changed from \(oldPokemon!.pokemonId) to \(self.pokemonId)")
+                    Log.debug(
+                        message: "[POKEMON] Pokemon \(id) changed from \(oldPokemon!.pokemonId) to \(self.pokemonId)"
+                    )
                 } else if oldPokemon!.displayPokemonId ?? 0 != self.pokemonId {
-                    Log.debug(message: "[POKEMON] Pokemon \(id) Ditto diguised as \(oldPokemon!.displayPokemonId ?? 0) now seen as \(self.pokemonId)")
+                    Log.debug(
+                        message: "[POKEMON] Pokemon \(id) Ditto diguised as \(oldPokemon!.displayPokemonId ?? 0) " +
+                                 "now seen as \(self.pokemonId)"
+                    )
                 }
             }
 
             if oldPokemon!.cellId != nil && self.cellId == nil {
                 self.cellId = oldPokemon!.cellId
             }
-            
+
             if oldPokemon!.spawnId != nil && self.spawnId == nil {
                 self.spawnId = oldPokemon!.spawnId
                 self.lat = oldPokemon!.lat
                 self.lon = oldPokemon!.lon
             }
-            
+
             if oldPokemon!.pokestopId != nil && self.pokestopId == nil {
                 self.pokestopId = oldPokemon!.pokestopId
             }
-            
+
             let changedSQL: String
             if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
                 WebHookController.global.addPokemonEvent(pokemon: self)
@@ -460,7 +483,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.changed = oldPokemon!.changed
                 changedSQL = "?"
             }
-            
+
             if updateIV && oldPokemon!.atkIv != nil && self.atkIv == nil {
                 if !(
                         (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
@@ -483,32 +506,37 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     }
                 }
             }
-            
-            let shouldWrite:Bool = Pokemon.shouldUpdate(old: oldPokemon!, new: self)
-            
+
+            let shouldWrite: Bool = Pokemon.shouldUpdate(old: oldPokemon!, new: self)
+
             if !shouldWrite {
                 return
             }
-            
+
             let ivSQL: String
             if updateIV {
-                ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, weight = ?, size = ?, shiny = ?, display_pokemon_id = ?,"
+                ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, " +
+                        "weight = ?, size = ?, shiny = ?, display_pokemon_id = ?,"
             } else {
                 ivSQL = ""
             }
-            
+
             if oldPokemon!.pokemonId == Pokemon.dittoPokemonId && self.pokemonId != Pokemon.dittoPokemonId {
-                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto changed from \(oldPokemon!.pokemonId) to \(self.pokemonId)")
+                Log.debug(
+                    message: "[POKEMON] Pokemon \(id) Ditto changed from \(oldPokemon!.pokemonId) to \(self.pokemonId)"
+                )
             }
 
             let sql = """
                 UPDATE pokemon
-                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) username = ?, gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(), first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?
+                SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) username = ?,
+                    gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(),
+                    first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
         }
-        
+
         mysqlStmt.bindParam(pokemonId)
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
@@ -541,37 +569,38 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         mysqlStmt.bindParam(cellId)
         mysqlStmt.bindParam(expireTimestampVerified)
-        
+
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
         }
-        
+
         if self.spawnId != nil {
             let spawnPoint: SpawnPoint
             if expireTimestampVerified && expireTimestamp != nil {
-                
+
                 let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
-                
+
                 let formatter = DateFormatter()
                 formatter.dateFormat = "mm:ss"
                 let formattedDate = formatter.string(from: date)
-                
+
                 let split = formattedDate.components(separatedBy: ":")
                 let minute = Int(split[0])!
                 let second = Int(split[1])!
                 let secondOfHour = second + minute * 60
-                spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated, despawnSecond: UInt16(secondOfHour))
+                spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated,
+                                        despawnSecond: UInt16(secondOfHour))
             } else {
                 spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated, despawnSecond: nil)
             }
             try? spawnPoint.save(mysql: mysql, update: true)
         }
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        
+
         if oldPokemon == nil {
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
@@ -579,18 +608,21 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 InstanceController.global.gotIV(pokemon: self)
             }
         }
-        
+
     }
-    
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil, pokemonFilterIV: [String: String]?=nil) throws -> [Pokemon] {
-        
+
+    //  swiftlint:disable:next function_parameter_count
+    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
+                              showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil,
+                              pokemonFilterIV: [String: String]?=nil) throws -> [Pokemon] {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         var pokemonFilterExclude = pokemonFilterExclude ?? [Int]()
-        
+
         if pokemonFilterIV != nil && !pokemonFilterIV!.isEmpty && showIV {
             for ivFilter in pokemonFilterIV! {
                 guard let id = Int(ivFilter.key) else {
@@ -600,9 +632,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     pokemonFilterExclude.append(id)
                 }
             }
-            
+
         }
-        
+
         let sqlExclude: String
         if pokemonFilterExclude.isEmpty {
             sqlExclude = ""
@@ -614,7 +646,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             sqlExcludeCreate += "?)"
             sqlExclude = sqlExcludeCreate
         }
-        
+
         let sqlAdd: String
         if (pokemonFilterIV == nil || pokemonFilterIV!.isEmpty || !showIV) && pokemonFilterExclude.isEmpty {
             sqlAdd = ""
@@ -654,7 +686,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if orPart != "" {
                 orPart += ")"
             }
-            
+
             if orPart != "" && andPart != "" {
                 sqlAdd = " AND (\(orPart) AND \(andPart))"
             } else if orPart != "" {
@@ -666,15 +698,18 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             } else {
                 sqlAdd = ""
             }
-            
+
         }
-        
+
         let sql = """
-            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified, shiny, username
+            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
+                   gender, form, cp, level, weather, costume, weight, size, display_pokemon_id, pokestop_id, updated,
+                   first_seen_timestamp, changed, cell_id, expire_timestamp_verified, shiny, username
             FROM pokemon
-            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(sqlAdd)
+            WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND
+                  lon <= ? AND updated > ? \(sqlAdd)
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLat)
@@ -685,23 +720,23 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         for id in pokemonFilterExclude {
             mysqlStmt.bindParam(id)
         }
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
-        
+
         var pokemons = [Pokemon]()
         while let result = results.next() {
-            
+
             let id = result[0] as! String
             let pokemonId = result[1] as! UInt16
             let lat = result[2] as! Double
             let lon = result[3] as! Double
             let spawnId = result[4] as? UInt64
             let expireTimestamp = result[5] as? UInt32
-            
+
             let atkIv: UInt8?
             let defIv: UInt8?
             let staIv: UInt8?
@@ -735,7 +770,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 size = nil
                 displayPokemonId = nil
             }
-            
+
             let gender = result[11] as? UInt8
             let form = result[12] as? UInt16
             let weather = result[15] as? UInt8
@@ -748,31 +783,40 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let expireTimestampVerified = (result[25] as? UInt8)!.toBool()
             let shiny = (result[26] as? UInt8)?.toBool()
             let username = result[27] as? String
-            
-            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, displayPokemonId: displayPokemonId, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified))
-            
+
+            pokemons.append(Pokemon(
+                id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
+                atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form,
+                cp: cp, level: level, weight: weight, costume: costume, size: size, displayPokemonId: displayPokemonId,
+                weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
+                firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
+                expireTimestampVerified: expireTimestampVerified
+            ))
+
         }
         return pokemons
-        
+
     }
-    
+
     public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Pokemon? {
-        
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
         }
-        
+
         let sql = """
-            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, weather, costume, weight, size, display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified, shiny, username
+            SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
+                   gender, form, cp, level, weather, costume, weight, size, display_pokemon_id, pokestop_id, updated,
+                   first_seen_timestamp, changed, cell_id, expire_timestamp_verified, shiny, username
             FROM pokemon
             WHERE id = ?
         """
-        
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(id)
-        
+
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
@@ -781,9 +825,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if results.numRows == 0 {
             return nil
         }
-        
+
         let result = results.next()!
-        
+
         let id = result[0] as! String
         let pokemonId = result[1] as! UInt16
         let lat = result[2] as! Double
@@ -812,11 +856,18 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let expireTimestampVerified = (result[25] as? UInt8)!.toBool()
         let shiny = (result[26] as? UInt8)?.toBool()
         let username = result[27] as? String
-        
-        return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size, displayPokemonId: displayPokemonId, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified)
-        
+
+        return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
+                       expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
+                       move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight,
+                       costume: costume, size: size, displayPokemonId: displayPokemonId, weather: weather,
+                       shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
+                       updated: updated, changed: changed, cellId: cellId,
+                       expireTimestampVerified: expireTimestampVerified
+        )
+
     }
-    
+
     static func == (lhs: Pokemon, rhs: Pokemon) -> Bool {
         return lhs.id == rhs.id
     }
@@ -837,40 +888,46 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     private static func isDittoDisguised(pokemon: Pokemon) -> Bool {
         return isDittoDisguised(pokemonId: pokemon.pokemonId,
-                                level:     pokemon.level ?? 0,
-                                weather:   pokemon.weather ?? 0,
-                                atkIv:     pokemon.atkIv ?? 0,
-                                defIv:     pokemon.defIv ?? 0,
-                                staIv:     pokemon.staIv ?? 0
+                                level: pokemon.level ?? 0,
+                                weather: pokemon.weather ?? 0,
+                                atkIv: pokemon.atkIv ?? 0,
+                                defIv: pokemon.defIv ?? 0,
+                                staIv: pokemon.staIv ?? 0
         )
     }
-    
-    private static func isDittoDisguised(pokemonId: UInt16, level: UInt8, weather: UInt8, atkIv: UInt8, defIv: UInt8, staIv: UInt8) -> Bool {
-        let isDisguised = (pokemonId == Pokemon.dittoPokemonId) || (WebHookRequestHandler.dittoDisguises?.contains(pokemonId) ?? false)
+
+    //  swiftlint:disable:next function_parameter_count
+    private static func isDittoDisguised(pokemonId: UInt16, level: UInt8, weather: UInt8,
+                                         atkIv: UInt8, defIv: UInt8, staIv: UInt8) -> Bool {
+        let isDisguised = (pokemonId == Pokemon.dittoPokemonId) ||
+                          (WebHookRequestHandler.dittoDisguises?.contains(pokemonId) ?? false)
         let isUnderLevelBoosted = level > 0 && level < Pokemon.weatherBoostMinLevel
-        let isUnderIvStatBoosted = level > 0 && (atkIv < Pokemon.weatherBoostMinIvStat || defIv < Pokemon.weatherBoostMinIvStat || staIv < Pokemon.weatherBoostMinIvStat)
+        let isUnderIvStatBoosted = level > 0 &&
+            (atkIv < Pokemon.weatherBoostMinIvStat ||
+             defIv < Pokemon.weatherBoostMinIvStat ||
+             staIv < Pokemon.weatherBoostMinIvStat)
         let isWeatherBoosted = weather > 0
         return isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted
     }
-    
+
     private static func sqlifyIvFilter(filter: String) -> String? {
-        
+
         let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?)\\)?)*$"
-        
+
         if filter !~ fullMatch {
             return nil
         }
-        
+
         let singleMatch = "(A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?"
-        
+
         var sql = singleMatch.r?.replaceAll(in: filter) { match in
             if let firstGroup = match.group(at: 0) {
-                
+
                 var firstGroupNumbers = firstGroup.replacingOccurrences(of: "A", with: "")
                 firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "D", with: "")
                 firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "S", with: "")
                 firstGroupNumbers = firstGroupNumbers.replacingOccurrences(of: "L", with: "")
-                
+
                 let column: String
                 if firstGroup.contains(string: "A") {
                     column = "atk_iv"
@@ -883,13 +940,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 } else {
                     column = "iv"
                 }
-                
+
                 if firstGroupNumbers.contains(string: "-") { // min max
                     let split = firstGroupNumbers.components(separatedBy: "-")
                     guard split.count == 2, let number0 = Float(split[0]), let number1 = Float(split[1]) else {
                         return nil
                     }
-                    
+
                     let min: Float
                     let max: Float
                     if number0 < number1 {
@@ -899,7 +956,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                         max = number1
                         min = number0
                     }
-                    
+
                     return "\(column) >= \(min) AND \(column) <= \(max)"
                 } else { // fixed
                     guard let number = Float(firstGroupNumbers) else {
@@ -907,20 +964,19 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     }
                     return "\(column) = \(number)"
                 }
-                
+
             }
             return nil
         } ?? ""
         if sql == "" {
             return nil
         }
-        
+
         sql = sql.replacingOccurrences(of: "&&", with: " AND ")
         sql = sql.replacingOccurrences(of: "||", with: " OR ")
-        
-        return sql
-        
-    }
-    
-}
 
+        return sql
+
+    }
+
+}

@@ -12,17 +12,19 @@ import PerfectMustache
 import PerfectSession
 
 struct WebPageHandler: MustachePageHandler {
-    
+
     private var page: WebServer.Page
     private var data: MustacheEvaluationContext.MapType
-    
-    public init(page: WebServer.Page = .home, data: MustacheEvaluationContext.MapType = MustacheEvaluationContext.MapType()) {
+
+    public init(page: WebServer.Page = .home,
+                data: MustacheEvaluationContext.MapType = MustacheEvaluationContext.MapType()) {
         self.page = page
         self.data = data
     }
-    
-    public func extendValuesForResponse(context contxt: MustacheWebEvaluationContext, collector: MustacheEvaluationOutputCollector) {
-        
+
+    public func extendValuesForResponse(context contxt: MustacheWebEvaluationContext,
+                                        collector: MustacheEvaluationOutputCollector) {
+
         contxt.extendValues(with: data)
 
         do {
@@ -34,6 +36,5 @@ struct WebPageHandler: MustachePageHandler {
             response.completed()
         }
     }
-    
-}
 
+}

@@ -9,59 +9,59 @@ import PerfectMySQL
 import PerfectLib
 
 extension MySQLStmt {
-    
-    func bindParam(_ i: UInt64?) {
-        if (i == nil) {
+
+    func bindParam(_ value: UInt64?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(i!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ i: UInt32?) {
-        if (i == nil) {
+
+    func bindParam(_ value: UInt32?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(i!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ i: UInt16?) {
-        if (i == nil) {
+
+    func bindParam(_ value: UInt16?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(i!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ i: UInt8?) {
-        if (i == nil) {
+
+    func bindParam(_ value: UInt8?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(i!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ d: Double?) {
-        if (d == nil) {
+
+    func bindParam(_ value: Double?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(d!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ s: String?) {
-        if (s == nil) {
+
+    func bindParam(_ value: String?) {
+        if value == nil {
             bindParam()
         } else {
-            bindParam(s!)
+            bindParam(value!)
         }
     }
-    
-    func bindParam(_ b: Bool?) {
-        if (b == nil) {
+
+    func bindParam(_ value: Bool?) {
+        if value == nil {
             bindParam()
-        } else if b == true {
+        } else if value == true {
             bindParam(1)
         } else {
             bindParam(0)

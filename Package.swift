@@ -21,7 +21,29 @@ let package = Package(
         .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "1.18.0")),
     ],
     targets: [
-        .target(name: "RealDeviceMap", dependencies: ["PerfectHTTPServer","PerfectSessionMySQL","PerfectMySQL","PerfectThread","PerfectMustache","PerfectCURL","PerfectSMTP","Turnstile","Regex","POGOProtos","Turf","S2Geometry"])
+        .target(
+            name: "RealDeviceMap",
+            dependencies: [
+                "PerfectHTTPServer",
+                "PerfectSessionMySQL",
+                "PerfectMySQL",
+                "PerfectThread",
+                "PerfectMustache",
+                "PerfectCURL",
+                "PerfectSMTP",
+                "Turnstile",
+                "Regex",
+                "POGOProtos",
+                "Turf",
+                "S2Geometry"
+            ]
+        ),
+        .testTarget(
+            name: "RealDeviceMapTests",
+            dependencies: [
+                "RealDeviceMap"
+            ]
+        )
     ],
     swiftLanguageVersions: [4]
 )

@@ -8,13 +8,13 @@
 import Foundation
 
 class Shell {
-    
+
     private var args: [String]
-    
+
     init (_ args: String...) {
         self.args = args
     }
-    
+
     func run(errorPipe: Any?=nil, inputPipe: Any?=nil, environment: [String: String]?=nil) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"
@@ -35,7 +35,7 @@ class Shell {
         task.waitUntilExit()
         return String(data: data, encoding: String.Encoding.utf8)
     }
-    
+
     func runError(standartPipe: Any?=nil, inputPipe: Any?=nil, environment: [String: String]?=nil) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"
@@ -56,5 +56,5 @@ class Shell {
         task.waitUntilExit()
         return String(data: data, encoding: String.Encoding.utf8)
     }
-    
+
 }
