@@ -43,11 +43,11 @@ class ApiRequestHandler {
         let pokemonFilterExcludeArray = request.param(name: "pokemon_filter_exclude")?
             .jsonDecodeForceTry() as? [Any] ?? [Any]()
         var pokemonFilterExclude = [String]()
-        for el in pokemonFilterExcludeArray {
-          if let key = el as? String {
+        for value in pokemonFilterExcludeArray {
+          if let key = value as? String {
             // Value is big_karp or tiny_rat
             pokemonFilterExclude.append(key)
-          } else if let key = el as? Int {
+          } else if let key = value as? Int {
             // Value is pokemon_id
             pokemonFilterExclude.append(String(key))
           }
