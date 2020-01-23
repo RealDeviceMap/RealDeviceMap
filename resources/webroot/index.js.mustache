@@ -76,7 +76,7 @@ let deviceOnlineIcon
 let deviceOfflineIcon
 
 let tileLayer
-let nestLayer = new L.LayerGroup()
+const nestLayer = new L.LayerGroup()
 
 let pokemonDb = {}
 let weatherTypes = {}
@@ -1187,7 +1187,7 @@ function initMap () {
   setInterval(updateDevicesLoop, 10000)
   setInterval(updateMapTimers, 1000)
 
-  $.getJSON( "/static/custom/nest.json", function (data) {
+  $.getJSON('/static/custom/nest.json', function (data) {
     nestsDb = data
     if (showNests) {
       loadNestPolygons()
