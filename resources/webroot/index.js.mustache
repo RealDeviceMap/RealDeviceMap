@@ -1206,7 +1206,7 @@ function loadData () {
     if (pokemonFilter.big_karp.show !== false) {
       pokemonFilterExclude.push('big_karp')
     }
-    
+
     if (pokemonFilter.tiny_rat.show !== false) {
       pokemonFilterExclude.push('tiny_rat')
     }
@@ -3094,26 +3094,26 @@ function manageSelectButton (e, isNew) {
         break
     }
   } else if (type === 'pokemon-size') {
-      switch (info) {
-        case 'hide':
-          shouldShow = pokemonFilterNew[id].show === false
-          break
-        case 'show':
-          shouldShow = pokemonFilterNew[id].show === true
-          break
-        case 'small':
-          shouldShow = pokemonFilterNew[id].size === 'small'
-          break
-        case 'normal':
-          shouldShow = pokemonFilterNew[id].size === 'normal'
-          break
-        case 'large':
-          shouldShow = pokemonFilterNew[id].size === 'large'
-          break
-        case 'huge':
-          shouldShow = pokemonFilterNew[id].size === 'huge'
-          break
-      }
+    switch (info) {
+      case 'hide':
+        shouldShow = pokemonFilterNew[id].show === false
+        break
+      case 'show':
+        shouldShow = pokemonFilterNew[id].show === true
+        break
+      case 'small':
+        shouldShow = pokemonFilterNew[id].size === 'small'
+        break
+      case 'normal':
+        shouldShow = pokemonFilterNew[id].size === 'normal'
+        break
+      case 'large':
+        shouldShow = pokemonFilterNew[id].size === 'large'
+        break
+      case 'huge':
+        shouldShow = pokemonFilterNew[id].size === 'huge'
+        break
+    }
   } else if (type === 'quest-misc') {
     switch (info) {
       case 'hide':
@@ -3432,26 +3432,26 @@ function manageSelectButton (e, isNew) {
             break
         }
       } else if (type === 'pokemon-size') {
-          switch (info) {
-            case 'hide':
-              pokemonFilterNew[id].show = false
-              break
-            case 'show':
-              pokemonFilterNew[id].show = true
-              break
-            case 'small':
-              pokemonFilterNew[id].size = 'small'
-              break
-            case 'normal':
-              pokemonFilterNew[id].size = 'normal'
-              break
-            case 'large':
-              pokemonFilterNew[id].size = 'large'
-              break
-            case 'huge':
-              pokemonFilterNew[id].size = 'huge'
-              break
-          }
+        switch (info) {
+          case 'hide':
+            pokemonFilterNew[id].show = false
+            break
+          case 'show':
+            pokemonFilterNew[id].show = true
+            break
+          case 'small':
+            pokemonFilterNew[id].size = 'small'
+            break
+          case 'normal':
+            pokemonFilterNew[id].size = 'normal'
+            break
+          case 'large':
+            pokemonFilterNew[id].size = 'large'
+            break
+          case 'huge':
+            pokemonFilterNew[id].size = 'huge'
+            break
+        }
       } else if (type === 'quest-misc') {
         switch (info) {
           case 'hide':
