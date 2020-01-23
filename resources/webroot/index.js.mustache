@@ -185,10 +185,10 @@ $(function () {
     pokestopFilterNew = $.extend(true, {}, pokestopFilter)
     spawnpointFilterNew = $.extend(true, {}, spawnpointFilter)
 
-    $('.select-button').each(function (button) {
+    $('.select-button').each(function () {
       manageSelectButton($(this), false)
     })
-    $('.configure-button').each(function (button) {
+    $('.configure-button').each(function () {
       manageConfigureButton($(this), false)
     })
 
@@ -644,7 +644,7 @@ function initMap () {
   })
   map.addControl(new CustomControlLocation())
 
-  $('#reset-pokemon-filter').on('click', function (event) {
+  $('#reset-pokemon-filter').on('click', function () {
     const defaultPokemonFilter = []
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -659,7 +659,7 @@ function initMap () {
     $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-pokemon-filter').on('click', function (event) {
+  $('#disable-all-pokemon-filter').on('click', function () {
     const defaultPokemonFilter = []
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -674,7 +674,7 @@ function initMap () {
     $('#table-filter-pokemon').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#reset-quest-filter').on('click', function (event) {
+  $('#reset-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -690,7 +690,7 @@ function initMap () {
     $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-quest-filter').on('click', function (event) {
+  $('#disable-all-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -706,7 +706,7 @@ function initMap () {
     $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#reset-raid-filter').on('click', function (event) {
+  $('#reset-raid-filter').on('click', function () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
@@ -723,7 +723,7 @@ function initMap () {
     $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-raid-filter').on('click', function (event) {
+  $('#disable-all-raid-filter').on('click', function () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
@@ -740,7 +740,7 @@ function initMap () {
     $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#reset-gym-filter').on('click', function (event) {
+  $('#reset-gym-filter').on('click', function () {
     const defaultGymFilter = {}
     let i
     for (i = 0; i <= 3; i++) {
@@ -757,7 +757,7 @@ function initMap () {
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-gym-filter').on('click', function (event) {
+  $('#disable-all-gym-filter').on('click', function () {
     const defaultGymFilter = {}
     let i
     for (i = 0; i <= 3; i++) {
@@ -774,7 +774,7 @@ function initMap () {
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#reset-pokestop-filter').on('click', function (event) {
+  $('#reset-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     for (var i = 1; i < 5; i++) {
@@ -788,7 +788,7 @@ function initMap () {
     $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-pokestop-filter').on('click', function (event) {
+  $('#disable-all-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: false, size: pokestopFilterNew.normal.size }
     for (var i = 1; i < 5; i++) {
@@ -802,7 +802,7 @@ function initMap () {
     $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#reset-spawnpoint-filter').on('click', function (event) {
+  $('#reset-spawnpoint-filter').on('click', function () {
     const defaultSpawnpointFilter = {}
     defaultSpawnpointFilter['no-timer'] = { show: true, size: 'normal' }
     defaultSpawnpointFilter['with-timer'] = { show: true, size: 'normal' }
@@ -813,7 +813,7 @@ function initMap () {
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#disable-all-spawnpoint-filter').on('click', function (event) {
+  $('#disable-all-spawnpoint-filter').on('click', function () {
     const defaultSpawnpointFilter = {}
     defaultSpawnpointFilter['no-timer'] = { show: false, size: spawnpointFilterNew['no-timer'].size }
     defaultSpawnpointFilter['with-timer'] = { show: false, size: spawnpointFilterNew['with-timer'].size }
@@ -824,7 +824,7 @@ function initMap () {
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   })
 
-  $('#saveSettings').on('click', function (event) {
+  $('#saveSettings').on('click', function () {
     $(this).toggleClass('active')
 
     const newShowGyms = $('#show-gyms').hasClass('active')
@@ -1022,7 +1022,7 @@ function initMap () {
     options: {
       position: 'topleft'
     },
-    onAdd: function (map) {
+    onAdd: function () {
       const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom')
 
       container.innerHTML = '<a href="#"><img src="/static/svg/settings.svg" style="width: 21px; height: 21px; class="center-block;"/></a>'
@@ -2607,7 +2607,7 @@ function getCellMarker (cell, ts) {
   })
   polygon.setStyle(getCellStyle(cell, ts))
   polygon.bindPopup(getCellPopupContent(cell))
-  polygon.on('popupopen', function (popup) {
+  polygon.on('popupopen', function () {
     openedCell = cell
     polygon._popup.setContent(getCellPopupContent(cell))
   })
@@ -2632,6 +2632,7 @@ function getSubmissionPlacementCellMarker (cell, ts) {
   return polygon
 }
 
+// eslint-disable-next-line no-unused-vars
 function getSubmissionPlacementCellStyle (cell, ts) {
   if (cell.blocked) {
     return { fillColor: 'black', color: 'black', opacity: 0.75, fillOpacity: 0.25, weight: 0.1 }
@@ -2650,6 +2651,7 @@ function getSubmissionPlacementRingMarker (ring, ts) {
   return circle
 }
 
+// eslint-disable-next-line no-unused-vars
 function getSubmissionPlacementRingStyle (cell, ts) {
   return { fillColor: 'blue', color: 'black', opacity: 0.75, fillOpacity: 0.25, weight: 0.1 }
 }
@@ -2663,13 +2665,14 @@ function getSubmissionTypeCellMarker (cell, ts) {
     direction: 'center',
     className: 'labelstyle'
   })
-  polygon.on('popupopen', function (popup) {
+  polygon.on('popupopen', function () {
     openedSubmissionTypeCell = cell
     polygon._popup.setContent(getSubmissionTypeCellPopupContent(cell))
   })
   return polygon
 }
 
+// eslint-disable-next-line no-unused-vars
 function getSubmissionTypeCellStyle (cell, ts) {
   if ((cell.count === 1 && cell.count_gyms < 1) || (cell.count === 5 && cell.count_gyms < 2) || (cell.count === 19 && cell.count_gyms < 3)) {
     return { fillColor: 'red', color: 'red', opacity: 0.75, fillOpacity: 0.5, weight: 0.75 }
@@ -2686,7 +2689,7 @@ function getWeatherMarker (weather, ts) {
   const polygon = L.polygon(weather.polygon)
   polygon.setStyle(getWeatherStyle(weather, ts))
   polygon.bindPopup(getWeatherPopupContent(weather))
-  polygon.on('popupopen', function (popup) {
+  polygon.on('popupopen', function () {
     openedWeather = weather
     polygon._popup.setContent(getWeatherPopupContent(weather))
   })
@@ -2705,6 +2708,7 @@ function getWeatherStyle (weather, ts) {
   return { fillColor: ['hsl(', hue, ',100%,50%)'].join(''), color: 'black', opacity: 0.75, fillOpacity: 0.5, weight: 1.0 }
 }
 
+// eslint-disable-next-line no-unused-vars
 function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
@@ -2725,7 +2729,7 @@ function getPokemonMarker (pokemon, ts) {
     virtual: true
   })
   marker.bindPopup('')
-  marker.on('popupopen', function (popup) {
+  marker.on('popupopen', function () {
     openedPokemon = pokemon
     marker._popup.setContent(getPokemonPopupContent(pokemon))
   })
@@ -2856,13 +2860,14 @@ function getPokestopMarker (pokestop, ts) {
     virtual: true
   })
   marker.bindPopup(pokestop.name)
-  marker.on('popupopen', function (popup) {
+  marker.on('popupopen', function () {
     openedPokestop = pokestop
     marker._popup.setContent(getPokestopPopupContent(pokestop))
   })
   return marker
 }
 
+// eslint-disable-next-line no-unused-vars
 function getSpawnpointMarkerIcon (spawnpoint, ts) {
   var iconId = spawnpoint.despawn_second != null ? 1 : 0
   const icon = L.icon({
@@ -2958,7 +2963,7 @@ function getGymMarker (gym, ts) {
     virtual: true
   })
   marker.bindPopup(gym.name)
-  marker.on('popupopen', function (popup) {
+  marker.on('popupopen', function () {
     openedGym = gym
     marker._popup.setContent(getGymPopupContent(gym))
   })
@@ -2978,7 +2983,7 @@ function getDeviceMarker (device, ts) {
     virtual: true
   })
   marker.bindPopup('')
-  marker.on('popupopen', function (popup) {
+  marker.on('popupopen', function () {
     openedDevice = device
     marker._popup.setContent(getDevicePopupContent(device))
   })
@@ -3845,17 +3850,17 @@ function loadPokemonFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -3863,10 +3868,10 @@ function loadPokemonFilter () {
   })
 
   $('#table-filter-pokemon tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -3878,7 +3883,7 @@ function loadPokemonFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 
@@ -3934,17 +3939,17 @@ function loadQuestFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -3952,10 +3957,10 @@ function loadQuestFilter () {
   })
 
   $('#table-filter-quest tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -3967,7 +3972,7 @@ function loadQuestFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 
@@ -4023,17 +4028,17 @@ function loadRaidFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -4041,10 +4046,10 @@ function loadRaidFilter () {
   })
 
   $('#table-filter-raid tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -4056,7 +4061,7 @@ function loadRaidFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 
@@ -4112,17 +4117,17 @@ function loadGymFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -4130,10 +4135,10 @@ function loadGymFilter () {
   })
 
   $('#table-filter-gym tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -4145,7 +4150,7 @@ function loadGymFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 
@@ -4201,17 +4206,17 @@ function loadPokestopFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -4219,10 +4224,10 @@ function loadPokestopFilter () {
   })
 
   $('#table-filter-pokestop tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -4234,7 +4239,7 @@ function loadPokestopFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 
@@ -4290,17 +4295,17 @@ function loadSpawnpointFilter () {
     scroller: true,
     lengthChange: false,
     dom: 'lfrti',
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $('.lazy_load').each(function () {
         var img = $(this)
         img.removeClass('lazy_load')
         img.attr('src', img.data('src'))
       })
 
-      $('.select-button-new').each(function (button) {
+      $('.select-button-new').each(function () {
         manageSelectButton($(this), true)
       })
-      $('.configure-button-new').each(function (button) {
+      $('.configure-button-new').each(function () {
         manageConfigureButton($(this), true)
       })
     },
@@ -4308,10 +4313,10 @@ function loadSpawnpointFilter () {
   })
 
   $('#table-filter-spawnpoint tbody').on('click', 'td.details-control', function () {
-    $('.select-button-new').each(function (button) {
+    $('.select-button-new').each(function () {
       manageSelectButton($(this), true)
     })
-    $('.configure-button-new').each(function (button) {
+    $('.configure-button-new').each(function () {
       manageConfigureButton($(this), true)
     })
   })
@@ -4323,7 +4328,7 @@ function loadSpawnpointFilter () {
       if (row.child.isShown()) {
         row.child.hide()
         tr.removeClass('parent')
-      };
+      }
     })
   })
 

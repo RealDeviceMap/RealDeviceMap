@@ -1,11 +1,9 @@
-name: Deploy
+name: Swift
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
-  Debug:
+  BuildDebug:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v1
@@ -20,12 +18,34 @@ jobs:
         key: ${{ runner.os }}-debug-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
       run: swift build -v -c debug
-    - name: Publish Image
+    - name: Test
+      run: swift test -v -c debug
+    - name: Upload executeable
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-debug
+        path: .build/debug/RealDeviceMap
+  DeployDebug:
+    runs-on: ubuntu-16.04
+    needs: BuildDebug
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download executeable
+      uses: actions/download-artifact@v1
+      if: github.event_name == 'push'
+      with:
+        name: build-debug
+        path: .build/debug/RealDeviceMap
+    - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-debug
-  Release:
+    - name: Call MR Build System
+      if: github.event_name == 'pull_request'
+      run: echo TODO
+  BuildRelease:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v1
@@ -40,9 +60,28 @@ jobs:
         key: ${{ runner.os }}-release-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
       run: swift build -v -c release
-    - name: Publish Image
+    - name: Upload executeable
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-release
+        path: .build/release/RealDeviceMap
+  DeployRelease:
+    runs-on: ubuntu-16.04
+    needs: BuildRelease
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download executeable
+      uses: actions/download-artifact@v1
+      if: github.event_name == 'push'
+      with:
+        name: build-release
+        path: .build/release/RealDeviceMap
+    - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
-        imageTagSuffix: -release
         dockerfile: Dockerfile-localbuild-release
+    - name: Call MR Build System
+      if: github.event_name == 'pull_request'
+      run: echo TODO
