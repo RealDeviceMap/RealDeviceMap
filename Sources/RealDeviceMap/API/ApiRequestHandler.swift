@@ -40,7 +40,8 @@ class ApiRequestHandler {
         let showQuests = request.param(name: "show_quests")?.toBool() ?? false
         let questFilterExclude = request.param(name: "quest_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
-        let pokemonFilterExcludeArray = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Any] ?? [Any]()
+        let pokemonFilterExcludeArray = request.param(name: "pokemon_filter_exclude")?
+            .jsonDecodeForceTry() as? [Any] ?? [Any]()
         var pokemonFilterExclude = [String]()
         for el in pokemonFilterExcludeArray {
           if let key = el as? String {
@@ -296,10 +297,12 @@ class ApiRequestHandler {
 
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-sm btn-off select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="hide">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="hide">
                             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                         </label>
-                        <label class="btn btn-sm btn-on select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="show">
+                        <label class="btn btn-sm btn-on select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="show">
                             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                         </label>
                     </div>
@@ -314,16 +317,20 @@ class ApiRequestHandler {
 
                 let size = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="small">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="small">
                             <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
                         </label>
-                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="normal">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="normal">
                             <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
                         </label>
-                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="large">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="large">
                             <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
                         </label>
-                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)" data-type="pokemon-size" data-info="huge">
+                        <label class="btn btn-sm btn-size select-button-new" data-id="\(id)"
+                            data-type="pokemon-size" data-info="huge">
                             <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
                         </label>
                     </div>
@@ -335,7 +342,8 @@ class ApiRequestHandler {
                         "sort": i+2
                     ],
                     "name": sizeString,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i == 0 ? 129 : 19).png\" style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i == 0 ? 129 : 19).png\"" +
+                             "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
                     "type": generalTypeString
