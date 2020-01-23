@@ -32,14 +32,19 @@ jobs:
     - uses: actions/checkout@v1
     - name: Download executeable
       uses: actions/download-artifact@v1
+      if: github.event_name == 'push'
       with:
         name: build-debug
         path: .build/debug/RealDeviceMap
     - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
       with:
-        accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-debug
+    - name: Call MR Build System
+      if: github.event_name == 'pull_request'
+      run: echo TODO
   BuildRelease:
     runs-on: ubuntu-16.04
     steps:
@@ -67,11 +72,16 @@ jobs:
     - uses: actions/checkout@v1
     - name: Download executeable
       uses: actions/download-artifact@v1
+      if: github.event_name == 'push'
       with:
         name: build-release
         path: .build/release/RealDeviceMap
     - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
       with:
-        accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-release
+    - name: Call MR Build System
+      if: github.event_name == 'pull_request'
+      run: echo TODO
