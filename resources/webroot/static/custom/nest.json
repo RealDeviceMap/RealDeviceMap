@@ -1,0 +1,28 @@
+{
+    "type": "FeatureCollection", 
+    "features": [
+        {
+            "geometry": {
+                "type": "Polygon", 
+                "coordinates": [
+                    [
+                        [
+                            -100, 
+                            4
+                        ]
+                    ]
+                ]
+            }, 
+            "type": "Feature", 
+            "id": 0, 
+            "properties": {
+                "name": "Unknown Areaname", 
+                "stroke-opacity": 1.0, 
+                "fill-opacity": 0.5, 
+                "stroke": "#352BFF", 
+                "stroke-width": 2.0, 
+                "fill": "#0651FF"
+            }
+        }
+    ]
+}

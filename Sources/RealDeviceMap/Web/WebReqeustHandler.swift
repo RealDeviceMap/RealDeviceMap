@@ -175,6 +175,7 @@ class WebReqeustHandler {
             data["hide_pokestops"] = !perms.contains(.viewMapPokestop)
             data["hide_raids"] = !perms.contains(.viewMapRaid)
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
+            data["hide_nests"] = !perms.contains(.viewMapNests)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             //data["hide_lures"] = !perms.contains(.viewMapLure)
@@ -238,7 +239,7 @@ class WebReqeustHandler {
                            "filter_quest_filter", "filter_raid_filter", "filter_gym_filter",
                            "filter_pokestop_filter", "filter_spawnpoint_filter", "filter_cells",
                            "filter_weathers", "filter_devices", "filter_select_mapstyle", "filter_mapstyle",
-                           "filter_export", "filter_import", "filter_submission_cells"]
+                           "filter_export", "filter_import", "filter_submission_cells", "filter_nests"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -2802,6 +2803,7 @@ class WebReqeustHandler {
         let permViewMapDevice = request.param(name: "perm_view_map_device") != nil
         let permViewStats = request.param(name: "perm_view_stats") != nil
         let permViewMapSubmissionCells = request.param(name: "perm_view_map_submission_cell") != nil
+        let permViewMapNests = request.param(name: "perm_view_map_nests") != nil
 
         data["name"] = name
         data["perm_admin"] = permAdmin
@@ -2819,6 +2821,7 @@ class WebReqeustHandler {
         data["perm_view_map_weather"] = permViewMapWeather
         data["perm_view_map_device"] = permViewMapDevice
         data["perm_view_map_submission_cell"] = permViewMapSubmissionCells
+        data["perm_view_map_nests"] = permViewMapNests
         data["perm_view_stats"] = permViewStats
 
         var perms = [Group.Perm]()
@@ -2869,6 +2872,9 @@ class WebReqeustHandler {
         }
         if permViewMapSubmissionCells {
             perms.append(.viewMapSubmissionCells)
+        }
+        if permViewMapNests {
+            perms.append(.viewMapNests)
         }
 
         if groupName == nil { // New Group
@@ -2942,6 +2948,7 @@ class WebReqeustHandler {
         data["perm_view_map_weather"] = perms.contains(.viewMapWeather)
         data["perm_view_map_device"] = perms.contains(.viewMapDevice)
         data["perm_view_map_submission_cell"] = perms.contains(.viewMapSubmissionCells)
+        data["perm_view_map_nests"] = perms.contains(.viewMapNests)
         data["perm_view_stats"] = perms.contains(.viewStats)
 
         return data
@@ -3203,8 +3210,4 @@ class WebReqeustHandler {
         return (perms, username)
     }
 
-}
-
-struct Area {
-    let city: String
 }

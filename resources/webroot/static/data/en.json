@@ -69,6 +69,7 @@
 		"filter_select_mapstyle": "Select Map-Style",
 		"filter_level": "Level",
 		"filter_devices": "Devices",
+        "filter_nests": "Nests",
 		"register_title": "Register to %{name}!",
 		"register_username": "Username",
 		"register_email": "Email",
