@@ -422,6 +422,8 @@ function loadStorage () {
     }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
+    defaultPokemonFilter.big_karp = { show: false, size: 'normal' }
+    defaultPokemonFilter.tiny_rat = { show: false, size: 'normal' }
 
     store('pokemon_filter', JSON.stringify(defaultPokemonFilter))
     pokemonFilter = defaultPokemonFilter
@@ -438,6 +440,12 @@ function loadStorage () {
     }
     if (pokemonFilter.iv_or === undefined) {
       pokemonFilter.iv_or = { on: false, filter: '0-100' }
+    }
+    if (pokemonFilter.big_karp === undefined) {
+      pokemonFilter.big_karp = { show: false, size: 'normal' }
+    }
+    if (pokemonFilter.tiny_rat === undefined) {
+      pokemonFilter.tiny_rat = { show: false, size: 'normal' }
     }
     store('pokemon_filter', JSON.stringify(pokemonFilter))
   }
@@ -652,6 +660,8 @@ function initMap () {
     }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
+    defaultPokemonFilter.big_karp = { show: false, size: 'normal' }
+    defaultPokemonFilter.tiny_rat = { show: false, size: 'normal' }
 
     store('pokemon_filter', JSON.stringify(defaultPokemonFilter))
     pokemonFilterNew = defaultPokemonFilter
@@ -667,6 +677,8 @@ function initMap () {
     }
     defaultPokemonFilter.iv_and = { on: false, filter: pokemonFilterNew.iv_and.filter }
     defaultPokemonFilter.iv_or = { on: false, filter: pokemonFilterNew.iv_or.filter }
+    defaultPokemonFilter.big_karp = { show: false, size: 'normal' }
+    defaultPokemonFilter.tiny_rat = { show: false, size: 'normal' }
 
     store('pokemon_filter', JSON.stringify(defaultPokemonFilter))
     pokemonFilterNew = defaultPokemonFilter
@@ -1189,6 +1201,14 @@ function loadData () {
 
     if (pokemonFilter.iv_or.on === true) {
       pokemonFilterIV.or = pokemonFilter.iv_or.filter.replace(/\s/g, '')
+    }
+
+    if (pokemonFilter.big_karp.show !== false) {
+      pokemonFilterExclude.push('big_karp')
+    }
+    
+    if (pokemonFilter.tiny_rat.show !== false) {
+      pokemonFilterExclude.push('tiny_rat')
     }
   }
 
@@ -1973,8 +1993,13 @@ function getPokemonPopupContent (pokemon) {
   if (pokemon.move_2 !== null) {
     content += '<b>Charge:</b> ' + getMoveName(pokemon.move_2) + '<br>'
   }
-  if (pokemon.height !== null && pokemon.weight !== null) {
-    content += '<b>Size:</b> ' + getSize(pokemon.size) + ' | <b>Weight:</b> ' + Math.round(pokemon.weight) + 'kg<br>'
+  if (pokemon.size !== null && pokemon.weight !== null && (pokemon.pokemon_id === 19 || pokemon.pokemon_id === 129)) {
+    var baseHeight = pokemon.pokemon_id === 19 ? 0.300000011920929 : 0.89999998
+    var baseWeight = pokemon.pokemon_id === 19 ? 3.5 : 10
+    var size = (pokemon.size / baseHeight) + (pokemon.weight / baseWeight)
+    content += '<b>Size:</b> ' + getSize(size) + ' | <b>Weight:</b> ' + Math.round(pokemon.weight) + 'kg<br>'
+  } else if (pokemon.weight !== null) {
+    content += '<b>Weight:</b> ' + Math.round(pokemon.weight) + 'kg<br>'
   }
   content +=
         '</div>' +
@@ -3068,6 +3093,27 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokemonFilterNew['iv_' + id].on
         break
     }
+  } else if (type === 'pokemon-size') {
+      switch (info) {
+        case 'hide':
+          shouldShow = pokemonFilterNew[id].show === false
+          break
+        case 'show':
+          shouldShow = pokemonFilterNew[id].show === true
+          break
+        case 'small':
+          shouldShow = pokemonFilterNew[id].size === 'small'
+          break
+        case 'normal':
+          shouldShow = pokemonFilterNew[id].size === 'normal'
+          break
+        case 'large':
+          shouldShow = pokemonFilterNew[id].size === 'large'
+          break
+        case 'huge':
+          shouldShow = pokemonFilterNew[id].size === 'huge'
+          break
+      }
   } else if (type === 'quest-misc') {
     switch (info) {
       case 'hide':
@@ -3385,6 +3431,27 @@ function manageSelectButton (e, isNew) {
             pokemonFilterNew['iv_' + id].on = true
             break
         }
+      } else if (type === 'pokemon-size') {
+          switch (info) {
+            case 'hide':
+              pokemonFilterNew[id].show = false
+              break
+            case 'show':
+              pokemonFilterNew[id].show = true
+              break
+            case 'small':
+              pokemonFilterNew[id].size = 'small'
+              break
+            case 'normal':
+              pokemonFilterNew[id].size = 'normal'
+              break
+            case 'large':
+              pokemonFilterNew[id].size = 'large'
+              break
+            case 'huge':
+              pokemonFilterNew[id].size = 'huge'
+              break
+          }
       } else if (type === 'quest-misc') {
         switch (info) {
           case 'hide':

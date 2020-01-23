@@ -613,7 +613,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     //  swiftlint:disable:next function_parameter_count
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
-                              showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil,
+                              showIV: Bool, updated: UInt32, pokemonFilterExclude: [String]?=nil,
                               pokemonFilterIV: [String: String]?=nil) throws -> [Pokemon] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -621,30 +621,57 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             throw DBController.DBError()
         }
 
-        var pokemonFilterExclude = pokemonFilterExclude ?? [Int]()
+        var pokemonFilterExclude = pokemonFilterExclude ?? [String]()
+        var onlyBigKarp = Bool()
+        var onlyTinyRat = Bool()
 
         if pokemonFilterIV != nil && !pokemonFilterIV!.isEmpty && showIV {
             for ivFilter in pokemonFilterIV! {
                 guard let id = Int(ivFilter.key) else {
                     continue
                 }
-                if !pokemonFilterExclude.contains(id) {
-                    pokemonFilterExclude.append(id)
+                if !pokemonFilterExclude.contains(id.description) {
+                    pokemonFilterExclude.append(id.description)
                 }
             }
 
         }
 
-        let sqlExclude: String
-        if pokemonFilterExclude.isEmpty {
-            sqlExclude = ""
-        } else {
-            var sqlExcludeCreate = "pokemon_id NOT IN ("
-            for _ in 1..<pokemonFilterExclude.count {
-                sqlExcludeCreate += "?, "
+        if pokemonFilterExclude.contains("big_karp") {
+            onlyBigKarp = true
+        }
+        if pokemonFilterExclude.contains("tiny_rat") {
+            onlyTinyRat = true
+        }
+        
+        var sqlExclude: String
+        if onlyBigKarp || onlyTinyRat {
+            let karpBaseHeight = 0.89999998
+            let karpBaseWeight = 10
+            let bigKarpSQL = "(pokemon_id = 129 AND weight IS NOT NULL AND ((weight / \(karpBaseWeight)) + (size / \(karpBaseHeight))) > 2.5)"
+            let ratBaseHeight = 0.300000011920929
+            let ratBaseWeight = 3.5 //Alolan - 3.79999995231628
+            let tinyRatSQL = "(pokemon_id = 19 AND weight IS NOT NULL AND ((weight / \(ratBaseWeight)) + (size / \(ratBaseHeight))) < 1.5)"
+            if onlyBigKarp && onlyTinyRat {
+                sqlExclude = "(\(bigKarpSQL) OR \(tinyRatSQL))"
+            } else if onlyBigKarp && !onlyTinyRat {
+                sqlExclude = bigKarpSQL
+            } else if !onlyBigKarp && onlyTinyRat {
+                sqlExclude = tinyRatSQL
+            } else {
+                sqlExclude = ""
             }
-            sqlExcludeCreate += "?)"
-            sqlExclude = sqlExcludeCreate
+        } else {
+            if pokemonFilterExclude.isEmpty {
+                sqlExclude = ""
+            } else {
+                var sqlExcludeCreate = "pokemon_id NOT IN ("
+                for _ in 1..<pokemonFilterExclude.count {
+                    sqlExcludeCreate += "?, "
+                }
+                sqlExcludeCreate += "?)"
+                sqlExclude = sqlExcludeCreate
+            }
         }
 
         let sqlAdd: String
@@ -717,8 +744,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(minLon)
         mysqlStmt.bindParam(maxLon)
         mysqlStmt.bindParam(updated)
-        for id in pokemonFilterExclude {
-            mysqlStmt.bindParam(id)
+        if !(onlyBigKarp || onlyTinyRat) {
+            for id in pokemonFilterExclude {
+                if id != "big_karp" && id != "tiny_rat" {
+                    mysqlStmt.bindParam(id)
+                }
+            }
         }
 
         guard mysqlStmt.execute() else {
