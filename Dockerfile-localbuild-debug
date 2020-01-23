@@ -20,25 +20,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 RUN apt-get -y update && apt-get install -y mysql-client-5.7
 
 
-## Build Image
-FROM base AS build
-
-WORKDIR /build
-COPY Package.swift Package.swift
-RUN swift package update
-COPY .emptysources Sources
-COPY .emptytests Tests
-RUN swift build -c debug
-RUN rm -rf Sources
-COPY Sources Sources
-COPY Tests Tests
-RUN swift build -c debug
-
-
-## Executable Image
-FROM base
-
-COPY --from=build /build/.build/debug/RealDeviceMap /app/RealDeviceMap
+## Copy Files
+COPY .build/debug/RealDeviceMap /app/RealDeviceMap
 COPY resources /app/resources
 RUN cd /app && wget https://raw.githubusercontent.com/apple/swift/master/utils/symbolicate-linux-fatal && chmod +x symbolicate-linux-fatal
 COPY run-debug-docker /app/run-debug-docker

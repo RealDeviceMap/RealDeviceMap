@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   rdm:
-    image: realdevicemap/realdevicemap-beta:latest
+    image: docker.pkg.github.com/realdevicemap/realdevicemap/realdevicemap:master
     container_name: realdevicemap
     restart: unless-stopped
     tty: true

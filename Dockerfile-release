@@ -27,9 +27,11 @@ WORKDIR /build
 COPY Package.swift Package.swift
 RUN swift package update
 COPY .emptysources Sources
+COPY .emptytests Tests
 RUN swift build -c release
 RUN rm -rf Sources
 COPY Sources Sources
+COPY Tests Tests
 RUN swift build -c release
 
 

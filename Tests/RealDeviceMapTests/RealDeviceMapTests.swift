@@ -6,7 +6,7 @@ import Foundation
 final class RealDeviceMapTests: XCTestCase {
     
     func test01Example() {
-
+        print("HI")
     }
     
     static var allTests = [
