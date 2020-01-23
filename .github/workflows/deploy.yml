@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: swift build -v -c debug
     - name: Publish Image
-      uses: 123FLO321/github-docker-temp@0.4.0
+      uses: 123FLO321/github-docker-temp@0.5.0
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-debug
@@ -41,7 +41,7 @@ jobs:
     - name: Build
       run: swift build -v -c release
     - name: Publish Image
-      uses: 123FLO321/github-docker-temp@0.4.0
+      uses: 123FLO321/github-docker-temp@0.5.0
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
         imageTagSuffix: -release
