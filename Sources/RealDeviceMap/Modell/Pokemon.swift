@@ -435,7 +435,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
                     level, weight, size, capture_1, capture_2, capture_3, display_pokemon_id, shiny, username, gender,
-                    form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified
+                    form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
+                    expire_timestamp_verified
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -728,7 +729,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
-                   gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3, 
+                   gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
                    expire_timestamp_verified, shiny, username
             FROM pokemon
