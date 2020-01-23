@@ -887,14 +887,15 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let capture1 = result[19] as? Double
         let capture2 = result[20] as? Double
         let capture3 = result[21] as? Double
-        let pokestopId = result[22] as? String
-        let updated = result[23] as! UInt32
-        let firstSeenTimestamp = result[24] as! UInt32
-        let changed = result[25] as! UInt32
-        let cellId = result[26] as? UInt64
-        let expireTimestampVerified = (result[27] as? UInt8)!.toBool()
-        let shiny = (result[28] as? UInt8)?.toBool()
-        let username = result[29] as? String
+        let displayPokemonId = result[22] as? UInt16
+        let pokestopId = result[23] as? String
+        let updated = result[24] as! UInt32
+        let firstSeenTimestamp = result[25] as! UInt32
+        let changed = result[26] as! UInt32
+        let cellId = result[27] as? UInt64
+        let expireTimestampVerified = (result[28] as? UInt8)!.toBool()
+        let shiny = (result[29] as? UInt8)?.toBool()
+        let username = result[30] as? String
 
         return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
                        expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
