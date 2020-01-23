@@ -3,46 +3,75 @@ name: Swift
 on: [push, pull_request]
 
 jobs:
-  Debug:
+  BuildDebug:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v1
     - uses: YOCKOW/Action-setup-swift@master
     - name: Install Requirements
       run: sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
-    - name: Resolve Project
+    - name: Resolve
       run: swift package resolve
     - uses: actions/cache@v1
       with:
         path: .build
         key: ${{ runner.os }}-debug-spm-${{ hashFiles('Package.resolved') }}
-    - name: Build Project
+    - name: Build
       run: swift build -v -c debug
-    - name: Test Project
+    - name: Test
       run: swift test -v -c debug
-    - name: Publish Image
+    - name: Upload executeable
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-debug
+        path: .build/debug/RealDeviceMap
+  DeployDebug:
+    runs-on: ubuntu-16.04
+    needs: BuildDebug
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download executeable
+      uses: actions/download-artifact@v1
+      with:
+        name: build-debug
+        path: .build/debug/RealDeviceMap
+    - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
         dockerfile: Dockerfile-localbuild-debug
-  Release:
+  BuildRelease:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v1
     - uses: YOCKOW/Action-setup-swift@master
     - name: Install Requirements
       run: sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
-    - name: Resolve Project
+    - name: Resolve
       run: swift package resolve
     - uses: actions/cache@v1
       with:
         path: .build
         key: ${{ runner.os }}-release-spm-${{ hashFiles('Package.resolved') }}
-    - name: Build Project
+    - name: Build
       run: swift build -v -c release
-    - name: Publish Image
+    - name: Upload executeable
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-release
+        path: .build/release/RealDeviceMap
+  DeployRelease:
+    runs-on: ubuntu-16.04
+    needs: BuildRelease
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download executeable
+      uses: actions/download-artifact@v1
+      with:
+        name: build-release
+        path: .build/release/RealDeviceMap
+    - name: Publish
       uses: 123FLO321/github-docker-temp@0.5.0
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
-        imageTagSuffix: -release
         dockerfile: Dockerfile-localbuild-release
