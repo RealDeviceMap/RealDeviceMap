@@ -643,15 +643,17 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if pokemonFilterExclude.contains("tiny_rat") {
             onlyTinyRat = true
         }
-        
+
         var sqlExclude: String
         if onlyBigKarp || onlyTinyRat {
             let karpBaseHeight = 0.89999998
             let karpBaseWeight = 10
-            let bigKarpSQL = "(pokemon_id = 129 AND weight IS NOT NULL AND ((weight / \(karpBaseWeight)) + (size / \(karpBaseHeight))) > 2.5)"
+            let bigKarpSQL = "(pokemon_id = 129 AND weight IS NOT NULL AND " +
+                             "((weight / \(karpBaseWeight)) + (size / \(karpBaseHeight))) > 2.5)"
             let ratBaseHeight = 0.300000011920929
             let ratBaseWeight = 3.5 //Alolan - 3.79999995231628
-            let tinyRatSQL = "(pokemon_id = 19 AND weight IS NOT NULL AND ((weight / \(ratBaseWeight)) + (size / \(ratBaseHeight))) < 1.5)"
+            let tinyRatSQL = "(pokemon_id = 19 AND weight IS NOT NULL AND " +
+                             "((weight / \(ratBaseWeight)) + (size / \(ratBaseHeight))) < 1.5)"
             if onlyBigKarp && onlyTinyRat {
                 sqlExclude = "(\(bigKarpSQL) OR \(tinyRatSQL))"
             } else if onlyBigKarp && !onlyTinyRat {

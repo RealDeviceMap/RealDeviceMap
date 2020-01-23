@@ -342,7 +342,7 @@ class ApiRequestHandler {
                         "sort": i+2
                     ],
                     "name": sizeString,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i == 0 ? 129 : 19).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i == 0 ? 129 : 19).png\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
