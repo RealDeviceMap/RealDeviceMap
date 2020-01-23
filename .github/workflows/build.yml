@@ -1,8 +1,6 @@
-name: Deploy
+name: Swift
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   Debug:
@@ -12,18 +10,20 @@ jobs:
     - uses: YOCKOW/Action-setup-swift@master
     - name: Install Requirements
       run: sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
-    - name: Resolve
+    - name: Resolve Project
       run: swift package resolve
     - uses: actions/cache@v1
       with:
         path: .build
         key: ${{ runner.os }}-debug-spm-${{ hashFiles('Package.resolved') }}
-    - name: Build
+    - name: Build Project
       run: swift build -v -c debug
+    - name: Test Project
+      run: swift test -v -c debug
     - name: Publish Image
       uses: 123FLO321/github-docker-temp@0.5.0
       with:
-        accessToken: ${{ secrets.GITHUB_TOKEN }}
+        accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
         dockerfile: Dockerfile-localbuild-debug
   Release:
     runs-on: ubuntu-16.04
@@ -32,17 +32,17 @@ jobs:
     - uses: YOCKOW/Action-setup-swift@master
     - name: Install Requirements
       run: sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
-    - name: Resolve
+    - name: Resolve Project
       run: swift package resolve
     - uses: actions/cache@v1
       with:
         path: .build
         key: ${{ runner.os }}-release-spm-${{ hashFiles('Package.resolved') }}
-    - name: Build
+    - name: Build Project
       run: swift build -v -c release
     - name: Publish Image
       uses: 123FLO321/github-docker-temp@0.5.0
       with:
-        accessToken: ${{ secrets.GITHUB_TOKEN }}
+        accessToken: ${{ secrets.GITHUB_TOKEN_PACKAGES }}
         imageTagSuffix: -release
         dockerfile: Dockerfile-localbuild-release
