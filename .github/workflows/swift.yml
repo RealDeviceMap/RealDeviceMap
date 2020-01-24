@@ -46,6 +46,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: 'curl https://build.realdevicemap.com/workflow/build -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${{github.ref}}\",\"sha\":\"${{github.sha}}\",\"type\":\"build\"}" --fail'
     - name: Wait for MR Build System
+      if: github.event_name == 'pull_request'
       run: |
         while true; do
           status=$(curl https://build.realdevicemap.com/workflow/status -X POST -H "Content-Type: application/json" -d '{"ref":"${{github.ref}}","sha":"${{github.sha}}","type":"build"}' --fail -s)
@@ -99,6 +100,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: 'curl https://build.realdevicemap.com/workflow/build -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${{github.ref}}\",\"sha\":\"${{github.sha}}\",\"type\":\"release\"}" --fail'
     - name: Wait for MR Build System
+      if: github.event_name == 'pull_request'
       run: |
         while true; do
           status=$(curl https://build.realdevicemap.com/workflow/status -X POST -H "Content-Type: application/json" -d '{"ref":"${{github.ref}}","sha":"${{github.sha}}","type":"release"}' --fail -s)
