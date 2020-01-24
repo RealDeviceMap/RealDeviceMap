@@ -1140,7 +1140,6 @@ class WebReqeustHandler {
                         data["show_error"] = true
                         data["error"] = "Failed to truncate Pokemon table."
                     }
-                    break
                 case "convert_pokestops":
                     let result = try? Gym.convertPokestopsToGyms()
                     let deleteResult = try? Pokestop.deleteConvertedPokestops()
@@ -1151,7 +1150,6 @@ class WebReqeustHandler {
                         data["show_error"] = true
                         data["error"] = "Failed to update converted pokestops to gyms."
                     }
-                    break
                 case "delete_stale_pokestops":
                     let result = try? Pokestop.deleteStalePokestops()
                     if result! >= 0 {
@@ -1161,7 +1159,6 @@ class WebReqeustHandler {
                         data["show_error"] = true
                         data["error"] = "Failed to delete stale Pokestops."
                     }
-                    break
                 default:
                     break
                 }
