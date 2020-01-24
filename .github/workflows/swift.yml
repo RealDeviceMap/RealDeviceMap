@@ -42,9 +42,22 @@ jobs:
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-debug
-    - name: Call MR Build System
+    - name: Start MR Build System
       if: github.event_name == 'pull_request'
-      run: echo TODO
+      run: 'curl https://build.realdevicemap.com/workflow/build -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${{github.ref}}\",\"sha\":\"${{github.sha}}\",\"type\":\"debug\"}" --fail'
+    - name: Wait for MR Build System
+      if: github.event_name == 'pull_request'
+      run: |
+        while true; do
+          status=$(curl https://build.realdevicemap.com/workflow/status -X POST -H "Content-Type: application/json" -d '{"ref":"${{github.ref}}","sha":"${{github.sha}}","type":"debug"}' --fail -s)
+          if [[ $status == "failed" ]]; then
+             exit 1
+          fi
+           if [[ $status == "success" ]]; then
+             exit 0
+          fi
+          sleep 5
+        done
   BuildRelease:
     runs-on: ubuntu-16.04
     steps:
@@ -82,6 +95,20 @@ jobs:
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
         dockerfile: Dockerfile-localbuild-release
-    - name: Call MR Build System
+        imageTagSuffix: -release
+    - name: Start MR Build System
       if: github.event_name == 'pull_request'
-      run: echo TODO
+      run: 'curl https://build.realdevicemap.com/workflow/build -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${{github.ref}}\",\"sha\":\"${{github.sha}}\",\"type\":\"release\"}" --fail'
+    - name: Wait for MR Build System
+      if: github.event_name == 'pull_request'
+      run: |
+        while true; do
+          status=$(curl https://build.realdevicemap.com/workflow/status -X POST -H "Content-Type: application/json" -d '{"ref":"${{github.ref}}","sha":"${{github.sha}}","type":"release"}' --fail -s)
+          if [[ $status == "failed" ]]; then
+             exit 1
+          fi
+           if [[ $status == "success" ]]; then
+             exit 0
+          fi
+          sleep 5
+        done
