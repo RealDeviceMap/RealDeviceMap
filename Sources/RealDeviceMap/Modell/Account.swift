@@ -605,7 +605,7 @@ class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE failed IS NULL AND first_warning_timestamp IS NOT NULL
+            WHERE (failed IS NULL OR failed = 'GPR_RED_WARNING') AND first_warning_timestamp IS NOT NULL
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -661,10 +661,10 @@ class Account: WebHookEvent {
               level,
               COUNT(level) as total,
               SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
-              SUM(failed = 'banned') as banned,
+              SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
-              SUM(failed != 'banned' AND failed != 'invalid_credentials') as other,
+              SUM(failed NOT IN('banned', 'invalid_credentials', 'GPR_RED_WARNING', 'GPR_BANNED')) as other,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
@@ -722,9 +722,15 @@ class Account: WebHookEvent {
 
         let sql = """
             SELECT
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as banned_7days,
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as banned_14days,
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as banned_30days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_7days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_14days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_30days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as warning_7days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as warning_14days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as warning_30days
