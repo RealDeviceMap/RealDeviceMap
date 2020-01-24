@@ -44,7 +44,7 @@ jobs:
         dockerfile: Dockerfile-localbuild-debug
     - name: Call MR Build System
       if: github.event_name == 'pull_request'
-      run: echo TODO
+      run: curl https://build.realdevicemap.com/workflow/$GITHUB_ACTION/debug -X POST --fail
   BuildRelease:
     runs-on: ubuntu-16.04
     steps:
@@ -84,4 +84,4 @@ jobs:
         dockerfile: Dockerfile-localbuild-release
     - name: Call MR Build System
       if: github.event_name == 'pull_request'
-      run: echo TODO
+      run: curl https://build.realdevicemap.com/workflow/$GITHUB_ACTION/release -X POST --fail
