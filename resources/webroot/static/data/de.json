@@ -128,7 +128,7 @@
         	"email_reset_subtitle": "Du hast eine Passwort Löschung beantragt. Nutze den Button unten um dein Passwort zu löschen.\nFalls du keine Passwort Löschung beantragt hast, ignoriere diese Email\nDieser Link ist eine Stunde gültig.",
         	"email_reset_button": "Passwort zurücksetzen",
         	"email_automail_info": "Dies ist eine automatisierte Email. Antworten sie dieser Email nicht.",
-       		"confirmmail_title": "Bestätige Email Addresse",
+		"confirmmail_title": "Bestätige Email Addresse",
         	"confirmmail_success": "Email erfolgreich bestätigt.",
         	"confirmmail_success_new": "Bestätigungsmail erfolgreich versendet.",
         	"confirmmail_error_undefined": "Etwas ist schief gelaufen. Bitte versuche es später noch einmal!",
