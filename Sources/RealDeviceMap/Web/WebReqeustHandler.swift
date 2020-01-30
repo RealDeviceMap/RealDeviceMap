@@ -1746,16 +1746,21 @@ class WebReqeustHandler {
 
         if type == nil {
             data["nothing_selected"] = true
-        } else if type! == .circlePokemon {
-            data["circle_pokemon_selected"] = true
-        } else if type! == .circleRaid {
-            data["circle_raid_selected"] = true
-        } else if type! == .circleSmartRaid {
-            data["circle_smart_raid_selected"] = true
-        } else if type! == .autoQuest {
-            data["auto_quest_selected"] = true
-        } else if type! == .pokemonIV {
-            data["pokemon_iv_selected"] = true
+        } else {
+            switch type! {
+            case .circlePokemon:
+                data["circle_pokemon_selected"] = true
+            case .circleRaid:
+                data["circle_raid_selected"] = true
+            case .circleSmartRaid:
+                data["circle_smart_raid_selected"] = true
+            case .autoQuest:
+                data["auto_quest_selected"] = true
+            case .pokemonIV:
+                data["pokemon_iv_selected"] = true
+            case .leveling:
+                data["leveling_selected"] = true
+            }
         }
 
         if type == .pokemonIV && pokemonIDs.isEmpty {
@@ -1794,7 +1799,7 @@ class WebReqeustHandler {
 
             newCoords = coords
 
-        } else if type != nil && type! == .autoQuest || type! == .pokemonIV {
+        } else if type != nil && type! == .autoQuest || type! == .pokemonIV || type! == .leveling {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
             var currentIndex = 0
@@ -1817,10 +1822,14 @@ class WebReqeustHandler {
 
             if coordArray.count == 0 {
                 data["show_error"] = true
-                data["error"] = "Failed to parse coords."
+                data["error"] = "Failed to parse coords (no coordinates in list)."
                 return data
             }
-
+            if type! == .leveling && coordArray.count > 1 {
+                data["show_error"] = true
+                data["error"] = "Failed to parse coords (only one coordinate (=start) needed for leveling instances)."
+                return data
+            }
             newCoords = coordArray
         } else {
             data["show_error"] = true
@@ -1977,6 +1986,8 @@ class WebReqeustHandler {
                 data["auto_quest_selected"] = true
             case .pokemonIV:
                 data["pokemon_iv_selected"] = true
+            case .leveling:
+                data["leveling_selected"] = true
             }
             return data
         }

@@ -308,6 +308,7 @@ class WebHookRequestHandler {
                 } else {
                     break
                 }
+                InstanceController.global.gotFortData(fortData: fort.data, username: username)
             }
         }
         if targetCoord != nil || pokemonEncounterId != nil {

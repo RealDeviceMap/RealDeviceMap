@@ -80,7 +80,7 @@ class IVInstanceController: InstanceControllerProto {
                     if let pokemonReal = pokemonReal {
                         if pokemonReal.atkIv == nil {
                             Log.debug(message: "[IVInstanceController] Checked Pokemon doesn't have IV")
-                            self.addPokemon(pokemon: pokemonReal)
+                            self.gotPokemon(pokemon: pokemonReal)
                         } else {
                             Log.debug(message: "[IVInstanceController] Checked Pokemon has IV")
                         }
@@ -175,7 +175,7 @@ class IVInstanceController: InstanceControllerProto {
         return pokemon
     }
 
-    func addPokemon(pokemon: Pokemon) {
+    func gotPokemon(pokemon: Pokemon) {
         if pokemonList.contains(pokemon.pokemonId) &&
            multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
