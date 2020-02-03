@@ -378,7 +378,7 @@ class AutoInstanceController: InstanceControllerProto {
                     newLat = closest!.lat
                     pokestop = closest!
                     let now = UInt32(Date().timeIntervalSince1970)
-                    if lastTime == nil {
+                    if lastTime == nil || lastTime! > now {
                         encounterTime = now
                     } else {
                         let encounterTimeT = lastTime! + encounterCooldown(distM: closestDistance)
