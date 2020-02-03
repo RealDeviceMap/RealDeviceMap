@@ -21,7 +21,7 @@ RUN apt-get -y update && apt-get install -y mysql-client-5.7
 
 
 ## Copy Files
-COPY .build/debug/RealDeviceMap /app/RealDeviceMap
+COPY .build/debug/RealDeviceMap /app/
 COPY resources /app/resources
 RUN cd /app && wget https://raw.githubusercontent.com/apple/swift/master/utils/symbolicate-linux-fatal && chmod +x symbolicate-linux-fatal
 COPY run-debug-docker /app/run-debug-docker
