@@ -76,7 +76,7 @@ class Cooldown {
         } else {
             let lastCoord = Coord(lat: lastLat!, lon: lastLon!)
             let distance = lastCoord.distance(to: location)
-            if lastTime == nil {
+            if lastTime == nil || lastTime! > now {
                 encounterTime = now
             } else {
                 let encounterTimeT = lastTime! + encounterCooldown(distM: distance)
