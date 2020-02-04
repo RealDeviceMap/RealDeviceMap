@@ -1775,7 +1775,7 @@ class WebReqeustHandler {
             return data
         }
 
-        var newCoords: [Any]
+        var newCoords: Any
 
         if type != nil && type! == .circlePokemon || type! == .circleRaid || type! == .circleSmartRaid {
             var coords = [Coord]()
@@ -1825,12 +1825,16 @@ class WebReqeustHandler {
                 data["error"] = "Failed to parse coords (no coordinates in list)."
                 return data
             }
-            if type! == .leveling && coordArray.count > 1 {
+            if type! == .leveling && coordArray.count > 1 || coordArray[0].count > 1 {
                 data["show_error"] = true
                 data["error"] = "Failed to parse coords (only one coordinate (=start) needed for leveling instances)."
                 return data
             }
-            newCoords = coordArray
+            if type! == .leveling {
+                newCoords = coordArray[0][0]
+            } else {
+                newCoords = coordArray
+            }
         } else {
             data["show_error"] = true
             data["error"] = "Invalid Request."
@@ -1930,6 +1934,7 @@ class WebReqeustHandler {
             var areaString = ""
             let areaType1 = oldInstance!.data["area"] as? [[String: Double]]
             let areaType2 = oldInstance!.data["area"] as? [[[String: Double]]]
+            let areaType3 = oldInstance!.data["area"] as? [String: Double]
             if areaType1 != nil {
                 for coordLine in areaType1! {
                     let lat = coordLine["lat"]
@@ -1947,6 +1952,10 @@ class WebReqeustHandler {
                         areaString += "\(lat!),\(lon!)\n"
                     }
                 }
+            } else if areaType3 != nil {
+                let lat = areaType3!["lat"]
+                let lon = areaType3!["lon"]
+                areaString += "\(lat!),\(lon!)\n"
             }
 
             data["name"] = oldInstance!.name

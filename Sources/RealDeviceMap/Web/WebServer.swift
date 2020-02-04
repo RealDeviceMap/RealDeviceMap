@@ -101,7 +101,7 @@ class WebServer {
         let address = enviroment["WEB_SERVER_ADDRESS"] ?? "0.0.0.0"
         let port = Int(enviroment["WEB_SERVER_PORT"] ?? "") ?? 9000
 
-        let route = Route(uri: "**") { (request, response) in
+        let route = Route(uri: "**") { (_, response) in
             response.setBody(string: """
             <html lang="en">
                 <head>

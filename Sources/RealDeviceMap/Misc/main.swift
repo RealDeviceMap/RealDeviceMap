@@ -22,7 +22,7 @@ let projectroot = Dir.workingDir.path
 // Starting Startup Webserver
 Log.debug(message: "[MAIN] Starting Startup Webserver")
 var startupServer: HTTPServer.Server? = WebServer.startupServer
-var startupServerContext:  HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
+var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
 
 // Check if /backups exists
 let backups = Dir("\(projectroot)/backups")

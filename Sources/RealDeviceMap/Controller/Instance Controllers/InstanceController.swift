@@ -29,12 +29,14 @@ protocol InstanceControllerProto {
     func gotPokemon(pokemon: Pokemon)
     func gotIV(pokemon: Pokemon)
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?)
+    func gotPlayerInfo(username: String, level: Int, xp: Int)
 }
 
 extension InstanceControllerProto {
     func gotPokemon(pokemon: Pokemon) { }
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
+    func gotPlayerInfo(username: String, level: Int, xp: Int) { }
 }
 
 extension InstanceControllerProto {
@@ -322,6 +324,14 @@ class InstanceController {
         instancesLock.lock()
         for instance in instancesByInstanceName {
             instance.value.gotFortData(fortData: fortData, username: username)
+        }
+        instancesLock.unlock()
+    }
+
+    public func gotPlayerInfo(username: String, level: Int, xp: Int) {
+        instancesLock.lock()
+        for instance in instancesByInstanceName {
+            instance.value.gotPlayerInfo(username: username, level: level, xp: xp)
         }
         instancesLock.unlock()
     }

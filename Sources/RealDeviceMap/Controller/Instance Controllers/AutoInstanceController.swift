@@ -314,8 +314,6 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
 
-                let newLon: Double
-                let newLat: Double
                 let pokestop: Pokestop
 
                 let lastCoord: Coord?
@@ -360,8 +358,6 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.lock()
                     if let stop = todayStops!.first {
-                        newLon = stop.lon
-                        newLat = stop.lat
                         pokestop = stop
                         _ = todayStops!.removeFirst()
                     } else {
