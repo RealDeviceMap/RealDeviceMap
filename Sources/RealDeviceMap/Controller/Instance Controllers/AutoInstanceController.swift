@@ -349,7 +349,6 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     pokestop = closest!
-
                     stopsLock.lock()
                     if let index = todayStops!.index(of: pokestop) {
                         todayStops!.remove(at: index)
