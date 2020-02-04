@@ -93,9 +93,9 @@ WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(k
     return string.toUInt16() ?? 0
 }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] //Default ditto disguises
 WebReqeustHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
-    .jsonDecode() as? [[String: String]] ?? [[:]]
+    .jsonDecode() as? [[String: String]] ?? []
 WebReqeustHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
-    .jsonDecode() as? [[String: String]] ?? [[:]]
+    .jsonDecode() as? [[String: String]] ?? []
 
 if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?
     .jsonDecodeForceTry() as? [String: String] {
