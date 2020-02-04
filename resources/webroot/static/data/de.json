@@ -125,7 +125,7 @@
         "email_reset_subject": "Passwort von %{name} zurücksetzen!",
         "email_reset_title_1": "Hallo %{name},",
         "email_reset_title_2": "Passwort von %{name} zurücksetzen!",
-        "email_reset_subtitle": "Du hast eine Passwort Löschung beantragt. Nutze den Button unten um dein Passwort zu löschen.\nFalls du keine Passwort Löschung beantragt hast, ignoriere diese Email\nDieser Link ist eine Stunde gültig.",
+        "email_reset_subtitle": "Du hast eine Passwort Zurücksetzung beantragt. Nutze den Button unten um dein Passwort zurücksetzen.\nFalls du dies nicht beantragt hast, ignoriere diese Email\nDieser Link ist eine Stunde gültig.",
         "email_reset_button": "Passwort zurücksetzen",
         "email_automail_info": "Dies ist eine automatisierte Email. Antworten sie dieser Email nicht.",
         "confirmmail_title": "Bestätige Email Addresse",
