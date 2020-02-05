@@ -7,17 +7,17 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		$('#table').DataTable( {
-			"ajax": {
-				"url": "/api/get_data?show_assignments=true&formatted=true",
-				"dataSrc": "data.assignments"
-			},
-			"paging":   true,
-			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-			"columns": [
-				{ "data": "instance_name" },
-				{ "data": "device_uuid" },
+    $(document).ready(function() {
+        $('#table').DataTable( {
+            "ajax": {
+                "url": "/api/get_data?show_assignments=true&formatted=true",
+                "dataSrc": "data.assignments"
+            },
+            "paging":   true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "columns": [
+                { "data": "instance_name" },
+                { "data": "device_uuid" },
                 { data: {
                     _:    "time.formatted",
                     sort: "time.timestamp"
@@ -25,16 +25,16 @@
                 { "data": "enabled" },
                 { "data": "buttons" }
             ],
-			"info":     true,
-			"order": [[ 2, "asc" ]],
+            "info":     true,
+            "order": [[ 2, "asc" ]],
             "columnDefs": [ {
-				"targets": [4],
-				"orderable": false
-			}],
-			"search.caseInsensitive": true,
+                "targets": [4],
+                "orderable": false
+            }],
+            "search.caseInsensitive": true,
             "responsive": true
-		});
-	} );
+        });
+    } );
 </script>
 
 <body>
