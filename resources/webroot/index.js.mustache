@@ -610,6 +610,7 @@ function loadStorage () {
 function initMap () {
   map = L.map('map', {
     preferCanvas: true,
+    worldCopyJump: true,
     updateWhenIdle: true,
     updateWhenZooming: false
   }).setView(['{{start_lat}}', '{{start_lon}}'], '{{start_zoom}}')
