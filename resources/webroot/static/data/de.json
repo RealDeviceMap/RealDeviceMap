@@ -3285,7 +3285,7 @@
         "quest_30": "Erlöse %{amount} Pokemon",
         "quest_31": "Find %{amount} Team Rocket Invasion(en)",
         "quest_32": "%{amount} mal erster Grunt des Tages",
-        "quest_33": "Unbekannt",
+        "quest_33": "Füttere deinen Kumpel %{ammount} mal",
         "quest_34": "Erhalte %{ammount} Herzen mit deinem Kumpel",
         "quest_reward_1": "XP",
         "quest_reward_1_formatted": "%{amount} XP",
