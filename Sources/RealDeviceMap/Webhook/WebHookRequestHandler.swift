@@ -63,7 +63,13 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
 
-            let loginSecretHeader = request.header(.authorization)
+            var loginSecretHeader = request.header(.authorization)
+            
+            if let madAuth = Data(base64Encoded: loginSecretHeader?.components(separatedBy: " ").last ?? ""),
+                let madString = String(data: madAuth, encoding: .utf8),
+                let madSecret = madString.components(separatedBy: ":").last {
+                loginSecretHeader = "Bearer \(madSecret)"
+            }
             guard loginSecretHeader == "Bearer \(loginSecret)" else {
                 WebHookRequestHandler.limiter.failed(host: host)
                 return response.respondWithError(status: .unauthorized)
