@@ -89,12 +89,18 @@ class WebHookRequestHandler {
 
         let json: [String: Any]
         do {
-            guard var jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String: Any] else {
+            if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String : Any] {
+                if rdmRaw["payload"] != nil {
+                    json = ["contents": [rdmRaw]]
+                } else {
+                    json = rdmRaw
+                }
+            } else if let madRaw = try request.postBodyString?.jsonDecode() as? [[String : Any]] {
+                json = ["contents": madRaw]
+            } else {
                 response.respondWithError(status: .badRequest)
                 return
             }
-            if jsonOpt["payload"] != nil { jsonOpt["contents"] = [jsonOpt] }
-            json = jsonOpt
         } catch {
             response.respondWithError(status: .badRequest)
             return
