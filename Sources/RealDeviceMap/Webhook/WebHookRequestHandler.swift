@@ -64,7 +64,6 @@ class WebHookRequestHandler {
             }
 
             var loginSecretHeader = request.header(.authorization)
-            
             if let madAuth = Data(base64Encoded: loginSecretHeader?.components(separatedBy: " ").last ?? ""),
                 let madString = String(data: madAuth, encoding: .utf8),
                 let madSecret = madString.components(separatedBy: ":").last {
@@ -89,13 +88,13 @@ class WebHookRequestHandler {
 
         let json: [String: Any]
         do {
-            if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String : Any] {
+            if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String: Any] {
                 if rdmRaw["payload"] != nil {
                     json = ["contents": [rdmRaw]]
                 } else {
                     json = rdmRaw
                 }
-            } else if let madRaw = try request.postBodyString?.jsonDecode() as? [[String : Any]] {
+            } else if let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
                 json = ["contents": madRaw]
             } else {
                 response.respondWithError(status: .badRequest)
@@ -134,14 +133,14 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
-        
+
         var uuid: String?
         if let rdmUuid = json["uuid"] as? String {
             uuid = rdmUuid
         } else if let madUuid = request.header(.origin) {
             uuid = madUuid
         }
-        
+
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
