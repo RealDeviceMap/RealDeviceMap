@@ -134,8 +134,14 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
-
-        let uuid = json["uuid"] as? String
+        
+        var uuid: String?
+        if let rdmUuid = json["uuid"] as? String {
+            uuid = rdmUuid
+        } else if let madUuid = request.header(.origin) {
+            uuid = madUuid
+        }
+        
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
