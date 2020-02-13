@@ -2070,7 +2070,7 @@ function getPokemonPopupContent (pokemon) {
     '</div>' + // END 3RD ROW
     '<br>' +
     '<div class="text-center">' +
-        '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(' + pokemon.id + ');return false;"><b>[Hide]</b></a>&nbsp;' +
+        '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>[Hide]</b></a>&nbsp;' +
         '<a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>[Exclude]</b></a>' +
         '<br>' +
         '<br>' +
