@@ -34,7 +34,13 @@ class WebHookRequestHandler {
     private static var emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
+    private static var isMadData: Bool = false
+
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
+
+        if request.header(.origin) != nil {
+            isMadData = true
+        }
 
         if let hostWhitelist = hostWhitelist {
             let host: String
@@ -64,10 +70,13 @@ class WebHookRequestHandler {
             }
 
             var loginSecretHeader = request.header(.authorization)
-            if let madAuth = Data(base64Encoded: loginSecretHeader?.components(separatedBy: " ").last ?? ""),
-                let madString = String(data: madAuth, encoding: .utf8),
-                let madSecret = madString.components(separatedBy: ":").last {
-                loginSecretHeader = "Bearer \(madSecret)"
+
+            if isMadData {
+                if let madAuth = Data(base64Encoded: loginSecretHeader?.components(separatedBy: " ").last ?? ""),
+                    let madString = String(data: madAuth, encoding: .utf8),
+                    let madSecret = madString.components(separatedBy: ":").last {
+                        loginSecretHeader = "Bearer \(madSecret)"
+                }
             }
             guard loginSecretHeader == "Bearer \(loginSecret)" else {
                 WebHookRequestHandler.limiter.failed(host: host)
@@ -88,14 +97,12 @@ class WebHookRequestHandler {
 
         let json: [String: Any]
         do {
-            if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String: Any] {
-                if rdmRaw["payload"] != nil {
-                    json = ["contents": [rdmRaw]]
-                } else {
-                    json = rdmRaw
-                }
-            } else if let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
-                json = ["contents": madRaw]
+            if isMadData, let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
+                json = ["contents": madRaw,
+                        "uuid": request.header(.origin)!,
+                        "username": "PogoDroid"]
+            } else if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String: Any] {
+                json = rdmRaw
             } else {
                 response.respondWithError(status: .badRequest)
                 return
@@ -112,7 +119,7 @@ class WebHookRequestHandler {
         }
 
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        var username = json["username"] as? String
+        let username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -134,12 +141,7 @@ class WebHookRequestHandler {
             return
         }
 
-        var uuid: String?
-        if let rdmUuid = json["uuid"] as? String {
-            uuid = rdmUuid
-        } else if let madUuid = request.header(.origin) {
-            uuid = madUuid
-        }
+        let uuid = json["uuid"] as? String
 
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
@@ -165,7 +167,6 @@ class WebHookRequestHandler {
         var isEmtpyGMO = true
         var isInvalidGMO = true
         var containsGMO = false
-        var isMadData = false
 
         for rawData in contents {
 
@@ -195,9 +196,6 @@ class WebHookRequestHandler {
             } else if let madString = rawData["payload"] as? String {
 				data = Data(base64Encoded: madString) ?? Data()
 				method = rawData["type"] as? Int ?? 106
-				isMadData = true
-				username = "PogoDroid"
-				//Log.info(message: "[WebHookRequestHandler] PogoDroid Raw Data Type: \(method)")
             } else {
                 continue
             }
