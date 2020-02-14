@@ -1825,7 +1825,7 @@ class WebReqeustHandler {
                 data["error"] = "Failed to parse coords (no coordinates in list)."
                 return data
             }
-            if type! == .leveling && coordArray.count > 1 || coordArray[0].count > 1 {
+            if type! == .leveling && (coordArray.count > 1 || coordArray[0].count > 1) {
                 data["show_error"] = true
                 data["error"] = "Failed to parse coords (only one coordinate (=start) needed for leveling instances)."
                 return data
