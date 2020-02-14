@@ -34,13 +34,9 @@ class WebHookRequestHandler {
     private static var emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
-    private static var isMadData: Bool = false
-
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
-        if request.header(.origin) != nil {
-            isMadData = true
-        }
+        let isMadData = request.header(.origin) != nil
 
         if let hostWhitelist = hostWhitelist {
             let host: String
@@ -76,6 +72,8 @@ class WebHookRequestHandler {
                     let madString = String(data: madAuth, encoding: .utf8),
                     let madSecret = madString.components(separatedBy: ":").last {
                         loginSecretHeader = "Bearer \(madSecret)"
+                } else {
+                    return response.respondWithError(status: .badRequest)
                 }
             }
             guard loginSecretHeader == "Bearer \(loginSecret)" else {
@@ -96,6 +94,7 @@ class WebHookRequestHandler {
     static func rawHandler(request: HTTPRequest, response: HTTPResponse) {
 
         let json: [String: Any]
+        let isMadData = request.header(.origin) != nil
         do {
             if isMadData, let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
                 json = ["contents": madRaw,
@@ -142,7 +141,6 @@ class WebHookRequestHandler {
         }
 
         let uuid = json["uuid"] as? String
-
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
