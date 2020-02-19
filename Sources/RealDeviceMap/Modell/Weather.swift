@@ -35,14 +35,14 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             "polygon": polygon,
             "gameplay_condition": gameplayCondition,
             "wind_direction": windDirection,
-			"cloud_level": cloudLevel,
-			"rain_level": rainLevel,
-			"wind_level": windLevel,
-			"snow_level": snowLevel,
-			"fog_level": fogLevel,
-			"special_effect_level": sELevel,
-			"severity": severity as Any,
-			"warn_weather": warnWeather as Any,
+            "cloud_level": cloudLevel,
+            "rain_level": rainLevel,
+            "wind_level": windLevel,
+            "snow_level": snowLevel,
+            "fog_level": fogLevel,
+            "special_effect_level": sELevel,
+            "severity": severity as Any,
+            "warn_weather": warnWeather as Any,
             "updated": updated ?? 1
         ]
     }
@@ -72,7 +72,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             "snow_level": snowLevel as Any,
             "fog_level": fogLevel as Any,
             "special_effect_level": sELevel as Any,
-			"severity": severity as Any,
+            "severity": severity as Any,
             "warn_weather": warnWeather as Any,
             "updated": updated ?? 1
         ]
@@ -88,14 +88,14 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     var longitude: Double
     var gameplayCondition: UInt8
     var windDirection: Int32
-	var cloudLevel: UInt8
-	var rainLevel: UInt8
-	var windLevel: UInt8
-	var snowLevel: UInt8
-	var fogLevel: UInt8
-	var sELevel: UInt8
-	var severity: UInt8? = 0
-	var warnWeather: Bool? = false
+    var cloudLevel: UInt8
+    var rainLevel: UInt8
+    var windLevel: UInt8
+    var snowLevel: UInt8
+    var fogLevel: UInt8
+    var sELevel: UInt8
+    var severity: UInt8? = 0
+    var warnWeather: Bool? = false
     var updated: UInt32?
 
     init(id: Int64, level: UInt8, latitude: Double, longitude: Double, gameplayCondition: UInt8, windDirection: Int32,
@@ -125,17 +125,17 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         self.latitude = latitude
         self.longitude = longitude
         self.gameplayCondition = conditions.gameplayWeather.gameplayCondition.rawValue.toUInt8()
-		self.windDirection = conditions.displayWeather.windDirection
-		self.cloudLevel = conditions.displayWeather.cloudLevel.rawValue.toUInt8()
+        self.windDirection = conditions.displayWeather.windDirection
+        self.cloudLevel = conditions.displayWeather.cloudLevel.rawValue.toUInt8()
         self.rainLevel = conditions.displayWeather.rainLevel.rawValue.toUInt8()
         self.windLevel = conditions.displayWeather.windLevel.rawValue.toUInt8()
         self.snowLevel = conditions.displayWeather.snowLevel.rawValue.toUInt8()
         self.fogLevel = conditions.displayWeather.fogLevel.rawValue.toUInt8()
-		self.sELevel = conditions.displayWeather.specialEffectLevel.rawValue.toUInt8()
-		for severityConditions in conditions.alerts {
-		    severity = severityConditions.severity.rawValue.toUInt8()
-		    warnWeather = severityConditions.warnWeather
-		}
+        self.sELevel = conditions.displayWeather.specialEffectLevel.rawValue.toUInt8()
+        for severityConditions in conditions.alerts {
+            severity = severityConditions.severity.rawValue.toUInt8()
+            warnWeather = severityConditions.warnWeather
+        }
         self.updated = updated
     }
 
@@ -146,7 +146,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             throw DBController.DBError()
         }
 
-		WebHookController.global.addWeatherEvent(weather: self)
+        WebHookController.global.addWeatherEvent(weather: self)
 
         var sql = """
         INSERT INTO `weather` (
