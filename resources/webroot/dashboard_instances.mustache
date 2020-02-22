@@ -7,36 +7,36 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		const table = $('#table').DataTable( {
-			"ajax": {
-				"url": "/api/get_data?show_instances=true&formatted=true",
-				"dataSrc": "data.instances"
-			},
-			"paging":   true,
-			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-			"columns": [
-				{ "data": "name" },
-				{ "data": "type" },
+    $(document).ready(function() {
+        const table = $('#table').DataTable( {
+            "ajax": {
+                "url": "/api/get_data?show_instances=true&formatted=true",
+                "dataSrc": "data.instances"
+            },
+            "paging":   true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "columns": [
+                { "data": "name" },
+                { "data": "type" },
                 { "data": "status" },
                 { "data": "count" },
-				{ "data": "buttons" }
-			],
-			"info":     true,
-			"order": [[ 0, "asc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
-				"targets": [4],
-				"orderable": false
-			}],
+                { "data": "buttons" }
+            ],
+            "info":     true,
+            "order": [[ 0, "asc" ]],
+            "search.caseInsensitive": true,
+            "columnDefs": [ {
+                "targets": [4],
+                "orderable": false
+            }],
             "responsive": true
-		});
+        });
         $('#table').on( 'draw.dt', function () {
             setTimeout( function () {
                 table.ajax.reload(null, false);
             }, 5000);
         } );
-	} );
+    } );
 </script>
 
 <body>
