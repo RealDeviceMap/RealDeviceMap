@@ -99,21 +99,21 @@ class IVInstanceController: InstanceControllerProto {
 
     func getTask(uuid: String, username: String?) -> [String: Any] {
 
-		guard let mysql = DBController.global.mysql else {
-			Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-			return [String: Any]()
-		}
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
+            return [String: Any]()
+        }
 
-		do {
-			if username != nil {
-				let account = try Account.getWithUsername(mysql: mysql, username: username!)
-				if account != nil {
-					if account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
-						return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-					}
-				}
-			}
-		} catch { }
+        do {
+            if username != nil {
+                let account = try Account.getWithUsername(mysql: mysql, username: username!)
+                if account != nil {
+                    if account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
+                        return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                    }
+                }
+            }
+        } catch { }
 
         pokemonLock.lock()
         if pokemonQueue.isEmpty {

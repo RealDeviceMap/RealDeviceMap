@@ -97,19 +97,19 @@ class Account: WebHookEvent {
 
         if accountData.warn == true {
             self.failed = "GPR_RED_WARNING"
-			if self.firstWarningTimestamp == nil {
+            if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
                 self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-			}
+            }
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
-			if self.firstWarningTimestamp == nil {
+            if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
                 self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-			}
+            }
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
         }
@@ -374,13 +374,13 @@ class Account: WebHookEvent {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
-		let creationTimestamp = result[10] as? UInt32
-		let warn = result[11] as? Bool
-		let warnExpireTimestamp = result[12] as? UInt32
-		let warnMessageAcknowledged = result[13] as? Bool
-		let suspendedMessageAcknowledged = result[14] as? Bool
-		let wasSuspended = result[15] as? Bool
-		let banned = result[16] as? Bool
+        let creationTimestamp = result[10] as? UInt32
+        let warn = result[11] as? Bool
+        let warnExpireTimestamp = result[12] as? UInt32
+        let warnMessageAcknowledged = result[13] as? Bool
+        let suspendedMessageAcknowledged = result[14] as? Bool
+        let wasSuspended = result[15] as? Bool
+        let banned = result[16] as? Bool
 
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,

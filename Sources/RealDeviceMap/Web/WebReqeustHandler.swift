@@ -36,6 +36,8 @@ class WebReqeustHandler {
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
+    static var buttonsLeft = [[String: String]]()
+    static var buttonsRight = [[String: String]]()
     static var googleAnalyticsId: String?
     static var googleAdSenseId: String?
     static var statsUrl: String?
@@ -69,6 +71,8 @@ class WebReqeustHandler {
         data["title"] = title
         data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
         data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
+        data["buttons_left"] = buttonsLeft
+        data["buttons_right"] = buttonsRight
 
         // Localize Navbar
         let navLoc = ["nav_dashboard", "nav_areas", "nav_stats", "nav_logout", "nav_register", "nav_login"]
@@ -538,6 +542,12 @@ class WebReqeustHandler {
                                     "\(tileserver.value["attribution"] ?? "")\n"
             }
             data["tileservers"] = tileserverString
+            data["buttons_left_formatted"] = buttonsLeft.map({ (button) -> String in
+                return (button["name"] ?? "?") + ";" + (button["url"] ?? "?")
+            }).joined(separator: "\n")
+            data["buttons_right_formatted"] = buttonsRight.map({ (button) -> String in
+                return (button["name"] ?? "?") + ";" + (button["url"] ?? "?")
+            }).joined(separator: "\n")
 
             var citiesString = ""
             for city in self.cities {
@@ -1536,6 +1546,33 @@ class WebReqeustHandler {
             .map({ (value) -> UInt16 in
             return value.toUInt16() ?? 0
         }) ?? [UInt16]()
+
+        let buttonsLeft = request.param(name: "buttons_left_formatted")?
+                                .replacingOccurrences(of: "<br>", with: "")
+                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                .components(separatedBy: "\n")
+        .map({ (string) -> [String: String] in
+            let components = string.components(separatedBy: ";")
+            return [
+                "name": components[0],
+                "url": components.last ?? "?"
+            ]
+        })
+
+        let buttonsRight = request.param(name: "buttons_right_formatted")?
+                                .replacingOccurrences(of: "<br>", with: "")
+                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                .components(separatedBy: "\n")
+        .map({ (string) -> [String: String] in
+            let components = string.components(separatedBy: ";")
+            return [
+                "name": components[0],
+                "url": components.last ?? "?"
+            ]
+        })
+
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines)
             .components(separatedBy: "\n") {
@@ -1601,6 +1638,8 @@ class WebReqeustHandler {
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
             try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "BUTTONS_LEFT", value: buttonsLeft.jsonEncodeForceTry() ?? "")
+            try DBController.global.setValueForKey(key: "BUTTONS_RIGHT", value: buttonsRight.jsonEncodeForceTry() ?? "")
             try DBController.global.setValueForKey(key: "GOOGLE_ANALYTICS_ID", value: googleAnalyticsId ?? "")
             try DBController.global.setValueForKey(key: "GOOGLE_ADSENSE_ID", value: googleAdSenseId ?? "")
             try DBController.global.setValueForKey(key: "MAILER_URL", value: mailerURL ?? "")
@@ -1644,6 +1683,8 @@ class WebReqeustHandler {
         WebReqeustHandler.cities = citySettings
         WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
+        WebReqeustHandler.buttonsRight = buttonsRight ?? [[:]]
+        WebReqeustHandler.buttonsLeft = buttonsLeft ?? [[:]]
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
