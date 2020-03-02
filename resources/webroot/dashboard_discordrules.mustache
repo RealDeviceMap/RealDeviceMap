@@ -7,31 +7,31 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		const table = $('#table').DataTable( {
-			"ajax": {
-				"url": "/api/get_data?show_discordrules=true&formatted=true",
-				"dataSrc": "data.discordrules"
-			},
-			"paging":   true,
-			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-			"columns": [
-				{ "data": "priority" },
+    $(document).ready(function() {
+        const table = $('#table').DataTable( {
+            "ajax": {
+                "url": "/api/get_data?show_discordrules=true&formatted=true",
+                "dataSrc": "data.discordrules"
+            },
+            "paging":   true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "columns": [
+                { "data": "priority" },
                 { "data": "server.name" },
-				{ "data": "role.name" },
-				{ "data": "group_name" },
+                { "data": "role.name" },
+                { "data": "group_name" },
                 { "data": "buttons" }
-			],
-			"info":     true,
-			"order": [[ 0, "desc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
-				"targets": [4],
-				"orderable": false
-			}],
+            ],
+            "info":     true,
+            "order": [[ 0, "desc" ]],
+            "search.caseInsensitive": true,
+            "columnDefs": [ {
+                "targets": [4],
+                "orderable": false
+            }],
             "responsive": true
         });
-	} );
+    } );
 </script>
 
 <body>

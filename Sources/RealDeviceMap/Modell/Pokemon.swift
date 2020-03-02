@@ -434,7 +434,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let sql = """
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
-                    level, weight, size, capture_1, capture_2, capture_3, display_pokemon_id, shiny, username, gender,
+                    level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id, username, gender,
                     form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
                     expire_timestamp_verified
                 )
