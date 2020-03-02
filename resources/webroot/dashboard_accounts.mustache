@@ -1,7 +1,16 @@
 {{> header}}
 
-<body>
+<script>
+    $(document).ready(function() {
+        $('#table').DataTable({
+            "scrollX": true,
+            "order": [[0, 'desc']],
+            "responsive": false
+        });
+    })
+</script>
 
+<body>
     <h1 class="mt-3" align="center">Configure {{title}}'s Accounts!</h1>
     <center>
     <div class="p-1 w-75">
