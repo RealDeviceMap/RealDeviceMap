@@ -1271,7 +1271,7 @@ class ApiRequestHandler {
 
                         let instanceUUID =
                         "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
-                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a" +
+                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignment/start/\(instanceUUID.encodeUrl()!)\" " +
                             "role=\"button\" class=\"btn btn-success\">Start</a>" +
                             "<a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" " +
