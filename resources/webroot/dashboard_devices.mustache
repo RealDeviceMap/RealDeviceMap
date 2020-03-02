@@ -7,32 +7,32 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		const table = $('#table').DataTable( {
-			"ajax": {
-				"url": "/api/get_data?show_devices=true&formatted=true",
-				"dataSrc": "data.devices"
-			},
-			"paging":   true,
-			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-			"columns": [
-				{ "data": "uuid" },
+    $(document).ready(function() {
+        const table = $('#table').DataTable( {
+            "ajax": {
+                "url": "/api/get_data?show_devices=true&formatted=true",
+                "dataSrc": "data.devices"
+            },
+            "paging":   true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "columns": [
+                { "data": "uuid" },
                 { "data": "username" },
-				{ "data": "instance" },
-				{ "data": "host" },
+                { "data": "instance" },
+                { "data": "host" },
                 { data: {
                     _:    "last_seen.formatted",
                     sort: "last_seen.timestamp"
                 } },
-				{ "data": "buttons" }
-			],
-			"info":     true,
-			"order": [[ 0, "asc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
-				"targets": [5],
-				"orderable": false
-			}],
+                { "data": "buttons" }
+            ],
+            "info":     true,
+            "order": [[ 0, "asc" ]],
+            "search.caseInsensitive": true,
+            "columnDefs": [ {
+                "targets": [5],
+                "orderable": false
+            }],
             "responsive": true
         });
         $('#table').on( 'draw.dt', function () {
@@ -40,7 +40,7 @@
                 table.ajax.reload(null, false);
             }, 5000);
         } );
-	} );
+    } );
 </script>
 
 <body>
