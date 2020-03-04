@@ -3280,6 +3280,8 @@
         "quest_30": "Purify %{amount} Pokemon",
         "quest_31": "Find %{amount} Team Rocket Invasion(s)",
         "quest_32": "%{amount} time(s) First Grunt OTD",
+        "quest_33": "Feed your buddy %{amount} times",
+        "quest_34": "Earn %{amount} hearts with your buddy",
         "quest_reward_1": "XP",
         "quest_reward_1_formatted": "%{amount} XP",
         "quest_reward_2": "Item",

@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS `spawnpoint` (
-	`id` bigint(15) unsigned NOT NULL,
+    `id` bigint(15) unsigned NOT NULL,
     `lat` double(18,14) NOT NULL,
     `lon` double(18,14) NOT NULL,
     `updated` int(11) UNSIGNED NOT NULL DEFAULT 0,
