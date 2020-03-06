@@ -29,6 +29,24 @@ class WebRoutes {
             Route(method: .get, uri: "/@/{city}/{zoom}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
             }),
+            Route(method: .get, uri: "/@pokemon/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@pokemon/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@pokestop/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@pokestop/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@gym/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@gym/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
             Route(method: .get, uri: "/index.js", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .homeJs, requiredPerms: [.viewMap])
             }),
