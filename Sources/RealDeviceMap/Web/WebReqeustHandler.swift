@@ -204,7 +204,7 @@ class WebReqeustHandler {
 
             if city != nil {
                 guard let citySetting = cities[city!.lowercased()] else {
-                    response.setBody(string: "The city \(city!) was not found.")
+                    response.setBody(string: "The city \"\(city!)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
                     return
@@ -224,8 +224,7 @@ class WebReqeustHandler {
 
             if let id = id {
                 do {
-                    if perms.contains(.viewMapPokemon),
-                       request.pathComponents[1] == "@pokemon",
+                    if request.pathComponents[1] == "@pokemon",
                        let pokemon = try Pokemon.getWithId(id: id) {
                         data["start_pokemon"] = try pokemon.jsonEncodedString()
                         lat = pokemon.lat
@@ -233,9 +232,14 @@ class WebReqeustHandler {
                         if zoom == nil {
                             zoom = 18
                         }
-                    } else if perms.contains(.viewMapPokestop),
-                              request.pathComponents[1] == "@pokestop",
-                              let pokestop = try Pokestop.getWithId(id: id) {
+                    } else {
+                        response.setBody(string: "The Pokemon \"\(id)\" was not found.")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .notFound)
+                        return
+                    }
+                    if request.pathComponents[1] == "@pokestop",
+                       let pokestop = try Pokestop.getWithId(id: id) {
                         if !perms.contains(.viewMapLure) {
                             pokestop.lureId = nil
                             pokestop.lureExpireTimestamp = nil
@@ -259,9 +263,14 @@ class WebReqeustHandler {
                         if zoom == nil {
                             zoom = 18
                         }
-                    } else if perms.contains(.viewMapGym),
-                              request.pathComponents[1] == "@gym",
-                              let gym = try Gym.getWithId(id: id) {
+                    } else {
+                        response.setBody(string: "The Pokestop \"\(id)\" was not found.")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .notFound)
+                        return
+                    }
+                    if request.pathComponents[1] == "@gym",
+                       let gym = try Gym.getWithId(id: id) {
                         if !perms.contains(.viewMapRaid) {
                             gym.raidEndTimestamp = nil
                             gym.raidSpawnTimestamp = nil
@@ -274,9 +283,17 @@ class WebReqeustHandler {
                         if zoom == nil {
                             zoom = 18
                         }
+                    } else {
+                        response.setBody(string: "The Gym \"\(id)\" was not found.")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .notFound)
+                        return
                     }
                 } catch {
-                    // Display default
+                    response.setBody(string: "Something went wrong while searching for this pokemon/pokestop/gym.")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
                 }
             }
 
