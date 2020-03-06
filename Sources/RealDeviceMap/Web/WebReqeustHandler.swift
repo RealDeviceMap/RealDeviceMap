@@ -224,7 +224,7 @@ class WebReqeustHandler {
 
             if let id = id {
                 do {
-                    if perms.contains(.viewMapPokemon), 
+                    if perms.contains(.viewMapPokemon),
                        request.pathComponents[1] == "@pokemon",
                        let pokemon = try Pokemon.getWithId(id: id) {
                         data["start_pokemon"] = try pokemon.jsonEncodedString()
@@ -233,8 +233,8 @@ class WebReqeustHandler {
                         if zoom == nil {
                             zoom = 18
                         }
-                    } else if perms.contains(.viewMapPokestop), 
-                              request.pathComponents[1] == "@pokestop", 
+                    } else if perms.contains(.viewMapPokestop),
+                              request.pathComponents[1] == "@pokestop",
                               let pokestop = try Pokestop.getWithId(id: id) {
                         if !perms.contains(.viewMapLure) {
                             pokestop.lureId = nil
@@ -259,8 +259,8 @@ class WebReqeustHandler {
                         if zoom == nil {
                             zoom = 18
                         }
-                    } else if perms.contains(.viewMapGym), 
-                              request.pathComponents[1] == "@gym", 
+                    } else if perms.contains(.viewMapGym),
+                              request.pathComponents[1] == "@gym",
                               let gym = try Gym.getWithId(id: id) {
                         if !perms.contains(.viewMapRaid) {
                             gym.raidEndTimestamp = nil
