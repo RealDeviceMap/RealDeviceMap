@@ -17,7 +17,7 @@ class WebRoutes {
             Route(method: .get, uri: "/", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
             }),
-            Route(method: .get, uri: "/favicon.ico", handler: { (request, response) in
+            Route(method: .get, uri: "/favicon.ico", handler: { (_, response) in
                 response.redirect(path: "/static/favicons/favicon.ico")
                 response.completed()
             }),
