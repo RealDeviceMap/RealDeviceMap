@@ -674,20 +674,26 @@ function loadStorage () {
 function initPreview () {
   const ts = Math.round((new Date()).getTime() / 1000)
   try {
-      let startPokemon = JSON.parse(decodeURIComponent('{{{start_pokemon}}}'))
-      startPokemon.is_start = true
-      addPokemon(startPokemon, ts)
-  } catch { }
+    let startPokemon = JSON.parse(decodeURIComponent('{{{start_pokemon}}}'))
+    startPokemon.is_start = true
+    addPokemon(startPokemon, ts)
+  } catch(e) {
+    // No Start Pokemon
+  }
   try {
-      let startPokestop = JSON.parse(decodeURIComponent('{{{start_pokestop}}}'))
-      startPokestop.is_start = true
-      addPokestop(startPokestop, ts)
-  } catch { }
+    let startPokestop = JSON.parse(decodeURIComponent('{{{start_pokestop}}}'))
+    startPokestop.is_start = true
+    addPokestop(startPokestop, ts)
+  } catch(e) {
+    // No Start Pokestop
+  }
   try {
-      let startGym = JSON.parse(decodeURIComponent('{{{start_gym}}}'))
-      startGym.is_start = true
-      addGym(startGym, ts)
-  } catch { }
+    let startGym = JSON.parse(decodeURIComponent('{{{start_gym}}}'))
+    startGym.is_start = true
+    addGym(startGym, ts)
+  } catch(e) {
+    // No Start Gym
+  }
 }
 
 function initMap () {
@@ -2904,7 +2910,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let invasionString
     let invasionStringEnd
     let folder
-    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
+    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
       invasionString = 'i'
       invasionStringEnd = '_' + pokestop.grunt_type
       folder = 'quest_invasion'
@@ -2958,7 +2964,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
 
 function getPokestopMarker (pokestop, ts) {
   let zIndex
-  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
     let rewardString
     const id = pokestop.quest_rewards[0].type
     const info = pokestop.quest_rewards[0].info
