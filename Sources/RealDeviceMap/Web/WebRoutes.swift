@@ -173,6 +173,10 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardGroupAdd,
                                          requiredPerms: [.admin])
             }),
+            Route(methods: [.get, .post], uri: "/dashboard/utilities", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardUtilities,
+                                         requiredPerms: [.admin])
+            }),
             Route(methods: [.get, .post], uri: "/dashboard/discordrules", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardDiscordRules,
                                          requiredPerms: [.admin])

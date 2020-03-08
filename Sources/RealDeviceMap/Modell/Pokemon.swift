@@ -910,6 +910,27 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         return isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted
     }
 
+    public static func truncate(mysql: MySQL?=nil) throws -> UInt {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKEMON] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        TRUNCATE TABLE `pokemon`
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        return mysqlStmt.affectedRows()
+    }
+
     private static func sqlifyIvFilter(filter: String) -> String? {
 
         let fullMatch = "^(?!&&|\\|\\|)((\\|\\||&&)?\\(?((A|D|S|L)?[0-9.]+(-(A|D|S|L)?[0-9.]+)?)\\)?)*$"
