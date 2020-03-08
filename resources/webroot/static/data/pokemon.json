@@ -9366,6 +9366,30 @@
       }
     ]
   },
+  "641": {
+    "name": "Tornadus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Flying",
+        "color": "#a890f0"
+      }
+    ]
+  },
+  "642": {
+    "name": "Thundurus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Electric",
+        "color": "#f8d030"
+      },
+      {
+        "type": "Flying",
+        "color": "#a890f0"
+      }
+    ]
+  },
   "643":{
     "name": "Reshiram",
     "rarity":"",
