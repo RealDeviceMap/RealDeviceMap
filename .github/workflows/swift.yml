@@ -41,7 +41,7 @@ jobs:
       if: github.event_name == 'push'
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
-        dockerfile: Dockerfile-localbuild-debug
+        dockerfile: .github/docker/Dockerfile-localbuild-debug
     - name: Start MR Build System
       if: github.event_name == 'pull_request'
       run: 'curl https://build.realdevicemap.com/workflow/build -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${{github.ref}}\",\"sha\":\"${{github.sha}}\",\"type\":\"debug\"}" --fail'
@@ -94,7 +94,7 @@ jobs:
       if: github.event_name == 'push'
       with:
         accessToken: ${{ secrets.GITHUB_TOKEN }}
-        dockerfile: Dockerfile-localbuild-release
+        dockerfile: .github/docker/Dockerfile-localbuild-release
         imageTagSuffix: -release
     - name: Start MR Build System
       if: github.event_name == 'pull_request'
