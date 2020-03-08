@@ -1129,6 +1129,51 @@ class WebReqeustHandler {
                 }
             }
 
+        case .dashboardUtilities:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Utilities"
+
+            let convertiblePokestopsCount = try? Pokestop.getConvertiblePokestopsCount()
+            let stalePokestopsCount = try? Pokestop.getStalePokestopsCount()
+            data["convertible_pokestops"] = convertiblePokestopsCount
+            data["stale_pokestops"] = stalePokestopsCount
+
+            if request.method == .post {
+                let action = request.param(name: "action")
+                switch action {
+                case "truncate_pokemon":
+                    let result = try? Pokemon.truncate()
+                    if result! >= 0 {
+                        data["show_success"] = true
+                        data["success"] = "Pokemon table truncated!"
+                    } else {
+                        data["show_error"] = true
+                        data["error"] = "Failed to truncate Pokemon table."
+                    }
+                case "convert_pokestops":
+                    let result = try? Gym.convertPokestopsToGyms()
+                    let deleteResult = try? Pokestop.deleteConvertedPokestops()
+                    if result! >= 0 && deleteResult! >= 0 {
+                        data["show_success"] = true
+                        data["success"] = "\((result ?? 0).description) Pokestops converted to gyms!"
+                    } else {
+                        data["show_error"] = true
+                        data["error"] = "Failed to update converted pokestops to gyms."
+                    }
+                case "delete_stale_pokestops":
+                    let result = try? Pokestop.deleteStalePokestops()
+                    if result! >= 0 {
+                        data["show_success"] = true
+                        data["success"] = "\((result ?? 0).description) Stale Pokestops deleted!"
+                    } else {
+                        data["show_error"] = true
+                        data["error"] = "Failed to delete stale Pokestops."
+                    }
+                default:
+                    break
+                }
+            }
+
         case .register:
 
             if !enableRegister {
