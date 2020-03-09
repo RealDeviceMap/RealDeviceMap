@@ -1811,8 +1811,8 @@ class WebReqeustHandler {
         WebReqeustHandler.cities = citySettings
         WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight ?? [[:]]
-        WebReqeustHandler.buttonsLeft = buttonsLeft ?? [[:]]
+        WebReqeustHandler.buttonsRight = buttonsRight ?? []
+        WebReqeustHandler.buttonsLeft = buttonsLeft ?? []
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
