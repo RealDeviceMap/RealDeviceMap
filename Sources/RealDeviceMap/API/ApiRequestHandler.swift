@@ -264,7 +264,7 @@ class ApiRequestHandler {
                             "sort": i
                         ],
                         "name": globalIV,
-                        "image": "-",
+                        "image": andOrString,
                         "filter": filter,
                         "size": size,
                         "type": generalTypeString
