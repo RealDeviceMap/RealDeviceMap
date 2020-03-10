@@ -79,6 +79,10 @@ let tileLayer
 let pokemonDb = {}
 let weatherTypes = {}
 
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+
 $(function () {
   L.Marker.addInitHook(function () {
     if (this.options.virtual) {
