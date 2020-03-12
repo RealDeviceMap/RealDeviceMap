@@ -216,7 +216,7 @@ class ApiRequestHandler {
             let hugeString = Localizer.global.get(value: "filter_huge")
 
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let generalTypeString = Localizer.global.get(value: "filter_general")
+            let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
@@ -264,10 +264,10 @@ class ApiRequestHandler {
                             "sort": i
                         ],
                         "name": globalIV,
-                        "image": "-",
+                        "image": andOrString,
                         "filter": filter,
                         "size": size,
-                        "type": generalTypeString
+                        "type": globalIVTypeString
                     ])
 
                 }

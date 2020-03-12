@@ -79,6 +79,10 @@ let tileLayer
 let pokemonDb = {}
 let weatherTypes = {}
 
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+
 $(function () {
   L.Marker.addInitHook(function () {
     if (this.options.virtual) {
@@ -3882,17 +3886,18 @@ function loadPokemonFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_pokemon_filter=true',
@@ -3971,17 +3976,18 @@ function loadQuestFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_quest_filter=true',
@@ -4060,17 +4066,18 @@ function loadRaidFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_raid_filter=true',
@@ -4149,17 +4156,18 @@ function loadGymFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_gym_filter=true',
@@ -4238,17 +4246,18 @@ function loadPokestopFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_pokestop_filter=true',
@@ -4327,17 +4336,18 @@ function loadSpawnpointFilter () {
     },
     autoWidth: false,
     columns: [
-      { data: 'image', width: '5%', className: 'details-control' },
-      { data: 'name', width: '15%' },
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
       {
         data: {
           _: 'id.formatted',
           sort: 'id.sort'
         },
-        width: '5%'
+        width: '5%',
+        responsivePriority: 5
       },
-      { data: 'filter' },
-      { data: 'size' }
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
     ],
     ajax: {
       url: '/api/get_data?show_spawnpoint_filter=true',
