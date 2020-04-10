@@ -191,6 +191,8 @@ class WebReqeustHandler {
             var lat = request.urlVariables["lat"]?.toDouble()
             var lon = request.urlVariables["lon"]?.toDouble()
             var city = request.urlVariables["city"]
+            let id = request.urlVariables["id"]
+
             // City but in wrong route
             if city == nil, let tmpCity = request.urlVariables["lat"], tmpCity.toDouble() == nil {
                 city = tmpCity
@@ -202,7 +204,7 @@ class WebReqeustHandler {
 
             if city != nil {
                 guard let citySetting = cities[city!.lowercased()] else {
-                    response.setBody(string: "The city \(city!) was not found.")
+                    response.setBody(string: "The city \"\(city!)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
                     return
@@ -218,6 +220,84 @@ class WebReqeustHandler {
                 zoom = maxZoom
             } else if (zoom ?? startZoom) < minZoom {
                 zoom = minZoom
+            }
+
+            if let id = id {
+                do {
+                    if request.pathComponents[1] == "@pokemon" {
+                        if let pokemon = try Pokemon.getWithId(id: id) {
+                            data["start_pokemon"] = try pokemon.jsonEncodedString()
+                            lat = pokemon.lat
+                            lon = pokemon.lon
+                            if zoom == nil {
+                                zoom = 18
+                            }
+                        } else {
+                            response.setBody(string: "The Pokemon \"\(id)\" was not found.")
+                            sessionDriver.save(session: request.session!)
+                            response.completed(status: .notFound)
+                            return
+                        }
+                    }
+                    if request.pathComponents[1] == "@pokestop" {
+                        if let pokestop = try Pokestop.getWithId(id: id) {
+                            if !perms.contains(.viewMapLure) {
+                                pokestop.lureId = nil
+                                pokestop.lureExpireTimestamp = nil
+                            }
+                            if !perms.contains(.viewMapInvasion) {
+                                pokestop.pokestopDisplay = nil
+                                pokestop.incidentExpireTimestamp = nil
+                                pokestop.gruntType = nil
+                            }
+                            if !perms.contains(.viewMapQuest) {
+                                pokestop.questType = nil
+                                pokestop.questTimestamp = nil
+                                pokestop.questTarget = nil
+                                pokestop.questConditions = nil
+                                pokestop.questRewards = nil
+                                pokestop.questTemplate = nil
+                            }
+                            data["start_pokestop"] = try pokestop.jsonEncodedString()
+                            lat = pokestop.lat
+                            lon = pokestop.lon
+                            if zoom == nil {
+                                zoom = 18
+                            }
+                        } else {
+                            response.setBody(string: "The Pokestop \"\(id)\" was not found.")
+                            sessionDriver.save(session: request.session!)
+                            response.completed(status: .notFound)
+                            return
+                        }
+                    }
+                    if request.pathComponents[1] == "@gym" {
+                        if let gym = try Gym.getWithId(id: id) {
+                            if !perms.contains(.viewMapRaid) {
+                                gym.raidEndTimestamp = nil
+                                gym.raidSpawnTimestamp = nil
+                                gym.raidBattleTimestamp = nil
+                                gym.raidPokemonId = nil
+                            }
+                            data["start_gym"] = try gym.jsonEncodedString()
+                            lat = gym.lat
+                            lon = gym.lon
+                            if zoom == nil {
+                                zoom = 18
+                            }
+                        } else {
+                            response.setBody(string: "The Gym \"\(id)\" was not found.")
+                            sessionDriver.save(session: request.session!)
+                            response.completed(status: .notFound)
+                            return
+                        }
+                    }
+                } catch {
+                    response.setBody(string: "Something went wrong while searching for this pokemon/pokestop/gym.")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
             }
 
             data["lat"] = lat ?? self.startLat
@@ -1316,6 +1396,9 @@ class WebReqeustHandler {
             data["min_zoom"] = request.param(name: "min_zoom")?.toUInt8() ?? minZoom
             data["max_zoom"] = request.param(name: "max_zoom")?.toUInt8() ?? maxZoom
             data["max_pokemon_id"] = maxPokemonId
+            data["start_pokemon"] = request.param(name: "start_pokemon")
+            data["start_pokestop"] = request.param(name: "start_pokestop")
+            data["start_gym"] = request.param(name: "start_gym")
             data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")
@@ -1728,8 +1811,8 @@ class WebReqeustHandler {
         WebReqeustHandler.cities = citySettings
         WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight ?? [[:]]
-        WebReqeustHandler.buttonsLeft = buttonsLeft ?? [[:]]
+        WebReqeustHandler.buttonsRight = buttonsRight ?? []
+        WebReqeustHandler.buttonsLeft = buttonsLeft ?? []
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing

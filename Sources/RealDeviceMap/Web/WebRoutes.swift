@@ -17,6 +17,10 @@ class WebRoutes {
             Route(method: .get, uri: "/", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
             }),
+            Route(method: .get, uri: "/favicon.ico", handler: { (_, response) in
+                response.redirect(path: "/static/favicons/favicon.ico")
+                response.completed()
+            }),
             Route(method: .get, uri: "/@/{lat}/{lon}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
             }),
@@ -28,6 +32,30 @@ class WebRoutes {
             }),
             Route(method: .get, uri: "/@/{city}/{zoom}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home, requiredPerms: [.viewMap])
+            }),
+            Route(method: .get, uri: "/@pokemon/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokemon])
+            }),
+            Route(method: .get, uri: "/@pokemon/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokemon])
+            }),
+            Route(method: .get, uri: "/@pokestop/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokestop])
+            }),
+            Route(method: .get, uri: "/@pokestop/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokestop])
+            }),
+            Route(method: .get, uri: "/@gym/{id}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapGym])
+            }),
+            Route(method: .get, uri: "/@gym/{id}/{zoom}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapGym])
             }),
             Route(method: .get, uri: "/index.js", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .homeJs, requiredPerms: [.viewMap])
