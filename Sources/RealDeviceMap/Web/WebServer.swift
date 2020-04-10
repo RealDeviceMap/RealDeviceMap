@@ -55,6 +55,7 @@ class WebServer {
         case dashboardDiscordRules = "dashboard_discordrules.mustache"
         case dashboardDiscordRuleAdd = "dashboard_discordrule_add.mustache"
         case dashboardDiscordRuleEdit = "dashboard_discordrule_edit.mustache"
+        case dashboardUtilities = "dashboard_utilities.mustache"
         case unauthorized = "unauthorized.mustache"
     }
 
