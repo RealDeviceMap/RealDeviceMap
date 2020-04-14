@@ -11,6 +11,7 @@ import Foundation
 import PerfectLib
 import PerfectThread
 import Turf
+import POGOProtos
 
 protocol InstanceControllerDelegate: class {
     func instanceControllerDone(name: String)
@@ -25,6 +26,17 @@ protocol InstanceControllerProto {
     func getStatus(formatted: Bool) -> JSONConvertible?
     func reload()
     func stop()
+    func gotPokemon(pokemon: Pokemon)
+    func gotIV(pokemon: Pokemon)
+    func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?)
+    func gotPlayerInfo(username: String, level: Int, xp: Int)
+}
+
+extension InstanceControllerProto {
+    func gotPokemon(pokemon: Pokemon) { }
+    func gotIV(pokemon: Pokemon) { }
+    func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
+    func gotPlayerInfo(username: String, level: Int, xp: Int) { }
 }
 
 extension InstanceControllerProto {
@@ -42,29 +54,53 @@ class InstanceController {
         let instances = try Instance.getAll()
         let devices = try Device.getAll()
 
-        for instance in instances {
-            global.addInstance(instance: instance)
-        }
-        for device in devices {
-            global.addDevice(device: device)
+        let thread = Threading.getQueue(name: "InstanceController-global-setup", type: .serial)
+        thread.dispatch {
+            Log.debug(message: "[InstanceController] Starting instances...")
+            let dispatchGroup = DispatchGroup()
+            for instance in instances {
+                dispatchGroup.enter()
+                let instanceThread = Threading.getQueue(
+                    name: "InstanceController-instance-\(instance.name)-setup",
+                    type: .serial
+                )
+                instanceThread.dispatch {
+                    Log.debug(message: "[InstanceController] Starting \(instance.name)...")
+                    global.addInstance(instance: instance)
+                    Log.debug(message: "[InstanceController] Started \(instance.name)")
+                    dispatchGroup.leave()
+                }
+            }
+            dispatchGroup.wait()
+            for device in devices {
+                global.addDevice(device: device)
+            }
+            Log.debug(message: "[InstanceController] Done starting instances")
         }
 
     }
 
     private init() { }
 
+    private let instancesLock = Threading.Lock()
     private var instancesByInstanceName = [String: InstanceControllerProto]()
     private var devicesByDeviceUUID = [String: Device]()
 
     public func getInstanceController(instanceName: String) -> InstanceControllerProto? {
-        return instancesByInstanceName[instanceName]
+        instancesLock.lock()
+        let instances = instancesByInstanceName[instanceName]
+        instancesLock.unlock()
+        return instances
     }
 
     public func getInstanceController(deviceUUID: String) -> InstanceControllerProto? {
+        instancesLock.lock()
         guard let device = devicesByDeviceUUID[deviceUUID], let instanceName = device.instanceName else {
             return nil
         }
-        return instancesByInstanceName[instanceName]
+        let instances = instancesByInstanceName[instanceName]
+        instancesLock.unlock()
+        return instances
     }
 
     public func addInstance(instance: Instance) {
@@ -145,19 +181,40 @@ class InstanceController {
                     timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit
                 )
             }
+        case .leveling:
+            let coord: Coord
+            if let coordX = instance.data["area"] as? Coord {
+                coord = coordX
+            } else {
+                let coordDict = instance.data["area"] as? [String: Double] ?? [:]
+                if let lat = coordDict["lat"], let lon = coordDict["lon"] {
+                    coord = Coord(lat: lat, lon: lon)
+                } else {
+                    coord = Coord(lat: 0, lon: 0)
+                }
+            }
+            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
+            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            instanceController = LevelingInstanceController(name: instance.name, start: coord,
+                                                            minLevel: minLevel, maxLevel: maxLevel)
         }
         instanceController.delegate = AssignmentController.global
+        instancesLock.lock()
         instancesByInstanceName[instance.name] = instanceController
+        instancesLock.unlock()
     }
 
     public func reloadAllInstances() {
+        instancesLock.lock()
         for instance in instancesByInstanceName {
             instance.value.reload()
         }
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
     public func reloadInstance(newInstance: Instance, oldInstanceName: String) {
+        instancesLock.lock()
         let oldInstance = instancesByInstanceName[oldInstanceName]
         if oldInstance != nil {
             for row in devicesByDeviceUUID where row.value.instanceName == oldInstance!.name {
@@ -168,31 +225,38 @@ class InstanceController {
             instancesByInstanceName[oldInstanceName]?.stop()
             instancesByInstanceName[oldInstanceName] = nil
         }
+        instancesLock.unlock()
         addInstance(instance: newInstance)
     }
 
     public func removeInstance(instance: Instance) {
+        instancesLock.lock()
         instancesByInstanceName[instance.name]?.stop()
         instancesByInstanceName[instance.name] = nil
         for device in devicesByDeviceUUID where device.value.instanceName == instance.name {
             devicesByDeviceUUID[device.key] = nil
         }
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
     public func removeInstance(instanceName: String) {
+        instancesLock.lock()
         instancesByInstanceName[instanceName]?.stop()
         instancesByInstanceName[instanceName] = nil
         for device in devicesByDeviceUUID where device.value.instanceName == instanceName {
             devicesByDeviceUUID[device.key] = nil
         }
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
     public func addDevice(device: Device) {
+        instancesLock.lock()
         if device.instanceName != nil && instancesByInstanceName[device.instanceName!] != nil {
             devicesByDeviceUUID[device.uuid] = device
         }
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
@@ -202,27 +266,36 @@ class InstanceController {
     }
 
     public func removeDevice(device: Device) {
+        instancesLock.lock()
         devicesByDeviceUUID[device.uuid] = nil
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
     public func removeDevice(deviceUUID: String) {
+        instancesLock.lock()
         devicesByDeviceUUID[deviceUUID] = nil
+        instancesLock.unlock()
         try? AssignmentController.global.setup()
     }
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
         var deviceUUIDS = [String]()
+        instancesLock.lock()
         for device in devicesByDeviceUUID where device.value.instanceName == instanceName {
             deviceUUIDS.append(device.key)
         }
+        instancesLock.unlock()
         return deviceUUIDS
     }
 
     public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
+        instancesLock.lock()
         if let instanceProto = instancesByInstanceName[instance.name] {
+            instancesLock.unlock()
             return instanceProto.getStatus(formatted: formatted)
         } else {
+            instancesLock.unlock()
             if formatted {
                 return "?"
             } else {
@@ -232,25 +305,43 @@ class InstanceController {
     }
 
     public func gotPokemon(pokemon: Pokemon) {
+        instancesLock.lock()
         for instance in instancesByInstanceName {
-            if let instance = instance.value as? IVInstanceController {
-                instance.addPokemon(pokemon: pokemon)
-            }
+            instance.value.gotPokemon(pokemon: pokemon)
         }
+        instancesLock.unlock()
     }
 
     public func gotIV(pokemon: Pokemon) {
+        instancesLock.lock()
         for instance in instancesByInstanceName {
-            if let instance = instance.value as? IVInstanceController {
-                instance.gotIV(pokemon: pokemon)
-            }
+            instance.value.gotIV(pokemon: pokemon)
         }
+        instancesLock.unlock()
+    }
+
+    public func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) {
+        instancesLock.lock()
+        for instance in instancesByInstanceName {
+            instance.value.gotFortData(fortData: fortData, username: username)
+        }
+        instancesLock.unlock()
+    }
+
+    public func gotPlayerInfo(username: String, level: Int, xp: Int) {
+        instancesLock.lock()
+        for instance in instancesByInstanceName {
+            instance.value.gotPlayerInfo(username: username, level: level, xp: xp)
+        }
+        instancesLock.unlock()
     }
 
     public func getIVQueue(name: String) -> [Pokemon] {
+        instancesLock.lock()
         if let instance = instancesByInstanceName[name] as? IVInstanceController {
             return instance.getQueue()
         }
+        instancesLock.unlock()
         return [Pokemon]()
     }
 

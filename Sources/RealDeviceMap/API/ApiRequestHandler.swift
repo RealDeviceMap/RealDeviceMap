@@ -1270,6 +1270,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
                         instanceData["type"] = "Pokemon IV"
+                    case .leveling:
+                        instanceData["type"] = "Leveling"
                     }
 
                     if formatted {
