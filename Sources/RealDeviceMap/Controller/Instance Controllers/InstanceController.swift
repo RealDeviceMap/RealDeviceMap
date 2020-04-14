@@ -96,6 +96,7 @@ class InstanceController {
     public func getInstanceController(deviceUUID: String) -> InstanceControllerProto? {
         instancesLock.lock()
         guard let device = devicesByDeviceUUID[deviceUUID], let instanceName = device.instanceName else {
+            instancesLock.unlock()
             return nil
         }
         let instances = instancesByInstanceName[instanceName]
@@ -339,6 +340,7 @@ class InstanceController {
     public func getIVQueue(name: String) -> [Pokemon] {
         instancesLock.lock()
         if let instance = instancesByInstanceName[name] as? IVInstanceController {
+            instancesLock.unlock()
             return instance.getQueue()
         }
         instancesLock.unlock()
