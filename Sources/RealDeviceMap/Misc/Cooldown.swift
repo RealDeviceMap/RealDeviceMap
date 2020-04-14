@@ -76,21 +76,17 @@ class Cooldown {
         } else {
             let lastCoord = Coord(lat: lastLat!, lon: lastLon!)
             let distance = lastCoord.distance(to: location)
-            if lastTime == nil {
+            if lastTime! > now {
+                lastTime = now
+            }
+            let encounterTimeT = lastTime! + encounterCooldown(distM: distance)
+            if encounterTimeT < now {
                 encounterTime = now
             } else {
-                if lastTime! > now {
-                    lastTime = now
-                }
-                let encounterTimeT = lastTime! + encounterCooldown(distM: distance)
-                if encounterTimeT < now {
-                    encounterTime = now
-                } else {
-                    encounterTime = encounterTimeT
-                }
-                if encounterTime - now >= 7200 {
-                    encounterTime = now + 7200
-                }
+                encounterTime = encounterTimeT
+            }
+            if encounterTime - now >= 7200 {
+                encounterTime = now + 7200
             }
             let delayT = Int(Date(timeIntervalSince1970: Double(encounterTime)).timeIntervalSinceNow)
             if delayT < 0 {
