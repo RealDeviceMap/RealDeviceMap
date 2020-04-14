@@ -55,7 +55,7 @@ class Cooldown {
 
         let lastLat: Double?
         let lastLon: Double?
-        let lastTime: UInt32?
+        var lastTime: UInt32?
         if let account = account {
             lastLat = account.lastEncounterLat
             lastLon = account.lastEncounterLon
