@@ -151,6 +151,7 @@ class LevelingInstanceController: InstanceControllerProto {
 
         return [
             "action": "spin_pokestop",
+            "deploy_egg": true,
             "lat": destination.lat,
             "lon": destination.lon,
             "delay": delay,
