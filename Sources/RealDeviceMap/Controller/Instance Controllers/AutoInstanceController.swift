@@ -418,7 +418,7 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
 
-                return ["action": "scan_quest", "lat": pokestop.lat, "lon": pokestop.lon,
+                return ["action": "scan_quest", "deploy_egg": false, "lat": pokestop.lat, "lon": pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel]
             }
         }
