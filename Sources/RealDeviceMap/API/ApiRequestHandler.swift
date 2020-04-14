@@ -227,7 +227,7 @@ class ApiRequestHandler {
             let hugeString = Localizer.global.get(value: "filter_huge")
 
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let generalTypeString = Localizer.global.get(value: "filter_general")
+            let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
@@ -278,10 +278,10 @@ class ApiRequestHandler {
                             "sort": i
                         ],
                         "name": globalIV,
-                        "image": "-",
+                        "image": andOrString,
                         "filter": filter,
                         "size": size,
-                        "type": generalTypeString
+                        "type": globalIVTypeString
                     ])
 
                 }
@@ -1348,7 +1348,7 @@ class ApiRequestHandler {
 
                         let instanceUUID =
                         "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
-                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a" +
+                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignment/start/\(instanceUUID.encodeUrl()!)\" " +
                             "role=\"button\" class=\"btn btn-success\">Start</a>" +
                             "<a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" " +

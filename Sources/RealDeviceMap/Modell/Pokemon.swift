@@ -416,7 +416,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let sql = """
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
-                    level, weight, size, display_pokemon_id, shiny, username, gender, form, weather, costume,
+                    level, weight, size, shiny, display_pokemon_id, username, gender, form, weather, costume,
                     pokestop_id, updated, first_seen_timestamp, changed, cell_id, expire_timestamp_verified
                 )
                 VALUES (
@@ -941,6 +941,27 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
              staIv < Pokemon.weatherBoostMinIvStat)
         let isWeatherBoosted = weather > 0
         return isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted
+    }
+
+    public static func truncate(mysql: MySQL?=nil) throws -> UInt {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKEMON] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        TRUNCATE TABLE `pokemon`
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        return mysqlStmt.affectedRows()
     }
 
     private static func sqlifyIvFilter(filter: String) -> String? {

@@ -13,12 +13,13 @@ let package = Package(
         .package(url: "https://github.com/PerfectlySoft/Perfect-Mustache.git", .upToNextMinor(from: "3.0.2")),
         .package(url: "https://github.com/PerfectlySoft/Perfect-CURL.git", .upToNextMinor(from: "3.1.0")),
         .package(url: "https://github.com/PerfectlySoft/Perfect-SMTP.git", .upToNextMinor(from: "3.3.0")),
+        .package(url: "https://github.com/PerfectlySoft/Perfect-Crypto.git", .upToNextMinor(from: "3.2.0")),
         .package(url: "https://github.com/123FLO321/Turnstile.git", .upToNextMinor(from: "1.2.3")),
         .package(url: "https://github.com/crossroadlabs/Regex.git", .upToNextMinor(from: "1.1.0")),
         .package(url: "https://github.com/apple/swift-protobuf.git", .upToNextMinor(from: "1.5.0")),
         .package(url: "https://github.com/123FLO321/turf-swift.git", .upToNextMinor(from: "0.3.1")),
         .package(url: "https://github.com/123FLO321/S2Geometry.git", .upToNextMinor(from: "0.3.1")),
-        .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "1.18.0")),
+        .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "1.20.0"))
     ],
     targets: [
         .target(
@@ -31,6 +32,7 @@ let package = Package(
                 "PerfectMustache",
                 "PerfectCURL",
                 "PerfectSMTP",
+                "PerfectCrypto",
                 "Turnstile",
                 "Regex",
                 "POGOProtos",

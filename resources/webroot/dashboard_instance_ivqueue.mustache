@@ -7,34 +7,34 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		const table = $('#table').DataTable( {
-			"ajax": {
+    $(document).ready(function() {
+        const table = $('#table').DataTable( {
+            "ajax": {
             "url": "/api/get_data?show_ivqueue=true&formatted=true&instance={{instance_name_url}}",
-				"dataSrc": "data.ivqueue"
-			},
-			"paging":  false,
-			"columns": [
-				{ "data": "id" },
+                "dataSrc": "data.ivqueue"
+            },
+            "paging":  false,
+            "columns": [
+                { "data": "id" },
                 { "data": "pokemon_image" },
-				{ "data": "pokemon_name" },
-				{ "data": "pokemon_id" },
+                { "data": "pokemon_name" },
+                { "data": "pokemon_id" },
                 { "data": "pokemon_spawn_id" },
-				{ "data": "location" }
-			],
-			"info":     true,
-			"order": [[ 0, "asc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
-				"targets": [1],
-				"orderable": false
-			}],
+                { "data": "location" }
+            ],
+            "info":     true,
+            "order": [[ 0, "asc" ]],
+            "search.caseInsensitive": true,
+            "columnDefs": [ {
+                "targets": [1],
+                "orderable": false
+            }],
             "responsive": true
         });
-		setInterval( function () {
+        setInterval( function () {
             table.ajax.reload(null, false);
         }, 5000)
-	} );
+    } );
 </script>
 
 <body>

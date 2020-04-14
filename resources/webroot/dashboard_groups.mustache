@@ -7,29 +7,29 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		const table = $('#table').DataTable( {
-			"ajax": {
-				"url": "/api/get_data?show_groups=true&formatted=true",
-				"dataSrc": "data.groups"
-			},
-			"paging":   true,
-			"lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-			"columns": [
-				{ "data": "name" },
+    $(document).ready(function() {
+        const table = $('#table').DataTable( {
+            "ajax": {
+                "url": "/api/get_data?show_groups=true&formatted=true",
+                "dataSrc": "data.groups"
+            },
+            "paging":   true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "columns": [
+                { "data": "name" },
                 { "data": "perms" },
-				{ "data": "buttons" }
-			],
-			"info":     true,
-			"order": [[ 0, "asc" ]],
-			"search.caseInsensitive": true,
-			"columnDefs": [ {
-				"targets": [2],
-				"orderable": false
-			}],
+                { "data": "buttons" }
+            ],
+            "info":     true,
+            "order": [[ 0, "asc" ]],
+            "search.caseInsensitive": true,
+            "columnDefs": [ {
+                "targets": [2],
+                "orderable": false
+            }],
             "responsive": true
         });
-	} );
+    } );
 </script>
 
 <body>
