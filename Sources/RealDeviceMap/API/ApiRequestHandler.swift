@@ -234,6 +234,7 @@ class ApiRequestHandler {
             let andString = Localizer.global.get(value: "filter_and")
             let orString = Localizer.global.get(value: "filter_or")
 
+            let generalTypeString = Localizer.global.get(value: "filter_general")
             let bigKarpString = Localizer.global.get(value: "filter_big_karp")
             let tinyRatString = Localizer.global.get(value: "filter_tiny_rat")
 
