@@ -118,7 +118,8 @@ class WebHookRequestHandler {
         }
 
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        let username = json["username"] as? String
+        let trainerXP = json["trainerexp"] as? Int ?? 0
+        var username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -131,6 +132,10 @@ class WebHookRequestHandler {
                     levelCacheLock.unlock()
                 } catch {}
             }
+        }
+
+        if username != nil {
+            InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
         guard let contents = json["contents"] as? [[String: Any]] ??
@@ -158,6 +163,7 @@ class WebHookRequestHandler {
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var gymInfos = [POGOProtos_Networking_Responses_GymGetInfoResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
+        var fortSearch = [POGOProtos_Networking_Responses_FortSearchResponse]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         var playerdatas = [POGOProtos_Networking_Responses_GetPlayerResponse]()
         var cells = [UInt64]()
@@ -199,8 +205,8 @@ class WebHookRequestHandler {
             }
 
             if method == 2 {
-                if let prr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
-                    playerdatas.append(prr)
+                if let gpr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
+                    playerdatas.append(gpr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed GetPlayerResponse")
                 }
@@ -210,6 +216,7 @@ class WebHookRequestHandler {
                         let quest = fsr.challengeQuest.quest
                         quests.append(quest)
                     }
+                    fortSearch.append(fsr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
                 }
@@ -313,13 +320,12 @@ class WebHookRequestHandler {
 
         if targetCoord != nil {
             for fort in forts {
+                InstanceController.global.gotFortData(fortData: fort.data, username: username)
                 if !inArea {
                     let coord = CLLocationCoordinate2D(latitude: fort.data.latitude, longitude: fort.data.longitude)
                     if coord.distance(to: targetCoord!) <= targetMaxDistance {
                         inArea = true
                     }
-                } else {
-                    break
                 }
             }
         }
@@ -364,7 +370,7 @@ class WebHookRequestHandler {
 
         var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count,
                     "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any,
-                    "only_empty_gmos": containsGMO && isEmtpyGMO,
+                    "only_empty_gmos": containsGMO && isEmtpyGMO, "fort_search": fortSearch.count,
                     "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO
         ]
 
