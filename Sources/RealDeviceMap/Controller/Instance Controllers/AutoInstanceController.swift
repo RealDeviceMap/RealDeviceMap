@@ -383,7 +383,7 @@ class AutoInstanceController: InstanceControllerProto {
                     let result = try Cooldown.cooldown(
                         account: account,
                         deviceUUID: uuid,
-                        location: Coord(lat: pokestop.lon, lon: pokestop.lon)
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon)
                     )
                     delay = result.delay
                     encounterTime = result.encounterTime
@@ -401,7 +401,7 @@ class AutoInstanceController: InstanceControllerProto {
                         mysql: mysql,
                         account: account,
                         deviceUUID: uuid,
-                        location: Coord(lat: pokestop.lon, lon: pokestop.lon),
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon),
                         encounterTime: encounterTime
                   )
                 } catch {
