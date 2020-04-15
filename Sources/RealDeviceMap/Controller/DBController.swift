@@ -246,6 +246,7 @@ class DBController {
                     "pokemon": true,
                     "pokemon_stats": false,
                     "pokemon_shiny_stats": false,
+                    "pokemon_hundo_stats": false,
                     "pokestop": true,
                     "quest_stats": false,
                     "raid_stats": false,
