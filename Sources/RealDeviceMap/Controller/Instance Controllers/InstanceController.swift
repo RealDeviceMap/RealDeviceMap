@@ -177,9 +177,11 @@ class InstanceController {
                 )
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 500
+                let delayLogout = instance.data["delay_logout"] as? Int ?? 900
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
-                    timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit
+                    timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel,
+                    spinLimit: spinLimit, delayLogout: delayLogout
                 )
             }
         case .leveling:

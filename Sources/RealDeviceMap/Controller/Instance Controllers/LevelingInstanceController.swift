@@ -134,15 +134,31 @@ class LevelingInstanceController: InstanceControllerProto {
         unspunPokestopsPerUsernameLock.unlock()
 
         let delay: Int
+        let encounterTime: UInt32
         do {
-            delay = try Cooldown.encounter(
+            let result = try Cooldown.cooldown(
                 account: account,
                 deviceUUID: uuid,
                 location: destination
             )
+            delay = result.delay
+            encounterTime = result.encounterTime
         } catch {
-            Log.error(message: "[LevelingInstanceController] Failed to store cooldown.")
-            return [:]
+            Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+            return [String: Any]()
+        }
+
+        do {
+            try Cooldown.encounter(
+                mysql: mysql,
+                account: account,
+                deviceUUID: uuid,
+                location: destination,
+                encounterTime: encounterTime
+          )
+        } catch {
+            Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+            return [String: Any]()
         }
 
         playerLock.lock()

@@ -65,9 +65,9 @@ class DBController {
         return current
     }
 
-    public func getValueForKey(key: String) throws -> String? {
+    public func getValueForKey(key: String, mysql: MySQL?=nil) throws -> String? {
 
-        guard let mysql = mysql else {
+        guard let mysql = mysql ?? self.mysql else {
             Log.error(message: "[DBController] Failed to connect to database.")
             throw DBError()
         }
@@ -96,9 +96,9 @@ class DBController {
 
     }
 
-    public func setValueForKey(key: String, value: String) throws {
+    public func setValueForKey(key: String, value: String, mysql: MySQL?=nil) throws {
 
-        guard let mysql = mysql else {
+        guard let mysql = mysql ?? self.mysql else {
             Log.error(message: "[DBController] Failed to connect to database.")
             throw DBError()
         }

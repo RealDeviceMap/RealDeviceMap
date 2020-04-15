@@ -683,6 +683,7 @@ class WebReqeustHandler {
                 data["timezone_offset"] = 0
                 data["iv_queue_limit"] = 100
                 data["spin_limit"] = 500
+                data["delay_logout"] = 900
                 data["nothing_selected"] = true
             }
         case .dashboardInstanceIVQueue:
@@ -1900,8 +1901,9 @@ class WebReqeustHandler {
         }
 
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
-        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "100" ) ?? 100
-        let spinLimit = Int(request.param(name: "spin_limit") ?? "500" ) ?? 500
+        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
+        let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 500
+        let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
 
         data["name"] = name
         data["area"] = area
@@ -1912,6 +1914,7 @@ class WebReqeustHandler {
         data["timezone_offset"] = timezoneOffset
         data["iv_queue_limit"] = ivQueueLimit
         data["spin_limit"] = spinLimit
+        data["delay_logout"] = delayLogout
 
         if type == nil {
             data["nothing_selected"] = true
@@ -2038,6 +2041,7 @@ class WebReqeustHandler {
                     oldInstance!.data["scatter_pokemon_ids"] = scatterPokemonIDs
                 } else if type == .autoQuest {
                     oldInstance!.data["spin_limit"] = spinLimit
+                    oldInstance!.data["delay_logout"] = delayLogout
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -2062,6 +2066,7 @@ class WebReqeustHandler {
                 instanceData["scatter_pokemon_ids"] = scatterPokemonIDs
             } else if type == .autoQuest {
                 instanceData["spin_limit"] = spinLimit
+                instanceData["delay_logout"] = delayLogout
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
@@ -2134,6 +2139,7 @@ class WebReqeustHandler {
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 500
+            data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900
 
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {
