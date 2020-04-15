@@ -37,9 +37,10 @@ class AutoInstanceController: InstanceControllerProto {
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
+    public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
+         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -47,6 +48,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
         self.spinLimit = spinLimit
+        self.delayLogout = delayLogout
         update()
 
         bootstrap()
@@ -376,12 +378,32 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.unlock()
 
                 let delay: Int
+                let encounterTime: UInt32
                 do {
-                    delay = try Cooldown.encounter(
+                    let result = try Cooldown.cooldown(
                         account: account,
                         deviceUUID: uuid,
-                        location: Coord(lat: pokestop.lon, lon: pokestop.lon)
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon)
                     )
+                    delay = result.delay
+                    encounterTime = result.encounterTime
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+                    return [String: Any]()
+                }
+
+                if delay >= delayLogout {
+                    return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                }
+
+                do {
+                    try Cooldown.encounter(
+                        mysql: mysql,
+                        account: account,
+                        deviceUUID: uuid,
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon),
+                        encounterTime: encounterTime
+                  )
                 } catch {
                     Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
                     return [String: Any]()
