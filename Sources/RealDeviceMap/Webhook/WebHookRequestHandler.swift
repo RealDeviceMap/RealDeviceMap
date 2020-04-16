@@ -134,7 +134,7 @@ class WebHookRequestHandler {
             }
         }
 
-        if username != nil {
+        if username != nil && trainerXP > 0 && trainerLevel > 0 {
             InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
