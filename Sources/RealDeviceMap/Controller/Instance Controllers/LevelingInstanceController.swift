@@ -64,6 +64,8 @@ class LevelingInstanceController: InstanceControllerProto {
     ]
 
     private let start: Coord
+    private let storeData: Bool
+    private let radius: UInt64
     private let unspunPokestopsPerUsernameLock = NSLock()
     private var unspunPokestopsPerUsername = [String: [String: POGOProtos_Map_Fort_FortData]]()
     private var lastPokestopsPerUsername = [String: [Coord]]()
@@ -74,11 +76,13 @@ class LevelingInstanceController: InstanceControllerProto {
     private var playerXPPerTime = [String: [(date: Date, xp: Int)]]()
     private var lastLocactionUsername = [String: Coord]()
 
-    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8) {
+    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8, storeData: Bool, radius: UInt64) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.start = start
+        self.storeData = storeData
+        self.radius = radius
     }
 
     func getTask(uuid: String, username: String?) -> [String: Any] {
@@ -209,16 +213,19 @@ class LevelingInstanceController: InstanceControllerProto {
         }
 
         if fortData.type == .checkpoint {
-            unspunPokestopsPerUsernameLock.lock()
-            if unspunPokestopsPerUsername[username] == nil {
-                unspunPokestopsPerUsername[username] = [:]
+            let coord = Coord(lat: fortData.latitude, lon: fortData.longitude)
+            if UInt64(coord.distance(to: start)) <= radius {
+                unspunPokestopsPerUsernameLock.lock()
+                if unspunPokestopsPerUsername[username] == nil {
+                    unspunPokestopsPerUsername[username] = [:]
+                }
+                if fortData.visited {
+                    unspunPokestopsPerUsername[username]![fortData.id] = nil
+                } else {
+                    unspunPokestopsPerUsername[username]![fortData.id] = fortData
+                }
+                unspunPokestopsPerUsernameLock.unlock()
             }
-            if fortData.visited {
-                unspunPokestopsPerUsername[username]![fortData.id] = nil
-            } else {
-                unspunPokestopsPerUsername[username]![fortData.id] = fortData
-            }
-            unspunPokestopsPerUsernameLock.unlock()
         }
     }
 
@@ -316,6 +323,10 @@ class LevelingInstanceController: InstanceControllerProto {
             playerLock.unlock()
             return data
         }
+    }
+
+    func shouldStoreData() -> Bool {
+        return storeData
     }
 
     func reload() {

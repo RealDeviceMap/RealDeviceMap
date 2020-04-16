@@ -684,6 +684,8 @@ class WebReqeustHandler {
                 data["iv_queue_limit"] = 100
                 data["spin_limit"] = 500
                 data["delay_logout"] = 900
+                data["radius"] = 10000
+                data["store_data"] = false
                 data["nothing_selected"] = true
             }
         case .dashboardInstanceIVQueue:
@@ -1223,30 +1225,31 @@ class WebReqeustHandler {
                 let action = request.param(name: "action")
                 switch action {
                 case "truncate_pokemon":
-                    let result = try? Pokemon.truncate()
-                    if result! >= 0 {
+                    do {
+                        let result = try Pokemon.truncate()
                         data["show_success"] = true
-                        data["success"] = "Pokemon table truncated!"
-                    } else {
+                        data["success"] = "\(result) Pokemon truncated!"
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to truncate Pokemon table."
                     }
                 case "convert_pokestops":
-                    let result = try? Gym.convertPokestopsToGyms()
-                    let deleteResult = try? Pokestop.deleteConvertedPokestops()
-                    if result! >= 0 && deleteResult! >= 0 {
+                    do {
+                        let result = try Gym.convertPokestopsToGyms()
+                        let deleteResult = try Pokestop.deleteConvertedPokestops()
                         data["show_success"] = true
-                        data["success"] = "\((result ?? 0).description) Pokestops converted to gyms!"
-                    } else {
+                        data["success"] = "\(result) Pokestops converted to " +
+                                          "gyms and \(deleteResult) Pokestops deleted!"
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to update converted pokestops to gyms."
                     }
                 case "delete_stale_pokestops":
-                    let result = try? Pokestop.deleteStalePokestops()
-                    if result! >= 0 {
+                    do {
+                        let result = try Pokestop.deleteStalePokestops()
                         data["show_success"] = true
-                        data["success"] = "\((result ?? 0).description) Stale Pokestops deleted!"
-                    } else {
+                        data["success"] = "\(result) Stale Pokestops deleted!"
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to delete stale Pokestops."
                     }
@@ -1904,6 +1907,8 @@ class WebReqeustHandler {
         let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
         let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 500
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
+        let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
+        let storeData = request.param(name: "store_data") == "true"
 
         data["name"] = name
         data["area"] = area
@@ -1915,6 +1920,8 @@ class WebReqeustHandler {
         data["iv_queue_limit"] = ivQueueLimit
         data["spin_limit"] = spinLimit
         data["delay_logout"] = delayLogout
+        data["radius"] = radius
+        data["store_data"] = storeData
 
         if type == nil {
             data["nothing_selected"] = true
@@ -2042,6 +2049,9 @@ class WebReqeustHandler {
                 } else if type == .autoQuest {
                     oldInstance!.data["spin_limit"] = spinLimit
                     oldInstance!.data["delay_logout"] = delayLogout
+                } else if type == .leveling {
+                    oldInstance!.data["radius"] = radius
+                    oldInstance!.data["store_data"] = storeData
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -2067,6 +2077,9 @@ class WebReqeustHandler {
             } else if type == .autoQuest {
                 instanceData["spin_limit"] = spinLimit
                 instanceData["delay_logout"] = delayLogout
+            } else if type == .leveling {
+                instanceData["radius"] = radius
+                instanceData["store_data"] = storeData
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
@@ -2140,6 +2153,8 @@ class WebReqeustHandler {
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 500
             data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900
+            data["radius"] = (oldInstance!.data["radius"] as? Int)?.toUInt64() ?? 100000
+            data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
 
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {
