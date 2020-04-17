@@ -26,6 +26,7 @@ protocol InstanceControllerProto {
     func getStatus(formatted: Bool) -> JSONConvertible?
     func reload()
     func stop()
+    func shouldStoreData() -> Bool
     func gotPokemon(pokemon: Pokemon)
     func gotIV(pokemon: Pokemon)
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?)
@@ -33,6 +34,7 @@ protocol InstanceControllerProto {
 }
 
 extension InstanceControllerProto {
+    func shouldStoreData() -> Bool { return true }
     func gotPokemon(pokemon: Pokemon) { }
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
@@ -198,8 +200,16 @@ class InstanceController {
             }
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            instanceController = LevelingInstanceController(name: instance.name, start: coord,
-                                                            minLevel: minLevel, maxLevel: maxLevel)
+            let radius = instance.data["radius"] as? UInt64 ?? (instance.data["radius"] as? Int)?.toUInt64() ?? 100000
+            let storeData = instance.data["store_data"] as? Bool ?? false
+            instanceController = LevelingInstanceController(
+                name: instance.name,
+                start: coord,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                storeData: storeData,
+                radius: radius
+            )
         }
         instanceController.delegate = AssignmentController.global
         instancesLock.lock()
@@ -280,6 +290,13 @@ class InstanceController {
         devicesByDeviceUUID[deviceUUID] = nil
         instancesLock.unlock()
         try? AssignmentController.global.setup()
+    }
+
+    public func shouldStoreData(deviceUUID: String) -> Bool {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return instanceController.shouldStoreData()
+        }
+        return true
     }
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
