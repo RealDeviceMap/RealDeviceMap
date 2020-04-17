@@ -303,7 +303,7 @@ class LevelingInstanceController: InstanceControllerProto {
 
                 let timeLeftHours: Int
                 let timeLeftMinutes: Int
-                if timeLeft == .infinity || timeLeft == -.infinity || timeLeft == .nan {
+                if timeLeft == .infinity || timeLeft == -.infinity || timeLeft.isNaN {
                     timeLeftHours = 999
                     timeLeftMinutes = 0
                 } else {
