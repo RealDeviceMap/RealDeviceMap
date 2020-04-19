@@ -321,7 +321,7 @@ class Account: WebHookEvent {
         }
     }
 
-    public static func getNewAccount(mysql: MySQL?=nil, minLevel: Int, maxLevel: Int) throws -> Account? {
+    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")

@@ -24,6 +24,7 @@ protocol InstanceControllerProto {
     var delegate: InstanceControllerDelegate? { get set }
     func getTask(uuid: String, username: String?) -> [String: Any]
     func getStatus(formatted: Bool) -> JSONConvertible?
+    func getAccount(uuid: String) throws -> Account?
     func reload()
     func stop()
     func shouldStoreData() -> Bool
@@ -39,6 +40,9 @@ extension InstanceControllerProto {
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
+    func getAccount(uuid: String) throws -> Account? {
+        return try Account.getNewAccount(minLevel: minLevel, maxLevel: maxLevel)
+    }
 }
 
 extension InstanceControllerProto {
@@ -297,6 +301,13 @@ class InstanceController {
             return instanceController.shouldStoreData()
         }
         return true
+    }
+
+    public func getAccount(deviceUUID: String) throws -> Account? {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return try instanceController.getAccount(uuid: deviceUUID)
+        }
+        return try Account.getNewAccount(minLevel: 0, maxLevel: 29)
     }
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
