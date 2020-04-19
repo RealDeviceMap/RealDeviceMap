@@ -687,8 +687,6 @@ class WebHookRequestHandler {
         }
 
         let username = jsonO?["username"] as? String
-        let minLevel = jsonO?["min_level"] as? Int ?? 0
-        let maxLevel = jsonO?["max_level"] as? Int ?? 29
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
@@ -757,31 +755,26 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .notFound)
             }
         } else if type == "get_account" {
-
             do {
-                guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let account = try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
-                    else {
-                        response.respondWithError(status: .notFound)
-                        return
+                guard let device = try Device.getById(mysql: mysql, id: uuid) else {
+                    response.respondWithError(status: .notFound)
+                    return
                 }
-                if device.accountUsername != nil {
-                    do {
-                        let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
-                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil &&
-                           oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: [
-                                "username": oldAccount!.username,
-                                "password": oldAccount!.password,
-                                "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any,
-                                "level": oldAccount!.level
-                            ])
-                            return
-                        }
-                    } catch { }
+                if device.accountUsername != nil,
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
+                   oldAccount.failed == nil {
+                    try response.respondWithData(data: [
+                        "username": oldAccount.username,
+                        "password": oldAccount.password,
+                        "first_warning_timestamp": oldAccount.firstWarningTimestamp as Any
+                    ])
+                    return
                 }
-
+                guard let account = try InstanceController.global.getAccount(deviceUUID: uuid) else {
+                    Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                    response.respondWithError(status: .notFound)
+                    return
+                }
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
@@ -789,7 +782,6 @@ class WebHookRequestHandler {
                     "password": account.password,
                     "first_warning_timestamp": account.firstWarningTimestamp as Any
                 ])
-
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
