@@ -1206,7 +1206,8 @@ class ApiRequestHandler {
                         }
 
                         if formatted {
-                            let status = InstanceController.global.getInstanceStatus(instance: instance, formatted: true)
+                            let status = InstanceController.global.getInstanceStatus(instance: instance,
+                                                                                     formatted: true)
                             if let status = status as? String {
                                 instanceData["status"] = status
                             } else {
@@ -1219,8 +1220,9 @@ class ApiRequestHandler {
                         }
 
                         if formatted {
-                            instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
-                                                      " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                            instanceData["buttons"] =
+                                "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
+                                " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                         }
                         jsonArrayLock.lock()
                         jsonArray.append(instanceData)
