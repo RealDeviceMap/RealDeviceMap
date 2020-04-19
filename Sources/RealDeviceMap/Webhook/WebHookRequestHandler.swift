@@ -761,7 +761,8 @@ class WebHookRequestHandler {
                     return
                 }
                 if device.accountUsername != nil,
-                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!) {
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
+                   oldAccount.failed == nil {
                     try response.respondWithData(data: [
                         "username": oldAccount.username,
                         "password": oldAccount.password,
