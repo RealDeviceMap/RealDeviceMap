@@ -1679,7 +1679,6 @@ class WebReqeustHandler {
             return value.toUInt16() ?? 0
         }) ?? [UInt16]()
 
-
         let buttonsLeftString = request.param(name: "buttons_left_formatted")?
             .replacingOccurrences(of: "<br>", with: "")
             .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
