@@ -1226,9 +1226,9 @@ class WebReqeustHandler {
                 switch action {
                 case "truncate_pokemon":
                     do {
-                        let result = try Pokemon.truncate()
+                        try Pokemon.truncate()
                         data["show_success"] = true
-                        data["success"] = "\(result) Pokemon truncated!"
+                        data["success"] = "Pokemon table truncated!"
                     } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to truncate Pokemon table."
