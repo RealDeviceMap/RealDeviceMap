@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 29.01.20.
 //
-//  swiftlint:disable type_body_length function_body_length
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
@@ -313,7 +313,7 @@ class LevelingInstanceController: InstanceControllerProto {
 
                 if level >= maxLevel {
                     text += "\(username): Lvl.\(level) done"
-                } else {
+                } else {
                     text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
                             "\(timeLeftHours)h\(timeLeftMinutes)m"
                 }
