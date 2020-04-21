@@ -311,8 +311,12 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
-                        "\(timeLeftHours)h\(timeLeftMinutes)m"
+                if level >= maxLevel {
+                    text += "\(username): Lvl.\(level) done"
+                } else {
+                    text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
+                            "\(timeLeftHours)h\(timeLeftMinutes)m"
+                }
             }
             playerLock.unlock()
             if text == "" {
