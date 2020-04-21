@@ -8,6 +8,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
@@ -97,12 +98,7 @@ class IVInstanceController: InstanceControllerProto {
         stop()
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
-
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-            return [String: Any]()
-        }
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         do {
             if username != nil {
@@ -124,7 +120,7 @@ class IVInstanceController: InstanceControllerProto {
         pokemonLock.unlock()
 
         if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
-            return getTask(uuid: uuid, username: username)
+            return getTask(mysql: mysql, uuid: uuid, username: username)
         }
 
         scannedPokemonLock.lock()
@@ -135,7 +131,7 @@ class IVInstanceController: InstanceControllerProto {
                 "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
 
         let ivh: Int?
         self.statsLock.lock()

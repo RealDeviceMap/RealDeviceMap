@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import POGOProtos
 
@@ -22,9 +23,9 @@ protocol InstanceControllerProto {
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(uuid: String, username: String?) -> [String: Any]
-    func getStatus(formatted: Bool) -> JSONConvertible?
-    func getAccount(uuid: String) throws -> Account?
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any]
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account?
     func reload()
     func stop()
     func shouldStoreData() -> Bool
@@ -40,8 +41,8 @@ extension InstanceControllerProto {
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
-    func getAccount(uuid: String) throws -> Account? {
-        return try Account.getNewAccount(minLevel: minLevel, maxLevel: maxLevel)
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
     }
 }
 
@@ -303,9 +304,9 @@ class InstanceController {
         return true
     }
 
-    public func getAccount(deviceUUID: String) throws -> Account? {
+    public func getAccount(mysql: MySQL, deviceUUID: String) throws -> Account? {
         if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
-            return try instanceController.getAccount(uuid: deviceUUID)
+            return try instanceController.getAccount(mysql: mysql, uuid: deviceUUID)
         }
         return try Account.getNewAccount(minLevel: 0, maxLevel: 29)
     }
@@ -320,11 +321,11 @@ class InstanceController {
         return deviceUUIDS
     }
 
-    public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
+    public func getInstanceStatus(mysql: MySQL, instance: Instance, formatted: Bool) -> JSONConvertible? {
         instancesLock.lock()
         if let instanceProto = instancesByInstanceName[instance.name] {
             instancesLock.unlock()
-            return instanceProto.getStatus(formatted: formatted)
+            return instanceProto.getStatus(mysql: mysql, formatted: formatted)
         } else {
             instancesLock.unlock()
             if formatted {

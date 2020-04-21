@@ -1206,8 +1206,11 @@ class ApiRequestHandler {
                         }
 
                         if formatted {
-                            let status = InstanceController.global.getInstanceStatus(instance: instance,
-                                                                                     formatted: true)
+                            let status = InstanceController.global.getInstanceStatus(
+                                mysql: mysql,
+                                instance: instance,
+                                formatted: true
+                            )
                             if let status = status as? String {
                                 instanceData["status"] = status
                             } else {
@@ -1215,7 +1218,9 @@ class ApiRequestHandler {
                             }
                         } else {
                             instanceData["status"] = InstanceController.global.getInstanceStatus(
-                                instance: instance, formatted: false
+                                mysql: mysql,
+                                instance: instance,
+                                formatted: false
                             ) as Any
                         }
 

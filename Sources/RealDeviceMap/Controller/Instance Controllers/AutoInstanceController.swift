@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import S2Geometry
 
@@ -195,7 +196,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -249,11 +250,6 @@ class AutoInstanceController: InstanceControllerProto {
 
             } else {
                 bootstrappLock.unlock()
-
-                guard let mysql = DBController.global.mysql else {
-                    Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-                    return [String: Any]()
-                }
 
                 stopsLock.lock()
                 if todayStops == nil {
@@ -448,7 +444,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         switch type {
         case .quest:
             bootstrappLock.lock()
@@ -482,7 +478,7 @@ class AutoInstanceController: InstanceControllerProto {
                 })
                 stopsLock.unlock()
 
-                if let stops = try? Pokestop.getIn(ids: ids) {
+                if let stops = try? Pokestop.getIn(mysql: mysql, ids: ids) {
                     for stop in stops where stop.questType != nil {
                         currentCountDb += 1
                     }

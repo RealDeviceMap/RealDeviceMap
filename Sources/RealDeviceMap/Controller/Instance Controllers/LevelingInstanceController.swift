@@ -9,6 +9,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import POGOProtos
 import Turf
 
@@ -85,12 +86,7 @@ class LevelingInstanceController: InstanceControllerProto {
         self.radius = radius
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
-
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[LevelingInstanceController] Failed to connect to database.")
-            return [:]
-        }
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         guard let username = username else {
             Log.error(message: "[LevelingInstanceController] No username specified.")
@@ -240,7 +236,7 @@ class LevelingInstanceController: InstanceControllerProto {
         playerLock.unlock()
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         var players = [String]()
         playerLock.lock()
         for player in playerLastSeen {
