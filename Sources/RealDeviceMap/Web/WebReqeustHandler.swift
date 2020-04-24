@@ -560,9 +560,11 @@ class WebReqeustHandler {
             }
 
         case .dashboard:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
         case .dashboardSettings:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Settings"
             if request.method == .post {
@@ -643,9 +645,11 @@ class WebReqeustHandler {
             data["cities"] = citiesString
 
         case .dashboardDevices:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
         case .dashboardDeviceAssign:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assign Device"
             let deviceUUID = (request.urlVariables["device_uuid"] ?? "").decodeUrl()!
@@ -666,9 +670,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardInstances:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Instances"
         case .dashboardInstanceAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Instance"
             if request.method == .post {
@@ -689,15 +695,18 @@ class WebReqeustHandler {
                 data["nothing_selected"] = true
             }
         case .dashboardInstanceIVQueue:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - IV Queue"
             let instanceName = request.urlVariables["instance_name"] ?? ""
             data["instance_name_url"] = instanceName
             data["instance_name"] = instanceName.decodeUrl() ?? ""
         case .dashboardDeviceGroups:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Device Groups"
         case .dashboardDeviceGroupAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Device Group"
             if request.method == .post {
@@ -715,6 +724,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardDeviceGroupEdit:
+            data["locale"] = "en"
             let deviceGroupName = (request.urlVariables["name"] ?? "").decodeUrl()!
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit Device Group"
@@ -750,9 +760,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignments:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assignments"
         case .dashboardAssignmentAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Assignment"
             if request.method == .get {
@@ -769,6 +781,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignmentEdit:
+            data["locale"] = "en"
             let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
             let tmp = uuid.replacingOccurrences(of: "\\\\-", with: "&tmp")
             data["page_is_dashboard"] = true
@@ -788,6 +801,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignmentStart:
+            data["locale"] = "en"
             let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
             let split = uuid.components(separatedBy: "\\-")
             if split.count >= 2 {
@@ -816,6 +830,7 @@ class WebReqeustHandler {
                 response.completed(status: .seeOther)
             }
         case .dashboardAssignmentDelete:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Assignment"
 
@@ -847,6 +862,7 @@ class WebReqeustHandler {
                 response.completed(status: .badRequest)
             }
         case .dashboardAssignmentsDeleteAll:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
 
             do {
@@ -860,6 +876,7 @@ class WebReqeustHandler {
             sessionDriver.save(session: request.session!)
             response.completed(status: .seeOther)
         case .dashboardAccounts:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
             data["new_accounts_count"] = (try? Account.getNewCount().withCommas()) ?? "?"
@@ -872,6 +889,7 @@ class WebReqeustHandler {
             data["stats"] = (try? Account.getStats()) ?? ""
             data["ban_stats"] = (try? Account.getWarningBannedStats()) ?? ""
         case .dashboardAccountsAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Accounts"
             if request.method == .post {
@@ -884,6 +902,7 @@ class WebReqeustHandler {
                 data["level"] = 0
             }
         case .dashboardInstanceEdit:
+            data["locale"] = "en"
             let instanceName = (request.urlVariables["instance_name"] ?? "").decodeUrl()!
             data["page_is_dashboard"] = true
             data["old_name"] = instanceName
@@ -935,6 +954,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardClearQuests:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Clear All Quests"
             if request.method == .post {
@@ -951,9 +971,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardUsers:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Users"
         case .dashboardUserEdit:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit User"
             let editUsername = (request.urlVariables["username"] ?? "").decodeUrl()!
@@ -1026,9 +1048,11 @@ class WebReqeustHandler {
                 data["groups"] = groupsData
             }
         case .dashboardGroups:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Groups"
         case .dashboardGroupEdit:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit Group"
             let groupName = (request.urlVariables["group_name"])?.decodeUrl() ?? ""
@@ -1063,6 +1087,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardGroupAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Group"
             if request.method == .post {
@@ -1074,9 +1099,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardDiscordRules:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Discord Rules"
         case .dashboardDiscordRuleAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Discord Rule"
 
@@ -1127,6 +1154,9 @@ class WebReqeustHandler {
             }
 
         case .dashboardDiscordRuleEdit:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Edit Discord Rule"
 
             let priority = (request.urlVariables["discordrule_priority"] ?? "").toInt32()
             data["priority_old"] = priority
@@ -1213,6 +1243,7 @@ class WebReqeustHandler {
             }
 
         case .dashboardUtilities:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Utilities"
 
