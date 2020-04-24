@@ -762,7 +762,17 @@ class WebHookRequestHandler {
                 }
                 if device.accountUsername != nil,
                    let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
-                   oldAccount.failed == nil {
+                   (
+                       oldAccount.failed == nil ||
+                       oldAccount.failed! == "GPR_RED_WARNING" &&
+                       oldAccount.warnExpireTimestamp ?? UInt32.max <= UInt32(Date().timeIntervalSince1970)
+                   ),
+                   oldAccount.spins < 400,
+                   (
+                       oldAccount.lastEncounterTime == nil ||
+                       UInt32(Date().timeIntervalSince1970) - oldAccount.lastEncounterTime! >= 7200
+                   )
+                {
                     try response.respondWithData(data: [
                         "username": oldAccount.username,
                         "password": oldAccount.password,
