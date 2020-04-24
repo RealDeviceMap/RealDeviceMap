@@ -464,7 +464,7 @@ class WebHookRequestHandler {
                 Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
-            
+
             guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
                 Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
                 return
