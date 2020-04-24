@@ -1679,31 +1679,45 @@ class WebReqeustHandler {
             return value.toUInt16() ?? 0
         }) ?? [UInt16]()
 
-        let buttonsLeft = request.param(name: "buttons_left_formatted")?
-                                .replacingOccurrences(of: "<br>", with: "")
-                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
-                                .components(separatedBy: "\n")
-        .map({ (string) -> [String: String] in
-            let components = string.components(separatedBy: ";")
-            return [
-                "name": components[0],
-                "url": components.last ?? "?"
-            ]
-        })
+        let buttonsLeftString = request.param(name: "buttons_left_formatted")?
+            .replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let buttonsRight = request.param(name: "buttons_right_formatted")?
-                                .replacingOccurrences(of: "<br>", with: "")
-                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
-                                .components(separatedBy: "\n")
-        .map({ (string) -> [String: String] in
-            let components = string.components(separatedBy: ";")
-            return [
-                "name": components[0],
-                "url": components.last ?? "?"
-            ]
-        })
+        let buttonsLeft: [[String: String]]
+        if buttonsLeftString == nil || buttonsLeftString!.isEmpty {
+            buttonsLeft = []
+        } else {
+            buttonsLeft = buttonsLeftString!
+                .components(separatedBy: "\n")
+                .map({ (string) -> [String: String] in
+                    let components = string.components(separatedBy: ";")
+                    return [
+                        "name": components[0],
+                        "url": components.last ?? "?"
+                    ]
+                })
+        }
+
+        let buttonsRightString = request.param(name: "buttons_right_formatted")?
+            .replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let buttonsRight: [[String: String]]
+        if buttonsRightString == nil || buttonsRightString!.isEmpty {
+            buttonsRight = []
+        } else {
+            buttonsRight = buttonsRightString!
+                .components(separatedBy: "\n")
+                .map({ (string) -> [String: String] in
+                    let components = string.components(separatedBy: ";")
+                    return [
+                        "name": components[0],
+                        "url": components.last ?? "?"
+                    ]
+                })
+        }
 
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1815,8 +1829,8 @@ class WebReqeustHandler {
         WebReqeustHandler.cities = citySettings
         WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight ?? []
-        WebReqeustHandler.buttonsLeft = buttonsLeft ?? []
+        WebReqeustHandler.buttonsRight = buttonsRight
+        WebReqeustHandler.buttonsLeft = buttonsLeft
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
@@ -1846,6 +1860,8 @@ class WebReqeustHandler {
 
         data["title"] = title
         data["show_success"] = true
+        data["buttons_left"] = buttonsLeft
+        data["buttons_right"] = buttonsRight
 
         return data
     }
