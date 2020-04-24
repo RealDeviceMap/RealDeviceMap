@@ -664,7 +664,7 @@ class Account: WebHookEvent {
               level,
               COUNT(level) as total,
               SUM(
-                  (failed IS NULL AND first_warning_timestamp is NULL) OR 
+                  (failed IS NULL AND first_warning_timestamp is NULL) OR
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
