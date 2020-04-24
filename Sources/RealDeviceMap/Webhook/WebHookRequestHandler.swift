@@ -444,11 +444,6 @@ class WebHookRequestHandler {
             response.respondWithError(status: .internalServerError)
         }
 
-        guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
-            Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
-            return
-        }
-
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
 
@@ -468,6 +463,11 @@ class WebHookRequestHandler {
                 }
                 Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+
+            guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
+                Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
+                return
             }
 
             var gymIdsPerCell = [UInt64: [String]]()
