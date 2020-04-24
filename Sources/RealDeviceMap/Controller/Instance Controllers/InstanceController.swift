@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import POGOProtos
 
@@ -22,9 +23,10 @@ protocol InstanceControllerProto {
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(uuid: String, username: String?) -> [String: Any]
+    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any]
     func getStatus(formatted: Bool) -> JSONConvertible?
-    func getAccount(uuid: String) throws -> Account?
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account?
+    func accountValid(account: Account) -> Bool
     func reload()
     func stop()
     func shouldStoreData() -> Bool
@@ -40,8 +42,11 @@ extension InstanceControllerProto {
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
-    func getAccount(uuid: String) throws -> Account? {
-        return try Account.getNewAccount(minLevel: minLevel, maxLevel: maxLevel)
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
+    }
+    func accountValid(account: Account) -> Bool {
+        return account.isFailed()
     }
 }
 
@@ -303,11 +308,18 @@ class InstanceController {
         return true
     }
 
-    public func getAccount(deviceUUID: String) throws -> Account? {
+    public func getAccount(mysql: MySQL, deviceUUID: String) throws -> Account? {
         if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
-            return try instanceController.getAccount(uuid: deviceUUID)
+            return try instanceController.getAccount(mysql: mysql, uuid: deviceUUID)
         }
         return try Account.getNewAccount(minLevel: 0, maxLevel: 29)
+    }
+
+    public func accountValid(deviceUUID: String, account: Account) -> Bool {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return instanceController.accountValid(account: account)
+        }
+        return account.isFailed()
     }
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {

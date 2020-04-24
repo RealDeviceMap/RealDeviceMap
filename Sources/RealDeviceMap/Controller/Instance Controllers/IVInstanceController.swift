@@ -8,6 +8,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
@@ -97,23 +98,7 @@ class IVInstanceController: InstanceControllerProto {
         stop()
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
-
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-            return [String: Any]()
-        }
-
-        do {
-            if username != nil {
-                let account = try Account.getWithUsername(mysql: mysql, username: username!)
-                if account != nil {
-                    if account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
-                        return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-                    }
-                }
-            }
-        } catch { }
+    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         pokemonLock.lock()
         if pokemonQueue.isEmpty {
@@ -124,7 +109,7 @@ class IVInstanceController: InstanceControllerProto {
         pokemonLock.unlock()
 
         if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
-            return getTask(uuid: uuid, username: username)
+            return getTask(uuid: uuid, username: username, account: account)
         }
 
         scannedPokemonLock.lock()
@@ -242,6 +227,21 @@ class IVInstanceController: InstanceControllerProto {
 
         return nil
 
+    }
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(
+            mysql: mysql,
+            minLevel: minLevel,
+            maxLevel: maxLevel,
+            ignoringWarning: false,
+            spins: nil,
+            noCooldown: false
+        )
+    }
+
+    func accountValid(account: Account) -> Bool {
+        return account.isFailed()
     }
 
 }

@@ -9,6 +9,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import POGOProtos
 import Turf
 
@@ -85,7 +86,7 @@ class LevelingInstanceController: InstanceControllerProto {
         self.radius = radius
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
+    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[LevelingInstanceController] Failed to connect to database.")
@@ -97,21 +98,9 @@ class LevelingInstanceController: InstanceControllerProto {
             return [:]
         }
 
-        let accountX: Account?
-        do {
-            accountX = try Account.getWithUsername(mysql: mysql, username: username)
-        } catch {
-            Log.error(message: "[LevelingInstanceController] Failed to get account.")
+        guard let account = account else {
+            Log.error(message: "[LevelingInstanceController] No account specified.")
             return [:]
-        }
-
-        guard let account = accountX else {
-            Log.error(message: "[LevelingInstanceController] Got account thats not in the db. Logging out.")
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-        }
-
-        if account.failed == "GPR_RED_WARNING" || account.failed == "GPR_BANNED" {
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
         }
 
         if lastPokestopsPerUsername[username] == nil {
@@ -335,6 +324,21 @@ class LevelingInstanceController: InstanceControllerProto {
 
     func stop() {
 
+    }
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(
+            mysql: mysql,
+            minLevel: minLevel,
+            maxLevel: maxLevel,
+            ignoringWarning: false,
+            spins: nil, // 7000
+            noCooldown: true
+        )
+    }
+
+    func accountValid(account: Account) -> Bool {
+        return account.isFailed() // && account.hasSpinsLeft(spins: 7000)
     }
 
 }

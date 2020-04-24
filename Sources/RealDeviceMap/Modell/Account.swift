@@ -230,6 +230,24 @@ class Account: WebHookEvent {
         }
     }
 
+    public func isFailed(ignoringWarning: Bool=false) -> Bool {
+        return (
+            self.failed == nil ||
+            self.failed! == "GPR_RED_WARNING" &&
+            (ignoringWarning || self.warnExpireTimestamp ?? UInt32.max <= UInt32(Date().timeIntervalSince1970))
+        )
+    }
+
+    public func hasSpinsLeft(spins: Int = 1000, noCooldown: Bool=false) -> Bool {
+        return (
+            self.spins < spins &&
+            !noCooldown || (
+                self.lastEncounterTime == nil ||
+                UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime! >= 7200
+            )
+        )
+    }
+
     public static func setLevel(mysql: MySQL?=nil, username: String, level: Int) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -321,11 +339,50 @@ class Account: WebHookEvent {
         }
     }
 
-    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8) throws -> Account? {
+    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
+                                     ignoringWarning: Bool=false, spins: Int?=1000,
+                                     noCooldown: Bool=true) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
+        }
+
+        let failedSQL: String
+        if ignoringWarning {
+            failedSQL = """
+            AND (
+                failed IS NULL OR failed = 'GPR_RED_WARNING'
+            )
+            """
+        } else {
+            failedSQL = """
+            AND (
+                (failed IS NULL AND first_warning_timestamp is NULL) OR
+                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+            )
+            """
+        }
+
+        let spinSQL: String
+        if spins != nil {
+            spinSQL = """
+            AND spins <= ?
+            """
+        } else {
+            spinSQL = ""
+        }
+
+        let cooldownSQL: String
+        if noCooldown {
+            cooldownSQL = """
+            AND (
+                last_encounter_time IS NULL OR
+                UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
+            )
+            """
+        } else {
+            cooldownSQL = ""
         }
 
         let sql = """
@@ -335,15 +392,12 @@ class Account: WebHookEvent {
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE
-                first_warning_timestamp is NULL AND
-                failed_timestamp is NULL and device.uuid IS NULL AND
+                device.uuid IS NULL AND
                 level >= ? AND
                 level <= ? AND
-                failed IS NULL AND (
-                    last_encounter_time IS NULL OR
-                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
-                    spins < 400
-                )
+                \(failedSQL)
+                \(spinSQL)
+                \(cooldownSQL)
             ORDER BY level DESC, RAND()
             LIMIT 1
         """
@@ -352,6 +406,9 @@ class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLevel)
         mysqlStmt.bindParam(maxLevel)
+        if let spins = spins {
+            mysqlStmt.bindParam(spins)
+        }
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -463,7 +520,10 @@ class Account: WebHookEvent {
             WHERE
                 first_warning_timestamp is NULL AND
                 failed_timestamp is NULL and device.uuid IS NULL AND
-                failed IS NULL AND (
+                (
+                    (failed IS NULL AND first_warning_timestamp is NULL) OR
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
                     spins < 400
@@ -660,7 +720,10 @@ class Account: WebHookEvent {
             SELECT
               level,
               COUNT(level) as total,
-              SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
+              SUM(
+                  (failed IS NULL AND first_warning_timestamp is NULL) OR
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+              ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
