@@ -38,7 +38,7 @@ class CircleInstanceController: InstanceControllerProto {
         self.lastCompletedTime = Date()
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         lock.lock()
         let currentIndex = self.lastIndex

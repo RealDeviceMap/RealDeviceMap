@@ -196,7 +196,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         switch type {
         case .quest:
