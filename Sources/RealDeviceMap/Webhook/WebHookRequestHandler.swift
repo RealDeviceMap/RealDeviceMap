@@ -119,7 +119,7 @@ class WebHookRequestHandler {
 
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         let trainerXP = json["trainerexp"] as? Int ?? 0
-        var username = json["username"] as? String
+        let username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -134,7 +134,7 @@ class WebHookRequestHandler {
             }
         }
 
-        if username != nil {
+        if username != nil && trainerXP > 0 && trainerLevel > 0 {
             InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
@@ -465,6 +465,11 @@ class WebHookRequestHandler {
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
 
+            guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
+                Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
+                return
+            }
+
             var gymIdsPerCell = [UInt64: [String]]()
             var stopsIdsPerCell = [UInt64: [String]]()
 
@@ -682,8 +687,6 @@ class WebHookRequestHandler {
         }
 
         let username = jsonO?["username"] as? String
-        let minLevel = jsonO?["min_level"] as? Int ?? 0
-        let maxLevel = jsonO?["max_level"] as? Int ?? 29
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
@@ -744,7 +747,9 @@ class WebHookRequestHandler {
             let controller = InstanceController.global.getInstanceController(deviceUUID: uuid)
             if controller != nil {
                 do {
-                    try response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
+                    try response.respondWithData(
+                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username)
+                    )
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
@@ -752,31 +757,26 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .notFound)
             }
         } else if type == "get_account" {
-
             do {
-                guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let account = try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
-                    else {
-                        response.respondWithError(status: .notFound)
-                        return
+                guard let device = try Device.getById(mysql: mysql, id: uuid) else {
+                    response.respondWithError(status: .notFound)
+                    return
                 }
-                if device.accountUsername != nil {
-                    do {
-                        let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
-                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil &&
-                           oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: [
-                                "username": oldAccount!.username,
-                                "password": oldAccount!.password,
-                                "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any,
-                                "level": oldAccount!.level
-                            ])
-                            return
-                        }
-                    } catch { }
+                if device.accountUsername != nil,
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
+                   oldAccount.failed == nil {
+                    try response.respondWithData(data: [
+                        "username": oldAccount.username,
+                        "password": oldAccount.password,
+                        "first_warning_timestamp": oldAccount.firstWarningTimestamp as Any
+                    ])
+                    return
                 }
-
+                guard let account = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                    Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                    response.respondWithError(status: .notFound)
+                    return
+                }
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
@@ -784,7 +784,6 @@ class WebHookRequestHandler {
                     "password": account.password,
                     "first_warning_timestamp": account.firstWarningTimestamp as Any
                 ])
-
             } catch {
                 response.respondWithError(status: .internalServerError)
             }

@@ -9,6 +9,9 @@ import Foundation
 
 public extension BinaryInteger {
 
+    func toUInt64() -> UInt64 {
+        return UInt64(self)
+    }
     func toUInt32() -> UInt32 {
         return UInt32(self)
     }

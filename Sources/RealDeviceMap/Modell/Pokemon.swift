@@ -983,7 +983,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         return isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted
     }
 
-    public static func truncate(mysql: MySQL?=nil) throws -> UInt {
+    public static func truncate(mysql: MySQL?=nil) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
@@ -1000,8 +1000,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-
-        return mysqlStmt.affectedRows()
     }
 
     private static func sqlifyIvFilter(filter: String) -> String? {

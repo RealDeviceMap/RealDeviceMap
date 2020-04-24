@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import S2Geometry
 
@@ -37,9 +38,10 @@ class AutoInstanceController: InstanceControllerProto {
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
+    public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
+         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -47,6 +49,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
         self.spinLimit = spinLimit
+        self.delayLogout = delayLogout
         update()
 
         bootstrap()
@@ -193,7 +196,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -238,7 +241,8 @@ class AutoInstanceController: InstanceControllerProto {
                         bootstrappLock.unlock()
                     }
 
-                    return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
+                    return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude,
+                            "min_level": minLevel, "max_level": maxLevel]
                 } else {
                     bootstrappLock.unlock()
                     return [String: Any]()
@@ -246,11 +250,6 @@ class AutoInstanceController: InstanceControllerProto {
 
             } else {
                 bootstrappLock.unlock()
-
-                guard let mysql = DBController.global.mysql else {
-                    Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-                    return [String: Any]()
-                }
 
                 stopsLock.lock()
                 if todayStops == nil {
@@ -375,12 +374,32 @@ class AutoInstanceController: InstanceControllerProto {
                 stopsLock.unlock()
 
                 let delay: Int
+                let encounterTime: UInt32
                 do {
-                    delay = try Cooldown.encounter(
+                    let result = try Cooldown.cooldown(
                         account: account,
                         deviceUUID: uuid,
-                        location: Coord(lat: pokestop.lon, lon: pokestop.lon)
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon)
                     )
+                    delay = result.delay
+                    encounterTime = result.encounterTime
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+                    return [String: Any]()
+                }
+
+                if delay >= delayLogout {
+                    return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                }
+
+                do {
+                    try Cooldown.encounter(
+                        mysql: mysql,
+                        account: account,
+                        deviceUUID: uuid,
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon),
+                        encounterTime: encounterTime
+                  )
                 } catch {
                     Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
                     return [String: Any]()
@@ -418,14 +437,14 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
 
-                return ["action": "scan_quest", "lat": pokestop.lat, "lon": pokestop.lon,
+                return ["action": "scan_quest", "deploy_egg": false, "lat": pokestop.lat, "lon": pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel]
             }
         }
 
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         switch type {
         case .quest:
             bootstrappLock.lock()
@@ -459,7 +478,7 @@ class AutoInstanceController: InstanceControllerProto {
                 })
                 stopsLock.unlock()
 
-                if let stops = try? Pokestop.getIn(ids: ids) {
+                if let stops = try? Pokestop.getIn(mysql: mysql, ids: ids) {
                     for stop in stops where stop.questType != nil {
                         currentCountDb += 1
                     }
