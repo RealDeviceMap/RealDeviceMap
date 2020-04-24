@@ -1205,24 +1205,30 @@ class ApiRequestHandler {
                             instanceData["type"] = "Leveling"
                         }
 
-                        if formatted {
-                            let status = InstanceController.global.getInstanceStatus(
-                                mysql: mysql,
-                                instance: instance,
-                                formatted: true
-                            )
-                            if let status = status as? String {
-                                instanceData["status"] = status
+                        var mysqlTemp = DBController.global.mysql
+                        if mysqlTemp != nil {
+                            if formatted {
+                                let status = InstanceController.global.getInstanceStatus(
+                                    mysql: mysqlTemp!,
+                                    instance: instance,
+                                    formatted: true
+                                )
+                                if let status = status as? String {
+                                    instanceData["status"] = status
+                                } else {
+                                    instanceData["status"] = "?"
+                                }
                             } else {
-                                instanceData["status"] = "?"
+                                instanceData["status"] = InstanceController.global.getInstanceStatus(
+                                    mysql: mysqlTemp!,
+                                    instance: instance,
+                                    formatted: false
+                                ) as Any
                             }
-                        } else {
-                            instanceData["status"] = InstanceController.global.getInstanceStatus(
-                                mysql: mysql,
-                                instance: instance,
-                                formatted: false
-                            ) as Any
-                        }
+			} else {
+                            instanceData["status"] = "?"
+			}
+			mysqlTemp = nil
 
                         if formatted {
                             instanceData["buttons"] =
