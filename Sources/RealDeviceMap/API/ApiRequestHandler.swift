@@ -1174,77 +1174,52 @@ class ApiRequestHandler {
         if showInstances && perms.contains(.admin) {
 
             let instances = try? Instance.getAll(mysql: mysql)
-
-            let jsonArrayLock = Threading.Lock()
             var jsonArray = [[String: Any]]()
-            let dispatchGroup = DispatchGroup()
 
             if instances != nil {
                 for instance in instances! {
-                    dispatchGroup.enter()
-                    let thread = Threading.getQueue(
-                        name: "ApiRequestHandler-getInstanceStatus-\(instance.name)-\(UUID().uuidString)",
-                        type: .serial
-                    )
-                    thread.dispatch {
-                        var instanceData = [String: Any]()
-                        instanceData["name"] = instance.name
-                        instanceData["count"] = instance.count
-                        switch instance.type {
-                        case .circleRaid:
-                            instanceData["type"] = "Circle Raid"
-                        case .circleSmartRaid:
-                            instanceData["type"] = "Circle Smart Raid"
-                        case .circlePokemon:
-                            instanceData["type"] = "Circle Pokemon"
-                        case .autoQuest:
-                            instanceData["type"] = "Auto Quest"
-                        case .pokemonIV:
-                            instanceData["type"] = "Pokemon IV"
-                        case .leveling:
-                            instanceData["type"] = "Leveling"
-                        }
-
-                        var mysqlTemp = DBController.global.mysql
-                        if mysqlTemp != nil {
-                            if formatted {
-                                let status = InstanceController.global.getInstanceStatus(
-                                    mysql: mysqlTemp!,
-                                    instance: instance,
-                                    formatted: true
-                                )
-                                if let status = status as? String {
-                                    instanceData["status"] = status
-                                } else {
-                                    instanceData["status"] = "?"
-                                }
-                            } else {
-                                instanceData["status"] = InstanceController.global.getInstanceStatus(
-                                    mysql: mysqlTemp!,
-                                    instance: instance,
-                                    formatted: false
-                                ) as Any
-                            }
-			} else {
-                            instanceData["status"] = "?"
-			}
-			mysqlTemp = nil
-
-                        if formatted {
-                            instanceData["buttons"] =
-                                "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
-                                " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
-                        }
-                        jsonArrayLock.lock()
-                        jsonArray.append(instanceData)
-                        jsonArrayLock.unlock()
-                        dispatchGroup.leave()
+                    var instanceData = [String: Any]()
+                    instanceData["name"] = instance.name
+                    instanceData["count"] = instance.count
+                    switch instance.type {
+                    case .circleRaid:
+                        instanceData["type"] = "Circle Raid"
+                    case .circleSmartRaid:
+                        instanceData["type"] = "Circle Smart Raid"
+                    case .circlePokemon:
+                        instanceData["type"] = "Circle Pokemon"
+                    case .autoQuest:
+                        instanceData["type"] = "Auto Quest"
+                    case .pokemonIV:
+                        instanceData["type"] = "Pokemon IV"
+                    case .leveling:
+                        instanceData["type"] = "Leveling"
                     }
+
+                    if formatted {
+                        let status = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: true
+                        )
+                        if let status = status as? String {
+                            instanceData["status"] = status
+                        } else {
+                            instanceData["status"] = "?"
+                        }
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
+                                                  " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                    } else {
+                        instanceData["status"] = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: false
+                        ) as Any
+                    }
+                    jsonArray.append(instanceData)
                 }
             }
-            dispatchGroup.wait()
             data["instances"] = jsonArray
-
         }
 
         if showDeviceGroups && perms.contains(.admin) {
