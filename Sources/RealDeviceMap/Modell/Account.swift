@@ -335,11 +335,13 @@ class Account: WebHookEvent {
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE
-                first_warning_timestamp is NULL AND
                 failed_timestamp is NULL and device.uuid IS NULL AND
                 level >= ? AND
                 level <= ? AND
-                failed IS NULL AND (
+                (
+                    (failed IS NULL AND first_warning_timestamp is NULL) OR
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
                     spins < 400
@@ -461,9 +463,11 @@ class Account: WebHookEvent {
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE
-                first_warning_timestamp is NULL AND
                 failed_timestamp is NULL and device.uuid IS NULL AND
-                failed IS NULL AND (
+                (
+                    (failed IS NULL AND first_warning_timestamp is NULL) OR
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
                     spins < 400
@@ -655,12 +659,11 @@ class Account: WebHookEvent {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
-
         let sql = """
             SELECT
               level,
               COUNT(level) as total,
-              SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
+              SUM((failed IS NULL AND first_warning_timestamp is NULL) OR (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
