@@ -763,7 +763,9 @@ class WebHookRequestHandler {
                             return
                         }
                     }
-                    try response.respondWithData(data: controller!.getTask(uuid: uuid, username: username, account: account))
+                    try response.respondWithData(
+                        data: controller!.getTask(uuid: uuid, username: username, account: account)
+                    )
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
