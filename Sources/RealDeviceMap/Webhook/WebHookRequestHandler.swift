@@ -747,7 +747,9 @@ class WebHookRequestHandler {
             let controller = InstanceController.global.getInstanceController(deviceUUID: uuid)
             if controller != nil {
                 do {
-                    try response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
+                    try response.respondWithData(
+                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username)
+                    )
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
@@ -770,7 +772,7 @@ class WebHookRequestHandler {
                     ])
                     return
                 }
-                guard let account = try InstanceController.global.getAccount(deviceUUID: uuid) else {
+                guard let account = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
                     Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
                     response.respondWithError(status: .notFound)
                     return
