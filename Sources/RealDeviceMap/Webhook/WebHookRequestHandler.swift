@@ -771,8 +771,7 @@ class WebHookRequestHandler {
                    (
                        oldAccount.lastEncounterTime == nil ||
                        UInt32(Date().timeIntervalSince1970) - oldAccount.lastEncounterTime! >= 7200
-                   )
-                {
+                   ) {
                     try response.respondWithData(data: [
                         "username": oldAccount.username,
                         "password": oldAccount.password,
