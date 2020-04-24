@@ -23,7 +23,7 @@ protocol InstanceControllerProto {
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any]
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any]
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
     func getAccount(mysql: MySQL, uuid: String) throws -> Account?
     func accountValid(account: Account) -> Bool
