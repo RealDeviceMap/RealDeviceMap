@@ -764,7 +764,7 @@ class WebHookRequestHandler {
                         }
                     }
                     try response.respondWithData(
-                        data: controller!.getTask(uuid: uuid, username: username, account: account)
+                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
                     )
                 } catch {
                     response.respondWithError(status: .internalServerError)

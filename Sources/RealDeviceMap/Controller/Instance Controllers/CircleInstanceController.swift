@@ -38,7 +38,7 @@ class CircleInstanceController: InstanceControllerProto {
         self.lastCompletedTime = Date()
     }
 
-    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         lock.lock()
         let currentIndex = self.lastIndex
@@ -63,7 +63,7 @@ class CircleInstanceController: InstanceControllerProto {
 
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
 
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))

@@ -104,7 +104,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     }
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
-    override func getTask(uuid: String, username: String?, account: Account?) -> [String: Any] {
+    override func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         // Get gyms without raid and gyms without boss where updated ago > ignoreTime
         var gymsNoRaid = [(Gym, Date, Coord)]()
@@ -174,7 +174,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
 
     }
 
-    override func getStatus(formatted: Bool) -> JSONConvertible? {
+    override func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
 
         let scansh: Int?
         self.statsLock.lock()

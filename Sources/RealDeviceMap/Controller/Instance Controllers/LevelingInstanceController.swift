@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 29.01.20.
 //
-//  swiftlint:disable type_body_length function_body_length
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
@@ -86,12 +86,7 @@ class LevelingInstanceController: InstanceControllerProto {
         self.radius = radius
     }
 
-    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any] {
-
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[LevelingInstanceController] Failed to connect to database.")
-            return [:]
-        }
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         guard let username = username else {
             Log.error(message: "[LevelingInstanceController] No username specified.")
@@ -229,7 +224,7 @@ class LevelingInstanceController: InstanceControllerProto {
         playerLock.unlock()
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         var players = [String]()
         playerLock.lock()
         for player in playerLastSeen {
@@ -300,8 +295,12 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
-                        "\(timeLeftHours)h\(timeLeftMinutes)m"
+                if level >= maxLevel {
+                    text += "\(username): Lvl.\(level) done"
+                } else {
+                    text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
+                            "\(timeLeftHours)h\(timeLeftMinutes)m"
+                }
             }
             playerLock.unlock()
             if text == "" {

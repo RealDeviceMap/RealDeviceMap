@@ -23,8 +23,8 @@ protocol InstanceControllerProto {
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(uuid: String, username: String?, account: Account?) -> [String: Any]
-    func getStatus(formatted: Bool) -> JSONConvertible?
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any]
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
     func getAccount(mysql: MySQL, uuid: String) throws -> Account?
     func accountValid(account: Account) -> Bool
     func reload()
@@ -332,11 +332,11 @@ class InstanceController {
         return deviceUUIDS
     }
 
-    public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
+    public func getInstanceStatus(mysql: MySQL, instance: Instance, formatted: Bool) -> JSONConvertible? {
         instancesLock.lock()
         if let instanceProto = instancesByInstanceName[instance.name] {
             instancesLock.unlock()
-            return instanceProto.getStatus(formatted: formatted)
+            return instanceProto.getStatus(mysql: mysql, formatted: formatted)
         } else {
             instancesLock.unlock()
             if formatted {
