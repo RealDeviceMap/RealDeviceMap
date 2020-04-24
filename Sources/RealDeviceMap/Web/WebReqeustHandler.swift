@@ -1157,7 +1157,7 @@ class WebReqeustHandler {
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit Discord Rule"
-            
+
             let priority = (request.urlVariables["discordrule_priority"] ?? "").toInt32()
             data["priority_old"] = priority
 
