@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 29.01.20.
 //
-//  swiftlint:disable type_body_length function_body_length
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
@@ -311,8 +311,12 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
-                        "\(timeLeftHours)h\(timeLeftMinutes)m"
+                if level >= maxLevel {
+                    text += "\(username): Lvl.\(level) done"
+                } else {
+                    text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
+                            "\(timeLeftHours)h\(timeLeftMinutes)m"
+                }
             }
             playerLock.unlock()
             if text == "" {
