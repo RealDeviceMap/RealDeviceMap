@@ -446,7 +446,7 @@ class WebHookRequestHandler {
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
-            
+
             defer {
                 Threading.destroyQueue(queue)
             }
