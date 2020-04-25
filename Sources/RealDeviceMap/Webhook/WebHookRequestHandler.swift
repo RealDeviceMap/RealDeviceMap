@@ -36,6 +36,8 @@ class WebHookRequestHandler {
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
+        let isMadData = request.header(.origin) != nil
+
         if let hostWhitelist = hostWhitelist {
             let host: String
             let forwardedForHeader = request.header(.xForwardedFor) ?? ""
@@ -63,7 +65,17 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
 
-            let loginSecretHeader = request.header(.authorization)
+            var loginSecretHeader = request.header(.authorization)
+
+            if isMadData {
+                if let madAuth = Data(base64Encoded: loginSecretHeader?.components(separatedBy: " ").last ?? ""),
+                    let madString = String(data: madAuth, encoding: .utf8),
+                    let madSecret = madString.components(separatedBy: ":").last {
+                        loginSecretHeader = "Bearer \(madSecret)"
+                } else {
+                    return response.respondWithError(status: .badRequest)
+                }
+            }
             guard loginSecretHeader == "Bearer \(loginSecret)" else {
                 WebHookRequestHandler.limiter.failed(host: host)
                 return response.respondWithError(status: .unauthorized)
@@ -82,13 +94,18 @@ class WebHookRequestHandler {
     static func rawHandler(request: HTTPRequest, response: HTTPResponse) {
 
         let json: [String: Any]
+        let isMadData = request.header(.origin) != nil
         do {
-            guard var jsonOpt = try (request.postBodyString ?? "").jsonDecode() as? [String: Any] else {
+            if isMadData, let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
+                json = ["contents": madRaw,
+                        "uuid": request.header(.origin)!,
+                        "username": "PogoDroid"]
+            } else if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String: Any] {
+                json = rdmRaw
+            } else {
                 response.respondWithError(status: .badRequest)
                 return
             }
-            if jsonOpt["payload"] != nil { jsonOpt["contents"] = [jsonOpt] }
-            json = jsonOpt
         } catch {
             response.respondWithError(status: .badRequest)
             return
@@ -101,7 +118,8 @@ class WebHookRequestHandler {
         }
 
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        var username = json["username"] as? String
+        let trainerXP = json["trainerexp"] as? Int ?? 0
+        let username = json["username"] as? String
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -114,6 +132,10 @@ class WebHookRequestHandler {
                     levelCacheLock.unlock()
                 } catch {}
             }
+        }
+
+        if username != nil && trainerXP > 0 && trainerLevel > 0 {
+            InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
         guard let contents = json["contents"] as? [[String: Any]] ??
@@ -141,6 +163,7 @@ class WebHookRequestHandler {
         var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
         var gymInfos = [POGOProtos_Networking_Responses_GymGetInfoResponse]()
         var quests = [POGOProtos_Data_Quests_Quest]()
+        var fortSearch = [POGOProtos_Networking_Responses_FortSearchResponse]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         var playerdatas = [POGOProtos_Networking_Responses_GetPlayerResponse]()
         var cells = [UInt64]()
@@ -148,7 +171,6 @@ class WebHookRequestHandler {
         var isEmtpyGMO = true
         var isInvalidGMO = true
         var containsGMO = false
-        var isMadData = false
 
         for rawData in contents {
 
@@ -176,18 +198,15 @@ class WebHookRequestHandler {
                 data = Data(base64Encoded: dataString) ?? Data()
                 method = rawData["method"] as? Int ?? 106
             } else if let madString = rawData["payload"] as? String {
-				data = Data(base64Encoded: madString) ?? Data()
-				method = rawData["type"] as? Int ?? 106
-				isMadData = true
-				username = "PogoDroid"
-				//Log.info(message: "[WebHookRequestHandler] PogoDroid Raw Data Type: \(method)")
+                data = Data(base64Encoded: madString) ?? Data()
+                method = rawData["type"] as? Int ?? 106
             } else {
                 continue
             }
 
             if method == 2 {
-                if let prr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
-                    playerdatas.append(prr)
+                if let gpr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
+                    playerdatas.append(gpr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed GetPlayerResponse")
                 }
@@ -197,6 +216,7 @@ class WebHookRequestHandler {
                         let quest = fsr.challengeQuest.quest
                         quests.append(quest)
                     }
+                    fortSearch.append(fsr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
                 }
@@ -300,13 +320,12 @@ class WebHookRequestHandler {
 
         if targetCoord != nil {
             for fort in forts {
+                InstanceController.global.gotFortData(fortData: fort.data, username: username)
                 if !inArea {
                     let coord = CLLocationCoordinate2D(latitude: fort.data.latitude, longitude: fort.data.longitude)
                     if coord.distance(to: targetCoord!) <= targetMaxDistance {
                         inArea = true
                     }
-                } else {
-                    break
                 }
             }
         }
@@ -351,7 +370,7 @@ class WebHookRequestHandler {
 
         var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count,
                     "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any,
-                    "only_empty_gmos": containsGMO && isEmtpyGMO,
+                    "only_empty_gmos": containsGMO && isEmtpyGMO, "fort_search": fortSearch.count,
                     "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO
         ]
 
@@ -428,22 +447,31 @@ class WebHookRequestHandler {
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
 
+            defer {
+                Threading.destroyQueue(queue)
+            }
+
             if !playerdatas.isEmpty && username != nil {
                 let start = Date()
                 for playerdata in playerdatas {
-					let account: Account?
-					do {
+                    let account: Account?
+                    do {
                         account = try Account.getWithUsername(mysql: mysql, username: username!)
                     } catch {
                         account = nil
                     }
                     if account != nil {
-						account!.responseInfo(accountData: playerdata)
+                        account!.responseInfo(accountData: playerdata)
                         try? account!.save(mysql: mysql, update: true)
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+            }
+
+            guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
+                Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
+                return
             }
 
             var gymIdsPerCell = [UInt64: [String]]()
@@ -467,16 +495,16 @@ class WebHookRequestHandler {
             }
 
             let startclientWeathers = Date()
-			for conditions in clientWeathers {
-				let ws2cell = S2Cell(cellId: S2CellId(id: conditions.cell))
-				let wlat = ws2cell.capBound.rectBound.center.lat.degrees
-				let wlon = ws2cell.capBound.rectBound.center.lng.degrees
-				let wlevel = ws2cell.level
+            for conditions in clientWeathers {
+                let ws2cell = S2Cell(cellId: S2CellId(id: conditions.cell))
+                let wlat = ws2cell.capBound.rectBound.center.lat.degrees
+                let wlon = ws2cell.capBound.rectBound.center.lng.degrees
+                let wlevel = ws2cell.level
                 let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel),
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
-				try? weather.save(mysql: mysql, update: true)
-			}
-			Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) " +
+                try? weather.save(mysql: mysql, update: true)
+            }
+            Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) " +
                                "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s")
 
             let startWildPokemon = Date()
@@ -637,8 +665,6 @@ class WebHookRequestHandler {
                     }
                 }
             }
-
-            Threading.destroyQueue(queue)
         }
 
     }
@@ -663,8 +689,6 @@ class WebHookRequestHandler {
         }
 
         let username = jsonO?["username"] as? String
-        let minLevel = jsonO?["min_level"] as? Int ?? 0
-        let maxLevel = jsonO?["max_level"] as? Int ?? 29
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
@@ -725,7 +749,9 @@ class WebHookRequestHandler {
             let controller = InstanceController.global.getInstanceController(deviceUUID: uuid)
             if controller != nil {
                 do {
-                    try response.respondWithData(data: controller!.getTask(uuid: uuid, username: username))
+                    try response.respondWithData(
+                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username)
+                    )
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
@@ -733,31 +759,26 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .notFound)
             }
         } else if type == "get_account" {
-
             do {
-                guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let account = try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
-                    else {
-                        response.respondWithError(status: .notFound)
-                        return
+                guard let device = try Device.getById(mysql: mysql, id: uuid) else {
+                    response.respondWithError(status: .notFound)
+                    return
                 }
-                if device.accountUsername != nil {
-                    do {
-                        let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!)
-                        if oldAccount != nil && oldAccount!.firstWarningTimestamp == nil &&
-                           oldAccount!.failed == nil && oldAccount!.failedTimestamp == nil {
-                            try response.respondWithData(data: [
-                                "username": oldAccount!.username,
-                                "password": oldAccount!.password,
-                                "first_warning_timestamp": oldAccount!.firstWarningTimestamp as Any,
-                                "level": oldAccount!.level
-                            ])
-                            return
-                        }
-                    } catch { }
+                if device.accountUsername != nil,
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
+                   oldAccount.failed == nil {
+                    try response.respondWithData(data: [
+                        "username": oldAccount.username,
+                        "password": oldAccount.password,
+                        "first_warning_timestamp": oldAccount.firstWarningTimestamp as Any
+                    ])
+                    return
                 }
-
+                guard let account = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                    Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                    response.respondWithError(status: .notFound)
+                    return
+                }
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
@@ -765,7 +786,6 @@ class WebHookRequestHandler {
                     "password": account.password,
                     "first_warning_timestamp": account.firstWarningTimestamp as Any
                 ])
-
             } catch {
                 response.respondWithError(status: .internalServerError)
             }

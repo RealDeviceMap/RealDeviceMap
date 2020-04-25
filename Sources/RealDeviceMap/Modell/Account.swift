@@ -97,19 +97,19 @@ class Account: WebHookEvent {
 
         if accountData.warn == true {
             self.failed = "GPR_RED_WARNING"
-			if self.firstWarningTimestamp == nil {
+            if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
                 self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-			}
+            }
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
-			if self.firstWarningTimestamp == nil {
+            if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
                 self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-			}
+            }
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
         }
@@ -321,7 +321,7 @@ class Account: WebHookEvent {
         }
     }
 
-    public static func getNewAccount(mysql: MySQL?=nil, minLevel: Int, maxLevel: Int) throws -> Account? {
+    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -374,13 +374,13 @@ class Account: WebHookEvent {
         let lastEncounterLon = result[7] as? Double
         let lastEncounterTime = result[8] as? UInt32
         let spins = result[9] as! UInt16
-		let creationTimestamp = result[10] as? UInt32
-		let warn = result[11] as? Bool
-		let warnExpireTimestamp = result[12] as? UInt32
-		let warnMessageAcknowledged = result[13] as? Bool
-		let suspendedMessageAcknowledged = result[14] as? Bool
-		let wasSuspended = result[15] as? Bool
-		let banned = result[16] as? Bool
+        let creationTimestamp = result[10] as? UInt32
+        let warn = result[11] as? Bool
+        let warnExpireTimestamp = result[12] as? UInt32
+        let warnMessageAcknowledged = result[13] as? Bool
+        let suspendedMessageAcknowledged = result[14] as? Bool
+        let wasSuspended = result[15] as? Bool
+        let banned = result[16] as? Bool
 
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,
@@ -605,7 +605,7 @@ class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE failed IS NULL AND first_warning_timestamp IS NOT NULL
+            WHERE (failed IS NULL OR failed = 'GPR_RED_WARNING') AND first_warning_timestamp IS NOT NULL
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -661,10 +661,10 @@ class Account: WebHookEvent {
               level,
               COUNT(level) as total,
               SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
-              SUM(failed = 'banned') as banned,
+              SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
-              SUM(failed != 'banned' AND failed != 'invalid_credentials') as other,
+              SUM(failed NOT IN('banned', 'invalid_credentials', 'GPR_RED_WARNING', 'GPR_BANNED')) as other,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
@@ -722,9 +722,15 @@ class Account: WebHookEvent {
 
         let sql = """
             SELECT
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as banned_7days,
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as banned_14days,
-              SUM(failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as banned_30days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_7days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_14days,
+              SUM(
+                failed_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY) AND failed IN('banned', 'GPR_BANNED')
+              ) as banned_30days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY)) as warning_7days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 14 DAY)) as warning_14days,
               SUM(first_warning_timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)) as warning_30days

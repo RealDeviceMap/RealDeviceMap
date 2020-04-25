@@ -19,6 +19,11 @@ let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.work
 let projectroot = Dir.workingDir.path
 #endif
 
+// Starting Startup Webserver
+Log.debug(message: "[MAIN] Starting Startup Webserver")
+var startupServer: HTTPServer.Server? = WebServer.startupServer
+var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
+
 // Check if /backups exists
 let backups = Dir("\(projectroot)/backups")
 #if DEBUG
@@ -92,6 +97,10 @@ WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(k
     .components(separatedBy: ",").map({ (string) -> UInt16 in
     return string.toUInt16() ?? 0
 }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] //Default ditto disguises
+WebReqeustHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
+    .jsonDecode() as? [[String: String]] ?? []
+WebReqeustHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
+    .jsonDecode() as? [[String: String]] ?? []
 
 if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?
     .jsonDecodeForceTry() as? [String: String] {
@@ -228,6 +237,12 @@ try! DiscordController.global.setup()
 // Create Raid images
 Log.debug(message: "[MAIN] Starting Images Generator")
 ImageGenerator.generate()
+
+// Stopping Startup Webserver
+Log.debug(message: "[MAIN] Stopping Startup Webserver")
+startupServerContext!.terminate()
+startupServer = nil
+startupServerContext = nil
 
 Log.debug(message: "[MAIN] Starting Webserves")
 do {

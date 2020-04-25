@@ -256,7 +256,7 @@
         "formtypes": [
           {
             "type": "Normal",
-	    "color": "#8a8a59"
+            "color": "#8a8a59"
           }
         ]
       },
@@ -267,11 +267,11 @@
         "formtypes": [
           {
             "type": "Dark",
-	    "color": "#707070"
+            "color": "#707070"
           },
-	  {
+          {
             "type": "Normal",
-	    "color": "#8a8a59"
+            "color": "#8a8a59"
           }
         ]
       }
@@ -291,10 +291,10 @@
         "nameform": "Normal",
         "protoform": "47",
         "assetsform": "00",
-	"formtypes": [
+        "formtypes": [
           {
             "type": "Normal",
-	    "color": "#8a8a59"
+            "color": "#8a8a59"
           }
         ]
       },
@@ -302,14 +302,14 @@
         "nameform": "Alolan",
         "protoform": "48",
         "assetsform": "61",
-	"formtypes": [
+        "formtypes": [
           {
             "type": "Dark",
-	    "color": "#707070"
+            "color": "#707070"
           },
-	  {
+          {
             "type": "Normal",
-	    "color": "#8a8a59"
+            "color": "#8a8a59"
           }
         ]
       }
@@ -407,7 +407,7 @@
             "type": "Electric",
             "color": "#f8d030"
           },
-	  {
+          {
             "type": "Psychic",
             "color": "#f85888"
           }
@@ -651,7 +651,7 @@
             "type": "Ice",
             "color": "#98d8d8"
           },
-	  {
+          {
             "type": "Fairy",
             "color": "#e898e8"
           }
@@ -9366,6 +9366,30 @@
       }
     ]
   },
+  "641": {
+    "name": "Tornadus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Flying",
+        "color": "#a890f0"
+      }
+    ]
+  },
+  "642": {
+    "name": "Thundurus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Electric",
+        "color": "#f8d030"
+      },
+      {
+        "type": "Flying",
+        "color": "#a890f0"
+      }
+    ]
+  },
   "643":{
     "name": "Reshiram",
     "rarity":"",
@@ -9391,6 +9415,20 @@
       {
         "type": "Electric",
         "color": "#f8d030"
+      }
+    ]
+  },
+  "645":{
+    "name": "Landorus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Ground",
+        "color": "#e0c068"
+      },
+      {
+        "type": "Flying",
+        "color": "#a890f0"
       }
     ]
   },

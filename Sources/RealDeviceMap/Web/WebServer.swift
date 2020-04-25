@@ -55,6 +55,7 @@ class WebServer {
         case dashboardDiscordRules = "dashboard_discordrules.mustache"
         case dashboardDiscordRuleAdd = "dashboard_discordrule_add.mustache"
         case dashboardDiscordRuleEdit = "dashboard_discordrule_edit.mustache"
+        case dashboardUtilities = "dashboard_utilities.mustache"
         case unauthorized = "unauthorized.mustache"
     }
 
@@ -94,6 +95,32 @@ class WebServer {
         return HTTPServer.Server(name: "Web Server", address: address, port: port, routes: routes,
                                  requestFilters: [sessionDriver.requestFilter],
                                  responseFilters: [sessionDriver.responseFilter])
+    }
+
+    public static var startupServer: HTTPServer.Server {
+        let enviroment = ProcessInfo.processInfo.environment
+        let address = enviroment["WEB_SERVER_ADDRESS"] ?? "0.0.0.0"
+        let port = Int(enviroment["WEB_SERVER_PORT"] ?? "") ?? 9000
+
+        let route = Route(uri: "**") { (_, response) in
+            response.setBody(string: """
+            <html lang="en">
+                <head>
+                    <title>RealDeviceMap - Starting...</title>
+                    <meta http-equiv="refresh" content="30"/>
+                </head>
+
+                <body>
+                    <br>
+                    <h1 align="center">RealDeviceMap is starting!</h1>
+                    <h2 align="center">Please wait...<h2>
+                    <h2 align="center">(This page will auto reload in 30 seconds.)</h2>
+                </body>
+            </html>
+            """)
+            response.completed()
+        }
+        return HTTPServer.Server(name: "Temp Web Server", address: address, port: port, routes: Routes([route]))
     }
 
 }
