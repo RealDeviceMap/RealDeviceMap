@@ -492,7 +492,6 @@ class WebHookRequestHandler {
             defer {
                 threadLimitLock.lock()
                 threadLimitCount -= 1
-                print("COUNT", threadLimitCount)
                 threadLimitLock.unlock()
             }
 
