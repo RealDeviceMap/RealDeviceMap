@@ -519,6 +519,8 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func accountValid(account: Account) -> Bool {
-        return account.isFailed() && account.hasSpinsLeft(spins: spinLimit)
+        return account.level >= minLevel &&
+            account.level <= maxLevel && account.isFailed() &&
+            account.hasSpinsLeft(spins: spinLimit)
     }
 }

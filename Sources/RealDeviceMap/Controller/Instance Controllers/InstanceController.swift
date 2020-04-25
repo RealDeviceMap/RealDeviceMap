@@ -46,7 +46,7 @@ extension InstanceControllerProto {
         return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
     }
     func accountValid(account: Account) -> Bool {
-        return account.isFailed()
+        return account.level >= minLevel && account.level <= maxLevel && account.isFailed()
     }
 }
 

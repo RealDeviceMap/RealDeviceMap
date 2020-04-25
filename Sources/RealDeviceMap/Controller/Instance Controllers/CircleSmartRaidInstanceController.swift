@@ -210,7 +210,9 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     }
 
     override func accountValid(account: Account) -> Bool {
-        return account.isFailed(ignoringWarning: true)
+        return account.level >= minLevel &&
+            account.level <= maxLevel &&
+            account.isFailed(ignoringWarning: true)
     }
 
 }
