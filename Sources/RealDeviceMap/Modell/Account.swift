@@ -358,7 +358,7 @@ class Account: WebHookEvent {
         } else {
             failedSQL = """
             AND (
-                (failed IS NULL AND first_warning_timestamp is NULL) OR
+                (failed IS NULL AND first_warning_timestamp IS NULL) OR
                 (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
             )
             """
@@ -378,7 +378,7 @@ class Account: WebHookEvent {
             cooldownSQL = """
             AND (
                 last_encounter_time IS NULL OR
-                UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
+                UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
             )
             """
         } else {
@@ -394,7 +394,7 @@ class Account: WebHookEvent {
             WHERE
                 device.uuid IS NULL AND
                 level >= ? AND
-                level <= ? AND
+                level <= ?
                 \(failedSQL)
                 \(spinSQL)
                 \(cooldownSQL)
@@ -402,6 +402,7 @@ class Account: WebHookEvent {
             LIMIT 1
         """
 
+        print(sql)
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLevel)
