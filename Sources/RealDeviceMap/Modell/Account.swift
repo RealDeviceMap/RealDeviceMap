@@ -402,7 +402,6 @@ class Account: WebHookEvent {
             LIMIT 1
         """
 
-        print(sql)
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLevel)
