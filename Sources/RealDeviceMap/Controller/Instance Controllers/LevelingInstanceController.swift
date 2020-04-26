@@ -295,7 +295,7 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                if level >= maxLevel {
+                if level > maxLevel {
                     text += "\(username): Lvl.\(level) done"
                 } else {
                     text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
