@@ -451,6 +451,10 @@ class WebHookRequestHandler {
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
 
+            defer {
+                Threading.destroyQueue(queue)
+            }
+
             if !playerdatas.isEmpty && username != nil {
                 let start = Date()
                 for playerdata in playerdatas {
@@ -686,8 +690,6 @@ class WebHookRequestHandler {
                     }
                 }
             }
-
-            Threading.destroyQueue(queue)
         }
 
     }
