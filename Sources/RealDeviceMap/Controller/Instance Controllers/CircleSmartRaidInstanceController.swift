@@ -28,7 +28,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     private var shouldExit = false
 
     private static let raidInfoBeforeHatch = 120 // 2 min
-    private static let ignoreTime = 150 // 2.5 min
+    private static let ignoreTimeEgg = 150 // 2.5 min
+    private static let ignoreTimeBoss = 60 // 1 min
     private static let noRaidTime = 1800 // 30 min
 
     init(name: String, coords: [Coord], minLevel: UInt8, maxLevel: UInt8) {
@@ -116,19 +117,23 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         smartRaidLock.lock()
         for gymsInPoint in smartRaidGymsInPoint {
             let updated = smartRaidPointsUpdated[gymsInPoint.key]
-            guard updated == nil ||
-                  nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTime
-                  else {
-                continue
-            }
+            let shouldUpdateEgg = (
+                updated == nil ||
+                nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTimeEgg
+            )
+            let shouldUpdateBoss = (
+                updated == nil ||
+                nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTimeBoss
+            )
             for id in gymsInPoint.value {
                 guard let gym = smartRaidGyms[id] else {
                     continue
                 }
-                if gym.raidEndTimestamp == nil ||
-                   nowTimestamp >= Int(gym.raidEndTimestamp!) + CircleSmartRaidInstanceController.noRaidTime {
+                if shouldUpdateEgg && (gym.raidEndTimestamp == nil ||
+                   nowTimestamp >= Int(gym.raidEndTimestamp!) + CircleSmartRaidInstanceController.noRaidTime) {
                     gymsNoRaid.append((gym, updated!, gymsInPoint.key))
-                } else if (gym.raidPokemonId == nil || gym.raidPokemonId == 0) &&
+                } else if shouldUpdateBoss &&
+                          (gym.raidPokemonId == nil || gym.raidPokemonId == 0) &&
                           gym.raidBattleTimestamp != nil &&
                           gym.raidEndTimestamp != nil &&
                           nowTimestamp >= Int(gym.raidBattleTimestamp!) -
