@@ -20,12 +20,12 @@ extension S2LatLng {
 
     func getLoadedS2CellIds() -> [S2CellId] {
         let radius: CLLocationDistance
-        if (lat.degrees <= 39) {
-            radius = 715;
-        } else if (lat.degrees >= 69) {
-            radius = 330;
+        if lat.degrees <= 39 {
+            radius = 715
+        } else if lat.degrees >= 69 {
+            radius = 330
         } else {
-            radius = -13 * lat.degrees + 1225;
+            radius = -13 * lat.degrees + 1225
         }
         let radians = radius / 6378137
         let centerNormalizedPoint = self.normalized.point
