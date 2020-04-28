@@ -19,6 +19,11 @@ let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.work
 let projectroot = Dir.workingDir.path
 #endif
 
+// Starting Startup Webserver
+Log.debug(message: "[MAIN] Starting Startup Webserver")
+var startupServer: HTTPServer.Server? = WebServer.startupServer
+var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
+
 // Check if /backups exists
 let backups = Dir("\(projectroot)/backups")
 #if DEBUG
@@ -232,6 +237,12 @@ try! DiscordController.global.setup()
 // Create Raid images
 Log.debug(message: "[MAIN] Starting Images Generator")
 ImageGenerator.generate()
+
+// Stopping Startup Webserver
+Log.debug(message: "[MAIN] Stopping Startup Webserver")
+startupServerContext!.terminate()
+startupServer = nil
+startupServerContext = nil
 
 Log.debug(message: "[MAIN] Starting Webserves")
 do {

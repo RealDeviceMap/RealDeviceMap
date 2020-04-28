@@ -1066,6 +1066,98 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
+    public static func getConvertiblePokestopsCount(mysql: MySQL?=nil) throws -> Int {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKESTOP] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        SELECT id
+        FROM `pokestop`
+        WHERE id IN (SELECT id FROM `gym`)
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        let results = mysqlStmt.results()
+        return results.numRows
+    }
+
+    public static func getStalePokestopsCount(mysql: MySQL?=nil) throws -> Int {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKESTOP] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        SELECT id
+        FROM `pokestop`
+        WHERE updated < UNIX_TIMESTAMP() - 90000
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        let results = mysqlStmt.results()
+        return results.numRows
+    }
+
+    public static func deleteConvertedPokestops(mysql: MySQL?=nil) throws -> UInt {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKESTOP] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        DELETE FROM `pokestop`
+        WHERE id IN (SELECT id FROM `gym`)
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        return mysqlStmt.affectedRows()
+    }
+
+    public static func deleteStalePokestops(mysql: MySQL?=nil) throws -> UInt {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKESTOP] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        DELETE FROM `pokestop`
+        WHERE updated < UNIX_TIMESTAMP() - 90000
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        return mysqlStmt.affectedRows()
+    }
+
     static func == (lhs: Pokestop, rhs: Pokestop) -> Bool {
         return lhs.id == rhs.id
     }

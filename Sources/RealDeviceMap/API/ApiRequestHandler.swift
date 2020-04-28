@@ -13,6 +13,7 @@ import PerfectMustache
 import PerfectSessionMySQL
 import POGOProtos
 import S2Geometry
+import PerfectThread
 
 class ApiRequestHandler {
 
@@ -216,7 +217,7 @@ class ApiRequestHandler {
             let hugeString = Localizer.global.get(value: "filter_huge")
 
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let generalTypeString = Localizer.global.get(value: "filter_general")
+            let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
@@ -264,10 +265,10 @@ class ApiRequestHandler {
                             "sort": i
                         ],
                         "name": globalIV,
-                        "image": "-",
+                        "image": andOrString,
                         "filter": filter,
                         "size": size,
-                        "type": generalTypeString
+                        "type": globalIVTypeString
                     ])
 
                 }
@@ -1173,7 +1174,6 @@ class ApiRequestHandler {
         if showInstances && perms.contains(.admin) {
 
             let instances = try? Instance.getAll(mysql: mysql)
-
             var jsonArray = [[String: Any]]()
 
             if instances != nil {
@@ -1192,30 +1192,34 @@ class ApiRequestHandler {
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
                         instanceData["type"] = "Pokemon IV"
+                    case .leveling:
+                        instanceData["type"] = "Leveling"
                     }
 
                     if formatted {
-                        let status = InstanceController.global.getInstanceStatus(instance: instance, formatted: true)
+                        let status = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: true
+                        )
                         if let status = status as? String {
                             instanceData["status"] = status
                         } else {
                             instanceData["status"] = "?"
                         }
-                    } else {
-                        instanceData["status"] = InstanceController.global.getInstanceStatus(
-                            instance: instance, formatted: false
-                        ) as Any
-                    }
-
-                    if formatted {
                         instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
                                                   " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                    } else {
+                        instanceData["status"] = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: false
+                        ) as Any
                     }
                     jsonArray.append(instanceData)
                 }
             }
             data["instances"] = jsonArray
-
         }
 
         if showDeviceGroups && perms.contains(.admin) {
@@ -1271,7 +1275,7 @@ class ApiRequestHandler {
 
                         let instanceUUID =
                         "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
-                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a" +
+                        assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignment/start/\(instanceUUID.encodeUrl()!)\" " +
                             "role=\"button\" class=\"btn btn-success\">Start</a>" +
                             "<a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" " +

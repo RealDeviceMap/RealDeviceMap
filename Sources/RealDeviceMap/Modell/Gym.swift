@@ -910,6 +910,28 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
+    public static func convertPokestopsToGyms(mysql: MySQL?=nil) throws -> UInt {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[GYM] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        UPDATE `gym` INNER JOIN `pokestop` ON pokestop.id = gym.id
+        SET gym.name = pokestop.name, gym.url = pokestop.url
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        return mysqlStmt.affectedRows()
+    }
+
     static func == (lhs: Gym, rhs: Gym) -> Bool {
         return lhs.id == rhs.id
     }

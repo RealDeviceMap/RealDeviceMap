@@ -1,0 +1,42 @@
+{{> header}}
+<body>
+
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <div class="alert alert-success w-75 {{^show_success}}d-none{{/show_success}}" style="float: none; margin: 0 auto;">
+        <strong>Success!</strong> {{success}}</a>
+    </div>
+    {{#show_success}}<br>{{/show_success}}
+
+<h1 class="mt-3" align="center">{{title}} Utilities</h1>
+
+<div class="w-75" style="float: none; margin: 0 auto;">
+
+    <div class="card border-dark mt-4">
+        <div class="card-header text-white bg-dark">
+            <h4>Tools</h4>
+        </div>
+        <div class="list-group list-group-flush">
+            <form action="" method="post">
+                <button type="submit" name="action" value="truncate_pokemon" class="list-group-item list-group-item-action list-group-item-danger" 
+                    onclick="return confirm('Are you sure that you want to truncate the `pokemon` table?');">
+                    Truncate Pokemon Table
+                </button>
+                <button type="submit" name="action" value="convert_pokestops" class="list-group-item list-group-item-action list-group-item-warning"
+                    onclick="return confirm('Are you sure that you want to convert {{convertible_pokestops}} Pokestops to Gyms?');">
+                    Convert Pokestops to Gyms {{#convertible_pokestops}}({{convertible_pokestops}}){{/convertible_pokestops}}
+                </button>
+                <button type="submit" name="action" value="delete_stale_pokestops" class="list-group-item list-group-item-action list-group-item-danger"
+                    onclick="return confirm('Are you sure that you want to delete {{stale_pokestops}} stale Pokestops that haven\'t been seen in the last 25 hours?');">
+                    Delete Stale Pokestops {{#stale_pokestops}}({{stale_pokestops}} Not seen last 25 hours){{/stale_pokestops}}
+                </button>
+                <input type="hidden" name="_csrf" value="{{csrf}}">
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>

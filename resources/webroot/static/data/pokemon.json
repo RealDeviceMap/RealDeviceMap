@@ -9418,6 +9418,20 @@
       }
     ]
   },
+  "645":{
+    "name": "Landorus",
+    "rarity":"",
+    "types": [
+      {
+        "type": "Ground",
+        "color": "#e0c068"
+      },
+      {
+        "type": "Flying",
+        "color": "#a890f0"
+      }
+    ]
+  },
   "646":{
     "name": "Kyurem",
     "rarity":"",

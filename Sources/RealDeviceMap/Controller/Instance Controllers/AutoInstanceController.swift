@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import S2Geometry
 
@@ -37,20 +38,10 @@ class AutoInstanceController: InstanceControllerProto {
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
-
-    private static let cooldownDataArray = [
-        0.3: 0.16, 1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 7, 15: 9, 20: 12, 25: 15, 30: 17, 35: 18, 45: 20,
-        50: 20, 60: 21, 70: 23, 80: 24, 90: 25, 100: 26, 125: 29, 150: 32, 175: 34, 201: 37,
-        250: 41, 300: 46, 328: 48, 350: 50, 400: 54, 450: 58,
-        500: 62, 550: 66, 600: 70, 650: 74, 700: 77, 751: 82, 802: 84, 839: 88, 897: 90, 900: 91, 948: 95,
-        1007: 98, 1020: 102, 1100: 104, 1180: 109, 1200: 111, 1221: 113, 1300: 117, 1344: 119,
-        Double(Int.max): 120
-    ].sorted { (lhs, rhs) -> Bool in
-        lhs.key < rhs.key
-    }
+    public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int) {
+         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -58,6 +49,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
         self.spinLimit = spinLimit
+        self.delayLogout = delayLogout
         update()
 
         bootstrap()
@@ -204,18 +196,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    private func encounterCooldown(distM: Double) -> UInt32 {
-
-        let dist = distM / 1000
-
-        for data in AutoInstanceController.cooldownDataArray where data.key >= dist {
-            return UInt32(data.value * 60)
-        }
-        return 0
-
-    }
-
-    func getTask(uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -260,7 +241,8 @@ class AutoInstanceController: InstanceControllerProto {
                         bootstrappLock.unlock()
                     }
 
-                    return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude]
+                    return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude,
+                            "min_level": minLevel, "max_level": maxLevel]
                 } else {
                     bootstrappLock.unlock()
                     return [String: Any]()
@@ -268,11 +250,6 @@ class AutoInstanceController: InstanceControllerProto {
 
             } else {
                 bootstrappLock.unlock()
-
-                guard let mysql = DBController.global.mysql else {
-                    Log.error(message: "[InstanceControllerProto] Failed to connect to database.")
-                    return [String: Any]()
-                }
 
                 stopsLock.lock()
                 if todayStops == nil {
@@ -315,23 +292,16 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 stopsLock.unlock()
 
-                var lastLat: Double?
-                var lastLon: Double?
-                var lastTime: UInt32?
                 var account: Account?
 
                 do {
                     if username != nil, let accountT = try Account.getWithUsername(mysql: mysql, username: username!) {
                         account = accountT
-                        lastLat = accountT.lastEncounterLat
-                        lastLon = accountT.lastEncounterLon
-                        lastTime = accountT.lastEncounterTime
-                    } else {
-                        lastLat = Double(try DBController.global.getValueForKey(key: "AIC_\(uuid)_last_lat") ?? "")
-                        lastLon = Double(try DBController.global.getValueForKey(key: "AIC_\(uuid)_last_lon") ?? "")
-                        lastTime = UInt32(try DBController.global.getValueForKey(key: "AIC_\(uuid)_last_time") ?? "")
                     }
-                } catch { }
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to connect get account.")
+                    return [String: Any]()
+                }
 
                 if username != nil && account != nil {
                     if account!.spins >= spinLimit ||
@@ -343,14 +313,17 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
 
-                let newLon: Double
-                let newLat: Double
-                var encounterTime: UInt32
                 let pokestop: Pokestop
 
-                if lastLat != nil && lastLon != nil {
+                let lastCoord: Coord?
+                do {
+                    lastCoord = try Cooldown.lastLocation(account: account, deviceUUID: uuid)
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to get last location.")
+                    return [String: Any]()
+                }
 
-                    let current = CLLocationCoordinate2D(latitude: lastLat!, longitude: lastLon!)
+                if lastCoord != nil {
 
                     var closest: Pokestop?
                     var closestDistance: Double = 10000000000000000
@@ -362,8 +335,8 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     for stop in todayStopsC! {
-                        let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
-                        let dist = current.distance(to: coord)
+                        let coord = Coord(lat: stop.lat, lon: stop.lon)
+                        let dist = lastCoord!.distance(to: coord)
                         if dist < closestDistance {
                             closest = stop
                             closestDistance = dist
@@ -374,24 +347,7 @@ class AutoInstanceController: InstanceControllerProto {
                          return [String: Any]()
                     }
 
-                    newLon = closest!.lon
-                    newLat = closest!.lat
                     pokestop = closest!
-                    let now = UInt32(Date().timeIntervalSince1970)
-                    if lastTime == nil || lastTime! > now {
-                        encounterTime = now
-                    } else {
-                        let encounterTimeT = lastTime! + encounterCooldown(distM: closestDistance)
-                        if encounterTimeT < now {
-                            encounterTime = now
-                        } else {
-                            encounterTime = encounterTimeT
-                        }
-
-                        if encounterTime - now >= 7200 {
-                            encounterTime = now + 7200
-                        }
-                    }
                     stopsLock.lock()
                     if let index = todayStops!.index(of: pokestop) {
                         todayStops!.remove(at: index)
@@ -400,10 +356,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.lock()
                     if let stop = todayStops!.first {
-                        newLon = stop.lon
-                        newLat = stop.lat
                         pokestop = stop
-                        encounterTime = UInt32(Date().timeIntervalSince1970)
                         _ = todayStops!.removeFirst()
                     } else {
                         stopsLock.unlock()
@@ -420,24 +373,36 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 stopsLock.unlock()
 
-                if username != nil && account != nil {
-                    try? Account.didEncounter(
-                        mysql: mysql, username: username!, lon: newLon, lat: newLat, time: encounterTime
+                let delay: Int
+                let encounterTime: UInt32
+                do {
+                    let result = try Cooldown.cooldown(
+                        account: account,
+                        deviceUUID: uuid,
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon)
                     )
-                } else {
-                    try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lat", value: newLat.description)
-                    try? DBController.global.setValueForKey(key: "AIC_\(uuid)_last_lon", value: newLon.description)
-                    try? DBController.global.setValueForKey(
-                        key: "AIC_\(uuid)_last_time", value: encounterTime.description
-                    )
+                    delay = result.delay
+                    encounterTime = result.encounterTime
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+                    return [String: Any]()
                 }
 
-                let delayT = Int(Date(timeIntervalSince1970: Double(encounterTime)).timeIntervalSinceNow)
-                let delay: Int
-                if delayT < 0 {
-                    delay = 0
-                } else {
-                    delay = delayT + 1
+                if delay >= delayLogout {
+                    return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                }
+
+                do {
+                    try Cooldown.encounter(
+                        mysql: mysql,
+                        account: account,
+                        deviceUUID: uuid,
+                        location: Coord(lat: pokestop.lat, lon: pokestop.lon),
+                        encounterTime: encounterTime
+                  )
+                } catch {
+                    Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+                    return [String: Any]()
                 }
 
                 stopsLock.lock()
@@ -472,14 +437,14 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
 
-                return ["action": "scan_quest", "lat": newLat, "lon": newLon, "delay":
-                        delay, "min_level": minLevel, "max_level": maxLevel]
+                return ["action": "scan_quest", "deploy_egg": false, "lat": pokestop.lat, "lon": pokestop.lon,
+                        "delay": delay, "min_level": minLevel, "max_level": maxLevel]
             }
         }
 
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         switch type {
         case .quest:
             bootstrappLock.lock()
@@ -513,7 +478,7 @@ class AutoInstanceController: InstanceControllerProto {
                 })
                 stopsLock.unlock()
 
-                if let stops = try? Pokestop.getIn(ids: ids) {
+                if let stops = try? Pokestop.getIn(mysql: mysql, ids: ids) {
                     for stop in stops where stop.questType != nil {
                         currentCountDb += 1
                     }
