@@ -116,7 +116,9 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         smartRaidLock.lock()
         for gymsInPoint in smartRaidGymsInPoint {
             let updated = smartRaidPointsUpdated[gymsInPoint.key]
-            guard updated == nil || nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTime else {
+            guard updated == nil ||
+                  nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTime
+                  else {
                 continue
             }
             for id in gymsInPoint.value {
@@ -129,7 +131,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
                 } else if (gym.raidPokemonId == nil || gym.raidPokemonId == 0) &&
                           gym.raidBattleTimestamp != nil &&
                           gym.raidEndTimestamp != nil &&
-                          nowTimestamp >= Int(gym.raidBattleTimestamp!) - CircleSmartRaidInstanceController.raidInfoBeforeHatch &&
+                          nowTimestamp >= Int(gym.raidBattleTimestamp!) -
+                          CircleSmartRaidInstanceController.raidInfoBeforeHatch &&
                           nowTimestamp <= Int(gym.raidEndTimestamp!) {
                     gymsNoBoss.append((gym, updated!, gymsInPoint.key))
                 }
