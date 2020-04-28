@@ -34,6 +34,10 @@ class WebHookRequestHandler {
     private static var emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
+    private static var threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
+    private static var threadLimitLock = Threading.Lock()
+    private static var threadLimitCount: UInt32 = 0
+
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
         let isMadData = request.header(.origin) != nil
@@ -472,6 +476,27 @@ class WebHookRequestHandler {
             guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
                 Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
                 return
+            }
+
+            threadLimitLock.lock()
+            if threadLimitCount >= threadLimitMax {
+                threadLimitLock.unlock()
+                Log.error(
+                    message: "[WebHookRequestHandler] Reached thread limit of \(threadLimitMax) for /raw. " +
+                              "Ignoring request."
+                )
+                return
+            }
+            threadLimitCount += 1
+            Log.info(
+                message: "[WebHookRequestHandler] Processing /raw request. Currently processing: \(threadLimitCount)"
+            )
+            threadLimitLock.unlock()
+
+            defer {
+                threadLimitLock.lock()
+                threadLimitCount -= 1
+                threadLimitLock.unlock()
             }
 
             var gymIdsPerCell = [UInt64: [String]]()
