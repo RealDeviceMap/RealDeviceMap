@@ -1576,7 +1576,7 @@ function loadData () {
         }
       })
     },
-    error: function(xhr, status, error) {
+    error: function(xhr) {
       console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
     },
     complete: function() {
