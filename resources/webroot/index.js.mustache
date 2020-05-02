@@ -2296,7 +2296,7 @@ function getGymPopupContent (gym) {
   const raidEndDate = new Date(gym.raid_end_timestamp * 1000)
 
   const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0
-  const isRaidBattle = raidBattleDate <= now && isRaid
+  const isRaidBattle = (raidBattleDate <= now || (gym.raid_pokemon_id !== null && gym.raid_pokemon_id !== 0)) && isRaid
 
   var gymName = ''
   if (gym.name === null || gym.name === '') {
