@@ -849,8 +849,7 @@ class WebHookRequestHandler {
         } else if type == "account_banned" {
             do {
                 guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let username = device.accountUsername,
+                    let username = username,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                 else {
                     response.respondWithError(status: .internalServerError)
@@ -865,11 +864,28 @@ class WebHookRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if type == "account_suspended" {
+            do {
+                guard
+                    let username = username,
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
+                else {
+                    response.respondWithError(status: .internalServerError)
+                    return
+                }
+                if account.failedTimestamp == nil || account.failed == nil {
+                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                    account.failed = "suspended"
+                    try account.save(mysql: mysql, update: true)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else if type == "account_warning" {
             do {
                 guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let username = device.accountUsername,
+                    let username = username,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
                         response.respondWithError(status: .notFound)

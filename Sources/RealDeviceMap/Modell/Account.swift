@@ -139,7 +139,8 @@ class Account: WebHookEvent {
                 INSERT INTO account (
                     username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat,
                     last_encounter_lon, last_encounter_time, spins, creation_timestamp, warn, warn_expire_timestamp,
-                    warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned, last_used_timestamp
+                    warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned,
+                    last_used_timestamp
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
@@ -388,7 +389,8 @@ class Account: WebHookEvent {
             failedSQL = """
             AND (
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
-                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
             )
             """
         }
@@ -556,7 +558,8 @@ class Account: WebHookEvent {
                 failed_timestamp is NULL and device.uuid IS NULL AND
                 (
                     (failed IS NULL AND first_warning_timestamp is NULL) OR
-                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
                 ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
@@ -756,7 +759,8 @@ class Account: WebHookEvent {
               COUNT(level) as total,
               SUM(
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
-                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP())
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,

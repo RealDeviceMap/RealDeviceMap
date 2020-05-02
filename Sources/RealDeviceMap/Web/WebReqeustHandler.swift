@@ -2864,7 +2864,8 @@ class WebReqeustHandler {
                                     failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
                                     lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
                                     warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-                                    suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil, lastUsedTimestamp: nil))
+                                    suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
+                                    lastUsedTimestamp: nil))
             }
         }
 
