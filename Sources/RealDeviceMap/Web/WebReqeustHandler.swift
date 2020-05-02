@@ -688,7 +688,7 @@ class WebReqeustHandler {
                 data["max_level"] = 29
                 data["timezone_offset"] = 0
                 data["iv_queue_limit"] = 100
-                data["spin_limit"] = 500
+                data["spin_limit"] = 1000
                 data["delay_logout"] = 900
                 data["radius"] = 10000
                 data["store_data"] = false
@@ -1952,7 +1952,7 @@ class WebReqeustHandler {
 
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
         let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
-        let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 500
+        let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 1000
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
         let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
         let storeData = request.param(name: "store_data") == "true"
@@ -2198,7 +2198,7 @@ class WebReqeustHandler {
             data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
-            data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 500
+            data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
             data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900
             data["radius"] = (oldInstance!.data["radius"] as? Int)?.toUInt64() ?? 100000
             data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
