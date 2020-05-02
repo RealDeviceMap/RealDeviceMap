@@ -96,7 +96,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         }
     }
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next function_body_length
     override func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         // Get gyms without raid and gyms without boss where updated ago > ignoreTime
