@@ -1575,7 +1575,11 @@ function loadData () {
           }
         }
       })
-
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    },
+    complete: function() {
       lastUpdate = new Date()
       isLoading = false
     }
