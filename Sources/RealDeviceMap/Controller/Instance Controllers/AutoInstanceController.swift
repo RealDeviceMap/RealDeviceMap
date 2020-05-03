@@ -27,17 +27,19 @@ class AutoInstanceController: InstanceControllerProto {
 
     private var multiPolygon: MultiPolygon
     private var type: AutoType
-    private var stopsLock = Threading.Lock()
+    private let stopsLock = Threading.Lock()
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
     private var todayStopsTries: [Pokestop: UInt8]?
     private var questClearerQueue: ThreadQueue?
     private var timezoneOffset: Int
     private var shouldExit = false
-    private var bootstrappLock = Threading.Lock()
+    private let bootstrappLock = Threading.Lock()
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
+    private let accountsLock = Threading.Lock()
+    private var accounts = [String: String]()
     public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
@@ -367,6 +369,18 @@ class AutoInstanceController: InstanceControllerProto {
                 }
 
                 if delay >= delayLogout {
+                    do {
+                        let account = try getAccount(
+                            mysql: mysql,
+                            uuid: uuid,
+                            encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
+                        )
+                        accountsLock.lock()
+                        accounts[uuid] = account?.username
+                        accountsLock.unlock()
+                    } catch {
+                        Log.error(message: "[InstanceControllerProto] Failed to get account in advance.")
+                    }
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 }
 
@@ -510,15 +524,24 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
-        return try Account.getNewAccount(
-            mysql: mysql,
-            minLevel: minLevel,
-            maxLevel: maxLevel,
-            ignoringWarning: false,
-            spins: spinLimit,
-            noCooldown: true
-        )
+    func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?=nil) throws -> Account? {
+        accountsLock.lock()
+        if let usernane = accounts[uuid] {
+            accounts[uuid] = nil
+            accountsLock.unlock()
+            return try Account.getWithUsername(username: usernane)
+        } else {
+            accountsLock.unlock()
+            return try Account.getNewAccount(
+                mysql: mysql,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                ignoringWarning: false,
+                spins: spinLimit,
+                noCooldown: true,
+                encounterTarget: encounterTarget
+            )
+        }
     }
 
     func accountValid(account: Account) -> Bool {

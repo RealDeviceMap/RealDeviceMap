@@ -371,7 +371,7 @@ class Account: WebHookEvent {
 
     public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
                                      ignoringWarning: Bool=false, spins: Int?=1000,
-                                     noCooldown: Bool=true) throws -> Account? {
+                                     noCooldown: Bool=true, encounterTarget: Coord?=nil) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -406,12 +406,31 @@ class Account: WebHookEvent {
 
         let cooldownSQL: String
         if noCooldown {
-            cooldownSQL = """
-            AND (
-                last_encounter_time IS NULL OR
-                UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
-            )
-            """
+            if encounterTarget != nil {
+                cooldownSQL = """
+                AND (
+                    last_encounter_time IS NULL OR
+                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 OR
+                    (
+                        CAST(last_encounter_time AS SIGNED INTEGER) +
+                        LEAST(
+                            ST_Distance_Sphere(
+                                point(?, ?),
+                                point(last_encounter_lon, last_encounter_lat)
+                            ) / 9.8,
+                            7200
+                        )
+                    ) <= UNIX_TIMESTAMP()
+                )
+                """
+            } else {
+                cooldownSQL = """
+                AND (
+                    last_encounter_time IS NULL OR
+                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
+                )
+                """
+            }
         } else {
             cooldownSQL = ""
         }
@@ -439,6 +458,10 @@ class Account: WebHookEvent {
         mysqlStmt.bindParam(maxLevel)
         if let spins = spins {
             mysqlStmt.bindParam(spins)
+        }
+        if noCooldown, let encounterTarget = encounterTarget {
+            mysqlStmt.bindParam(encounterTarget.lon)
+            mysqlStmt.bindParam(encounterTarget.lat)
         }
 
         guard mysqlStmt.execute() else {
