@@ -20,4 +20,4 @@ VALUES("MAP_START_LON", "11.400476");
 INSERT INTO metadata (`key`, `value`)
 VALUES("MAP_START_ZOOM", "14");
 INSERT INTO metadata (`key`, `value`)
-VALUES("MAP_MAX_POKEMON_ID", "493");
+VALUES("MAP_MAX_POKEMON_ID", "649");
