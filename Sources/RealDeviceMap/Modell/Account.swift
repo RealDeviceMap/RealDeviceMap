@@ -642,7 +642,7 @@ class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE spins >= 500
+            WHERE spins >= 1000
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -793,7 +793,7 @@ class Account: WebHookEvent {
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
               ) as cooldown,
-              SUM(spins >= 500) as spin_limit
+              SUM(spins >= 1000) as spin_limit
             FROM account
             GROUP BY level
             ORDER BY level DESC
