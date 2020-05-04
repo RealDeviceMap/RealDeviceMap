@@ -39,7 +39,9 @@ class WebHookRequestHandler {
     private static var threadLimitCount: UInt32 = 0
 
     private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
-    private static let loginLimitIntervall = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? "") ?? 300
+    private static let loginLimitIntervall = UInt32(
+        ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? ""
+    ) ?? 300
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime: UInt32 = 0
     private static var loginLimitCount: UInt32 = 0
@@ -807,7 +809,9 @@ class WebHookRequestHandler {
                         return
                     }
                     self.loginLimitCount += 1
-                    Log.debug(message: "[WebHookRequestHandler] Login Limit: \(self.loginLimitCount)/\(loginLimit) (\(left)s left)")
+                    Log.debug(message:
+                        "[WebHookRequestHandler] Login Limit: \(self.loginLimitCount)/\(loginLimit) (\(left)s left)"
+                    )
                     self.loginLimitLock.unlock()
                 }
 
