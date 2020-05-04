@@ -120,40 +120,72 @@ class AutoInstanceController: InstanceControllerProto {
 
     private func bootstrap() {
         Log.debug(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
-        let start = Date()
-        var totalCount = 0
-        var missingCellIDs = [S2CellId]()
-        for polygon in multiPolygon.polygons {
-            let cellIDs = polygon.getS2CellIDs(minLevel: 15, maxLevel: 15, maxCells: Int.max)
-            totalCount += cellIDs.count
-            let ids = cellIDs.map({ (id) -> UInt64 in
-                return id.uid
-            })
-            var done = false
-            var cells = [Cell]()
-            while !done {
-                do {
-                    cells = try Cell.getInIDs(ids: ids)
-                    done = true
-                } catch {
-                    Threading.sleep(seconds: 1)
-                }
+
+        let multiPolygonHash = multiPolygon.persistentHash
+        let multiPolygonHashKey = "MultiPolygonS215Cells-\(multiPolygonHash ?? "")"
+        var cachedCellIDs: [UInt64]?
+        do {
+            if multiPolygonHash != nil,
+               let cachedCellsString = try DBController.global.getValueForKey(key: multiPolygonHashKey) {
+                 cachedCellIDs = cachedCellsString.components(separatedBy: ",").map({ (string) -> UInt64 in
+                    return string.toUInt64() ?? 0
+                })
             }
-            for cellID in cellIDs {
-                if !cells.contains(where: { (cell) -> Bool in
-                    return cell.id == cellID.uid
-                }) {
-                    missingCellIDs.append(cellID)
-                }
+        } catch {}
+
+        let start = Date()
+        var allCells = [S2CellId]()
+        var allCellIDs = [UInt64]()
+        if let cachedCellIDs = cachedCellIDs {
+            Log.debug(message: "[AutoInstanceController] [\(name)] Usign Cached Cells...")
+            allCellIDs = cachedCellIDs
+            allCells = allCellIDs.map({ (uid) -> S2CellId in
+                return S2CellId(uid: uid)
+            })
+        } else {
+            Log.debug(message: "[AutoInstanceController] [\(name)] Calculating Cells...")
+            for polygon in multiPolygon.polygons {
+                let cellIDs = polygon.getS2CellIDs(minLevel: 15, maxLevel: 15, maxCells: Int.max)
+                let ids = cellIDs.map({ (id) -> UInt64 in
+                    return id.uid
+                })
+                allCells += cellIDs
+                allCellIDs += ids
+            }
+
+            if multiPolygonHash != nil {
+                let allCellIDsString = allCellIDs.map { (int) -> String in
+                    return int.description
+                }.joined(separator: ",")
+                try? DBController.global.setValueForKey(key: multiPolygonHashKey, value: allCellIDsString)
             }
         }
+
+        var missingCellIDs = [S2CellId]()
+        var done = false
+        while !done {
+            do {
+                let cells = try Cell.getInIDs(ids: allCellIDs)
+                for cellID in allCells {
+                    if !cells.contains(where: { (cell) -> Bool in
+                        return cell.id == cellID.uid
+                    }) {
+                        missingCellIDs.append(cellID)
+                    }
+                }
+                done = true
+            } catch {
+                Threading.sleep(seconds: 1)
+            }
+        }
+
         Log.debug(message:
-            "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) " +
-            "after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
+            "[AutoInstanceController] [\(name)] Bootstrap Status: \(allCells.count - missingCellIDs.count)/" +
+            "\(allCells.count) after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
         )
         bootstrappLock.lock()
         bootstrappCellIDs = missingCellIDs
-        bootstrappTotalCount = totalCount
+        bootstrappTotalCount = allCells.count
         bootstrappLock.unlock()
 
     }
