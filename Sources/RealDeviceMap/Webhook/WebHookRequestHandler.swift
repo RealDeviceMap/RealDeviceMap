@@ -227,7 +227,7 @@ class WebHookRequestHandler {
                 if let gpr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
                     playerdatas.append(gpr)
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed GetPlayerResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetPlayerResponse")
                 }
             } else if method == 101 {
                 if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
@@ -237,25 +237,25 @@ class WebHookRequestHandler {
                     }
                     fortSearch.append(fsr)
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed FortSearchResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortSearchResponse")
                 }
             } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
                 if let enr = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
                     encounters.append(enr)
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed EncounterResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
             } else if method == 104 {
                 if let fdr = try? POGOProtos_Networking_Responses_FortDetailsResponse(serializedData: data) {
                     fortDetails.append(fdr)
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed FortDetailsResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortDetailsResponse")
                 }
             } else if method == 156 {
                 if let ggi = try? POGOProtos_Networking_Responses_GymGetInfoResponse(serializedData: data) {
                     gymInfos.append(ggi)
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed GymGetInfoResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
                 }
             } else if method == 106 {
                 containsGMO = true
@@ -300,14 +300,14 @@ class WebHookRequestHandler {
                             emptyCellsLock.unlock()
                             if count == 3 {
                                 Log.debug(
-                                    message: "[WebHookRequestHandler] Cell \(cell) was empty 3 times in a row. " +
-                                             "Asuming empty."
+                                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cell \(cell) was " +
+                                             "empty 3 times in a row. Asuming empty."
                                 )
                                 cells.append(cell)
                             }
                         }
 
-                        Log.info(message: "[WebHookRequestHandler] GMO is empty.")
+                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] GMO is empty.")
                     } else {
                         for cell in newCells {
                             emptyCellsLock.lock()
@@ -322,7 +322,7 @@ class WebHookRequestHandler {
                         clientWeathers += newClientWeathers
                     }
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] Malformed GetMapObjectsResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
             }
         }
@@ -484,12 +484,12 @@ class WebHookRequestHandler {
                         try? account!.save(mysql: mysql, update: true)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Player Detail parsed in " +
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Player Detail parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
             }
 
             guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
-                Log.info(message: "[WebHookRequestHandler] Ignoring data for \(uuid ?? "?")")
+                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignoring data for \(uuid ?? "?")")
                 return
             }
 
@@ -497,14 +497,15 @@ class WebHookRequestHandler {
             if threadLimitCount >= threadLimitMax {
                 threadLimitLock.unlock()
                 Log.error(
-                    message: "[WebHookRequestHandler] Reached thread limit of \(threadLimitMax) for /raw. " +
-                              "Ignoring request."
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Reached thread limit of \(threadLimitMax) " +
+                              "for /raw. Ignoring request."
                 )
                 return
             }
             threadLimitCount += 1
             Log.info(
-                message: "[WebHookRequestHandler] Processing /raw request. Currently processing: \(threadLimitCount)"
+                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Processing /raw request. " +
+                         "Currently processing: \(threadLimitCount)"
             )
             threadLimitLock.unlock()
 
@@ -544,8 +545,10 @@ class WebHookRequestHandler {
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
                 try? weather.save(mysql: mysql, update: true)
             }
-            Log.debug(message: "[WebHookRequestHandler] Weather Detail Count: \(clientWeathers.count) " +
-                               "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s")
+            Log.debug(
+                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
+                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
+            )
 
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
@@ -553,8 +556,10 @@ class WebHookRequestHandler {
                                       timestampMs: wildPokemon.timestampMs, username: username)
                 try? pokemon.save(mysql: mysql)
             }
-            Log.debug(message: "[WebHookRequestHandler] Pokemon Count: \(wildPokemons.count) parsed in " +
-                               "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s")
+            Log.debug(
+                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed in " +
+                         "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
+            )
 
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
@@ -562,8 +567,10 @@ class WebHookRequestHandler {
                                            cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
-            Log.debug(message: "[WebHookRequestHandler] NearbyPokemon Count: \(nearbyPokemons.count) parsed in " +
-                               "\(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s")
+            Log.debug(
+                message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
+                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
+            )
 
             let startForts = Date()
             for fort in forts {
@@ -583,7 +590,7 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            Log.debug(message: "[WebHookRequestHandler] Forts Count: \(forts.count) parsed in " +
+            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
                                "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
 
             if !fortDetails.isEmpty {
@@ -613,8 +620,10 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in " +
-                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if !gymInfos.isEmpty {
@@ -631,8 +640,10 @@ class WebHookRequestHandler {
                         try? gym!.save(mysql: mysql)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Forts Detail Count: \(fortDetails.count) parsed in " +
-                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if !quests.isEmpty {
@@ -649,8 +660,10 @@ class WebHookRequestHandler {
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Quest Count: \(quests.count) parsed in " +
-                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if !encounters.isEmpty {
@@ -687,21 +700,23 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                Log.debug(message: "[WebHookRequestHandler] Encounter Count: \(encounters.count) parsed in " +
-                                   "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if enableClearing {
                 for gymId in gymIdsPerCell {
                     if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key),
                        cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Gyms.")
+                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Gyms.")
                     }
                 }
                 for stopId in stopsIdsPerCell {
                     if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key),
                        cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] Cleared \(cleared) old Pokestops.")
+                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Pokestops.")
                     }
                 }
             }
@@ -731,7 +746,7 @@ class WebHookRequestHandler {
         let username = jsonO?["username"] as? String
 
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
@@ -806,7 +821,7 @@ class WebHookRequestHandler {
                 } else {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                           else {
-                        Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                        Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
                     }
@@ -815,31 +830,30 @@ class WebHookRequestHandler {
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
 
-                if username != account.username {
-                    if let loginLimit = self.loginLimit {
-                        let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
-                        let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
-                        self.loginLimitLock.lock()
-                        if self.loginLimitTime[host] != currentTime {
-                            self.loginLimitTime[host] = currentTime
-                            self.loginLimitCount[host] = 0
-                        }
-                        guard self.loginLimitCount[host]! < loginLimit else {
-                            self.loginLimitLock.unlock()
-                            Log.info(
-                                message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)"
-                            )
-                            response.addHeader(.retryAfter, value: "\(left)")
-                            response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
-                            return
-                        }
-                        self.loginLimitCount[host]! += 1
-                        Log.debug(
-                            message: "[WebHookRequestHandler] Login Limit for \(host): " +
-                                     "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
-                        )
-                        self.loginLimitLock.unlock()
+                if username != account.username, let loginLimit = self.loginLimit {
+                    let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
+                    let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
+                    self.loginLimitLock.lock()
+                    if self.loginLimitTime[host] != currentTime {
+                        self.loginLimitTime[host] = currentTime
+                        self.loginLimitCount[host] = 0
                     }
+                    guard self.loginLimitCount[host]! < loginLimit else {
+                        self.loginLimitLock.unlock()
+                        Log.info(
+                            message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
+                                     "exceeded (\(left)s left)"
+                        )
+                        response.addHeader(.retryAfter, value: "\(left)")
+                        response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
+                        return
+                    }
+                    self.loginLimitCount[host]! += 1
+                    Log.debug(
+                        message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
+                                 "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
+                    )
+                    self.loginLimitLock.unlock()
                 }
                 try response.respondWithData(data: [
                     "username": account.username,
@@ -957,7 +971,7 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
         } else {
-            Log.debug(message: "[WebHookRequestHandler] Unhandled Request: \(type)")
+            Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Unhandled Request: \(type)")
             response.respondWithError(status: .badRequest)
         }
 
