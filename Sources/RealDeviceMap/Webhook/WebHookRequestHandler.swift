@@ -794,51 +794,50 @@ class WebHookRequestHandler {
             }
         } else if type == "get_account" {
             do {
-
-                if let loginLimit = self.loginLimit {
-                    let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
-                    let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
-                    self.loginLimitLock.lock()
-                    if self.loginLimitTime[host] != currentTime {
-                        self.loginLimitTime[host] = currentTime
-                        self.loginLimitCount[host] = 0
-                    }
-                    guard self.loginLimitCount[host]! < loginLimit else {
-                        self.loginLimitLock.unlock()
-                        Log.info(message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)")
-                        response.addHeader(.retryAfter, value: "\(left)")
-                        response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
-                        return
-                    }
-                    self.loginLimitCount[host]! += 1
-                    Log.debug(
-                        message: "[WebHookRequestHandler] Login Limit for \(host): " +
-                                 "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
-                    )
-                    self.loginLimitLock.unlock()
-                }
-
                 guard let device = try Device.getById(mysql: mysql, id: uuid) else {
                     response.respondWithError(status: .notFound)
                     return
                 }
+                let account: Account
                 if device.accountUsername != nil,
                    let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
                    oldAccount.failed == nil {
-                    try response.respondWithData(data: [
-                        "username": oldAccount.username,
-                        "password": oldAccount.password,
-                        "first_warning_timestamp": oldAccount.firstWarningTimestamp as Any
-                    ])
-                    return
-                }
-                guard let account = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
-                    Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
-                    response.respondWithError(status: .notFound)
-                    return
+                    account = oldAccount
+                } else {
+                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                        Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                        response.respondWithError(status: .notFound)
+                        return
+                    }
+                    account = newAccount
                 }
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
+
+                if username != account.username {
+                    if let loginLimit = self.loginLimit {
+                        let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
+                        let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
+                        self.loginLimitLock.lock()
+                        if self.loginLimitTime[host] != currentTime {
+                            self.loginLimitTime[host] = currentTime
+                            self.loginLimitCount[host] = 0
+                        }
+                        guard self.loginLimitCount[host]! < loginLimit else {
+                            self.loginLimitLock.unlock()
+                            Log.info(message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)")
+                            response.addHeader(.retryAfter, value: "\(left)")
+                            response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
+                            return
+                        }
+                        self.loginLimitCount[host]! += 1
+                        Log.debug(
+                            message: "[WebHookRequestHandler] Login Limit for \(host): " +
+                                     "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
+                        )
+                        self.loginLimitLock.unlock()
+                    }
+                }
                 try response.respondWithData(data: [
                     "username": account.username,
                     "password": account.password,
