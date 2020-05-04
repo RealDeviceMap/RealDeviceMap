@@ -75,13 +75,13 @@ class InstanceController {
                     Log.debug(message: "[InstanceController] Starting \(instance.name)...")
                     global.addInstance(instance: instance)
                     Log.debug(message: "[InstanceController] Started \(instance.name)")
+                    for device in devices where device.instanceName == instance.name {
+                        global.addDevice(device: device)
+                    }
                     dispatchGroup.leave()
                 }
             }
             dispatchGroup.wait()
-            for device in devices {
-                global.addDevice(device: device)
-            }
             Log.debug(message: "[InstanceController] Done starting instances")
         }
 
