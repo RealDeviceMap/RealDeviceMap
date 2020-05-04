@@ -804,7 +804,8 @@ class WebHookRequestHandler {
                    oldAccount.failed == nil {
                     account = oldAccount
                 } else {
-                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
+                          else {
                         Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
@@ -825,7 +826,9 @@ class WebHookRequestHandler {
                         }
                         guard self.loginLimitCount[host]! < loginLimit else {
                             self.loginLimitLock.unlock()
-                            Log.info(message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)")
+                            Log.info(
+                                message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)"
+                            )
                             response.addHeader(.retryAfter, value: "\(left)")
                             response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
                             return
