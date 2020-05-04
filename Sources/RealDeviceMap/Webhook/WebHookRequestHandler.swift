@@ -43,10 +43,17 @@ class WebHookRequestHandler {
         ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? ""
     ) ?? 300
     private static let loginLimitLock = Threading.Lock()
-    private static var loginLimitTime: UInt32 = 0
-    private static var loginLimitCount: UInt32 = 0
+    private static var loginLimitTime = [String: UInt32]()
+    private static var loginLimitCount = [String: UInt32]()
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
+
+        let host: String
+        if let remoteAddress = request.connection.remoteAddress {
+            host = remoteAddress.host + ":" + remoteAddress.port.description
+        } else {
+            host = "?"
+        }
 
         let isMadData = request.header(.origin) != nil
 
@@ -96,14 +103,14 @@ class WebHookRequestHandler {
 
         switch type {
         case .controler:
-            controlerHandler(request: request, response: response)
+            controlerHandler(request: request, response: response, host: host)
         case .raw:
-            rawHandler(request: request, response: response)
+            rawHandler(request: request, response: response, host: host)
         }
 
     }
 
-    static func rawHandler(request: HTTPRequest, response: HTTPResponse) {
+    static func rawHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
 
         let json: [String: Any]
         let isMadData = request.header(.origin) != nil
@@ -161,7 +168,7 @@ class WebHookRequestHandler {
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
-            try? Device.setLastLocation(mysql: mysql, uuid: uuid!, lat: latTarget!, lon: lonTarget!)
+            try? Device.setLastLocation(mysql: mysql, uuid: uuid!, lat: latTarget!, lon: lonTarget!, host: host)
         }
 
         let pokemonEncounterId = json["pokemon_encounter_id"] as? String
@@ -702,7 +709,7 @@ class WebHookRequestHandler {
 
     }
 
-    static func controlerHandler(request: HTTPRequest, response: HTTPResponse) {
+    static func controlerHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
 
         let jsonO: [String: Any]?
         let typeO: String?
@@ -766,12 +773,6 @@ class WebHookRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
         } else if type == "heartbeat" {
-            let host: String
-            if let remoteAddress = request.connection.remoteAddress {
-                host = remoteAddress.host + ":" + remoteAddress.port.description
-            } else {
-                host = "?"
-            }
             do {
                 try Device.touch(mysql: mysql, uuid: uuid, host: host)
                 response.respondWithOk()
@@ -797,20 +798,21 @@ class WebHookRequestHandler {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
                     self.loginLimitLock.lock()
-                    if self.loginLimitTime != currentTime {
-                        self.loginLimitTime = currentTime
-                        self.loginLimitCount = 0
+                    if self.loginLimitTime[host] != currentTime {
+                        self.loginLimitTime[host] = currentTime
+                        self.loginLimitCount[host] = 0
                     }
-                    guard self.loginLimitCount < loginLimit else {
+                    guard self.loginLimitCount[host]! < loginLimit else {
                         self.loginLimitLock.unlock()
-                        Log.info(message: "[WebHookRequestHandler] Login Limit: exceeded (\(left)s left)")
+                        Log.info(message: "[WebHookRequestHandler] Login Limit for \(host): exceeded (\(left)s left)")
                         response.addHeader(.retryAfter, value: "\(left)")
                         response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
                         return
                     }
-                    self.loginLimitCount += 1
-                    Log.debug(message:
-                        "[WebHookRequestHandler] Login Limit: \(self.loginLimitCount)/\(loginLimit) (\(left)s left)"
+                    self.loginLimitCount[host]! += 1
+                    Log.debug(
+                        message: "[WebHookRequestHandler] Login Limit for \(host): " +
+                                 "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
                     )
                     self.loginLimitLock.unlock()
                 }
