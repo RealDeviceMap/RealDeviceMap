@@ -9,6 +9,7 @@
 <script>
     $(document).ready(function() {
         const table = $('#table').DataTable( {
+            "stateSave": true,
             "ajax": {
             "url": "/api/get_data?show_ivqueue=true&formatted=true&instance={{instance_name_url}}",
                 "dataSrc": "data.ivqueue"
