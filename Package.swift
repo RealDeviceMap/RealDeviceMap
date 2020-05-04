@@ -4,11 +4,6 @@ import PackageDescription
 
 let package = Package(
     name: "RealDeviceMap",
-    #if os(macOS)
-    platforms: [
-        .macOS(.v10_13)
-    ]
-    #endif
     products: [],
     dependencies: [
         .package(url: "https://github.com/PerfectlySoft/Perfect-HTTPServer.git", .upToNextMinor(from: "3.0.22")),
