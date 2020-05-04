@@ -794,6 +794,7 @@ class WebHookRequestHandler {
             }
         } else if type == "get_account" {
             do {
+
                 if let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
