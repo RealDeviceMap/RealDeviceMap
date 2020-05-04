@@ -1,6 +1,6 @@
 //
 //  PersistentHashable.swift
-//  SwiftTileserverCache
+//  RealDeviceMap
 //
 //  Created by Florian Kostenzer on 04.03.20.
 //
