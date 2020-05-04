@@ -50,7 +50,7 @@ class WebHookRequestHandler {
 
         let host: String
         if let remoteAddress = request.connection.remoteAddress {
-            host = remoteAddress.host + ":" + remoteAddress.port.description
+            host = remoteAddress.host
         } else {
             host = "?"
         }
