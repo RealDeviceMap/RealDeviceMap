@@ -28,15 +28,21 @@ class WebHookRequestHandler {
 
     private static var limiter = LoginLimiter()
 
-    private static var levelCacheLock = Threading.Lock()
+    private static let levelCacheLock = Threading.Lock()
     private static var levelCache = [String: Int]()
 
-    private static var emptyCellsLock = Threading.Lock()
+    private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
-    private static var threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
-    private static var threadLimitLock = Threading.Lock()
+    private static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
+    private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
+
+    private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
+    private static let loginLimitIntervall = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? "") ?? 300
+    private static let loginLimitLock = Threading.Lock()
+    private static var loginLimitTime: UInt32 = 0
+    private static var loginLimitCount: UInt32 = 0
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
@@ -785,6 +791,26 @@ class WebHookRequestHandler {
             }
         } else if type == "get_account" {
             do {
+                if let loginLimit = self.loginLimit {
+                    let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
+                    let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
+                    self.loginLimitLock.lock()
+                    if self.loginLimitTime != currentTime {
+                        self.loginLimitTime = currentTime
+                        self.loginLimitCount = 0
+                    }
+                    guard self.loginLimitCount < loginLimit else {
+                        self.loginLimitLock.unlock()
+                        Log.info(message: "[WebHookRequestHandler] Login Limit: exceeded (\(left)s left)")
+                        response.addHeader(.retryAfter, value: "\(left)")
+                        response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
+                        return
+                    }
+                    self.loginLimitCount += 1
+                    Log.debug(message: "[WebHookRequestHandler] Login Limit: \(self.loginLimitCount)/\(loginLimit) (\(left)s left)")
+                    self.loginLimitLock.unlock()
+                }
+
                 guard let device = try Device.getById(mysql: mysql, id: uuid) else {
                     response.respondWithError(status: .notFound)
                     return
