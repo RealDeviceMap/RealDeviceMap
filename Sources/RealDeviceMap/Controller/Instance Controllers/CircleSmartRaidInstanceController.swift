@@ -28,7 +28,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     private var shouldExit = false
 
     private static let raidInfoBeforeHatch = 120 // 2 min
-    private static let ignoreTime = 150 // 2.5 min
+    private static let ignoreTimeEgg = 150 // 2.5 min
+    private static let ignoreTimeBoss = 60 // 1 min
     private static let noRaidTime = 1800 // 30 min
 
     init(name: String, coords: [Coord], minLevel: UInt8, maxLevel: UInt8) {
@@ -36,17 +37,9 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
 
         for point in coords {
 
-            // Get all cells rouching a 630m (-5m for error) circle at center
             let coord = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
-            let radians = 0.00009799064306948 // 625m
-            let centerNormalizedPoint = S2LatLng(coord: coord).normalized.point
-            let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
-            let coverer = S2RegionCoverer()
-            coverer.maxCells = 100
-            coverer.maxLevel = 15
-            coverer.minLevel = 15
-            let cellIDs = coverer.getCovering(region: circle).map { (cell) -> UInt64 in
-                cell.uid
+            let cellIDs = S2LatLng(coord: coord).getLoadedS2CellIds().map { (cell) -> UInt64 in
+                return cell.uid
             }
 
             var loaded = false
@@ -120,25 +113,33 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         // Get gyms without raid and gyms without boss where updated ago > ignoreTime
         var gymsNoRaid = [(Gym, Date, Coord)]()
         var gymsNoBoss = [(Gym, Date, Coord)]()
+        let nowTimestamp = Int(Date().timeIntervalSince1970)
         smartRaidLock.lock()
         for gymsInPoint in smartRaidGymsInPoint {
             let updated = smartRaidPointsUpdated[gymsInPoint.key]
-
-            let nowTimestamp = Int(Date().timeIntervalSince1970)
-            if updated == nil ||
-              nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTime {
-                for id in gymsInPoint.value {
-                    if let gym = smartRaidGyms[id] {
-                        if gym.raidEndTimestamp == nil ||
-                            nowTimestamp >= Int(gym.raidEndTimestamp!) + CircleSmartRaidInstanceController.noRaidTime {
-                            gymsNoRaid.append((gym, updated!, gymsInPoint.key))
-                        } else if gym.raidPokemonId == nil &&
-                                  gym.raidBattleTimestamp != nil &&
-                                  nowTimestamp >= Int(gym.raidBattleTimestamp!) -
-                                  CircleSmartRaidInstanceController.raidInfoBeforeHatch {
-                            gymsNoBoss.append((gym, updated!, gymsInPoint.key))
-                        }
-                    }
+            let shouldUpdateEgg = (
+                updated == nil ||
+                nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTimeEgg
+            )
+            let shouldUpdateBoss = (
+                updated == nil ||
+                nowTimestamp >= Int(updated!.timeIntervalSince1970) + CircleSmartRaidInstanceController.ignoreTimeBoss
+            )
+            for id in gymsInPoint.value {
+                guard let gym = smartRaidGyms[id] else {
+                    continue
+                }
+                if shouldUpdateEgg && (gym.raidEndTimestamp == nil ||
+                   nowTimestamp >= Int(gym.raidEndTimestamp!) + CircleSmartRaidInstanceController.noRaidTime) {
+                    gymsNoRaid.append((gym, updated!, gymsInPoint.key))
+                } else if shouldUpdateBoss &&
+                          (gym.raidPokemonId == nil || gym.raidPokemonId == 0) &&
+                          gym.raidBattleTimestamp != nil &&
+                          gym.raidEndTimestamp != nil &&
+                          nowTimestamp >= Int(gym.raidBattleTimestamp!) -
+                          CircleSmartRaidInstanceController.raidInfoBeforeHatch &&
+                          nowTimestamp <= Int(gym.raidEndTimestamp!) {
+                    gymsNoBoss.append((gym, updated!, gymsInPoint.key))
                 }
             }
         }
@@ -166,7 +167,6 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         if coord == nil {
             return [String: Any]()
         } else {
-
             self.statsLock.lock()
             if self.startDate == nil {
                 self.startDate = Date()
