@@ -834,11 +834,14 @@ class WebHookRequestHandler {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
                     self.loginLimitLock.lock()
+                    let currentCount: UInt32
                     if self.loginLimitTime[host] != currentTime {
                         self.loginLimitTime[host] = currentTime
-                        self.loginLimitCount[host] = 0
+                        currentCount = 0
+                    } else {
+                        currentCount = self.loginLimitCount[host] ?? 0
                     }
-                    guard self.loginLimitCount[host]! < loginLimit else {
+                    guard currentCount < loginLimit else {
                         self.loginLimitLock.unlock()
                         Log.info(
                             message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
@@ -848,10 +851,10 @@ class WebHookRequestHandler {
                         response.respondWithError(status: .custom(code: 429, message: "Login Limit exceeded"))
                         return
                     }
-                    self.loginLimitCount[host]! += 1
+                    self.loginLimitCount[host] = currentCount + 1
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
-                                 "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
+                                 "\(currentCount)/\(loginLimit) (\(left)s left)"
                     )
                     self.loginLimitLock.unlock()
                 }
