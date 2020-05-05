@@ -9,6 +9,7 @@
 <script>
     $(document).ready(function() {
         $('#table').DataTable( {
+            "stateSave": true,
             "ajax": {
                 "url": "/api/get_data?show_assignments=true&formatted=true",
                 "dataSrc": "data.assignments"
