@@ -285,7 +285,7 @@ class DBController {
                     }
                 }
 
-                Log.debug(message: "[DBController] Creating backup \(uuidString)")
+                Log.info(message: "[DBController] Creating backup \(uuidString)")
                 #if os(macOS)
                 let mysqldumpCommand = "/usr/local/opt/mysql@5.7/bin/mysqldump"
                 #else
@@ -404,7 +404,7 @@ class DBController {
         let mysqlCommand = "/usr/bin/mysql"
         #endif
 
-        Log.debug(message: "[DBController] Executing Schema backup...")
+        Log.info(message: "[DBController] Executing Schema backup...")
         //  swiftlint:disable:next line_length
         let commandSchema = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileSchema.path)")
         if let result = commandSchema.runError(),
@@ -414,10 +414,10 @@ class DBController {
                ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
             Log.error(message: "[DBController] Executing Schema backup failed: \(result)")
         } else {
-            Log.debug(message: "[DBController] Executing Schema backup done")
+            Log.info(message: "[DBController] Executing Schema backup done")
         }
 
-        Log.debug(message: "[DBController] Executing Trigger backup...")
+        Log.info(message: "[DBController] Executing Trigger backup...")
         //  swiftlint:disable:next line_length
         let commandTrigger = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileTrigger.path)")
         if let result = commandTrigger.runError(),
@@ -427,10 +427,10 @@ class DBController {
            ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
             Log.error(message: "[DBController] Executing Trigger backup failed: \(result)")
         } else {
-            Log.debug(message: "[DBController] Executing Trigger backup done")
+            Log.info(message: "[DBController] Executing Trigger backup done")
         }
 
-        Log.debug(message: "[DBController] Executing Data backup...")
+        Log.info(message: "[DBController] Executing Data backup...")
         //  swiftlint:disable:next line_length
         let commandData = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileData.path)")
         if let result = commandData.runError(),
@@ -440,7 +440,7 @@ class DBController {
            ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
             Log.error(message: "[DBController] Executing Data backup failed: \(result)")
         } else {
-            Log.debug(message: "[DBController] Executing Data backup done")
+            Log.info(message: "[DBController] Executing Data backup done")
         }
 
         Log.info(message: "[DBController] Database restored successfully!")

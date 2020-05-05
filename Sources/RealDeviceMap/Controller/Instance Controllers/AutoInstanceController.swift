@@ -90,12 +90,12 @@ class AutoInstanceController: InstanceControllerProto {
                             continue
                         }
 
-                        Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids")
+                        Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids.")
                         let ids = self.allStops!.map({ (stop) -> String in
                             return stop.id
                         })
                         var done = false
-                        Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests for ids: \(ids).")
+                        Log.info(message: "[AutoInstanceController] [\(name)] Clearing Quests.")
                         while !done {
                             do {
                                 try Pokestop.clearQuests(ids: ids)
@@ -119,7 +119,7 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     private func bootstrap() {
-        Log.debug(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
+        Log.info(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
         let start = Date()
         var totalCount = 0
         var missingCellIDs = [S2CellId]()
@@ -147,7 +147,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         }
-        Log.debug(message:
+        Log.info(message:
             "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) " +
             "after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
         )

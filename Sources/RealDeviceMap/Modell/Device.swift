@@ -214,7 +214,7 @@ class Device: JSONConvertibleObject, Hashable {
                       accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon, deviceGroup: deviceGroup)
     }
 
-    public static func setLastLocation(mysql: MySQL?=nil, uuid: String, lat: Double, lon: Double) throws {
+    public static func setLastLocation(mysql: MySQL?=nil, uuid: String, lat: Double, lon: Double, host: String) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[DEVICE] Failed to connect to database.")
             throw DBController.DBError()
@@ -223,12 +223,13 @@ class Device: JSONConvertibleObject, Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET last_lat = ?, last_lon = ?, last_seen = UNIX_TIMESTAMP()
+                SET last_lat = ?, last_lon = ?, last_seen = UNIX_TIMESTAMP(), last_host = ?
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
+        mysqlStmt.bindParam(host)
         mysqlStmt.bindParam(uuid)
 
         guard mysqlStmt.execute() else {

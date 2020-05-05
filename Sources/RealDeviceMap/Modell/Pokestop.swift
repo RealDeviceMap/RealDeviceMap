@@ -993,7 +993,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        Log.debug(message: "SQL: \(sql)")
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
