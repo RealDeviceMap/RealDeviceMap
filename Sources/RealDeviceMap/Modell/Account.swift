@@ -391,7 +391,8 @@ class Account: WebHookEvent {
             failedSQL = """
             AND (
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
-                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp != 0 AND  <= UNIX_TIMESTAMP()) OR
+                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                 warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                 (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
             )
             """

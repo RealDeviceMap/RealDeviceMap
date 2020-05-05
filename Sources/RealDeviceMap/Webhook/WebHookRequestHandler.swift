@@ -820,7 +820,7 @@ class WebHookRequestHandler {
                     } else {
                         Log.debug(
                             message: "[WebHookRequestHandler] Previously Assigned Account \(oldAccount.username) not " +
-                                     "valid for Instance \(device.instanceName ?? "None"). Switching Account."
+                                     "valid for Instance \(device.instanceName ?? "None"). Getting new Account."
                         )
                     }
                 }
