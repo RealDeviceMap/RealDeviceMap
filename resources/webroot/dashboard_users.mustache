@@ -9,6 +9,7 @@
 <script>
     $(document).ready(function() {
         const table = $('#table').DataTable( {
+            "stateSave": true,
             "ajax": {
                 "url": "/api/get_data?show_users=true&formatted=true",
                 "dataSrc": "data.users"
