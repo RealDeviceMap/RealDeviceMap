@@ -2858,8 +2858,8 @@ class WebReqeustHandler {
         for accountsRow in accountsRows {
             let rowSplit = accountsRow.components(separatedBy: ",")
             if rowSplit.count == 2 {
-                let username = rowSplit[0]
-                let password = rowSplit[1]
+                let username = rowSplit[0].trimmingCharacters(in: .whitespaces)
+                let password = rowSplit[1].trimmingCharacters(in: .whitespaces)
                 accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil,
                                     failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
                                     lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
