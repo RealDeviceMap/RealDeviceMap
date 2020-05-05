@@ -13,6 +13,15 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
+let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
+extension Log {
+    public static func debug(message: @autoclosure () -> String) {
+        if logDebug {
+            Log.logger.debug(message: message(), true)
+        }
+    }
+}
+
 #if DEBUG
 let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.workingDir.path
 #else
@@ -20,7 +29,7 @@ let projectroot = Dir.workingDir.path
 #endif
 
 // Starting Startup Webserver
-Log.debug(message: "[MAIN] Starting Startup Webserver")
+Log.info(message: "[MAIN] Starting Startup Webserver")
 var startupServer: HTTPServer.Server? = WebServer.startupServer
 var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
 
@@ -36,11 +45,11 @@ if !backups.exists {
 }
 
 // Init DBController
-Log.debug(message: "[MAIN] Starting Database Controller")
+Log.info(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
 
 // Load Groups
-Log.debug(message: "[MAIN] Loading groups")
+Log.info(message: "[MAIN] Loading groups")
 do {
     try Group.setup()
 } catch {
@@ -50,7 +59,7 @@ do {
 }
 
 // Load timezone
-Log.debug(message: "[MAIN] Loading Timezone")
+Log.info(message: "[MAIN] Loading Timezone")
 if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
     let sign = result.substring(toIndex: 1)
     if let hours = Int(result.substring(toIndex: 3).substring(fromIndex: 1)),
@@ -68,7 +77,7 @@ if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with:
 }
 
 // Load Settings
-Log.debug(message: "[MAIN] Loading Settings")
+Log.info(message: "[MAIN] Loading Settings")
 WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
 WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
 WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
@@ -158,7 +167,7 @@ if let webhookDelay = Double(webhookDelayString) {
 
 // Init Instance Contoller
 do {
-    Log.debug(message: "[MAIN] Starting Instance Controller")
+    Log.info(message: "[MAIN] Starting Instance Controller")
     try InstanceController.setup()
 } catch {
     let message = "[MAIN] Failed to setup InstanceController"
@@ -167,11 +176,11 @@ do {
 }
 
 // Start WebHookController
-Log.debug(message: "[MAIN] Starting Webhook Controller")
+Log.info(message: "[MAIN] Starting Webhook Controller")
 WebHookController.global.start()
 
 // Load Forms
-Log.debug(message: "[MAIN] Loading Avilable Forms")
+Log.info(message: "[MAIN] Loading Avilable Forms")
 var avilableForms = [String]()
 do {
     try Dir("\(projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
@@ -185,20 +194,20 @@ do {
     Log.error(message: "Failed to load forms. Frontend will only display default forms. Error: \(error)")
 }
 
-Log.debug(message: "[MAIN] Loading Avilable Items")
+Log.info(message: "[MAIN] Loading Avilable Items")
 var aviableItems = [-3, -2, -1]
 for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
     aviableItems.append(itemId.rawValue)
 }
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
-Log.debug(message: "[MAIN] Starting Webhook")
+Log.info(message: "[MAIN] Starting Webhook")
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
-Log.debug(message: "[MAIN] Starting Account Controller")
+Log.info(message: "[MAIN] Starting Account Controller")
 AccountController.global.setup()
 
-Log.debug(message: "[MAIN] Starting Assignement Controller")
+Log.info(message: "[MAIN] Starting Assignement Controller")
 do {
     try AssignmentController.global.setup()
 } catch {
@@ -208,7 +217,7 @@ do {
 }
 
 // Check if is setup
-Log.debug(message: "[MAIN] Checking if setup is completed")
+Log.info(message: "[MAIN] Checking if setup is completed")
 let isSetup: String?
 do {
     isSetup = try DBController.global.getValueForKey(key: "IS_SETUP")
@@ -223,28 +232,28 @@ if isSetup != nil && isSetup == "true" {
 } else {
     WebReqeustHandler.isSetup = false
     WebReqeustHandler.accessToken = URandom().secureToken
-    Log.debug(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
+    Log.info(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
 }
 
 // Start MailController
-Log.debug(message: "[MAIL] Starting Mail Controller")
+Log.info(message: "[MAIL] Starting Mail Controller")
 try! MailController.global.setup()
 
 // Start DiscordController
-Log.debug(message: "[MAIL] Starting Discord Controller")
+Log.info(message: "[MAIL] Starting Discord Controller")
 try! DiscordController.global.setup()
 
 // Create Raid images
-Log.debug(message: "[MAIN] Starting Images Generator")
+Log.info(message: "[MAIN] Starting Images Generator")
 ImageGenerator.generate()
 
 // Stopping Startup Webserver
-Log.debug(message: "[MAIN] Stopping Startup Webserver")
+Log.info(message: "[MAIN] Stopping Startup Webserver")
 startupServerContext!.terminate()
 startupServer = nil
 startupServerContext = nil
 
-Log.debug(message: "[MAIN] Starting Webserves")
+Log.info(message: "[MAIN] Starting Webserves")
 do {
     try HTTPServer.launch(
         [

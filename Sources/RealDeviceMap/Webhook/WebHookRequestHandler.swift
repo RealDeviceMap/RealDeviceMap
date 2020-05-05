@@ -307,7 +307,7 @@ class WebHookRequestHandler {
                             }
                         }
 
-                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] GMO is empty.")
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] GMO is empty.")
                     } else {
                         for cell in newCells {
                             emptyCellsLock.lock()
@@ -489,14 +489,14 @@ class WebHookRequestHandler {
             }
 
             guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
-                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignoring data for \(uuid ?? "?")")
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignoring data for \(uuid ?? "?")")
                 return
             }
 
             threadLimitLock.lock()
             if threadLimitCount >= threadLimitMax {
                 threadLimitLock.unlock()
-                Log.error(
+                Log.warning(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Reached thread limit of \(threadLimitMax) " +
                               "for /raw. Ignoring request."
                 )
@@ -849,7 +849,7 @@ class WebHookRequestHandler {
                         return
                     }
                     self.loginLimitCount[host]! += 1
-                    Log.debug(
+                    Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
                                  "\(self.loginLimitCount[host]!)/\(loginLimit) (\(left)s left)"
                     )

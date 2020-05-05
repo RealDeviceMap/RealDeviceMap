@@ -63,7 +63,7 @@ class InstanceController {
 
         let thread = Threading.getQueue(name: "InstanceController-global-setup", type: .serial)
         thread.dispatch {
-            Log.debug(message: "[InstanceController] Starting instances...")
+            Log.info(message: "[InstanceController] Starting instances...")
             let dispatchGroup = DispatchGroup()
             for instance in instances {
                 dispatchGroup.enter()
@@ -82,7 +82,7 @@ class InstanceController {
                 }
             }
             dispatchGroup.wait()
-            Log.debug(message: "[InstanceController] Done starting instances")
+            Log.info(message: "[InstanceController] Done starting instances")
         }
 
     }
