@@ -100,21 +100,18 @@ class Account: WebHookEvent {
         self.wasSuspended = accountData.wasSuspended
         self.banned = accountData.banned
 
-        if accountData.warn == true {
+        if accountData.warn == true && self.failed == nil {
             self.failed = "GPR_RED_WARNING"
             if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             }
+            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
-            if self.firstWarningTimestamp == nil {
-                self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-            }
+            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
         }
