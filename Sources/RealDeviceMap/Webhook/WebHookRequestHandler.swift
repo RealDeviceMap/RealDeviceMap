@@ -502,12 +502,13 @@ class WebHookRequestHandler {
                 )
                 return
             }
-            threadLimitCount += 1
+            let limitCount = threadLimitCount + 1
+            threadLimitCount = limitCount
+            threadLimitLock.unlock()
             Log.info(
                 message: "[WebHookRequestHandler] [\(uuid ?? "?")] Processing /raw request. " +
-                         "Currently processing: \(threadLimitCount)"
+                         "Currently processing: \(limitCount)"
             )
-            threadLimitLock.unlock()
 
             defer {
                 threadLimitLock.lock()
@@ -852,11 +853,11 @@ class WebHookRequestHandler {
                         return
                     }
                     self.loginLimitCount[host] = currentCount + 1
+                    self.loginLimitLock.unlock()
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
-                                 "\(currentCount)/\(loginLimit) (\(left)s left)"
+                                 "\(currentCount + 1)/\(loginLimit) (\(left)s left)"
                     )
-                    self.loginLimitLock.unlock()
                 }
                 try response.respondWithData(data: [
                     "username": account.username,
