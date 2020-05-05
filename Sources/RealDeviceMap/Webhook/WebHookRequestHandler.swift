@@ -776,12 +776,16 @@ class WebHookRequestHandler {
                 do {
                     let account: Account?
                     if let username = username {
-                        account = try Account.getWithUsername(username: username)
+                        account = try Account.getWithUsername(mysql: mysql, username: username)
                     } else {
                         account = nil
                     }
                     if let account = account {
                         guard controller!.accountValid(account: account) else {
+                            Log.debug(
+                                message: "[WebHookRequestHandler] Account \(account.username) not valid for " +
+                                         "Instance \(controller!.name). Switching Account."
+                            )
                             try response.respondWithData(data: [
                                 "action": "switch_account",
                                 "min_level": controller!.minLevel,
@@ -806,13 +810,19 @@ class WebHookRequestHandler {
                     return
                 }
                 if device.accountUsername != nil,
-                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
-                   InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
-                    try response.respondWithData(data: [
-                        "username": oldAccount.username,
-                        "password": oldAccount.password
-                    ])
-                    return
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!) {
+                    if InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
+                        try response.respondWithData(data: [
+                              "username": oldAccount.username,
+                              "password": oldAccount.password
+                        ])
+                        return
+                    } else {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] Previously Assigned Account \(oldAccount.username) not " +
+                                     "valid for Instance \(device.instanceName ?? "None"). Switching Account."
+                        )
+                    }
                 }
                 guard let account = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
                     Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")

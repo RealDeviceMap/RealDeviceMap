@@ -116,13 +116,15 @@ class CircleInstanceController: InstanceControllerProto {
     func accountValid(account: Account) -> Bool {
         switch type {
         case .pokemon:
-            return account.level >= minLevel &&
+            return
+                account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isFailed()
+                account.isValid()
         case .raid:
-            return account.level >= minLevel &&
+            return
+                account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isFailed(ignoringWarning: true)
+                account.isValid(ignoringWarning: true)
         }
     }
 

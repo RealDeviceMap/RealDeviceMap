@@ -337,9 +337,10 @@ class LevelingInstanceController: InstanceControllerProto {
     }
 
     func accountValid(account: Account) -> Bool {
-        return account.level >= minLevel &&
+        return
+            account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isFailed() // && account.hasSpinsLeft(spins: 7000)
+            account.isValid() // && account.hasSpinsLeft(spins: 7000)
     }
 
 }

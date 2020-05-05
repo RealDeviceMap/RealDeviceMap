@@ -360,18 +360,28 @@ class AutoInstanceController: InstanceControllerProto {
                 }
 
                 if delay >= delayLogout {
+                    var newUsername: String?
                     do {
-                        let account = try getAccount(
-                            mysql: mysql,
-                            uuid: uuid,
-                            encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
-                        )
                         accountsLock.lock()
-                        accounts[uuid] = account?.username
+                        if accounts[uuid] == nil {
+                            accountsLock.unlock()
+                            let account = try getAccount(
+                                mysql: mysql,
+                                uuid: uuid,
+                                encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
+                            )
+                            newUsername = account?.username
+                            accountsLock.lock()
+                            accounts[uuid] = account?.username
+                        }
                         accountsLock.unlock()
                     } catch {
                         Log.error(message: "[InstanceControllerProto] Failed to get account in advance.")
                     }
+                    Log.debug(
+                        message: "[InstanceControllerProto] Over Logout Delay. " +
+                                 "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                    )
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 }
 
@@ -536,8 +546,10 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func accountValid(account: Account) -> Bool {
-        return account.level >= minLevel &&
-            account.level <= maxLevel && account.isFailed() &&
+        return
+            account.level >= minLevel &&
+            account.level <= maxLevel &&
+            account.isValid() &&
             account.hasSpinsLeft(spins: spinLimit)
     }
 }

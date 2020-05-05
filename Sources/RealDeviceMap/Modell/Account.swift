@@ -237,20 +237,22 @@ class Account: WebHookEvent {
         }
     }
 
-    public func isFailed(ignoringWarning: Bool=false) -> Bool {
+    public func isValid(ignoringWarning: Bool=false) -> Bool {
         return (
-            self.failed == nil ||
-            self.failed! == "GPR_RED_WARNING" &&
-            (ignoringWarning || self.warnExpireTimestamp ?? UInt32.max <= UInt32(Date().timeIntervalSince1970))
+            self.failed == nil || (
+                self.failed! == "GPR_RED_WARNING" &&
+                (ignoringWarning || self.warnExpireTimestamp ?? UInt32.max <= UInt32(Date().timeIntervalSince1970))
+            )
         )
     }
 
     public func hasSpinsLeft(spins: Int = 1000, noCooldown: Bool=false) -> Bool {
         return (
-            self.spins < spins &&
-            !noCooldown || (
-                self.lastEncounterTime == nil ||
-                UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime! >= 7200
+            self.spins <= spins && (
+                !noCooldown || (
+                    self.lastEncounterTime == nil ||
+                    UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime! >= 7200
+                )
             )
         )
     }
@@ -419,8 +421,8 @@ class Account: WebHookEvent {
                                 point(last_encounter_lon, last_encounter_lat)
                             ) / 9.8,
                             7200
-                        )
-                    ) <= UNIX_TIMESTAMP()
+                        ) <= UNIX_TIMESTAMP()
+                    )
                 )
                 """
             } else {

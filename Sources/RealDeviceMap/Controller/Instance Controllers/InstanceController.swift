@@ -46,7 +46,7 @@ extension InstanceControllerProto {
         return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
     }
     func accountValid(account: Account) -> Bool {
-        return account.level >= minLevel && account.level <= maxLevel && account.isFailed()
+        return account.level >= minLevel && account.level <= maxLevel && account.isValid()
     }
 }
 
@@ -319,7 +319,7 @@ class InstanceController {
         if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
             return instanceController.accountValid(account: account)
         }
-        return account.isFailed()
+        return account.isValid()
     }
 
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {

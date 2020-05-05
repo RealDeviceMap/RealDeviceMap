@@ -241,9 +241,10 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func accountValid(account: Account) -> Bool {
-        return account.level >= minLevel &&
+        return
+            account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isFailed()
+            account.isValid()
     }
 
 }
