@@ -91,7 +91,10 @@ class Account: WebHookEvent {
     public func responseInfo(accountData: POGOProtos_Networking_Responses_GetPlayerResponse) {
         self.creationTimestamp = UInt32(accountData.playerData.creationTimestampMs / 1000)
         self.warn = accountData.warn
-        self.warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
+        let warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
+        if warnExpireTimestamp != 0 {
+            self.warnExpireTimestamp = warnExpireTimestamp
+        }
         self.warnMessageAcknowledged = accountData.warnMessageAcknowledged
         self.suspendedMessageAcknowledged = accountData.suspendedMessageAcknowledged
         self.wasSuspended = accountData.wasSuspended
@@ -391,7 +394,7 @@ class Account: WebHookEvent {
             failedSQL = """
             AND (
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
-                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp != 0 AND  <= UNIX_TIMESTAMP()) OR
                 (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
             )
             """
@@ -583,7 +586,7 @@ class Account: WebHookEvent {
                 failed_timestamp is NULL and device.uuid IS NULL AND
                 (
                     (failed IS NULL AND first_warning_timestamp is NULL) OR
-                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp != 0 AND  <= UNIX_TIMESTAMP()) OR
                     (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
                 ) AND (
                     last_encounter_time IS NULL OR
@@ -784,7 +787,7 @@ class Account: WebHookEvent {
               COUNT(level) as total,
               SUM(
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
-                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                  failed = 'GPR_RED_WARNING' AND warn_expire_timestamp != 0 AND  <= UNIX_TIMESTAMP()) OR
                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
