@@ -847,21 +847,22 @@ class WebHookRequestHandler {
                     }
                 }
                 if account == nil {
-                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) 
+                    else {
                         Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
                     }
                     account = newAccount
                 }
-                device.accountUsername = account.username
+                device.accountUsername = account!.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
-                    "username": account.username,
-                    "password": account.password
+                    "username": account!.username,
+                    "password": account!.password
                 ])
 
-                if username != account.username, let loginLimit = self.loginLimit {
+                if username != account!.username, let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
                     self.loginLimitLock.lock()
@@ -890,8 +891,8 @@ class WebHookRequestHandler {
                     )
                 }
                 try response.respondWithData(data: [
-                    "username": account.username,
-                    "password": account.password
+                    "username": account!.username,
+                    "password": account!.password
                 ])
             } catch {
                 response.respondWithError(status: .internalServerError)
