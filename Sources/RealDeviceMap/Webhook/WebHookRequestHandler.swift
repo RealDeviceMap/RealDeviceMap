@@ -847,7 +847,7 @@ class WebHookRequestHandler {
                     }
                 }
                 if account == nil {
-                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) 
+                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
                         Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
