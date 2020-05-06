@@ -834,15 +834,21 @@ class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                let account: Account
+                var account: Account?
                 if device.accountUsername != nil,
-                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!),
-                   InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
-                    account = oldAccount
-                } else {
-                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
-                          else {
-                        Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
+                   let oldAccount = try Account.getWithUsername(mysql: mysql, username: device.accountUsername!) {
+                    if InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
+                        account = oldAccount
+                    } else {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] Previously Assigned Account \(oldAccount.username) not " +
+                                     "valid for Instance \(device.instanceName ?? "None"). Getting new Account."
+                        )
+                    }
+                }
+                if account == nil {
+                    guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid) else {
+                        Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
                     }
@@ -850,6 +856,10 @@ class WebHookRequestHandler {
                 }
                 device.accountUsername = account.username
                 try device.save(mysql: mysql, oldUUID: device.uuid)
+                try response.respondWithData(data: [
+                    "username": account.username,
+                    "password": account.password
+                ])
 
                 if username != account.username, let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
