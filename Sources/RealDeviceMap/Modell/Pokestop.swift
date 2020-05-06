@@ -368,8 +368,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .quest: break
             case .unset: break
             case .UNRECOGNIZED: break
-            case .pokecoin:
-                break
             }
 
             reward["info"] = infoData
