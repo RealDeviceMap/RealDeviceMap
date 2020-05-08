@@ -290,7 +290,9 @@ class AutoInstanceController: InstanceControllerProto {
                 do {
                     lastCoord = try Cooldown.lastLocation(account: account, deviceUUID: uuid)
                 } catch {
-                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get last location.")
+                    Log.error(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get last location."
+                    )
                     return [String: Any]()
                 }
 
