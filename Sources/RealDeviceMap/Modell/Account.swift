@@ -241,7 +241,7 @@ class Account: WebHookEvent {
         return (
             self.failed == nil || (
                 self.failed! == "GPR_RED_WARNING" &&
-                (ignoringWarning || self.warnExpireTimestamp ?? UInt32.max <= UInt32(Date().timeIntervalSince1970))
+                (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= UInt32(Date().timeIntervalSince1970))
             )
         )
     }
@@ -251,7 +251,7 @@ class Account: WebHookEvent {
             self.spins <= spins && (
                 !noCooldown || (
                     self.lastEncounterTime == nil ||
-                    UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime! >= 7200
+                    (UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime!) >= 7200
                 )
             )
         )

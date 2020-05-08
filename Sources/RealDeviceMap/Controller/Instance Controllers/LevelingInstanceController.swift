@@ -89,12 +89,12 @@ class LevelingInstanceController: InstanceControllerProto {
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         guard let username = username else {
-            Log.error(message: "[LevelingInstanceController] No username specified.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No username specified.")
             return [:]
         }
 
         guard let account = account else {
-            Log.error(message: "[LevelingInstanceController] No account specified.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No account specified.")
             return [:]
         }
 
@@ -132,7 +132,7 @@ class LevelingInstanceController: InstanceControllerProto {
             delay = result.delay
             encounterTime = result.encounterTime
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
             return [String: Any]()
         }
 
@@ -145,7 +145,7 @@ class LevelingInstanceController: InstanceControllerProto {
                 encounterTime: encounterTime
           )
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
             return [String: Any]()
         }
 

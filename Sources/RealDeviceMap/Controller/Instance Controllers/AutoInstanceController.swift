@@ -290,7 +290,7 @@ class AutoInstanceController: InstanceControllerProto {
                 do {
                     lastCoord = try Cooldown.lastLocation(account: account, deviceUUID: uuid)
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to get last location.")
+                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get last location.")
                     return [String: Any]()
                 }
 
@@ -355,7 +355,7 @@ class AutoInstanceController: InstanceControllerProto {
                     delay = result.delay
                     encounterTime = result.encounterTime
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
                     return [String: Any]()
                 }
 
@@ -370,16 +370,18 @@ class AutoInstanceController: InstanceControllerProto {
                                 uuid: uuid,
                                 encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
                             )
-                            newUsername = account?.username
                             accountsLock.lock()
+                            newUsername = account?.username
                             accounts[uuid] = account?.username
+                        } else {
+                            newUsername = accounts[uuid]
                         }
                         accountsLock.unlock()
                     } catch {
-                        Log.error(message: "[InstanceControllerProto] Failed to get account in advance.")
+                        Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance.")
                     }
                     Log.debug(
-                        message: "[InstanceControllerProto] Over Logout Delay. " +
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
                                  "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
                     )
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
@@ -397,7 +399,7 @@ class AutoInstanceController: InstanceControllerProto {
                         encounterTime: encounterTime
                   )
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
                     return [String: Any]()
                 }
 
@@ -425,7 +427,7 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                     if todayStops!.isEmpty {
-                        Log.info(message: "[AutoInstanceController] [\(name)] Instance done")
+                        Log.info(message: "[AutoInstanceController] [\(name)] [\(uuid)] Instance done")
                         delegate?.instanceControllerDone(name: name)
                     }
                     stopsLock.unlock()
@@ -525,7 +527,11 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?=nil) throws -> Account? {
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try getAccount(mysql: mysql, uuid: uuid, encounterTarget: nil)
+    }
+
+    func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?) throws -> Account? {
         accountsLock.lock()
         if let usernane = accounts[uuid] {
             accounts[uuid] = nil

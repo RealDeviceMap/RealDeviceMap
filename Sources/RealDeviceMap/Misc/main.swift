@@ -17,10 +17,11 @@ let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?
 extension Log {
     public static func debug(message: @autoclosure () -> String) {
         if logDebug {
-            Log.logger.debug(message: message(), true)
+            Log.logger.debug(message: message(), even)
         }
     }
 }
+Log.even = true
 
 #if DEBUG
 let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.workingDir.path

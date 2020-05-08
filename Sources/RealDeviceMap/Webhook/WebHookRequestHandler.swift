@@ -890,6 +890,10 @@ class WebHookRequestHandler {
                                  "\(currentCount + 1)/\(loginLimit) (\(left)s left)"
                     )
                 }
+                if username != account!.username {
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
+                }
+
                 try response.respondWithData(data: [
                     "username": account!.username,
                     "password": account!.password
@@ -924,11 +928,10 @@ class WebHookRequestHandler {
                     response.respondWithError(status: .internalServerError)
                     return
                 }
-                if account.failedTimestamp == nil || account.failed == nil {
-                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-                    account.failed = "banned"
-                    try account.save(mysql: mysql, update: true)
-                }
+                account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                account.failed = "banned"
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Account banned: \(username)")
+                try account.save(mysql: mysql, update: true)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
@@ -942,11 +945,10 @@ class WebHookRequestHandler {
                     response.respondWithError(status: .internalServerError)
                     return
                 }
-                if account.failedTimestamp == nil || account.failed == nil {
-                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-                    account.failed = "suspended"
-                    try account.save(mysql: mysql, update: true)
-                }
+                account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+                account.failed = "suspended"
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Account suspended: \(username)")
+                try account.save(mysql: mysql, update: true)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)

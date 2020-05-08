@@ -80,10 +80,10 @@ class IVInstanceController: InstanceControllerProto {
                     }
                     if let pokemonReal = pokemonReal {
                         if pokemonReal.atkIv == nil {
-                            Log.debug(message: "[IVInstanceController] Checked Pokemon doesn't have IV")
+                            Log.debug(message: "[IVInstanceController] [\(name)] Checked Pokemon doesn't have IV")
                             self.gotPokemon(pokemon: pokemonReal)
                         } else {
-                            Log.debug(message: "[IVInstanceController] Checked Pokemon has IV")
+                            Log.debug(message: "[IVInstanceController] [\(name)] Checked Pokemon has IV")
                         }
                     }
 
@@ -173,7 +173,7 @@ class IVInstanceController: InstanceControllerProto {
             let index = lastIndexOf(pokemonId: pokemon.pokemonId)
 
             if pokemonQueue.count >= ivQueueLimit && index == nil {
-                Log.debug(message: "[IVInstanceController] Queue is full!")
+                Log.debug(message: "[IVInstanceController] [\(name)] Queue is full!")
             } else if pokemonQueue.count >= ivQueueLimit {
                 pokemonQueue.insert(pokemon, at: index!)
                 _ = pokemonQueue.popLast()
