@@ -380,7 +380,9 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                         accountsLock.unlock()
                     } catch {
-                        Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance.")
+                        Log.error(
+                            message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance."
+                        )
                     }
                     Log.debug(
                         message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
