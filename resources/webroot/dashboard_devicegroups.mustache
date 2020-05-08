@@ -10,6 +10,7 @@ table.dataTable tbody td {
 $(document).ready(function() {
     const table = $('#table').DataTable( {
         "stateSave": true,
+        "stateDuration": 0,
         "ajax": {
             "url": "/api/get_data?show_devicegroups=true&formatted=true",
             "dataSrc": "data.devicegroups"
