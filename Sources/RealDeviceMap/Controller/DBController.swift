@@ -181,6 +181,35 @@ class DBController {
 
         var version = 0
 
+        let versionSQL = "SELECT @@VERSION_COMMENT"
+        guard mysql.query(statement: versionSQL),
+            let versionResults = mysql.storeResults(),
+            let versionResult = versionResults.next()?[0] else {
+            let message = "Failed to get db type: (\(mysql.errorMessage())"
+            Log.critical(message: "[DBController] " + message)
+            fatalError(message)
+        }
+        if versionResult.lowercased().contains(string: "mariadb") {
+            let stDistancephereSQL = """
+                CREATE FUNCTION IF NOT EXISTS `ST_Distance_Sphere`(`pt1` POINT, `pt2` POINT) RETURNS
+                decimal(10,2)
+                NO SQL
+                DETERMINISTIC
+                BEGIN
+                return 6371000 * 2 * ASIN(SQRT(
+                    POWER(SIN((ST_Y(pt2) - ST_Y(pt1)) * pi()/180 / 2),
+                    2) + COS(ST_Y(pt1) * pi()/180 ) * COS(ST_Y(pt2) *
+                    pi()/180) * POWER(SIN((ST_X(pt2) - ST_X(pt1)) *
+                    pi()/180 / 2), 2) ));
+                END
+            """
+            guard mysql.query(statement: stDistancephereSQL) else {
+                let message = "Failed to create ST_Distance_Sphere function: (\(mysql.errorMessage())"
+                Log.critical(message: "[DBController] " + message)
+                fatalError(message)
+            }
+        }
+
         let createMetadataTableSQL = """
             CREATE TABLE IF NOT EXISTS metadata (
                 `key` VARCHAR(50) PRIMARY KEY NOT NULL,
