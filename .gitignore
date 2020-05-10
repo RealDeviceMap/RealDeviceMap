@@ -15,3 +15,5 @@ RealDeviceMap.xcodeproj/
 
 resources/webroot/static/img/
 backups/
+.gitref
+.gitsha
