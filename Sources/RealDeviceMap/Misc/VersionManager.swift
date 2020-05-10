@@ -24,6 +24,7 @@ internal class VersionManager {
     internal let commit: String
     internal let url: String
 
+    // swiftlint:disable:next function_body_length
     private init() {
         let sha: String
         let pullRequest: String?
@@ -31,7 +32,8 @@ internal class VersionManager {
         let shaFile = File("\(projectroot)/.gitsha")
         do {
             try shaFile.open()
-            sha = try shaFile.readString().components(separatedBy: .newlines)[0].trimmingCharacters(in: .whitespaces)
+            sha = try shaFile.readString().components(separatedBy: .newlines)[0]
+                             .trimmingCharacters(in: .whitespaces)
         } catch {
             sha = "?"
             Log.error(message: "[VersionManager] Failed to read .gitsha")
@@ -39,9 +41,11 @@ internal class VersionManager {
         let refFile = File("\(projectroot)/.gitref")
         do {
             try refFile.open()
-            let ref = try refFile.readString().components(separatedBy: .newlines)[0].trimmingCharacters(in: .whitespaces)
+            let ref = try refFile.readString().components(separatedBy: .newlines)[0]
+                                 .trimmingCharacters(in: .whitespaces)
             if ref.starts(with: "refs/pull/") && ref.contains(string: "/merge") {
-                pullRequest = ref.replacingOccurrences(of: "refs/pull/", with: "").replacingOccurrences(of: "/merge", with: "")
+                pullRequest = ref.replacingOccurrences(of: "refs/pull/", with: "")
+                                 .replacingOccurrences(of: "/merge", with: "")
             } else {
                 pullRequest = nil
             }
@@ -49,7 +53,6 @@ internal class VersionManager {
             pullRequest = nil
             Log.error(message: "[VersionManager] Failed to read .gitref")
         }
-
 
         if pullRequest == nil {
             let tagsRequest = CURLRequest("https://api.github.com/repos/RealDeviceMap/RealDeviceMap/tags")
