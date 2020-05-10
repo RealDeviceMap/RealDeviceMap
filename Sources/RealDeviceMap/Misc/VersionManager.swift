@@ -24,6 +24,7 @@ internal class VersionManager {
     internal let commit: String
     internal let url: String
 
+    // swiftlint:disable:next function_body_length
     private init() {
         let sha: String
         let pullRequest: String?
@@ -52,7 +53,6 @@ internal class VersionManager {
             pullRequest = nil
             Log.error(message: "[VersionManager] Failed to read .gitref")
         }
-
 
         if pullRequest == nil {
             let tagsRequest = CURLRequest("https://api.github.com/repos/RealDeviceMap/RealDeviceMap/tags")
