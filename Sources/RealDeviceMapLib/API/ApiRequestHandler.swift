@@ -147,6 +147,7 @@ public class ApiRequestHandler {
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showAssignmentGroups = request.param(name: "show_assignmentgroups")?.toBool() ?? false
+        let showWebhooks = request.param(name: "show_webhooks")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
@@ -1582,6 +1583,39 @@ public class ApiRequestHandler {
             }
 
             data["assignmentgroups"] = jsonArray
+        }
+
+        if showWebhooks && perms.contains(.admin) {
+            
+            let webhooks = try? Webhook.getAll(mysql: mysql)
+            var jsonArray = [[String: Any]]()
+
+            if webhooks != nil {
+                for webhook in webhooks! {
+                    var webhookData = [String: Any]()
+                    webhookData["name"] = webhook.name
+                    webhookData["url"] = webhook.url
+                    webhookData["delay"] = webhook.delay
+                    var types = ""
+                    for (index, type) in webhook.types.enumerated() {
+                        types.append("\(WebhookType.toString(type))")
+                        if (index != webhook.types.count - 1) {
+                            types.append(",")
+                        }
+                    }
+                    webhookData["types"] = types
+                    webhookData["enabled"] = webhook.enabled ? "Yes" : "No";
+                    
+                    if formatted {
+                        webhookData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a href=\"/dashboard/webhook/edit/\(webhook.name.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit</a></div>"
+                    }
+                    webhookData["enabled"] = webhook.enabled ? "Yes" : "No"
+                    
+                    jsonArray.append(webhookData)
+                }
+            }
+            data["webhooks"] = jsonArray
+            
         }
 
         if showIVQueue && perms.contains(.admin), let instance = instance {
