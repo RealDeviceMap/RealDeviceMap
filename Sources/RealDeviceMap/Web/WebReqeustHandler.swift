@@ -563,6 +563,9 @@ class WebReqeustHandler {
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
+            data["version"] = VersionManager.global.version
+            data["version_commit"] = VersionManager.global.commit
+            data["version_url"] = VersionManager.global.url
         case .dashboardSettings:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
