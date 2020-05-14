@@ -28,6 +28,9 @@ let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.work
 let projectroot = Dir.workingDir.path
 #endif
 
+Log.info(message: "[MAIN] Getting Version")
+_ = VersionManager.global
+
 // Starting Startup Webserver
 Log.info(message: "[MAIN] Starting Startup Webserver")
 var startupServer: HTTPServer.Server? = WebServer.startupServer
