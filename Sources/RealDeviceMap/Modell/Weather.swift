@@ -60,7 +60,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         }
 
         let message: [String: Any] = [
-            "id": id,
+            "s2_cell_id": id,
             "latitude": latitude,
             "longitude": longitude,
             "polygon": polygon,
