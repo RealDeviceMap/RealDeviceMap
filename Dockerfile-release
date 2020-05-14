@@ -40,4 +40,6 @@ FROM base
 
 COPY --from=build /build/.build/release/RealDeviceMap /app/RealDeviceMap
 COPY resources /app/resources
+COPY .gitsha /app/.gitsha
+COPY .gitref /app/.gitref
 CMD cd /app/ && ./RealDeviceMap

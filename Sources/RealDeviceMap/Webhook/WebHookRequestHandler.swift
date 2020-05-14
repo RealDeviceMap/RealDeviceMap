@@ -49,37 +49,22 @@ class WebHookRequestHandler {
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
         let host: String
-        if let remoteAddress = request.connection.remoteAddress {
-            host = remoteAddress.host
+        let forwardedForHeader = request.header(.xForwardedFor) ?? ""
+        if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
+            host = request.remoteAddress.host
         } else {
-            host = "?"
+            host = forwardedForHeader
         }
 
         let isMadData = request.header(.origin) != nil
 
         if let hostWhitelist = hostWhitelist {
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
             guard hostWhitelist.contains(host) else {
                 return response.respondWithError(status: .unauthorized)
             }
         }
 
         if let loginSecret = loginSecret {
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
             guard WebHookRequestHandler.limiter.allowed(host: host) else {
                 return response.respondWithError(status: .unauthorized)
             }
