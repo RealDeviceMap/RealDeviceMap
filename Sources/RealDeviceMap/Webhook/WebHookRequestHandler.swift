@@ -744,7 +744,7 @@ class WebHookRequestHandler {
             return
         }
 
-        let username = jsonO?["username"] as? String
+        let username = (jsonO?["username"] as? String)?.emptyToNil()
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to connect to database.")
@@ -818,6 +818,17 @@ class WebHookRequestHandler {
                             ])
                             return
                         }
+                    } else if let username = username, account == nil {
+                        Log.error(
+                            message: "[WebHookRequestHandler] Account \(username) not found in database. " +
+                                     "Switching Account."
+                        )
+                        try response.respondWithData(data: [
+                            "action": "switch_account",
+                            "min_level": controller!.minLevel,
+                            "max_level": controller!.maxLevel
+                        ])
+                        return
                     }
                     try response.respondWithData(
                         data: controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
