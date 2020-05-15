@@ -563,6 +563,9 @@ class WebReqeustHandler {
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
+            data["version"] = VersionManager.global.version
+            data["version_commit"] = VersionManager.global.commit
+            data["version_url"] = VersionManager.global.url
         case .dashboardSettings:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -2858,8 +2861,8 @@ class WebReqeustHandler {
         for accountsRow in accountsRows {
             let rowSplit = accountsRow.components(separatedBy: ",")
             if rowSplit.count == 2 {
-                let username = rowSplit[0]
-                let password = rowSplit[1]
+                let username = rowSplit[0].trimmingCharacters(in: .whitespaces)
+                let password = rowSplit[1].trimmingCharacters(in: .whitespaces)
                 accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil,
                                     failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
                                     lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,

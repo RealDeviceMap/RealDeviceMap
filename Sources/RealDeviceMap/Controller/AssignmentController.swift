@@ -108,7 +108,7 @@ class AssignmentController: InstanceControllerDelegate {
             }
         }
         if let device = device, device.instanceName != assignment.instanceName {
-            Log.debug(
+            Log.info(
                 message: "[AssignmentController] Assigning \(assignment.deviceUUID) to \(assignment.instanceName)"
             )
             InstanceController.global.removeDevice(device: device)

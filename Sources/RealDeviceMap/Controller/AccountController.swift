@@ -43,7 +43,7 @@ class AccountController {
                 if timeLeft > 0 {
                     Threading.sleep(seconds: Double(timeLeft))
 
-                    Log.debug(message: "[AccountController] Clearing Spins...")
+                    Log.info(message: "[AccountController] Clearing Spins...")
                     var done = false
                     while !done {
                         do {
