@@ -317,6 +317,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.raidEndTimestamp = oldGym!.raidEndTimestamp
             }
 
+            guard Gym.shouldUpdate(old: oldGym!, new: self) else {
+                return
+            }
+
             if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 &&
                 (
                     oldGym!.raidLevel != self.raidLevel ||
@@ -930,6 +934,24 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         return mysqlStmt.affectedRows()
+    }
+
+    public static func shouldUpdate(old: Gym, new: Gym) -> Bool {
+        return
+            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
+            new.name != old.name ||
+            new.url != old.url ||
+            new.enabled != old.enabled ||
+            new.raidEndTimestamp != old.raidEndTimestamp ||
+            new.raidPokemonId != old.raidPokemonId ||
+            new.teamId != old.teamId ||
+            new.guardPokemonId != old.guardPokemonId ||
+            new.availbleSlots != old.availbleSlots ||
+            new.totalCp != old.totalCp ||
+            new.exRaidEligible != old.exRaidEligible ||
+            new.sponsorId != old.sponsorId ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     static func == (lhs: Gym, rhs: Gym) -> Bool {
