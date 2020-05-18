@@ -441,7 +441,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             }
 
             guard Pokestop.shouldUpdate(old: oldPokestop!, new: self) else {
-                // TODO
                 return
             }
 
