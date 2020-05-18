@@ -3321,7 +3321,7 @@
         "quest_32": "%{amount} time(s) First Grunt OTD",
         "quest_33": "Feed your Buddy %{amount} times",
         "quest_34": "Earn %{amount} hearts with your Buddy",
-	"quest_35": "Play %{amount} times with your Buddy",
+        "quest_35": "Play %{amount} times with your Buddy",
         "quest_reward_1": "XP",
         "quest_reward_1_formatted": "%{amount} XP",
         "quest_reward_2": "Item",
