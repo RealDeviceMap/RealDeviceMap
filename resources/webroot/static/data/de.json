@@ -3316,7 +3316,7 @@
         "quest_32": "%{amount} mal erster Grunt des Tages",
         "quest_33": "Füttere deinen Kumpel %{amount} mal",
         "quest_34": "Erhalte %{amount} Herzen mit deinem Kumpel",
-        "quest_35": "Abspielen %{amount} mal mit deinem Kumpel",
+        "quest_35": "Spiele %{amount} mal mit deinem Kumpel",
         "quest_reward_1": "XP",
         "quest_reward_1_formatted": "%{amount} XP",
         "quest_reward_2": "Item",
