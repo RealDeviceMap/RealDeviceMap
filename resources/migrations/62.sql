@@ -68,7 +68,7 @@ FOR EACH ROW BEGIN
         count = count + 1&semi
       END&semi
   END IF&semi
-  IF (NEW.iv = 100 AND (OLD.iv <> 100 OR OLD.iv IS NULL)) THEN BEGIN
+  IF (NEW.iv = 100 AND OLD.iv IS NULL) THEN BEGIN
       INSERT INTO pokemon_hundo_stats (pokemon_id, count, date)
         VALUES
       (NEW.pokemon_id, 1, DATE(FROM_UNIXTIME(NEW.expire_timestamp)))
