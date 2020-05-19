@@ -20,7 +20,6 @@ class ApiRequestHandler {
     private static var sessionDriver = MySQLSessions()
 
     public static func handle(request: HTTPRequest, response: HTTPResponse, route: WebServer.APIPage) {
-
         switch route {
         case .getData:
             handleGetData(request: request, response: response)
@@ -70,6 +69,19 @@ class ApiRequestHandler {
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
+        let showDashboardStats = request.param(name: "show_dashboard_stats")?.toBool() ?? false
+        let showPokemonStats = request.param(name: "show_pokemon_stats")?.toBool() ?? false
+        let showRaidStats = request.param(name: "show_raid_stats")?.toBool() ?? false
+        let showQuestStats = request.param(name: "show_quest_stats")?.toBool() ?? false
+        let showInvasionStats = request.param(name: "show_invasion_stats")?.toBool() ?? false
+        let showTop10Stats = request.param(name: "show_top10_stats")?.toBool() ?? false
+        let showTop10ivStats = request.param(name: "show_top10iv_stats")?.toBool() ?? false
+        let iv = request.param(name: "iv")?.toDouble() ?? 0
+        let date = request.param(name: "date") ?? ""
+        let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
+        let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
+        let start = request.param(name: "start") ?? ""
+        let end = request.param(name: "end") ?? ""
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -164,8 +176,9 @@ class ApiRequestHandler {
                 pokestopFilterExclude: pokestopFilterExclude
             )
         }
+        let permShowPokemon = perms.contains(.viewMapPokemon)
         let permShowIV = perms.contains(.viewMapIV)
-        if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon) {
+        if isPost && permViewMap && showPokemon && permShowPokemon {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
@@ -1463,6 +1476,103 @@ class ApiRequestHandler {
                 jsonArray.append(discordRuleData)
             }
             data["discordrules"] = jsonArray
+        }
+
+        let permViewStats = perms.contains(.viewStats)
+        if permViewStats && showDashboardStats {
+            let stats = Stats().getJSONValues()
+            data["pokemon_total"] = stats["pokemon_total"]
+            data["pokemon_active"] = stats["pokemon_active"]
+            data["pokemon_iv_total"] = stats["pokemon_iv_total"]
+            data["pokemon_iv_active"] = stats["pokemon_iv_active"]
+            data["pokemon_active_100iv"] = stats["pokemon_active_100iv"]
+            data["pokemon_active_90iv"] = stats["pokemon_active_90iv"]
+            data["pokemon_active_0iv"] = stats["pokemon_active_0iv"]
+            data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
+            data["pokemon_active_shiny"] = stats["pokemon_active_shiny"]
+            data["pokestops_total"] = stats["pokestops_total"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["pokestops_lures_glacial"] = stats["pokestops_lures_glacial"]
+            data["pokestops_lures_mossy"] = stats["pokestops_lures_mossy"]
+            data["pokestops_lures_magnetic"] = stats["pokestops_lures_magnetic"]
+            data["pokestops_quests"] = stats["pokestops_quests"]
+            data["pokestops_invasions"] = stats["pokestops_invasions"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["gyms_total"] = stats["gyms_total"]
+            data["gyms_neutral"] = stats["gyms_neutral"]
+            data["gyms_mystic"] = stats["gyms_mystic"]
+            data["gyms_valor"] = stats["gyms_valor"]
+            data["gyms_instinct"] = stats["gyms_instinct"]
+            data["gyms_raids"] = stats["gyms_raids"]
+            data["spawnpoints_total"] = stats["spawnpoints_total"]
+            data["spawnpoints_found"] = stats["spawnpoints_found"]
+            data["spawnpoints_missing"] = stats["spawnpoints_missing"]
+        }
+
+        if permViewStats && permShowPokemon && showTop10Stats {
+            let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: true)
+            let today = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: false)
+            data["lifetime"] = lifetime
+            data["today"] = today
+        }
+        if permViewStats && permShowPokemon && permShowIV && showTop10ivStats {
+            let top10iv = try? Stats.getTopPokemonIVStats(mysql: mysql, iv: iv)
+            data["top10_100iv"] = top10iv
+        }
+
+        if permViewStats && permShowPokemon && showPokemonStats {
+            if date == "lifetime" {
+                let stats = try? Stats.getAllPokemonStats(mysql: mysql)
+                data["stats"] = stats
+            } else {
+                let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
+                data["date"] = date
+                data["stats"] = stats
+            }
+        }
+
+        if permViewStats && permShowRaid && showRaidStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllRaidStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["raid_stats"] = try? Stats.getRaidStats(mysql: mysql, date: date)
+                data["egg_stats"] = try? Stats.getRaidEggStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowQuests && showQuestStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllQuestStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
+                data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowInvasions && showInvasionStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllInvasionStats(mysql: mysql)
+            } else {
+                data["stats"] = try? Stats.getInvasionStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowPokemon && showCommdayStats {
+            if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
+                let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
+                let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
+                let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
+                data["pokemon_id"] = pokemonId
+                data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
+                data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
+                data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
+                data["start"] = start
+                data["end"] = end
+                data["stats"] = stats
+            }
         }
 
         data["timestamp"] = Int(Date().timeIntervalSince1970)
