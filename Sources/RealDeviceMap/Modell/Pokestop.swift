@@ -364,6 +364,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .pokecoin:
                 let info = rewardData.pokecoin
                 infoData["amount"] = info
+            case .sticker: break
             case .avatarClothing: break
             case .quest: break
             case .unset: break
