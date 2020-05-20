@@ -445,9 +445,13 @@ class Account: WebHookEvent {
 
         Account.lockoutLock.lock()
         let now = Date()
-        Account.lockouts.removeAll { (lockout) -> Bool in
-            lockout.untill <= now
+        var newAccounts = [(account: String, device: String, untill: Date)]()
+        for lockout in Account.lockouts {
+            if (lockout.untill) >= now {
+                newAccounts.append(lockout)
+            }
         }
+        Account.lockouts = newAccounts
         let locked = Account.lockouts.filter { (lockout) -> Bool in
             return lockout.device != device
         }.map { (lockout) -> String in
