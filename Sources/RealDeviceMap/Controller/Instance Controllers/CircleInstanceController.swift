@@ -38,18 +38,7 @@ class CircleInstanceController: InstanceControllerProto {
         self.lastCompletedTime = Date()
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
-
-        do {
-            if username != nil {
-                let account = try Account.getWithUsername(mysql: mysql, username: username!)
-                if account != nil {
-                    if account!.failed == "GPR_RED_WARNING" || account!.failed == "GPR_BANNED" {
-                        return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-                    }
-                }
-            }
-        } catch { }
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         lock.lock()
         let currentIndex = self.lastIndex
@@ -100,5 +89,43 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     func stop() {}
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        switch type {
+        case .pokemon:
+            return try Account.getNewAccount(
+                mysql: mysql,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                ignoringWarning: false,
+                spins: nil,
+                noCooldown: false
+            )
+        case .raid:
+            return try Account.getNewAccount(
+                mysql: mysql,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                ignoringWarning: true,
+                spins: nil,
+                noCooldown: false
+            )
+        }
+    }
+
+    func accountValid(account: Account) -> Bool {
+        switch type {
+        case .pokemon:
+            return
+                account.level >= minLevel &&
+                account.level <= maxLevel &&
+                account.isValid()
+        case .raid:
+            return
+                account.level >= minLevel &&
+                account.level <= maxLevel &&
+                account.isValid(ignoringWarning: true)
+        }
+    }
 
 }
