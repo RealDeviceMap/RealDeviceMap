@@ -370,14 +370,7 @@ class WebReqeustHandler {
                 data[loc] = localizer.get(value: loc)
             }
 
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
+            let host = request.host
             if !LoginLimiter.global.tokenAllowed(host: host) {
                 data["is_error"] = true
                 data["error"] = localizer.get(value: "confirmmail_error_limited")
@@ -458,14 +451,7 @@ class WebReqeustHandler {
                 data[loc] = localizer.get(value: loc)
             }
 
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
+            let host = request.host
             if !LoginLimiter.global.tokenAllowed(host: host) {
                 data["is_error"] = true
                 data["error"] = localizer.get(value: "resetpassword_error_limited")
@@ -1602,13 +1588,7 @@ class WebReqeustHandler {
 
         var user: User?
         do {
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
+            let host = request.host
             if usernameEmail.contains("@") {
                 user = try User.login(email: usernameEmail, password: password, host: host)
             } else {

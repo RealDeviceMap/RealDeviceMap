@@ -48,13 +48,7 @@ class WebHookRequestHandler {
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
-        let host: String
-        let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-        if forwardedForHeader.isEmpty || !hostWhitelistUsesProxy {
-            host = request.remoteAddress.host
-        } else {
-            host = forwardedForHeader
-        }
+        let host = request.host
 
         let isMadData = request.header(.origin) != nil
 
