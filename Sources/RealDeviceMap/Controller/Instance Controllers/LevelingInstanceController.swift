@@ -86,28 +86,16 @@ class LevelingInstanceController: InstanceControllerProto {
         self.radius = radius
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         guard let username = username else {
-            Log.error(message: "[LevelingInstanceController] No username specified.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No username specified.")
             return [:]
         }
 
-        let accountX: Account?
-        do {
-            accountX = try Account.getWithUsername(mysql: mysql, username: username)
-        } catch {
-            Log.error(message: "[LevelingInstanceController] Failed to get account.")
+        guard let account = account else {
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No account specified.")
             return [:]
-        }
-
-        guard let account = accountX else {
-            Log.error(message: "[LevelingInstanceController] Got account thats not in the db. Logging out.")
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-        }
-
-        if account.failed == "GPR_RED_WARNING" || account.failed == "GPR_BANNED" {
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
         }
 
         if lastPokestopsPerUsername[username] == nil {
@@ -144,7 +132,7 @@ class LevelingInstanceController: InstanceControllerProto {
             delay = result.delay
             encounterTime = result.encounterTime
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
             return [String: Any]()
         }
 
@@ -157,7 +145,7 @@ class LevelingInstanceController: InstanceControllerProto {
                 encounterTime: encounterTime
           )
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
             return [String: Any]()
         }
 
@@ -307,7 +295,7 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                if level >= maxLevel {
+                if level > maxLevel {
                     text += "\(username): Lvl.\(level) done"
                 } else {
                     text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
@@ -335,6 +323,24 @@ class LevelingInstanceController: InstanceControllerProto {
 
     func stop() {
 
+    }
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(
+            mysql: mysql,
+            minLevel: minLevel,
+            maxLevel: maxLevel,
+            ignoringWarning: false,
+            spins: nil, // 7000
+            noCooldown: true
+        )
+    }
+
+    func accountValid(account: Account) -> Bool {
+        return
+            account.level >= minLevel &&
+            account.level <= maxLevel &&
+            account.isValid() // && account.hasSpinsLeft(spins: 7000)
     }
 
 }
