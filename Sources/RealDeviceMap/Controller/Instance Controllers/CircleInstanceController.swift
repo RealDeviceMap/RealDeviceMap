@@ -99,7 +99,8 @@ class CircleInstanceController: InstanceControllerProto {
                 maxLevel: maxLevel,
                 ignoringWarning: false,
                 spins: nil,
-                noCooldown: false
+                noCooldown: false,
+                device: uuid
             )
         case .raid:
             return try Account.getNewAccount(
@@ -108,7 +109,8 @@ class CircleInstanceController: InstanceControllerProto {
                 maxLevel: maxLevel,
                 ignoringWarning: true,
                 spins: nil,
-                noCooldown: false
+                noCooldown: false,
+                device: uuid
             )
         }
     }
