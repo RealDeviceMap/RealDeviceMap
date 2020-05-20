@@ -55,12 +55,13 @@ class Account: WebHookEvent {
     var suspendedMessageAcknowledged: Bool?
     var wasSuspended: Bool?
     var banned: Bool?
+    var lastUsedTimestamp: UInt32?
 
     init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?,
          failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?,
          lastEncounterTime: UInt32?, spins: UInt16, creationTimestamp: UInt32?, warn: Bool?,
          warnExpireTimestamp: UInt32?, warnMessageAcknowledged: Bool?, suspendedMessageAcknowledged: Bool?,
-         wasSuspended: Bool?, banned: Bool?) {
+         wasSuspended: Bool?, banned: Bool?, lastUsedTimestamp: UInt32?) {
         self.username = username
         self.password = password
         self.level = level
@@ -84,32 +85,33 @@ class Account: WebHookEvent {
         self.suspendedMessageAcknowledged = suspendedMessageAcknowledged
         self.wasSuspended = wasSuspended
         self.banned = banned
+        self.lastUsedTimestamp = lastUsedTimestamp
     }
 
     public func responseInfo(accountData: POGOProtos_Networking_Responses_GetPlayerResponse) {
         self.creationTimestamp = UInt32(accountData.playerData.creationTimestampMs / 1000)
         self.warn = accountData.warn
-        self.warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
+        let warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
+        if warnExpireTimestamp != 0 {
+            self.warnExpireTimestamp = warnExpireTimestamp
+        }
         self.warnMessageAcknowledged = accountData.warnMessageAcknowledged
         self.suspendedMessageAcknowledged = accountData.suspendedMessageAcknowledged
         self.wasSuspended = accountData.wasSuspended
         self.banned = accountData.banned
 
-        if accountData.warn == true {
+        if accountData.warn == true && self.failed == nil {
             self.failed = "GPR_RED_WARNING"
             if self.firstWarningTimestamp == nil {
                 self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             }
+            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
-            if self.firstWarningTimestamp == nil {
-                self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-            }
+            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
                 "UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
         }
@@ -137,9 +139,10 @@ class Account: WebHookEvent {
                 INSERT INTO account (
                     username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat,
                     last_encounter_lon, last_encounter_time, spins, creation_timestamp, warn, warn_expire_timestamp,
-                    warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned
+                    warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned,
+                    last_used_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
 
@@ -188,6 +191,9 @@ class Account: WebHookEvent {
             if banned == nil && oldAccount!.banned != nil {
                 self.banned = oldAccount!.banned!
             }
+            if lastUsedTimestamp == nil && oldAccount!.lastUsedTimestamp != nil {
+                self.lastUsedTimestamp = oldAccount!.lastUsedTimestamp!
+            }
             WebHookController.global.addAccountEvent(account: self)
 
             let sql = """
@@ -195,7 +201,7 @@ class Account: WebHookEvent {
                 SET password = ?, level = ?, first_warning_timestamp = ?, failed_timestamp = ?, failed = ?,
                     last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?,
                     creation_timestamp = ?, warn = ?, warn_expire_timestamp = ?, warn_message_acknowledged = ?,
-                    suspended_message_acknowledged = ?, was_suspended = ?, banned = ?
+                    suspended_message_acknowledged = ?, was_suspended = ?, banned = ?, last_used_timestamp = ?
                 WHERE username = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -219,6 +225,7 @@ class Account: WebHookEvent {
         mysqlStmt.bindParam(suspendedMessageAcknowledged)
         mysqlStmt.bindParam(wasSuspended)
         mysqlStmt.bindParam(banned)
+        mysqlStmt.bindParam(lastUsedTimestamp)
 
         if oldAccount != nil {
             mysqlStmt.bindParam(username)
@@ -228,6 +235,26 @@ class Account: WebHookEvent {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+    }
+
+    public func isValid(ignoringWarning: Bool=false) -> Bool {
+        return (
+            self.failed == nil || (
+                self.failed! == "GPR_RED_WARNING" &&
+                (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= UInt32(Date().timeIntervalSince1970))
+            )
+        )
+    }
+
+    public func hasSpinsLeft(spins: Int = 1000, noCooldown: Bool=false) -> Bool {
+        return (
+            self.spins < spins && (
+                !noCooldown || (
+                    self.lastEncounterTime == nil ||
+                    (UInt32(Date().timeIntervalSince1970) - self.lastEncounterTime!) >= 7200
+                )
+            )
+        )
     }
 
     public static func setLevel(mysql: MySQL?=nil, username: String, level: Int) throws {
@@ -321,30 +348,110 @@ class Account: WebHookEvent {
         }
     }
 
-    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8) throws -> Account? {
+    public static func setLastUsed(mysql: MySQL?=nil, username: String) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
             throw DBController.DBError()
         }
 
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                UPDATE account
+                SET last_used_timestamp = ?
+                WHERE username = ?
+            """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(UInt32(Date().timeIntervalSince1970))
+        mysqlStmt.bindParam(username)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+
+    public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
+                                     ignoringWarning: Bool=false, spins: Int?=1000,
+                                     noCooldown: Bool=true, encounterTarget: Coord?=nil) throws -> Account? {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let failedSQL: String
+        if ignoringWarning {
+            failedSQL = """
+            AND (
+                failed IS NULL OR failed = 'GPR_RED_WARNING'
+            )
+            """
+        } else {
+            failedSQL = """
+            AND (
+                (failed IS NULL AND first_warning_timestamp IS NULL) OR
+                (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                 warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+            )
+            """
+        }
+
+        let spinSQL: String
+        if spins != nil {
+            spinSQL = """
+            AND spins < ?
+            """
+        } else {
+            spinSQL = ""
+        }
+
+        let cooldownSQL: String
+        if noCooldown {
+            if encounterTarget != nil {
+                cooldownSQL = """
+                AND (
+                    last_encounter_time IS NULL OR
+                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 OR
+                    (
+                        CAST(last_encounter_time AS SIGNED INTEGER) +
+                        LEAST(
+                            ST_Distance_Sphere(
+                                point(?, ?),
+                                point(last_encounter_lon, last_encounter_lat)
+                            ) / 9.8,
+                            7200
+                        ) <= UNIX_TIMESTAMP()
+                    )
+                )
+                """
+            } else {
+                cooldownSQL = """
+                AND (
+                    last_encounter_time IS NULL OR
+                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
+                )
+                """
+            }
+        } else {
+            cooldownSQL = ""
+        }
+
         let sql = """
             SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat,
                 last_encounter_lon, last_encounter_time, spins, creation_timestamp, warn, warn_expire_timestamp,
-                warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned
+                warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned, last_used_timestamp
             FROM account
             LEFT JOIN device ON username = account_username
             WHERE
-                first_warning_timestamp is NULL AND
-                failed_timestamp is NULL and device.uuid IS NULL AND
+                device.uuid IS NULL AND
                 level >= ? AND
-                level <= ? AND
-                failed IS NULL AND (
-                    last_encounter_time IS NULL OR
-                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
-                    spins < 400
-                )
-            ORDER BY level DESC, RAND()
+                level <= ?
+                \(failedSQL)
+                \(spinSQL)
+                \(cooldownSQL)
+            ORDER BY level DESC, last_used_timestamp DESC
             LIMIT 1
         """
 
@@ -352,6 +459,13 @@ class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(minLevel)
         mysqlStmt.bindParam(maxLevel)
+        if let spins = spins {
+            mysqlStmt.bindParam(spins)
+        }
+        if noCooldown, let encounterTarget = encounterTarget {
+            mysqlStmt.bindParam(encounterTarget.lon)
+            mysqlStmt.bindParam(encounterTarget.lat)
+        }
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -381,14 +495,17 @@ class Account: WebHookEvent {
         let suspendedMessageAcknowledged = result[14] as? Bool
         let wasSuspended = result[15] as? Bool
         let banned = result[16] as? Bool
+        let lastUsedTimestamp = result[17] as? UInt32
 
+        try? Account.setLastUsed(mysql: mysql, username: username)
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,
             failedTimestamp: failedTimestamp, failed: failed, lastEncounterLat: lastEncounterLat,
             lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins,
             creationTimestamp: creationTimestamp, warn: warn, warnExpireTimestamp: warnExpireTimestamp,
             warnMessageAcknowledged: warnMessageAcknowledged,
-            suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned)
+            suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned,
+            lastUsedTimestamp: lastUsedTimestamp)
     }
 
     public static func getWithUsername(mysql: MySQL?=nil, username: String) throws -> Account? {
@@ -402,7 +519,7 @@ class Account: WebHookEvent {
             SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed,
                    last_encounter_lat, last_encounter_lon, last_encounter_time, spins, creation_timestamp,
                    warn, warn_expire_timestamp, warn_message_acknowledged, suspended_message_acknowledged,
-                  was_suspended, banned
+                  was_suspended, banned, last_used_timestamp
             FROM account
             WHERE username = ?
         """
@@ -439,6 +556,7 @@ class Account: WebHookEvent {
         let suspendedMessageAcknowledged = result[14] as? Bool
         let wasSuspended = result[15] as? Bool
         let banned = result[16] as? Bool
+        let lastUsedTimestamp = result[17] as? UInt32
 
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,
@@ -446,7 +564,8 @@ class Account: WebHookEvent {
             lastEncounterLon: lastEncounterLon, lastEncounterTime: lastEncounterTime, spins: spins,
             creationTimestamp: creationTimestamp, warn: warn, warnExpireTimestamp: warnExpireTimestamp,
             warnMessageAcknowledged: warnMessageAcknowledged,
-            suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned)
+            suspendedMessageAcknowledged: suspendedMessageAcknowledged, wasSuspended: wasSuspended, banned: banned,
+            lastUsedTimestamp: lastUsedTimestamp)
     }
 
     public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {
@@ -463,7 +582,12 @@ class Account: WebHookEvent {
             WHERE
                 first_warning_timestamp is NULL AND
                 failed_timestamp is NULL and device.uuid IS NULL AND
-                failed IS NULL AND (
+                (
+                    (failed IS NULL AND first_warning_timestamp is NULL) OR
+                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+                ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
                     spins < 400
@@ -522,7 +646,7 @@ class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE spins >= 500
+            WHERE spins >= 1000
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -660,7 +784,12 @@ class Account: WebHookEvent {
             SELECT
               level,
               COUNT(level) as total,
-              SUM(failed IS NULL AND first_warning_timestamp IS NULL) as good,
+              SUM(
+                  (failed IS NULL AND first_warning_timestamp is NULL) OR
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                   warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+              ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
@@ -669,7 +798,7 @@ class Account: WebHookEvent {
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
               ) as cooldown,
-              SUM(spins >= 500) as spin_limit
+              SUM(spins >= 1000) as spin_limit
             FROM account
             GROUP BY level
             ORDER BY level DESC

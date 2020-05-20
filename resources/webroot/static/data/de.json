@@ -3331,6 +3331,7 @@
         "quest_reward_7_formatted": "%{pokemon}",
         "quest_reward_8": "Pokemünzen",
         "quest_reward_8_formatted": "%{amount} Pokemünzen",
+        "quest_reward_11": "Aufkleber",
         "poke_type_1": "Normal",
         "poke_type_2": "Kampf",
         "poke_type_3": "Flug",

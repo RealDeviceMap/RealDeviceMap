@@ -3336,6 +3336,7 @@
         "quest_reward_7_formatted": "%{pokemon}",
         "quest_reward_8": "Pokecoin",
         "quest_reward_8_formatted": "%{amount} Pokecoins",
+        "quest_reward_11": "Sticker",
         "poke_type_1": "Normal",
         "poke_type_2": "Fighting",
         "poke_type_3": "Flying",
