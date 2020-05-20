@@ -341,7 +341,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let spawnId = UInt64(encounterData.wildPokemon.spawnPointID, radix: 16)
             self.spawnId = spawnId
             self.lat = encounterData.wildPokemon.latitude
-            self.lat = encounterData.wildPokemon.latitude
+            self.lon = encounterData.wildPokemon.longitude
 
             if !expireTimestampVerified && spawnId != nil {
                 let spawnpoint: SpawnPoint?

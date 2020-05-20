@@ -1595,7 +1595,11 @@ function loadData () {
           }
         }
       })
-
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    },
+    complete: function() {
       lastUpdate = new Date()
       isLoading = false
     }
@@ -2321,7 +2325,7 @@ function getGymPopupContent (gym) {
   const raidEndDate = new Date(gym.raid_end_timestamp * 1000)
 
   const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0
-  const isRaidBattle = raidBattleDate <= now && isRaid
+  const isRaidBattle = (raidBattleDate <= now || (gym.raid_pokemon_id !== null && gym.raid_pokemon_id !== 0)) && isRaid
 
   var gymName = ''
   if (gym.name === null || gym.name === '') {
@@ -2672,6 +2676,8 @@ function getQuestReward (reward) {
       string += ' (Shiny)'
     }
     return string
+  } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+    return i18n('quest_reward_8_formatted', { amount: info.amount })
   } else {
     return i18n('quest_reward_' + id)
   }
