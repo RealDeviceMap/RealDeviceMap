@@ -335,7 +335,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             reward["type"] = rewardData.type.rawValue
 
             switch rewardData.type {
-
             case .experience:
                 let info = rewardData.exp
                 infoData["amount"] = info
@@ -362,6 +361,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["form_id"] = info.pokemonDisplay.form.rawValue
                 infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
                 infoData["shiny"] = info.pokemonDisplay.shiny
+            case .pokecoin:
+                let info = rewardData.pokecoin
+                infoData["amount"] = info
+            case .sticker: break
             case .avatarClothing: break
             case .quest: break
             case .unset: break
@@ -991,7 +994,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        Log.debug(message: "SQL: \(sql)")
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")

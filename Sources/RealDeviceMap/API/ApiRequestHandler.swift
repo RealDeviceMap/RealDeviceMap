@@ -90,13 +90,7 @@ class ApiRequestHandler {
                     if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
                         let user: User
                         do {
-                            let host: String
-                            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-                            if forwardedForHeader.isEmpty {
-                                host = request.remoteAddress.host
-                            } else {
-                                host = forwardedForHeader
-                            }
+                            let host = request.host
                             if usernameEmail.contains("@") {
                                 user = try User.login(email: usernameEmail, password: password, host: host)
                             } else {
