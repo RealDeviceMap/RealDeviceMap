@@ -40,6 +40,8 @@ FROM base
 
 COPY --from=build /build/.build/debug/RealDeviceMap /app/RealDeviceMap
 COPY resources /app/resources
+COPY .gitsha /app/.gitsha
+COPY .gitref /app/.gitref
 RUN cd /app && wget https://raw.githubusercontent.com/apple/swift/master/utils/symbolicate-linux-fatal && chmod +x symbolicate-linux-fatal
 COPY run-debug-docker /app/run-debug-docker
 RUN cd /app && chmod +x run-debug-docker

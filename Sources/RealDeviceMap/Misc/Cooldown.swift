@@ -25,7 +25,7 @@ class Cooldown {
             lastLon = Double(try DBController.global.getValueForKey(key: "AIC_\(deviceUUID)_last_lon") ?? "")
         }
 
-        if lastLon == nil || lastLon == nil {
+        if lastLat == nil || lastLon == nil {
             return nil
         } else {
             return Coord(lat: lastLat!, lon: lastLon!)
@@ -71,7 +71,7 @@ class Cooldown {
                                 location: Coord) throws -> (delay: Int, encounterTime: UInt32) {
         let lastLat: Double?
         let lastLon: Double?
-        var lastTime: UInt32?
+        let lastTime: UInt32?
         if let account = account {
             lastLat = account.lastEncounterLat
             lastLon = account.lastEncounterLon
@@ -95,9 +95,6 @@ class Cooldown {
         } else {
             let lastCoord = Coord(lat: lastLat!, lon: lastLon!)
             let distance = lastCoord.distance(to: location)
-            if lastTime! > now {
-                lastTime = now
-            }
             let encounterTimeT = lastTime! + encounterCooldown(distM: distance)
             if encounterTimeT < now {
                 encounterTime = now
@@ -118,7 +115,7 @@ class Cooldown {
     }
 
     private static func encounterCooldown(distM: Double) -> UInt32 {
-         return UInt32(distM / 9.8)
-     }
+        return UInt32(distM / 9.8)
+    }
 
 }

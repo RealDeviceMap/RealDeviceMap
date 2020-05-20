@@ -13,6 +13,7 @@ import PerfectMustache
 import PerfectSessionMySQL
 import POGOProtos
 import S2Geometry
+import PerfectThread
 
 class ApiRequestHandler {
 
@@ -89,13 +90,7 @@ class ApiRequestHandler {
                     if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
                         let user: User
                         do {
-                            let host: String
-                            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-                            if forwardedForHeader.isEmpty {
-                                host = request.remoteAddress.host
-                            } else {
-                                host = forwardedForHeader
-                            }
+                            let host = request.host
                             if usernameEmail.contains("@") {
                                 user = try User.login(email: usernameEmail, password: password, host: host)
                             } else {
@@ -1173,7 +1168,6 @@ class ApiRequestHandler {
         if showInstances && perms.contains(.admin) {
 
             let instances = try? Instance.getAll(mysql: mysql)
-
             var jsonArray = [[String: Any]]()
 
             if instances != nil {
@@ -1197,27 +1191,29 @@ class ApiRequestHandler {
                     }
 
                     if formatted {
-                        let status = InstanceController.global.getInstanceStatus(instance: instance, formatted: true)
+                        let status = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: true
+                        )
                         if let status = status as? String {
                             instanceData["status"] = status
                         } else {
                             instanceData["status"] = "?"
                         }
-                    } else {
-                        instanceData["status"] = InstanceController.global.getInstanceStatus(
-                            instance: instance, formatted: false
-                        ) as Any
-                    }
-
-                    if formatted {
                         instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
                                                   " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                    } else {
+                        instanceData["status"] = InstanceController.global.getInstanceStatus(
+                            mysql: mysql,
+                            instance: instance,
+                            formatted: false
+                        ) as Any
                     }
                     jsonArray.append(instanceData)
                 }
             }
             data["instances"] = jsonArray
-
         }
 
         if showDeviceGroups && perms.contains(.admin) {

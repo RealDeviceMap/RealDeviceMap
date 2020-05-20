@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import Turf
 import POGOProtos
 
@@ -22,10 +23,13 @@ protocol InstanceControllerProto {
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(uuid: String, username: String?) -> [String: Any]
-    func getStatus(formatted: Bool) -> JSONConvertible?
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any]
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account?
+    func accountValid(account: Account) -> Bool
     func reload()
     func stop()
+    func shouldStoreData() -> Bool
     func gotPokemon(pokemon: Pokemon)
     func gotIV(pokemon: Pokemon)
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?)
@@ -33,10 +37,17 @@ protocol InstanceControllerProto {
 }
 
 extension InstanceControllerProto {
+    func shouldStoreData() -> Bool { return true }
     func gotPokemon(pokemon: Pokemon) { }
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
+    }
+    func accountValid(account: Account) -> Bool {
+        return account.level >= minLevel && account.level <= maxLevel && account.isValid()
+    }
 }
 
 extension InstanceControllerProto {
@@ -56,7 +67,7 @@ class InstanceController {
 
         let thread = Threading.getQueue(name: "InstanceController-global-setup", type: .serial)
         thread.dispatch {
-            Log.debug(message: "[InstanceController] Starting instances...")
+            Log.info(message: "[InstanceController] Starting instances...")
             let dispatchGroup = DispatchGroup()
             for instance in instances {
                 dispatchGroup.enter()
@@ -68,14 +79,14 @@ class InstanceController {
                     Log.debug(message: "[InstanceController] Starting \(instance.name)...")
                     global.addInstance(instance: instance)
                     Log.debug(message: "[InstanceController] Started \(instance.name)")
+                    for device in devices where device.instanceName == instance.name {
+                        global.addDevice(device: device)
+                    }
                     dispatchGroup.leave()
                 }
             }
             dispatchGroup.wait()
-            for device in devices {
-                global.addDevice(device: device)
-            }
-            Log.debug(message: "[InstanceController] Done starting instances")
+            Log.info(message: "[InstanceController] Done starting instances")
         }
 
     }
@@ -176,7 +187,7 @@ class InstanceController {
                     minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList
                 )
             } else {
-                let spinLimit = instance.data["spin_limit"] as? Int ?? 500
+                let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
@@ -198,8 +209,16 @@ class InstanceController {
             }
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            instanceController = LevelingInstanceController(name: instance.name, start: coord,
-                                                            minLevel: minLevel, maxLevel: maxLevel)
+            let radius = instance.data["radius"] as? UInt64 ?? (instance.data["radius"] as? Int)?.toUInt64() ?? 100000
+            let storeData = instance.data["store_data"] as? Bool ?? false
+            instanceController = LevelingInstanceController(
+                name: instance.name,
+                start: coord,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                storeData: storeData,
+                radius: radius
+            )
         }
         instanceController.delegate = AssignmentController.global
         instancesLock.lock()
@@ -282,6 +301,27 @@ class InstanceController {
         try? AssignmentController.global.setup()
     }
 
+    public func shouldStoreData(deviceUUID: String) -> Bool {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return instanceController.shouldStoreData()
+        }
+        return true
+    }
+
+    public func getAccount(mysql: MySQL, deviceUUID: String) throws -> Account? {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return try instanceController.getAccount(mysql: mysql, uuid: deviceUUID)
+        }
+        return try Account.getNewAccount(minLevel: 0, maxLevel: 29)
+    }
+
+    public func accountValid(deviceUUID: String, account: Account) -> Bool {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return instanceController.accountValid(account: account)
+        }
+        return account.isValid()
+    }
+
     public func getDeviceUUIDsInInstance(instanceName: String) -> [String] {
         var deviceUUIDS = [String]()
         instancesLock.lock()
@@ -292,11 +332,11 @@ class InstanceController {
         return deviceUUIDS
     }
 
-    public func getInstanceStatus(instance: Instance, formatted: Bool) -> JSONConvertible? {
+    public func getInstanceStatus(mysql: MySQL, instance: Instance, formatted: Bool) -> JSONConvertible? {
         instancesLock.lock()
         if let instanceProto = instancesByInstanceName[instance.name] {
             instancesLock.unlock()
-            return instanceProto.getStatus(formatted: formatted)
+            return instanceProto.getStatus(mysql: mysql, formatted: formatted)
         } else {
             instancesLock.unlock()
             if formatted {

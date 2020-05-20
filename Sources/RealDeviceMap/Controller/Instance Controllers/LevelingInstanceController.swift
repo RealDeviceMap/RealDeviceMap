@@ -4,11 +4,12 @@
 //
 //  Created by Florian Kostenzer on 29.01.20.
 //
-//  swiftlint:disable type_body_length function_body_length
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity
 
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 import POGOProtos
 import Turf
 
@@ -64,6 +65,8 @@ class LevelingInstanceController: InstanceControllerProto {
     ]
 
     private let start: Coord
+    private let storeData: Bool
+    private let radius: UInt64
     private let unspunPokestopsPerUsernameLock = NSLock()
     private var unspunPokestopsPerUsername = [String: [String: POGOProtos_Map_Fort_FortData]]()
     private var lastPokestopsPerUsername = [String: [Coord]]()
@@ -74,40 +77,25 @@ class LevelingInstanceController: InstanceControllerProto {
     private var playerXPPerTime = [String: [(date: Date, xp: Int)]]()
     private var lastLocactionUsername = [String: Coord]()
 
-    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8) {
+    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8, storeData: Bool, radius: UInt64) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
         self.start = start
+        self.storeData = storeData
+        self.radius = radius
     }
 
-    func getTask(uuid: String, username: String?) -> [String: Any] {
-
-        guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[LevelingInstanceController] Failed to connect to database.")
-            return [:]
-        }
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         guard let username = username else {
-            Log.error(message: "[LevelingInstanceController] No username specified.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No username specified.")
             return [:]
         }
 
-        let accountX: Account?
-        do {
-            accountX = try Account.getWithUsername(mysql: mysql, username: username)
-        } catch {
-            Log.error(message: "[LevelingInstanceController] Failed to get account.")
+        guard let account = account else {
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No account specified.")
             return [:]
-        }
-
-        guard let account = accountX else {
-            Log.error(message: "[LevelingInstanceController] Got account thats not in the db. Logging out.")
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-        }
-
-        if account.failed == "GPR_RED_WARNING" || account.failed == "GPR_BANNED" {
-            return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
         }
 
         if lastPokestopsPerUsername[username] == nil {
@@ -144,7 +132,7 @@ class LevelingInstanceController: InstanceControllerProto {
             delay = result.delay
             encounterTime = result.encounterTime
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
             return [String: Any]()
         }
 
@@ -157,7 +145,7 @@ class LevelingInstanceController: InstanceControllerProto {
                 encounterTime: encounterTime
           )
         } catch {
-            Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+            Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
             return [String: Any]()
         }
 
@@ -209,16 +197,19 @@ class LevelingInstanceController: InstanceControllerProto {
         }
 
         if fortData.type == .checkpoint {
-            unspunPokestopsPerUsernameLock.lock()
-            if unspunPokestopsPerUsername[username] == nil {
-                unspunPokestopsPerUsername[username] = [:]
+            let coord = Coord(lat: fortData.latitude, lon: fortData.longitude)
+            if UInt64(coord.distance(to: start)) <= radius {
+                unspunPokestopsPerUsernameLock.lock()
+                if unspunPokestopsPerUsername[username] == nil {
+                    unspunPokestopsPerUsername[username] = [:]
+                }
+                if fortData.visited {
+                    unspunPokestopsPerUsername[username]![fortData.id] = nil
+                } else {
+                    unspunPokestopsPerUsername[username]![fortData.id] = fortData
+                }
+                unspunPokestopsPerUsernameLock.unlock()
             }
-            if fortData.visited {
-                unspunPokestopsPerUsername[username]![fortData.id] = nil
-            } else {
-                unspunPokestopsPerUsername[username]![fortData.id] = fortData
-            }
-            unspunPokestopsPerUsernameLock.unlock()
         }
     }
 
@@ -233,7 +224,7 @@ class LevelingInstanceController: InstanceControllerProto {
         playerLock.unlock()
     }
 
-    func getStatus(formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         var players = [String]()
         playerLock.lock()
         for player in playerLastSeen {
@@ -296,7 +287,7 @@ class LevelingInstanceController: InstanceControllerProto {
 
                 let timeLeftHours: Int
                 let timeLeftMinutes: Int
-                if timeLeft == .infinity || timeLeft == -.infinity || timeLeft == .nan {
+                if timeLeft == .infinity || timeLeft == -.infinity || timeLeft.isNaN {
                     timeLeftHours = 999
                     timeLeftMinutes = 0
                 } else {
@@ -304,8 +295,12 @@ class LevelingInstanceController: InstanceControllerProto {
                     timeLeftMinutes = Int((timeLeft - Double(timeLeftHours)) * 60)
                 }
 
-                text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
-                        "\(timeLeftHours)h\(timeLeftMinutes)m"
+                if level > maxLevel {
+                    text += "\(username): Lvl.\(level) done"
+                } else {
+                    text += "\(username): Lvl.\(level) \((xpPercentage))% \(xpPerHour)XP/h " +
+                            "\(timeLeftHours)h\(timeLeftMinutes)m"
+                }
             }
             playerLock.unlock()
             if text == "" {
@@ -318,12 +313,34 @@ class LevelingInstanceController: InstanceControllerProto {
         }
     }
 
+    func shouldStoreData() -> Bool {
+        return storeData
+    }
+
     func reload() {
 
     }
 
     func stop() {
 
+    }
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try Account.getNewAccount(
+            mysql: mysql,
+            minLevel: minLevel,
+            maxLevel: maxLevel,
+            ignoringWarning: false,
+            spins: nil, // 7000
+            noCooldown: true
+        )
+    }
+
+    func accountValid(account: Account) -> Bool {
+        return
+            account.level >= minLevel &&
+            account.level <= maxLevel &&
+            account.isValid() // && account.hasSpinsLeft(spins: 7000)
     }
 
 }

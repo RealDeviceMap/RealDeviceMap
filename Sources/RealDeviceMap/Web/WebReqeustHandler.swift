@@ -29,7 +29,7 @@ class WebReqeustHandler {
     static var startZoom: Int = 14
     static var minZoom: Int = 10
     static var maxZoom: Int = 18
-    static var maxPokemonId: Int = 493
+    static var maxPokemonId: Int = 649
     static var title: String = "RealDeviceMap"
     static var avilableFormsJson: String = "[]"
     static var avilableItemJson: String = "[]"
@@ -370,14 +370,7 @@ class WebReqeustHandler {
                 data[loc] = localizer.get(value: loc)
             }
 
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
+            let host = request.host
             if !LoginLimiter.global.tokenAllowed(host: host) {
                 data["is_error"] = true
                 data["error"] = localizer.get(value: "confirmmail_error_limited")
@@ -458,14 +451,7 @@ class WebReqeustHandler {
                 data[loc] = localizer.get(value: loc)
             }
 
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
-
+            let host = request.host
             if !LoginLimiter.global.tokenAllowed(host: host) {
                 data["is_error"] = true
                 data["error"] = localizer.get(value: "resetpassword_error_limited")
@@ -560,9 +546,14 @@ class WebReqeustHandler {
             }
 
         case .dashboard:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard"
+            data["version"] = VersionManager.global.version
+            data["version_commit"] = VersionManager.global.commit
+            data["version_url"] = VersionManager.global.url
         case .dashboardSettings:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Settings"
             if request.method == .post {
@@ -643,9 +634,11 @@ class WebReqeustHandler {
             data["cities"] = citiesString
 
         case .dashboardDevices:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Devices"
         case .dashboardDeviceAssign:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assign Device"
             let deviceUUID = (request.urlVariables["device_uuid"] ?? "").decodeUrl()!
@@ -666,9 +659,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardInstances:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Instances"
         case .dashboardInstanceAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Instance"
             if request.method == .post {
@@ -682,20 +677,25 @@ class WebReqeustHandler {
                 data["max_level"] = 29
                 data["timezone_offset"] = 0
                 data["iv_queue_limit"] = 100
-                data["spin_limit"] = 500
+                data["spin_limit"] = 1000
                 data["delay_logout"] = 900
+                data["radius"] = 10000
+                data["store_data"] = false
                 data["nothing_selected"] = true
             }
         case .dashboardInstanceIVQueue:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - IV Queue"
             let instanceName = request.urlVariables["instance_name"] ?? ""
             data["instance_name_url"] = instanceName
             data["instance_name"] = instanceName.decodeUrl() ?? ""
         case .dashboardDeviceGroups:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Device Groups"
         case .dashboardDeviceGroupAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Device Group"
             if request.method == .post {
@@ -713,6 +713,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardDeviceGroupEdit:
+            data["locale"] = "en"
             let deviceGroupName = (request.urlVariables["name"] ?? "").decodeUrl()!
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit Device Group"
@@ -748,9 +749,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignments:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Assignments"
         case .dashboardAssignmentAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Assignment"
             if request.method == .get {
@@ -767,6 +770,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignmentEdit:
+            data["locale"] = "en"
             let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
             let tmp = uuid.replacingOccurrences(of: "\\\\-", with: "&tmp")
             data["page_is_dashboard"] = true
@@ -786,6 +790,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardAssignmentStart:
+            data["locale"] = "en"
             let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
             let split = uuid.components(separatedBy: "\\-")
             if split.count >= 2 {
@@ -814,6 +819,7 @@ class WebReqeustHandler {
                 response.completed(status: .seeOther)
             }
         case .dashboardAssignmentDelete:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Assignment"
 
@@ -845,6 +851,7 @@ class WebReqeustHandler {
                 response.completed(status: .badRequest)
             }
         case .dashboardAssignmentsDeleteAll:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
 
             do {
@@ -858,6 +865,7 @@ class WebReqeustHandler {
             sessionDriver.save(session: request.session!)
             response.completed(status: .seeOther)
         case .dashboardAccounts:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
             data["new_accounts_count"] = (try? Account.getNewCount().withCommas()) ?? "?"
@@ -870,6 +878,7 @@ class WebReqeustHandler {
             data["stats"] = (try? Account.getStats()) ?? ""
             data["ban_stats"] = (try? Account.getWarningBannedStats()) ?? ""
         case .dashboardAccountsAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Accounts"
             if request.method == .post {
@@ -882,6 +891,7 @@ class WebReqeustHandler {
                 data["level"] = 0
             }
         case .dashboardInstanceEdit:
+            data["locale"] = "en"
             let instanceName = (request.urlVariables["instance_name"] ?? "").decodeUrl()!
             data["page_is_dashboard"] = true
             data["old_name"] = instanceName
@@ -933,6 +943,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardClearQuests:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Clear All Quests"
             if request.method == .post {
@@ -949,9 +960,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardUsers:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Users"
         case .dashboardUserEdit:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit User"
             let editUsername = (request.urlVariables["username"] ?? "").decodeUrl()!
@@ -1024,9 +1037,11 @@ class WebReqeustHandler {
                 data["groups"] = groupsData
             }
         case .dashboardGroups:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Groups"
         case .dashboardGroupEdit:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Edit Group"
             let groupName = (request.urlVariables["group_name"])?.decodeUrl() ?? ""
@@ -1061,6 +1076,7 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardGroupAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Group"
             if request.method == .post {
@@ -1072,9 +1088,11 @@ class WebReqeustHandler {
                 }
             }
         case .dashboardDiscordRules:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Discord Rules"
         case .dashboardDiscordRuleAdd:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Add Discord Rule"
 
@@ -1125,6 +1143,9 @@ class WebReqeustHandler {
             }
 
         case .dashboardDiscordRuleEdit:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Edit Discord Rule"
 
             let priority = (request.urlVariables["discordrule_priority"] ?? "").toInt32()
             data["priority_old"] = priority
@@ -1211,6 +1232,7 @@ class WebReqeustHandler {
             }
 
         case .dashboardUtilities:
+            data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Utilities"
 
@@ -1223,30 +1245,31 @@ class WebReqeustHandler {
                 let action = request.param(name: "action")
                 switch action {
                 case "truncate_pokemon":
-                    let result = try? Pokemon.truncate()
-                    if result! >= 0 {
+                    do {
+                        try Pokemon.truncate()
                         data["show_success"] = true
                         data["success"] = "Pokemon table truncated!"
-                    } else {
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to truncate Pokemon table."
                     }
                 case "convert_pokestops":
-                    let result = try? Gym.convertPokestopsToGyms()
-                    let deleteResult = try? Pokestop.deleteConvertedPokestops()
-                    if result! >= 0 && deleteResult! >= 0 {
+                    do {
+                        let result = try Gym.convertPokestopsToGyms()
+                        let deleteResult = try Pokestop.deleteConvertedPokestops()
                         data["show_success"] = true
-                        data["success"] = "\((result ?? 0).description) Pokestops converted to gyms!"
-                    } else {
+                        data["success"] = "\(result) Pokestops converted to " +
+                                          "gyms and \(deleteResult) Pokestops deleted!"
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to update converted pokestops to gyms."
                     }
                 case "delete_stale_pokestops":
-                    let result = try? Pokestop.deleteStalePokestops()
-                    if result! >= 0 {
+                    do {
+                        let result = try Pokestop.deleteStalePokestops()
                         data["show_success"] = true
-                        data["success"] = "\((result ?? 0).description) Stale Pokestops deleted!"
-                    } else {
+                        data["success"] = "\(result) Stale Pokestops deleted!"
+                    } catch {
                         data["show_error"] = true
                         data["error"] = "Failed to delete stale Pokestops."
                     }
@@ -1565,13 +1588,7 @@ class WebReqeustHandler {
 
         var user: User?
         do {
-            let host: String
-            let forwardedForHeader = request.header(.xForwardedFor) ?? ""
-            if forwardedForHeader.isEmpty {
-                host = request.remoteAddress.host
-            } else {
-                host = forwardedForHeader
-            }
+            let host = request.host
             if usernameEmail.contains("@") {
                 user = try User.login(email: usernameEmail, password: password, host: host)
             } else {
@@ -1676,31 +1693,45 @@ class WebReqeustHandler {
             return value.toUInt16() ?? 0
         }) ?? [UInt16]()
 
-        let buttonsLeft = request.param(name: "buttons_left_formatted")?
-                                .replacingOccurrences(of: "<br>", with: "")
-                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
-                                .components(separatedBy: "\n")
-        .map({ (string) -> [String: String] in
-            let components = string.components(separatedBy: ";")
-            return [
-                "name": components[0],
-                "url": components.last ?? "?"
-            ]
-        })
+        let buttonsLeftString = request.param(name: "buttons_left_formatted")?
+            .replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let buttonsRight = request.param(name: "buttons_right_formatted")?
-                                .replacingOccurrences(of: "<br>", with: "")
-                                .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
-                                .components(separatedBy: "\n")
-        .map({ (string) -> [String: String] in
-            let components = string.components(separatedBy: ";")
-            return [
-                "name": components[0],
-                "url": components.last ?? "?"
-            ]
-        })
+        let buttonsLeft: [[String: String]]
+        if buttonsLeftString == nil || buttonsLeftString!.isEmpty {
+            buttonsLeft = []
+        } else {
+            buttonsLeft = buttonsLeftString!
+                .components(separatedBy: "\n")
+                .map({ (string) -> [String: String] in
+                    let components = string.components(separatedBy: ";")
+                    return [
+                        "name": components[0],
+                        "url": components.last ?? "?"
+                    ]
+                })
+        }
+
+        let buttonsRightString = request.param(name: "buttons_right_formatted")?
+            .replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let buttonsRight: [[String: String]]
+        if buttonsRightString == nil || buttonsRightString!.isEmpty {
+            buttonsRight = []
+        } else {
+            buttonsRight = buttonsRightString!
+                .components(separatedBy: "\n")
+                .map({ (string) -> [String: String] in
+                    let components = string.components(separatedBy: ";")
+                    return [
+                        "name": components[0],
+                        "url": components.last ?? "?"
+                    ]
+                })
+        }
 
         var tileservers = [String: [String: String]]()
         for tileserverString in tileserversString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1812,8 +1843,8 @@ class WebReqeustHandler {
         WebReqeustHandler.cities = citySettings
         WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight ?? []
-        WebReqeustHandler.buttonsLeft = buttonsLeft ?? []
+        WebReqeustHandler.buttonsRight = buttonsRight
+        WebReqeustHandler.buttonsLeft = buttonsLeft
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
@@ -1843,6 +1874,8 @@ class WebReqeustHandler {
 
         data["title"] = title
         data["show_success"] = true
+        data["buttons_left"] = buttonsLeft
+        data["buttons_right"] = buttonsRight
 
         return data
     }
@@ -1902,8 +1935,10 @@ class WebReqeustHandler {
 
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
         let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
-        let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 500
+        let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 1000
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
+        let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
+        let storeData = request.param(name: "store_data") == "true"
 
         data["name"] = name
         data["area"] = area
@@ -1915,6 +1950,8 @@ class WebReqeustHandler {
         data["iv_queue_limit"] = ivQueueLimit
         data["spin_limit"] = spinLimit
         data["delay_logout"] = delayLogout
+        data["radius"] = radius
+        data["store_data"] = storeData
 
         if type == nil {
             data["nothing_selected"] = true
@@ -2042,6 +2079,9 @@ class WebReqeustHandler {
                 } else if type == .autoQuest {
                     oldInstance!.data["spin_limit"] = spinLimit
                     oldInstance!.data["delay_logout"] = delayLogout
+                } else if type == .leveling {
+                    oldInstance!.data["radius"] = radius
+                    oldInstance!.data["store_data"] = storeData
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -2067,6 +2107,9 @@ class WebReqeustHandler {
             } else if type == .autoQuest {
                 instanceData["spin_limit"] = spinLimit
                 instanceData["delay_logout"] = delayLogout
+            } else if type == .leveling {
+                instanceData["radius"] = radius
+                instanceData["store_data"] = storeData
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
@@ -2138,8 +2181,10 @@ class WebReqeustHandler {
             data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
-            data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 500
+            data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
             data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900
+            data["radius"] = (oldInstance!.data["radius"] as? Int)?.toUInt64() ?? 100000
+            data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
 
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {
@@ -2796,13 +2841,14 @@ class WebReqeustHandler {
         for accountsRow in accountsRows {
             let rowSplit = accountsRow.components(separatedBy: ",")
             if rowSplit.count == 2 {
-                let username = rowSplit[0]
-                let password = rowSplit[1]
+                let username = rowSplit[0].trimmingCharacters(in: .whitespaces)
+                let password = rowSplit[1].trimmingCharacters(in: .whitespaces)
                 accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil,
                                     failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
                                     lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
                                     warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-                                    suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil))
+                                    suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
+                                    lastUsedTimestamp: nil))
             }
         }
 
