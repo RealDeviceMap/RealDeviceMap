@@ -2651,6 +2651,8 @@ function getQuestReward (reward) {
       string += ' (Shiny)'
     }
     return string
+  } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+    return i18n('quest_reward_8_formatted', { amount: info.amount })
   } else {
     return i18n('quest_reward_' + id)
   }
