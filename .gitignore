@@ -5,6 +5,7 @@
 .build/
 .build_lin/
 .packages_lin/
+.swiftpm/
 Package.resolved
 
 # Xcode

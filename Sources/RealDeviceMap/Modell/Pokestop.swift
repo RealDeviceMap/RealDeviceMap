@@ -103,8 +103,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
     }
 
-    public var hashValue: Int {
-        return id.hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 
     var id: String
@@ -364,7 +364,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .pokecoin:
                 let info = rewardData.pokecoin
                 infoData["amount"] = info
-            case .sticker: break
             case .avatarClothing: break
             case .quest: break
             case .unset: break
