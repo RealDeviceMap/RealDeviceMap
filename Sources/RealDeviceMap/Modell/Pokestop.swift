@@ -366,6 +366,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["amount"] = info
             case .avatarClothing: break
             case .quest: break
+            case .sticker: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
