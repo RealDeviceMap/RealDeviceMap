@@ -81,7 +81,7 @@ internal class PVPStatsManager {
             return nil
         }
         guard let index = stats.firstIndex(where: { value in
-            for ivlevel in value.ivs where if ivlevel.0 == iv {
+            for ivlevel in value.ivs where ivlevel.0 == iv {
                 return true
             }
             return false
