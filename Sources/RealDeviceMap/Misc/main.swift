@@ -13,9 +13,6 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 
-// TODO: - Remove; Just for testing
-print("Forms:", POGOProtos_Enums_Form.allCases.count)
-
 let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
 extension Log {
     public static func debug(message: @autoclosure () -> String) {
