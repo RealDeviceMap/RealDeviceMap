@@ -16,7 +16,7 @@ let package = Package(
         .package(url: "https://github.com/PerfectlySoft/Perfect-Crypto.git", .upToNextMinor(from: "3.2.0")),
         .package(url: "https://github.com/123FLO321/Turnstile.git", .upToNextMinor(from: "1.2.3")),
         .package(url: "https://github.com/crossroadlabs/Regex.git", .upToNextMinor(from: "1.1.0")),
-        .package(url: "https://github.com/apple/swift-protobuf.git", .upToNextMinor(from: "1.5.0")),
+        .package(url: "https://github.com/apple/swift-protobuf.git", .upToNextMinor(from: "1.9.0")),
         .package(url: "https://github.com/123FLO321/turf-swift.git", .upToNextMinor(from: "0.3.1")),
         .package(url: "https://github.com/123FLO321/S2Geometry.git", .upToNextMinor(from: "0.3.1")),
         .package(url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "1.23.2"))
