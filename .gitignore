@@ -3,7 +3,7 @@
 
 # Swift
 .build/
-.swiftpm/
+.build_lin/
 .packages_lin/
 Package.resolved
 
