@@ -1601,8 +1601,31 @@ function getPokemonSize (pokemonId) {
   }
 }
 
-function getPokemonIndex (pokemonId) {
-  const size = pokemonFilter[pokemonId].size
+function getPokemonIndex (pokemon) {
+  const size = pokemonFilter[pokemon.pokemon_id].size
+  if (pokemon.atk_iv === 15 && pokemon.def_iv === 15 && pokemon.sta_iv === 15) {
+    return 9
+  }
+  if (pokemon.pvp_rankings_great_league !== null && pokemon.pvp_rankings_ultra_league !== null) {
+    let bestRank = 4
+    $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    if (bestRank === 1) {
+      return 7
+    } else if (bestRank === 2) {
+      return 6
+    } else if (bestRank === 3) {
+      return 5
+    }
+  }
   if (size === 'small') {
     return 1
   } else if (size === 'large') {
@@ -2913,7 +2936,7 @@ function getPokemonMarker (pokemon, ts) {
   if (pokemon.is_start) {
     zIndex = 1000
   } else {
-    zIndex = 40 + getPokemonIndex(pokemon.pokemon_id)
+    zIndex = 40 + getPokemonIndex(pokemon)
   }
   const marker = L.marker([pokemon.lat, pokemon.lon], {
     icon: getPokemonMarkerIcon(pokemon, ts),
