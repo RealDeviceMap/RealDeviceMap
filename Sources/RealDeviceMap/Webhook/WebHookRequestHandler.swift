@@ -845,12 +845,6 @@ class WebHookRequestHandler {
                     }
                     account = newAccount
                 }
-                device.accountUsername = account!.username
-                try device.save(mysql: mysql, oldUUID: device.uuid)
-                try response.respondWithData(data: [
-                    "username": account!.username,
-                    "password": account!.password
-                ])
 
                 if username != account!.username, let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
@@ -884,6 +878,8 @@ class WebHookRequestHandler {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
                 }
 
+                device.accountUsername = account!.username
+                try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
                     "username": account!.username,
                     "password": account!.password

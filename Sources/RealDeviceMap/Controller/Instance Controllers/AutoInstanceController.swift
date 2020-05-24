@@ -375,6 +375,10 @@ class AutoInstanceController: InstanceControllerProto {
                             accountsLock.lock()
                             newUsername = account?.username
                             accounts[uuid] = account?.username
+                            Log.debug(
+                                message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
+                                         "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                            )
                         } else {
                             newUsername = accounts[uuid]
                         }
@@ -384,10 +388,6 @@ class AutoInstanceController: InstanceControllerProto {
                             message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance."
                         )
                     }
-                    Log.debug(
-                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
-                                 "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
-                    )
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 }
 
@@ -550,7 +550,8 @@ class AutoInstanceController: InstanceControllerProto {
                 ignoringWarning: true,
                 spins: spinLimit,
                 noCooldown: true,
-                encounterTarget: encounterTarget
+                encounterTarget: encounterTarget,
+                device: uuid
             )
         }
     }
