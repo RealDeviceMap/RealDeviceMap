@@ -3137,7 +3137,7 @@ function getGymMarkerIcon (gym, ts) {
       // Raid Boss
       iconSize = getRaidSize('p' + gym.raid_pokemon_id)
       icon = L.icon({
-        iconUrl: '/static/img/raid/' + gym.team_id + '_' + size + '_' + pokemonIdString + '.png',
+        iconUrl: '/static/img/raid/' + gym.team_id + '_' + size + '_' + pokemonIdString,
         iconSize: [iconSize, iconSize * 1.667],
         iconAnchor: [iconSize / 2, iconSize * 1.567],
         popupAnchor: [0, iconSize * -1.567]
