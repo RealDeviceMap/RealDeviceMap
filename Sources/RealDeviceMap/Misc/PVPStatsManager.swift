@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 23.05.20.
 //
-//  swiftlint:disable large_tuple function_body_length
+//  swiftlint:disable large_tuple function_body_length function_parameter_count
 
 import Foundation
 import PerfectLib
