@@ -2005,9 +2005,9 @@ class WebReqeustHandler {
                 data["error"] = "Failed to parse coords."
                 return data
             }
-
-            newCoords = coords
-
+            newCoords = coords.map({ (coord) -> [String: Any] in
+                return coord.getJSONValues()
+            })
         } else if type != nil && type! == .autoQuest || type! == .pokemonIV || type! == .leveling {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
@@ -2040,9 +2040,13 @@ class WebReqeustHandler {
                 return data
             }
             if type! == .leveling {
-                newCoords = coordArray[0][0]
+                newCoords = coordArray[0][0].getJSONValues()
             } else {
-                newCoords = coordArray
+                newCoords = coordArray.map({ (coords) -> [[String: Any]] in
+                    return coords.map { (coord) -> [String: Any] in
+                        return coord.getJSONValues()
+                    }
+                })
             }
         } else {
             data["show_error"] = true
