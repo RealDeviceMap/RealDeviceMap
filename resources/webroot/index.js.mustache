@@ -2172,6 +2172,9 @@ function getPokemonPopupContent (pokemon) {
       } else {
         infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
       }
+      if (ranking.cp !== null) {
+        infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+      }
       content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
     })
   }
@@ -2192,6 +2195,9 @@ function getPokemonPopupContent (pokemon) {
         infoString = 'CP too high'
       } else {
         infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+      }
+      if (ranking.cp !== null) {
+        infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
       }
       content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
     })

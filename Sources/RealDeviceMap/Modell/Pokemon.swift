@@ -397,8 +397,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
-                "rank": ranking.ranking as Any,
-                "percentage": ranking.percentage as Any
+                "rank": ranking.response?.rank as Any,
+                "percentage": ranking.response?.percentage as Any,
+                "cp": ranking.response?.ivs.first?.cp as Any,
+                "level": ranking.response?.ivs.first?.level as Any
             ]
         })
 
@@ -413,8 +415,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
-                "rank": ranking.ranking as Any,
-                "percentage": ranking.percentage as Any
+                "rank": ranking.response?.rank as Any,
+                "percentage": ranking.response?.percentage as Any,
+                "cp": ranking.response?.ivs.first?.cp as Any,
+                "level": ranking.response?.ivs.first?.level as Any
             ]
         })
 

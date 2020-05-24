@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 23.05.20.
 //
-//  swiftlint:disable large_tuple function_body_length function_parameter_count
+//  swiftlint:disable function_body_length function_parameter_count
 
 import Foundation
 import PerfectLib
@@ -18,9 +18,9 @@ internal class PVPStatsManager {
 
     private var stats = [PokemonWithForm: Stats]()
     private let rankingGreatLock = Threading.Lock()
-    private var rankingGreat = [PokemonWithForm: [(value: Int, ivs: [(IV, Double)])]]()
+    private var rankingGreat = [PokemonWithForm: [Response]]()
     private let rankingUltraLock = Threading.Lock()
-    private var rankingUltra = [PokemonWithForm: [(value: Int, ivs: [(IV, Double)])]]()
+    private var rankingUltra = [PokemonWithForm: [Response]]()
 
     private init() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
@@ -76,29 +76,36 @@ internal class PVPStatsManager {
     }
 
     internal func getPVPStats(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?, iv: IV, level: Double,
-                              league: League) -> (ranking: Int, percentage: Double)? {
-        guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league, level: level) else {
+                              league: League) -> Response? {
+        guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
         guard let index = stats.firstIndex(where: { value in
-            for ivlevel in value.ivs where ivlevel.0 == iv {
+            for ivlevel in value.ivs where ivlevel.iv == iv && ivlevel.level >= level {
                 return true
             }
             return false
         }) else {
             return nil
         }
-        let max = Double(stats[0].value)
-        let value = Double(stats[index].value)
-        return (index + 1, value/max)
+        let max = Double(stats[0].rank)
+        let result = stats[index]
+        let value = Double(result.rank)
+        let ivs: [Response.IVWithCP]
+        if let currentIV = result.ivs.first(where: { return $0.iv == iv }) {
+            ivs = [currentIV]
+        } else {
+            ivs = []
+        }
+        return .init(rank: index + 1, percentage: value/max, ivs: ivs)
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
                                             costume: POGOProtos_Enums_Costume, iv: IV, level: Double, league: League)
-                                            -> [(pokemon: PokemonWithForm, ranking: Int?, percentage: Double?)] {
+                                            -> [(pokemon: PokemonWithForm, response: Response?)] {
         let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
         let pokemonWithForm = PokemonWithForm(pokemon: pokemon, form: form)
-        var result = [(pokemon: pokemonWithForm, ranking: current?.ranking, percentage: current?.percentage)]
+        var result = [(pokemon: pokemonWithForm, response: current)]
         guard !String(describing: costume).lowercased().contains(string: "noevolve"),
               let stat = stats[pokemonWithForm],
               !stat.evolutions.isEmpty else {
@@ -113,9 +120,9 @@ internal class PVPStatsManager {
     }
 
     internal func getTopPVP(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
-                            league: League, level: Double=1) -> [(value: Int, ivs: [(IV, Double)])]? {
+                            league: League) -> [Response]? {
         let info = PokemonWithForm(pokemon: pokemon, form: form)
-        let cached: [(value: Int, ivs: [(IV, Double)])]?
+        let cached: [Response]?
         switch league {
         case .great:
             rankingGreatLock.lock()
@@ -132,7 +139,7 @@ internal class PVPStatsManager {
         guard let stats = stats[info] else {
             return nil
         }
-        let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue, level: level)
+        let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue)
         switch league {
         case .great:
             rankingGreatLock.lock()
@@ -146,28 +153,31 @@ internal class PVPStatsManager {
         return values
     }
 
-    private func getPVPValuesOrdered(stats: Stats, cap: Int?, level: Double) -> [(value: Int, ivs: [(IV, Double)])] {
-        var ranking = [Int: [(IV, Double)]]()
+    private func getPVPValuesOrdered(stats: Stats, cap: Int?) -> [Response] {
+        var ranking = [Int: Response]()
         for iv in IV.all {
             var maxLevel: Double = 0
-            for level in stride(from: level, through: 40.0, by: 0.5).reversed() {
-                if cap == nil || getCPValue(iv: iv, level: level, stats: stats) <= cap! {
+            var maxCP: Int = 0
+            for level in stride(from: 0.0, through: 40.0, by: 0.5).reversed() {
+                let cp = (cap == nil ? 0 : getCPValue(iv: iv, level: level, stats: stats))
+                if cp <= (cap ?? 0) {
                     maxLevel = level
+                    maxCP = cp
                     break
                 }
             }
             if maxLevel != 0 {
                 let value = getPVPValue(iv: iv, level: maxLevel, stats: stats)
                 if ranking[value] == nil {
-                    ranking[value] = []
+                    ranking[value] = Response(rank: value, percentage: 0.0, ivs: [])
                 }
-                ranking[value]!.append((iv, maxLevel))
+                ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
             }
         }
         return ranking.sorted { (lhs, rhs) -> Bool in
             return lhs.key >= rhs.key
-        }.map { (value) -> (value: Int, ivs: [(IV, Double)]) in
-            return (value: value.key, ivs: value.value)
+        }.map { (value) -> Response in
+            return value.value
         }
     }
 
@@ -235,6 +245,17 @@ extension PVPStatsManager {
             }
             return all
         }
+    }
+
+    struct Response {
+        struct IVWithCP {
+            var iv: IV
+            var level: Double
+            var cp: Int
+        }
+        var rank: Int
+        var percentage: Double
+        var ivs: [IVWithCP]
     }
 
     enum League: Int {
