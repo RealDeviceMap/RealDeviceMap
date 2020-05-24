@@ -94,17 +94,19 @@ internal class PVPStatsManager {
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
-                                            iv: IV, level: Double, league: League)
+                                            costume: POGOProtos_Enums_Costume, iv: IV, level: Double, league: League)
                                             -> [(pokemon: PokemonWithForm, ranking: Int?, percentage: Double?)] {
         let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
         let pokemonWithForm = PokemonWithForm(pokemon: pokemon, form: form)
         var result = [(pokemon: pokemonWithForm, ranking: current?.ranking, percentage: current?.percentage)]
-        guard let stat = stats[pokemonWithForm], !stat.evolutions.isEmpty else {
+        guard !String(describing: costume).lowercased().contains(string: "noevolve"),
+              let stat = stats[pokemonWithForm],
+              !stat.evolutions.isEmpty else {
             return result
         }
         for evolution in stat.evolutions {
             let pvpStats = getPVPStatsWithEvolutions(pokemon: evolution.pokemon, form: evolution.form,
-                                                     iv: iv, level: level, league: league)
+                                                     costume: costume, iv: iv, level: level, league: league)
             result += pvpStats
         }
         return result

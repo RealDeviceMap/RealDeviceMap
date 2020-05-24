@@ -389,6 +389,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
             form: form == .unset ? nil : form,
+            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
             league: .great
@@ -404,6 +405,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
             form: form == .unset ? nil : form,
+            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
             league: .ultra
