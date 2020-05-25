@@ -731,6 +731,7 @@ class WebHookRequestHandler {
             return
         }
 
+        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Got control request: \(type)")
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
@@ -809,9 +810,13 @@ class WebHookRequestHandler {
                         ])
                         return
                     }
-                    try response.respondWithData(
-                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    let task = controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    Log.debug(
+                        message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
+                        " at \((task["lat"] as? Double)?.description ?? "?")," +
+                        "\((task["lon"] as? Double)?.description ?? "?")"
                     )
+                    try response.respondWithData(data: task)
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
@@ -845,12 +850,6 @@ class WebHookRequestHandler {
                     }
                     account = newAccount
                 }
-                device.accountUsername = account!.username
-                try device.save(mysql: mysql, oldUUID: device.uuid)
-                try response.respondWithData(data: [
-                    "username": account!.username,
-                    "password": account!.password
-                ])
 
                 if username != account!.username, let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
@@ -884,6 +883,8 @@ class WebHookRequestHandler {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
                 }
 
+                device.accountUsername = account!.username
+                try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
                     "username": account!.username,
                     "password": account!.password
