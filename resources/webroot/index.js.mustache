@@ -3133,7 +3133,7 @@ function getGymMarkerIcon (gym, ts) {
   let iconSize
   if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && (showRaids || gym.is_start) && parseInt(gym.raid_level) > 0) {
     if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
-      const pokemonIdString = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
+      const pokemonIdString = getPokemonIdIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
       // Raid Boss
       iconSize = getRaidSize('p' + gym.raid_pokemon_id)
       icon = L.icon({
@@ -4019,8 +4019,23 @@ function getSize (size) {
   return 'Big'
 }
 
-function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague) {
+function getPokemonIdIconString(pokemonId, pokemonForm) {
   let pokemonIdString
+  if (pokemonForm !== 0 && pokemonForm !== null) {
+    const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
+    if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+      pokemonIdString = pokemonIdStringTmp
+    } else {
+      pokemonIdString = '' + pokemonId
+    }
+  } else {
+    pokemonIdString = '' + pokemonId
+  }
+  return pokemonIdString
+}
+
+function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague) {
+  let pokemonIdString = getPokemonIdIconString(pokemonId, pokemonForm)
   if (pokemonForm !== 0 && pokemonForm !== null) {
     const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
     if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
