@@ -236,7 +236,8 @@ class IVInstanceController: InstanceControllerProto {
             maxLevel: maxLevel,
             ignoringWarning: false,
             spins: nil,
-            noCooldown: false
+            noCooldown: false,
+            device: uuid
         )
     }
 
