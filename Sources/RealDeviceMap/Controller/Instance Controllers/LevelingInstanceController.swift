@@ -332,7 +332,8 @@ class LevelingInstanceController: InstanceControllerProto {
             maxLevel: maxLevel,
             ignoringWarning: false,
             spins: nil, // 7000
-            noCooldown: true
+            noCooldown: true,
+            device: uuid
         )
     }
 
