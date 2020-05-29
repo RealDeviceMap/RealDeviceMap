@@ -731,6 +731,7 @@ class WebHookRequestHandler {
             return
         }
 
+        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Got control request: \(type)")
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
@@ -781,6 +782,8 @@ class WebHookRequestHandler {
                     let account: Account?
                     if let username = username {
                         account = try Account.getWithUsername(mysql: mysql, username: username)
+                    } else if let device = try Device.getById(id: uuid), let username = device.accountUsername {
+                        account = try Account.getWithUsername(mysql: mysql, username: username)
                     } else {
                         account = nil
                     }
@@ -809,9 +812,13 @@ class WebHookRequestHandler {
                         ])
                         return
                     }
-                    try response.respondWithData(
-                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    let task = controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    Log.debug(
+                        message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
+                        " at \((task["lat"] as? Double)?.description ?? "?")," +
+                        "\((task["lon"] as? Double)?.description ?? "?")"
                     )
+                    try response.respondWithData(data: task)
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
