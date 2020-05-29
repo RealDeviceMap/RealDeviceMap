@@ -523,7 +523,7 @@ class WebHookRequestHandler {
                 let wlevel = ws2cell.level
                 let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel),
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
-                try? weather.save(mysql: mysql, update: true)
+                try? weather.save(mysql: mysql)
             }
             Log.debug(
                 message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +

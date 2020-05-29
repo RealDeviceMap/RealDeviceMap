@@ -493,8 +493,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
             let changedSQL: String
             if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
-                WebHookController.global.addPokemonEvent(pokemon: self)
-                InstanceController.global.gotIV(pokemon: self)
                 bindChangedTimestamp = false
                 changedSQL = "UNIX_TIMESTAMP()"
             } else {
@@ -623,7 +621,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
             throw DBController.DBError()
         }
 
@@ -633,8 +635,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if self.atkIv != nil {
                 InstanceController.global.gotIV(pokemon: self)
             }
+        } else if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
+            WebHookController.global.addPokemonEvent(pokemon: self)
+            InstanceController.global.gotIV(pokemon: self)
         }
-
     }
 
     //  swiftlint:disable:next function_parameter_count
