@@ -59,6 +59,9 @@ let showDevices
 let showRaidTimers
 let showSubmissionCells
 
+let showGreatLeague
+let showUltraLeague
+
 let avilableForms = []
 let avilableItems = []
 let avilableTileservers = {}
@@ -672,6 +675,22 @@ function loadStorage () {
     if (spawnpointFilter['with-timer'] === undefined) {
       spawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     }
+  }
+
+  const showGreatLeagueValue = retrieve('show_great_league')
+  if (showGreatLeagueValue === null) {
+    store('show_great_league', false)
+    showGreatLeague = false
+  } else {
+    showGreatLeague = (showGreatLeagueValue === 'true')
+  }
+
+  const showUltraLeagueValue = retrieve('show_ultra_league')
+  if (showUltraLeagueValue === null) {
+    store('show_ultra_league', false)
+    showUltraLeague = false
+  } else {
+    showUltraLeague = (showUltraLeagueValue === 'true')
   }
 }
 
@@ -2157,54 +2176,60 @@ function getPokemonPopupContent (pokemon) {
   }
   if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
     content +=
-        '<br>' +
-        '<b>Great League:</b><br>'
-    $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
-      let pokemonName
-      if (ranking.form !== 0) {
-        pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
-      } else {
-        pokemonName = getPokemonName(ranking.pokemon)
-      }
-      let infoString
-      if (ranking.rank === null) {
-        infoString = 'CP too high'
-      } else {
-        infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-      }
-      if (ranking.cp !== null) {
-        infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
-      }
-      content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
-    })
+      '<a href="#" onclick="toggleGreatLeague()">' +
+      '<b>Great League:</b>' +
+      '</a><br>'
+    if (showGreatLeague) {
+      $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
   }
 
   if (pokemon.pvp_rankings_ultra_league !== undefined && pokemon.pvp_rankings_ultra_league !== null) {
     content +=
-        '<br>' +
-        '<b>Ultra League:</b><br>'
-    $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
-      let pokemonName
-      if (ranking.form !== 0) {
-        pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
-      } else {
-        pokemonName = getPokemonName(ranking.pokemon)
-      }
-      let infoString
-      if (ranking.rank === null) {
-        infoString = 'CP too high'
-      } else {
-        infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-      }
-      if (ranking.cp !== null) {
-        infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
-      }
-      content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
-    })
+      '<a href="#" onclick="toggleUltraLeague()">' +
+      '<b>Ultra League:</b>' +
+      '</a><br>'
+    if (showUltraLeague) {
+      $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
   }
 
   content +=
-        '</div>' +
+    '</div>' +
     '</div>' + // END 3RD ROW
     '<br>' +
     '<div class="text-center">' +
@@ -4745,4 +4770,20 @@ function loadFilterSettings (e) {
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   }
   reader.readAsText(file)
+}
+
+function toggleGreatLeague() {
+  showGreatLeague = !showGreatLeague
+  store('show_great_league', showGreatLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
+}
+
+function toggleUltraLeague() {
+  showUltraLeague = !showUltraLeague
+  store('show_ultra_league', showUltraLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
 }
