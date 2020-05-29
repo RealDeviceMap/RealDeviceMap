@@ -782,6 +782,8 @@ class WebHookRequestHandler {
                     let account: Account?
                     if let username = username {
                         account = try Account.getWithUsername(mysql: mysql, username: username)
+                    } else if let device = try Device.getById(id: uuid), let username = device.accountUsername {
+                        account = try Account.getWithUsername(mysql: mysql, username: username)
                     } else {
                         account = nil
                     }
