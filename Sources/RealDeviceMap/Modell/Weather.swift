@@ -190,7 +190,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         if oldWeather == nil {
             WebHookController.global.addWeatherEvent(weather: self)
         } else if oldWeather!.gameplayCondition != self.gameplayCondition ||
-                  oldWeather!.warnWeather != self.warnWeather{
+                  oldWeather!.warnWeather != self.warnWeather {
             WebHookController.global.addWeatherEvent(weather: self)
         }
     }
