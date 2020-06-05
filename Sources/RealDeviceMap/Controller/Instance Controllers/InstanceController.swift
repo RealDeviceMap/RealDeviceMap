@@ -43,7 +43,7 @@ extension InstanceControllerProto {
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
     func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
-        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel)
+        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel, device: uuid)
     }
     func accountValid(account: Account) -> Bool {
         return account.level >= minLevel && account.level <= maxLevel && account.isValid()
@@ -312,7 +312,7 @@ class InstanceController {
         if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
             return try instanceController.getAccount(mysql: mysql, uuid: deviceUUID)
         }
-        return try Account.getNewAccount(minLevel: 0, maxLevel: 29)
+        return try Account.getNewAccount(minLevel: 0, maxLevel: 29, device: deviceUUID)
     }
 
     public func accountValid(deviceUUID: String, account: Account) -> Bool {
