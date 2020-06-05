@@ -743,7 +743,8 @@ class WebHookRequestHandler {
                         data: [
                             "assigned": false,
                             "version": VersionManager.global.version,
-                            "commit":  VersionManager.global.commit
+                            "commit": VersionManager.global.commit,
+                            "provider": "RealDeviceMap"
                         ]
                     )
                 } else {
@@ -752,7 +753,8 @@ class WebHookRequestHandler {
                             data: [
                                 "assigned": false,
                                 "version": VersionManager.global.version,
-                                "commit":  VersionManager.global.commit
+                                "commit": VersionManager.global.commit,
+                                "provider": "RealDeviceMap"
                             ]
                         )
                     } else {
