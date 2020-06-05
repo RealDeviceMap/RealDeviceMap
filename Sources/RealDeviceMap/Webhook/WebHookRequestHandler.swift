@@ -79,7 +79,7 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
         }
-
+        response.addHeader(.custom(name: "X-Server"), value: "RealDeviceMap/\(VersionManager.global.version)")
         switch type {
         case .controler:
             controlerHandler(request: request, response: response, host: host)
@@ -731,39 +731,31 @@ class WebHookRequestHandler {
             return
         }
 
+        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] Got control request: \(type)")
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
-                let firstWarningTimestamp: UInt32?
-                if device == nil || device!.accountUsername == nil {
-                    firstWarningTimestamp = nil
-                } else {
-                    let account = try Account.getWithUsername(mysql: mysql, username: device!.accountUsername!)
-                    if account != nil {
-                        firstWarningTimestamp = account!.firstWarningTimestamp
-                    } else {
-                        firstWarningTimestamp = nil
-                    }
-                }
-
+                let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
                                            accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
-                    try response.respondWithData(
-                        data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                    )
+                    assigned = false
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(
-                            data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = false
                     } else {
-                        try response.respondWithData(
-                            data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = true
                     }
                 }
+                try response.respondWithData(
+                    data: [
+                        "assigned": assigned,
+                        "version": VersionManager.global.version,
+                        "commit": VersionManager.global.commit,
+                        "provider": "RealDeviceMap"
+                    ]
+                )
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
@@ -780,6 +772,8 @@ class WebHookRequestHandler {
                 do {
                     let account: Account?
                     if let username = username {
+                        account = try Account.getWithUsername(mysql: mysql, username: username)
+                    } else if let device = try Device.getById(id: uuid), let username = device.accountUsername {
                         account = try Account.getWithUsername(mysql: mysql, username: username)
                     } else {
                         account = nil
@@ -809,9 +803,13 @@ class WebHookRequestHandler {
                         ])
                         return
                     }
-                    try response.respondWithData(
-                        data: controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    let task = controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    Log.debug(
+                        message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
+                        " at \((task["lat"] as? Double)?.description ?? "?")," +
+                        "\((task["lon"] as? Double)?.description ?? "?")"
                     )
+                    try response.respondWithData(data: task)
                 } catch {
                     response.respondWithError(status: .internalServerError)
                 }
@@ -845,12 +843,6 @@ class WebHookRequestHandler {
                     }
                     account = newAccount
                 }
-                device.accountUsername = account!.username
-                try device.save(mysql: mysql, oldUUID: device.uuid)
-                try response.respondWithData(data: [
-                    "username": account!.username,
-                    "password": account!.password
-                ])
 
                 if username != account!.username, let loginLimit = self.loginLimit {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
@@ -884,6 +876,8 @@ class WebHookRequestHandler {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
                 }
 
+                device.accountUsername = account!.username
+                try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
                     "username": account!.username,
                     "password": account!.password
