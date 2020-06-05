@@ -177,7 +177,8 @@ class LevelingInstanceController: InstanceControllerProto {
         unspunLoop: for stop in unspunPokestops {
             let coord = Coord(lat: stop.latitude, lon: stop.longitude)
             for last in exclude {
-                if coord.distance(to: last) <= 40 {
+                // MARK: Revert back to 40m once reverted ingame
+                if coord.distance(to: last) <= 80 {
                     continue unspunLoop
                 }
             }
