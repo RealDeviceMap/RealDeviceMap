@@ -735,38 +735,27 @@ class WebHookRequestHandler {
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
+                let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
                                            accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
-                    try response.respondWithData(
-                        data: [
-                            "assigned": false,
-                            "version": VersionManager.global.version,
-                            "commit": VersionManager.global.commit,
-                            "provider": "RealDeviceMap"
-                        ]
-                    )
+                    assigned = false
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(
-                            data: [
-                                "assigned": false,
-                                "version": VersionManager.global.version,
-                                "commit": VersionManager.global.commit,
-                                "provider": "RealDeviceMap"
-                            ]
-                        )
+                        assigned = false
                     } else {
-                        try response.respondWithData(
-                            data: [
-                                "assigned": true,
-                                "version": VersionManager.global.version,
-                                "commit": VersionManager.global.commit
-                            ]
-                        )
+                        assigned = true
                     }
                 }
+                try response.respondWithData(
+                    data: [
+                        "assigned": assigned,
+                        "version": VersionManager.global.version,
+                        "commit": VersionManager.global.commit,
+                        "provider": "RealDeviceMap"
+                    ]
+                )
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
