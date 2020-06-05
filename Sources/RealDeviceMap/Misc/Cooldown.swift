@@ -104,12 +104,7 @@ class Cooldown {
             if encounterTime - now >= 7200 {
                 encounterTime = now + 7200
             }
-            let delayT = Int(Date(timeIntervalSince1970: Double(encounterTime)).timeIntervalSinceNow)
-            if delayT < 0 {
-                delay = 0
-            } else {
-                delay = delayT + 1
-            }
+            delay = Int(encounterTime - now)
         }
         return (delay: delay, encounterTime: encounterTime)
     }

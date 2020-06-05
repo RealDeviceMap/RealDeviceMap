@@ -10,9 +10,13 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import PerfectThread
 import POGOProtos
 
 class Account: WebHookEvent {
+
+    private static let lockoutLock = Threading.Lock()
+    private static var lockouts = [(account: String, device: String, untill: Date)]()
 
     func getWebhookValues(type: String) -> [String: Any] {
 
@@ -373,7 +377,8 @@ class Account: WebHookEvent {
 
     public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
                                      ignoringWarning: Bool=false, spins: Int?=1000,
-                                     noCooldown: Bool=true, encounterTarget: Coord?=nil) throws -> Account? {
+                                     noCooldown: Bool=true, encounterTarget: Coord?=nil,
+                                     device: String) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -438,6 +443,28 @@ class Account: WebHookEvent {
             cooldownSQL = ""
         }
 
+        Account.lockoutLock.lock()
+        let now = Date()
+        var newAccounts = [(account: String, device: String, untill: Date)]()
+        for lockout in Account.lockouts where (lockout.untill) >= now {
+            newAccounts.append(lockout)
+        }
+        Account.lockouts = newAccounts
+        let locked = Account.lockouts.filter { (lockout) -> Bool in
+            return lockout.device != device
+        }.map { (lockout) -> String in
+            return lockout.account
+        }
+        Account.lockoutLock.unlock()
+
+        let lockoutSQL: String
+        if !locked.isEmpty {
+            let paramString = [String].init(repeating: "?", count: locked.count).joined(separator: ", ")
+            lockoutSQL = "AND username NOT IN (\(paramString))"
+        } else {
+            lockoutSQL = ""
+        }
+
         let sql = """
             SELECT username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat,
                 last_encounter_lon, last_encounter_time, spins, creation_timestamp, warn, warn_expire_timestamp,
@@ -451,6 +478,7 @@ class Account: WebHookEvent {
                 \(failedSQL)
                 \(spinSQL)
                 \(cooldownSQL)
+                \(lockoutSQL)
             ORDER BY level DESC, last_used_timestamp DESC
             LIMIT 1
         """
@@ -465,6 +493,11 @@ class Account: WebHookEvent {
         if noCooldown, let encounterTarget = encounterTarget {
             mysqlStmt.bindParam(encounterTarget.lon)
             mysqlStmt.bindParam(encounterTarget.lat)
+        }
+        if !locked.isEmpty {
+            for username in locked {
+                mysqlStmt.bindParam(username)
+            }
         }
 
         guard mysqlStmt.execute() else {
@@ -496,6 +529,10 @@ class Account: WebHookEvent {
         let wasSuspended = result[15] as? Bool
         let banned = result[16] as? Bool
         let lastUsedTimestamp = result[17] as? UInt32
+
+        Account.lockoutLock.lock()
+        Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
+        Account.lockoutLock.unlock()
 
         try? Account.setLastUsed(mysql: mysql, username: username)
         return Account(
