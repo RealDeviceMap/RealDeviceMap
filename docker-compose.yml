@@ -1,51 +1,31 @@
 version: '3.1'
 services:
   rdm:
-    image: docker.pkg.github.com/realdevicemap/realdevicemap/realdevicemap:master
+    image: kbtbc/rdm:nowarn
     container_name: realdevicemap
     restart: unless-stopped
     tty: true
-    depends_on:
-      - db
     volumes:
       - images:/app/resources/webroot/static/img
       - backups:/app/backups
-#     - favicons:/app/resources/webroot/static/favicons
-#     - /etc/localtime:/etc/localtime:ro
+      - /etc/localtime:/etc/localtime:ro  
     ports:
       - 9000:9000
       - 9001:9001
+      - 8008:8008
     environment:
       DB_DATABASE: rdmdb
-      DB_HOST: db
+      DB_HOST: 192.168.1.133
       DB_PORT: 3306
-      DB_USERNAME: rdmuser
-      DB_PASSWORD: YourStrongPassw0rd!
+      DB_USERNAME: pmsf
+      DB_PASSWORD: woofwoof123
       DB_ROOT_USERNAME: root
-      DB_ROOT_PASSWORD: YourStrongRootPassw0rd!
+      DB_ROOT_PASSWORD: woofwoof123
       WEB_SERVER_ADDRESS: 0.0.0.0
       WEB_SERVER_PORT: 9000
       WEBHOOK_SERVER_ADDRESS: 0.0.0.0
       WEBHOOK_SERVER_PORT: 9001
-      RAW_THREAD_LIMIT: 100
-      LOG_LEVEL: debug
-#     LOGINLIMIT_COUNT: 15
-#     LOGINLIMIT_INTERVALL: 300
-  db:
-    image: mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password --binlog-expire-logs-seconds=86400
-    container_name: realdevicemap-db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: YourStrongRootPassw0rd!
-      MYSQL_DATABASE: rdmdb
-      MYSQL_USER: rdmuser
-      MYSQL_PASSWORD: YourStrongPassw0rd!
-    ports:
-      - 3306:3306
-    volumes:
-      - data:/var/lib/mysql
-#     - /etc/localtime:/etc/localtime:ro
+      RAW_THREAD_LIMIT: 1000
 volumes:
   images:
     driver: local
@@ -53,5 +33,3 @@ volumes:
     driver: local
   data:
     driver: local
-# favicons
-#   driver: local

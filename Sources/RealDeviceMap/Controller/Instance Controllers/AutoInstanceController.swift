@@ -543,7 +543,7 @@ class AutoInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: true,
+                ignoringWarning: false,
                 spins: spinLimit,
                 noCooldown: true,
                 encounterTarget: encounterTarget,
@@ -556,7 +556,7 @@ class AutoInstanceController: InstanceControllerProto {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid(ignoringWarning: true) &&
+            account.isValid(ignoringWarning: false) &&
             account.hasSpinsLeft(spins: spinLimit)
     }
 }
