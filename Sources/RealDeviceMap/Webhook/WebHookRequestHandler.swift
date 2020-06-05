@@ -79,7 +79,7 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
         }
-        response.addHeader(.server, value: "RealDeviceMap/\(VersionManager.global.version)")
+        response.addHeader(.custom(name: "X-Server"), value: "RealDeviceMap/\(VersionManager.global.version)")
         switch type {
         case .controler:
             controlerHandler(request: request, response: response, host: host)
@@ -762,7 +762,7 @@ class WebHookRequestHandler {
                             data: [
                                 "assigned": true,
                                 "version": VersionManager.global.version,
-                                "commit":  VersionManager.global.commit
+                                "commit": VersionManager.global.commit
                             ]
                         )
                     }
