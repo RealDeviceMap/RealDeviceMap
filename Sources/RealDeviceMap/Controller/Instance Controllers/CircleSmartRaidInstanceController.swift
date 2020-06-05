@@ -205,7 +205,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
             maxLevel: maxLevel,
             ignoringWarning: true,
             spins: nil,
-            noCooldown: false
+            noCooldown: false,
+            device: uuid
         )
     }
 
