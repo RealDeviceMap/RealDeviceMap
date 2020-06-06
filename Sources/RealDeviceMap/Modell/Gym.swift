@@ -299,7 +299,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.raidEndTimestamp = oldGym!.raidEndTimestamp
             }
 
-
             let sql = """
                 UPDATE gym
                 SET lat = ?, lon = ?, name = ?, url = ?, guarding_pokemon_id = ?, last_modified_timestamp = ?,
