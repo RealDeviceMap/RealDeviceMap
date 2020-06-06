@@ -17,3 +17,4 @@ resources/webroot/static/img/
 backups/
 .gitref
 .gitsha
+docker-compose.yml

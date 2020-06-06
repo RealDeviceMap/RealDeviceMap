@@ -203,7 +203,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
             mysql: mysql,
             minLevel: minLevel,
             maxLevel: maxLevel,
-            ignoringWarning: true,
+            ignoringWarning: false,
             spins: nil,
             noCooldown: false,
             device: uuid
@@ -214,7 +214,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid(ignoringWarning: true)
+            account.isValid(ignoringWarning: false)
     }
 
 }
