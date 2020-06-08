@@ -751,7 +751,7 @@ class WebHookRequestHandler {
                 try response.respondWithData(
                     data: [
                         "assigned": assigned,
-                        "version": VersionManager.global.version,
+                        "version": "1.10.0",
                         "commit": VersionManager.global.commit,
                         "provider": "RealDeviceMap"
                     ]
