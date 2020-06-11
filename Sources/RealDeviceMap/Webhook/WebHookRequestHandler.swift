@@ -79,7 +79,7 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
         }
-
+        response.addHeader(.custom(name: "X-Server"), value: "RealDeviceMap/\(VersionManager.global.version)")
         switch type {
         case .controler:
             controlerHandler(request: request, response: response, host: host)
@@ -735,36 +735,27 @@ class WebHookRequestHandler {
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
-                let firstWarningTimestamp: UInt32?
-                if device == nil || device!.accountUsername == nil {
-                    firstWarningTimestamp = nil
-                } else {
-                    let account = try Account.getWithUsername(mysql: mysql, username: device!.accountUsername!)
-                    if account != nil {
-                        firstWarningTimestamp = account!.firstWarningTimestamp
-                    } else {
-                        firstWarningTimestamp = nil
-                    }
-                }
-
+                let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
                                            accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
-                    try response.respondWithData(
-                        data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                    )
+                    assigned = false
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(
-                            data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = false
                     } else {
-                        try response.respondWithData(
-                            data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = true
                     }
                 }
+                try response.respondWithData(
+                    data: [
+                        "assigned": assigned,
+                        "version": VersionManager.global.version,
+                        "commit": VersionManager.global.commit,
+                        "provider": "RealDeviceMap"
+                    ]
+                )
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
