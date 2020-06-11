@@ -111,7 +111,7 @@ class WebHookRequestHandler {
         let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[WebHookRequestHandler] [\(uuid) ?? "?")] Failed to connect to database.")
+            Log.error(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
