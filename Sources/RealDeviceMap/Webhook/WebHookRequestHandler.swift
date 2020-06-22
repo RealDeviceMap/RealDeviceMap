@@ -476,7 +476,7 @@ class WebHookRequestHandler {
                     let items = holodata.inventoryDelta.inventoryItems
                     for item in items {
                         let playerstats = item.inventoryItemData.playerStats
-                        trainerXP = Int(playerstats.experience)
+                        trainerXP = Int(playerstats.experience) > 0 ? Int(playerstats.experience) : trainerXP
                     }
                 }
                 Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Holo Inventory parsed in " +
