@@ -27,17 +27,19 @@ class AutoInstanceController: InstanceControllerProto {
 
     private var multiPolygon: MultiPolygon
     private var type: AutoType
-    private var stopsLock = Threading.Lock()
+    private let stopsLock = Threading.Lock()
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
     private var todayStopsTries: [Pokestop: UInt8]?
     private var questClearerQueue: ThreadQueue?
     private var timezoneOffset: Int
     private var shouldExit = false
-    private var bootstrappLock = Threading.Lock()
+    private let bootstrappLock = Threading.Lock()
     private var bootstrappCellIDs = [S2CellId]()
     private var bootstrappTotalCount = 0
     private var spinLimit: Int
+    private let accountsLock = Threading.Lock()
+    private var accounts = [String: String]()
     public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
@@ -90,12 +92,12 @@ class AutoInstanceController: InstanceControllerProto {
                             continue
                         }
 
-                        Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids")
+                        Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids.")
                         let ids = self.allStops!.map({ (stop) -> String in
                             return stop.id
                         })
                         var done = false
-                        Log.debug(message: "[AutoInstanceController] [\(name)] Clearing Quests for ids: \(ids).")
+                        Log.info(message: "[AutoInstanceController] [\(name)] Clearing Quests.")
                         while !done {
                             do {
                                 try Pokestop.clearQuests(ids: ids)
@@ -119,7 +121,7 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     private func bootstrap() {
-        Log.debug(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
+        Log.info(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
         let start = Date()
         var totalCount = 0
         var missingCellIDs = [S2CellId]()
@@ -147,7 +149,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         }
-        Log.debug(message:
+        Log.info(message:
             "[AutoInstanceController] [\(name)] Bootstrap Status: \(totalCount - missingCellIDs.count)/\(totalCount) " +
             "after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
         )
@@ -196,7 +198,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -209,17 +211,8 @@ class AutoInstanceController: InstanceControllerProto {
 
                     let cell = S2Cell(cellId: target)
                     let center = S2LatLng(point: cell.center)
-
-                    // Get all cells touching a 630 (-5m for error) circle at center
                     let coord = center.coord
-                    let radians = 0.00009799064306948 // 625m
-                    let centerNormalizedPoint = center.normalized.point
-                    let circle = S2Cap(axis: centerNormalizedPoint, height: (radians*radians)/2)
-                    let coverer = S2RegionCoverer()
-                    coverer.maxCells = 100
-                    coverer.maxLevel = 15
-                    coverer.minLevel = 15
-                    let cellIDs = coverer.getCovering(region: circle)
+                    let cellIDs = center.getLoadedS2CellIds()
 
                     bootstrappLock.lock()
                     for cellID in cellIDs {
@@ -292,34 +285,14 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 stopsLock.unlock()
 
-                var account: Account?
-
-                do {
-                    if username != nil, let accountT = try Account.getWithUsername(mysql: mysql, username: username!) {
-                        account = accountT
-                    }
-                } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to connect get account.")
-                    return [String: Any]()
-                }
-
-                if username != nil && account != nil {
-                    if account!.spins >= spinLimit ||
-                       account!.failed == "GPR_RED_WARNING" ||
-                       account!.failed == "GPR_BANNED" {
-                        return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
-                    } else {
-                        try? Account.spin(mysql: mysql, username: username!)
-                    }
-                }
-
                 let pokestop: Pokestop
-
                 let lastCoord: Coord?
                 do {
                     lastCoord = try Cooldown.lastLocation(account: account, deviceUUID: uuid)
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to get last location.")
+                    Log.error(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get last location."
+                    )
                     return [String: Any]()
                 }
 
@@ -365,14 +338,6 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
 
-                stopsLock.lock()
-                if todayStopsTries![pokestop] == nil {
-                    todayStopsTries![pokestop] = 1
-                } else {
-                    todayStopsTries![pokestop]! += 1
-                }
-                stopsLock.unlock()
-
                 let delay: Int
                 let encounterTime: UInt32
                 do {
@@ -384,15 +349,48 @@ class AutoInstanceController: InstanceControllerProto {
                     delay = result.delay
                     encounterTime = result.encounterTime
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to calculate cooldown.")
+                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
+                    accountsLock.lock()
+                    todayStops?.append(pokestop)
+                    accountsLock.unlock()
                     return [String: Any]()
                 }
 
                 if delay >= delayLogout {
+                    accountsLock.lock()
+                    todayStops?.append(pokestop)
+                    var newUsername: String?
+                    do {
+                        if accounts[uuid] == nil {
+                            accountsLock.unlock()
+                            let account = try getAccount(
+                                mysql: mysql,
+                                uuid: uuid,
+                                encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
+                            )
+                            accountsLock.lock()
+                            newUsername = account?.username
+                            accounts[uuid] = account?.username
+                            Log.debug(
+                                message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
+                                         "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                            )
+                        } else {
+                            newUsername = accounts[uuid]
+                        }
+                        accountsLock.unlock()
+                    } catch {
+                        Log.error(
+                            message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance."
+                        )
+                    }
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 }
 
                 do {
+                    if let username = username {
+                        try Account.spin(mysql: mysql, username: username)
+                    }
                     try Cooldown.encounter(
                         mysql: mysql,
                         account: account,
@@ -401,11 +399,19 @@ class AutoInstanceController: InstanceControllerProto {
                         encounterTime: encounterTime
                   )
                 } catch {
-                    Log.error(message: "[InstanceControllerProto] Failed to store cooldown.")
+                    Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
+                    accountsLock.lock()
+                    todayStops?.append(pokestop)
+                    accountsLock.unlock()
                     return [String: Any]()
                 }
 
                 stopsLock.lock()
+                if todayStopsTries![pokestop] == nil {
+                    todayStopsTries![pokestop] = 1
+                } else {
+                    todayStopsTries![pokestop]! += 1
+                }
                 if todayStops!.isEmpty {
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
@@ -429,14 +435,13 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                     if todayStops!.isEmpty {
-                        Log.info(message: "[AutoInstanceController] [\(name)] Instance done")
+                        Log.info(message: "[AutoInstanceController] [\(name)] [\(uuid)] Instance done")
                         delegate?.instanceControllerDone(name: name)
                     }
                     stopsLock.unlock()
                 } else {
                     stopsLock.unlock()
                 }
-
                 return ["action": "scan_quest", "deploy_egg": false, "lat": pokestop.lat, "lon": pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel]
             }
@@ -527,5 +532,38 @@ class AutoInstanceController: InstanceControllerProto {
         if questClearerQueue != nil {
             Threading.destroyQueue(questClearerQueue!)
         }
+    }
+
+    func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
+        return try getAccount(mysql: mysql, uuid: uuid, encounterTarget: nil)
+    }
+
+    func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?) throws -> Account? {
+        accountsLock.lock()
+        if let usernane = accounts[uuid] {
+            accounts[uuid] = nil
+            accountsLock.unlock()
+            return try Account.getWithUsername(username: usernane)
+        } else {
+            accountsLock.unlock()
+            return try Account.getNewAccount(
+                mysql: mysql,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                ignoringWarning: true,
+                spins: spinLimit,
+                noCooldown: true,
+                encounterTarget: encounterTarget,
+                device: uuid
+            )
+        }
+    }
+
+    func accountValid(account: Account) -> Bool {
+        return
+            account.level >= minLevel &&
+            account.level <= maxLevel &&
+            account.isValid(ignoringWarning: true) &&
+            account.hasSpinsLeft(spins: spinLimit)
     }
 }
