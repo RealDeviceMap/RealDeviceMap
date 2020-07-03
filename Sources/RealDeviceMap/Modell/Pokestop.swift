@@ -440,6 +440,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if oldPokestop!.lureId != nil && self.lureId == nil {
                 self.lureId = oldPokestop!.lureId
             }
+
+            guard Pokestop.shouldUpdate(old: oldPokestop!, new: self) else {
+                return
+            }
+
             if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
                 WebHookController.global.addLureEvent(pokestop: self)
             }
@@ -840,6 +845,57 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
+    public static func questCountIn(mysql: MySQL?=nil, ids: [String]) throws -> Int64 {
+        if ids.count > 10000 {
+            var result: Int64 = 0
+            for i in 0..<(Int(ceil(Double(ids.count)/10000.0))) {
+                let start = 10000 * i
+                let end = min(10000 * (i+1) - 1, ids.count - 1)
+                let splice = Array(ids[start...end])
+                if let spliceResult = try? questCountIn(mysql: mysql, ids: splice) {
+                    result += spliceResult
+                }
+            }
+            return result
+        }
+
+        if ids.count == 0 {
+            return 0
+        }
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKESTOP] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        var inSQL = "("
+        for _ in 1..<ids.count {
+            inSQL += "?, "
+        }
+        inSQL += "?)"
+
+        let sql = """
+            SELECT COUNT(*)
+            FROM pokestop
+            WHERE id IN \(inSQL) AND deleted = false AND quest_reward_type IS NOT NULL
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for id in ids {
+            mysqlStmt.bindParam(id)
+        }
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        let result = results.next()!
+        let count = result[0] as! Int64
+
+        return count
+    }
+
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Pokestop? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -1158,6 +1214,23 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         return mysqlStmt.affectedRows()
+    }
+
+    public static func shouldUpdate(old: Pokestop, new: Pokestop) -> Bool {
+        return
+            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
+            new.lureExpireTimestamp != old.lureExpireTimestamp ||
+            new.lureId != old.lureId ||
+            new.incidentExpireTimestamp != old.incidentExpireTimestamp ||
+            new.gruntType != old.gruntType ||
+            new.pokestopDisplay != old.pokestopDisplay ||
+            new.name != old.name ||
+            new.url != old.url ||
+            new.questTemplate != old.questTemplate ||
+            new.enabled != old.enabled ||
+            new.sponsorId != old.sponsorId ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     static func == (lhs: Pokestop, rhs: Pokestop) -> Bool {

@@ -477,18 +477,11 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 bootstrappLock.unlock()
                 stopsLock.lock()
-                var currentCountDb = 0
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
                 })
                 stopsLock.unlock()
-
-                if let stops = try? Pokestop.getIn(mysql: mysql, ids: ids) {
-                    for stop in stops where stop.questType != nil {
-                        currentCountDb += 1
-                    }
-                }
-
+                let currentCountDb = (try? Pokestop.questCountIn(mysql: mysql, ids: ids)) ?? 0
                 stopsLock.lock()
                 let maxCount = self.allStops?.count ?? 0
                 let currentCount = maxCount - (self.todayStops?.count ?? 0)
