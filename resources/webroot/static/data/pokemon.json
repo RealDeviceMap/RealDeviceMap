@@ -373,6 +373,96 @@
         "type": "Electric",
         "color": "#f8d030"
       }
+    ],
+    "forms": [
+      {
+        "nameform": "Normal",
+        "protoform": "598",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "No Evolve",
+        "protoform": "599",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "Fall",
+        "protoform": "894",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "VS 2019",
+        "protoform": "901",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "Clone",
+        "protoform": "949",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "Shadow",
+        "protoform": "969",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "Purified",
+        "protoform": "970",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      },
+      {
+        "nameform": "Costume 2020",
+        "protoform": "2332",
+        "assetsform": "00",
+        "formtypes": [
+          {
+            "type": "Electric",
+            "color": "#f8d030"
+          }
+        ]
+      }
     ]
   },
   "26": {
