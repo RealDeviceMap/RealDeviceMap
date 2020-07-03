@@ -28,6 +28,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var multiPolygon: MultiPolygon
     private var type: AutoType
     private let stopsLock = Threading.Lock()
+    private var lastDoneCheck = Date(timeIntervalSinceNow: -3600)
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
     private var todayStopsTries: [Pokestop: UInt8]?
@@ -257,6 +258,12 @@ class AutoInstanceController: InstanceControllerProto {
                     return [String: Any]()
                 }
                 if todayStops!.isEmpty {
+                    guard Date().timeIntervalSince(lastDoneCheck) >= 600 else {
+                        stopsLock.unlock()
+                        delegate?.instanceControllerDone(name: name)
+                        return [:]
+                    }
+                    lastDoneCheck = Date()
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
@@ -280,7 +287,7 @@ class AutoInstanceController: InstanceControllerProto {
                     if todayStops!.isEmpty {
                         stopsLock.unlock()
                         delegate?.instanceControllerDone(name: name)
-                        return [String: Any]()
+                        return [:]
                     }
                 }
                 stopsLock.unlock()
@@ -360,15 +367,17 @@ class AutoInstanceController: InstanceControllerProto {
                     encounterTime = result.encounterTime
                 } catch {
                     Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
-                    accountsLock.lock()
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
-                    accountsLock.unlock()
+                    stopsLock.unlock()
                     return [String: Any]()
                 }
 
-                if delay >= delayLogout {
-                    accountsLock.lock()
+                if delay >= delayLogout && account != nil {
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
+                    stopsLock.unlock()
+                    accountsLock.lock()
                     var newUsername: String?
                     do {
                         if accounts[uuid] == nil {
@@ -379,12 +388,14 @@ class AutoInstanceController: InstanceControllerProto {
                                 encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
                             )
                             accountsLock.lock()
-                            newUsername = account?.username
-                            accounts[uuid] = account?.username
-                            Log.debug(
-                                message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
-                                         "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
-                            )
+                            if accounts[uuid] == nil {
+                                newUsername = account?.username
+                                accounts[uuid] = account?.username
+                                Log.debug(
+                                    message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
+                                             "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                                )
+                            }
                         } else {
                             newUsername = accounts[uuid]
                         }
@@ -395,6 +406,11 @@ class AutoInstanceController: InstanceControllerProto {
                         )
                     }
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                } else if delay >= delayLogout {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ingoring over Logout Delay, " +
+                                 "because no account is specified."
+                    )
                 }
 
                 do {
@@ -410,9 +426,9 @@ class AutoInstanceController: InstanceControllerProto {
                   )
                 } catch {
                     Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
-                    accountsLock.lock()
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
-                    accountsLock.unlock()
+                    stopsLock.unlock()
                     return [String: Any]()
                 }
 
@@ -423,6 +439,7 @@ class AutoInstanceController: InstanceControllerProto {
                     todayStopsTries![pokestop]! += 1
                 }
                 if todayStops!.isEmpty {
+                    lastDoneCheck = Date()
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
