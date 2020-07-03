@@ -317,13 +317,23 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     if closest == nil {
-                         return [String: Any]()
+                        return [String: Any]()
                     }
-
                     pokestop = closest!
+
+                    var nearbyStops = [pokestop]
+                    let pokestopCoord = Coord(lat: pokestop.lat, lon: pokestop.lon)
+                    for stop in todayStopsC! {
+                        // MARK: Revert back to 40m once reverted ingame
+                        if pokestopCoord.distance(to: Coord(lat: stop.lat, lon: stop.lon)) <= 80 {
+                            nearbyStops.append(stop)
+                        }
+                    }
                     stopsLock.lock()
-                    if let index = todayStops!.index(of: pokestop) {
-                        todayStops!.remove(at: index)
+                    for pokestop in nearbyStops {
+                        if let index = todayStops!.index(of: pokestop) {
+                            todayStops!.remove(at: index)
+                        }
                     }
                     stopsLock.unlock()
                 } else {
