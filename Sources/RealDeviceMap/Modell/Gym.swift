@@ -299,6 +299,29 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.raidEndTimestamp = oldGym!.raidEndTimestamp
             }
 
+            guard Gym.shouldUpdate(old: oldGym!, new: self) else {
+                return
+            }
+
+            if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 &&
+                (
+                    oldGym!.raidLevel != self.raidLevel ||
+                    oldGym!.raidPokemonId != self.raidPokemonId ||
+                    oldGym!.raidSpawnTimestamp != self.raidSpawnTimestamp
+                ) {
+
+                let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+                let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+                let now = Date()
+
+                if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                    WebHookController.global.addEggEvent(gym: self)
+                } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                    WebHookController.global.addRaidEvent(gym: self)
+                }
+
+            }
+
             let sql = """
                 UPDATE gym
                 SET lat = ?, lon = ?, name = ?, url = ?, guarding_pokemon_id = ?, last_modified_timestamp = ?,
@@ -931,6 +954,24 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         return mysqlStmt.affectedRows()
+    }
+
+    public static func shouldUpdate(old: Gym, new: Gym) -> Bool {
+        return
+            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
+            new.name != old.name ||
+            new.url != old.url ||
+            new.enabled != old.enabled ||
+            new.raidEndTimestamp != old.raidEndTimestamp ||
+            new.raidPokemonId != old.raidPokemonId ||
+            new.teamId != old.teamId ||
+            new.guardPokemonId != old.guardPokemonId ||
+            new.availbleSlots != old.availbleSlots ||
+            new.totalCp != old.totalCp ||
+            new.exRaidEligible != old.exRaidEligible ||
+            new.sponsorId != old.sponsorId ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     static func == (lhs: Gym, rhs: Gym) -> Bool {

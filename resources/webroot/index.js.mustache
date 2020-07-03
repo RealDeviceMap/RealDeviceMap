@@ -2416,14 +2416,14 @@ function getGymPopupContent (gym) {
               : ''
       var url = gym.url.replace('http://', 'https://')
       content +=
-            '<div class="col-6 col-md-4">' + // START 1ST COL
+            '<div class="col-6 col-md-5">' + // START 1ST COL
                 // '<a href="' + url + '" target="_blank"><img src="' + url + '" style="border-radius:50%; height:96px; width:96px;"></a>' +
                 '<a href="' + url + '" target="_blank"><img src="' + url + '" class="circle-image ' + teamClass + '" style="height:96px; width:96px;"></a>' +
             '</div>' // END 1ST COL
     }
     content +=
             // '<div class="col-12 col-md-8 ' + (hasGymUrl ? 'text-center' : '') + ' center-vertical">' + //START 2ND COL
-            '<div class="col-12 col-md-8 center-vertical p-4">' + // START 2ND COL
+            '<div class="col-12 col-md-7 center-vertical p-4">' + // START 2ND COL
                 '<b>Team:</b> ' + getTeamName(gym.team_id) + '<br>' +
                 '<b>Slots Available:</b> ' + (gym.availble_slots === 0 ? 'Full' : gym.availble_slots === 6 ? 'Empty' : gym.availble_slots) + '<br>'
     if (gym.guard_pokemon_id !== null) {

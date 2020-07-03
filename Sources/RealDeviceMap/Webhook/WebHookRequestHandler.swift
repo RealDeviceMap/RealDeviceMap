@@ -108,9 +108,10 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
+        let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            Log.error(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
@@ -143,7 +144,6 @@ class WebHookRequestHandler {
             return
         }
 
-        let uuid = json["uuid"] as? String
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
@@ -781,8 +781,8 @@ class WebHookRequestHandler {
                     if let account = account {
                         guard controller!.accountValid(account: account) else {
                             Log.debug(
-                                message: "[WebHookRequestHandler] Account \(account.username) not valid for " +
-                                         "Instance \(controller!.name). Switching Account."
+                                message: "[WebHookRequestHandler] [\(uuid)] Account \(account.username) not valid " +
+                                         "for Instance \(controller!.name). Switching Account."
                             )
                             try response.respondWithData(data: [
                                 "action": "switch_account",
@@ -793,7 +793,7 @@ class WebHookRequestHandler {
                         }
                     } else if let username = username, account == nil {
                         Log.error(
-                            message: "[WebHookRequestHandler] Account \(username) not found in database. " +
+                            message: "[WebHookRequestHandler] [\(uuid)] Account \(username) not found in database. " +
                                      "Switching Account."
                         )
                         try response.respondWithData(data: [
@@ -829,15 +829,16 @@ class WebHookRequestHandler {
                         account = oldAccount
                     } else {
                         Log.debug(
-                            message: "[WebHookRequestHandler] Previously Assigned Account \(oldAccount.username) not " +
-                                     "valid for Instance \(device.instanceName ?? "None"). Getting new Account."
+                            message: "[WebHookRequestHandler] [\(uuid)] Previously Assigned Account " +
+                                     "\(oldAccount.username) not valid for Instance " +
+                                     "\(device.instanceName ?? "None"). Getting new Account."
                         )
                     }
                 }
                 if account == nil {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
-                        Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                        Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
                     }
