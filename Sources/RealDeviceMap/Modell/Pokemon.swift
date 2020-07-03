@@ -382,24 +382,25 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     }
 
     public static func shouldUpdate(old: Pokemon, new: Pokemon) -> Bool {
-        let now = UInt32(Date().timeIntervalSince1970)
-
-        if (old.pokemonId != new.pokemonId) && (old.pokemonId != Pokemon.dittoPokemonId) {
-            return true
-        } else if (old.spawnId == nil && new.spawnId != nil) || (old.pokestopId == nil && new.pokestopId != nil) {
-            return true
-        } else if (old.expireTimestampVerified == false && new.expireTimestampVerified == true) ||
-                  (old.expireTimestampVerified == true && new.expireTimestampVerified == true &&
-                    (old.expireTimestamp != new.expireTimestamp)
-                  ) {
-            return true
-        } else if old.weather != new.weather {
-           return true
-        } else if (new.atkIv != nil) && (old.atkIv == nil || old.atkIv != new.atkIv) {
-            return true
-        } else {
-            return (now > old.updated! + 90) && (old.pokemonId != Pokemon.dittoPokemonId)
-        }
+        return
+            new.pokemonId != old.pokemonId ||
+            new.spawnId != old.spawnId ||
+            new.pokestopId != old.pokestopId ||
+            new.weather != old.weather ||
+            new.expireTimestampVerified != old.expireTimestampVerified ||
+            new.atkIv != old.atkIv ||
+            new.defIv != old.defIv ||
+            new.staIv != old.staIv ||
+            new.cp != old.cp ||
+            new.level != old.level ||
+            new.move1 != old.move1 ||
+            new.move2 != old.move2 ||
+            new.gender != old.gender ||
+            new.form != old.form ||
+            new.costume != old.costume ||
+            abs(Int(new.expireTimestamp ?? 0) - Int(old.expireTimestamp ?? 0)) >= 60 ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     public func save(mysql: MySQL?=nil, updateIV: Bool=false) throws {
@@ -529,9 +530,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 }
             }
 
-            let shouldWrite: Bool = Pokemon.shouldUpdate(old: oldPokemon!, new: self)
-
-            if !shouldWrite {
+            guard Pokemon.shouldUpdate(old: oldPokemon!, new: self) else {
                 return
             }
 
