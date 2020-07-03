@@ -398,16 +398,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         updated = UInt32(Date().timeIntervalSince1970)
 
         if oldPokestop == nil {
-            WebHookController.global.addPokestopEvent(pokestop: self)
-            if lureExpireTimestamp ?? 0 > 0 {
-                WebHookController.global.addLureEvent(pokestop: self)
-            }
-            if questTimestamp ?? 0 > 0 {
-                WebHookController.global.addQuestEvent(pokestop: self)
-            }
-            if incidentExpireTimestamp ?? 0 > 0 {
-                WebHookController.global.addInvasionEvent(pokestop: self)
-            }
             let sql = """
                 INSERT INTO pokestop (
                     id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type,
@@ -501,8 +491,35 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[POKESTOP] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
             throw DBController.DBError()
+        }
+
+        if oldPokestop == nil {
+            WebHookController.global.addPokestopEvent(pokestop: self)
+            if lureExpireTimestamp ?? 0 > 0 {
+                WebHookController.global.addLureEvent(pokestop: self)
+            }
+            if questTimestamp ?? 0 > 0 {
+                WebHookController.global.addQuestEvent(pokestop: self)
+            }
+            if incidentExpireTimestamp ?? 0 > 0 {
+                WebHookController.global.addInvasionEvent(pokestop: self)
+            }
+        } else {
+            if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
+                WebHookController.global.addLureEvent(pokestop: self)
+            }
+            if oldPokestop!.incidentExpireTimestamp ?? 0 < self.incidentExpireTimestamp ?? 0 {
+                WebHookController.global.addInvasionEvent(pokestop: self)
+            }
+            if updateQuest && questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
+                WebHookController.global.addQuestEvent(pokestop: self)
+            }
         }
     }
 

@@ -198,7 +198,6 @@ class Account: WebHookEvent {
             if lastUsedTimestamp == nil && oldAccount!.lastUsedTimestamp != nil {
                 self.lastUsedTimestamp = oldAccount!.lastUsedTimestamp!
             }
-            WebHookController.global.addAccountEvent(account: self)
 
             let sql = """
                 UPDATE account
@@ -238,6 +237,13 @@ class Account: WebHookEvent {
         guard mysqlStmt.execute() else {
             Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
+        }
+
+        if oldAccount == nil {
+            WebHookController.global.addAccountEvent(account: self)
+        } else if self.level != oldAccount!.level || self.failed != oldAccount!.failed ||
+                  self.warn != oldAccount!.warn || self.banned != oldAccount!.banned {
+            WebHookController.global.addAccountEvent(account: self)
         }
     }
 

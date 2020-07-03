@@ -267,18 +267,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         updated = UInt32(Date().timeIntervalSince1970)
 
         if oldGym == nil {
-            WebHookController.global.addGymEvent(gym: self)
-            WebHookController.global.addGymInfoEvent(gym: self)
-            let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
-            let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
-            let now = Date()
-
-            if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
-                WebHookController.global.addEggEvent(gym: self)
-            } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
-                WebHookController.global.addRaidEvent(gym: self)
-            }
-
             let sql = """
                 INSERT INTO gym (
                     id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
@@ -305,12 +293,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             }
             if oldGym!.raidIsExclusive != nil && self.raidIsExclusive == nil {
                 self.raidIsExclusive = oldGym!.raidIsExclusive
-            }
-
-            if oldGym!.availbleSlots != self.availbleSlots ||
-               oldGym!.teamId != self.teamId ||
-               oldGym!.inBattle != self.inBattle {
-                WebHookController.global.addGymInfoEvent(gym: self)
             }
 
             if self.raidEndTimestamp == nil && oldGym!.raidEndTimestamp != nil {
@@ -385,8 +367,46 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[GYM] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
             throw DBController.DBError()
+        }
+
+        if oldGym == nil {
+            WebHookController.global.addGymEvent(gym: self)
+            WebHookController.global.addGymInfoEvent(gym: self)
+            let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+            let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+            let now = Date()
+
+            if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                WebHookController.global.addEggEvent(gym: self)
+            } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                WebHookController.global.addRaidEvent(gym: self)
+            }
+        } else {
+            if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 && (
+                    oldGym!.raidLevel != self.raidLevel ||
+                    oldGym!.raidPokemonId != self.raidPokemonId ||
+                    oldGym!.raidSpawnTimestamp != self.raidSpawnTimestamp) {
+                let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+                let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+                let now = Date()
+
+                if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                    WebHookController.global.addEggEvent(gym: self)
+                } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                    WebHookController.global.addRaidEvent(gym: self)
+                }
+            }
+            if oldGym!.availbleSlots != self.availbleSlots ||
+               oldGym!.teamId != self.teamId ||
+               oldGym!.inBattle != self.inBattle {
+                WebHookController.global.addGymInfoEvent(gym: self)
+            }
         }
     }
 
