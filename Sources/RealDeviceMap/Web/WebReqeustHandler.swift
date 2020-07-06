@@ -2234,7 +2234,7 @@ class WebReqeustHandler {
         let devices: [Device]
 
         do {
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
             devices = try Device.getAll()
         } catch {
             response.setBody(string: "Internal Server Errror")
@@ -2334,7 +2334,7 @@ class WebReqeustHandler {
             let devices: [Device]
 
             do {
-                instances = try Instance.getAll()
+                instances = try Instance.getAll(getData: false)
                 devices = try Device.getAll()
             } catch {
                 response.setBody(string: "Internal Server Errror")
@@ -2481,7 +2481,7 @@ class WebReqeustHandler {
         let instances: [Instance]
         do {
             device = try Device.getById(id: deviceUUID)
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             data["show_error"] = true
             data["error"] = "Failed to assign Device."
@@ -2523,7 +2523,7 @@ class WebReqeustHandler {
         let device: Device?
         do {
             device = try Device.getById(id: deviceUUID)
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2554,7 +2554,7 @@ class WebReqeustHandler {
         let devices: [Device]
         do {
             devices = try Device.getAll()
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2590,7 +2590,7 @@ class WebReqeustHandler {
         let devices: [Device]
         do {
             devices = try Device.getAll()
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2690,7 +2690,7 @@ class WebReqeustHandler {
             let devices: [Device]
             do {
                 devices = try Device.getAll()
-                instances = try Instance.getAll()
+                instances = try Instance.getAll(getData: false)
             } catch {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)

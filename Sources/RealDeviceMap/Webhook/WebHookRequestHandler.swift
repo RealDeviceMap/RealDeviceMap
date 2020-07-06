@@ -79,7 +79,7 @@ class WebHookRequestHandler {
                 return response.respondWithError(status: .unauthorized)
             }
         }
-
+        response.addHeader(.custom(name: "X-Server"), value: "RealDeviceMap/\(VersionManager.global.version)")
         switch type {
         case .controler:
             controlerHandler(request: request, response: response, host: host)
@@ -108,9 +108,10 @@ class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
             return
         }
+        let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[WebHookRequestHandler] Failed to connect to database.")
+            Log.error(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Failed to connect to database.")
             response.respondWithError(status: .internalServerError)
             return
         }
@@ -143,7 +144,6 @@ class WebHookRequestHandler {
             return
         }
 
-        let uuid = json["uuid"] as? String
         let latTarget = json["lat_target"] as? Double
         let lonTarget = json["lon_target"] as? Double
         if uuid != nil && latTarget != nil && lonTarget != nil {
@@ -523,7 +523,7 @@ class WebHookRequestHandler {
                 let wlevel = ws2cell.level
                 let weather = Weather(mysql: mysql, id: ws2cell.cellId.id, level: UInt8(wlevel),
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
-                try? weather.save(mysql: mysql, update: true)
+                try? weather.save(mysql: mysql)
             }
             Log.debug(
                 message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
@@ -735,36 +735,27 @@ class WebHookRequestHandler {
         if type == "init" {
             do {
                 let device = try Device.getById(mysql: mysql, id: uuid)
-                let firstWarningTimestamp: UInt32?
-                if device == nil || device!.accountUsername == nil {
-                    firstWarningTimestamp = nil
-                } else {
-                    let account = try Account.getWithUsername(mysql: mysql, username: device!.accountUsername!)
-                    if account != nil {
-                        firstWarningTimestamp = account!.firstWarningTimestamp
-                    } else {
-                        firstWarningTimestamp = nil
-                    }
-                }
-
+                let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
                                            accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
                     try newDevice.create(mysql: mysql)
-                    try response.respondWithData(
-                        data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                    )
+                    assigned = false
                 } else {
                     if device!.instanceName == nil {
-                        try response.respondWithData(
-                            data: ["assigned": false, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = false
                     } else {
-                        try response.respondWithData(
-                            data: ["assigned": true, "first_warning_timestamp": firstWarningTimestamp as Any]
-                        )
+                        assigned = true
                     }
                 }
+                try response.respondWithData(
+                    data: [
+                        "assigned": assigned,
+                        "version": VersionManager.global.version,
+                        "commit": VersionManager.global.commit,
+                        "provider": "RealDeviceMap"
+                    ]
+                )
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
@@ -782,16 +773,14 @@ class WebHookRequestHandler {
                     let account: Account?
                     if let username = username {
                         account = try Account.getWithUsername(mysql: mysql, username: username)
-                    } else if let device = try Device.getById(id: uuid), let username = device.accountUsername {
-                        account = try Account.getWithUsername(mysql: mysql, username: username)
                     } else {
                         account = nil
                     }
                     if let account = account {
                         guard controller!.accountValid(account: account) else {
                             Log.debug(
-                                message: "[WebHookRequestHandler] Account \(account.username) not valid for " +
-                                         "Instance \(controller!.name). Switching Account."
+                                message: "[WebHookRequestHandler] [\(uuid)] Account \(account.username) not valid " +
+                                         "for Instance \(controller!.name). Switching Account."
                             )
                             try response.respondWithData(data: [
                                 "action": "switch_account",
@@ -802,7 +791,7 @@ class WebHookRequestHandler {
                         }
                     } else if let username = username, account == nil {
                         Log.error(
-                            message: "[WebHookRequestHandler] Account \(username) not found in database. " +
+                            message: "[WebHookRequestHandler] [\(uuid)] Account \(username) not found in database. " +
                                      "Switching Account."
                         )
                         try response.respondWithData(data: [
@@ -838,15 +827,16 @@ class WebHookRequestHandler {
                         account = oldAccount
                     } else {
                         Log.debug(
-                            message: "[WebHookRequestHandler] Previously Assigned Account \(oldAccount.username) not " +
-                                     "valid for Instance \(device.instanceName ?? "None"). Getting new Account."
+                            message: "[WebHookRequestHandler] [\(uuid)] Previously Assigned Account " +
+                                     "\(oldAccount.username) not valid for Instance " +
+                                     "\(device.instanceName ?? "None"). Getting new Account."
                         )
                     }
                 }
                 if account == nil {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
-                        Log.error(message: "[WebHookRequestHandler] Failed to get account for \(uuid)")
+                        Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
                         response.respondWithError(status: .notFound)
                         return
                     }

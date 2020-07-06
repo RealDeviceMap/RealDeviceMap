@@ -139,14 +139,19 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         self.updated = updated
     }
 
-    public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
+    public func save(mysql: MySQL?=nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[WEATHER] Failed to connect to database.")
             throw DBController.DBError()
         }
 
-        WebHookController.global.addWeatherEvent(weather: self)
+        let oldWeather: Weather?
+        do {
+            oldWeather = try Weather.getWithId(mysql: mysql, id: id)
+        } catch {
+            oldWeather = nil
+        }
 
         var sql = """
         INSERT INTO `weather` (
@@ -155,25 +160,6 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
         """
-        if update {
-            sql += """
-            ON DUPLICATE KEY UPDATE
-            level=VALUES(level),
-            latitude=VALUES(latitude),
-            longitude=VALUES(longitude),
-            gameplay_condition=VALUES(gameplay_condition),
-            wind_direction=VALUES(wind_direction),
-            cloud_level=VALUES(cloud_level),
-            rain_level=VALUES(rain_level),
-            wind_level=VALUES(wind_level),
-            snow_level=VALUES(snow_level),
-            fog_level=VALUES(fog_level),
-            special_effect_level=VALUES(special_effect_level),
-            severity=VALUES(severity),
-            warn_weather=VALUES(warn_weather),
-            updated=VALUES(updated)
-            """
-        }
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
@@ -193,10 +179,73 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         mysqlStmt.bindParam(warnWeather)
 
         guard mysqlStmt.execute() else {
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[WEATHER] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[WEATHER] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
+            throw DBController.DBError()
+        }
+
+        if oldWeather == nil {
+            WebHookController.global.addWeatherEvent(weather: self)
+        } else if oldWeather!.gameplayCondition != self.gameplayCondition ||
+                  oldWeather!.warnWeather != self.warnWeather {
+            WebHookController.global.addWeatherEvent(weather: self)
+        }
+    }
+
+    public static func getWithId(mysql: MySQL?=nil, id: Int64) throws -> Weather? {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[WEATHER] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        SELECT id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level,
+               rain_level, wind_level, snow_level, fog_level, special_effect_level, severity, warn_weather, updated
+        FROM weather
+        WHERE id = ?
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
+
+        guard mysqlStmt.execute() else {
             Log.error(message: "[WEATHER] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return nil
+        }
+        let result = results.next()!
+
+        let id = result[0] as! Int64
+        let level = result[1] as! UInt8
+        let latitude = result[2] as! Double
+        let longitude = result[3] as! Double
+        let gameplayCondition = result[4] as! UInt8
+        let windDirection = result[5] as! Int32
+        let cloudLevel = result[6] as! UInt8
+        let rainLevel = result[7] as! UInt8
+        let windLevel = result[8] as! UInt8
+        let snowLevel = result[9] as! UInt8
+        let fogLevel = result[10] as! UInt8
+        let sELevel = result[11] as! UInt8
+        let severity = result[12] as! UInt8
+        let warnWeather = (result[13] as? UInt8)!.toBool()
+        let updated = result[14] as! UInt32
+
+        return Weather(
+            id: id, level: level, latitude: latitude, longitude: longitude, gameplayCondition: gameplayCondition,
+            windDirection: windDirection, cloudLevel: cloudLevel, rainLevel: rainLevel, windLevel: windLevel,
+            snowLevel: snowLevel, fogLevel: fogLevel, sELevel: sELevel, severity: severity,
+            warnWeather: warnWeather, updated: updated
+        )
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double,

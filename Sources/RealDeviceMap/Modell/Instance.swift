@@ -128,7 +128,7 @@ class Instance: Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil) throws -> [Instance] {
+    public static func getAll(mysql: MySQL?=nil, getData: Bool=true) throws -> [Instance] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
@@ -136,7 +136,7 @@ class Instance: Hashable {
         }
 
         let sql = """
-            SELECT name, type, data, count
+            SELECT name, type, count \(getData ? ", data" : "")
             FROM instance AS inst
             LEFT JOIN (
               SELECT COUNT(instance_name) AS count, instance_name
@@ -158,8 +158,13 @@ class Instance: Hashable {
         while let result = results.next() {
             let name = result[0] as! String
             let type = InstanceType.fromString(result[1] as! String)!
-            let data = (try (result[2] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
-            let count = result[3] as! Int64? ?? 0
+            let count = result[2] as! Int64? ?? 0
+            let data: [String: Any]
+            if getData {
+                data = (try (result[3] as! String).jsonDecode() as? [String: Any]) ?? [:]
+            } else {
+                data = [:]
+            }
             instances.append(Instance(name: name, type: type, data: data, count: count))
         }
         return instances
