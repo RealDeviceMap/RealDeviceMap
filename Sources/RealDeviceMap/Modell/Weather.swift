@@ -164,6 +164,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             SET level = ?, latitude = ?, longitude = ?, gameplay_condition = ?, wind_direction = ?, cloud_level = ?,
                 rain_level = ?, wind_level = ?, snow_level = ?, fog_level = ?, special_effect_level = ?, severity = ?,
                 warn_weather = ?, updated = UNIX_TIMESTAMP()
+            WHERE id = ?
             """
         } else {
             sql = """
