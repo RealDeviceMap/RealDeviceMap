@@ -5,7 +5,7 @@
 //  Created by versx on 15.09.19.
 //
 //  swiftlint:disable:next superfluous_disable_command
-//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity force_cast
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity force_cast file_length
 
 import Foundation
 import PerfectLib
@@ -153,17 +153,34 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             oldWeather = nil
         }
 
-        var sql = """
-        INSERT INTO `weather` (
-            id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level, rain_level, wind_level,
-            snow_level, fog_level, special_effect_level, severity, warn_weather, updated
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
-        """
+        let sql: String
+
+        if let oldWeather = oldWeather {
+            guard Weather.shouldUpdate(old: oldWeather, new: self) else {
+                return
+            }
+            sql = """
+            UPDATE `weather`
+            SET level = ?, latitude = ?, longitude = ?, gameplay_condition = ?, wind_direction = ?, cloud_level = ?,
+                rain_level = ?, wind_level = ?, snow_level = ?, fog_level = ?, special_effect_level = ?, severity = ?,
+                warn_weather = ?, updated = UNIX_TIMESTAMP()
+            WHERE id = ?
+            """
+        } else {
+            sql = """
+            INSERT INTO `weather` (
+                id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level, rain_level, wind_level,
+                snow_level, fog_level, special_effect_level, severity, warn_weather, updated
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
+            """
+        }
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(id)
+        if oldWeather == nil {
+            mysqlStmt.bindParam(id)
+        }
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(latitude)
         mysqlStmt.bindParam(longitude)
@@ -177,6 +194,9 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         mysqlStmt.bindParam(sELevel)
         mysqlStmt.bindParam(severity)
         mysqlStmt.bindParam(warnWeather)
+        if oldWeather != nil {
+            mysqlStmt.bindParam(id)
+        }
 
         guard mysqlStmt.execute() else {
             if mysqlStmt.errorCode() == 1062 {
@@ -389,6 +409,24 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         }
         return weather
 
+    }
+
+    public static func shouldUpdate(old: Weather, new: Weather) -> Bool {
+        return
+            new.id != old.id ||
+            new.level != old.level ||
+            new.gameplayCondition != old.gameplayCondition ||
+            new.windDirection != old.windDirection ||
+            new.cloudLevel != old.cloudLevel ||
+            new.rainLevel != old.rainLevel ||
+            new.windLevel != old.windLevel ||
+            new.snowLevel != old.snowLevel ||
+            new.fogLevel != old.fogLevel ||
+            new.sELevel != old.sELevel ||
+            new.severity != old.severity ||
+            new.warnWeather != old.warnWeather ||
+            fabs(new.latitude - old.latitude) >= 0.000001 ||
+            fabs(new.longitude - old.longitude) >= 0.000001
     }
 
 }
