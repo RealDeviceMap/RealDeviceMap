@@ -21,20 +21,52 @@ internal class PVPStatsManager {
     private var rankingGreat = [PokemonWithForm: [Response]]()
     private let rankingUltraLock = Threading.Lock()
     private var rankingUltra = [PokemonWithForm: [Response]]()
+    private var eTag: String?
+    private let updaterThread: ThreadQueue
 
     private init() {
+        updaterThread = Threading.getQueue(name: "PVPMasterfileUpdater", type: .serial)
+        updaterThread.dispatch {
+            while true {
+                sleep(900)
+                self.loadMasterFileIfNeeded()
+            }
+        }
+        loadMasterFile()
+    }
+
+    private func loadMasterFileIfNeeded() {
+        let request = CURLRequest(
+            "https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
+            "pokemongo-game-master/master/versions/latest/GAME_MASTER.json",
+            .httpMethod(.head)
+        )
+        guard let result = try? request.perform() else {
+           Log.error(message: "[PVPStatsManager] Failed to load game master file")
+           return
+        }
+        let newETag = result.get(.eTag)
+        if newETag != eTag {
+            Log.info(message: "[PVPStatsManager] Game master file changed")
+            loadMasterFile()
+        }
+    }
+
+    private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
         let request = CURLRequest("https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
                                   "pokemongo-game-master/master/versions/latest/GAME_MASTER.json")
-        guard let resut = try? request.perform() else {
+        guard let result = try? request.perform() else {
             Log.error(message: "[PVPStatsManager] Failed to load game master file")
             return
         }
+        eTag = result.get(.eTag)
         Log.debug(message: "[PVPStatsManager] Parsing game master file")
-        guard let templates = resut.bodyJSON["itemTemplate"] as? [[String: Any]] else {
+        guard let templates = result.bodyJSON["itemTemplate"] as? [[String: Any]] else {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
+        var stats = [PokemonWithForm: Stats]()
         templates.forEach { (template) in
             guard let id = template["templateId"] as? String else { return }
             if id.starts(with: "V"), id.contains(string: "_POKEMON_"),
@@ -68,11 +100,19 @@ internal class PVPStatsManager {
                         evolutions.append(.init(pokemon: pokemon, form: form))
                     }
                 }
-                let stats = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
+                let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
                                   baseStamina: baseStamina, evolutions: evolutions)
-                self.stats[.init(pokemon: pokemon, form: form)] = stats
+                stats[.init(pokemon: pokemon, form: form)] = stat
             }
         }
+        rankingGreatLock.lock()
+        rankingUltraLock.lock()
+        self.stats = stats
+        self.rankingGreat = [:]
+        self.rankingUltra = [:]
+        rankingGreatLock.unlock()
+        rankingUltraLock.unlock()
+        Log.debug(message: "[PVPStatsManager] Done parsing game master file")
     }
 
     internal func getPVPStats(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?, iv: IV, level: Double,

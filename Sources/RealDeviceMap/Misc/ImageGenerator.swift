@@ -68,6 +68,9 @@ class ImageGenerator {
             if pokemonDir.exists && firstFile.exists && secondFile.exists && thirdFile.exists {
                 Log.info(message: "[ImageGenerator] Creating Pokemon League Images...")
                 try! pokemonDir.forEachEntry { (pokemonFilename) in
+                    if !pokemonFilename.contains(".png") {
+                        return
+                    }
                     let pokemonFile = File(pokemonDir.path + pokemonFilename)
                     let pokemonId = pokemonFilename.replacingOccurrences(of: ".png", with: "")
                     let newFileFirst = File(pokemonLeagueDir.path + pokemonId + "_1.png")
@@ -91,7 +94,7 @@ class ImageGenerator {
             } else {
                 Log.warning(message: "[ImageGenerator] Creating Pokemon League Images (missing Dirs)")
                 if !pokemonDir.exists {
-                    Log.info(message: "[ImageGenerator] Missing dir \(raidDir.path)")
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
                 }
                 if !firstFile.exists {
                     Log.info(message: "[ImageGenerator] Missing file \(firstFile.path)")
@@ -313,6 +316,7 @@ class ImageGenerator {
                 }
             }
 
+            Log.info(message: "[ImageGenerator] Done")
             Threading.destroyQueue(thread)
 
         }
