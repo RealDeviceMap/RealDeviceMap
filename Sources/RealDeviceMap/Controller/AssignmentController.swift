@@ -94,9 +94,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     public func deleteAssignment(id: UInt32) {
         assignmentsLock.lock()
-        if let index = assignments.firstIndex(where: { $0.id == id }) {
-            assignments.remove(at: index)
-        }
+        assignments = assignments.filter({ $0.id != id })
         assignmentsLock.unlock()
     }
 
