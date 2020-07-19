@@ -208,7 +208,6 @@ class Device: JSONConvertibleObject, Hashable {
 
     }
 
-
     public static func getById(mysql: MySQL?=nil, id: String) throws -> Device? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {

@@ -1017,6 +1017,5 @@ class WebHookRequestHandler {
         }
 
     }
-    
 
 }

@@ -1227,7 +1227,9 @@ class ApiRequestHandler {
             if deviceGroups != nil {
                 for deviceGroup in deviceGroups! {
                     let devicesInGroup = devices?.filter({ deviceGroup.deviceUUIDs.contains($0.uuid) }) ?? []
-                    let instances = Array(Set(devicesInGroup.filter({ $0.instanceName != nil }).map({ $0.instanceName! })))
+                    let instances = Array(
+                        Set(devicesInGroup.filter({ $0.instanceName != nil }).map({ $0.instanceName! }))
+                    )
 
                     var deviceGroupData = [String: Any]()
                     deviceGroupData["name"] = deviceGroup.name
@@ -1288,7 +1290,10 @@ class ApiRequestHandler {
                         } else {
                             formattedDate = assignment.date!.toString() ?? "?"
                         }
-                        assignmentData["date"] = ["timestamp": assignment.date?.timeIntervalSince1970 ?? 0, "formatted": formattedDate]
+                        assignmentData["date"] = [
+                            "timestamp": assignment.date?.timeIntervalSince1970 ?? 0,
+                            "formatted": formattedDate
+                        ]
 
                         assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignment/start/\(assignment.id!)\" " +

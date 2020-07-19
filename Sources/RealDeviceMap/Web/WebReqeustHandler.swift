@@ -2804,7 +2804,8 @@ class WebReqeustHandler {
             }
         }
 
-        if ((selectedDevice == nil || selectedDevice == "") && (selectedGroup == nil || selectedGroup == "")) || selectedInstance == nil {
+        if ((selectedDevice == nil || selectedDevice == "") && (selectedGroup == nil || selectedGroup == "")) ||
+            selectedInstance == nil {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
@@ -3486,8 +3487,9 @@ class WebReqeustHandler {
         return (perms, username)
     }
 
-    static func assignDeviceGroupPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse,
-                                 name: String) throws -> MustacheEvaluationContext.MapType {
+    static func assignDeviceGroupPost(
+        data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, name: String
+    ) throws -> MustacheEvaluationContext.MapType {
 
         var data = data
         guard let instanceName = request.param(name: "instance") else {
@@ -3538,8 +3540,9 @@ class WebReqeustHandler {
 
     }
 
-    static func assignDeviceGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse,
-                                name: String) throws -> MustacheEvaluationContext.MapType {
+    static func assignDeviceGroupGet(
+        data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, name: String
+    ) throws -> MustacheEvaluationContext.MapType {
 
         var data = data
         let instances: [Instance]
@@ -3568,7 +3571,6 @@ class WebReqeustHandler {
         return data
 
     }
-
 
 }
 

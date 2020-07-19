@@ -74,7 +74,8 @@ class Assignment: Equatable {
 
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
-            INSERT INTO assignment (device_uuid, device_group_name, instance_name, source_instance_name, time, date, enabled)
+            INSERT INTO assignment (device_uuid, device_group_name, instance_name,
+                                    source_instance_name, time, date, enabled)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """
 
