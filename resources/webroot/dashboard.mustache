@@ -1,6 +1,30 @@
 {{> header}}
 <body>
 
+<script>
+    $(document).ready(function() {
+        updateStatus();
+    })
+
+    function updateStatus() {
+        $.ajax({
+            url: '/api/get_data?show_status=true',
+            success: function (data) {
+                $('#processing_current').text(data.data.status.processing.current)
+                $('#processing_max').text(data.data.status.processing.max)
+            },
+            error: function(xhr) {
+                console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+            },
+            complete: function() {
+                setTimeout( function () {
+                    updateStatus();
+                }, 1000);
+            }
+        })
+    }
+</script>
+
 <h1 class="mt-3" align="center">Manage {{title}}!</h1>
 
 <div class="w-75" style="float: none; margin: 0 auto;">
@@ -49,6 +73,11 @@
     </div>
 
 </div>
-<p class="mt-3" align="center"><a href="{{version_url}}">{{version}}</a> (<a href="https://github.com/RealDeviceMap/RealDeviceMap/commit/{{version_commit}}">{{version_commit}}</a>)</p>
+<p class="mt-3" align="center">
+    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span>
+</p>
+<p class="mt-3" align="center">
+    Version: <a href="{{version_url}}">{{version}}</a> (<a href="https://github.com/RealDeviceMap/RealDeviceMap/commit/{{version_commit}}">{{version_commit}}</a>)
+</p>
 <br>
 </body>

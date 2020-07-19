@@ -42,6 +42,13 @@ extension String {
         return UInt64(self)
     }
 
+    func toDate() -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: self)
+    }
+
     var length: Int {
         return self.count
     }

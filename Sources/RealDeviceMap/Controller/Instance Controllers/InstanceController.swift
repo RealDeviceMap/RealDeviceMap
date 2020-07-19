@@ -15,7 +15,7 @@ import Turf
 import POGOProtos
 
 protocol InstanceControllerDelegate: class {
-    func instanceControllerDone(name: String)
+    func instanceControllerDone(mysql: MySQL?, name: String)
 }
 
 protocol InstanceControllerProto {

@@ -18,11 +18,17 @@
             "paging":   true,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "columns": [
+                { "data": "source_instance_name" },
                 { "data": "instance_name" },
                 { "data": "device_uuid" },
+                { "data": "device_group_name" },
                 { data: {
                     _:    "time.formatted",
                     sort: "time.timestamp"
+                } },
+                { data: {
+                    _:    "date.formatted",
+                    sort: "date.timestamp"
                 } },
                 { "data": "enabled" },
                 { "data": "buttons" }
@@ -30,7 +36,7 @@
             "info":     true,
             "order": [[ 2, "asc" ]],
             "columnDefs": [ {
-                "targets": [4],
+                "targets": [7],
                 "orderable": false
             }],
             "search.caseInsensitive": true,
@@ -52,9 +58,12 @@
         <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
             <thead>
             <tr>
-                <th>Instance Name</th>
+                <th>Source Instance</th>
+                <th>Target Instance</th>
                 <th>Device UUID</th>
+                <th>Device Group</th>
                 <th>Time</th>
+                <th>Date</th>
                 <th>Enabled</td>
                 <th width="5%"></th>
             </tr>

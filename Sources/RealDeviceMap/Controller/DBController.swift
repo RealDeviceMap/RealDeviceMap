@@ -157,13 +157,8 @@ class DBController {
         while !done {
             guard let mysqlTemp = self.mysql else {
                 let message = "Failed to connect to database (as \(self.rootUsername)) while initializing. " +
-                              "Try: \(count)/10"
-                if count == 10 {
-                    Log.critical(message: "[DBController] " + message)
-                    fatalError(message)
-                } else {
-                    Log.warning(message: "[DBController] " + message)
-                }
+                              "Try: \(count)"
+                Log.warning(message: "[DBController] " + message)
                 count += 1
                 Threading.sleep(seconds: 2.5)
                 continue

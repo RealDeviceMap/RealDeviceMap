@@ -18,15 +18,11 @@ class DeviceGroup: Hashable {
     }
 
     var name: String
-    var instanceName: String
-    var devices: [Device]
-    var count: UInt64
+    var deviceUUIDs: [String]
 
-    init(name: String, instanceName: String, devices: [Device]) {
+    init(name: String, deviceUUIDs: [String]) {
         self.name = name
-        self.instanceName = instanceName
-        self.devices = devices
-        self.count = UInt64(devices.count)
+        self.deviceUUIDs = deviceUUIDs
     }
 
     public func create(mysql: MySQL?=nil) throws {
@@ -38,17 +34,39 @@ class DeviceGroup: Hashable {
 
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
-            INSERT INTO device_group (name, instance_name)
-            VALUES (?, ?)
+            INSERT INTO device_group (name)
+            VALUES (?)
         """
-
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
-        mysqlStmt.bindParam(instanceName)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
+        }
+
+        try createLinkings(mysql: mysql)
+    }
+
+    private func createLinkings(mysql: MySQL) throws {
+        if deviceUUIDs.isEmpty {
+            return
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+            INSERT INTO device_group_device (device_group_name, device_uuid)
+            VALUES \(String(String.init(repeating: "(?, ?),", count: deviceUUIDs.count).dropLast()))
+        """
+        _ = mysqlStmt.prepare(statement: sql)
+        for deviceUUID in deviceUUIDs {
+            mysqlStmt.bindParam(name)
+            mysqlStmt.bindParam(deviceUUID)
+        }
+
+        guard mysqlStmt.execute() else {
+           Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+           throw DBController.DBError()
         }
     }
 
@@ -73,10 +91,6 @@ class DeviceGroup: Hashable {
             throw DBController.DBError()
         }
 
-        let devices = try getDevicesByGroup(name: name)!
-        for device in devices {
-            try device.clearGroup()
-        }
     }
 
     public func update(mysql: MySQL?=nil, oldName: String) throws {
@@ -89,18 +103,35 @@ class DeviceGroup: Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
             UPDATE device_group
-            SET name = ?, instance_name = ?
+            SET name = ?
             WHERE name = ?
         """
 
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
-        mysqlStmt.bindParam(instanceName)
         mysqlStmt.bindParam(oldName)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
+        }
+
+        try deleteLinkings(mysql: mysql)
+        try createLinkings(mysql: mysql)
+    }
+
+    private func deleteLinkings(mysql: MySQL) throws {
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+            DELETE FROM device_group_device
+            WHERE device_group_name = ?
+        """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(name)
+
+        guard mysqlStmt.execute() else {
+           Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+           throw DBController.DBError()
         }
     }
 
@@ -112,13 +143,10 @@ class DeviceGroup: Hashable {
         }
 
         let sql = """
-            SELECT name, instance_name
-            FROM device_group AS devgroup
-            LEFT JOIN (
-                SELECT device_group
-                FROM device
-                GROUP BY device_group
-            ) AS dev ON (dev.device_group = devgroup.name)
+            SELECT dg.name, IF(COUNT(dgd.device_uuid) > 0,JSON_ARRAYAGG(dgd.device_uuid), '[]') as device_uuids
+            FROM device_group dg
+            LEFT JOIN device_group_device dgd on dg.name = dgd.device_group_name
+            GROUP by dg.name
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -133,52 +161,11 @@ class DeviceGroup: Hashable {
         var deviceGroups = [DeviceGroup]()
         while let result = results.next() {
             let name = result[0] as! String
-            let instanceName = result[1] as! String
-            let devices = try getDevicesByGroup(name: name) ?? [Device]()
-            deviceGroups.append(DeviceGroup(name: name, instanceName: instanceName, devices: devices))
+            let deviceUUIDs = (result[1] as? String)?.jsonDecodeForceTry() as? [String] ?? []
+            deviceGroups.append(DeviceGroup(name: name, deviceUUIDs: deviceUUIDs))
         }
         return deviceGroups
 
-    }
-
-    public static func getDevicesByGroup(mysql: MySQL?=nil, name: String) throws -> [Device]? {
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[DEVICEGROUP] Failed to connect to database.")
-            throw DBController.DBError()
-        }
-
-        let sql = """
-            SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon, device_group
-            FROM device
-            WHERE device_group = ?
-        """
-
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(name)
-
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-        let results = mysqlStmt.results()
-
-        var devices = [Device]()
-        while let result = results.next() {
-            let uuid = result[0] as! String
-            let instanceName = result[1] as? String
-            let lastHost = result[2] as? String
-            let lastSeen = result[3] as! UInt32
-            let accountUsername = result[4] as? String
-            let lastLat = result[5] as? Double
-            let lastLon = result[6] as? Double
-            let deviceGroup = result[7] as? String
-
-            devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen,
-                                  accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon,
-                                  deviceGroup: deviceGroup))
-        }
-        return devices
     }
 
     public static func getByName(mysql: MySQL?=nil, name: String) throws -> DeviceGroup? {
@@ -189,9 +176,11 @@ class DeviceGroup: Hashable {
         }
 
         let sql = """
-            SELECT instance_name
-            FROM device_group
-            WHERE name = ?
+            SELECT dg.name, IF(COUNT(dgd.device_uuid) > 0,JSON_ARRAYAGG(dgd.device_uuid), '[]') as device_uuids
+            FROM device_group dg
+            LEFT JOIN device_group_device dgd on dg.name = dgd.device_group_name
+            WHERE dg.name = ?
+            GROUP by dg.name
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -208,9 +197,10 @@ class DeviceGroup: Hashable {
         }
 
         let result = results.next()!
-        let instanceName = result[0] as! String
-        let devices = try getDevicesByGroup(name: name) ?? [Device]()
-        return DeviceGroup(name: name, instanceName: instanceName, devices: devices)
+        let name = result[0] as! String
+        let deviceUUIDs = (result[1] as? String)?.jsonDecodeForceTry() as? [String] ?? []
+
+        return DeviceGroup(name: name, deviceUUIDs: deviceUUIDs)
 
     }
 
