@@ -1288,7 +1288,7 @@ class ApiRequestHandler {
                         } else {
                             formattedDate = assignment.date!.toString() ?? "?"
                         }
-                        assignmentData["date"] = ["timestamp": assignment.date?.timeIntervalSince1970 as Any, "formatted": formattedDate]
+                        assignmentData["date"] = ["timestamp": assignment.date?.timeIntervalSince1970 ?? 0, "formatted": formattedDate]
 
                         assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignment/start/\(assignment.id!)\" " +
