@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 23.05.20.
 //
-//  swiftlint:disable function_body_length function_parameter_count
+//  swiftlint:disable function_body_length function_parameter_count file_length type_body_length
 
 import Foundation
 import PerfectLib
@@ -159,6 +159,7 @@ internal class PVPStatsManager {
         return result
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     internal func getTopPVP(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
                             league: League) -> [Response]? {
         let info = PokemonWithForm(pokemon: pokemon, form: form)
@@ -174,21 +175,13 @@ internal class PVPStatsManager {
             rankingUltraLock.unlock()
         }
 
-        switch cached {
-        case .responses(let responses):
-            return responses
-        case .event(let event):
-            event.lock()
-            _ = event.wait(seconds: 10)
-            event.unlock()
-            return getTopPVP(pokemon: pokemon, form: form, league: league)
-        case .none:
+        if cached == nil {
             switch league {
-               case .great:
-                   rankingGreatLock.lock()
-               case .ultra:
-                   rankingUltraLock.lock()
-               }
+            case .great:
+                rankingGreatLock.lock()
+            case .ultra:
+                rankingUltraLock.lock()
+            }
             guard let stats = stats[info] else {
                 return nil
             }
@@ -216,6 +209,15 @@ internal class PVPStatsManager {
             event.broadcast()
             event.unlock()
             return values
+        }
+        switch cached! {
+        case .responses(let responses):
+            return responses
+        case .event(let event):
+            event.lock()
+            _ = event.wait(seconds: 10)
+            event.unlock()
+            return getTopPVP(pokemon: pokemon, form: form, league: league)
         }
     }
 
