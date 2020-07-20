@@ -2607,7 +2607,10 @@ class WebReqeustHandler {
         if time == nil || time == "" {
             timeInt = 0
         } else {
-            let split = time!.components(separatedBy: ":")
+            var split = time!.components(separatedBy: ":")
+            if split.count == 2 {
+                split.append("00")
+            }
             if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(),
                let seconds = split[2].toInt() {
                 let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
@@ -2788,7 +2791,10 @@ class WebReqeustHandler {
         if time == nil || time == "" {
             timeInt = 0
         } else {
-            let split = time!.components(separatedBy: ":")
+            var split = time!.components(separatedBy: ":")
+            if split.count == 2 {
+                split.append("00")
+            }
             if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(),
                let seconds = split[2].toInt() {
                 let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
