@@ -18,9 +18,9 @@ internal class PVPStatsManager {
 
     private var stats = [PokemonWithForm: Stats]()
     private let rankingGreatLock = Threading.Lock()
-    private var rankingGreat = [PokemonWithForm: [Response]]()
+    private var rankingGreat = [PokemonWithForm: ResponsesOrEvent]()
     private let rankingUltraLock = Threading.Lock()
-    private var rankingUltra = [PokemonWithForm: [Response]]()
+    private var rankingUltra = [PokemonWithForm: ResponsesOrEvent]()
     private var eTag: String?
     private let updaterThread: ThreadQueue
 
@@ -162,7 +162,7 @@ internal class PVPStatsManager {
     internal func getTopPVP(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
                             league: League) -> [Response]? {
         let info = PokemonWithForm(pokemon: pokemon, form: form)
-        let cached: [Response]?
+        let cached: ResponsesOrEvent?
         switch league {
         case .great:
             rankingGreatLock.lock()
@@ -173,24 +173,50 @@ internal class PVPStatsManager {
             cached = rankingUltra[info]
             rankingUltraLock.unlock()
         }
-        guard cached == nil else {
-            return cached!
+
+        switch cached {
+        case .responses(let responses):
+            return responses
+        case .event(let event):
+            event.lock()
+            _ = event.wait(seconds: 10)
+            event.unlock()
+            return getTopPVP(pokemon: pokemon, form: form, league: league)
+        case .none:
+            switch league {
+               case .great:
+                   rankingGreatLock.lock()
+               case .ultra:
+                   rankingUltraLock.lock()
+               }
+            guard let stats = stats[info] else {
+                return nil
+            }
+            let event = Threading.Event()
+            switch league {
+            case .great:
+                rankingGreat[info] = .event(event: event)
+                rankingGreatLock.unlock()
+            case .ultra:
+                rankingUltra[info] = .event(event: event)
+                rankingUltraLock.unlock()
+            }
+            let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue)
+            switch league {
+            case .great:
+                rankingGreatLock.lock()
+                rankingGreat[info] = .responses(responses: values)
+                rankingGreatLock.unlock()
+            case .ultra:
+                rankingUltraLock.lock()
+                rankingUltra[info] = .responses(responses: values)
+                rankingUltraLock.unlock()
+            }
+            event.lock()
+            event.broadcast()
+            event.unlock()
+            return values
         }
-        guard let stats = stats[info] else {
-            return nil
-        }
-        let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue)
-        switch league {
-        case .great:
-            rankingGreatLock.lock()
-            rankingGreat[info] = values
-            rankingGreatLock.unlock()
-        case .ultra:
-            rankingUltraLock.lock()
-            rankingUltra[info] = values
-            rankingUltraLock.unlock()
-        }
-        return values
     }
 
     private func getPVPValuesOrdered(stats: Stats, cap: Int?) -> [Response] {
@@ -285,6 +311,11 @@ extension PVPStatsManager {
             }
             return all
         }
+    }
+
+    enum ResponsesOrEvent {
+        case responses(responses: [Response])
+        case event(event: Threading.Event)
     }
 
     struct Response {
