@@ -538,7 +538,7 @@ class AutoInstanceController: InstanceControllerProto {
                     return "Status: \(currentCountDb)|\(currentCount)/\(maxCount) " +
                         "(\(percentageReal.rounded(toStringWithDecimals: 1))|" +
                         "\(percentage.rounded(toStringWithDecimals: 1))%)" +
-                        "\(doneDate != nil ? ", Completed @: \(doneDate!.toString("HH:mm") ?? "")" : "")"
+                        "\(doneDate != nil ? ", Completed: @\(doneDate!.toString("HH:mm") ?? "")" : "")"
                 } else {
                     return [
                         "quests": [

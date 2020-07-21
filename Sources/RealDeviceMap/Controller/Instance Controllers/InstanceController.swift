@@ -340,7 +340,7 @@ class InstanceController {
         } else {
             instancesLock.unlock()
             if formatted {
-                return "?"
+                return "Starting..."
             } else {
                 return nil
             }
