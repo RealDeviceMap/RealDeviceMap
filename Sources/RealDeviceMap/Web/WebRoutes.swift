@@ -37,7 +37,11 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .home,
                                          requiredPerms: [.viewMap, .viewMapPokemon])
             }),
-            Route(method: .get, uri: "/@pokemon/{id}/{zoom}", handler: { (request, response) in
+            Route(method: .get, uri: "/@pokemon/{id}/{is_event}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokemon])
+            }),
+            Route(method: .get, uri: "/@pokemon/{id}/{is_event}/{zoom}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home,
                                          requiredPerms: [.viewMap, .viewMapPokemon])
             }),

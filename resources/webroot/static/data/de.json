@@ -53,6 +53,8 @@
         "filter_pokestop_table_empty": "keine passenden Pokestops gefunden",
         "filter_spawnpoint_table_empty": "keine passenden Spawnpunkte gefunden",
         "filter_global_iv": "Globales IV Limit",
+        "filter_event": "Event Filter",
+        "filter_event_only": "Nur Event Spawns",
         "filter_and": "und",
         "filter_or": "oder",
         "filter_on": "ein",

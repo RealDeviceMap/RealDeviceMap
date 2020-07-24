@@ -41,6 +41,7 @@ class ApiRequestHandler {
         let showQuests = request.param(name: "show_quests")?.toBool() ?? false
         let questFilterExclude = request.param(name: "quest_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
+        let pokemonFilterEventOnly = request.param(name: "pokemon_filter_event_only")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
         let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
@@ -163,11 +164,12 @@ class ApiRequestHandler {
             })
         }
         let permShowIV = perms.contains(.viewMapIV)
+        let permShowEventPokemon = perms.contains(.viewMapEventPokemon)
         if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon) {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
-                pokemonFilterIV: pokemonFilterIV
+                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon
             ).map({ (object) -> [String: Any] in
                 return object.getJSONValues()
             })
@@ -233,14 +235,42 @@ class ApiRequestHandler {
             let hugeString = Localizer.global.get(value: "filter_huge")
 
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
+            let eventsTypeString = Localizer.global.get(value: "filter_event")
             let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
+            let eventOnlyString = Localizer.global.get(value: "filter_event_only")
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
             let andString = Localizer.global.get(value: "filter_and")
             let orString = Localizer.global.get(value: "filter_or")
 
             var pokemonData = [[String: Any]]()
+
+            if permShowEventPokemon {
+                 let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="event_only"
+                         data-type="pokemon-iv" data-info="event_only_hide">
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                        </label>
+                        <label class="btn btn-sm btn-on select-button-new" data-id="event_only"
+                         data-type="pokemon-iv" data-info="event_only_show">
+                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                        </label>
+                    </div>
+                """
+                pokemonData.append([
+                    "id": [
+                        "formatted": "",
+                        "sort": -1
+                    ],
+                    "name": eventOnlyString,
+                    "image": "Event",
+                    "filter": filter,
+                    "size": "",
+                    "type": eventsTypeString
+                ])
+            }
 
             if permShowIV {
                 for i in 0...1 {
@@ -1419,6 +1449,8 @@ class ApiRequestHandler {
                                 permName = "Device"
                             case .viewMapSubmissionCells:
                                 permName = "Submission-Cell"
+                            case .viewMapEventPokemon:
+                                permName = "Event Pokemon"
                             }
 
                             if permsString == "" {

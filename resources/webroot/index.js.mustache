@@ -491,6 +491,7 @@ function loadStorage () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -503,6 +504,9 @@ function loadStorage () {
       if (pokemonFilter[i] === undefined) {
         pokemonFilter[i] = { show: true, size: 'normal' }
       }
+    }
+    if (pokemonFilter.event_only === undefined) {
+      pokemonFilter.event_only = { on: false }
     }
     if (pokemonFilter.iv_and === undefined) {
       pokemonFilter.iv_and = { on: false, filter: '0-100' }
@@ -763,6 +767,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -778,6 +783,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: false, size: pokemonFilterNew[i].size, filter: pokemonFilterNew[i].filter }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: pokemonFilterNew.iv_and.filter }
     defaultPokemonFilter.iv_or = { on: false, filter: pokemonFilterNew.iv_or.filter }
 
@@ -1301,6 +1307,7 @@ function loadData () {
       pokemonFilterIV.or = pokemonFilter.iv_or.filter.replace(/\s/g, '')
     }
   }
+  let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'].on
 
   const questFilterExclude = []
   if (showQuests) {
@@ -1391,6 +1398,7 @@ function loadData () {
     show_pokestops: showPokestops,
     show_quests: showQuests,
     show_pokemon: showPokemon,
+    pokemon_filter_event_only: pokemonFilterEventOnly,
     pokemon_filter_exclude: JSON.stringify(pokemonFilterExclude),
     quest_filter_exclude: JSON.stringify(questFilterExclude),
     pokemon_filter_iv: JSON.stringify(pokemonFilterIV),
@@ -2235,7 +2243,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="text-center">' +
         '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>[Hide]</b></a>&nbsp;' +
         '<a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>[Exclude]</b></a> ' +
-        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'"><b>[Direct Link]</b></a>' +
+        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'/'+pokemon.is_event+'"><b>[Direct Link]</b></a>' +
         '<br>' +
         '<br>' +
         '<div class="row">' +
@@ -3324,6 +3332,12 @@ function manageSelectButton (e, isNew) {
       case 'on':
         shouldShow = pokemonFilterNew['iv_' + id].on
         break
+      case 'event_only_hide':
+        shouldShow = !pokemonFilterNew['event_only'].on
+        break
+      case 'event_only_show':
+        shouldShow = pokemonFilterNew['event_only'].on
+        break
     }
   } else if (type === 'quest-misc') {
     switch (info) {
@@ -3640,6 +3654,12 @@ function manageSelectButton (e, isNew) {
             break
           case 'on':
             pokemonFilterNew['iv_' + id].on = true
+            break
+          case 'event_only_show':
+            pokemonFilterNew['event_only'].on = true
+            break
+          case 'event_only_hide':
+            pokemonFilterNew['event_only'].on = false
             break
         }
       } else if (type === 'quest-misc') {
@@ -4663,7 +4683,7 @@ function loadFilterSettings (e) {
 
     showPokemon = obj.show_pokemon
     pokemonFilterNew = obj.pokemon
-    store('show_pokemon', showRaids)
+    store('show_pokemon', showPokemon)
     store('pokemon_filter', JSON.stringify(pokemonFilterNew))
 
     showQuests = obj.show_quests

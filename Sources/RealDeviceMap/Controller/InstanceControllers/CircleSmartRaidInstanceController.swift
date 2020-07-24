@@ -32,8 +32,9 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     private static let ignoreTimeBoss = 60 // 1 min
     private static let noRaidTime = 1800 // 30 min
 
-    init(name: String, coords: [Coord], minLevel: UInt8, maxLevel: UInt8) {
-        super.init(name: name, coords: coords, type: .raid, minLevel: minLevel, maxLevel: maxLevel)
+    init(name: String, coords: [Coord], minLevel: UInt8, maxLevel: UInt8, accountGroup: String?, isEvent: Bool) {
+        super.init(name: name, coords: coords, type: .raid, minLevel: minLevel,
+                   maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
 
         for point in coords {
 
@@ -206,7 +207,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
             ignoringWarning: true,
             spins: nil,
             noCooldown: false,
-            device: uuid
+            device: uuid,
+            group: accountGroup
         )
     }
 
@@ -214,7 +216,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid(ignoringWarning: true)
+            account.isValid(ignoringWarning: true, group: accountGroup)
     }
 
 }
