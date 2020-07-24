@@ -10,7 +10,6 @@
 import Foundation
 import PerfectLib
 import PerfectThread
-import cURL
 import PerfectCURL
 
 class WebHookController {
@@ -238,25 +237,22 @@ class WebHookController {
     }
 
     private func sendEvents(events: [[String: Any]], url: String) {
-
         guard let body = try? events.jsonEncodedString() else {
             Log.error(message: "[WebHookController] Failed to parse events into json string")
             return
         }
         let byteArray = [UInt8](body.utf8)
 
-        let curlObject = CURL(url: url)
-
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Accept: application/json")
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Cache-Control: no-cache")
-        curlObject.setOption(CURLOPT_USERAGENT, s: "RealDeviceMap")
-        curlObject.setOption(CURLOPT_POST, int: 1)
-        curlObject.setOption(CURLOPT_POSTFIELDSIZE, int: byteArray.count)
-        curlObject.setOption(CURLOPT_COPYPOSTFIELDS, v: UnsafeMutablePointer(mutating: byteArray))
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Content-Type: application/json")
-
-        curlObject.perform { (_, _, _) in }
-
+        let request = CURLRequest(
+            url,
+            .httpMethod(.post),
+            .postData(byteArray),
+            .addHeader(.contentType, "application/json"),
+            .addHeader(.accept, "application/json"),
+            .addHeader(.cacheControl, "no-cache"),
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+        )
+        request.perform { (_) in }
     }
 
 }

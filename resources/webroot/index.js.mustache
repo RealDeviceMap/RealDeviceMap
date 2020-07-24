@@ -59,6 +59,9 @@ let showDevices
 let showRaidTimers
 let showSubmissionCells
 
+let showGreatLeague
+let showUltraLeague
+
 let avilableForms = []
 let avilableItems = []
 let avilableTileservers = {}
@@ -672,6 +675,22 @@ function loadStorage () {
     if (spawnpointFilter['with-timer'] === undefined) {
       spawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     }
+  }
+
+  const showGreatLeagueValue = retrieve('show_great_league')
+  if (showGreatLeagueValue === null) {
+    store('show_great_league', false)
+    showGreatLeague = false
+  } else {
+    showGreatLeague = (showGreatLeagueValue === 'true')
+  }
+
+  const showUltraLeagueValue = retrieve('show_ultra_league')
+  if (showUltraLeagueValue === null) {
+    store('show_ultra_league', false)
+    showUltraLeague = false
+  } else {
+    showUltraLeague = (showUltraLeagueValue === 'true')
   }
 }
 
@@ -1601,8 +1620,31 @@ function getPokemonSize (pokemonId) {
   }
 }
 
-function getPokemonIndex (pokemonId) {
-  const size = pokemonFilter[pokemonId].size
+function getPokemonIndex (pokemon) {
+  const size = pokemonFilter[pokemon.pokemon_id].size
+  if (pokemon.atk_iv === 15 && pokemon.def_iv === 15 && pokemon.sta_iv === 15) {
+    return 9
+  }
+  if (pokemon.pvp_rankings_great_league !== null && pokemon.pvp_rankings_ultra_league !== null) {
+    let bestRank = 4
+    $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    if (bestRank === 1) {
+      return 7
+    } else if (bestRank === 2) {
+      return 6
+    } else if (bestRank === 3) {
+      return 5
+    }
+  }
   if (size === 'small') {
     return 1
   } else if (size === 'large') {
@@ -2044,7 +2086,7 @@ function getPokemonPopupContent (pokemon) {
     pokemonName += ' (' + getPokemonNameNoId(pokemon.display_pokemon_id) + ')'
   }
 
-  const pokemonIcon = getPokemonIconString(pokemon.pokemon_id, pokemon.form)
+  const pokemonIcon = getPokemonIconString(pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league)
 
   content +=
     '<div class="row">' + // START 1ST ROW
@@ -2064,7 +2106,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="row">' + // START 2ND ROW
         '<div class="' + (hasIV ? 'col-6 col-md-4' : 'col text-center') + '">' +
             '<div class="row' + (hasIV ? '' : 'text-center') + '" style="margin: auto;">' +
-                '<img src="/static/img/pokemon/' + pokemonIcon + '.png" height="64" width="64">' +
+                '<img src="/static/img/' + pokemonIcon + '" height="64" width="64">' +
             '</div>' + // END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">'
   var pkmn = pokemonDb[pokemon.pokemon_id]
@@ -2132,8 +2174,62 @@ function getPokemonPopupContent (pokemon) {
     const updatedDate = new Date(pokemon.updated * 1000)
     content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
+  if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
+    content +=
+      '<a href="#" onclick="toggleGreatLeague()">' +
+      '<b>Great League:</b>' +
+      '</a><br>'
+    if (showGreatLeague) {
+      $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
+  }
+
+  if (pokemon.pvp_rankings_ultra_league !== undefined && pokemon.pvp_rankings_ultra_league !== null) {
+    content +=
+      '<a href="#" onclick="toggleUltraLeague()">' +
+      '<b>Ultra League:</b>' +
+      '</a><br>'
+    if (showUltraLeague) {
+      $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
+  }
+
   content +=
-        '</div>' +
+    '</div>' +
     '</div>' + // END 3RD ROW
     '<br>' +
     '<div class="text-center">' +
@@ -2336,13 +2432,13 @@ function getGymPopupContent (gym) {
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
-    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
+    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, null, null)
     content +=
         '<div class="row" style="margin:auto;">' + // START 1ST ROW
             '<div class="col-6 col-md-4">' + // START 1ST COL
                 '<div class="row" style="margin:auto;">'
     if (hasRaidBoss && isRaidBattle) {
-      content += '<img src="/static/img/pokemon/' + pokemonIcon + '.png" height="64" width="64">'
+      content += '<img src="/static/img/' + pokemonIcon + '" "height="64" width="64">'
     } else {
       content += '<img src="/static/img/egg/' + gym.raid_level + '.png" height="64" width="64">'
     }
@@ -2856,9 +2952,9 @@ function getWeatherStyle (weather, ts) {
 function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
-  const pokemonIdString = getPokemonIconString(pokemon.pokemon_id, pokemon.form)
+  const pokemonIdString = getPokemonIconString(pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league)
   const icon = L.icon({
-    iconUrl: '/static/img/pokemon/' + pokemonIdString + '.png',
+    iconUrl: '/static/img/' + pokemonIdString,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2)]
@@ -2871,7 +2967,7 @@ function getPokemonMarker (pokemon, ts) {
   if (pokemon.is_start) {
     zIndex = 1000
   } else {
-    zIndex = 40 + getPokemonIndex(pokemon.pokemon_id)
+    zIndex = 40 + getPokemonIndex(pokemon)
   }
   const marker = L.marker([pokemon.lat, pokemon.lon], {
     icon: getPokemonMarkerIcon(pokemon, ts),
@@ -3062,7 +3158,7 @@ function getGymMarkerIcon (gym, ts) {
   let iconSize
   if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && (showRaids || gym.is_start) && parseInt(gym.raid_level) > 0) {
     if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
-      const pokemonIdString = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
+      const pokemonIdString = getPokemonIdIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
       // Raid Boss
       iconSize = getRaidSize('p' + gym.raid_pokemon_id)
       icon = L.icon({
@@ -3948,7 +4044,7 @@ function getSize (size) {
   return 'Big'
 }
 
-function getPokemonIconString (pokemonId, pokemonForm) {
+function getPokemonIdIconString(pokemonId, pokemonForm) {
   let pokemonIdString
   if (pokemonForm !== 0 && pokemonForm !== null) {
     const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
@@ -3961,6 +4057,46 @@ function getPokemonIconString (pokemonId, pokemonForm) {
     pokemonIdString = '' + pokemonId
   }
   return pokemonIdString
+}
+
+function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague) {
+  let pokemonIdString = getPokemonIdIconString(pokemonId, pokemonForm)
+  if (pokemonForm !== 0 && pokemonForm !== null) {
+    const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
+    if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+      pokemonIdString = pokemonIdStringTmp
+    } else {
+      pokemonIdString = '' + pokemonId
+    }
+  } else {
+    pokemonIdString = '' + pokemonId
+  }
+  let pre
+  let post
+  if (greatLeague === null || ultraLeague === null) {
+    pre = 'pokemon/'
+    post = '.png'
+  } else {
+    let bestRank = 4
+    $.each(greatLeague, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    $.each(ultraLeague, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    if (bestRank <= 3) {
+      pre = 'pokemon_league/'
+      post = '_' + bestRank +'.png'
+    } else {
+      pre = 'pokemon/'
+      post = '.png'
+    }
+  }
+  return pre + pokemonIdString + post
 }
 
 // MARK: - Init Filter
@@ -4634,4 +4770,22 @@ function loadFilterSettings (e) {
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   }
   reader.readAsText(file)
+}
+
+// eslint-disable-next-line no-unused-vars
+function toggleGreatLeague() {
+  showGreatLeague = !showGreatLeague
+  store('show_great_league', showGreatLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
+}
+
+// eslint-disable-next-line no-unused-vars
+function toggleUltraLeague() {
+  showUltraLeague = !showUltraLeague
+  store('show_ultra_league', showUltraLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
 }

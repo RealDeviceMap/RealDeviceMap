@@ -1,5 +1,5 @@
 ## Base Image
-FROM perfectlysoft/perfectassistant:4.1 AS base
+FROM swift:4.2 AS base
 
 # Perfect-COpenSSL
 RUN apt-get -y update && apt-get install -y libssl-dev

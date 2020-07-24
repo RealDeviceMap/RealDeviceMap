@@ -15,7 +15,7 @@ jobs:
     - uses: actions/cache@v1
       with:
         path: .build
-        key: ${{ runner.os }}-debug-spm-${{ hashFiles('Package.resolved') }}
+        key: ${{ runner.os }}-debug-4.2-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
       run: swift build -v -c debug
     - name: Test
@@ -74,7 +74,7 @@ jobs:
     - uses: actions/cache@v1
       with:
         path: .build
-        key: ${{ runner.os }}-release-spm-${{ hashFiles('Package.resolved') }}
+        key: ${{ runner.os }}-release-4.2-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
       run: swift build -v -c release
     - name: Upload executeable
