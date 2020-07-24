@@ -202,8 +202,9 @@ class IVInstanceController: InstanceControllerProto {
                 pokemonQueue.remove(at: index)
             }
             // Re-Scan 100% none event Pokemon
-            if isEvent && !pokemon.isEvent &&  pokemon.atkIv == 15 &&
-               pokemon.defIv == 15 && pokemon.staIv == 15 {
+            if isEvent && !pokemon.isEvent && (
+                pokemon.atkIv == 15 || pokemon.atkIv == 0 || pokemon.atkIv == 1
+               ) && pokemon.defIv == 15 && pokemon.staIv == 15 {
                 pokemon.isEvent = true
                 pokemonQueue.insert(pokemon, at: 0)
             }
