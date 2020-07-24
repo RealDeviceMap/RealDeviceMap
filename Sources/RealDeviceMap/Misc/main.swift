@@ -37,6 +37,9 @@ Log.info(message: "[MAIN] Starting Startup Webserver")
 var startupServer: HTTPServer.Server? = WebServer.startupServer
 var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
 
+Log.info(message: "[MAIN] Getting Version")
+_ = VersionManager.global
+
 // Check if /backups exists
 let backups = Dir("\(projectroot)/backups")
 #if DEBUG
@@ -204,6 +207,9 @@ for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
     aviableItems.append(itemId.rawValue)
 }
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
+
+Log.info(message: "[MAIN] Getting PVP Stats")
+_ = PVPStatsManager.global
 
 Log.info(message: "[MAIN] Starting Webhook")
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")

@@ -28,6 +28,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var multiPolygon: MultiPolygon
     private var type: AutoType
     private let stopsLock = Threading.Lock()
+    private var lastDoneCheck = Date(timeIntervalSinceNow: -3600)
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
     private var todayStopsTries: [Pokestop: UInt8]?
@@ -257,6 +258,12 @@ class AutoInstanceController: InstanceControllerProto {
                     return [String: Any]()
                 }
                 if todayStops!.isEmpty {
+                    guard Date().timeIntervalSince(lastDoneCheck) >= 600 else {
+                        stopsLock.unlock()
+                        delegate?.instanceControllerDone(name: name)
+                        return [:]
+                    }
+                    lastDoneCheck = Date()
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
@@ -280,7 +287,7 @@ class AutoInstanceController: InstanceControllerProto {
                     if todayStops!.isEmpty {
                         stopsLock.unlock()
                         delegate?.instanceControllerDone(name: name)
-                        return [String: Any]()
+                        return [:]
                     }
                 }
                 stopsLock.unlock()
@@ -317,13 +324,23 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     if closest == nil {
-                         return [String: Any]()
+                        return [String: Any]()
                     }
-
                     pokestop = closest!
+
+                    var nearbyStops = [pokestop]
+                    let pokestopCoord = Coord(lat: pokestop.lat, lon: pokestop.lon)
+                    for stop in todayStopsC! {
+                        // MARK: Revert back to 40m once reverted ingame
+                        if pokestopCoord.distance(to: Coord(lat: stop.lat, lon: stop.lon)) <= 80 {
+                            nearbyStops.append(stop)
+                        }
+                    }
                     stopsLock.lock()
-                    if let index = todayStops!.index(of: pokestop) {
-                        todayStops!.remove(at: index)
+                    for pokestop in nearbyStops {
+                        if let index = todayStops!.index(of: pokestop) {
+                            todayStops!.remove(at: index)
+                        }
                     }
                     stopsLock.unlock()
                 } else {
@@ -350,15 +367,17 @@ class AutoInstanceController: InstanceControllerProto {
                     encounterTime = result.encounterTime
                 } catch {
                     Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
-                    accountsLock.lock()
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
-                    accountsLock.unlock()
+                    stopsLock.unlock()
                     return [String: Any]()
                 }
 
-                if delay >= delayLogout {
-                    accountsLock.lock()
+                if delay >= delayLogout && account != nil {
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
+                    stopsLock.unlock()
+                    accountsLock.lock()
                     var newUsername: String?
                     do {
                         if accounts[uuid] == nil {
@@ -369,12 +388,14 @@ class AutoInstanceController: InstanceControllerProto {
                                 encounterTarget: Coord(lat: pokestop.lat, lon: pokestop.lon)
                             )
                             accountsLock.lock()
-                            newUsername = account?.username
-                            accounts[uuid] = account?.username
-                            Log.debug(
-                                message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
-                                         "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
-                            )
+                            if accounts[uuid] == nil {
+                                newUsername = account?.username
+                                accounts[uuid] = account?.username
+                                Log.debug(
+                                    message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
+                                             "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                                )
+                            }
                         } else {
                             newUsername = accounts[uuid]
                         }
@@ -385,6 +406,11 @@ class AutoInstanceController: InstanceControllerProto {
                         )
                     }
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
+                } else if delay >= delayLogout {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ingoring over Logout Delay, " +
+                                 "because no account is specified."
+                    )
                 }
 
                 do {
@@ -400,9 +426,9 @@ class AutoInstanceController: InstanceControllerProto {
                   )
                 } catch {
                     Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
-                    accountsLock.lock()
+                    stopsLock.lock()
                     todayStops?.append(pokestop)
-                    accountsLock.unlock()
+                    stopsLock.unlock()
                     return [String: Any]()
                 }
 
@@ -413,6 +439,7 @@ class AutoInstanceController: InstanceControllerProto {
                     todayStopsTries![pokestop]! += 1
                 }
                 if todayStops!.isEmpty {
+                    lastDoneCheck = Date()
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
@@ -477,18 +504,11 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 bootstrappLock.unlock()
                 stopsLock.lock()
-                var currentCountDb = 0
                 let ids = self.allStops!.map({ (stop) -> String in
                     return stop.id
                 })
                 stopsLock.unlock()
-
-                if let stops = try? Pokestop.getIn(mysql: mysql, ids: ids) {
-                    for stop in stops where stop.questType != nil {
-                        currentCountDb += 1
-                    }
-                }
-
+                let currentCountDb = (try? Pokestop.questCountIn(mysql: mysql, ids: ids)) ?? 0
                 stopsLock.lock()
                 let maxCount = self.allStops?.count ?? 0
                 let currentCount = maxCount - (self.todayStops?.count ?? 0)

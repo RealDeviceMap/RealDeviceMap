@@ -1,5 +1,5 @@
 ## Base Image
-FROM docker.pkg.github.com/realdevicemap/realdevicemap/realdevicemap:base
+FROM docker.pkg.github.com/realdevicemap/realdevicemap/realdevicemap:base.4.2
 
 ## Copy Files
 COPY .build/release/RealDeviceMap /app/

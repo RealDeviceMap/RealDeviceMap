@@ -13,8 +13,8 @@ import PerfectMySQL
 
 class DeviceGroup: Hashable {
 
-    public var hashValue: Int {
-        return name.hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
     }
 
     var name: String

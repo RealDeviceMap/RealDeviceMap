@@ -2005,9 +2005,9 @@ class WebReqeustHandler {
                 data["error"] = "Failed to parse coords."
                 return data
             }
-
-            newCoords = coords
-
+            newCoords = coords.map({ (coord) -> [String: Any] in
+                return coord.getJSONValues()
+            })
         } else if type != nil && type! == .autoQuest || type! == .pokemonIV || type! == .leveling {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
@@ -2040,9 +2040,13 @@ class WebReqeustHandler {
                 return data
             }
             if type! == .leveling {
-                newCoords = coordArray[0][0]
+                newCoords = coordArray[0][0].getJSONValues()
             } else {
-                newCoords = coordArray
+                newCoords = coordArray.map({ (coords) -> [[String: Any]] in
+                    return coords.map { (coord) -> [String: Any] in
+                        return coord.getJSONValues()
+                    }
+                })
             }
         } else {
             data["show_error"] = true
@@ -2230,7 +2234,7 @@ class WebReqeustHandler {
         let devices: [Device]
 
         do {
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
             devices = try Device.getAll()
         } catch {
             response.setBody(string: "Internal Server Errror")
@@ -2330,7 +2334,7 @@ class WebReqeustHandler {
             let devices: [Device]
 
             do {
-                instances = try Instance.getAll()
+                instances = try Instance.getAll(getData: false)
                 devices = try Device.getAll()
             } catch {
                 response.setBody(string: "Internal Server Errror")
@@ -2477,7 +2481,7 @@ class WebReqeustHandler {
         let instances: [Instance]
         do {
             device = try Device.getById(id: deviceUUID)
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             data["show_error"] = true
             data["error"] = "Failed to assign Device."
@@ -2519,7 +2523,7 @@ class WebReqeustHandler {
         let device: Device?
         do {
             device = try Device.getById(id: deviceUUID)
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2550,7 +2554,7 @@ class WebReqeustHandler {
         let devices: [Device]
         do {
             devices = try Device.getAll()
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2586,7 +2590,7 @@ class WebReqeustHandler {
         let devices: [Device]
         do {
             devices = try Device.getAll()
-            instances = try Instance.getAll()
+            instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
@@ -2686,7 +2690,7 @@ class WebReqeustHandler {
             let devices: [Device]
             do {
                 devices = try Device.getAll()
-                instances = try Instance.getAll()
+                instances = try Instance.getAll(getData: false)
             } catch {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)

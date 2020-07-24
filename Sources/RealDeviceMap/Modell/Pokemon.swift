@@ -57,7 +57,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "capture_1": capture1 as Any,
             "capture_2": capture2 as Any,
             "capture_3": capture3 as Any,
-            "display_pokemon_id": displayPokemonId as Any
+            "display_pokemon_id": displayPokemonId as Any,
+            "pvp_rankings_great_league": pvpRankingsGreatLeague as Any,
+            "pvp_rankings_ultra_league": pvpRankingsUltraLeague as Any
         ]
     }
 
@@ -91,7 +93,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "capture_3": capture3 ?? 0,
             "shiny": shiny as Any,
             "username": username as Any,
-            "display_pokemon_id": displayPokemonId as Any
+            "display_pokemon_id": displayPokemonId as Any,
+            "pvp_rankings_great_league": pvpRankingsGreatLeague as Any,
+            "pvp_rankings_ultra_league": pvpRankingsUltraLeague as Any
         ]
         return [
             "type": "pokemon",
@@ -135,13 +139,16 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     var capture3: Double?
     var isDitto: Bool = false
     var displayPokemonId: UInt16?
+    var pvpRankingsGreatLeague: [[String: Any]]?
+    var pvpRankingsUltraLeague: [[String: Any]]?
 
     init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
          atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
          cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?,
          capture1: Double?, capture2: Double?, capture3: Double?, displayPokemonId: UInt16?,
          weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32?,
-         updated: UInt32?, changed: UInt32?, cellId: UInt64?, expireTimestampVerified: Bool) {
+         updated: UInt32?, changed: UInt32?, cellId: UInt64?, expireTimestampVerified: Bool,
+         pvpRankingsGreatLeague: [[String: Any]]?, pvpRankingsUltraLeague: [[String: Any]]?) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -173,6 +180,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.capture2 = capture2
         self.capture3 = capture3
         self.displayPokemonId = displayPokemonId
+        self.pvpRankingsGreatLeague = pvpRankingsGreatLeague
+        self.pvpRankingsUltraLeague = pvpRankingsUltraLeague
     }
 
     init(mysql: MySQL?=nil, wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64,
@@ -376,30 +385,68 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         }
 
+        let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
+        self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+            form: form == .unset ? nil : form,
+            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+            iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+            level: Double(self.level!),
+            league: .great
+        ).map({ (ranking) -> [String: Any] in
+            return [
+                "pokemon": ranking.pokemon.pokemon.rawValue,
+                "form": ranking.pokemon.form?.rawValue ?? 0,
+                "rank": ranking.response?.rank as Any,
+                "percentage": ranking.response?.percentage as Any,
+                "cp": ranking.response?.ivs.first?.cp as Any,
+                "level": ranking.response?.ivs.first?.level as Any
+            ]
+        })
+
+        self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+            form: form == .unset ? nil : form,
+            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+            iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+            level: Double(self.level!),
+            league: .ultra
+        ).map({ (ranking) -> [String: Any] in
+            return [
+                "pokemon": ranking.pokemon.pokemon.rawValue,
+                "form": ranking.pokemon.form?.rawValue ?? 0,
+                "rank": ranking.response?.rank as Any,
+                "percentage": ranking.response?.percentage as Any,
+                "cp": ranking.response?.ivs.first?.cp as Any,
+                "level": ranking.response?.ivs.first?.level as Any
+            ]
+        })
+
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
 
     }
 
     public static func shouldUpdate(old: Pokemon, new: Pokemon) -> Bool {
-        let now = UInt32(Date().timeIntervalSince1970)
-
-        if (old.pokemonId != new.pokemonId) && (old.pokemonId != Pokemon.dittoPokemonId) {
-            return true
-        } else if (old.spawnId == nil && new.spawnId != nil) || (old.pokestopId == nil && new.pokestopId != nil) {
-            return true
-        } else if (old.expireTimestampVerified == false && new.expireTimestampVerified == true) ||
-                  (old.expireTimestampVerified == true && new.expireTimestampVerified == true &&
-                    (old.expireTimestamp != new.expireTimestamp)
-                  ) {
-            return true
-        } else if old.weather != new.weather {
-           return true
-        } else if (new.atkIv != nil) && (old.atkIv == nil || old.atkIv != new.atkIv) {
-            return true
-        } else {
-            return (now > old.updated! + 90) && (old.pokemonId != Pokemon.dittoPokemonId)
-        }
+        return
+            new.pokemonId != old.pokemonId ||
+            new.spawnId != old.spawnId ||
+            new.pokestopId != old.pokestopId ||
+            new.weather != old.weather ||
+            new.expireTimestampVerified != old.expireTimestampVerified ||
+            new.atkIv != old.atkIv ||
+            new.defIv != old.defIv ||
+            new.staIv != old.staIv ||
+            new.cp != old.cp ||
+            new.level != old.level ||
+            new.move1 != old.move1 ||
+            new.move2 != old.move2 ||
+            new.gender != old.gender ||
+            new.form != old.form ||
+            new.costume != old.costume ||
+            abs(Int(new.expireTimestamp ?? 0) - Int(old.expireTimestamp ?? 0)) >= 60 ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     public func save(mysql: MySQL?=nil, updateIV: Bool=false) throws {
@@ -436,11 +483,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
                     level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id, username, gender,
                     form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                    expire_timestamp_verified
+                    expire_timestamp_verified, pvp_rankings_great_league, pvp_rankings_ultra_league
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?
+                    UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?, ?
                 )
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -491,10 +538,16 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.pokestopId = oldPokemon!.pokestopId
             }
 
+            if oldPokemon!.pvpRankingsGreatLeague != nil && self.pvpRankingsGreatLeague == nil {
+                self.pvpRankingsGreatLeague = oldPokemon!.pvpRankingsGreatLeague
+            }
+
+            if oldPokemon!.pvpRankingsUltraLeague != nil && self.pvpRankingsUltraLeague == nil {
+                self.pvpRankingsUltraLeague = oldPokemon!.pvpRankingsUltraLeague
+            }
+
             let changedSQL: String
             if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
-                WebHookController.global.addPokemonEvent(pokemon: self)
-                InstanceController.global.gotIV(pokemon: self)
                 bindChangedTimestamp = false
                 changedSQL = "UNIX_TIMESTAMP()"
             } else {
@@ -529,9 +582,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 }
             }
 
-            let shouldWrite: Bool = Pokemon.shouldUpdate(old: oldPokemon!, new: self)
-
-            if !shouldWrite {
+            guard Pokemon.shouldUpdate(old: oldPokemon!, new: self) else {
                 return
             }
 
@@ -554,7 +605,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 UPDATE pokemon
                 SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) username = ?,
                     gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(),
-                    first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?
+                    first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?,
+                    pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -595,6 +647,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         mysqlStmt.bindParam(cellId)
         mysqlStmt.bindParam(expireTimestampVerified)
+        mysqlStmt.bindParam(pvpRankingsGreatLeague?.jsonEncodeForceTry())
+        mysqlStmt.bindParam(pvpRankingsUltraLeague?.jsonEncodeForceTry())
 
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
@@ -623,7 +677,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
             throw DBController.DBError()
         }
 
@@ -633,8 +691,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if self.atkIv != nil {
                 InstanceController.global.gotIV(pokemon: self)
             }
+        } else if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
+            WebHookController.global.addPokemonEvent(pokemon: self)
+            InstanceController.global.gotIV(pokemon: self)
         }
-
     }
 
     //  swiftlint:disable:next function_parameter_count
@@ -731,7 +791,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
                    gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                   expire_timestamp_verified, shiny, username
+                   expire_timestamp_verified, shiny, username, pvp_rankings_great_league, pvp_rankings_ultra_league
             FROM pokemon
             WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND
                   lon <= ? AND updated > ? \(sqlAdd)
@@ -819,6 +879,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let expireTimestampVerified = (result[28] as? UInt8)!.toBool()
             let shiny = (result[29] as? UInt8)?.toBool()
             let username = result[30] as? String
+            let pvpRankingsGreatLeague = (result[31] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+            let pvpRankingsUltraLeague = (result[32] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
 
             pokemons.append(Pokemon(
                 id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
@@ -827,7 +889,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
                 weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
                 firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
-                expireTimestampVerified: expireTimestampVerified
+                expireTimestampVerified: expireTimestampVerified, pvpRankingsGreatLeague: pvpRankingsGreatLeague,
+                pvpRankingsUltraLeague: pvpRankingsUltraLeague
             ))
         }
         return pokemons
@@ -845,7 +908,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
                    gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                   expire_timestamp_verified, shiny, username
+                   expire_timestamp_verified, shiny, username, pvp_rankings_great_league, pvp_rankings_ultra_league
             FROM pokemon
             WHERE id = ?
         """
@@ -896,6 +959,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let expireTimestampVerified = (result[28] as? UInt8)!.toBool()
         let shiny = (result[29] as? UInt8)?.toBool()
         let username = result[30] as? String
+        let pvpRankingsGreatLeague = (result[31] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+        let pvpRankingsUltraLeague = (result[32] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
 
         return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
                        expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
@@ -904,7 +969,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                        displayPokemonId: displayPokemonId, weather: weather,
                        shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
                        updated: updated, changed: changed, cellId: cellId,
-                       expireTimestampVerified: expireTimestampVerified
+                       expireTimestampVerified: expireTimestampVerified, pvpRankingsGreatLeague: pvpRankingsGreatLeague,
+                       pvpRankingsUltraLeague: pvpRankingsUltraLeague
         )
     }
 

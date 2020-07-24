@@ -28,11 +28,17 @@ class ImageGenerator {
         }
         let pokestopDir = Dir("\(projectroot)/resources/webroot/static/img/pokestop/")
         let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
+        let pokemonLeagueDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon_league/")
         let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
         let questDir = Dir("\(projectroot)/resources/webroot/static/img/quest/")
         let gruntDir = Dir("\(projectroot)/resources/webroot/static/img/grunt/")
         let invasionDir = Dir("\(projectroot)/resources/webroot/static/img/invasion/")
         let questInvasionDir = Dir("\(projectroot)/resources/webroot/static/img/quest_invasion/")
+
+        let firstFile = File("\(projectroot)/resources/webroot/static/img/misc/first.png")
+        let secondFile = File("\(projectroot)/resources/webroot/static/img/misc/second.png")
+        let thirdFile = File("\(projectroot)/resources/webroot/static/img/misc/third.png")
+
         if !raidDir.exists {
             try! raidDir.create()
         }
@@ -45,6 +51,9 @@ class ImageGenerator {
         if !questInvasionDir.exists {
             try! questInvasionDir.create()
         }
+        if !pokemonLeagueDir.exists {
+            try! pokemonLeagueDir.create()
+        }
 
         let thread = Threading.getQueue(type: .serial)
 
@@ -55,6 +64,48 @@ class ImageGenerator {
             composeMethod = "dst-over"
         }
         thread.dispatch {
+
+            if pokemonDir.exists && firstFile.exists && secondFile.exists && thirdFile.exists {
+                Log.info(message: "[ImageGenerator] Creating Pokemon League Images...")
+                try! pokemonDir.forEachEntry { (pokemonFilename) in
+                    if !pokemonFilename.contains(".png") {
+                        return
+                    }
+                    let pokemonFile = File(pokemonDir.path + pokemonFilename)
+                    let pokemonId = pokemonFilename.replacingOccurrences(of: ".png", with: "")
+                    let newFileFirst = File(pokemonLeagueDir.path + pokemonId + "_1.png")
+                    if !newFileFirst.exists {
+                        Log.debug(message: "[ImageGenerator] Creating #1 Pokemon League Images \(pokemonId)")
+                        combineImagesLeague(image1: pokemonFile.path, image2: firstFile.path, output: newFileFirst.path)
+                    }
+                    let newFileSecond = File(pokemonLeagueDir.path + pokemonId + "_2.png")
+                    if !newFileSecond.exists {
+                        Log.debug(message: "[ImageGenerator] Creating #2 Pokemon League Images \(pokemonId)")
+                        combineImagesLeague(image1: pokemonFile.path, image2: secondFile.path,
+                                            output: newFileSecond.path)
+                    }
+                    let newFileThird = File(pokemonLeagueDir.path + pokemonId + "_3.png")
+                    if !newFileThird.exists {
+                        Log.debug(message: "[ImageGenerator] Creating #3 Pokemon League Images \(pokemonId)")
+                        combineImagesLeague(image1: pokemonFile.path, image2: thirdFile.path, output: newFileThird.path)
+                    }
+                }
+                Log.info(message: "[ImageGenerator] Pokemon League Images created.")
+            } else {
+                Log.warning(message: "[ImageGenerator] Creating Pokemon League Images (missing Dirs)")
+                if !pokemonDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
+                }
+                if !firstFile.exists {
+                    Log.info(message: "[ImageGenerator] Missing file \(firstFile.path)")
+                }
+                if !secondFile.exists {
+                    Log.info(message: "[ImageGenerator] Missing file \(secondFile.path)")
+                }
+                if !thirdFile.exists {
+                    Log.info(message: "[ImageGenerator] Missing file \(thirdFile.path)")
+                }
+            }
 
             if raidDir.exists && gymDir.exists && eggDir.exists && unkownEggDir.exists && pokemonDir.exists {
 
@@ -265,6 +316,7 @@ class ImageGenerator {
                 }
             }
 
+            Log.info(message: "[ImageGenerator] Done")
             Threading.destroyQueue(thread)
 
         }
@@ -301,6 +353,18 @@ class ImageGenerator {
                   "-resize", "64x64", "-gravity", "center", "tmp2.png").run(environment: magickEnv)
         _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
                   "-gravity", "center", "-geometry", "+0+13", "-compose", "over", "-composite", output)
+            .run(environment: magickEnv)
+        _ = Shell("rm", "-f", "tmp1.png").run()
+        _ = Shell("rm", "-f", "tmp2.png").run()
+    }
+
+    private static func combineImagesLeague(image1: String, image2: String, output: String) {
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none",
+                  "-resize", "96x96", "-gravity", "center", "tmp1.png").run(environment: magickEnv)
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none",
+                  "-resize", "64x64", "-gravity", "center", "tmp2.png").run(environment: magickEnv)
+        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
+                  "-gravity", "SouthWest", "-compose", "over", "-composite", output)
             .run(environment: magickEnv)
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
