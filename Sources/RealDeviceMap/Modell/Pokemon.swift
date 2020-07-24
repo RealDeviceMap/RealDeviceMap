@@ -390,12 +390,19 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
 
         }
+        setPVP()
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        self.changed = self.updated
+    }
 
-        let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
+    private func setPVP() {
+        let form = POGOProtos_Enums_Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        let pokemonID = POGOProtos_Enums_PokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
+        let costume = POGOProtos_Enums_Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+            pokemon: pokemonID,
             form: form == .unset ? nil : form,
-            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+            costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
             league: .great
@@ -411,9 +418,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         })
 
         self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+            pokemon: pokemonID,
             form: form == .unset ? nil : form,
-            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+            costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
             league: .ultra
@@ -427,10 +434,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 "level": ranking.response?.ivs.first?.level as Any
             ]
         })
-
-        self.updated = UInt32(Date().timeIntervalSince1970)
-        self.changed = self.updated
-
     }
 
     public static func shouldUpdate(old: Pokemon, new: Pokemon) -> Bool {
@@ -495,6 +498,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     self.capture2 = 0
                     self.capture3 = 0
                     updateIV = true
+                    setPVP()
                 }
             } catch { /* ignore */ }
         }
