@@ -613,7 +613,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(),
                     first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?,
                     pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?, is_event = ?
-                WHERE id = ?
+                WHERE id = ? AND is_event = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
         }
@@ -659,6 +659,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
+            mysqlStmt.bindParam(oldPokemon!.isEvent)
         }
 
         if self.spawnId != nil {
