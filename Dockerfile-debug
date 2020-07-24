@@ -1,5 +1,5 @@
 ## Base Image
-FROM perfectlysoft/perfectassistant:4.1 AS base
+FROM swift:4.2 AS base
 
 # Perfect-COpenSSL
 RUN apt-get -y update && apt-get install -y libssl-dev
@@ -19,6 +19,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 # MySQL Client
 RUN apt-get -y update && apt-get install -y mysql-client-5.7
 
+# WGet
+RUN apt-get -y update && apt-get install -y wget
 
 ## Build Image
 FROM base AS build

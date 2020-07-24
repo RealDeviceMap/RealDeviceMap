@@ -16,9 +16,9 @@ RUN tar -xzf /tmp/swiftenv.tar.gz -C /usr/local/ --strip 1
 # Add swiftenv shims to PATH
 ENV PATH /usr/local/shims:$PATH
 
-# Install swift 4.1
-RUN swiftenv install 4.1
-RUN touch /etc/ld.so.conf.d/swift.conf && echo "/usr/local/versions/4.1/usr/lib/swift/linux" >> /etc/ld.so.conf.d/swift.conf && ldconfig
+# Install swift 4.2
+RUN swiftenv install 4.2
+RUN touch /etc/ld.so.conf.d/swift.conf && echo "/usr/local/versions/4.2/usr/lib/swift/linux" >> /etc/ld.so.conf.d/swift.conf && ldconfig
 
 # Install OpenSSL 1.1.1c
 RUN apt-get -y update && apt-get install -y build-essential checkinstall zlib1g-dev

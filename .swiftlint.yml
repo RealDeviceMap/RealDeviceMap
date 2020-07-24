@@ -9,3 +9,7 @@ identifier_name:
     - id
     - cp
     - xp
+    - iv
+type_name:
+  excluded:
+    - IV

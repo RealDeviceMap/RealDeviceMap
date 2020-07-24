@@ -25,8 +25,8 @@ class Device: JSONConvertibleObject, Hashable {
         ]
     }
 
-    public var hashValue: Int {
-        return uuid.hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 
     var uuid: String
