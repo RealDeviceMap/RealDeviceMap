@@ -1838,7 +1838,7 @@ function addPokemon(pokemon, ts) {
     lastUpdateServer = pokemon.updated
   }
   const oldPokemon = pokemonMarkers.find(function (value) {
-    return pokemon.id === value.id
+    return pokemon.id === value.id && pokemon.is_event === value.is_event
   })
 
   if (oldPokemon === undefined || pokemon.is_start) {

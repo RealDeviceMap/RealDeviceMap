@@ -457,6 +457,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     public func save(mysql: MySQL?=nil, updateIV: Bool=false) throws {
 
+        var updateIV = updateIV
         var bindFirstSeen: Bool
         var bindChangedTimestamp: Bool
 
@@ -474,6 +475,29 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             oldPokemon = nil
         }
         let mysqlStmt = MySQLStmt(mysql)
+
+        if isEvent && atkIv == nil && (oldPokemon == nil || oldPokemon!.atkIv == nil) {
+            do {
+                if let oldPokemonNoneEvent = try Pokemon.getWithId(mysql: mysql, id: id, isEvent: false),
+                   oldPokemonNoneEvent.atkIv != nil,
+                   (weather == nil && oldPokemonNoneEvent.weather == nil) ||
+                   (weather != nil && oldPokemonNoneEvent.weather != nil) {
+                    self.atkIv = oldPokemonNoneEvent.atkIv
+                    self.defIv = oldPokemonNoneEvent.defIv
+                    self.staIv = oldPokemonNoneEvent.staIv
+                    self.level = oldPokemonNoneEvent.level
+                    self.cp = 0
+                    self.weight = 0
+                    self.size = 0
+                    self.move1 = 0
+                    self.move2 = 0
+                    self.capture1 = 0
+                    self.capture2 = 0
+                    self.capture3 = 0
+                    updateIV = true
+                }
+            } catch { /* ignore */ }
+        }
 
         if oldPokemon == nil {
             bindFirstSeen = false
