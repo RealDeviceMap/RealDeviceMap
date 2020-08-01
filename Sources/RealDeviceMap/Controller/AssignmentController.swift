@@ -195,7 +195,9 @@ class AssignmentController: InstanceControllerDelegate {
     // MARK: - InstanceControllerDelegate
 
     public func instanceControllerDone(mysql: MySQL?, name: String) {
-        for assignment in assignments where assignment.time == 0 {
+        for assignment in assignments where (
+            assignment.time == 0 && (assignment.sourceInstanceName == nil || assignment.sourceInstanceName == name)
+        ) {
             triggerAssignment(mysql: mysql, assignment: assignment)
         }
     }
