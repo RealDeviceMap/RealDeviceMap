@@ -27,6 +27,8 @@ class ApiRequestHandler {
         }
     }
 
+    public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
+
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
 
@@ -1508,10 +1510,17 @@ class ApiRequestHandler {
         }
 
         if showStatus && perms.contains(.admin) {
+            let passed = UInt32(Date().timeIntervalSince(start)).secondsToHoursMinutesSeconds()
             data["status"] = [
                 "processing": [
                     "current": WebHookRequestHandler.threadLimitCurrent,
                     "max": WebHookRequestHandler.threadLimitMax
+                ],
+                "uptime": [
+                    "date": start.timeIntervalSince1970,
+                    "hours": passed.hours,
+                    "minutes": passed.minutes,
+                    "seconds": passed.seconds
                 ]
             ]
         }
