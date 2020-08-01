@@ -13,6 +13,7 @@ public extension Date {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = format
+        formatter.timeZone = Localizer.global.timeZone
         return formatter.string(from: self)
     }
 
