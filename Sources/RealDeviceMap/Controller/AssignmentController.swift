@@ -22,6 +22,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     private init() {}
 
+    // swiftlint:disable:next function_body_length
     public func setup() throws {
 
         assignmentsLock.lock()
@@ -115,7 +116,9 @@ class AssignmentController: InstanceControllerDelegate {
     }
 
     public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, force: Bool=false) {
-        guard force || (assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())) else {
+        guard force || (
+            assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())
+        ) else {
             return
         }
         var devices = [Device]()
@@ -192,11 +195,8 @@ class AssignmentController: InstanceControllerDelegate {
     // MARK: - InstanceControllerDelegate
 
     public func instanceControllerDone(mysql: MySQL?, name: String) {
-        for assignment in assignments {
-            if assignment.time == 0 {
-                triggerAssignment(mysql: mysql, assignment: assignment)
-            }
+        for assignment in assignments where assignment.time == 0 {
+            triggerAssignment(mysql: mysql, assignment: assignment)
         }
-
     }
 }
