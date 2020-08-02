@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
+    - name: Set .gitsha
       if: github.event_name == 'push'
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
