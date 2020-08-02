@@ -192,7 +192,7 @@ class IVInstanceController: InstanceControllerProto {
         if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
 
             pokemonLock.lock()
-            if let index = pokemonQueue.index(of: pokemon) {
+            if let index = pokemonQueue.firstIndex(of: pokemon) {
                 pokemonQueue.remove(at: index)
             }
             pokemonLock.unlock()
@@ -214,11 +214,11 @@ class IVInstanceController: InstanceControllerProto {
 
     private func lastIndexOf(pokemonId: UInt16) -> Int? {
 
-        let targetPriority = pokemonList.index(of: pokemonId)!
+        let targetPriority = pokemonList.firstIndex(of: pokemonId)!
 
         var i = 0
         for pokemon in pokemonQueue {
-            let priority = pokemonList.index(of: pokemon.pokemonId)!
+            let priority = pokemonList.firstIndex(of: pokemon.pokemonId)!
             if targetPriority < priority {
                 return i
             }

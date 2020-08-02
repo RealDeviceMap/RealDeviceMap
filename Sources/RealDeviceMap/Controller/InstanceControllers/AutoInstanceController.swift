@@ -217,7 +217,7 @@ class AutoInstanceController: InstanceControllerProto {
 
                     bootstrappLock.lock()
                     for cellID in cellIDs {
-                        if let index = bootstrappCellIDs.index(of: cellID) {
+                        if let index = bootstrappCellIDs.firstIndex(of: cellID) {
                             bootstrappCellIDs.remove(at: index)
                         }
                     }
@@ -338,7 +338,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     stopsLock.lock()
                     for pokestop in nearbyStops {
-                        if let index = todayStops!.index(of: pokestop) {
+                        if let index = todayStops!.firstIndex(of: pokestop) {
                             todayStops!.remove(at: index)
                         }
                     }

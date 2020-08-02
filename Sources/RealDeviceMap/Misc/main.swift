@@ -12,6 +12,9 @@ import PerfectThread
 import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
+import Backtrace
+
+Backtrace.install()
 
 let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
 extension Log {

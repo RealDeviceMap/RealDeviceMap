@@ -81,7 +81,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     public func editAssignment(oldAssignment: Assignment, newAssignment: Assignment) {
         assignmentsLock.lock()
-        if let index = assignments.index(of: oldAssignment) {
+        if let index = assignments.firstIndex(of: oldAssignment) {
             assignments.remove(at: index)
         }
         assignments.append(newAssignment)
@@ -90,7 +90,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     public func deleteAssignment(assignment: Assignment) {
         assignmentsLock.lock()
-        if let index = assignments.index(of: assignment) {
+        if let index = assignments.firstIndex(of: assignment) {
             assignments.remove(at: index)
         }
         assignmentsLock.unlock()
