@@ -453,6 +453,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         var bindFirstSeen: Bool
         var bindChangedTimestamp: Bool
+        let setIVForWeather: Bool
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
@@ -470,6 +471,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let mysqlStmt = MySQLStmt(mysql)
 
         if oldPokemon == nil {
+            setIVForWeather = false
             bindFirstSeen = false
             bindChangedTimestamp = false
 
@@ -556,30 +558,48 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 changedSQL = "?"
             }
 
-            if updateIV && oldPokemon!.atkIv != nil && self.atkIv == nil {
-                if !(
-                        (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
-                            (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
-                    ) {
-                    self.atkIv = oldPokemon!.atkIv
-                    self.defIv = oldPokemon!.defIv
-                    self.staIv = oldPokemon!.staIv
-                    self.cp = oldPokemon!.cp
-                    self.weight = oldPokemon!.weight
-                    self.size = oldPokemon!.size
-                    self.move1 = oldPokemon!.move1
-                    self.move2 = oldPokemon!.move2
-                    self.level = oldPokemon!.level
-                    self.capture1 = oldPokemon!.capture1
-                    self.capture2 = oldPokemon!.capture2
-                    self.capture3 = oldPokemon!.capture3
-                    self.shiny = oldPokemon!.shiny
-                    self.isDitto = Pokemon.isDittoDisguised(pokemon: oldPokemon!)
-                    if self.isDitto {
-                        Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
-                        self.setDittoAttributes(displayPokemonId: self.pokemonId)
-                    }
+            let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
+                                 (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
+
+            if updateIV && oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
+                setIVForWeather = false
+                self.atkIv = oldPokemon!.atkIv
+                self.defIv = oldPokemon!.defIv
+                self.staIv = oldPokemon!.staIv
+                self.cp = oldPokemon!.cp
+                self.weight = oldPokemon!.weight
+                self.size = oldPokemon!.size
+                self.move1 = oldPokemon!.move1
+                self.move2 = oldPokemon!.move2
+                self.level = oldPokemon!.level
+                self.capture1 = oldPokemon!.capture1
+                self.capture2 = oldPokemon!.capture2
+                self.capture3 = oldPokemon!.capture3
+                self.shiny = oldPokemon!.shiny
+                self.isDitto = Pokemon.isDittoDisguised(pokemon: oldPokemon!)
+                if self.isDitto {
+                    Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
+                    self.setDittoAttributes(displayPokemonId: self.pokemonId)
                 }
+            } else if weatherChanged && oldPokemon!.atkIv != nil {
+                setIVForWeather = true
+                self.atkIv = nil
+                self.defIv = nil
+                self.staIv = nil
+                self.cp = nil
+                self.weight = nil
+                self.size = nil
+                self.move1 = nil
+                self.move2 = nil
+                self.level = nil
+                self.capture1 = nil
+                self.capture2 = nil
+                self.capture3 = nil
+                self.shiny = nil
+                self.isDitto = false
+                Log.debug(message: "[POKEMON] Weather-Boosted state changed. Clearing IVs")
+            } else {
+                setIVForWeather = false
             }
 
             guard Pokemon.shouldUpdate(old: oldPokemon!, new: self) else {
@@ -587,7 +607,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
 
             let ivSQL: String
-            if updateIV {
+            if updateIV || setIVForWeather {
                 ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, " +
                         "weight = ?, size = ?, capture_1 = ?, capture_2 = ?, capture_3 = ?, " +
                         "shiny = ?, display_pokemon_id = ?,"
@@ -617,7 +637,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         mysqlStmt.bindParam(lon)
         mysqlStmt.bindParam(spawnId)
         mysqlStmt.bindParam(expireTimestamp)
-        if updateIV || oldPokemon == nil {
+        if updateIV || setIVForWeather || oldPokemon == nil {
             mysqlStmt.bindParam(atkIv)
             mysqlStmt.bindParam(defIv)
             mysqlStmt.bindParam(staIv)
@@ -685,6 +705,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             throw DBController.DBError()
         }
 
+        if setIVForWeather {
+            WebHookController.global.addPokemonEvent(pokemon: self)
+            InstanceController.global.gotPokemon(pokemon: self)
+        }
         if oldPokemon == nil {
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)

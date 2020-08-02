@@ -28,6 +28,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var multiPolygon: MultiPolygon
     private var type: AutoType
     private let stopsLock = Threading.Lock()
+    private var doneDate: Date?
     private var lastDoneCheck = Date(timeIntervalSinceNow: -3600)
     private var allStops: [Pokestop]?
     private var todayStops: [Pokestop]?
@@ -189,6 +190,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
             self.todayStops = [Pokestop]()
             self.todayStopsTries = [Pokestop: UInt8]()
+            self.doneDate = nil
             for stop in self.allStops! {
                 if stop.questType == nil && stop.enabled == true {
                     self.todayStops!.append(stop)
@@ -260,10 +262,13 @@ class AutoInstanceController: InstanceControllerProto {
                 if todayStops!.isEmpty {
                     guard Date().timeIntervalSince(lastDoneCheck) >= 600 else {
                         stopsLock.unlock()
-                        delegate?.instanceControllerDone(name: name)
+                        delegate?.instanceControllerDone(mysql: mysql, name: name)
                         return [:]
                     }
                     lastDoneCheck = Date()
+                    if doneDate == nil {
+                        doneDate = Date()
+                    }
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
@@ -286,7 +291,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     if todayStops!.isEmpty {
                         stopsLock.unlock()
-                        delegate?.instanceControllerDone(name: name)
+                        delegate?.instanceControllerDone(mysql: mysql, name: name)
                         return [:]
                     }
                 }
@@ -444,6 +449,9 @@ class AutoInstanceController: InstanceControllerProto {
                         return stop.id
                     })
                     stopsLock.unlock()
+                    if doneDate == nil {
+                        doneDate = Date()
+                    }
                     var newStops: [Pokestop]!
                     var done = false
                     while !done {
@@ -463,7 +471,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     if todayStops!.isEmpty {
                         Log.info(message: "[AutoInstanceController] [\(name)] [\(uuid)] Instance done")
-                        delegate?.instanceControllerDone(name: name)
+                        delegate?.instanceControllerDone(mysql: mysql, name: name)
                     }
                     stopsLock.unlock()
                 } else {
@@ -527,12 +535,14 @@ class AutoInstanceController: InstanceControllerProto {
                     percentageReal = 100
                 }
                 if formatted {
-                    return "Done: \(currentCountDb)|\(currentCount)/\(maxCount) " +
+                    return "Status: \(currentCountDb)|\(currentCount)/\(maxCount) " +
                         "(\(percentageReal.rounded(toStringWithDecimals: 1))|" +
-                        "\(percentage.rounded(toStringWithDecimals: 1))%)"
+                        "\(percentage.rounded(toStringWithDecimals: 1))%)" +
+                        "\(doneDate != nil ? ", Completed: @\(doneDate!.toString("HH:mm") ?? "")" : "")"
                 } else {
                     return [
                         "quests": [
+                            "done_since": doneDate?.timeIntervalSince1970 as Any,
                             "current_count_db": currentCountDb,
                             "current_count_internal": currentCount,
                             "total_count": maxCount

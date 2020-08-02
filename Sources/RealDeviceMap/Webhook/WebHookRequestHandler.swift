@@ -34,9 +34,15 @@ class WebHookRequestHandler {
     private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
-    private static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
+    static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
+    internal static var threadLimitCurrent: UInt32 {
+        threadLimitLock.lock()
+        let count = threadLimitCount
+        threadLimitLock.unlock()
+        return count
+    }
 
     private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
     private static let loginLimitIntervall = UInt32(
@@ -738,7 +744,7 @@ class WebHookRequestHandler {
                 let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
-                                           accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceGroup: nil)
+                                           accountUsername: nil, lastLat: 0.0, lastLon: 0.0)
                     try newDevice.create(mysql: mysql)
                     assigned = false
                 } else {
