@@ -748,6 +748,50 @@ class WebReqeustHandler {
                     return
                 }
             }
+        case .dashboardDeviceGroupDelete:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Delete Device Group"
+
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                do {
+                    try DeviceGroup.delete(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                response.redirect(path: "/dashboard/devicegroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+        case .dashboardDeviceGroupAssign:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Assign Device Group"
+            let name = request.urlVariables["name"] ?? ""
+            data["name"] = name
+
+            if request.method == .post {
+                do {
+                    data = try assignDeviceGroupPost(data: data, request: request, response: response,
+                                                name: name)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try assignDeviceGroupGet(data: data, request: request, response: response, name: name)
+                } catch {
+                    return
+                }
+            }
         case .dashboardAssignments:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -791,60 +835,51 @@ class WebReqeustHandler {
             }
         case .dashboardAssignmentStart:
             data["locale"] = "en"
-            let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
-            let split = uuid.components(separatedBy: "\\-")
-            if split.count >= 2 {
-                let instanceName = split[0].unscaped()
-                let deviceUUID = split[1].unscaped()
-                let device: Device
+            let uuid = request.urlVariables["uuid"] ?? ""
+            if let id = UInt32(uuid) {
+                let assignmentT: Assignment?
                 do {
-                    guard let deviceGuard = try Device.getById(id: deviceUUID) else {
-                        response.setBody(string: "Internal Server Error")
-                        sessionDriver.save(session: request.session!)
-                        response.completed(status: .internalServerError)
-                        return
-                    }
-                    device = deviceGuard
+                    assignmentT = try Assignment.getByUUID(id: id)
                 } catch {
                     response.setBody(string: "Internal Server Error")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .internalServerError)
                     return
                 }
-                device.instanceName = instanceName
-                try? device.save(oldUUID: device.uuid)
-                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: deviceUUID)
+                guard let assignment = assignmentT else {
+                    response.setBody(string: "Assignment Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+                AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
                 response.redirect(path: "/dashboard/assignments")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
             }
         case .dashboardAssignmentDelete:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Assignment"
 
-            let uuid = (request.urlVariables["uuid"] ?? "").decodeUrl()!
-            let tmp = uuid.replacingOccurrences(of: "\\\\-", with: "&tmp")
-
-            let split = tmp.components(separatedBy: "\\-")
-            if split.count == 3 {
-                let instanceName = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-                let deviceUUID = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-                let time = UInt32(split[2]) ?? 0
-                let assignment = Assignment(instanceName: instanceName, deviceUUID: deviceUUID,
-                                            time: time, enabled: false)
+            let uuid = request.urlVariables["uuid"] ?? ""
+            if let id = UInt32(uuid) {
                 do {
-                    try assignment.delete()
+                    try Assignment.delete(id: id)
                 } catch {
                     response.setBody(string: "Internal Server Error")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .internalServerError)
+                    return
                 }
-                AssignmentController.global.deleteAssignment(assignment: assignment)
+                AssignmentController.global.deleteAssignment(id: id)
                 response.redirect(path: "/dashboard/assignments")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
-
             } else {
                 response.setBody(string: "Bad Request")
                 sessionDriver.save(session: request.session!)
@@ -860,6 +895,7 @@ class WebReqeustHandler {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .internalServerError)
+                return
             }
             response.redirect(path: "/dashboard/assignments")
             sessionDriver.save(session: request.session!)
@@ -2262,20 +2298,14 @@ class WebReqeustHandler {
                                    response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
 
         var data = data
-
-        guard
-            let groupName = request.param(name: "name"),
-            let instanceName = request.param(name: "instance")
-            else {
-                data["show_error"] = true
-                data["error"] = "Invalid Request."
-                return data
+        guard let groupName = request.param(name: "name") else {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
         }
-
         let deviceUUIDs = request.params(named: "devices")
-        let deviceGroup = DeviceGroup(name: groupName, instanceName: instanceName, devices: [Device]())
-        deviceGroup.name = groupName
-        deviceGroup.instanceName = instanceName
+
+        let deviceGroup = DeviceGroup(name: groupName, deviceUUIDs: deviceUUIDs)
         do {
             try deviceGroup.create()
         } catch {
@@ -2284,20 +2314,6 @@ class WebReqeustHandler {
             return data
         }
 
-        do {
-            for deviceUUID in deviceUUIDs {
-                let device = try Device.getById(id: deviceUUID)!
-                device.deviceGroup = groupName
-                device.instanceName = instanceName
-                try device.save(oldUUID: device.uuid)
-                deviceGroup.devices.append(device)
-                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: deviceUUID)
-            }
-        } catch {
-            data["show_error"] = true
-            data["error"] = "Failed to assign Device."
-            return data
-        }
         response.redirect(path: "/dashboard/devicegroups")
         sessionDriver.save(session: request.session!)
         response.completed(status: .seeOther)
@@ -2330,11 +2346,9 @@ class WebReqeustHandler {
             data["old_name"] = oldDeviceGroup!.name
             data["name"] = oldDeviceGroup!.name
 
-            let instances: [Instance]
             let devices: [Device]
 
             do {
-                instances = try Instance.getAll(getData: false)
                 devices = try Device.getAll()
             } catch {
                 response.setBody(string: "Internal Server Errror")
@@ -2343,21 +2357,10 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             }
 
-            var instancesData = [[String: Any]]()
-            for instance in instances {
-                instancesData.append(["name": instance.name, "selected": instance.name == oldDeviceGroup!.instanceName])
-            }
-            data["instances"] = instancesData
-
             var devicesData = [[String: Any]]()
-            var oldDevicesData = [String]()
             for device in devices {
-                if device.deviceGroup == oldDeviceGroup!.name {
-                    oldDevicesData.append(device.uuid)
-                }
-                devicesData.append(["name": device.uuid, "selected": device.deviceGroup == oldDeviceGroup!.name])
+                devicesData.append(["name": device.uuid, "selected": oldDeviceGroup!.deviceUUIDs.contains(device.uuid)])
             }
-            data["old_devices"] = oldDevicesData
             data["devices"] = devicesData
 
             return data
@@ -2371,8 +2374,7 @@ class WebReqeustHandler {
 
         var data = data
         guard
-            let name = request.param(name: "name"),
-            let instanceName = request.param(name: "instance")
+            let name = request.param(name: "name")
             else {
                 data["show_error"] = true
                 data["error"] = "Invalid Request."
@@ -2380,17 +2382,6 @@ class WebReqeustHandler {
         }
 
         let deviceUUIDs = request.params(named: "devices")
-        let oldDeviceUUIDs = request.param(name: "old_devices")
-
-        var oldDevices = [String]()
-        let split = oldDeviceUUIDs!.components(separatedBy: ",")
-        for device in split {
-            let deviceName = device.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
-                             .replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: " ", with: "")
-            oldDevices.append(deviceName)
-        }
-
-        let deviceDiff = Array(Set(oldDevices).symmetricDifference(Set(deviceUUIDs)))
 
         data["name"] = name
         if deviceGroupName != nil {
@@ -2409,29 +2400,10 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             } else {
                 oldDeviceGroup!.name = name
-                oldDeviceGroup!.instanceName = instanceName
+                oldDeviceGroup!.deviceUUIDs = deviceUUIDs
 
                 do {
                     try oldDeviceGroup!.update(oldName: deviceGroupName!)
-                    //Remove all existing devices from the group's device list.
-                    oldDeviceGroup!.devices.removeAll()
-
-                    //Set any removed device's group name to null.
-                    for deviceUUID in deviceDiff {
-                        if let device = try Device.getById(id: deviceUUID) {
-                            try device.clearGroup()
-                        }
-                    }
-                    //Update new and existing devices
-                    for deviceUUID in deviceUUIDs {
-                        if let device = try Device.getById(id: deviceUUID) {
-                            device.deviceGroup = name
-                            device.instanceName = instanceName
-                            try device.save(oldUUID: device.uuid)
-                            oldDeviceGroup!.devices.append(device)
-                            InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: deviceUUID)
-                        }
-                    }
                 } catch {
                     data["show_error"] = true
                     data["error"] = "Failed to update device group. Is the name unique?"
@@ -2443,17 +2415,9 @@ class WebReqeustHandler {
                 throw CompletedEarly()
             }
         } else {
-            let deviceGroup = DeviceGroup(name: name, instanceName: instanceName, devices: [Device]())
+            let deviceGroup = DeviceGroup(name: name, deviceUUIDs: deviceUUIDs)
             do {
                 try deviceGroup.create()
-                for deviceUUID in deviceUUIDs {
-                    let device = try Device.getById(id: deviceUUID)!
-                    device.deviceGroup = deviceGroupName
-                    device.instanceName = instanceName
-                    try device.save(oldUUID: device.uuid)
-                    deviceGroup.devices.append(device)
-                    InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: deviceUUID)
-                }
             } catch {
                 data["show_error"] = true
                 data["error"] = "Failed to create device group. Is the name unique?"
@@ -2552,8 +2516,10 @@ class WebReqeustHandler {
         var data = data
         let instances: [Instance]
         let devices: [Device]
+        let groups: [DeviceGroup]
         do {
             devices = try Device.getAll()
+            groups = try DeviceGroup.getAll()
             instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
@@ -2572,6 +2538,11 @@ class WebReqeustHandler {
             devicesData.append(["uuid": device.uuid, "selected": false])
         }
         data["devices"] = devicesData
+        var groupsData = [[String: Any]]()
+        for group in groups {
+            groupsData.append(["uuid": group.name, "selected": false])
+        }
+        data["groups"] = groupsData
         return data
 
     }
@@ -2579,17 +2550,34 @@ class WebReqeustHandler {
     static func editAssignmentsPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
                                     response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
 
-        let selectedDevice = request.param(name: "device")
+        let selectedDeviceOrGroup = request.param(name: "device")
+        let selectedDevice: String?
+        if selectedDeviceOrGroup != nil && selectedDeviceOrGroup!.starts(with: "device:") {
+            selectedDevice = String(selectedDeviceOrGroup!.dropFirst(7))
+        } else {
+            selectedDevice = nil
+        }
+        let selectedGroup: String?
+        if selectedDeviceOrGroup != nil && selectedDeviceOrGroup!.starts(with: "group:") {
+            selectedGroup = String(selectedDeviceOrGroup!.dropFirst(6))
+        } else {
+            selectedGroup = nil
+        }
+
         let selectedInstance = request.param(name: "instance")
+        let selectedSourceInstance = request.param(name: "source_instance")?.emptyToNil()
         let time = request.param(name: "time")
+        let date = request.param(name: "date")
         let onComplete = request.param(name: "oncomplete")
         let enabled = request.param(name: "enabled")
 
         var data = data
         let instances: [Instance]
         let devices: [Device]
+        let groups: [DeviceGroup]
         do {
             devices = try Device.getAll()
+            groups = try DeviceGroup.getAll()
             instances = try Instance.getAll(getData: false)
         } catch {
             response.setBody(string: "Internal Server Error")
@@ -2600,21 +2588,33 @@ class WebReqeustHandler {
 
         var instancesData = [[String: Any]]()
         for instance in instances {
-            instancesData.append(["name": instance.name, "selected": instance.name == selectedInstance])
-        }
+            instancesData.append([
+                "name": instance.name,
+                "selected": instance.name == selectedInstance,
+                "selected_source": instance.name == selectedSourceInstance
+            ])        }
         data["instances"] = instancesData
         var devicesData = [[String: Any]]()
         for device in devices {
-            devicesData.append(["uuid": device.uuid, "selected": device.uuid == selectedDevice])
+            devicesData.append(["uuid": device.uuid, "selected": device.uuid == selectedDeviceOrGroup])
         }
         data["devices"] = devicesData
+        var groupsData = [[String: Any]]()
+        for group in groups {
+            groupsData.append(["uuid": group.name, "selected": false])
+        }
+        data["groups"] = groupsData
         data["time"] = time
+        data["date"] = date
 
         let timeInt: UInt32
         if time == nil || time == "" {
             timeInt = 0
         } else {
-            let split = time!.components(separatedBy: ":")
+            var split = time!.components(separatedBy: ":")
+            if split.count == 2 {
+                split.append("00")
+            }
             if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(),
                let seconds = split[2].toInt() {
                 let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
@@ -2629,16 +2629,35 @@ class WebReqeustHandler {
                 return data
             }
         }
+        let realDate: Date?
+        if date != nil, let realDateT = date!.toDate() {
+            realDate = realDateT
+        } else if date == nil || date?.trimmingCharacters(in: .whitespacesAndNewlines) == "" {
+            realDate = nil
+        } else {
+            data["show_error"] = true
+            data["error"] = "Invalid Date."
+            return data
+        }
 
-        if selectedDevice == nil || selectedDevice == "" || selectedInstance == nil || selectedInstance == "" {
+        if ((selectedDevice == nil || selectedDevice == "") && (selectedGroup == nil || selectedGroup == "")) ||
+            selectedInstance == nil || selectedInstance == "" {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
         }
         do {
             let assignmentEnabled = enabled == "on"
-            let assignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!,
-                                        time: timeInt, enabled: assignmentEnabled)
+            let assignment = Assignment(
+                id: nil,
+                instanceName: selectedInstance!,
+                sourceInstanceName: selectedSourceInstance,
+                deviceUUID: selectedDevice,
+                deviceGroupName: selectedGroup,
+                time: timeInt,
+                date: realDate,
+                enabled: assignmentEnabled
+            )
             try assignment.create()
             AssignmentController.global.addAssignment(assignment: assignment)
         } catch {
@@ -2647,10 +2666,18 @@ class WebReqeustHandler {
             return data
         }
 
-        if onComplete == "on" {
+        if onComplete == "on" && timeInt != 0 {
             do {
-                let onCompleteAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!,
-                                                      time: 0, enabled: true)
+                let onCompleteAssignment = Assignment(
+                    id: nil,
+                    instanceName: selectedInstance!,
+                    sourceInstanceName: selectedSourceInstance,
+                    deviceUUID: selectedDevice,
+                    deviceGroupName: selectedGroup,
+                    time: 0,
+                    date: date?.toDate(),
+                    enabled: true
+                )
                 try onCompleteAssignment.create()
                 AssignmentController.global.addAssignment(assignment: onCompleteAssignment)
             } catch {
@@ -2673,70 +2700,68 @@ class WebReqeustHandler {
                                   instanceUUID: String) throws -> MustacheEvaluationContext.MapType {
 
         let selectedUUID = (request.urlVariables["uuid"] ?? "").decodeUrl()!
-        let tmp = selectedUUID.replacingOccurrences(of: "\\\\-", with: "\\-")
-
-        let split = tmp.components(separatedBy: "\\-")
-        if split.count != 3 {
-            response.setBody(string: "Bad Request")
-            sessionDriver.save(session: request.session!)
-            response.completed(status: .badRequest)
-        } else {
-            let selectedInstance = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-            let selectedDevice = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-            let time = UInt32(split[2]) ?? 0
-
+        if let id = UInt32(selectedUUID) {
             var data = data
             let instances: [Instance]
             let devices: [Device]
+            let groups: [DeviceGroup]
+            let assignmentT: Assignment?
             do {
                 devices = try Device.getAll()
+                groups = try DeviceGroup.getAll()
                 instances = try Instance.getAll(getData: false)
+                assignmentT = try Assignment.getByUUID(id: id)
             } catch {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+
+            guard let assignment = assignmentT else {
+                response.setBody(string: "Assignment not found")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .notFound)
                 throw CompletedEarly()
             }
 
             var instancesData = [[String: Any]]()
             for instance in instances {
-                instancesData.append(["name": instance.name, "selected": instance.name == selectedInstance])
+                instancesData.append([
+                    "name": instance.name,
+                    "selected": instance.name == assignment.instanceName,
+                    "selected_source": instance.name == assignment.sourceInstanceName
+                ])
             }
             data["instances"] = instancesData
             var devicesData = [[String: Any]]()
             for device in devices {
-                devicesData.append(["uuid": device.uuid, "selected": device.uuid == selectedDevice])
+                devicesData.append(["uuid": device.uuid, "selected": device.uuid == assignment.deviceUUID])
             }
             data["devices"] = devicesData
+            var groupsData = [[String: Any]]()
+            for group in groups {
+                groupsData.append(["uuid": group.name, "selected": group.name == assignment.deviceGroupName])
+            }
+            data["groups"] = groupsData
 
             let formattedTime: String
-            if time == 0 {
+            if assignment.time == 0 {
                 formattedTime = ""
             } else {
-                let times = time.secondsToHoursMinutesSeconds()
+                let times = assignment.time.secondsToHoursMinutesSeconds()
                 formattedTime = "\(String(format: "%02d", times.hours)):\(String(format: "%02d", times.minutes))" +
                                 ":\(String(format: "%02d", times.seconds))"
             }
             data["time"] = formattedTime
-            let assignment: Assignment
-            do {
-                assignment = try Assignment.getByUUID(instanceName: selectedInstance, deviceUUID: selectedDevice,
-                                                      time: time)!
-            } catch {
-                response.setBody(string: "Internal Server Error")
-                sessionDriver.save(session: request.session!)
-                response.completed(status: .internalServerError)
-                throw CompletedEarly()
-            }
+            data["date"] = assignment.date?.toString()
             data["enabled"] = assignment.enabled ? "checked" : ""
 
-            if selectedDevice == "" || selectedInstance == "" {
-                data["show_error"] = true
-                data["error"] = "Invalid Request."
-                return data
-            }
-
             return data
+        } else {
+            response.setBody(string: "Bad Request")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .badRequest)
         }
 
         throw CompletedEarly()
@@ -2744,9 +2769,24 @@ class WebReqeustHandler {
 
     static func editAssignmentPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
                                    response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
-        let selectedDevice = request.param(name: "device")
+        let selectedDeviceOrGroup = request.param(name: "device")
+        let selectedDevice: String?
+        if selectedDeviceOrGroup != nil && selectedDeviceOrGroup!.starts(with: "device:") {
+            selectedDevice = String(selectedDeviceOrGroup!.dropFirst(7))
+        } else {
+            selectedDevice = nil
+        }
+        let selectedGroup: String?
+        if selectedDeviceOrGroup != nil && selectedDeviceOrGroup!.starts(with: "group:") {
+            selectedGroup = String(selectedDeviceOrGroup!.dropFirst(6))
+        } else {
+            selectedGroup = nil
+        }
+
         let selectedInstance = request.param(name: "instance")
+        let selectedSourceInstance = request.param(name: "source_instance")?.emptyToNil()
         let time = request.param(name: "time")
+        let date = request.param(name: "date")
         let enabled = request.param(name: "enabled")
 
         var data = data
@@ -2755,7 +2795,10 @@ class WebReqeustHandler {
         if time == nil || time == "" {
             timeInt = 0
         } else {
-            let split = time!.components(separatedBy: ":")
+            var split = time!.components(separatedBy: ":")
+            if split.count == 2 {
+                split.append("00")
+            }
             if split.count == 3, let hours = split[0].toInt(), let minutes = split[1].toInt(),
                let seconds = split[2].toInt() {
                 let timeIntNew = UInt32(hours * 3600 + minutes * 60 + seconds)
@@ -2771,48 +2814,54 @@ class WebReqeustHandler {
             }
         }
 
-        if selectedDevice == nil || selectedInstance == nil {
+        if ((selectedDevice == nil || selectedDevice == "") && (selectedGroup == nil || selectedGroup == "")) ||
+            selectedInstance == nil {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
         }
 
         let selectedUUID = data["old_name"] as? String ?? ""
-        let tmp = selectedUUID.replacingOccurrences(of: "\\\\-", with: "\\-")
-
-        let split = tmp.components(separatedBy: "\\-")
-        if split.count != 3 {
-            response.setBody(string: "Bad Request")
-            sessionDriver.save(session: request.session!)
-            response.completed(status: .badRequest)
-        } else {
-            let oldInstanceName = split[0].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-            let oldDeviceUUID = split[1].replacingOccurrences(of: "&tmp", with: "\\\\-").unscaped()
-            let oldTime = UInt32(split[2]) ?? 0
-
-            let oldAssignment: Assignment
+        if let id = UInt32(selectedUUID) {
+            let oldAssignmentT: Assignment?
             do {
-                oldAssignment = try Assignment.getByUUID(instanceName: oldInstanceName,
-                                                         deviceUUID: oldDeviceUUID, time: oldTime)!
+                oldAssignmentT = try Assignment.getByUUID(id: id)
             } catch {
                 response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .internalServerError)
                 throw CompletedEarly()
             }
+            guard let oldAssignment = oldAssignmentT else {
+                response.setBody(string: "Assignment not found")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .notFound)
+                throw CompletedEarly()
+            }
 
             do {
                 let assignmentEnabled = enabled == "on"
-                let newAssignment = Assignment(instanceName: selectedInstance!, deviceUUID: selectedDevice!,
-                                               time: timeInt, enabled: assignmentEnabled)
-                try newAssignment.save(oldInstanceName: oldInstanceName, oldDeviceUUID: oldDeviceUUID, oldTime: oldTime,
-                                       enabled: assignmentEnabled)
+                let newAssignment = Assignment(
+                    id: id,
+                    instanceName: selectedInstance!,
+                    sourceInstanceName: selectedSourceInstance,
+                    deviceUUID: selectedDevice,
+                    deviceGroupName: selectedGroup,
+                    time: timeInt,
+                    date: date?.toDate(),
+                    enabled: assignmentEnabled
+                )
+                try newAssignment.save(oldId: id)
                 AssignmentController.global.editAssignment(oldAssignment: oldAssignment, newAssignment: newAssignment)
             } catch {
                 data["show_error"] = true
                 data["error"] = "Failed to assign Device."
                 return data
             }
+        } else {
+            response.setBody(string: "Bad Request")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .badRequest)
         }
 
         response.redirect(path: "/dashboard/assignments")
@@ -3446,6 +3495,91 @@ class WebReqeustHandler {
             }
         }
         return (perms, username)
+    }
+
+    static func assignDeviceGroupPost(
+        data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, name: String
+    ) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        guard let instanceName = request.param(name: "instance") else {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+        }
+
+        let group: DeviceGroup?
+        let instances: [Instance]
+        let devices: [Device]?
+        do {
+            group = try DeviceGroup.getByName(name: name)
+            devices = try Device.getAllInGroup(deviceGroupName: name)
+            instances = try Instance.getAll(getData: false)
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to assign Device."
+            return data
+        }
+        if group == nil || devices == nil {
+            response.setBody(string: "Device Group Not Found")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .notFound)
+            throw CompletedEarly()
+        }
+        var instancesData = [[String: Any]]()
+        for instance in instances {
+            instancesData.append(["name": instance.name])
+        }
+        data["instances"] = instancesData
+
+        do {
+            for device in devices! {
+                device.instanceName = instanceName
+                try device.save(oldUUID: device.uuid)
+                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+            }
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to assign Devices."
+            return data
+        }
+        response.redirect(path: "/dashboard/devicegroups")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+
+    }
+
+    static func assignDeviceGroupGet(
+        data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, name: String
+    ) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        let instances: [Instance]
+        let group: DeviceGroup?
+        do {
+            group = try DeviceGroup.getByName(name: name)
+            instances = try Instance.getAll(getData: false)
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+        if group == nil {
+            response.setBody(string: "Device Group Not Found")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .notFound)
+            throw CompletedEarly()
+        }
+
+        var instancesData = [[String: Any]]()
+        for instance in instances {
+            instancesData.append(["name": instance.name])
+        }
+        data["instances"] = instancesData
+        return data
+
     }
 
 }
