@@ -17,9 +17,9 @@ jobs:
         path: .build
         key: ${{ runner.os }}-debug-5-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
-      run: swift build -v -c debug
+      run: swift build --enable-test-discovery -Xswiftc -g -c debug
     - name: Test
-      run: swift test -v -c debug
+      run: swift test --enable-test-discovery -Xswiftc -g -c debug
   Deploy:
     runs-on: ubuntu-16.04
     steps:
