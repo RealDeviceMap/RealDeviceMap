@@ -8,6 +8,7 @@
 import Foundation
 import PerfectLib
 import PerfectThread
+import PerfectMySQL
 
 class AssignmentController: InstanceControllerDelegate {
 
@@ -21,6 +22,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     private init() {}
 
+    // swiftlint:disable:next function_body_length
     public func setup() throws {
 
         assignmentsLock.lock()
@@ -35,7 +37,21 @@ class AssignmentController: InstanceControllerDelegate {
             queue = Threading.getQueue(name: "AssignmentController-updater", type: .serial)
             queue.dispatch {
 
+                let mysql = DBController.global.mysql
+
                 var lastUpdate: Int32 = -2
+                let lastUpdatedFile = File("\(projectroot)/backups/last-updated.txt")
+                if lastUpdatedFile.exists {
+                    do {
+                        try lastUpdatedFile.open(.read)
+                        if let contents = try lastUpdatedFile.readString().toInt32() {
+                            lastUpdate = contents
+                        }
+                        lastUpdatedFile.close()
+                    } catch {
+                        Log.error(message: "Failed to read last updated from file: \(error.localizedDescription)")
+                    }
+                }
 
                 while true {
 
@@ -54,18 +70,23 @@ class AssignmentController: InstanceControllerDelegate {
 
                     for assignment in assignments {
 
-                        if assignment.enabled &&
-                           assignment.time != 0 &&
+                        if assignment.time != 0 &&
                            now >= assignment.time &&
                            lastUpdate < assignment.time {
-                            self.triggerAssignment(assignment: assignment)
+                            self.triggerAssignment(mysql: mysql, assignment: assignment)
                         }
 
                     }
 
                     Threading.sleep(seconds: 5)
                     lastUpdate = Int32(now)
-
+                    do {
+                        try lastUpdatedFile.open(.write)
+                        try lastUpdatedFile.write(string: lastUpdate.toString())
+                        lastUpdatedFile.close()
+                    } catch {
+                        Log.error(message: "Failed to store last updated to file: \(error.localizedDescription)")
+                    }
                 }
 
             }
@@ -88,35 +109,58 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.unlock()
     }
 
-    public func deleteAssignment(assignment: Assignment) {
+    public func deleteAssignment(id: UInt32) {
         assignmentsLock.lock()
-        if let index = assignments.index(of: assignment) {
-            assignments.remove(at: index)
-        }
+        assignments = assignments.filter({ $0.id != id })
         assignmentsLock.unlock()
     }
 
-    private func triggerAssignment(assignment: Assignment) {
-        var device: Device?
-        var done = false
-        while !done {
-            do {
-                device = try Device.getById(id: assignment.deviceUUID)
-                done = true
-            } catch {
-                Threading.sleep(seconds: 1.0)
+    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, force: Bool=false) {
+        guard force || (
+            assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())
+        ) else {
+            return
+        }
+        var devices = [Device]()
+        if let deviceUUID = assignment.deviceUUID {
+            var done = false
+            while !done {
+                do {
+                    if let device = try Device.getById(mysql: mysql, id: deviceUUID) {
+                        devices.append(device)
+                    }
+                    done = true
+                } catch {
+                    Threading.sleep(seconds: 1.0)
+                }
             }
         }
-        if let device = device, device.instanceName != assignment.instanceName {
+        if let deviceGroupName = assignment.deviceGroupName {
+            var done = false
+            while !done {
+                do {
+                    devices += try Device.getAllInGroup(mysql: mysql, deviceGroupName: deviceGroupName)
+                    done = true
+                } catch {
+                    Threading.sleep(seconds: 1.0)
+                }
+            }
+        }
+        for device in devices where (
+            force || (
+                device.instanceName != assignment.instanceName &&
+                (assignment.sourceInstanceName == nil || assignment.sourceInstanceName! == device.instanceName)
+            )
+        ) {
             Log.info(
-                message: "[AssignmentController] Assigning \(assignment.deviceUUID) to \(assignment.instanceName)"
+                message: "[AssignmentController] Assigning \(device.uuid) to \(assignment.instanceName)"
             )
             InstanceController.global.removeDevice(device: device)
             device.instanceName = assignment.instanceName
-            done = false
+            var done = false
             while !done {
                 do {
-                    try device.save(oldUUID: device.uuid)
+                    try device.save(mysql: mysql, oldUUID: device.uuid)
                     done = true
                 } catch {
                     Threading.sleep(seconds: 1.0)
@@ -124,7 +168,6 @@ class AssignmentController: InstanceControllerDelegate {
             }
             InstanceController.global.addDevice(device: device)
         }
-
     }
 
     private func todaySeconds() -> UInt32 {
@@ -151,18 +194,11 @@ class AssignmentController: InstanceControllerDelegate {
 
     // MARK: - InstanceControllerDelegate
 
-    public func instanceControllerDone(name: String) {
-
-        for assignment in assignments {
-
-            let deviceUUIDs = InstanceController.global.getDeviceUUIDsInInstance(instanceName: name)
-
-            if assignment.enabled && assignment.time == 0 && deviceUUIDs.contains(assignment.deviceUUID) {
-                triggerAssignment(assignment: assignment)
-                return
-            }
-
+    public func instanceControllerDone(mysql: MySQL?, name: String) {
+        for assignment in assignments where (
+            assignment.time == 0 && (assignment.sourceInstanceName == nil || assignment.sourceInstanceName == name)
+        ) {
+            triggerAssignment(mysql: mysql, assignment: assignment)
         }
-
     }
 }

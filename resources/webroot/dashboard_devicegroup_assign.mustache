@@ -1,0 +1,29 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Assign All Device in {{name}}!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Select Instance
+                <select class="form-control" name="instance" required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose a Instance</option>
+                    {{#instances}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/instances}}
+                </select>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Assign</button>
+        </form>
+    </div>
+    <br>
+</body>

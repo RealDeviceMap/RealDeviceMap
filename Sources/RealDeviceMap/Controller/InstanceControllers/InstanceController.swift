@@ -15,7 +15,7 @@ import Turf
 import POGOProtos
 
 protocol InstanceControllerDelegate: class {
-    func instanceControllerDone(name: String)
+    func instanceControllerDone(mysql: MySQL?, name: String)
 }
 
 protocol InstanceControllerProto {
@@ -356,7 +356,7 @@ class InstanceController {
         } else {
             instancesLock.unlock()
             if formatted {
-                return "?"
+                return "Starting..."
             } else {
                 return nil
             }

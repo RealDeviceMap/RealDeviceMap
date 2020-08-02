@@ -145,6 +145,14 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardDeviceGroupEdit,
                                          requiredPerms: [.admin])
             }),
+            Route(methods: [.get, .post], uri: "/dashboard/devicegroup/delete/{name}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDeviceGroupDelete,
+                                         requiredPerms: [.admin])
+            }),
+            Route(methods: [.get, .post], uri: "/dashboard/devicegroup/assign/{name}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .dashboardDeviceGroupAssign,
+                                         requiredPerms: [.admin])
+            }),
             Route(method: .get, uri: "/dashboard/instance/ivqueue/{instance_name}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardInstanceIVQueue,
                                          requiredPerms: [.admin])
@@ -181,7 +189,7 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentDelete,
                                          requiredPerms: [.admin])
             }),
-            Route(methods: [.get], uri: "/dashboard/assignment/delete_all", handler: { (request, response) in
+            Route(methods: [.get, .post], uri: "/dashboard/assignment/delete_all", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardAssignmentsDeleteAll,
                                          requiredPerms: [.admin])
             }),
