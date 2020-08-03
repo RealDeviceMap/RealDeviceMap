@@ -253,13 +253,13 @@ class AutoInstanceController: InstanceControllerProto {
                 if todayStops!.isEmpty {
                     guard Date().timeIntervalSince(lastDoneCheck) >= 600 else {
                         stopsLock.unlock()
+                        if doneDate == nil {
+                            doneDate = Date()
+                        }
                         delegate?.instanceControllerDone(mysql: mysql, name: name)
                         return [:]
                     }
                     lastDoneCheck = Date()
-                    if doneDate == nil {
-                        doneDate = Date()
-                    }
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
@@ -281,6 +281,9 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     if todayStops!.isEmpty {
                         stopsLock.unlock()
+                        if doneDate == nil {
+                            doneDate = Date()
+                        }
                         delegate?.instanceControllerDone(mysql: mysql, name: name)
                         return [:]
                     }
@@ -439,9 +442,6 @@ class AutoInstanceController: InstanceControllerProto {
                         return stop.id
                     })
                     stopsLock.unlock()
-                    if doneDate == nil {
-                        doneDate = Date()
-                    }
                     let newStops: [Pokestop]
                     do {
                         newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
@@ -459,10 +459,15 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                     if todayStops!.isEmpty {
+                        stopsLock.unlock()
                         Log.info(message: "[AutoInstanceController] [\(name)] [\(uuid)] Instance done")
+                        if doneDate == nil {
+                            doneDate = Date()
+                        }
                         delegate?.instanceControllerDone(mysql: mysql, name: name)
+                    } else {
+                        stopsLock.unlock()
                     }
-                    stopsLock.unlock()
                 } else {
                     stopsLock.unlock()
                 }
