@@ -122,7 +122,8 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.unlock()
     }
 
-    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, instance: String?=nil, force: Bool=false) throws {
+    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, 
+                                  instance: String?=nil, force: Bool=false) throws {
         guard force || (
             assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())
         ) else {
