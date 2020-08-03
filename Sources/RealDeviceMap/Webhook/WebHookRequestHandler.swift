@@ -37,12 +37,8 @@ class WebHookRequestHandler {
     static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
-    internal static var threadLimitCurrent: UInt32 {
-        threadLimitLock.lock()
-        let count = threadLimitCount
-        threadLimitLock.unlock()
-        return count
-    }
+    private static var threadLimitTotalCount: UInt64 = 0
+    private static var threadLimitIgnoredCount: UInt64 = 0
 
     private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
     private static let loginLimitIntervall = UInt32(
@@ -51,6 +47,15 @@ class WebHookRequestHandler {
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
+
+    internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
+        threadLimitLock.lock()
+        let current = threadLimitCount
+        let total = threadLimitTotalCount
+        let ignored = threadLimitIgnoredCount
+        threadLimitLock.unlock()
+        return (current: current, total: total, ignored: ignored)
+    }
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
 
@@ -480,6 +485,8 @@ class WebHookRequestHandler {
 
             threadLimitLock.lock()
             if threadLimitCount >= threadLimitMax {
+                threadLimitIgnoredCount += 1
+                threadLimitTotalCount += 1
                 threadLimitLock.unlock()
                 Log.warning(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Reached thread limit of \(threadLimitMax) " +
@@ -489,6 +496,7 @@ class WebHookRequestHandler {
             }
             let limitCount = threadLimitCount + 1
             threadLimitCount = limitCount
+            threadLimitTotalCount += 1
             threadLimitLock.unlock()
             Log.info(
                 message: "[WebHookRequestHandler] [\(uuid ?? "?")] Processing /raw request. " +
