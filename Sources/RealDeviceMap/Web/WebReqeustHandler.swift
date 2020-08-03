@@ -857,7 +857,14 @@ class WebReqeustHandler {
                     response.completed(status: .notFound)
                     return
                 }
-                AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                do {
+                    try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                } catch {
+                    response.setBody(string: "Failed to trigger assignment")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
                 response.redirect(path: "/dashboard/assignments")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)

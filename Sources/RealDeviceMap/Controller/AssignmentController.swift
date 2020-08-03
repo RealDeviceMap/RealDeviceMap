@@ -37,7 +37,7 @@ class AssignmentController: InstanceControllerDelegate {
             queue = Threading.getQueue(name: "AssignmentController-updater", type: .serial)
             queue.dispatch {
 
-                let mysql = DBController.global.mysql
+                var mysql: MySQL?
 
                 var lastUpdate: Int32 = -2
                 let lastUpdatedFile = File("\(projectroot)/backups/last-updated.txt")
@@ -69,14 +69,21 @@ class AssignmentController: InstanceControllerDelegate {
                     self.assignmentsLock.unlock()
 
                     for assignment in assignments {
-
                         if assignment.time != 0 &&
                            now >= assignment.time &&
                            lastUpdate < assignment.time {
-                            self.triggerAssignment(mysql: mysql, assignment: assignment)
+                            if mysql == nil {
+                                mysql = DBController.global.mysql
+                            }
+                            do {
+                                try self.triggerAssignment(mysql: mysql, assignment: assignment)
+                            } catch {
+                                Log.error(message: "Failed to trigger assignment: \(error)")
+                            }
                         }
 
                     }
+                    mysql = nil
 
                     Threading.sleep(seconds: 5)
                     lastUpdate = Int32(now)
@@ -115,36 +122,18 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.unlock()
     }
 
-    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, force: Bool=false) {
+    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, force: Bool=false) throws {
         guard force || (
             assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())
         ) else {
             return
         }
         var devices = [Device]()
-        if let deviceUUID = assignment.deviceUUID {
-            var done = false
-            while !done {
-                do {
-                    if let device = try Device.getById(mysql: mysql, id: deviceUUID) {
-                        devices.append(device)
-                    }
-                    done = true
-                } catch {
-                    Threading.sleep(seconds: 1.0)
-                }
-            }
+        if let deviceUUID = assignment.deviceUUID, let device = try Device.getById(mysql: mysql, id: deviceUUID) {
+            devices.append(device)
         }
         if let deviceGroupName = assignment.deviceGroupName {
-            var done = false
-            while !done {
-                do {
-                    devices += try Device.getAllInGroup(mysql: mysql, deviceGroupName: deviceGroupName)
-                    done = true
-                } catch {
-                    Threading.sleep(seconds: 1.0)
-                }
-            }
+            devices += try Device.getAllInGroup(mysql: mysql, deviceGroupName: deviceGroupName)
         }
         for device in devices where (
             force || (
@@ -157,15 +146,7 @@ class AssignmentController: InstanceControllerDelegate {
             )
             InstanceController.global.removeDevice(device: device)
             device.instanceName = assignment.instanceName
-            var done = false
-            while !done {
-                do {
-                    try device.save(mysql: mysql, oldUUID: device.uuid)
-                    done = true
-                } catch {
-                    Threading.sleep(seconds: 1.0)
-                }
-            }
+            try device.save(mysql: mysql, oldUUID: device.uuid)
             InstanceController.global.addDevice(device: device)
         }
     }
@@ -198,7 +179,11 @@ class AssignmentController: InstanceControllerDelegate {
         for assignment in assignments where (
             assignment.time == 0 && (assignment.sourceInstanceName == nil || assignment.sourceInstanceName == name)
         ) {
-            triggerAssignment(mysql: mysql, assignment: assignment)
+            do {
+                try triggerAssignment(mysql: mysql, assignment: assignment)
+            } catch {
+                Log.error(message: "Failed to trigger assignment: \(error)")
+            }
         }
     }
 }

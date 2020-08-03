@@ -48,6 +48,7 @@ class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
+    // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
         threadLimitLock.lock()
         let current = threadLimitCount

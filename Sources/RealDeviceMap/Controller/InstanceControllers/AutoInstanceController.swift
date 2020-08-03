@@ -56,7 +56,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.delayLogout = delayLogout
         update()
 
-        bootstrap()
+        try? bootstrap()
         if type == .quest {
             questClearerQueue = Threading.getQueue(name: "\(name)-quest-clearer", type: .serial)
             questClearerQueue!.dispatch {
@@ -122,7 +122,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     }
 
-    private func bootstrap() {
+    private func bootstrap() throws {
         Log.info(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
         let start = Date()
         var totalCount = 0
@@ -133,16 +133,7 @@ class AutoInstanceController: InstanceControllerProto {
             let ids = cellIDs.map({ (id) -> UInt64 in
                 return id.uid
             })
-            var done = false
-            var cells = [Cell]()
-            while !done {
-                do {
-                    cells = try Cell.getInIDs(ids: ids)
-                    done = true
-                } catch {
-                    Threading.sleep(seconds: 1)
-                }
-            }
+            let cells = try Cell.getInIDs(ids: ids)
             for cellID in cellIDs {
                 if !cells.contains(where: { (cell) -> Bool in
                     return cell.id == cellID.uid
@@ -225,7 +216,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                     if bootstrappCellIDs.isEmpty {
                         bootstrappLock.unlock()
-                        bootstrap()
+                        try? bootstrap()
                         bootstrappLock.lock()
                         if bootstrappCellIDs.isEmpty {
                             bootstrappLock.unlock()
@@ -272,15 +263,14 @@ class AutoInstanceController: InstanceControllerProto {
                     let ids = self.allStops!.map({ (stop) -> String in
                         return stop.id
                     })
-                    var newStops: [Pokestop]!
-                    var done = false
-                    while !done {
-                        do {
-                            newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
-                            done = true
-                        } catch {
-                            Threading.sleep(seconds: 1.0)
-                        }
+                    let newStops: [Pokestop]
+                    do {
+                        newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
+                    } catch {
+                        Log.error(
+                           message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
+                        )
+                        return [:]
                     }
 
                     for stop in newStops {
@@ -452,15 +442,14 @@ class AutoInstanceController: InstanceControllerProto {
                     if doneDate == nil {
                         doneDate = Date()
                     }
-                    var newStops: [Pokestop]!
-                    var done = false
-                    while !done {
-                        do {
-                            newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
-                            done = true
-                        } catch {
-                            Threading.sleep(seconds: 1.0)
-                        }
+                    let newStops: [Pokestop]
+                    do {
+                        newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
+                    } catch {
+                        Log.error(
+                           message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
+                        )
+                        return [:]
                     }
 
                     stopsLock.lock()
