@@ -122,7 +122,7 @@ class AssignmentController: InstanceControllerDelegate {
         assignmentsLock.unlock()
     }
 
-    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, force: Bool=false) throws {
+    public func triggerAssignment(mysql: MySQL?=nil, assignment: Assignment, instance: String?=nil, force: Bool=false) throws {
         guard force || (
             assignment.enabled && (assignment.date == nil || assignment.date!.toString() == Date().toString())
         ) else {
@@ -137,8 +137,9 @@ class AssignmentController: InstanceControllerDelegate {
         }
         for device in devices where (
             force || (
+                (instance == nil || device.instanceName == instance) &&
                 device.instanceName != assignment.instanceName &&
-                (assignment.sourceInstanceName == nil || assignment.sourceInstanceName! == device.instanceName)
+                (assignment.sourceInstanceName == nil || assignment.sourceInstanceName == device.instanceName)
             )
         ) {
             Log.info(
@@ -176,11 +177,9 @@ class AssignmentController: InstanceControllerDelegate {
     // MARK: - InstanceControllerDelegate
 
     public func instanceControllerDone(mysql: MySQL?, name: String) {
-        for assignment in assignments where (
-            assignment.time == 0 && (assignment.sourceInstanceName == nil || assignment.sourceInstanceName == name)
-        ) {
+        for assignment in assignments where assignment.time == 0 {
             do {
-                try triggerAssignment(mysql: mysql, assignment: assignment)
+                try triggerAssignment(mysql: mysql, assignment: assignment, instance: name)
             } catch {
                 Log.error(message: "Failed to trigger assignment: \(error)")
             }
