@@ -675,7 +675,7 @@ class WebHookRequestHandler {
                         pokemon = nil
                     }
                     if pokemon != nil {
-                        pokemon!.addEncounter(encounterData: encounter, username: username)
+                        pokemon!.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
                         let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude,
@@ -694,7 +694,7 @@ class WebHookRequestHandler {
                                 cellId: cellID.uid,
                                 timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
                                 username: username)
-                            newPokemon.addEncounter(encounterData: encounter, username: username)
+                            newPokemon.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                             try? newPokemon.save(mysql: mysql, updateIV: true)
                         }
                     }

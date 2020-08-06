@@ -205,6 +205,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
             expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
             expireTimestampVerified = true
+            let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
+            let components = Calendar.current.dateComponents([.second, .minute], from: date)
+            let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
+            let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+            try? spawnPoint.save(mysql: mysql, update: true)
         } else {
             expireTimestampVerified = false
         }
@@ -212,7 +218,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if !expireTimestampVerified && spawnId != nil {
             let spawnpoint: SpawnPoint?
             do {
-                spawnpoint = try SpawnPoint.getWithId(id: spawnId!)
+                spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId!)
             } catch {
                 spawnpoint = nil
             }
@@ -305,7 +311,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
-    public func addEncounter(encounterData: POGOProtos_Networking_Responses_EncounterResponse, username: String?) {
+    public func addEncounter(mysql: MySQL, encounterData: POGOProtos_Networking_Responses_EncounterResponse,
+                             username: String?) {
 
         self.pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
         self.cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
@@ -355,7 +362,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if !expireTimestampVerified && spawnId != nil {
                 let spawnpoint: SpawnPoint?
                 do {
-                    spawnpoint = try SpawnPoint.getWithId(id: spawnId!)
+                    spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId!)
                 } catch {
                     spawnpoint = nil
                 }
@@ -382,7 +389,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     self.expireTimestampVerified = true
                 }
             }
-
         }
 
         let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
@@ -672,28 +678,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
-        }
-
-        if self.spawnId != nil {
-            let spawnPoint: SpawnPoint
-            if expireTimestampVerified && expireTimestamp != nil {
-
-                let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
-
-                let formatter = DateFormatter()
-                formatter.dateFormat = "mm:ss"
-                let formattedDate = formatter.string(from: date)
-
-                let split = formattedDate.components(separatedBy: ":")
-                let minute = Int(split[0])!
-                let second = Int(split[1])!
-                let secondOfHour = second + minute * 60
-                spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated,
-                                        despawnSecond: UInt16(secondOfHour))
-            } else {
-                spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon, updated: updated, despawnSecond: nil)
-            }
-            try? spawnPoint.save(mysql: mysql, update: true)
         }
 
         guard mysqlStmt.execute() else {
