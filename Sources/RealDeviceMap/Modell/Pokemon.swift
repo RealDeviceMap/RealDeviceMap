@@ -243,6 +243,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
+            } else if spawnpoint == nil {
+                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                            updated: updated, despawnSecond: nil)
+                try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
 
