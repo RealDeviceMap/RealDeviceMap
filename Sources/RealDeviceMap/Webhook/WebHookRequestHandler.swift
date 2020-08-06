@@ -885,7 +885,7 @@ class WebHookRequestHandler {
                     }
                     self.loginLimitCount[host] = currentCount + 1
                     self.loginLimitLock.unlock()
-                    Log.info(
+                    Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid)] Login Limit for \(host): " +
                                  "\(currentCount + 1)/\(loginLimit) (\(left)s left)"
                     )
