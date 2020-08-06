@@ -708,8 +708,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if setIVForWeather {
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
-        }
-        if oldPokemon == nil {
+        } else if oldPokemon == nil {
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotPokemon(pokemon: self)
             if self.atkIv != nil {

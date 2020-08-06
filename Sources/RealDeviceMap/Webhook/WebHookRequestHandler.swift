@@ -499,10 +499,14 @@ class WebHookRequestHandler {
             threadLimitCount = limitCount
             threadLimitTotalCount += 1
             threadLimitLock.unlock()
-            Log.info(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Processing /raw request. " +
-                         "Currently processing: \(limitCount)"
-            )
+            let percentage = Float(limitCount) / Float(threadLimitMax)
+            let message = "[WebHookRequestHandler] [\(uuid ?? "?")] Processing /raw request. " +
+                          "Currently processing: \(limitCount) (\(Int(percentage*100))%)"
+            if percentage >= 0.5 {
+                Log.info(message: message)
+            } else {
+                Log.debug(message: message)
+            }
 
             defer {
                 threadLimitLock.lock()
