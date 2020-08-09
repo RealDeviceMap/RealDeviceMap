@@ -24,6 +24,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var dittoPokemonId: UInt16 = 132
     static var weatherBoostMinLevel: UInt8 = 6
     static var weatherBoostMinIvStat: UInt8 = 4
+    static var noPVP = false
 
     class ParsingError: Error {}
 
@@ -395,42 +396,44 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
         }
 
-        let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
-        self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
-            form: form == .unset ? nil : form,
-            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
-            iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
-            level: Double(self.level!),
-            league: .great
-        ).map({ (ranking) -> [String: Any] in
-            return [
-                "pokemon": ranking.pokemon.pokemon.rawValue,
-                "form": ranking.pokemon.form?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
-                "percentage": ranking.response?.percentage as Any,
-                "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
-            ]
-        })
+        if !Pokemon.noPVP {
+            let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
+            self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+                pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+                form: form == .unset ? nil : form,
+                costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+                iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+                level: Double(self.level!),
+                league: .great
+            ).map({ (ranking) -> [String: Any] in
+                return [
+                    "pokemon": ranking.pokemon.pokemon.rawValue,
+                    "form": ranking.pokemon.form?.rawValue ?? 0,
+                    "rank": ranking.response?.rank as Any,
+                    "percentage": ranking.response?.percentage as Any,
+                    "cp": ranking.response?.ivs.first?.cp as Any,
+                    "level": ranking.response?.ivs.first?.level as Any
+                ]
+            })
 
-        self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-            pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
-            form: form == .unset ? nil : form,
-            costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
-            iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
-            level: Double(self.level!),
-            league: .ultra
-        ).map({ (ranking) -> [String: Any] in
-            return [
-                "pokemon": ranking.pokemon.pokemon.rawValue,
-                "form": ranking.pokemon.form?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
-                "percentage": ranking.response?.percentage as Any,
-                "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
-            ]
-        })
+            self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+                pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+                form: form == .unset ? nil : form,
+                costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+                iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+                level: Double(self.level!),
+                league: .ultra
+            ).map({ (ranking) -> [String: Any] in
+                return [
+                    "pokemon": ranking.pokemon.pokemon.rawValue,
+                    "form": ranking.pokemon.form?.rawValue ?? 0,
+                    "rank": ranking.response?.rank as Any,
+                    "percentage": ranking.response?.percentage as Any,
+                    "cp": ranking.response?.ivs.first?.cp as Any,
+                    "level": ranking.response?.ivs.first?.level as Any
+                ]
+            })
+        }
 
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
@@ -607,6 +610,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.capture3 = nil
                 self.shiny = nil
                 self.isDitto = false
+                self.pvpRankingsGreatLeague = nil
+                self.pvpRankingsUltraLeague = nil
                 Log.debug(message: "[POKEMON] Weather-Boosted state changed. Clearing IVs")
             } else {
                 setIVForWeather = false
