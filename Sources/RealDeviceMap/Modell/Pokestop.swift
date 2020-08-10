@@ -131,6 +131,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var incidentExpireTimestamp: UInt32?
     var gruntType: UInt16?
 
+    var hasChanges = false
+
     static var cache: MemoryCache<Pokestop>?
 
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?,
@@ -202,9 +204,17 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.lat = fortData.latitude
         self.lon = fortData.longitude
         if !fortData.imageUrls.isEmpty {
-            self.url = fortData.imageUrls[0]
+            let url = fortData.imageUrls[0]
+            if self.url != url {
+                hasChanges = true
+            }
+            self.url = url
         }
-        self.name = fortData.name
+        let name = fortData.name
+        if self.name != name {
+            hasChanges = true
+        }
+        self.name = name
 
     }
 
@@ -213,6 +223,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.questType = questData.questType.rawValue.toUInt32()
         self.questTarget = UInt16(questData.goal.target)
         self.questTemplate = questData.templateID.lowercased()
+        self.hasChanges = true
 
         var conditions = [[String: Any]]()
         var rewards = [[String: Any]]()
@@ -1256,6 +1267,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     }
 
     public static func shouldUpdate(old: Pokestop, new: Pokestop) -> Bool {
+        if old.hasChanges {
+            old.hasChanges = false
+            return true
+        }
         return
             new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
             new.lureExpireTimestamp != old.lureExpireTimestamp ||

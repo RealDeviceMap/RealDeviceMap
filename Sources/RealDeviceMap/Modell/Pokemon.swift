@@ -145,6 +145,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     var pvpRankingsGreatLeague: [[String: Any]]?
     var pvpRankingsUltraLeague: [[String: Any]]?
 
+    var hasChanges = false
+
     init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
          atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
          cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?,
@@ -329,20 +331,53 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     public func addEncounter(mysql: MySQL, encounterData: POGOProtos_Networking_Responses_EncounterResponse,
                              username: String?) {
 
-        self.pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
-        self.cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
-        self.move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
-        self.move2 = UInt16(encounterData.wildPokemon.pokemonData.move2.rawValue)
-        self.size = Double(encounterData.wildPokemon.pokemonData.heightM)
-        self.weight = Double(encounterData.wildPokemon.pokemonData.weightKg)
-        self.atkIv = UInt8(encounterData.wildPokemon.pokemonData.individualAttack)
-        self.defIv = UInt8(encounterData.wildPokemon.pokemonData.individualDefense)
-        self.staIv = UInt8(encounterData.wildPokemon.pokemonData.individualStamina)
-        self.costume = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.costume.rawValue)
+        let pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
+        let cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
+        let move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
+        let move2 = UInt16(encounterData.wildPokemon.pokemonData.move2.rawValue)
+        let size = Double(encounterData.wildPokemon.pokemonData.heightM)
+        let weight = Double(encounterData.wildPokemon.pokemonData.weightKg)
+        let atkIv = UInt8(encounterData.wildPokemon.pokemonData.individualAttack)
+        let defIv = UInt8(encounterData.wildPokemon.pokemonData.individualDefense)
+        let staIv = UInt8(encounterData.wildPokemon.pokemonData.individualStamina)
+        let costume = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.costume.rawValue)
+        let form = UInt16(encounterData.wildPokemon.pokemonData.pokemonDisplay.form.rawValue)
+        let gender = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.gender.rawValue)
+
+        if pokemonId != self.pokemonId ||
+           cp != self.cp ||
+           move1 != self.move1 ||
+           move2 != self.move2 ||
+           size != self.size ||
+           weight != self.weight ||
+           atkIv != self.atkIv ||
+           defIv != self.defIv ||
+           staIv != self.staIv ||
+           costume != self.costume ||
+           form != self.form ||
+           gender != self.gender {
+            self.hasChanges = true
+        )
+
+        self.pokemonId = pokemonId
+        self.cp = cp
+        self.move1 = move1
+        self.move2 = move2
+        self.size = size
+        self.weight = weight
+        self.atkIv = atkIv
+        self.defIv = defIv
+        self.staIv = staIv
+        self.costume = costume
+        self.form = form
+        self.gender = gender
+
         self.shiny = encounterData.wildPokemon.pokemonData.pokemonDisplay.shiny
         self.username = username
-        self.form = UInt16(encounterData.wildPokemon.pokemonData.pokemonDisplay.form.rawValue)
-        self.gender = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.gender.rawValue)
+
+
+
+
         if encounterData.hasCaptureProbability {
             self.capture1 = Double(encounterData.captureProbability.captureProbability[0])
             self.capture2 = Double(encounterData.captureProbability.captureProbability[1])
@@ -451,6 +486,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     }
 
     public static func shouldUpdate(old: Pokemon, new: Pokemon) -> Bool {
+        if old.hasChanges {
+            old.hasChanges = false
+            return true
+        }
         return
             new.pokemonId != old.pokemonId ||
             new.spawnId != old.spawnId ||

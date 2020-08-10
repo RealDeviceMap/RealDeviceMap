@@ -153,6 +153,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var totalCp: UInt32?
     var sponsorId: UInt16?
 
+    var hasChanges = false
+
     static var cache: MemoryCache<Gym>?
 
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?,
@@ -236,14 +238,27 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
         if !fortData.imageUrls.isEmpty {
-            self.url = fortData.imageUrls[0]
+            let url = fortData.imageUrls[0]
+            if self.url != url {
+                hasChanges = true
+            }
+            self.url = url
         }
-        self.name = fortData.name
+        let name = fortData.name
+        if self.name != name {
+            hasChanges = true
+        }
+        self.name = name
     }
 
     public func addDetails(gymInfo: POGOProtos_Networking_Responses_GymGetInfoResponse) {
-        self.name = gymInfo.name
-        self.url = gymInfo.url
+        let name = gymInfo.name
+        let url = gymInfo.url
+        if (self.url != url || self.name != name) {
+            hasChanges = true
+        }
+        self.name = name
+        self.url = url
     }
 
     public func save(mysql: MySQL?=nil) throws {
@@ -973,6 +988,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     }
 
     public static func shouldUpdate(old: Gym, new: Gym) -> Bool {
+        if old.hasChanges {
+            old.hasChanges = false
+            return true
+        }
         return
             new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
             new.name != old.name ||
