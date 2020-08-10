@@ -32,6 +32,8 @@ class SpawnPoint: JSONConvertibleObject {
     var updated: UInt32?
     var despawnSecond: UInt16?
 
+    static var cache: MemoryCache<SpawnPoint>?
+
     init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, despawnSecond: UInt16?) {
         self.id = id
         self.lat = lat
@@ -99,6 +101,8 @@ class SpawnPoint: JSONConvertibleObject {
             Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+
+        SpawnPoint.cache?.set(id: id.toString(), value: self)
 
     }
 
@@ -172,6 +176,12 @@ class SpawnPoint: JSONConvertibleObject {
 
     public static func getWithId(mysql: MySQL?=nil, id: UInt64) throws -> SpawnPoint? {
 
+        if let cached = cache?.get(id: id.toString()) {
+            print("[SPAWNPOINT] Cached")
+            return cached
+        }
+        print("[SPAWNPOINT] Not Cached")
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
@@ -204,7 +214,9 @@ class SpawnPoint: JSONConvertibleObject {
         let updated = result[3] as! UInt32
         let despawnSecond = result[4] as? UInt16
 
-        return SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, despawnSecond: despawnSecond)
+        let spawnpoint = SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, despawnSecond: despawnSecond)
+        cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
+        return spawnpoint
 
     }
 

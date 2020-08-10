@@ -78,7 +78,7 @@ class AssignmentController: InstanceControllerDelegate {
                             do {
                                 try self.triggerAssignment(mysql: mysql, assignment: assignment)
                             } catch {
-                                Log.error(message: "Failed to trigger assignment: \(error)")
+                                Log.error(message: "Failed to trigger assignment: \(error.localizedDescription)")
                             }
                         }
 
@@ -182,7 +182,7 @@ class AssignmentController: InstanceControllerDelegate {
             do {
                 try triggerAssignment(mysql: mysql, assignment: assignment, instance: name)
             } catch {
-                Log.error(message: "Failed to trigger assignment: \(error)")
+                Log.error(message: "Failed to trigger assignment: \(error.localizedDescription)")
             }
         }
     }

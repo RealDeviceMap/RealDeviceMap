@@ -153,6 +153,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var totalCp: UInt32?
     var sponsorId: UInt16?
 
+    static var cache: MemoryCache<Gym>?
+
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?,
          lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?,
          raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots: UInt16?,
@@ -374,6 +376,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             }
             throw DBController.DBError()
         }
+
+        Gym.cache?.set(id: id, value: self)
 
         if oldGym == nil {
             WebHookController.global.addGymEvent(gym: self)
@@ -621,6 +625,12 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Gym? {
 
+        if let cached = cache?.get(id: id) {
+            print("[GYM] Cached")
+            return cached
+        }
+        print("[GYM] Not Cached")
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
@@ -685,15 +695,18 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let totalCp = result[26] as? UInt32
         let sponsorId = result[27] as? UInt16
 
-        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
-                   lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
-                   raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-                   raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
-                   exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
-                   raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
-                   raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
-                   raidPokemonGender: raidPokemonGender, raidIsExclusive: raidIsExclusive,
-                   cellId: cellId, totalCp: totalCp, sponsorId: sponsorId)
+        let gym = Gym(
+            id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
+            lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
+            raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
+            raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+            exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
+            raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
+            raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
+            raidPokemonGender: raidPokemonGender, raidIsExclusive: raidIsExclusive,
+            cellId: cellId, totalCp: totalCp, sponsorId: sponsorId)
+        cache?.set(id: gym.id, value: gym)
+        return gym
     }
 
     public static func getWithIDs(mysql: MySQL?=nil, ids: [String]) throws -> [Gym] {
@@ -952,6 +965,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+
+        cache?.clear()
 
         return mysqlStmt.affectedRows()
     }

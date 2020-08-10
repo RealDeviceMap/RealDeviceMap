@@ -131,6 +131,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var incidentExpireTimestamp: UInt32?
     var gruntType: UInt16?
 
+    static var cache: MemoryCache<Pokestop>?
+
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?,
          lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?,
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
@@ -498,6 +500,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             }
             throw DBController.DBError()
         }
+
+        Pokestop.cache?.set(id: self.id, value: self)
 
         if oldPokestop == nil {
             WebHookController.global.addPokestopEvent(pokestop: self)
@@ -915,6 +919,12 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Pokestop? {
 
+        if let cached = cache?.get(id: id) {
+            print("[POKESTOP] Cached")
+            return cached
+        }
+        print("[POKESTOP] Not Cached")
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
@@ -973,7 +983,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let gruntType = result[19] as? UInt16
         let sponsorId = result[20] as? UInt16
 
-        return Pokestop(
+        let pokestop = Pokestop(
             id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
             lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp,
             updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
@@ -981,6 +991,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
             incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId
         )
+        cache?.set(id: pokestop.id, value: pokestop)
+        return pokestop
     }
 
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
@@ -1027,6 +1039,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
 
+        Pokestop.cache?.clear()
+
     }
 
     public static func clearQuests(mysql: MySQL?=nil, instance: Instance) throws {
@@ -1072,6 +1086,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
             throw DBController.DBError()
         }
+
+        Pokestop.cache?.clear()
+
         let results = mysqlStmt.results()
         if results.numRows == 0 {
             return
@@ -1208,6 +1225,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
 
+        Pokestop.cache?.clear()
+
         return mysqlStmt.affectedRows()
     }
 
@@ -1229,6 +1248,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+
+        Pokestop.cache?.clear()
 
         return mysqlStmt.affectedRows()
     }

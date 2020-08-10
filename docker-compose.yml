@@ -27,10 +27,15 @@ services:
       WEB_SERVER_PORT: 9000
       WEBHOOK_SERVER_ADDRESS: 0.0.0.0
       WEBHOOK_SERVER_PORT: 9001
+      MEMORY_CACHE_CLEAR_INTERVAL: 900
+      MEMORY_CACHE_KEEP_TIME: 3600
       RAW_THREAD_LIMIT: 100
       LOG_LEVEL: debug
 #     LOGINLIMIT_COUNT: 15
 #     LOGINLIMIT_INTERVALL: 300
+#     NO_PVP: 1
+#     NO_MEMORY_CACHE: 1
+#     NO_BACKUP: 1
   db:
     image: mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password --binlog-expire-logs-seconds=86400

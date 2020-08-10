@@ -26,6 +26,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var weatherBoostMinIvStat: UInt8 = 4
     static var noPVP = false
 
+    static var cache: MemoryCache<Pokemon>?
+
     class ParsingError: Error {}
 
     override func getJSONValues() -> [String: Any] {
@@ -272,36 +274,46 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         self.username = username
 
-        let sql = """
-                SELECT lat, lon
-                FROM pokestop
-                WHERE id = ?;
-            """
+        let lat: Double
+        let lon: Double
+        let pokestop = Pokestop.cache?.get(id: pokestopId)
+        if pokestop != nil {
+            print("[POKESTOP] Cached")
+            lat = pokestop!.lat
+            lon = pokestop!.lon
+        } else {
+            print("[POKESTOP] Not Cached")
+            let sql = """
+                    SELECT lat, lon
+                    FROM pokestop
+                    WHERE id = ?;
+                """
 
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[POKEMON] Failed to connect to database.")
-            throw DBController.DBError()
+            guard let mysql = mysql ?? DBController.global.mysql else {
+                Log.error(message: "[POKEMON] Failed to connect to database.")
+                throw DBController.DBError()
+            }
+
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+
+            mysqlStmt.bindParam(pokestopId)
+
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+                throw DBController.DBError()
+            }
+
+            let results = mysqlStmt.results()
+
+            if results.numRows == 0 {
+                throw ParsingError()
+            }
+
+            let result = results.next()
+            lat = result![0] as! Double
+            lon = result![1] as! Double
         }
-
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-
-        mysqlStmt.bindParam(pokestopId)
-
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-
-        let results = mysqlStmt.results()
-
-        if results.numRows == 0 {
-            throw ParsingError()
-        }
-
-        let result = results.next()
-        let lat = result![0] as! Double
-        let lon = result![1] as! Double
 
         self.id = id
         self.lat = lat
@@ -711,6 +723,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotIV(pokemon: self)
         }
+
+        Pokemon.cache?.set(id: self.id, value: self)
     }
 
     //  swiftlint:disable:next function_parameter_count
@@ -915,6 +929,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Pokemon? {
 
+        if let cached = cache?.get(id: id) {
+            print("[POKEMON] Cached")
+            return cached
+        }
+        print("[POKEMON] Not Cached")
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
             throw DBController.DBError()
@@ -978,16 +998,19 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let pvpRankingsGreatLeague = (result[31] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
         let pvpRankingsUltraLeague = (result[32] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
 
-        return Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
-                       expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
-                       move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight,
-                       costume: costume, size: size, capture1: capture1, capture2: capture2, capture3: capture3,
-                       displayPokemonId: displayPokemonId, weather: weather,
-                       shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
-                       updated: updated, changed: changed, cellId: cellId,
-                       expireTimestampVerified: expireTimestampVerified, pvpRankingsGreatLeague: pvpRankingsGreatLeague,
-                       pvpRankingsUltraLeague: pvpRankingsUltraLeague
+        let pokemon = Pokemon(
+            id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
+            expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
+            move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight,
+            costume: costume, size: size, capture1: capture1, capture2: capture2, capture3: capture3,
+            displayPokemonId: displayPokemonId, weather: weather,
+            shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
+            updated: updated, changed: changed, cellId: cellId,
+            expireTimestampVerified: expireTimestampVerified, pvpRankingsGreatLeague: pvpRankingsGreatLeague,
+            pvpRankingsUltraLeague: pvpRankingsUltraLeague
         )
+        cache?.set(id: pokemon.id, value: pokemon)
+        return pokemon
     }
 
     static func == (lhs: Pokemon, rhs: Pokemon) -> Bool {
@@ -1049,6 +1072,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+
+        cache?.clear()
     }
 
     private static func sqlifyIvFilter(filter: String) -> String? {
