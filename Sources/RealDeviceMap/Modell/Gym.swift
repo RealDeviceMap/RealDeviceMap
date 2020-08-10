@@ -254,7 +254,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     public func addDetails(gymInfo: POGOProtos_Networking_Responses_GymGetInfoResponse) {
         let name = gymInfo.name
         let url = gymInfo.url
-        if (self.url != url || self.name != name) {
+        if self.url != url || self.name != name {
             hasChanges = true
         }
         self.name = name

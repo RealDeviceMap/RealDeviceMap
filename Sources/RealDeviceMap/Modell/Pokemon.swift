@@ -357,7 +357,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
            form != self.form ||
            gender != self.gender {
             self.hasChanges = true
-        )
+        }
 
         self.pokemonId = pokemonId
         self.cp = cp
@@ -374,9 +374,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         self.shiny = encounterData.wildPokemon.pokemonData.pokemonDisplay.shiny
         self.username = username
-
-
-
 
         if encounterData.hasCaptureProbability {
             self.capture1 = Double(encounterData.captureProbability.captureProbability[0])
