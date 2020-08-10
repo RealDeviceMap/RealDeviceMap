@@ -546,8 +546,8 @@ class WebHookRequestHandler {
             }
             if wildPokemons.count > 0 {
                 Log.debug(
-                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed in " +
-                             "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed " +
+                             "in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
                 )
             }
 
