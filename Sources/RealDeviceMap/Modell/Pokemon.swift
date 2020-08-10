@@ -493,6 +493,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         let mysqlStmt = MySQLStmt(mysql)
 
+        let now = UInt32(Date().timeIntervalSince1970)
         if oldPokemon == nil {
             setIVForWeather = false
             bindFirstSeen = false
@@ -515,6 +516,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?, ?
                 )
             """
+            self.updated = now
+            self.firstSeenTimestamp = now
+            self.changed = now
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
@@ -574,6 +578,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let changedSQL: String
             if updateIV && oldPokemon!.atkIv == nil && self.atkIv != nil {
                 bindChangedTimestamp = false
+                self.changed = now
                 changedSQL = "UNIX_TIMESTAMP()"
             } else {
                 bindChangedTimestamp = true
@@ -654,6 +659,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?
                 WHERE id = ?
             """
+            self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
         }
 

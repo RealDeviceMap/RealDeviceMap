@@ -157,6 +157,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
 
         let sql: String
 
+        let now = UInt32(Date().timeIntervalSince1970)
         if let oldWeather = oldWeather {
             guard Weather.shouldUpdate(old: oldWeather, new: self) else {
                 return
@@ -199,6 +200,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         if oldWeather != nil {
             mysqlStmt.bindParam(id)
         }
+
+        self.updated = now
 
         guard mysqlStmt.execute() else {
             if mysqlStmt.errorCode() == 1062 {

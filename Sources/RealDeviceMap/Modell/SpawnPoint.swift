@@ -63,6 +63,7 @@ class SpawnPoint: JSONConvertibleObject {
             return
         }
 
+        let now = UInt32(Date().timeIntervalSince1970)
         if oldSpawnpoint != nil {
 
             if self.despawnSecond == nil && oldSpawnpoint!.despawnSecond != nil {
@@ -90,6 +91,8 @@ class SpawnPoint: JSONConvertibleObject {
             despawn_sec=VALUES(despawn_sec)
             """
         }
+
+        self.updated = now
 
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(id)
