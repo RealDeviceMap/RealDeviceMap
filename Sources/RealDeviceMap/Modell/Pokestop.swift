@@ -920,10 +920,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Pokestop? {
 
         if let cached = cache?.get(id: id) {
-            print("[POKESTOP] Cached")
             return cached
         }
-        print("[POKESTOP] Not Cached")
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")

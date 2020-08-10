@@ -177,10 +177,8 @@ class SpawnPoint: JSONConvertibleObject {
     public static func getWithId(mysql: MySQL?=nil, id: UInt64) throws -> SpawnPoint? {
 
         if let cached = cache?.get(id: id.toString()) {
-            print("[SPAWNPOINT] Cached")
             return cached
         }
-        print("[SPAWNPOINT] Not Cached")
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")

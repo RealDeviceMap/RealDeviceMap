@@ -222,10 +222,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     public static func getWithId(mysql: MySQL?=nil, id: Int64) throws -> Weather? {
 
         if let cached = cache?.get(id: id.toString()) {
-            print("[WEATHER] Cached")
             return cached
         }
-        print("[WEATHER] Not Cached")
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[WEATHER] Failed to connect to database.")

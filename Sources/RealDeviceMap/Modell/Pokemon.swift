@@ -278,11 +278,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let lon: Double
         let pokestop = Pokestop.cache?.get(id: pokestopId)
         if pokestop != nil {
-            print("[POKESTOP] Cached")
             lat = pokestop!.lat
             lon = pokestop!.lon
         } else {
-            print("[POKESTOP] Not Cached")
             let sql = """
                     SELECT lat, lon
                     FROM pokestop
@@ -930,10 +928,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     public static func getWithId(mysql: MySQL?=nil, id: String) throws -> Pokemon? {
 
         if let cached = cache?.get(id: id) {
-            print("[POKEMON] Cached")
             return cached
         }
-        print("[POKEMON] Not Cached")
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")

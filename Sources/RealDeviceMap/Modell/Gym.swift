@@ -626,10 +626,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Gym? {
 
         if let cached = cache?.get(id: id) {
-            print("[GYM] Cached")
             return cached
         }
-        print("[GYM] Not Cached")
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
