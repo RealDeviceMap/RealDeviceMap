@@ -168,8 +168,8 @@ class DBController {
             guard self.mysql != nil else {
                 let message = "Failed to connect to database (as \(self.username)) while initializing."
                 Log.critical(message: "[DBController] " + message)
-                Log.info(message: "[DBController] Sleeping indefinitely")
-                sleep(UInt32.max)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
             asRoot = true
@@ -184,8 +184,8 @@ class DBController {
             let versionResult = versionResults.next()?[0] else {
             let message = "Failed to get db type: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
-            Log.info(message: "[DBController] Sleeping indefinitely")
-            sleep(UInt32.max)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
         if versionResult.lowercased().contains(string: "mariadb") {
@@ -205,8 +205,8 @@ class DBController {
             guard mysql.query(statement: stDistancephereSQL) else {
                 let message = "Failed to create ST_Distance_Sphere function: (\(mysql.errorMessage())"
                 Log.critical(message: "[DBController] " + message)
-                Log.info(message: "[DBController] Sleeping indefinitely")
-                sleep(UInt32.max)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
         }
@@ -221,8 +221,8 @@ class DBController {
         guard mysql.query(statement: createMetadataTableSQL) else {
             let message = "Failed to create metadata table: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
-            Log.info(message: "[DBController] Sleeping indefinitely")
-            sleep(UInt32.max)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
 
@@ -236,8 +236,8 @@ class DBController {
         guard mysql.query(statement: getDBVersionSQL) else {
             let message = "Failed to get current database version: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
-            Log.info(message: "[DBController] Sleeping indefinitely")
-            sleep(UInt32.max)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
 
@@ -305,8 +305,8 @@ class DBController {
                 guard mysqlStmtTables.execute() else {
                     let message = "Failed to execute query. (\(mysqlStmtTables.errorMessage())"
                     Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Sleeping indefinitely")
-                    sleep(UInt32.max)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
                 let results = mysqlStmtTables.results()
@@ -339,8 +339,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Command Backup: \(resultSchema as Any)"
                     Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Sleeping indefinitely")
-                    sleep(UInt32.max)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -355,8 +355,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Command Backup \(resultTrigger as Any)"
                     Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Sleeping indefinitely")
-                    sleep(UInt32.max)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -371,8 +371,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Data Backup \(resultData as Any)"
                     Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Sleeping indefinitely")
-                    sleep(UInt32.max)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -390,8 +390,8 @@ class DBController {
                 sqlFile.close()
                 let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
-                Log.info(message: "[DBController] Sleeping indefinitely")
-                sleep(UInt32.max)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
 
@@ -402,8 +402,8 @@ class DBController {
                     guard mysql.query(statement: sql) else {
                         let message = "Migration Failed: (\(mysql.errorMessage()))"
                         Log.critical(message: "[DBController] " + message)
-                        Log.info(message: "[DBController] Sleeping indefinitely")
-                        sleep(UInt32.max)
+                        Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                        Threading.sleep(seconds: Double(UInt32.max))
                         fatalError(message)
                     }
                 }
@@ -422,8 +422,8 @@ class DBController {
             guard mysql.query(statement: updateVersionSQL) else {
                 let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
-                Log.info(message: "[DBController] Sleeping indefinitely")
-                sleep(UInt32.max)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
 
