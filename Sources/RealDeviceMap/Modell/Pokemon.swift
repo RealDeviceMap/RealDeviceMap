@@ -386,7 +386,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let cpMultiplier = encounterData.wildPokemon.pokemonData.cpMultiplier
             let level: UInt8
             if cpMultiplier < 0.734 {
-                level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier - 2.838007664 * cpMultiplier + 0.8539209906))
+                level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier -
+                                    2.838007664 * cpMultiplier + 0.8539209906))
             } else {
                 level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
             }
@@ -681,7 +682,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if updateIV || setIVForWeather {
                 ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, " +
                         "weight = ?, size = ?, capture_1 = ?, capture_2 = ?, capture_3 = ?, " +
-                        "shiny = ?, display_pokemon_id = ?, pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?,"
+                        "shiny = ?, display_pokemon_id = ?, pvp_rankings_great_league = ?, " +
+                        "pvp_rankings_ultra_league = ?,"
             } else {
                 ivSQL = ""
             }
