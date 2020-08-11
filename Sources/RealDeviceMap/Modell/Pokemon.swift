@@ -377,29 +377,70 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.shiny = encounterData.wildPokemon.pokemonData.pokemonDisplay.shiny
         self.username = username
 
-        if encounterData.hasCaptureProbability {
-            self.capture1 = Double(encounterData.captureProbability.captureProbability[0])
-            self.capture2 = Double(encounterData.captureProbability.captureProbability[1])
-            self.capture3 = Double(encounterData.captureProbability.captureProbability[2])
-        }
-        let cpMultiplier = encounterData.wildPokemon.pokemonData.cpMultiplier
-        let level: UInt8
-        if cpMultiplier < 0.734 {
-            level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier - 2.838007664 * cpMultiplier + 0.8539209906))
-        } else {
-            level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
-        }
-        self.level = level
-        self.isDitto = Pokemon.isDittoDisguised(pokemonId: self.pokemonId,
-                                                level: self.level ?? 0,
-                                                weather: self.weather ?? 0,
-                                                atkIv: self.atkIv ?? 0,
-                                                defIv: self.defIv ?? 0,
-                                                staIv: self.staIv ?? 0
-        )
-        if self.isDitto {
-            Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(self.pokemonId)")
-            self.setDittoAttributes(displayPokemonId: self.pokemonId)
+        if hasIvChanges {
+            if encounterData.hasCaptureProbability {
+                self.capture1 = Double(encounterData.captureProbability.captureProbability[0])
+                self.capture2 = Double(encounterData.captureProbability.captureProbability[1])
+                self.capture3 = Double(encounterData.captureProbability.captureProbability[2])
+            }
+            let cpMultiplier = encounterData.wildPokemon.pokemonData.cpMultiplier
+            let level: UInt8
+            if cpMultiplier < 0.734 {
+                level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier - 2.838007664 * cpMultiplier + 0.8539209906))
+            } else {
+                level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
+            }
+            self.level = level
+            self.isDitto = Pokemon.isDittoDisguised(pokemonId: self.pokemonId,
+                                                    level: self.level ?? 0,
+                                                    weather: self.weather ?? 0,
+                                                    atkIv: self.atkIv ?? 0,
+                                                    defIv: self.defIv ?? 0,
+                                                    staIv: self.staIv ?? 0
+            )
+            if self.isDitto {
+                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(self.pokemonId)")
+                self.setDittoAttributes(displayPokemonId: self.pokemonId)
+            }
+
+            if !Pokemon.noPVP {
+                let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
+                self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+                    pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+                    form: form == .unset ? nil : form,
+                    costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+                    iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+                    level: Double(self.level!),
+                    league: .great
+                ).map({ (ranking) -> [String: Any] in
+                    return [
+                        "pokemon": ranking.pokemon.pokemon.rawValue,
+                        "form": ranking.pokemon.form?.rawValue ?? 0,
+                        "rank": ranking.response?.rank as Any,
+                        "percentage": ranking.response?.percentage as Any,
+                        "cp": ranking.response?.ivs.first?.cp as Any,
+                        "level": ranking.response?.ivs.first?.level as Any
+                    ]
+                })
+
+                self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
+                    pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
+                    form: form == .unset ? nil : form,
+                    costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
+                    iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
+                    level: Double(self.level!),
+                    league: .ultra
+                ).map({ (ranking) -> [String: Any] in
+                    return [
+                        "pokemon": ranking.pokemon.pokemon.rawValue,
+                        "form": ranking.pokemon.form?.rawValue ?? 0,
+                        "rank": ranking.response?.rank as Any,
+                        "percentage": ranking.response?.percentage as Any,
+                        "cp": ranking.response?.ivs.first?.cp as Any,
+                        "level": ranking.response?.ivs.first?.level as Any
+                    ]
+                })
+            }
         }
 
         if self.spawnId == nil {
@@ -438,45 +479,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     self.expireTimestampVerified = true
                 }
             }
-        }
-
-        if !Pokemon.noPVP {
-            let form = encounterData.wildPokemon.pokemonData.pokemonDisplay.form
-            self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-                pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
-                form: form == .unset ? nil : form,
-                costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
-                iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
-                level: Double(self.level!),
-                league: .great
-            ).map({ (ranking) -> [String: Any] in
-                return [
-                    "pokemon": ranking.pokemon.pokemon.rawValue,
-                    "form": ranking.pokemon.form?.rawValue ?? 0,
-                    "rank": ranking.response?.rank as Any,
-                    "percentage": ranking.response?.percentage as Any,
-                    "cp": ranking.response?.ivs.first?.cp as Any,
-                    "level": ranking.response?.ivs.first?.level as Any
-                ]
-            })
-
-            self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
-                pokemon: encounterData.wildPokemon.pokemonData.pokemonID,
-                form: form == .unset ? nil : form,
-                costume: encounterData.wildPokemon.pokemonData.pokemonDisplay.costume,
-                iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
-                level: Double(self.level!),
-                league: .ultra
-            ).map({ (ranking) -> [String: Any] in
-                return [
-                    "pokemon": ranking.pokemon.pokemon.rawValue,
-                    "form": ranking.pokemon.form?.rawValue ?? 0,
-                    "rank": ranking.response?.rank as Any,
-                    "percentage": ranking.response?.percentage as Any,
-                    "cp": ranking.response?.ivs.first?.cp as Any,
-                    "level": ranking.response?.ivs.first?.level as Any
-                ]
-            })
         }
 
         self.updated = UInt32(Date().timeIntervalSince1970)
@@ -545,13 +547,14 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let sql = """
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
-                    level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id, username, gender,
+                    level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id,
+                    pvp_rankings_great_league, pvp_rankings_ultra_league, username, gender,
                     form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                    expire_timestamp_verified, pvp_rankings_great_league, pvp_rankings_ultra_league
+                    expire_timestamp_verified
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?, ?
+                    ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?
                 )
             """
             self.updated = now
@@ -595,7 +598,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.cellId = oldPokemon!.cellId
             }
 
-            if oldPokemon!.spawnId != nil && self.spawnId == nil {
+            if oldPokemon!.spawnId != nil {
                 self.spawnId = oldPokemon!.spawnId
                 self.lat = oldPokemon!.lat
                 self.lon = oldPokemon!.lon
@@ -627,7 +630,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
 
-            if updateIV && oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
+            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
                 setIVForWeather = false
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
@@ -678,7 +681,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             if updateIV || setIVForWeather {
                 ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, " +
                         "weight = ?, size = ?, capture_1 = ?, capture_2 = ?, capture_3 = ?, " +
-                        "shiny = ?, display_pokemon_id = ?,"
+                        "shiny = ?, display_pokemon_id = ?, pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?,"
             } else {
                 ivSQL = ""
             }
@@ -693,8 +696,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 UPDATE pokemon
                 SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) username = ?,
                     gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(),
-                    first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?,
-                    pvp_rankings_great_league = ?, pvp_rankings_ultra_league = ?
+                    first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?
                 WHERE id = ?
             """
             self.updated = now
@@ -721,6 +723,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             mysqlStmt.bindParam(capture3)
             mysqlStmt.bindParam(shiny)
             mysqlStmt.bindParam(displayPokemonId)
+            mysqlStmt.bindParam(pvpRankingsGreatLeague?.jsonEncodeForceTry())
+            mysqlStmt.bindParam(pvpRankingsUltraLeague?.jsonEncodeForceTry())
         }
         mysqlStmt.bindParam(username)
         mysqlStmt.bindParam(gender)
@@ -736,8 +740,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         mysqlStmt.bindParam(cellId)
         mysqlStmt.bindParam(expireTimestampVerified)
-        mysqlStmt.bindParam(pvpRankingsGreatLeague?.jsonEncodeForceTry())
-        mysqlStmt.bindParam(pvpRankingsUltraLeague?.jsonEncodeForceTry())
 
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)

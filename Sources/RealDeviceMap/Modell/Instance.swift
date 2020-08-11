@@ -161,7 +161,7 @@ class Instance: Hashable {
             let count = result[2] as! Int64? ?? 0
             let data: [String: Any]
             if getData {
-                data = (try (result[3] as! String).jsonDecode() as? [String: Any]) ?? [:]
+                data = (result[3] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
             } else {
                 data = [:]
             }
@@ -199,7 +199,7 @@ class Instance: Hashable {
 
         let result = results.next()!
             let type = InstanceType.fromString(result[0] as! String)!
-            let data = (try (result[1] as! String).jsonDecode() as? [String: Any]) ?? [String: Any]()
+            let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
         return Instance(name: name, type: type, data: data, count: 0)
 
     }

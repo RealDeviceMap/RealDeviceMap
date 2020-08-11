@@ -237,7 +237,7 @@ class WebHookController {
     }
 
     private func sendEvents(events: [[String: Any]], url: String) {
-        guard let body = try? events.jsonEncodedString() else {
+        guard let body = events.jsonEncodeForceTry() else {
             Log.error(message: "[WebHookController] Failed to parse events into json string")
             return
         }

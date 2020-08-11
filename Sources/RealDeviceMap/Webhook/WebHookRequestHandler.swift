@@ -105,21 +105,17 @@ class WebHookRequestHandler {
 
         let json: [String: Any]
         let isMadData = request.header(.origin) != nil
-        do {
-            if isMadData, let madRaw = try request.postBodyString?.jsonDecode() as? [[String: Any]] {
-                json = ["contents": madRaw,
-                        "uuid": request.header(.origin)!,
-                        "username": "PogoDroid"]
-            } else if let rdmRaw = try request.postBodyString?.jsonDecode() as? [String: Any] {
-                json = rdmRaw
-            } else {
-                response.respondWithError(status: .badRequest)
-                return
-            }
-        } catch {
+        if isMadData, let madRaw = request.postBodyString?.jsonDecodeForceTry() as? [[String: Any]] {
+            json = ["contents": madRaw,
+                    "uuid": request.header(.origin)!,
+                    "username": "PogoDroid"]
+        } else if let rdmRaw = request.postBodyString?.jsonDecodeForceTry() as? [String: Any] {
+            json = rdmRaw
+        } else {
             response.respondWithError(status: .badRequest)
             return
         }
+
         let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
@@ -725,17 +721,9 @@ class WebHookRequestHandler {
 
     static func controlerHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
 
-        let jsonO: [String: Any]?
-        let typeO: String?
-        let uuidO: String?
-        do {
-            jsonO = try request.postBodyString?.jsonDecode() as? [String: Any]
-            typeO = jsonO?["type"] as? String
-            uuidO = jsonO?["uuid"] as? String
-        } catch {
-            response.respondWithError(status: .badRequest)
-            return
-        }
+        let jsonO = request.postBodyString?.jsonDecodeForceTry() as? [String: Any]
+        let typeO = jsonO?["type"] as? String
+        let uuidO = jsonO?["uuid"] as? String
 
         guard let type = typeO, let uuid = uuidO else {
             response.respondWithError(status: .badRequest)
