@@ -431,10 +431,13 @@ class AutoInstanceController: InstanceControllerProto {
                 }
 
                 stopsLock.lock()
-                if todayStopsTries![pokestop] == nil {
-                    todayStopsTries![pokestop] = 1
+                if todayStopsTries == nil {
+                    todayStopsTries = [:]
+                }
+                if let tries = todayStopsTries![pokestop] {
+                    todayStopsTries![pokestop] = tries + 1
                 } else {
-                    todayStopsTries![pokestop]! += 1
+                    todayStopsTries![pokestop] = 1
                 }
                 if todayStops!.isEmpty {
                     lastDoneCheck = Date()
