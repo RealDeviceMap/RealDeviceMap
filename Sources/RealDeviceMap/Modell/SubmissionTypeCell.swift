@@ -77,7 +77,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
             questFilterExclude: nil,
             pokestopFilterExclude: nil
         ).filter({ (pokestop) -> Bool in
-            return pokestop.sponsorId == nil || pokestop.sponsorId == 0
+            return pokestop.partnerId == nil || pokestop.partnerId == ""
         })
         let allGyms = try Gym.getAll(
             mysql: mysql,
@@ -91,7 +91,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
             raidFilterExclude: nil,
             gymFilterExclude: nil
         ).filter({ (gym) -> Bool in
-            return gym.sponsorId == nil || gym.sponsorId == 0
+            return gym.partnerId == nil || gym.partnerId == ""
         })
         let allStopCoods = allStops.map { (pokestop) -> CLLocationCoordinate2D in
             return CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
