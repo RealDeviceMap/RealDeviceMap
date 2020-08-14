@@ -214,12 +214,13 @@ class IVInstanceController: InstanceControllerProto {
 
     private func lastIndexOf(pokemonId: UInt16) -> Int? {
 
-        let targetPriority = pokemonList.firstIndex(of: pokemonId)!
+        guard let targetPriority = pokemonList.firstIndex(of: pokemonId) else {
+            return nil
+        }
 
         var i = 0
         for pokemon in pokemonQueue {
-            let priority = pokemonList.firstIndex(of: pokemon.pokemonId)!
-            if targetPriority < priority {
+            if let priority = pokemonList.firstIndex(of: pokemon.pokemonId), targetPriority < priority {
                 return i
             }
             i += 1
