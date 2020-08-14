@@ -117,7 +117,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var name: String?
     var url: String?
     var sponsorId: UInt16?
-    var partnerId: UInt16?
+    var partnerId: String?
     var updated: UInt32?
 
     var questType: UInt32?
@@ -140,7 +140,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
          lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?,
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
          questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?,
-         pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?, partnerId: UInt16?) {
+         pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?, partnerId: String?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -173,9 +173,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if fortData.sponsor != .unsetSponsor {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
-        Log.error(message: "[POKESTOP] Partner ID  \(fortData.partnerID)")
         if fortData.partnerID != "" {
-            self.partnerId = UInt16(fortData.partnerID)
+            Log.error(message: "[POKESTOP] Partner ID  \(fortData.partnerID)")
+            self.partnerId = fortData.partnerID
         } 
         self.enabled = fortData.enabled
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
@@ -424,7 +424,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, cell_id, lure_id,
                     pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, partner_id, updated, first_seen_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
             """
             self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
@@ -784,7 +784,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 gruntType = nil
             }
             let sponsorId = result[20] as? UInt16
-            let partnerId = result[21] as? UInt16
+            let partnerId = result[21] as? String
 
             pokestops.append(Pokestop(
                 id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
@@ -874,7 +874,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let incidentExpireTimestamp = result[18] as? UInt32
             let gruntType = result[19] as? UInt16
             let sponsorId = result[20] as? UInt16
-            let partnerId = result[21] as? UInt16
+            let partnerId = result[21] as? String
 
             pokestops.append(Pokestop(
                 id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
@@ -1003,7 +1003,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let incidentExpireTimestamp = result[18] as? UInt32
         let gruntType = result[19] as? UInt16
         let sponsorId = result[20] as? UInt16
-        let partnerId = result[21] as? UInt16
+        let partnerId = result[21] as? String
 
         let pokestop = Pokestop(
             id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
