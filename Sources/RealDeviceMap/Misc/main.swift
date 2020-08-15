@@ -12,6 +12,9 @@ import PerfectThread
 import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
+import Backtrace
+
+Backtrace.install()
 
 let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
 extension Log {
@@ -54,6 +57,23 @@ if !backups.exists {
 // Init DBController
 Log.info(message: "[MAIN] Starting Database Controller")
 _ = DBController.global
+
+// Init MemoryCache
+if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
+    let memoryCacheClearInterval = ProcessInfo.processInfo.environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
+    let memoryCacheKeepTime = ProcessInfo.processInfo.environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    Log.info(message:
+        "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) and keep time \(memoryCacheKeepTime)"
+    )
+    Pokestop.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    Gym.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    SpawnPoint.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    Weather.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    // 900 3600
+} else {
+    Log.info(message: "[MAIN] Memory Cache deactivated")
+}
 
 // Load Groups
 Log.info(message: "[MAIN] Loading groups")
@@ -198,7 +218,9 @@ do {
     }
     WebReqeustHandler.avilableFormsJson = try avilableForms.jsonEncodedString()
 } catch {
-    Log.error(message: "Failed to load forms. Frontend will only display default forms. Error: \(error)")
+    Log.error(
+        message: "Failed to load forms. Frontend will only display default forms. Error: \(error.localizedDescription)"
+    )
 }
 
 Log.info(message: "[MAIN] Loading Avilable Items")
@@ -208,8 +230,14 @@ for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
 }
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
-Log.info(message: "[MAIN] Getting PVP Stats")
-_ = PVPStatsManager.global
+Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
+
+if !Pokemon.noPVP {
+    Log.info(message: "[MAIN] Getting PVP Stats")
+    _ = PVPStatsManager.global
+} else {
+    Log.info(message: "[MAIN] PVP Stats deactivated")
+}
 
 Log.info(message: "[MAIN] Starting Webhook")
 WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
@@ -265,6 +293,9 @@ startupServerContext = nil
 
 ApiRequestHandler.start = Date()
 
+// Ignore SIGPIPE
+signal(SIGPIPE, SIG_IGN)
+
 Log.info(message: "[MAIN] Starting Webserves")
 do {
     try HTTPServer.launch(
@@ -274,7 +305,7 @@ do {
         ]
     )
 } catch {
-    let message = "Failed to launch Servers: \(error)"
+    let message = "Failed to launch Servers: \(error.localizedDescription)"
     Log.critical(message: message)
     fatalError(message)
 }

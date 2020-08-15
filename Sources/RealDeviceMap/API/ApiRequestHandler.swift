@@ -147,9 +147,7 @@ class ApiRequestHandler {
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
                 gymFilterExclude: gymFilterExclude
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
         let permShowQuests =  perms.contains(.viewMapQuest)
@@ -161,9 +159,7 @@ class ApiRequestHandler {
                 questsOnly: !showPokestops, showQuests: permShowQuests, showLures: permShowLures,
                 showInvasions: permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         let permShowIV = perms.contains(.viewMapIV)
         if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon) {
@@ -171,56 +167,40 @@ class ApiRequestHandler {
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
                 pokemonFilterIV: pokemonFilterIV
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint) {
             data["spawnpoints"] = try? SpawnPoint.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 updated: lastUpdate, spawnpointFilterExclude: spawnpointFilterExclude
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if isPost && permViewMap && showActiveDevices && perms.contains(.viewMapDevice) {
             data["active_devices"] = try? Device.getAll(
                 mysql: mysql
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if lastUpdate == 0 && isPost && showSubmissionPlacementCells && perms.contains(.viewMapSubmissionCells) {
             let result = try? SubmissionPlacementCell.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!
             )
-            data["submission_placement_cells"] = result?.cells.map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
-            data["submission_placement_rings"] = result?.rings.map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            data["submission_placement_cells"] = result?.cells
+            data["submission_placement_rings"] = result?.rings
         }
         if lastUpdate == 0 && isPost && showSubmissionTypeCells && perms.contains(.viewMapSubmissionCells) {
             data["submission_type_cells"] = try? SubmissionTypeCell.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if isPost && showWeathers && perms.contains(.viewMapWeather) {
 			data["weather"] = try? Weather.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate
-            ).map({ (object) -> [String: Any] in
-                return object.getJSONValues()
-            })
+            )
         }
         if permViewMap && showPokemonFilter {
 
@@ -1511,9 +1491,12 @@ class ApiRequestHandler {
 
         if showStatus && perms.contains(.admin) {
             let passed = UInt32(Date().timeIntervalSince(start)).secondsToHoursMinutesSeconds()
+            let limits = WebHookRequestHandler.getThreadLimits()
             data["status"] = [
                 "processing": [
-                    "current": WebHookRequestHandler.threadLimitCurrent,
+                    "current": limits.current,
+                    "total": limits.total,
+                    "ignored": limits.ignored,
                     "max": WebHookRequestHandler.threadLimitMax
                 ],
                 "uptime": [

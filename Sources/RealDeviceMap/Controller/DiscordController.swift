@@ -329,7 +329,9 @@ class DiscordController {
 
     public func deleteDiscordRule(priority: Int32) {
         discordRulesLock.lock()
-        if let index = discordRules.index(of: DiscordRule(priority: priority, serverId: 0, roleId: 0, groupName: "")) {
+        if let index = discordRules.firstIndex(
+            of: DiscordRule(priority: priority, serverId: 0, roleId: 0, groupName: "")
+        ) {
             discordRules.remove(at: index)
         }
         discordRules.sort { (lhs, rhs) -> Bool in
@@ -340,8 +342,9 @@ class DiscordController {
 
     public func updateDiscordRule(oldPriority: Int32, discordRule: DiscordRule) {
         discordRulesLock.lock()
-        if let index = discordRules.index(of: DiscordRule(priority: oldPriority, serverId: 0,
-                                                          roleId: 0, groupName: "")) {
+        if let index = discordRules.firstIndex(
+            of: DiscordRule(priority: oldPriority, serverId: 0, roleId: 0, groupName: "")
+        ) {
             discordRules.remove(at: index)
         }
         discordRules.append(discordRule)
