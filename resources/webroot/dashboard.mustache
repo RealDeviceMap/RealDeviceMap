@@ -12,6 +12,8 @@
             success: function (data) {
                 $('#processing_current').text(data.data.status.processing.current)
                 $('#processing_max').text(data.data.status.processing.max)
+                $('#processing_total').text(data.data.status.processing.total)
+                $('#processing_processed').text(data.data.status.processing.total - data.data.status.processing.ignored)
                 $('#uptime_date').text(new Date(data.data.status.uptime.date * 1000).toLocaleString())
                 $('#uptime_hours').text(data.data.status.uptime.hours)
                 $('#uptime_minutes').text(data.data.status.uptime.minutes)
@@ -78,7 +80,7 @@
 
 </div>
 <p class="mt-3" align="center">
-    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span>
+    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span> (<span id="processing_processed">?</span>/<span id="processing_total">?</span>)
 </p>
 <p class="mt-3" align="center">
     Uptime: <span id="uptime_date">?</span> (<span id="uptime_hours">?</span>h <span id="uptime_minutes">?</span>m <span id="uptime_seconds">?</span>s)
