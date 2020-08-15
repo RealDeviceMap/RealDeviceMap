@@ -5,7 +5,7 @@
 //  Created by versx on 15.09.19.
 //
 //  swiftlint:disable:next superfluous_disable_command
-//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity force_cast
+//  swiftlint:disable type_body_length function_body_length cyclomatic_complexity force_cast file_length
 
 import Foundation
 import PerfectLib
@@ -98,6 +98,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     var warnWeather: Bool? = false
     var updated: UInt32?
 
+    static var cache: MemoryCache<Weather>?
+
     init(id: Int64, level: UInt8, latitude: Double, longitude: Double, gameplayCondition: UInt8, windDirection: Int32,
          cloudLevel: UInt8, rainLevel: UInt8, windLevel: UInt8, snowLevel: UInt8, fogLevel: UInt8, sELevel: UInt8,
          severity: UInt8?, warnWeather: Bool?, updated: UInt32?) {
@@ -139,45 +141,49 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         self.updated = updated
     }
 
-    public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
+    public func save(mysql: MySQL?=nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[WEATHER] Failed to connect to database.")
             throw DBController.DBError()
         }
 
-        WebHookController.global.addWeatherEvent(weather: self)
+        let oldWeather: Weather?
+        do {
+            oldWeather = try Weather.getWithId(mysql: mysql, id: id)
+        } catch {
+            oldWeather = nil
+        }
 
-        var sql = """
-        INSERT INTO `weather` (
-            id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level, rain_level, wind_level,
-            snow_level, fog_level, special_effect_level, severity, warn_weather, updated
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
-        """
-        if update {
-            sql += """
-            ON DUPLICATE KEY UPDATE
-            level=VALUES(level),
-            latitude=VALUES(latitude),
-            longitude=VALUES(longitude),
-            gameplay_condition=VALUES(gameplay_condition),
-            wind_direction=VALUES(wind_direction),
-            cloud_level=VALUES(cloud_level),
-            rain_level=VALUES(rain_level),
-            wind_level=VALUES(wind_level),
-            snow_level=VALUES(snow_level),
-            fog_level=VALUES(fog_level),
-            special_effect_level=VALUES(special_effect_level),
-            severity=VALUES(severity),
-            warn_weather=VALUES(warn_weather),
-            updated=VALUES(updated)
+        let sql: String
+
+        let now = UInt32(Date().timeIntervalSince1970)
+        if let oldWeather = oldWeather {
+            guard Weather.shouldUpdate(old: oldWeather, new: self) else {
+                return
+            }
+            sql = """
+            UPDATE `weather`
+            SET level = ?, latitude = ?, longitude = ?, gameplay_condition = ?, wind_direction = ?, cloud_level = ?,
+                rain_level = ?, wind_level = ?, snow_level = ?, fog_level = ?, special_effect_level = ?, severity = ?,
+                warn_weather = ?, updated = UNIX_TIMESTAMP()
+            WHERE id = ?
+            """
+        } else {
+            sql = """
+            INSERT INTO `weather` (
+                id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level, rain_level, wind_level,
+                snow_level, fog_level, special_effect_level, severity, warn_weather, updated
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())
             """
         }
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(id)
+        if oldWeather == nil {
+            mysqlStmt.bindParam(id)
+        }
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(latitude)
         mysqlStmt.bindParam(longitude)
@@ -191,12 +197,88 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         mysqlStmt.bindParam(sELevel)
         mysqlStmt.bindParam(severity)
         mysqlStmt.bindParam(warnWeather)
+        if oldWeather != nil {
+            mysqlStmt.bindParam(id)
+        }
+
+        self.updated = now
+
+        guard mysqlStmt.execute() else {
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[WEATHER] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[WEATHER] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
+            throw DBController.DBError()
+        }
+
+        Weather.cache?.set(id: id.toString(), value: self)
+
+        if oldWeather == nil {
+            WebHookController.global.addWeatherEvent(weather: self)
+        } else if oldWeather!.gameplayCondition != self.gameplayCondition ||
+                  oldWeather!.warnWeather != self.warnWeather {
+            WebHookController.global.addWeatherEvent(weather: self)
+        }
+    }
+
+    public static func getWithId(mysql: MySQL?=nil, id: Int64) throws -> Weather? {
+
+        if let cached = cache?.get(id: id.toString()) {
+            return cached
+        }
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[WEATHER] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+        SELECT id, level, latitude, longitude, gameplay_condition, wind_direction, cloud_level,
+               rain_level, wind_level, snow_level, fog_level, special_effect_level, severity, warn_weather, updated
+        FROM weather
+        WHERE id = ?
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[WEATHER] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return nil
+        }
+        let result = results.next()!
+
+        let id = result[0] as! Int64
+        let level = result[1] as! UInt8
+        let latitude = result[2] as! Double
+        let longitude = result[3] as! Double
+        let gameplayCondition = result[4] as! UInt8
+        let windDirection = result[5] as! Int32
+        let cloudLevel = result[6] as! UInt8
+        let rainLevel = result[7] as! UInt8
+        let windLevel = result[8] as! UInt8
+        let snowLevel = result[9] as! UInt8
+        let fogLevel = result[10] as! UInt8
+        let sELevel = result[11] as! UInt8
+        let severity = result[12] as! UInt8
+        let warnWeather = (result[13] as? UInt8)!.toBool()
+        let updated = result[14] as! UInt32
+
+        let weather = Weather(
+            id: id, level: level, latitude: latitude, longitude: longitude, gameplayCondition: gameplayCondition,
+            windDirection: windDirection, cloudLevel: cloudLevel, rainLevel: rainLevel, windLevel: windLevel,
+            snowLevel: snowLevel, fogLevel: fogLevel, sELevel: sELevel, severity: severity,
+            warnWeather: warnWeather, updated: updated
+        )
+        cache?.set(id: weather.id.toString(), value: weather)
+        return weather
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double,
@@ -340,6 +422,24 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         }
         return weather
 
+    }
+
+    public static func shouldUpdate(old: Weather, new: Weather) -> Bool {
+        return
+            new.id != old.id ||
+            new.level != old.level ||
+            new.gameplayCondition != old.gameplayCondition ||
+            new.windDirection != old.windDirection ||
+            new.cloudLevel != old.cloudLevel ||
+            new.rainLevel != old.rainLevel ||
+            new.windLevel != old.windLevel ||
+            new.snowLevel != old.snowLevel ||
+            new.fogLevel != old.fogLevel ||
+            new.sELevel != old.sELevel ||
+            new.severity != old.severity ||
+            new.warnWeather != old.warnWeather ||
+            fabs(new.latitude - old.latitude) >= 0.000001 ||
+            fabs(new.longitude - old.longitude) >= 0.000001
     }
 
 }

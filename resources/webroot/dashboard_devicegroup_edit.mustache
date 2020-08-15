@@ -17,15 +17,6 @@
                 <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="30">
             </div>
             <div class="form-group">
-                Select Instance
-                <select class="form-control" name="instance" required>
-                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose an Instance</option>
-                    {{#instances}}
-                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                    {{/instances}}
-                </select>
-            </div>
-            <div class="form-group">
                 Select Device(s)
                 <select class="form-control" style="height: 400px" name="devices" multiple required>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Device(s)</option>
@@ -37,12 +28,6 @@
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <input type="hidden" name="old_devices" value="{{old_devices}}">
             <button type="submit" class="btn btn-primary">Update</button>
-        </form>
-        <br>
-        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to delete the device group {{old_name}}?');">
-            <input type="hidden" name="_csrf" value="{{csrf}}">
-            <input type="hidden" name="delete" value="true">
-            <button type="submit" class="btn btn-danger">Delete</button>
         </form>
     </div>
     <br>

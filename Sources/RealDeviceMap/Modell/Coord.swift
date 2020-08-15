@@ -20,8 +20,8 @@ class Coord: JSONConvertibleObject, Hashable {
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 
-    public var hashValue: Int {
-        return "\(lat.rounded(toStringWithDecimals: 10));\(lon.rounded(toStringWithDecimals: 10))".hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine("\(lat.rounded(toStringWithDecimals: 10));\(lon.rounded(toStringWithDecimals: 10))".hashValue)
     }
 
     init(lat: Double, lon: Double) {

@@ -7,6 +7,7 @@
 
 import PerfectMySQL
 import PerfectLib
+import Foundation
 
 extension MySQLStmt {
 

@@ -10,7 +10,6 @@
 import Foundation
 import PerfectLib
 import PerfectThread
-import cURL
 import PerfectCURL
 
 class WebHookController {
@@ -146,85 +145,79 @@ class WebHookController {
                         var events = [[String: Any]]()
 
                         self.pokemonEventLock.lock()
-                        for pokemonEvent in self.pokemonEvents {
-                            events.append(pokemonEvent.value.getWebhookValues(type: "pokemon"))
-                        }
-                        self.pokemonEvents = [String: Pokemon]()
+                        let pokemonEvents = self.pokemonEvents
+                        self.pokemonEvents = [:]
                         self.pokemonEventLock.unlock()
+                        events += pokemonEvents.map({$0.value.getWebhookValues(type: "pokemon")})
 
                         self.pokestopEventLock.lock()
-                        for pokestopEvent in self.pokestopEvents {
-                            events.append(pokestopEvent.value.getWebhookValues(type: "pokestop"))
-                        }
-                        self.pokestopEvents = [String: Pokestop]()
+                        let pokestopEvents = self.pokestopEvents
+                        self.pokestopEvents = [:]
                         self.pokestopEventLock.unlock()
+                        events += pokestopEvents.map({$0.value.getWebhookValues(type: "pokestop")})
 
                         self.lureEventLock.lock()
-                        for lureEvent in self.lureEvents {
-                            events.append(lureEvent.value.getWebhookValues(type: "lure"))
-                        }
-                        self.lureEvents = [String: Pokestop]()
+                        let lureEvents = self.lureEvents
+                        self.lureEvents = [:]
                         self.lureEventLock.unlock()
+                        events += lureEvents.map({$0.value.getWebhookValues(type: "lure")})
 
                         self.invasionEventLock.lock()
-                        for invasionEvent in self.invasionEvents {
-                            events.append(invasionEvent.value.getWebhookValues(type: "invasion"))
-                        }
+                        let invasionEvents = self.invasionEvents
                         self.invasionEvents = [String: Pokestop]()
                         self.invasionEventLock.unlock()
+                        events += invasionEvents.map({$0.value.getWebhookValues(type: "invasion")})
 
                         self.questEventLock.lock()
-                        for questEvent in self.questEvents {
-                            events.append(questEvent.value.getWebhookValues(type: "quest"))
-                        }
+                        let questEvents = self.questEvents
                         self.questEvents = [String: Pokestop]()
                         self.questEventLock.unlock()
+                        events += questEvents.map({$0.value.getWebhookValues(type: "quest")})
 
                         self.gymEventLock.lock()
-                        for gymEvent in self.gymEvents {
-                            events.append(gymEvent.value.getWebhookValues(type: "gym"))
-                        }
+                        let gymEvents = self.gymEvents
                         self.gymEvents = [String: Gym]()
                         self.gymEventLock.unlock()
+                        events += gymEvents.map({$0.value.getWebhookValues(type: "gym")})
 
                         self.gymInfoEventLock.lock()
-                        for gymInfoEvent in self.gymInfoEvents {
-                            events.append(gymInfoEvent.value.getWebhookValues(type: "gym-info"))
-                        }
+                        let gymInfoEvents = self.gymInfoEvents
                         self.gymInfoEvents = [String: Gym]()
                         self.gymInfoEventLock.unlock()
+                        events += gymInfoEvents.map({$0.value.getWebhookValues(type: "gym-info")})
 
                         self.raidEventLock.lock()
-                        for raidEvent in self.raidEvents {
-                            events.append(raidEvent.value.getWebhookValues(type: "raid"))
-                        }
+                        let raidEvents = self.raidEvents
                         self.raidEvents = [String: Gym]()
                         self.raidEventLock.unlock()
+                        events += raidEvents.map({$0.value.getWebhookValues(type: "raid")})
 
                         self.eggEventLock.lock()
-                        for eggEvent in self.eggEvents {
-                            events.append(eggEvent.value.getWebhookValues(type: "egg"))
-                        }
+                        let eggEvents = self.eggEvents
                         self.eggEvents = [String: Gym]()
                         self.eggEventLock.unlock()
+                        events += eggEvents.map({$0.value.getWebhookValues(type: "egg")})
 
                         self.weatherEventLock.lock()
-                        for weatherEvent in self.weatherEvents {
-                            events.append(weatherEvent.value.getWebhookValues(type: "weather"))
-                        }
+                        let weatherEvents = self.weatherEvents
                         self.weatherEvents = [Int64: Weather]()
                         self.weatherEventLock.unlock()
+                        events += weatherEvents.map({$0.value.getWebhookValues(type: "weather")})
 
                         self.accountEventLock.lock()
-                        for accountEvent in self.accountEvents {
-                            events.append(accountEvent.value.getWebhookValues(type: "account"))
-                        }
+                        let accountEvents = self.accountEvents
                         self.accountEvents = [String: Account]()
                         self.accountEventLock.unlock()
+                        events += accountEvents.map({$0.value.getWebhookValues(type: "account")})
 
                         if !events.isEmpty {
+                            guard let body = events.jsonEncodeForceTry() else {
+                                Log.error(message: "[WebHookController] Failed to parse events into json string")
+                                continue
+                            }
+                            let byteArray = [UInt8](body.utf8)
                             for url in self.webhookURLStrings {
-                                self.sendEvents(events: events, url: url)
+                                self.sendEvents(data: byteArray, url: url)
                             }
                         }
 
@@ -237,26 +230,17 @@ class WebHookController {
 
     }
 
-    private func sendEvents(events: [[String: Any]], url: String) {
-
-        guard let body = try? events.jsonEncodedString() else {
-            Log.error(message: "[WebHookController] Failed to parse events into json string")
-            return
-        }
-        let byteArray = [UInt8](body.utf8)
-
-        let curlObject = CURL(url: url)
-
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Accept: application/json")
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Cache-Control: no-cache")
-        curlObject.setOption(CURLOPT_USERAGENT, s: "RealDeviceMap")
-        curlObject.setOption(CURLOPT_POST, int: 1)
-        curlObject.setOption(CURLOPT_POSTFIELDSIZE, int: byteArray.count)
-        curlObject.setOption(CURLOPT_COPYPOSTFIELDS, v: UnsafeMutablePointer(mutating: byteArray))
-        curlObject.setOption(CURLOPT_HTTPHEADER, s: "Content-Type: application/json")
-
-        curlObject.perform { (_, _, _) in }
-
+    private func sendEvents(data: [UInt8], url: String) {
+        let request = CURLRequest(
+            url,
+            .httpMethod(.post),
+            .postData(data),
+            .addHeader(.contentType, "application/json"),
+            .addHeader(.accept, "application/json"),
+            .addHeader(.cacheControl, "no-cache"),
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+        )
+        request.perform { (_) in }
     }
 
 }

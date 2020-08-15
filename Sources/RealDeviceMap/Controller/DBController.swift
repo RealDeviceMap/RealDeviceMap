@@ -157,13 +157,8 @@ class DBController {
         while !done {
             guard let mysqlTemp = self.mysql else {
                 let message = "Failed to connect to database (as \(self.rootUsername)) while initializing. " +
-                              "Try: \(count)/10"
-                if count == 10 {
-                    Log.critical(message: "[DBController] " + message)
-                    fatalError(message)
-                } else {
-                    Log.warning(message: "[DBController] " + message)
-                }
+                              "Try: \(count)"
+                Log.warning(message: "[DBController] " + message)
                 count += 1
                 Threading.sleep(seconds: 2.5)
                 continue
@@ -173,6 +168,8 @@ class DBController {
             guard self.mysql != nil else {
                 let message = "Failed to connect to database (as \(self.username)) while initializing."
                 Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
             asRoot = true
@@ -187,6 +184,8 @@ class DBController {
             let versionResult = versionResults.next()?[0] else {
             let message = "Failed to get db type: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
         if versionResult.lowercased().contains(string: "mariadb") {
@@ -206,6 +205,8 @@ class DBController {
             guard mysql.query(statement: stDistancephereSQL) else {
                 let message = "Failed to create ST_Distance_Sphere function: (\(mysql.errorMessage())"
                 Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
         }
@@ -220,6 +221,8 @@ class DBController {
         guard mysql.query(statement: createMetadataTableSQL) else {
             let message = "Failed to create metadata table: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
 
@@ -233,6 +236,8 @@ class DBController {
         guard mysql.query(statement: getDBVersionSQL) else {
             let message = "Failed to get current database version: (\(mysql.errorMessage())"
             Log.critical(message: "[DBController] " + message)
+            Log.info(message: "[DBController] Threading.sleeping indefinitely")
+            Threading.sleep(seconds: Double(UInt32.max))
             fatalError(message)
         }
 
@@ -300,6 +305,8 @@ class DBController {
                 guard mysqlStmtTables.execute() else {
                     let message = "Failed to execute query. (\(mysqlStmtTables.errorMessage())"
                     Log.critical(message: "[DBController] " + message)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
                 let results = mysqlStmtTables.results()
@@ -332,6 +339,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Command Backup: \(resultSchema as Any)"
                     Log.critical(message: "[DBController] " + message)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -346,6 +355,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Command Backup \(resultTrigger as Any)"
                     Log.critical(message: "[DBController] " + message)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -360,6 +371,8 @@ class DBController {
                    ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                     let message = "Failed to create Data Backup \(resultData as Any)"
                     Log.critical(message: "[DBController] " + message)
+                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                    Threading.sleep(seconds: Double(UInt32.max))
                     fatalError(message)
                 }
 
@@ -375,8 +388,10 @@ class DBController {
                 sqlFile.close()
             } catch {
                 sqlFile.close()
-                let message = "Migration failed: (\(error.localizedDescription))"
+                let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
 
@@ -387,18 +402,8 @@ class DBController {
                     guard mysql.query(statement: sql) else {
                         let message = "Migration Failed: (\(mysql.errorMessage()))"
                         Log.critical(message: "[DBController] " + message)
-                        if ProcessInfo.processInfo.environment["NO_BACKUP"] == nil {
-                            for i in 0...10 {
-                                Log.info(message: "[DBController] Rolling back migration in \(10 - i) seconds")
-                                Threading.sleep(seconds: 1)
-                            }
-                            Log.info(message: "[DBController] Rolling back migration now. Do not kill RDM!")
-                            rollback(
-                                backupFileSchema: backupFileSchema,
-                                backupFileTrigger: backupFileTrigger,
-                                backupFileData: backupFileData
-                            )
-                        }
+                        Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                        Threading.sleep(seconds: Double(UInt32.max))
                         fatalError(message)
                     }
                 }
@@ -417,65 +422,14 @@ class DBController {
             guard mysql.query(statement: updateVersionSQL) else {
                 let message = "Migration Failed: (\(mysql.errorMessage()))"
                 Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
                 fatalError(message)
             }
 
             Log.info(message: "[DBController] Migration successful")
             migrate(mysql: mysql, fromVersion: fromVersion + 1, toVersion: toVersion)
         }
-    }
-
-    private func rollback(backupFileSchema: File, backupFileTrigger: File, backupFileData: File) {
-
-        #if os(macOS)
-        let mysqlCommand = "/usr/local/opt/mysql@5.7/bin/mysql"
-        #else
-        let mysqlCommand = "/usr/bin/mysql"
-        #endif
-
-        Log.info(message: "[DBController] Executing Schema backup...")
-        //  swiftlint:disable:next line_length
-        let commandSchema = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileSchema.path)")
-        if let result = commandSchema.runError(),
-               result.stringByReplacing(
-                string: "mysql: [Warning] Using a password on the command line interface can be insecure.",
-                withString: ""
-               ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-            Log.error(message: "[DBController] Executing Schema backup failed: \(result)")
-        } else {
-            Log.info(message: "[DBController] Executing Schema backup done")
-        }
-
-        Log.info(message: "[DBController] Executing Trigger backup...")
-        //  swiftlint:disable:next line_length
-        let commandTrigger = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileTrigger.path)")
-        if let result = commandTrigger.runError(),
-           result.stringByReplacing(
-            string: "mysql: [Warning] Using a password on the command line interface can be insecure.",
-            withString: ""
-           ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-            Log.error(message: "[DBController] Executing Trigger backup failed: \(result)")
-        } else {
-            Log.info(message: "[DBController] Executing Trigger backup done")
-        }
-
-        Log.info(message: "[DBController] Executing Data backup...")
-        //  swiftlint:disable:next line_length
-        let commandData = Shell("bash", "-c", mysqlCommand + " \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") < \(backupFileData.path)")
-        if let result = commandData.runError(),
-           result.stringByReplacing(
-            string: "mysql: [Warning] Using a password on the command line interface can be insecure.",
-            withString: ""
-           ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-            Log.error(message: "[DBController] Executing Data backup failed: \(result)")
-        } else {
-            Log.info(message: "[DBController] Executing Data backup done")
-        }
-
-        Log.info(message: "[DBController] Database restored successfully!")
-        Log.info(message: "[DBController] Sleeping for 60s before restarting again. (Save to kill now)")
-        Threading.sleep(seconds: 60)
-
     }
 
 }

@@ -119,8 +119,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         ]
     }
 
-    public var hashValue: Int {
-        return id.hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 
     var id: String
@@ -152,6 +152,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var cellId: UInt64?
     var totalCp: UInt32?
     var sponsorId: UInt16?
+
+    var hasChanges = false
+
+    static var cache: MemoryCache<Gym>?
 
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?,
          lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?,
@@ -234,14 +238,27 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
         if !fortData.imageUrls.isEmpty {
-            self.url = fortData.imageUrls[0]
+            let url = fortData.imageUrls[0]
+            if self.url != url {
+                hasChanges = true
+            }
+            self.url = url
         }
-        self.name = fortData.name
+        let name = fortData.name
+        if self.name != name {
+            hasChanges = true
+        }
+        self.name = name
     }
 
     public func addDetails(gymInfo: POGOProtos_Networking_Responses_GymGetInfoResponse) {
-        self.name = gymInfo.name
-        self.url = gymInfo.url
+        let name = gymInfo.name
+        let url = gymInfo.url
+        if self.url != url || self.name != name {
+            hasChanges = true
+        }
+        self.name = name
+        self.url = url
     }
 
     public func save(mysql: MySQL?=nil) throws {
@@ -266,19 +283,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         updated = UInt32(Date().timeIntervalSince1970)
 
+        let now = UInt32(Date().timeIntervalSince1970)
         if oldGym == nil {
-            WebHookController.global.addGymEvent(gym: self)
-            WebHookController.global.addGymInfoEvent(gym: self)
-            let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
-            let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
-            let now = Date()
-
-            if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
-                WebHookController.global.addEggEvent(gym: self)
-            } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
-                WebHookController.global.addRaidEvent(gym: self)
-            }
-
             let sql = """
                 INSERT INTO gym (
                     id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
@@ -291,6 +297,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
                 )
             """
+            self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
@@ -307,14 +314,12 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.raidIsExclusive = oldGym!.raidIsExclusive
             }
 
-            if oldGym!.availbleSlots != self.availbleSlots ||
-               oldGym!.teamId != self.teamId ||
-               oldGym!.inBattle != self.inBattle {
-                WebHookController.global.addGymInfoEvent(gym: self)
-            }
-
             if self.raidEndTimestamp == nil && oldGym!.raidEndTimestamp != nil {
                 self.raidEndTimestamp = oldGym!.raidEndTimestamp
+            }
+
+            guard Gym.shouldUpdate(old: oldGym!, new: self) else {
+                return
             }
 
             if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 &&
@@ -346,6 +351,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     raid_is_exclusive = ?, cell_id = ?, deleted = false, total_cp = ?, sponsor_id = ?
                 WHERE id = ?
             """
+            self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
         }
 
@@ -381,8 +387,48 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            if mysqlStmt.errorCode() == 1062 {
+                Log.debug(message: "[GYM] Duplicated key. Skipping...")
+            } else {
+                Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            }
             throw DBController.DBError()
+        }
+
+        Gym.cache?.set(id: id, value: self)
+
+        if oldGym == nil {
+            WebHookController.global.addGymEvent(gym: self)
+            WebHookController.global.addGymInfoEvent(gym: self)
+            let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+            let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+            let now = Date()
+
+            if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                WebHookController.global.addEggEvent(gym: self)
+            } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                WebHookController.global.addRaidEvent(gym: self)
+            }
+        } else {
+            if self.raidSpawnTimestamp != nil && raidSpawnTimestamp != 0 && (
+                    oldGym!.raidLevel != self.raidLevel ||
+                    oldGym!.raidPokemonId != self.raidPokemonId ||
+                    oldGym!.raidSpawnTimestamp != self.raidSpawnTimestamp) {
+                let raidBattleTime = Date(timeIntervalSince1970: Double(raidBattleTimestamp ?? 0))
+                let raidEndTime = Date(timeIntervalSince1970: Double(raidEndTimestamp ?? 0))
+                let now = Date()
+
+                if raidBattleTime > now && self.raidLevel ?? 0 != 0 {
+                    WebHookController.global.addEggEvent(gym: self)
+                } else if raidEndTime > now && self.raidPokemonId ?? 0 != 0 {
+                    WebHookController.global.addRaidEvent(gym: self)
+                }
+            }
+            if oldGym!.availbleSlots != self.availbleSlots ||
+               oldGym!.teamId != self.teamId ||
+               oldGym!.inBattle != self.inBattle {
+                WebHookController.global.addGymInfoEvent(gym: self)
+            }
         }
     }
 
@@ -597,6 +643,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Gym? {
 
+        if let cached = cache?.get(id: id) {
+            return cached
+        }
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
@@ -661,15 +711,18 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let totalCp = result[26] as? UInt32
         let sponsorId = result[27] as? UInt16
 
-        return Gym(id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
-                   lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
-                   raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-                   raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
-                   exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
-                   raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
-                   raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
-                   raidPokemonGender: raidPokemonGender, raidIsExclusive: raidIsExclusive,
-                   cellId: cellId, totalCp: totalCp, sponsorId: sponsorId)
+        let gym = Gym(
+            id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
+            lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
+            raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
+            raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+            exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
+            raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
+            raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
+            raidPokemonGender: raidPokemonGender, raidIsExclusive: raidIsExclusive,
+            cellId: cellId, totalCp: totalCp, sponsorId: sponsorId)
+        cache?.set(id: gym.id, value: gym)
+        return gym
     }
 
     public static func getWithIDs(mysql: MySQL?=nil, ids: [String]) throws -> [Gym] {
@@ -929,7 +982,31 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
 
+        cache?.clear()
+
         return mysqlStmt.affectedRows()
+    }
+
+    public static func shouldUpdate(old: Gym, new: Gym) -> Bool {
+        if old.hasChanges {
+            old.hasChanges = false
+            return true
+        }
+        return
+            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
+            new.name != old.name ||
+            new.url != old.url ||
+            new.enabled != old.enabled ||
+            new.raidEndTimestamp != old.raidEndTimestamp ||
+            new.raidPokemonId != old.raidPokemonId ||
+            new.teamId != old.teamId ||
+            new.guardPokemonId != old.guardPokemonId ||
+            new.availbleSlots != old.availbleSlots ||
+            new.totalCp != old.totalCp ||
+            new.exRaidEligible != old.exRaidEligible ||
+            new.sponsorId != old.sponsorId ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     static func == (lhs: Gym, rhs: Gym) -> Bool {

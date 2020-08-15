@@ -27,6 +27,8 @@ class ApiRequestHandler {
         }
     }
 
+    public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
+
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
 
@@ -70,6 +72,7 @@ class ApiRequestHandler {
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
+        let showStatus = request.param(name: "show_status")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -173,7 +176,9 @@ class ApiRequestHandler {
             )
         }
         if isPost && permViewMap && showActiveDevices && perms.contains(.viewMapDevice) {
-            data["active_devices"] = try? Device.getAll(mysql: mysql)
+            data["active_devices"] = try? Device.getAll(
+                mysql: mysql
+            )
         }
         if isPost && showCells && perms.contains(.viewMapCell) {
             data["cells"] = try? Cell.getAll(
@@ -1167,7 +1172,7 @@ class ApiRequestHandler {
 
         if showInstances && perms.contains(.admin) {
 
-            let instances = try? Instance.getAll(mysql: mysql)
+            let instances = try? Instance.getAll(mysql: mysql, getData: false)
             var jsonArray = [[String: Any]]()
 
             if instances != nil {
@@ -1219,20 +1224,34 @@ class ApiRequestHandler {
         if showDeviceGroups && perms.contains(.admin) {
 
             let deviceGroups = try? DeviceGroup.getAll(mysql: mysql)
+            let devices = try? Device.getAll(mysql: mysql)
 
             var jsonArray = [[String: Any]]()
 
             if deviceGroups != nil {
                 for deviceGroup in deviceGroups! {
+                    let devicesInGroup = devices?.filter({ deviceGroup.deviceUUIDs.contains($0.uuid) }) ?? []
+                    let instances = Array(
+                        Set(devicesInGroup.filter({ $0.instanceName != nil }).map({ $0.instanceName! }))
+                    )
+
                     var deviceGroupData = [String: Any]()
                     deviceGroupData["name"] = deviceGroup.name
-                    deviceGroupData["instance"] = deviceGroup.instanceName
-                    deviceGroupData["devices"] = deviceGroup.devices.count
 
                     if formatted {
-                        deviceGroupData["buttons"] =
-                            "<a href=\"/dashboard/devicegroup/edit/"+"\(deviceGroup.name.encodeUrl()!)\" " +
-                            "role=\"button\" class=\"btn btn-primary\">Edit Device Group</a>"
+                        deviceGroupData["instances"] = instances.joined(separator: ", ")
+                        deviceGroupData["devices"] = deviceGroup.deviceUUIDs.joined(separator: ", ")
+                        let id = deviceGroup.name.encodeUrl()!
+                        deviceGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
+                            "href=\"/dashboard/devicegroup/assign/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-success\">Asign</a>" +
+                            "<a href=\"/dashboard/devicegroup/edit/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
+                            "<a href=\"/dashboard/devicegroup/delete/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
+                    } else {
+                        deviceGroupData["instances"] = instances
+                        deviceGroupData["devices"] = deviceGroup.deviceUUIDs
                     }
 
                     jsonArray.append(deviceGroupData)
@@ -1252,8 +1271,10 @@ class ApiRequestHandler {
                 for assignment in assignments! {
                     var assignmentData = [String: Any]()
 
+                    assignmentData["source_instance_name"] = assignment.sourceInstanceName ?? ""
                     assignmentData["instance_name"] = assignment.instanceName
-                    assignmentData["device_uuid"] = assignment.deviceUUID
+                    assignmentData["device_uuid"] = assignment.deviceUUID ?? ""
+                    assignmentData["device_group_name"] = assignment.deviceGroupName ?? ""
 
                     if formatted {
                         let formattedTime: String
@@ -1267,14 +1288,23 @@ class ApiRequestHandler {
                         }
                         assignmentData["time"] = ["timestamp": assignment.time as Any, "formatted": formattedTime]
 
-                        let instanceUUID =
-                        "\(assignment.instanceName.escaped())\\-\(assignment.deviceUUID.escaped())\\-\(assignment.time)"
+                        let formattedDate: String
+                        if assignment.date == nil {
+                            formattedDate = ""
+                        } else {
+                            formattedDate = assignment.date!.toString() ?? "?"
+                        }
+                        assignmentData["date"] = [
+                            "timestamp": assignment.date?.timeIntervalSince1970 ?? 0,
+                            "formatted": formattedDate
+                        ]
+
                         assignmentData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
-                            "href=\"/dashboard/assignment/start/\(instanceUUID.encodeUrl()!)\" " +
+                            "href=\"/dashboard/assignment/start/\(assignment.id!)\" " +
                             "role=\"button\" class=\"btn btn-success\">Start</a>" +
-                            "<a href=\"/dashboard/assignment/edit/\(instanceUUID.encodeUrl()!)\" " +
+                            "<a href=\"/dashboard/assignment/edit/\(assignment.id!)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
-                            "<a href=\"/dashboard/assignment/delete/\(instanceUUID.encodeUrl()!)\" " +
+                            "<a href=\"/dashboard/assignment/delete/\(assignment.id!)\" " +
                             "role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
                     } else {
                         assignmentData["time"] = assignment.time as Any
@@ -1457,6 +1487,25 @@ class ApiRequestHandler {
                 jsonArray.append(discordRuleData)
             }
             data["discordrules"] = jsonArray
+        }
+
+        if showStatus && perms.contains(.admin) {
+            let passed = UInt32(Date().timeIntervalSince(start)).secondsToHoursMinutesSeconds()
+            let limits = WebHookRequestHandler.getThreadLimits()
+            data["status"] = [
+                "processing": [
+                    "current": limits.current,
+                    "total": limits.total,
+                    "ignored": limits.ignored,
+                    "max": WebHookRequestHandler.threadLimitMax
+                ],
+                "uptime": [
+                    "date": start.timeIntervalSince1970,
+                    "hours": passed.hours,
+                    "minutes": passed.minutes,
+                    "seconds": passed.seconds
+                ]
+            ]
         }
 
         data["timestamp"] = Int(Date().timeIntervalSince1970)
