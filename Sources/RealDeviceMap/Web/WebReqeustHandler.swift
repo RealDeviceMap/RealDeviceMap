@@ -131,12 +131,17 @@ class WebReqeustHandler {
                     }
                 } catch {}
 
-                mustacheRequest(
-                    request: request,
-                    response: response,
-                    handler: WebPageHandler(page: page, data: data),
-                    templatePath: documentRoot + "/" + WebServer.Page.unauthorized.rawValue
-                )
+                let path = documentRoot + "/" + WebServer.Page.unauthorized.rawValue
+                let context = MustacheEvaluationContext(templatePath: path, map: data)
+                let contents: String
+                do {
+                    contents = try context.formulateResponse(withCollector: .init())
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                response.setBody(string: contents)
                 response.completed(status: .unauthorized)
                 return
             } else {
@@ -852,7 +857,14 @@ class WebReqeustHandler {
                     response.completed(status: .notFound)
                     return
                 }
-                AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                do {
+                    try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                } catch {
+                    response.setBody(string: "Failed to trigger assignment")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
                 response.redirect(path: "/dashboard/assignments")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .seeOther)
@@ -1480,12 +1492,17 @@ class WebReqeustHandler {
         } else {
             response.setHeader(.contentType, value: "text/html")
         }
-        mustacheRequest(
-            request: request,
-            response: response,
-            handler: WebPageHandler(page: page, data: data),
-            templatePath: documentRoot + "/" + page.rawValue
-        )
+        let path = documentRoot + "/" + page.rawValue
+        let context = MustacheEvaluationContext(templatePath: path, map: data)
+        let contents: String
+        do {
+            contents = try context.formulateResponse(withCollector: .init())
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            response.completed(status: .internalServerError)
+            return
+        }
+        response.setBody(string: contents)
         if page != .homeJs && page != .homeCss {
             sessionDriver.save(session: request.session!)
         }
@@ -2041,9 +2058,7 @@ class WebReqeustHandler {
                 data["error"] = "Failed to parse coords."
                 return data
             }
-            newCoords = coords.map({ (coord) -> [String: Any] in
-                return coord.getJSONValues()
-            })
+            newCoords = coords
         } else if type != nil && type! == .autoQuest || type! == .pokemonIV || type! == .leveling {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
@@ -2076,13 +2091,9 @@ class WebReqeustHandler {
                 return data
             }
             if type! == .leveling {
-                newCoords = coordArray[0][0].getJSONValues()
+                newCoords = coordArray[0][0]
             } else {
-                newCoords = coordArray.map({ (coords) -> [[String: Any]] in
-                    return coords.map { (coord) -> [String: Any] in
-                        return coord.getJSONValues()
-                    }
-                })
+                newCoords = coordArray
             }
         } else {
             data["show_error"] = true
