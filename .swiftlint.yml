@@ -1,5 +1,6 @@
 included:
  - Sources
+ - Tests
 disabled_rules:
 - nesting
 - legacy_hashing

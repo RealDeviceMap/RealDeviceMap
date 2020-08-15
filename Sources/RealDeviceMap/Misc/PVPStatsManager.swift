@@ -28,7 +28,7 @@ internal class PVPStatsManager {
         updaterThread = Threading.getQueue(name: "PVPMasterfileUpdater", type: .serial)
         updaterThread.dispatch {
             while true {
-                sleep(900)
+                Threading.sleep(seconds: 900)
                 self.loadMasterFileIfNeeded()
             }
         }
