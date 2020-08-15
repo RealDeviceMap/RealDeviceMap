@@ -98,6 +98,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     var warnWeather: Bool? = false
     var updated: UInt32?
 
+    static var cache: MemoryCache<Weather>?
+
     init(id: Int64, level: UInt8, latitude: Double, longitude: Double, gameplayCondition: UInt8, windDirection: Int32,
          cloudLevel: UInt8, rainLevel: UInt8, windLevel: UInt8, snowLevel: UInt8, fogLevel: UInt8, sELevel: UInt8,
          severity: UInt8?, warnWeather: Bool?, updated: UInt32?) {
@@ -155,6 +157,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
 
         let sql: String
 
+        let now = UInt32(Date().timeIntervalSince1970)
         if let oldWeather = oldWeather {
             guard Weather.shouldUpdate(old: oldWeather, new: self) else {
                 return
@@ -198,6 +201,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             mysqlStmt.bindParam(id)
         }
 
+        self.updated = now
+
         guard mysqlStmt.execute() else {
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[WEATHER] Duplicated key. Skipping...")
@@ -206,6 +211,8 @@ class Weather: JSONConvertibleObject, WebHookEvent {
             }
             throw DBController.DBError()
         }
+
+        Weather.cache?.set(id: id.toString(), value: self)
 
         if oldWeather == nil {
             WebHookController.global.addWeatherEvent(weather: self)
@@ -216,6 +223,10 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     }
 
     public static func getWithId(mysql: MySQL?=nil, id: Int64) throws -> Weather? {
+
+        if let cached = cache?.get(id: id.toString()) {
+            return cached
+        }
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[WEATHER] Failed to connect to database.")
@@ -260,12 +271,14 @@ class Weather: JSONConvertibleObject, WebHookEvent {
         let warnWeather = (result[13] as? UInt8)!.toBool()
         let updated = result[14] as! UInt32
 
-        return Weather(
+        let weather = Weather(
             id: id, level: level, latitude: latitude, longitude: longitude, gameplayCondition: gameplayCondition,
             windDirection: windDirection, cloudLevel: cloudLevel, rainLevel: rainLevel, windLevel: windLevel,
             snowLevel: snowLevel, fogLevel: fogLevel, sELevel: sELevel, severity: severity,
             warnWeather: warnWeather, updated: updated
         )
+        cache?.set(id: weather.id.toString(), value: weather)
+        return weather
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double,
