@@ -1307,7 +1307,7 @@ function loadData () {
       pokemonFilterIV.or = pokemonFilter.iv_or.filter.replace(/\s/g, '')
     }
   }
-  let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'].on
+  let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'] && pokemonFilter['event_only'].on
 
   const questFilterExclude = []
   if (showQuests) {
@@ -3333,10 +3333,10 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokemonFilterNew['iv_' + id].on
         break
       case 'event_only_hide':
-        shouldShow = !pokemonFilterNew['event_only'].on
+        shouldShow = !pokemonFilter['event_only'] || !pokemonFilterNew['event_only'].on
         break
       case 'event_only_show':
-        shouldShow = pokemonFilterNew['event_only'].on
+        shouldShow = pokemonFilter['event_only'] && pokemonFilterNew['event_only'].on
         break
     }
   } else if (type === 'quest-misc') {
