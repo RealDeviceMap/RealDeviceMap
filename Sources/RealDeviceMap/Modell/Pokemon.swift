@@ -808,8 +808,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotIV(pokemon: self)
         }
-
-        Pokemon.cache?.set(id: self.id, value: self)
+        let uuid = self.isEvent ? "\(self.id)-1" : self.id
+        Pokemon.cache?.set(id: uuid, value: self)
     }
 
     //  swiftlint:disable:next function_parameter_count
@@ -1016,8 +1016,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     }
 
     public static func getWithId(mysql: MySQL?=nil, id: String, isEvent: Bool) throws -> Pokemon? {
-
-        if let cached = cache?.get(id: id) {
+        let uuid = isEvent ? "\(id)-1" : id
+        if let cached = cache?.get(id: uuid) {
             return cached
         }
 
@@ -1098,7 +1098,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             expireTimestampVerified: expireTimestampVerified, pvpRankingsGreatLeague: pvpRankingsGreatLeague,
             pvpRankingsUltraLeague: pvpRankingsUltraLeague, isEvent: isEvent
         )
-        cache?.set(id: pokemon.id, value: pokemon)
+        let uuidNew = pokemon.isEvent ? "\(pokemon.id)-1" : pokemon.id
+        cache?.set(id: uuidNew, value: pokemon)
         return pokemon
     }
 
