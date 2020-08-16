@@ -693,7 +693,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
                     self.setDittoAttributes(displayPokemonId: self.pokemonId)
                 }
-            } else if (self.atkIv != nil && oldPokemon?.atkIv == nil) || (self.cp != nil && oldPokemon?.cp == nil) {
+            } else if !weatherChanged && (
+                (self.atkIv != nil && oldPokemon?.atkIv == nil) ||
+                (self.cp != nil && oldPokemon?.cp == nil) ||
+                hasIvChanges
+            ) {
                 setIVForWeather = false
                 updateIV = true
             } else if weatherChanged && oldPokemon!.atkIv != nil {
