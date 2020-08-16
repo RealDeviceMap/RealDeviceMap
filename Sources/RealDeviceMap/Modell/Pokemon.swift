@@ -673,7 +673,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
 
-            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
+            if ((oldPokemon!.atkIv != nil && self.atkIv == nil) ||
+               (oldPokemon!.cp != self.cp)) && !weatherChanged {
+                updateIV = true
                 setIVForWeather = false
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
