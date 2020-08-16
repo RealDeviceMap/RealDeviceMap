@@ -545,28 +545,35 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
         let mysqlStmt = MySQLStmt(mysql)
 
-        if isEvent && atkIv == nil && (oldPokemon == nil || oldPokemon!.atkIv == nil) {
+        if isEvent && atkIv == nil {
             do {
                 if let oldPokemonNoneEvent = try Pokemon.getWithId(mysql: mysql, id: id, isEvent: false),
                    oldPokemonNoneEvent.atkIv != nil,
-                   (weather == nil && oldPokemonNoneEvent.weather == nil) ||
-                   (weather != nil && oldPokemonNoneEvent.weather != nil) {
+                   (weather?.zeroToNull() == nil && oldPokemonNoneEvent.weather?.zeroToNull() == nil) ||
+                   (weather?.zeroToNull() != nil && oldPokemonNoneEvent.weather?.zeroToNull() != nil) {
                     self.atkIv = oldPokemonNoneEvent.atkIv
                     self.defIv = oldPokemonNoneEvent.defIv
                     self.staIv = oldPokemonNoneEvent.staIv
                     self.level = oldPokemonNoneEvent.level
-                    self.cp = 0
-                    self.weight = 0
-                    self.size = 0
-                    self.move1 = 0
-                    self.move2 = 0
-                    self.capture1 = 0
-                    self.capture2 = 0
-                    self.capture3 = 0
+                    self.cp = nil
+                    self.weight = nil
+                    self.size = nil
+                    self.move1 = nil
+                    self.move2 = nil
+                    self.capture1 = nil
+                    self.capture2 = nil
+                    self.capture3 = nil
                     updateIV = true
                     setPVP()
                 }
             } catch { /* ignore */ }
+        }
+        if isEvent && expireTimestampVerified == false {
+            if let oldPokemonNoneEvent = try Pokemon.getWithId(mysql: mysql, id: id, isEvent: false),
+                oldPokemonNoneEvent.expireTimestampVerified {
+                self.expireTimestamp = oldPokemonNoneEvent.expireTimestamp
+                self.expireTimestampVerified = oldPokemonNoneEvent.expireTimestampVerified
+            }
         }
 
         let now = UInt32(Date().timeIntervalSince1970)
