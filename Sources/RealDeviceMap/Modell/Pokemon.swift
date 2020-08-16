@@ -713,6 +713,17 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             ) {
                 setIVForWeather = false
                 updateIV = true
+                if (self.isEvent && self.cp == nil) {
+                    self.cp = oldPokemon!.cp
+                    self.weight = oldPokemon!.weight
+                    self.size = oldPokemon!.size
+                    self.move1 = oldPokemon!.move1
+                    self.move2 = oldPokemon!.move2
+                    self.capture1 = oldPokemon!.capture1
+                    self.capture2 = oldPokemon!.capture2
+                    self.capture3 = oldPokemon!.capture3
+                    self.shiny = oldPokemon!.shiny
+                }
             } else if weatherChanged && oldPokemon!.atkIv != nil {
                 setIVForWeather = true
                 self.atkIv = nil
