@@ -673,9 +673,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
 
-            if ((oldPokemon!.atkIv != nil && self.atkIv == nil) ||
-               (oldPokemon!.cp != self.cp)) && !weatherChanged {
-                updateIV = true
+            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
                 setIVForWeather = false
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
@@ -695,6 +693,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                     Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
                     self.setDittoAttributes(displayPokemonId: self.pokemonId)
                 }
+            } else if (self.atkIv != nil && oldPokemon?.atkIv == nil) || (self.cp != nil && oldPokemon?.cp == nil) {
+                setIVForWeather = false
+                updateIV = true
             } else if weatherChanged && oldPokemon!.atkIv != nil {
                 setIVForWeather = true
                 self.atkIv = nil
