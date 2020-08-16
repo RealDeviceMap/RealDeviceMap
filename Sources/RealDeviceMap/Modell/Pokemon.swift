@@ -412,43 +412,56 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             setPVP()
         }
 
-        if self.spawnId == nil {
-            let spawnId = UInt64(encounterData.wildPokemon.spawnPointID, radix: 16)
-            self.spawnId = spawnId
-            self.lat = encounterData.wildPokemon.latitude
-            self.lon = encounterData.wildPokemon.longitude
+        let wildPokemon = encounterData.wildPokemon
+        let timestampMs = Date().timeIntervalSince1970 * 1000
+        if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
+            expireTimestamp = UInt32((timestampMs + Double(UInt64(wildPokemon.timeTillHiddenMs))) / 1000)
+            expireTimestampVerified = true
+            let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
+            let components = Calendar.current.dateComponents([.second, .minute], from: date)
+            let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
+            let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+            try? spawnPoint.save(mysql: mysql, update: true)
+        } else {
+            expireTimestampVerified = false
+        }
 
-            if !expireTimestampVerified && spawnId != nil {
-                let spawnpoint: SpawnPoint?
-                do {
-                    spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId!)
-                } catch {
-                    spawnpoint = nil
+        if !expireTimestampVerified && spawnId != nil {
+            let spawnpoint: SpawnPoint?
+            do {
+                spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId!)
+            } catch {
+                spawnpoint = nil
+            }
+            if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
+                let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
+
+                let formatter = DateFormatter()
+                formatter.dateFormat = "mm:ss"
+                let formattedDate = formatter.string(from: date)
+
+                let split = formattedDate.components(separatedBy: ":")
+                let minute = Int(split[0])!
+                let second = Int(split[1])!
+                let secondOfHour = second + minute * 60
+
+                let depsawnOffset: Int
+                if despawnSecond < secondOfHour {
+                    depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
+                } else {
+                    depsawnOffset = Int(despawnSecond) - secondOfHour
                 }
-                if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
-                    let date = Date()
 
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "mm:ss"
-                    let formattedDate = formatter.string(from: date)
-
-                    let split = formattedDate.components(separatedBy: ":")
-                    let minute = Int(split[0])!
-                    let second = Int(split[1])!
-                    let secondOfHour = second + minute * 60
-
-                    let depsawnOffset: Int
-                    if despawnSecond < secondOfHour {
-                        depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
-                    } else {
-                        depsawnOffset = Int(despawnSecond) - secondOfHour
-                    }
-
-                    self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
-                    self.expireTimestampVerified = true
-                }
+                self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
+                self.expireTimestampVerified = true
+            } else if spawnpoint == nil {
+                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                            updated: updated, despawnSecond: nil)
+                try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
+
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
     }
