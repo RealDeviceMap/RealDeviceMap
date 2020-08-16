@@ -413,6 +413,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         }
 
         let wildPokemon = encounterData.wildPokemon
+        self.spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
         let timestampMs = Date().timeIntervalSince1970 * 1000
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
             expireTimestamp = UInt32((timestampMs + Double(UInt64(wildPokemon.timeTillHiddenMs))) / 1000)
