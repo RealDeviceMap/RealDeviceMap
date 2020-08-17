@@ -235,23 +235,16 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-
-                let formatter = DateFormatter()
-                formatter.dateFormat = "mm:ss"
-                let formattedDate = formatter.string(from: date)
-
-                let split = formattedDate.components(separatedBy: ":")
-                let minute = Int(split[0])!
-                let second = Int(split[1])!
-                let secondOfHour = second + minute * 60
-
+                let components = Calendar.current.dateComponents([.second, .minute], from: date)
+                let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
+                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                           updated: updated, despawnSecond: UInt16(secondOfHour))
                 let depsawnOffset: Int
                 if despawnSecond < secondOfHour {
                     depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
                 } else {
                     depsawnOffset = Int(despawnSecond) - secondOfHour
                 }
-
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
             } else if spawnpoint == nil {
@@ -437,15 +430,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             }
             if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-
-                let formatter = DateFormatter()
-                formatter.dateFormat = "mm:ss"
-                let formattedDate = formatter.string(from: date)
-
-                let split = formattedDate.components(separatedBy: ":")
-                let minute = Int(split[0])!
-                let second = Int(split[1])!
-                let secondOfHour = second + minute * 60
+                let components = Calendar.current.dateComponents([.second, .minute], from: date)
+                let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
+                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
+                                           updated: updated, despawnSecond: UInt16(secondOfHour))
 
                 let depsawnOffset: Int
                 if despawnSecond < secondOfHour {
