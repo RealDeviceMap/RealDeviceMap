@@ -440,7 +440,7 @@ class AutoInstanceController: InstanceControllerProto {
                     todayStopsTries = [:]
                 }
                 if let tries = todayStopsTries![pokestop] {
-                    todayStopsTries![pokestop] = tries + 1
+                    todayStopsTries![pokestop] = (tries == UInt8.max ? 10 : tries + 1)
                 } else {
                     todayStopsTries![pokestop] = 1
                 }
