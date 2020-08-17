@@ -177,7 +177,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if fortData.partnerID != "" {
             self.partnerId = fortData.partnerID
         }
-        self.enabled = fortData.enabled 
+        self.enabled = fortData.enabled
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.activeFortModifier.contains(.itemTroyDisk) ||
             fortData.activeFortModifier.contains(.itemTroyDiskGlacial) ||
@@ -794,7 +794,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
                 questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
                 cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
-                incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId, partnerId: partnerId
+                incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
+                partnerId: partnerId
             ))
         }
         return pokestops
