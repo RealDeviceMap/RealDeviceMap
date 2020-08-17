@@ -140,7 +140,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
          lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?,
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
          questRewards: [[String: Any]]?, questTemplate: String?, cellId: UInt64?, lureId: Int16?,
-         pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?, partnerId: String?) {
+         pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?,
+         partnerId: String?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -175,8 +176,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         if fortData.partnerID != "" {
             self.partnerId = fortData.partnerID
-        } 
-        self.enabled = fortData.enabled
+        }
+        self.enabled = fortData.enabled 
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.activeFortModifier.contains(.itemTroyDisk) ||
             fortData.activeFortModifier.contains(.itemTroyDiskGlacial) ||
@@ -421,9 +422,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 INSERT INTO pokestop (
                     id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type,
                     quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, cell_id, lure_id,
-                    pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, partner_id, updated, first_seen_timestamp
+                    pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, partner_id, updated,
+                    first_seen_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(),
+                UNIX_TIMESTAMP())
             """
             self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
@@ -881,7 +884,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
                 questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
                 cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
-                incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId, partnerId: partnerId
+                incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
+                partnerId: partnerId
             ))
         }
         return pokestops
@@ -1010,7 +1014,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
             questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
             cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
-            incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId, partnerId: partnerId
+            incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
+            partnerId: partnerId
         )
         cache?.set(id: pokestop.id, value: pokestop)
         return pokestop
