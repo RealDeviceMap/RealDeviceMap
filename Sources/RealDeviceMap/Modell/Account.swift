@@ -253,11 +253,15 @@ class Account: WebHookEvent {
     }
 
     public func isValid(ignoringWarning: Bool=false, group: String?=nil) -> Bool {
+        let now = UInt32(Date().timeIntervalSince1970)
         return (
             self.group == group &&
             (self.failed == nil || (
                 self.failed! == "GPR_RED_WARNING" &&
-                (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= UInt32(Date().timeIntervalSince1970))
+                (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= now)
+            ) || (
+                self.failed! == "suspended" &&
+                ((self.failedTimestamp ?? UInt32.max) <= now - 2592000)
             ))
         )
     }
