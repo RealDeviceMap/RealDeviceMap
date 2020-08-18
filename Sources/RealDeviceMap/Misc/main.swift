@@ -293,7 +293,6 @@ startupServerContext = nil
 
 ApiRequestHandler.start = Date()
 
-
 Log.info(message: "[MAIN] Starting Webserves")
 do {
     try HTTPServer.launch(
