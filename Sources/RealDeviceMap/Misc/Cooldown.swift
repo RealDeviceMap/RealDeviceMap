@@ -101,9 +101,6 @@ class Cooldown {
             } else {
                 encounterTime = encounterTimeT
             }
-            if encounterTime - now >= 7200 {
-                encounterTime = now + 7200
-            }
             delay = Int(encounterTime - now)
         }
         return (delay: delay, encounterTime: encounterTime)

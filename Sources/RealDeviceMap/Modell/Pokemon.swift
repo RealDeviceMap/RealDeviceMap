@@ -237,8 +237,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
                 let components = Calendar.current.dateComponents([.second, .minute], from: date)
                 let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
-                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                           updated: updated, despawnSecond: UInt16(secondOfHour))
                 let depsawnOffset: Int
                 if despawnSecond < secondOfHour {
                     depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
@@ -432,9 +430,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
                 let components = Calendar.current.dateComponents([.second, .minute], from: date)
                 let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
-                let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                           updated: updated, despawnSecond: UInt16(secondOfHour))
-
                 let depsawnOffset: Int
                 if despawnSecond < secondOfHour {
                     depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
