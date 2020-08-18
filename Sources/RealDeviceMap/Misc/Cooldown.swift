@@ -110,7 +110,7 @@ class Cooldown {
     }
 
     private static func encounterCooldown(distM: Double) -> UInt32 {
-        return UInt32(distM / 9.8)
+        return min(UInt32(distM / 9.8), 7200)
     }
 
 }
