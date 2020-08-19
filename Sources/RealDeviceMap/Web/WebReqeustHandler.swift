@@ -1477,6 +1477,7 @@ class WebReqeustHandler {
             data["start_pokemon"] = request.param(name: "start_pokemon")
             data["start_pokestop"] = request.param(name: "start_pokestop")
             data["start_gym"] = request.param(name: "start_gym")
+            data["perm_admin"] = perms.contains(.admin)
             data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")

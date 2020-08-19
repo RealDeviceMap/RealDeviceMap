@@ -24,13 +24,72 @@ class ApiRequestHandler {
         switch route {
         case .getData:
             handleGetData(request: request, response: response)
+        case .setData:
+            handleSetData(request: request, response: response)
         }
     }
 
     public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
 
+    private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
+        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
+        let perms = tmp.perms
+        let username = tmp.username
+
+        if username == nil || username == "", let authorization = request.header(.authorization) {
+            let base64String = authorization.replacingOccurrences(of: "Basic ", with: "")
+            if let data = Data(base64Encoded: base64String), let string = String(data: data, encoding: .utf8) {
+                let split = string.components(separatedBy: ":")
+                if split.count == 2 {
+                    if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
+                        let user: User
+                        do {
+                            let host = request.host
+                            if usernameEmail.contains("@") {
+                                user = try User.login(email: usernameEmail, password: password, host: host)
+                            } else {
+                                user = try User.login(username: usernameEmail, password: password, host: host)
+                            }
+                        } catch {
+                            if error is DBController.DBError {
+                                response.respondWithError(status: .internalServerError)
+                                return nil
+                            } else if let error = error as? User.LoginError {
+                                switch error.type {
+                                case .limited, .usernamePasswordInvalid:
+                                    response.respondWithError(status: .unauthorized)
+                                    return nil
+                                case .undefined:
+                                    response.respondWithError(status: .internalServerError)
+                                    return nil
+                                }
+                            } else {
+                                response.respondWithError(status: .internalServerError)
+                                return nil
+                            }
+                        }
+
+                        request.session?.userid = user.username
+                        if user.group != nil {
+                            request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
+                        }
+                        sessionDriver.save(session: request.session!)
+                        handleGetData(request: request, response: response)
+                        return nil
+                    }
+                }
+
+            }
+        }
+        return perms
+    }
+
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
+
+        guard let perms = getPerms(request: request, response: response) else {
+            return
+        }
 
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
@@ -80,56 +139,6 @@ class ApiRequestHandler {
             (minLat == nil || maxLat == nil || minLon == nil || maxLon == nil) {
             response.respondWithError(status: .badRequest)
             return
-        }
-
-        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
-        let perms = tmp.perms
-        let username = tmp.username
-
-        if username == nil || username == "", let authorization = request.header(.authorization) {
-            let base64String = authorization.replacingOccurrences(of: "Basic ", with: "")
-            if let data = Data(base64Encoded: base64String), let string = String(data: data, encoding: .utf8) {
-                let split = string.components(separatedBy: ":")
-                if split.count == 2 {
-                    if let usernameEmail = split[0].stringByDecodingURL, let password = split[1].stringByDecodingURL {
-                        let user: User
-                        do {
-                            let host = request.host
-                            if usernameEmail.contains("@") {
-                                user = try User.login(email: usernameEmail, password: password, host: host)
-                            } else {
-                                user = try User.login(username: usernameEmail, password: password, host: host)
-                            }
-                        } catch {
-                            if error is DBController.DBError {
-                                response.respondWithError(status: .internalServerError)
-                                return
-                            } else if let error = error as? User.LoginError {
-                                switch error.type {
-                                case .limited, .usernamePasswordInvalid:
-                                    response.respondWithError(status: .unauthorized)
-                                    return
-                                case .undefined:
-                                    response.respondWithError(status: .internalServerError)
-                                    return
-                                }
-                            } else {
-                                response.respondWithError(status: .internalServerError)
-                                return
-                            }
-                        }
-
-                        request.session?.userid = user.username
-                        if user.group != nil {
-                            request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
-                        }
-                        sessionDriver.save(session: request.session!)
-                        handleGetData(request: request, response: response)
-                        return
-                    }
-                }
-
-            }
         }
 
         let permViewMap = perms.contains(.viewMap)
@@ -1550,6 +1559,33 @@ class ApiRequestHandler {
         } catch {
             response.respondWithError(status: .internalServerError)
             return
+        }
+    }
+
+    private static func handleSetData(request: HTTPRequest, response: HTTPResponse) {
+
+        guard let perms = getPerms(request: request, response: response) else {
+            return
+        }
+
+        let setGymName = request.param(name: "set_gym_name")?.toBool() ?? false
+        let gymId = request.param(name: "gym_id")
+        let gymName = request.param(name: "gym_name")
+
+        if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
+            do {
+                guard let oldGym = try Gym.getWithId(id: id) else {
+                    return response.respondWithError(status: .custom(code: 404, message: "Gym not found"))
+                }
+                oldGym.name = name
+                oldGym.hasChanges = true
+                try oldGym.save()
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else {
+            response.respondWithError(status: .badRequest)
         }
     }
 
