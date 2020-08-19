@@ -698,6 +698,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 setIVForWeather = false
                 updateIV = true
             } else if weatherChanged && oldPokemon!.atkIv != nil {
+                Log.debug(message: "[POKEMON] Pokemon \(id) changed Weatherboosted State. Clearing IVs.")
                 setIVForWeather = true
                 self.atkIv = nil
                 self.defIv = nil
