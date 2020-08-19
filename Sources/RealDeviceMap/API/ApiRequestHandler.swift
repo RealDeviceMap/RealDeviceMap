@@ -1359,20 +1359,23 @@ class ApiRequestHandler {
                 var json: [String: Any] = [
                     "id": i,
                     "pokemon_id": String(format: "%03d", pokemon.pokemonId),
-                    "pokemon_name": Localizer.global.get(value: "poke_\(pokemon.pokemonId)") ,
-                    "pokemon_spawn_id": pokemon.id,
-                    "location": "\(pokemon.lat), \(pokemon.lon)"
+                    "pokemon_name": Localizer.global.get(value: "poke_\(pokemon.pokemonId)")
                 ]
                 if formatted {
                     json["pokemon_image"] =
-                    "<img src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                        "<img src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                    json["pokemon_spawn_id"] =
+                        "<a target=\"_blank\" href=\"/@pokemon/\(pokemon.id)\">\(pokemon.id)</a>"
+                    json["location"] =
+                        "<a target=\"_blank\" href=\"https://www.google.com/maps/place/" +
+                        "\(pokemon.lat),\(pokemon.lon)\">\(pokemon.lat),\(pokemon.lon)</a>"
+                } else {
+                    json["pokemon_spawn_id"] = pokemon.id
+                    json["location"] = "\(pokemon.lat), \(pokemon.lon)"
                 }
                 jsonArray.append(json)
-
                 i += 1
-
             }
-
             data["ivqueue"] = jsonArray
 
         }
