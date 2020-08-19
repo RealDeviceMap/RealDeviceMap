@@ -4815,6 +4815,7 @@ function toggleUltraLeague() {
 // eslint-disable-next-line no-unused-vars
 function editGymName(id, oldName) {
   const newName = prompt('Edit Name for Gym: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
   $.ajax({
     url: '/api/set_data',
     data: {
