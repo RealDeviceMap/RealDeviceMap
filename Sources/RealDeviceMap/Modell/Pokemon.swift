@@ -671,7 +671,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
 
-            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged && !Pokemon.noWeatherIVClearing {
+            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
                 setIVForWeather = false
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
@@ -698,7 +698,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             ) {
                 setIVForWeather = false
                 updateIV = true
-            } else if weatherChanged && oldPokemon!.atkIv != nil {
+            } else if weatherChanged && oldPokemon!.atkIv != nil && !Pokemon.noWeatherIVClearing {
                 Log.debug(message: "[POKEMON] Pokemon \(id) changed Weatherboosted State. Clearing IVs.")
                 setIVForWeather = true
                 self.atkIv = nil
