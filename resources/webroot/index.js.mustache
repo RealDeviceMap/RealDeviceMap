@@ -4824,7 +4824,7 @@ function editGymName(id, oldName) {
       _csrf: '{{csrf}}'
     },
     type: 'post',
-    success: function (data) {
+    success: function() {
       const gym = gymMarkers.find(function (value) { return value.id === id })
       gym.name = newName
       updateOpenedPopupLoop()
