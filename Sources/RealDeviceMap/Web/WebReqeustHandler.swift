@@ -994,23 +994,6 @@ class WebReqeustHandler {
                     return
                 }
             }
-        case .dashboardClearQuests:
-            data["locale"] = "en"
-            data["page_is_dashboard"] = true
-            data["page"] = "Dashboard - Clear All Quests"
-            if request.method == .post {
-                do {
-                    try Pokestop.clearQuests()
-                    InstanceController.global.reloadAllInstances()
-                    response.redirect(path: "/dashboard")
-                    sessionDriver.save(session: request.session!)
-                    response.completed(status: .found)
-                    return
-                } catch {
-                    data["show_error"] = true
-                    data["error"] = "Failed to clear Quests. Please try agai later."
-                }
-            }
         case .dashboardUsers:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -1292,10 +1275,29 @@ class WebReqeustHandler {
             let stalePokestopsCount = try? Pokestop.getStalePokestopsCount()
             data["convertible_pokestops"] = convertiblePokestopsCount
             data["stale_pokestops"] = stalePokestopsCount
+            data["show_clear_memcache"] = ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil
 
             if request.method == .post {
                 let action = request.param(name: "action")
                 switch action {
+                case "clear_quests":
+                    do {
+                        try Pokestop.clearQuests()
+                        InstanceController.global.reloadAllInstances()
+                        data["show_success"] = true
+                        data["success"] = "Quests cleared!"
+                    } catch {
+                        data["show_error"] = true
+                        data["error"] = "Failed to clear quests."
+                    }
+                case "clear_memcache":
+                    Pokemon.cache?.clear()
+                    Pokestop.cache?.clear()
+                    Gym.cache?.clear()
+                    SpawnPoint.cache?.clear()
+                    Weather.cache?.clear()
+                    data["show_success"] = true
+                    data["success"] = "In-Memory Cache cleared!"
                 case "truncate_pokemon":
                     do {
                         try Pokemon.truncate()
