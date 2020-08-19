@@ -34,6 +34,7 @@ services:
 #     LOGINLIMIT_COUNT: 15
 #     LOGINLIMIT_INTERVALL: 300
 #     NO_PVP: 1
+#     NO_IV_WEATHER_CLEARING: 1
 #     NO_MEMORY_CACHE: 1
 #     NO_BACKUP: 1
 ### Uncommenting The following lines will start RDM in lldb and store crash reports in the backups folder

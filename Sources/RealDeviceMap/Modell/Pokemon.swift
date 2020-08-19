@@ -25,6 +25,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var weatherBoostMinLevel: UInt8 = 6
     static var weatherBoostMinIvStat: UInt8 = 4
     static var noPVP = false
+    static var noWeatherIVClearing = false
 
     static var cache: MemoryCache<Pokemon>?
 
@@ -670,7 +671,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
 
-            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
+            if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged && !Pokemon.noWeatherIVClearing {
                 setIVForWeather = false
                 self.atkIv = oldPokemon!.atkIv
                 self.defIv = oldPokemon!.defIv
@@ -712,8 +713,6 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.capture1 = nil
                 self.capture2 = nil
                 self.capture3 = nil
-                self.shiny = nil
-                self.isDitto = false
                 self.pvpRankingsGreatLeague = nil
                 self.pvpRankingsUltraLeague = nil
                 Log.debug(message: "[POKEMON] Weather-Boosted state changed. Clearing IVs")
