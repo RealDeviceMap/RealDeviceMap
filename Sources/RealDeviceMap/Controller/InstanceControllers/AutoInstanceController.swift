@@ -243,6 +243,20 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 bootstrappLock.unlock()
 
+                guard username != nil || InstanceController.noRequireAccount else {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] No username specified. Ignoring..."
+                    )
+                    return [:]
+                }
+
+                guard account != nil || InstanceController.noRequireAccount else {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] No account specified. Ignoring..."
+                    )
+                    return [:]
+                }
+
                 stopsLock.lock()
                 if todayStops == nil {
                     todayStops = [Pokestop]()

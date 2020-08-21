@@ -62,6 +62,7 @@ extension InstanceControllerProto {
 class InstanceController {
 
     public private(set) static var global = InstanceController()
+    public static var noRequireAccount = false
 
     public static func setup() throws {
 
