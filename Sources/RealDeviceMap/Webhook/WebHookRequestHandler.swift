@@ -540,7 +540,7 @@ class WebHookRequestHandler {
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
                 try? weather.save(mysql: mysql)
             }
-            if !clientWeather.isEmpty {
+            if !clientWeathers.isEmpty {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
