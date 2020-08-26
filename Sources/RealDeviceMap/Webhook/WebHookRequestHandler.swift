@@ -540,10 +540,12 @@ class WebHookRequestHandler {
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
                 try? weather.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
-                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
-            )
+            if !clientWeathers.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
+                )
+            }
 
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
@@ -551,10 +553,12 @@ class WebHookRequestHandler {
                                       timestampMs: wildPokemon.timestampMs, username: username)
                 try? pokemon.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed in " +
-                         "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
-            )
+            if !wildPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed " +
+                             "in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
+                )
+            }
 
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
@@ -562,10 +566,12 @@ class WebHookRequestHandler {
                                            cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
-                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
-            )
+            if !nearbyPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
+                )
+            }
 
             let startForts = Date()
             for fort in forts {
@@ -585,8 +591,10 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
-                               "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            if !forts.isEmpty {
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            }
 
             if !fortDetails.isEmpty {
                 let start = Date()
