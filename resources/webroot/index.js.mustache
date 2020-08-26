@@ -2302,11 +2302,16 @@ function getPokestopPopupContent (pokestop) {
   const isActiveLure = lureExpireDate >= now
 
   let content = '<div class="text-center">'
+  let pokestopName
   if (pokestop.name === null || pokestop.name === '') {
-    content += '<h6><b>Unknown Pokestop Name</b></h6>'
+    pokestopName = 'Unknown Pokestop Name'
   } else {
-    content += '<h6><b>' + pokestop.name + '</b></h6>'
+    pokestopName = pokestop.name
   }
+
+  content += '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editPokestopName(\''+pokestop.id+'\',\''+pokestop.name+'\')">{{/perm_admin}}' +
+      pokestopName +
+  '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></span>'
 
   if (pokestop.url !== null) {
     var lureClass = isActiveLure && pokestop.lure_id !== 0
@@ -4828,6 +4833,30 @@ function editGymName(id, oldName) {
     success: function() {
       const gym = gymMarkers.find(function (value) { return value.id === id })
       gym.name = newName
+      updateOpenedPopupLoop()
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
+}
+
+// eslint-disable-next-line no-unused-vars
+function editPokestopName(id, oldName) {
+  const newName = prompt('Edit Name for pokestop: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
+  $.ajax({
+    url: '/api/set_data',
+    data: {
+      set_pokestop_name: true,
+      pokestop_id: id,
+      pokestop_name: newName,
+      _csrf: '{{csrf}}'
+    },
+    type: 'post',
+    success: function() {
+      const pokestop = pokestopMarkers.find(function (value) { return value.id === id })
+      pokestop.name = newName
       updateOpenedPopupLoop()
     },
     error: function(xhr) {
