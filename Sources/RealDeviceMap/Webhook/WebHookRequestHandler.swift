@@ -540,7 +540,7 @@ class WebHookRequestHandler {
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
                 try? weather.save(mysql: mysql)
             }
-            if clientWeathers.count > 0 {
+            if !clientWeatherif.isEmpty {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
@@ -553,7 +553,7 @@ class WebHookRequestHandler {
                                       timestampMs: wildPokemon.timestampMs, username: username)
                 try? pokemon.save(mysql: mysql)
             }
-            if wildPokemons.count > 0 {
+            if !wildPokemons.isEmpty {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed " +
                              "in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
@@ -566,7 +566,7 @@ class WebHookRequestHandler {
                                            cellId: nearbyPokemon.cell, username: username)
                 try? pokemon?.save(mysql: mysql)
             }
-            if nearbyPokemons.count > 0 {
+            if !nearbyPokemons.isEmpty {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
@@ -591,7 +591,7 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            if forts.count > 0 {
+            if !forts.count.isEmpty {
                 Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
             }
@@ -623,7 +623,7 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                if fortDetails.count > 0 {
+                if !fortDetails.isEmpty {
                     Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
@@ -645,7 +645,7 @@ class WebHookRequestHandler {
                         try? gym!.save(mysql: mysql)
                     }
                 }
-                if fortDetails.count > 0 {
+                if !fortDetails.isEmpty {
                     Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
@@ -667,7 +667,7 @@ class WebHookRequestHandler {
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
-                if quests.count > 0 {
+                if !quests.isEmpty {
                     Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
@@ -709,7 +709,7 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                if encounters.count > 0 {
+                if !encounters.isEmpty {
                     Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
