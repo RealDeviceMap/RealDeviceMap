@@ -623,12 +623,10 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                if !fortDetails.isEmpty {
-                    Log.debug(
-                        message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
-                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
-                    )
-                }
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if !gymInfos.isEmpty {
@@ -645,12 +643,10 @@ class WebHookRequestHandler {
                         try? gym!.save(mysql: mysql)
                     }
                 }
-                if !fortDetails.isEmpty {
-                    Log.debug(
+                Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
-                    )
-                }
+                )
             }
 
             if !quests.isEmpty {
@@ -667,12 +663,10 @@ class WebHookRequestHandler {
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
-                if !quests.isEmpty {
-                    Log.debug(
+                Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
-                    )
-                }
+                )
             }
 
             if !encounters.isEmpty {
@@ -709,12 +703,10 @@ class WebHookRequestHandler {
                         }
                     }
                 }
-                if !encounters.isEmpty {
-                    Log.debug(
-                        message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
-                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
-                    )
-                }
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
             }
 
             if enableClearing {
