@@ -644,8 +644,8 @@ class WebHookRequestHandler {
                     }
                 }
                 Log.debug(
-                        message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
-                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
 
@@ -664,8 +664,8 @@ class WebHookRequestHandler {
                     }
                 }
                 Log.debug(
-                        message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
-                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
 
