@@ -591,7 +591,7 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            if !forts.count.isEmpty {
+            if !forts.isEmpty {
                 Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
             }
