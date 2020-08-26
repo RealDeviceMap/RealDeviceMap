@@ -37,7 +37,11 @@ class WebRoutes {
                 WebReqeustHandler.handle(request: request, response: response, page: .home,
                                          requiredPerms: [.viewMap, .viewMapPokemon])
             }),
-            Route(method: .get, uri: "/@pokemon/{id}/{zoom}", handler: { (request, response) in
+            Route(method: .get, uri: "/@pokemon/{id}/{is_event}", handler: { (request, response) in
+                WebReqeustHandler.handle(request: request, response: response, page: .home,
+                                         requiredPerms: [.viewMap, .viewMapPokemon])
+            }),
+            Route(method: .get, uri: "/@pokemon/{id}/{is_event}/{zoom}", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .home,
                                          requiredPerms: [.viewMap, .viewMapPokemon])
             }),
@@ -159,10 +163,6 @@ class WebRoutes {
             }),
             Route(methods: [.get, .post], uri: "/dashboard/accounts/add", handler: { (request, response) in
                 WebReqeustHandler.handle(request: request, response: response, page: .dashboardAccountsAdd,
-                                         requiredPerms: [.admin])
-            }),
-            Route(methods: [.get, .post], uri: "/dashboard/clearquests", handler: { (request, response) in
-                WebReqeustHandler.handle(request: request, response: response, page: .dashboardClearQuests,
                                          requiredPerms: [.admin])
             }),
             Route(method: .get, uri: "/dashboard/assignments", handler: { (request, response) in

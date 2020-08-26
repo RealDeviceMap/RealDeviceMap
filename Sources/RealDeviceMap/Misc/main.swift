@@ -231,6 +231,8 @@ for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
 Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
+Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
+InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
 
 if !Pokemon.noPVP {
     Log.info(message: "[MAIN] Getting PVP Stats")

@@ -46,6 +46,14 @@ public extension BinaryInteger {
             return true
         }
     }
+    func zeroToNull() -> Self? {
+        if self == 0 {
+            return nil
+        } else {
+            return self
+        }
+    }
+
     // swiftlint:disable:next large_tuple
     func secondsToHoursMinutesSeconds() -> (hours: UInt8, minutes: UInt8, seconds: UInt8) {
         return (UInt8(self / 3600), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))

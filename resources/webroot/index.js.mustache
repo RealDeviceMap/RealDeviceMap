@@ -491,6 +491,7 @@ function loadStorage () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -503,6 +504,9 @@ function loadStorage () {
       if (pokemonFilter[i] === undefined) {
         pokemonFilter[i] = { show: true, size: 'normal' }
       }
+    }
+    if (pokemonFilter.event_only === undefined) {
+      pokemonFilter.event_only = { on: false }
     }
     if (pokemonFilter.iv_and === undefined) {
       pokemonFilter.iv_and = { on: false, filter: '0-100' }
@@ -763,6 +767,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -778,6 +783,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: false, size: pokemonFilterNew[i].size, filter: pokemonFilterNew[i].filter }
     }
+    defaultPokemonFilter.event_only = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: pokemonFilterNew.iv_and.filter }
     defaultPokemonFilter.iv_or = { on: false, filter: pokemonFilterNew.iv_or.filter }
 
@@ -1301,6 +1307,7 @@ function loadData () {
       pokemonFilterIV.or = pokemonFilter.iv_or.filter.replace(/\s/g, '')
     }
   }
+  let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'] && pokemonFilter['event_only'].on
 
   const questFilterExclude = []
   if (showQuests) {
@@ -1391,6 +1398,7 @@ function loadData () {
     show_pokestops: showPokestops,
     show_quests: showQuests,
     show_pokemon: showPokemon,
+    pokemon_filter_event_only: pokemonFilterEventOnly,
     pokemon_filter_exclude: JSON.stringify(pokemonFilterExclude),
     quest_filter_exclude: JSON.stringify(questFilterExclude),
     pokemon_filter_iv: JSON.stringify(pokemonFilterIV),
@@ -1830,7 +1838,7 @@ function addPokemon(pokemon, ts) {
     lastUpdateServer = pokemon.updated
   }
   const oldPokemon = pokemonMarkers.find(function (value) {
-    return pokemon.id === value.id
+    return pokemon.id === value.id && pokemon.is_event === value.is_event
   })
 
   if (oldPokemon === undefined || pokemon.is_start) {
@@ -2235,7 +2243,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="text-center">' +
         '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>[Hide]</b></a>&nbsp;' +
         '<a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>[Exclude]</b></a> ' +
-        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'"><b>[Direct Link]</b></a>' +
+        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'/'+pokemon.is_event+'"><b>[Direct Link]</b></a>' +
         '<br>' +
         '<br>' +
         '<div class="row">' +
@@ -2294,11 +2302,16 @@ function getPokestopPopupContent (pokestop) {
   const isActiveLure = lureExpireDate >= now
 
   let content = '<div class="text-center">'
+  let pokestopName
   if (pokestop.name === null || pokestop.name === '') {
-    content += '<h6><b>Unknown Pokestop Name</b></h6>'
+    pokestopName = 'Unknown Pokestop Name'
   } else {
-    content += '<h6><b>' + pokestop.name + '</b></h6>'
+    pokestopName = pokestop.name
   }
+
+  content += '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editPokestopName(\''+pokestop.id+'\',\''+pokestop.name+'\')">{{/perm_admin}}' +
+      pokestopName +
+  '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></span>'
 
   if (pokestop.url !== null) {
     var lureClass = isActiveLure && pokestop.lure_id !== 0
@@ -2408,7 +2421,9 @@ function getGymPopupContent (gym) {
   var content =
     '<div class="row">' + // START 1ST ROW
         '<div class="col-12 col-md-8 center-vertical">' +
-            '<span class="text-nowrap"><h6><b>' + gymName + '</b></h6></span>' +
+            '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editGymName(\''+gym.id+'\',\''+gym.name+'\')">{{/perm_admin}}' +
+                gymName +
+            '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></span>' +
         '</div>' +
         '<div class="col-6 col-md-4 center-vertical">' +
             '<div style="float:right; margin: auto;">' +
@@ -3324,6 +3339,12 @@ function manageSelectButton (e, isNew) {
       case 'on':
         shouldShow = pokemonFilterNew['iv_' + id].on
         break
+      case 'event_only_hide':
+        shouldShow = !pokemonFilterNew['event_only'] || !pokemonFilterNew['event_only'].on
+        break
+      case 'event_only_show':
+        shouldShow = pokemonFilterNew['event_only'] && pokemonFilterNew['event_only'].on
+        break
     }
   } else if (type === 'quest-misc') {
     switch (info) {
@@ -3640,6 +3661,12 @@ function manageSelectButton (e, isNew) {
             break
           case 'on':
             pokemonFilterNew['iv_' + id].on = true
+            break
+          case 'event_only_show':
+            pokemonFilterNew['event_only'].on = true
+            break
+          case 'event_only_hide':
+            pokemonFilterNew['event_only'].on = false
             break
         }
       } else if (type === 'quest-misc') {
@@ -4663,7 +4690,7 @@ function loadFilterSettings (e) {
 
     showPokemon = obj.show_pokemon
     pokemonFilterNew = obj.pokemon
-    store('show_pokemon', showRaids)
+    store('show_pokemon', showPokemon)
     store('pokemon_filter', JSON.stringify(pokemonFilterNew))
 
     showQuests = obj.show_quests
@@ -4788,4 +4815,52 @@ function toggleUltraLeague() {
   if (openedPokemon !== undefined) {
     openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
   }
+}
+
+// eslint-disable-next-line no-unused-vars
+function editGymName(id, oldName) {
+  const newName = prompt('Edit Name for Gym: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
+  $.ajax({
+    url: '/api/set_data',
+    data: {
+      set_gym_name: true,
+      gym_id: id,
+      gym_name: newName,
+      _csrf: '{{csrf}}'
+    },
+    type: 'post',
+    success: function() {
+      const gym = gymMarkers.find(function (value) { return value.id === id })
+      gym.name = newName
+      updateOpenedPopupLoop()
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
+}
+
+// eslint-disable-next-line no-unused-vars
+function editPokestopName(id, oldName) {
+  const newName = prompt('Edit Name for pokestop: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
+  $.ajax({
+    url: '/api/set_data',
+    data: {
+      set_pokestop_name: true,
+      pokestop_id: id,
+      pokestop_name: newName,
+      _csrf: '{{csrf}}'
+    },
+    type: 'post',
+    success: function() {
+      const pokestop = pokestopMarkers.find(function (value) { return value.id === id })
+      pokestop.name = newName
+      updateOpenedPopupLoop()
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
 }
