@@ -205,9 +205,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle
-        if fortData.sponsor != .unsetSponsor {
-            self.sponsorId = UInt16(fortData.sponsor.rawValue)
-        }
+        self.sponsorId = fortData.partnerID != "" ? 1 : 0;
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
         }
