@@ -553,7 +553,7 @@ function loadStorage () {
       defaultRaidFilter.timers = { show: true, size: 'normal' }
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (defaultRaidFilter['l' + i] === undefined) {
         defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -575,7 +575,7 @@ function loadStorage () {
       showRaidTimers = raidFilter.timers.show
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (raidFilter['l' + i] === undefined) {
         raidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -829,7 +829,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -846,7 +846,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       defaultRaidFilter['l' + i] = { show: false, size: raidFilterNew['l' + i].size }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -1331,7 +1331,7 @@ function loadData () {
       raidFilterExclude.push('timers')
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (raidFilter['l' + i].show === false) {
         raidFilterExclude.push('l' + i)
       }
@@ -2444,6 +2444,10 @@ function getGymPopupContent (gym) {
       pokemonName += ' ' + getGenderIcon(gym.raid_pokemon_gender)
     } else if (isRaidBattle) {
       pokemonName = 'Unknown Raid Boss'
+    } else if (gym.raid_is_exclusive) {
+      pokemonName = 'EX Egg'
+    } else if (gym.raid_level === 6) {
+      pokemonName = 'Mega Egg'
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
@@ -2481,14 +2485,18 @@ function getGymPopupContent (gym) {
             '</div>' + // END 1ST COLUMN
             '<div class="col-12 col-md-8 text-nowrap">' + // START 2ND COL
                 '<h7><b>' + pokemonName + '</b></h7><br>'
-    if (hasRaidBoss && isRaidBattle) {
+    if (isRaidBattle) {
       if (gym.raid_pokemon_cp !== null) {
         if (gym.raid_is_exclusive) {
           content += '<b>Level:</b> EX<br>'
+        } else if (gym.raid_level === 6) {
+          content += '<b>Level:</b> Mega<br>'
         } else {
           content += '<b>Level:</b> ' + gym.raid_level + '<br>'
         }
       }
+    }
+    if (hasRaidBoss && isRaidBattle) {
       if (gym.raid_pokemon_move_1 !== null) {
         var move1 = getMoveName(gym.raid_pokemon_move_1)
         if (move1 !== null) {
@@ -3433,22 +3441,22 @@ function manageSelectButton (e, isNew) {
   } else if (type === 'raid-level') {
     switch (info) {
       case 'hide':
-        shouldShow = raidFilterNew['l' + id].show === false
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].show === false
         break
       case 'show':
-        shouldShow = raidFilterNew['l' + id].show === true
+        shouldShow = !raidFilterNew['l' + id] || raidFilterNew['l' + id].show === true
         break
       case 'small':
-        shouldShow = raidFilterNew['l' + id].size === 'small'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'small'
         break
       case 'normal':
-        shouldShow = raidFilterNew['l' + id].size === 'normal'
+        shouldShow = !raidFilterNew['l' + id] || raidFilterNew['l' + id].size === 'normal'
         break
       case 'large':
-        shouldShow = raidFilterNew['l' + id].size === 'large'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'large'
         break
       case 'huge':
-        shouldShow = raidFilterNew['l' + id].size === 'huge'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'huge'
         break
     }
   } else if (type === 'raid-pokemon') {
