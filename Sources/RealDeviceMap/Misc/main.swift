@@ -214,6 +214,9 @@ do {
         let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
         if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
             avilableForms.append("\(pokemonID)-\(formID)")
+        } else if split.count == 3, let pokemonID = Int(split[0]),
+                  let formID = Int(split[1]), let evoId = Int(split[2]) {
+            avilableForms.append("\(pokemonID)-\(formID)-\(evoId)")
         }
     }
     WebReqeustHandler.avilableFormsJson = try avilableForms.jsonEncodedString()
