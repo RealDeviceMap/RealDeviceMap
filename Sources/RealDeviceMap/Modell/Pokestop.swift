@@ -174,6 +174,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
         if fortData.partnerID != "" {
+            Log.error(message: "[POKESTOP] Partner ID  \(fortData.partnerID)")
             self.partnerId = fortData.partnerID
         } 
         self.enabled = fortData.enabled

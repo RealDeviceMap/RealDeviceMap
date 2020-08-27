@@ -215,6 +215,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
         if fortData.partnerID != "" {
+            Log.error(message: "[GYM] Partner ID  \(fortData.partnerID)")
             self.partnerId = fortData.partnerID
         }
         if fortData.imageURL != "" {
