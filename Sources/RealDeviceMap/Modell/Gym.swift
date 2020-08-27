@@ -72,7 +72,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "sponsor_od": sponsorId ?? 0,
-                "partner_id": partnerId ?? ""
+                "partner_id": partnerId ?? 0
             ]
         } else if type == "gym-info" {
             realType = "gym_details"
@@ -87,7 +87,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
                 "sponsor_od": sponsorId ?? 0,
-                "partner_id": partnerId ?? ""
+                "partner_id": partnerId ?? 0
             ]
         } else if type == "egg" || type == "raid" {
             realType = "raid"
@@ -111,7 +111,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "is_exclusive": raidIsExclusive ?? false,
                 "sponsor_od": sponsorId ?? 0,
-                "partner_id": partnerId ?? ""
+                "partner_id": partnerId ?? 0
             ]
         } else {
             realType = "unkown"
@@ -156,7 +156,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var cellId: UInt64?
     var totalCp: UInt32?
     var sponsorId: UInt16?
-    var partnerId: String?
+    var partnerId: UInt16?
 
     var hasChanges = false
 
@@ -167,7 +167,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
          raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots: UInt16?,
          updated: UInt32?, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?,
          raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?,
-         raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?, partnerId: String?) {
+         raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?, partnerId: UInt16?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -214,9 +214,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         if fortData.sponsor != .unsetSponsor {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
+        Log.error(message: "[GYM] Partner ID  \(fortData.partnerID)")
         if fortData.partnerID != "" {
-            Log.error(message: "[GYM] Partner ID  \(fortData.partnerID)")
-            self.partnerId = fortData.partnerID
+            self.partnerId = UInt16(fortData.partnerID)
         }
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
@@ -304,7 +304,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     sponsor_id, partner_id, updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+                    ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
                 )
             """
             self.updated = now
@@ -636,7 +636,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let cellId = result[25] as? UInt64
             let totalCp = result[26] as? UInt32
             let sponsorId = result[27] as? UInt16
-            let partnerId = result[28] as? String
+            let partnerId = result[28] as? UInt16
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -722,7 +722,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let cellId = result[25] as? UInt64
         let totalCp = result[26] as? UInt32
         let sponsorId = result[27] as? UInt16
-        let partnerId = result[28] as? String
+        let partnerId = result[28] as? UInt16
 
         let gym = Gym(
             id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -820,7 +820,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let cellId = result[25] as? UInt64
             let totalCp = result[26] as? UInt32
             let sponsorId = result[27] as? UInt16
-            let partnerId = result[28] as? String
+            let partnerId = result[28] as? UInt16
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -919,7 +919,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let cellId = result[25] as? UInt64
             let totalCp = result[26] as? UInt32
             let sponsorId = result[27] as? UInt16
-            let partnerId = result[28] as? String
+            let partnerId = result[28] as? UInt16
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
