@@ -168,7 +168,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.id = fortData.id
         self.lat = fortData.latitude
         self.lon = fortData.longitude
-        self.sponsorId = fortData.partnerID != "" ? 1 : 0;
+        self.sponsorId = fortData.partnerID != "" ? 1 : 0
         self.enabled = fortData.enabled
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
         if fortData.activeFortModifier.contains(.itemTroyDisk) ||
