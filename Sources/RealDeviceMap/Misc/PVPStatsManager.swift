@@ -55,7 +55,7 @@ internal class PVPStatsManager {
     private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
         let request = CURLRequest("https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-                                  "pokemongo-game-master/master/versions/latest/GAME_MASTER.json")
+                                  "pokemongo-game-master/master/versions/1595879989869/GAME_MASTER.json")
         guard let result = try? request.perform() else {
             Log.error(message: "[PVPStatsManager] Failed to load game master file")
             return
