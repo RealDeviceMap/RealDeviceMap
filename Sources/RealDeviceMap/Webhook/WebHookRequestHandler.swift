@@ -693,25 +693,16 @@ class WebHookRequestHandler {
                     } else {
                         let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude,
                                                                  longitude: encounter.wildPokemon.longitude)
-                        let center = S2LatLng(coord: centerCoord)
-                        let centerNormalizedPoint = center.normalized.point
-                        let circle = S2Cap(axis: centerNormalizedPoint, height: 0.0)
-                        let coverer = S2RegionCoverer()
-                        coverer.maxCells = 1
-                        coverer.maxLevel = 15
-                        coverer.minLevel = 15
-                        let cellIDs = coverer.getCovering(region: circle)
-                        if let cellID = cellIDs.first {
-                            let newPokemon = Pokemon(
-                                wildPokemon: encounter.wildPokemon,
-                                cellId: cellID.uid,
-                                timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
-                                username: username,
-                                isEvent: isEvent
-                            )
-                            newPokemon.addEncounter(mysql: mysql, encounterData: encounter, username: username)
-                            try? newPokemon.save(mysql: mysql, updateIV: true)
-                        }
+                        let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 15)
+                        let newPokemon = Pokemon(
+                            wildPokemon: encounter.wildPokemon,
+                            cellId: cellID.uid,
+                            timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
+                            username: username,
+                            isEvent: isEvent
+                        )
+                        newPokemon.addEncounter(mysql: mysql, encounterData: encounter, username: username)
+                        try? newPokemon.save(mysql: mysql, updateIV: true)
                     }
                 }
                 Log.debug(
