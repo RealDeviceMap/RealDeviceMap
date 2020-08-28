@@ -183,6 +183,12 @@ internal class PVPStatsManager {
                 rankingUltraLock.lock()
             }
             guard let stats = stats[info] else {
+                switch league {
+                case .great:
+                    rankingGreatLock.unlock()
+                case .ultra:
+                    rankingUltraLock.unlock()
+                }
                 return nil
             }
             let event = Threading.Event()
