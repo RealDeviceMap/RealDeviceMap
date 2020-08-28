@@ -624,7 +624,7 @@ class ApiRequestHandler {
                 ])
 
             //Level
-            for i in 1...5 {
+            for i in 1...6 {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
 
