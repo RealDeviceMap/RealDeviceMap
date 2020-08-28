@@ -23,6 +23,8 @@ class AutoInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var accountGroup: String?
+    public private(set) var isEvent: Bool
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
@@ -45,15 +47,18 @@ class AutoInstanceController: InstanceControllerProto {
     public var delayLogout: Int
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int) {
+         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
+         accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
+        self.accountGroup = accountGroup
         self.type = type
         self.multiPolygon = multiPolygon
         self.timezoneOffset = timezoneOffset
         self.spinLimit = spinLimit
         self.delayLogout = delayLogout
+        self.isEvent = isEvent
         update()
 
         try? bootstrap()
@@ -237,6 +242,20 @@ class AutoInstanceController: InstanceControllerProto {
 
             } else {
                 bootstrappLock.unlock()
+
+                guard username != nil || InstanceController.noRequireAccount else {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] No username specified. Ignoring..."
+                    )
+                    return [:]
+                }
+
+                guard account != nil || InstanceController.noRequireAccount else {
+                    Log.warning(
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] No account specified. Ignoring..."
+                    )
+                    return [:]
+                }
 
                 stopsLock.lock()
                 if todayStops == nil {
@@ -435,7 +454,7 @@ class AutoInstanceController: InstanceControllerProto {
                     todayStopsTries = [:]
                 }
                 if let tries = todayStopsTries![pokestop] {
-                    todayStopsTries![pokestop] = tries + 1
+                    todayStopsTries![pokestop] = (tries == UInt8.max ? 10 : tries + 1)
                 } else {
                     todayStopsTries![pokestop] = 1
                 }
@@ -581,7 +600,8 @@ class AutoInstanceController: InstanceControllerProto {
                 spins: spinLimit,
                 noCooldown: true,
                 encounterTarget: encounterTarget,
-                device: uuid
+                device: uuid,
+                group: accountGroup
             )
         }
     }
@@ -590,7 +610,7 @@ class AutoInstanceController: InstanceControllerProto {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid(ignoringWarning: true) &&
+            account.isValid(ignoringWarning: true, group: accountGroup) &&
             account.hasSpinsLeft(spins: spinLimit)
     }
 }

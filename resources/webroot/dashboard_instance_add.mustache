@@ -113,6 +113,13 @@
             <div class="checkbox store_data_text {{^leveling_selected}}d-none{{/leveling_selected}}">
                 <label><input type="checkbox" name="store_data" value="true" {{#store_data}}checked{{/store_data}}> Store Data in Database</label>
             </div>
+            <div class="form-group">
+                Account Group
+                <input type="text" class="form-control" name="account_group" value="{{account_group}}" maxlength="50">
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="is_event" value="true" {{#is_event}}checked{{/is_event}}> Is Unique Event</label>
+            </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>
         </form>

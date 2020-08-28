@@ -18,6 +18,8 @@ class LevelingInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var accountGroup: String?
+    public private(set) var isEvent: Bool
     public weak var delegate: InstanceControllerDelegate?
 
     private static let levelXP = [
@@ -77,10 +79,13 @@ class LevelingInstanceController: InstanceControllerProto {
     private var playerXPPerTime = [String: [(date: Date, xp: Int)]]()
     private var lastLocactionUsername = [String: Coord]()
 
-    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8, storeData: Bool, radius: UInt64) {
+    init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8, storeData: Bool,
+         radius: UInt64, accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
+        self.accountGroup = accountGroup
+        self.isEvent = isEvent
         self.start = start
         self.storeData = storeData
         self.radius = radius
@@ -334,7 +339,8 @@ class LevelingInstanceController: InstanceControllerProto {
             ignoringWarning: false,
             spins: nil, // 7000
             noCooldown: true,
-            device: uuid
+            device: uuid,
+            group: accountGroup
         )
     }
 
@@ -342,7 +348,7 @@ class LevelingInstanceController: InstanceControllerProto {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid() // && account.hasSpinsLeft(spins: 7000)
+            account.isValid(group: accountGroup) // && account.hasSpinsLeft(spins: 7000)
     }
 
 }

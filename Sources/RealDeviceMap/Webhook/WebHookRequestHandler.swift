@@ -127,6 +127,8 @@ class WebHookRequestHandler {
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         let trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
+        let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
+        let isEvent = controller?.isEvent ?? false
         if username != nil && trainerLevel > 0 {
             levelCacheLock.lock()
             let oldLevel = levelCache[username!]
@@ -407,8 +409,7 @@ class WebHookRequestHandler {
         if listScatterPokemon,
            pokemonCoords != nil,
            pokemonEncounterId != nil,
-           let uuid = json["uuid"] as? String,
-           let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) as? IVInstanceController {
+           let ivController = controller as? IVInstanceController {
 
             var scatterPokemon = [[String: Any]]()
 
@@ -420,7 +421,11 @@ class WebHookRequestHandler {
 
                 let pokemonId = UInt16(pokemon.data.pokemonData.pokemonID.rawValue)
                 do {
-                    let oldPokemon = try Pokemon.getWithId(mysql: mysql, id: pokemon.data.encounterID.description)
+                    let oldPokemon = try Pokemon.getWithId(
+                        mysql: mysql,
+                        id: pokemon.data.encounterID.description,
+                        isEvent: isEvent
+                    )
                     if oldPokemon != nil && oldPokemon!.atkIv != nil {
                         //Skip going to mons already with IVs.
                         continue
@@ -432,7 +437,7 @@ class WebHookRequestHandler {
                 let distance = pokemonCoords!.distance(to: coords)
 
                 // Only Encounter pokemon within 35m of initial pokemon scann
-                if distance <= 35 && controller.scatterPokemon.contains(pokemonId) {
+                if distance <= 35 && ivController.scatterPokemon.contains(pokemonId) {
                     scatterPokemon.append([
                         "lat": pokemon.data.latitude,
                         "lon": pokemon.data.longitude,
@@ -540,32 +545,38 @@ class WebHookRequestHandler {
                                       latitude: wlat, longitude: wlon, conditions: conditions.data, updated: nil)
                 try? weather.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
-                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
-            )
+            if !clientWeathers.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Weather Detail Count: \(clientWeathers.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startclientWeathers)))s"
+                )
+            }
 
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
                 let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell,
-                                      timestampMs: wildPokemon.timestampMs, username: username)
+                                      timestampMs: wildPokemon.timestampMs, username: username, isEvent: isEvent)
                 try? pokemon.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed in " +
-                         "\(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
-            )
+            if !wildPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Pokemon Count: \(wildPokemons.count) parsed " +
+                             "in \(String(format: "%.3f", Date().timeIntervalSince(startWildPokemon)))s"
+                )
+            }
 
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
                 let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data,
-                                           cellId: nearbyPokemon.cell, username: username)
+                                           cellId: nearbyPokemon.cell, username: username, isEvent: isEvent)
                 try? pokemon?.save(mysql: mysql)
             }
-            Log.debug(
-                message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
-                         "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
-            )
+            if !nearbyPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] NearbyPokemon Count: \(nearbyPokemons.count) " +
+                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startPokemon)))s"
+                )
+            }
 
             let startForts = Date()
             for fort in forts {
@@ -585,8 +596,10 @@ class WebHookRequestHandler {
                     stopsIdsPerCell[fort.cell]!.append(fort.data.id)
                 }
             }
-            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
-                               "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            if !forts.isEmpty {
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Count: \(forts.count) parsed in " +
+                                   "\(String(format: "%.3f", Date().timeIntervalSince(startForts)))s")
+            }
 
             if !fortDetails.isEmpty {
                 let start = Date()
@@ -666,7 +679,11 @@ class WebHookRequestHandler {
                 for encounter in encounters {
                     let pokemon: Pokemon?
                     do {
-                        pokemon = try Pokemon.getWithId(mysql: mysql, id: encounter.wildPokemon.encounterID.description)
+                        pokemon = try Pokemon.getWithId(
+                            mysql: mysql,
+                            id: encounter.wildPokemon.encounterID.description,
+                            isEvent: isEvent
+                        )
                     } catch {
                         pokemon = nil
                     }
@@ -689,7 +706,9 @@ class WebHookRequestHandler {
                                 wildPokemon: encounter.wildPokemon,
                                 cellId: cellID.uid,
                                 timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
-                                username: username)
+                                username: username,
+                                isEvent: isEvent
+                            )
                             newPokemon.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                             try? newPokemon.save(mysql: mysql, updateIV: true)
                         }
