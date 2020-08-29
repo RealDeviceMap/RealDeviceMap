@@ -134,7 +134,8 @@ class ImageGenerator {
                                           method: composeMethod, output: newFile.path)
                         }
                     }
-                    try! FileManager.default.contentsOfDirectory(atPath: unkownEggDir.path).forEach { (unkownEggFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: unkownEggDir.path)
+                                            .forEach { (unkownEggFilename) in
                         if !unkownEggFilename.contains(".png") {
                             Log.debug(message: "[ImageGenerator] \(unkownEggFilename) is not png! Skipping...")
                             return
@@ -258,8 +259,7 @@ class ImageGenerator {
                     if !pokestopFilename.contains(".png") {
                         Log.debug(message: "[ImageGenerator] \(pokestopFilename) is not png! Skipping...")
                         return
-                    }
-                    if !pokestopFilename.hasPrefix("i") {
+                    } else if !pokestopFilename.hasPrefix("i") {
                         return
                     }
                     let pokestopFile = File(pokestopDir.path + pokestopFilename)
@@ -296,11 +296,10 @@ class ImageGenerator {
             if gruntDir.exists, questDir.exists {
                 Log.info(message: "[ImageGenerator] Creating Quest Invasion Images...")
                 try! FileManager.default.contentsOfDirectory(atPath: questDir.path).forEach { (questFilename) in
-                    if !questFilename.contains(".png"){
+                    if !questFilename.contains(".png") {
                         Log.debug(message: "[ImageGenerator] \(questFilename) is not png! Skipping...")
                         return
-                    }
-                    if !questFilename.hasPrefix("i") {
+                    } else if !questFilename.hasPrefix("i") {
                         return
                     }
                     let questFile = File(questDir.path + questFilename)
