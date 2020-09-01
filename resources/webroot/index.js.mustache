@@ -2780,6 +2780,10 @@ function getQuestReward (reward) {
     return string
   } else if (id === 8 && info !== undefined && info.amount !== undefined) {
     return i18n('quest_reward_8_formatted', { amount: info.amount })
+  } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+    return i18n('quest_reward_11_formatted', { amount: info.amount, sticker_id: info.sticker_id })
+  } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+    return i18n('quest_reward_12_formatted', { amount: info.amount, type: getPokemonName(info.pokemon_id) })
   } else {
     return i18n('quest_reward_' + id)
   }
@@ -3040,7 +3044,13 @@ function getPokestopMarkerIcon (pokestop, ts) {
       } else {
         rewardString = 'p' + info.pokemon_id
       }
-    } else {
+    } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+      rewardString = 'i-4'
+    } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+      rewardString = 'i-5'
+    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+      rewardString = 'i-6'
+    }else {
       rewardString = 'i0'
     }
     const size = getQuestSize(rewardString)
@@ -3365,22 +3375,22 @@ function manageSelectButton (e, isNew) {
   } else if (type === 'quest-misc') {
     switch (info) {
       case 'hide':
-        shouldShow = questFilterNew['i' + -id].show === false
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].show === false
         break
       case 'show':
-        shouldShow = questFilterNew['i' + -id].show === true
+        shouldShow = !questFilterNew['i' + -id] || questFilterNew['i' + -id].show === true
         break
       case 'small':
-        shouldShow = questFilterNew['i' + -id].size === 'small'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'small'
         break
       case 'normal':
-        shouldShow = questFilterNew['i' + -id].size === 'normal'
+        shouldShow = !questFilterNew['i' + -id] ||questFilterNew['i' + -id].size === 'normal'
         break
       case 'large':
-        shouldShow = questFilterNew['i' + -id].size === 'large'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'large'
         break
       case 'huge':
-        shouldShow = questFilterNew['i' + -id].size === 'huge'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'huge'
         break
     }
   } else if (type === 'quest-item') {
