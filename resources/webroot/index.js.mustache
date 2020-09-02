@@ -2869,6 +2869,20 @@ function getQuestCondition (condition) {
       categoriesString += formatted + getCharacterCategoryName(characterCategory)
     })
     return i18n('quest_condition_27_formatted', { categories: categoriesString })
+  } else if (id === 37 && info !== undefined && info.raid_pokemon_evolutions !== undefined) {
+    let evolutionsString = ''
+    $.each(info.raid_pokemon_evolutions, function (index, evolution) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.raid_pokemon_evolutions.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      evolutionsString += formatted + getEvolutionName(evolution)
+    })
+    return i18n('quest_condition_37_formatted', { evolutions: evolutionsString })
   } else {
     return i18n('quest_condition_' + id)
   }
@@ -3050,10 +3064,17 @@ function getPokestopMarkerIcon (pokestop, ts) {
       rewardString = 'i-5'
     } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
       rewardString = 'i-6'
-    }else {
+    } else {
       rewardString = 'i0'
     }
-    const size = getQuestSize(rewardString)
+
+    let rewardId
+    if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
+      rewardId = 'p' + info.pokemon_id
+    } else {
+      rewardId = rewardString
+    }
+    const size = getQuestSize(rewardId)
 
     let lureId
     if (pokestop.lure_expire_timestamp >= ts) {
@@ -3133,6 +3154,12 @@ function getPokestopMarker (pokestop, ts) {
       rewardString = 'i-3'
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
       rewardString = 'p' + info.pokemon_id
+    } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+      rewardString = 'i-4'
+    } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+      rewardString = 'i-5'
+    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+      rewardString = 'i-6'
     } else {
       rewardString = 'i0'
     }

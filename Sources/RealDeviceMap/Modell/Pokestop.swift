@@ -321,6 +321,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withDailyBuddyAffection:
                 let info = conditionData.withDailyBuddyAffection
                 infoData["min_buddy_affection_earned_today"] = info.minBuddyAffectionEarnedToday
+            case .withMegaEvoPokemon:
+                let info = conditionData.withMegaEvoPokemon
+                infoData["raid_pokemon_evolutions"] = info.pokemonEvolution.map({ (evolution) -> Int in
+                    return evolution.rawValue
+                })
             case .withWinGymBattleStatus: break
             case .withSuperEffectiveCharge: break
             case .withUniquePokestop: break
