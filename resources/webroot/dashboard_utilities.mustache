@@ -1,15 +1,15 @@
 {{> header}}
 <body>
 
+    {{#show_error}}<br>{{/show_error}}
     <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
         <strong>Error!</strong> {{error}}</a>
     </div>
-    {{#show_error}}<br>{{/show_error}}
 
+    {{#show_success}}<br>{{/show_success}}
     <div class="alert alert-success w-75 {{^show_success}}d-none{{/show_success}}" style="float: none; margin: 0 auto;">
         <strong>Success!</strong> {{success}}</a>
     </div>
-    {{#show_success}}<br>{{/show_success}}
 
 <h1 class="mt-3" align="center">{{title}} Utilities</h1>
 
@@ -21,6 +21,14 @@
         </div>
         <div class="list-group list-group-flush">
             <form action="" method="post">
+                <button type="submit" name="action" value="clear_quests" class="list-group-item list-group-item-action list-group-item-danger"
+                    onclick="return confirm('Are you sure that you want to clear all quests?');">
+                    Clear All Quests
+                </button>
+                <button type="submit" name="action" value="clear_memcache" class="list-group-item list-group-item-action list-group-item-warning {{^show_clear_memcache}}d-none{{/show_clear_memcache}}""
+                    onclick="return confirm('Are you sure that you want to clear the In-Memory Cache?');">
+                    Clear In-Memory Cache
+                </button>
                 <button type="submit" name="action" value="truncate_pokemon" class="list-group-item list-group-item-action list-group-item-danger" 
                     onclick="return confirm('Are you sure that you want to truncate the `pokemon` table?');">
                     Truncate Pokemon Table

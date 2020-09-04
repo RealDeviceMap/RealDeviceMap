@@ -22,6 +22,8 @@ protocol InstanceControllerProto {
     var name: String { get }
     var minLevel: UInt8 { get }
     var maxLevel: UInt8 { get }
+    var accountGroup: String? { get }
+    var isEvent: Bool { get }
     var delegate: InstanceControllerDelegate? { get set }
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any]
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
@@ -43,10 +45,11 @@ extension InstanceControllerProto {
     func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
     func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
-        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel, device: uuid)
+        return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel,
+                                         device: uuid, group: accountGroup)
     }
     func accountValid(account: Account) -> Bool {
-        return account.level >= minLevel && account.level <= maxLevel && account.isValid()
+        return account.level >= minLevel && account.level <= maxLevel && account.isValid(group: accountGroup)
     }
 }
 
@@ -59,6 +62,7 @@ extension InstanceControllerProto {
 class InstanceController {
 
     public private(set) static var global = InstanceController()
+    public static var noRequireAccount = false
 
     public static func setup() throws {
 
@@ -130,16 +134,21 @@ class InstanceController {
             }
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
+            let isEvent = instance.data["is_event"] as? Bool ?? false
 
             if instance.type == .circlePokemon {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                                                              type: .pokemon, minLevel: minLevel, maxLevel: maxLevel)
+                                                              type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
+                                                              accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .circleRaid {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                                                              type: .raid, minLevel: minLevel, maxLevel: maxLevel)
+                                                              type: .raid, minLevel: minLevel, maxLevel: maxLevel,
+                                                              accountGroup: accountGroup, isEvent: isEvent)
             } else {
                 instanceController = CircleSmartRaidInstanceController(name: instance.name, coords: coordsArray,
-                                                                       minLevel: minLevel, maxLevel: maxLevel)
+                                                                       minLevel: minLevel, maxLevel: maxLevel,
+                                                                       accountGroup: accountGroup, isEvent: isEvent)
             }
         case .pokemonIV, .autoQuest:
             var areaArray = [[Coord]]()
@@ -171,6 +180,8 @@ class InstanceController {
 
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
+            let isEvent = instance.data["is_event"] as? Bool ?? false
 
             if instance.type == .pokemonIV {
                 let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ??
@@ -184,7 +195,8 @@ class InstanceController {
                 }) ?? [UInt16]()
                 instanceController = IVInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList,
-                    minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList
+                    minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList,
+                    accountGroup: accountGroup, isEvent: isEvent
                 )
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
@@ -192,7 +204,8 @@ class InstanceController {
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
                     timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel,
-                    spinLimit: spinLimit, delayLogout: delayLogout
+                    spinLimit: spinLimit, delayLogout: delayLogout,
+                    accountGroup: accountGroup, isEvent: isEvent
                 )
             }
         case .leveling:
@@ -209,6 +222,8 @@ class InstanceController {
             }
             let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
             let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
+            let isEvent = instance.data["is_event"] as? Bool ?? false
             let radius = instance.data["radius"] as? UInt64 ?? (instance.data["radius"] as? Int)?.toUInt64() ?? 100000
             let storeData = instance.data["store_data"] as? Bool ?? false
             instanceController = LevelingInstanceController(
@@ -217,7 +232,9 @@ class InstanceController {
                 minLevel: minLevel,
                 maxLevel: maxLevel,
                 storeData: storeData,
-                radius: radius
+                radius: radius,
+                accountGroup: accountGroup,
+                isEvent: isEvent
             )
         }
         instanceController.delegate = AssignmentController.global

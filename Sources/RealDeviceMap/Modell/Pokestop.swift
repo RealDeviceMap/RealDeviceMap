@@ -132,6 +132,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var gruntType: UInt16?
 
     var hasChanges = false
+    var hasQuestChanges = false
 
     static var cache: MemoryCache<Pokestop>?
 
@@ -224,6 +225,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.questTarget = UInt16(questData.goal.target)
         self.questTemplate = questData.templateID.lowercased()
         self.hasChanges = true
+        self.hasQuestChanges = true
 
         var conditions = [[String: Any]]()
         var rewards = [[String: Any]]()
@@ -535,7 +537,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if oldPokestop!.incidentExpireTimestamp ?? 0 < self.incidentExpireTimestamp ?? 0 {
                 WebHookController.global.addInvasionEvent(pokestop: self)
             }
-            if updateQuest && questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
+            if updateQuest && (hasQuestChanges || questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0) {
+                hasQuestChanges = false
                 WebHookController.global.addQuestEvent(pokestop: self)
             }
         }

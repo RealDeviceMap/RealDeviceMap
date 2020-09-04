@@ -101,16 +101,13 @@ class Cooldown {
             } else {
                 encounterTime = encounterTimeT
             }
-            if encounterTime - now >= 7200 {
-                encounterTime = now + 7200
-            }
             delay = Int(encounterTime - now)
         }
         return (delay: delay, encounterTime: encounterTime)
     }
 
     private static func encounterCooldown(distM: Double) -> UInt32 {
-        return UInt32(distM / 9.8)
+        return min(UInt32(distM / 9.8), 7200)
     }
 
 }

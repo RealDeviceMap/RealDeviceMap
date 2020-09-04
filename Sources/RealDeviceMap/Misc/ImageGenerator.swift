@@ -67,8 +67,9 @@ class ImageGenerator {
 
             if pokemonDir.exists && firstFile.exists && secondFile.exists && thirdFile.exists {
                 Log.info(message: "[ImageGenerator] Creating Pokemon League Images...")
-                try! pokemonDir.forEachEntry { (pokemonFilename) in
+                try! FileManager.default.contentsOfDirectory(atPath: pokemonDir.path).forEach { (pokemonFilename) in
                     if !pokemonFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(pokemonFilename) is not png! Skipping...")
                         return
                     }
                     let pokemonFile = File(pokemonDir.path + pokemonFilename)
@@ -111,15 +112,17 @@ class ImageGenerator {
 
                 Log.info(message: "[ImageGenerator] Creating Raid Images...")
 
-                try! gymDir.forEachEntry { (gymFilename) in
+                try! FileManager.default.contentsOfDirectory(atPath: gymDir.path).forEach { (gymFilename) in
                     if !gymFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(gymFilename) is not png! Skipping...")
                         return
                     }
                     let gymFile = File(gymDir.path + gymFilename)
                     let gymId = gymFilename.replacingOccurrences(of: ".png", with: "")
 
-                    try! eggDir.forEachEntry { (eggFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: eggDir.path).forEach { (eggFilename) in
                         if !eggFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(eggFilename) is not png! Skipping...")
                             return
                         }
                         let eggFile = File(eggDir.path + eggFilename)
@@ -131,8 +134,10 @@ class ImageGenerator {
                                           method: composeMethod, output: newFile.path)
                         }
                     }
-                    try! unkownEggDir.forEachEntry { (unkownEggFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: unkownEggDir.path)
+                                            .forEach { (unkownEggFilename) in
                         if !unkownEggFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(unkownEggFilename) is not png! Skipping...")
                             return
                         }
                         let unkownEggFile = File(unkownEggDir.path + unkownEggFilename)
@@ -146,8 +151,9 @@ class ImageGenerator {
                                           method: composeMethod, output: newFile.path)
                         }
                     }
-                    try! pokemonDir.forEachEntry { (pokemonFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: pokemonDir.path).forEach { (pokemonFilename) in
                         if !pokemonFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(pokemonFilename) is not png! Skipping...")
                             return
                         }
                         let pokemonFile = File(pokemonDir.path + pokemonFilename)
@@ -186,15 +192,17 @@ class ImageGenerator {
 
                 Log.info(message: "[ImageGenerator] Creating Quest Images...")
 
-                try! pokestopDir.forEachEntry { (pokestopFilename) in
+                try! FileManager.default.contentsOfDirectory(atPath: pokestopDir.path).forEach { (pokestopFilename) in
                     if !pokestopFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(pokestopFilename) is not png! Skipping...")
                         return
                     }
                     let pokestopFile = File(pokestopDir.path + pokestopFilename)
                     let pokestopId = pokestopFilename.replacingOccurrences(of: ".png", with: "")
 
-                    try! itemDir.forEachEntry { (itemFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: itemDir.path).forEach { (itemFilename) in
                         if !itemFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(itemFilename) is not png! Skipping...")
                             return
                         }
                         let itemFile = File(itemDir.path + itemFilename)
@@ -209,8 +217,9 @@ class ImageGenerator {
                         }
                     }
 
-                    try! pokemonDir.forEachEntry { (pokemonFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: pokemonDir.path).forEach { (pokemonFilename) in
                         if !pokemonFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(pokemonFilename) is not png! Skipping...")
                             return
                         }
                         let pokemonFile = File(pokemonDir.path + pokemonFilename)
@@ -246,15 +255,19 @@ class ImageGenerator {
 
             if gruntDir.exists, pokestopDir.exists {
                 Log.info(message: "[ImageGenerator] Creating Invasion Images...")
-                try! pokestopDir.forEachEntry { (pokestopFilename) in
-                    if !pokestopFilename.contains(".png") || !pokestopFilename.hasPrefix("i") {
+                try! FileManager.default.contentsOfDirectory(atPath: pokestopDir.path).forEach { (pokestopFilename) in
+                    if !pokestopFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(pokestopFilename) is not png! Skipping...")
+                        return
+                    } else if !pokestopFilename.hasPrefix("i") {
                         return
                     }
                     let pokestopFile = File(pokestopDir.path + pokestopFilename)
                     let pokestopId = pokestopFilename.replacingOccurrences(of: ".png", with: "")
 
-                    try! gruntDir.forEachEntry { (gruntFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: gruntDir.path).forEach { (gruntFilename) in
                         if !gruntFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(gruntFilename) is not png! Skipping...")
                             return
                         }
                         let gruntFile = File(gruntDir.path + gruntFilename)
@@ -282,15 +295,19 @@ class ImageGenerator {
 
             if gruntDir.exists, questDir.exists {
                 Log.info(message: "[ImageGenerator] Creating Quest Invasion Images...")
-                try! questDir.forEachEntry { (questFilename) in
-                    if !questFilename.contains(".png") || !questFilename.hasPrefix("i") {
+                try! FileManager.default.contentsOfDirectory(atPath: questDir.path).forEach { (questFilename) in
+                    if !questFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(questFilename) is not png! Skipping...")
+                        return
+                    } else if !questFilename.hasPrefix("i") {
                         return
                     }
                     let questFile = File(questDir.path + questFilename)
                     let questId = questFilename.replacingOccurrences(of: ".png", with: "")
 
-                    try! gruntDir.forEachEntry { (gruntFilename) in
+                    try! FileManager.default.contentsOfDirectory(atPath: gruntDir.path).forEach { (gruntFilename) in
                         if !gruntFilename.contains(".png") {
+                            Log.debug(message: "[ImageGenerator] \(gruntFilename) is not png! Skipping...")
                             return
                         }
                         let gruntFile = File(gruntDir.path + gruntFilename)
