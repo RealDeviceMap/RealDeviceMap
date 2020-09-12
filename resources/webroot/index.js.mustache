@@ -3063,7 +3063,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
       rewardString = 'i-5'
     } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-      rewardString = 'i-6'
+      rewardString = 'i-6-' + info.pokemon_id
     } else {
       rewardString = 'i0'
     }
@@ -3071,7 +3071,9 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let rewardId
     if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
       rewardId = 'p' + info.pokemon_id
-    } else {
+    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+      rewardId = 'i-6'
+    else {
       rewardId = rewardString
     }
     const size = getQuestSize(rewardId)
@@ -3159,7 +3161,7 @@ function getPokestopMarker (pokestop, ts) {
     } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
       rewardString = 'i-5'
     } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-      rewardString = 'i-6'
+      rewardString = 'i-6-' + info.pokemon_id
     } else {
       rewardString = 'i0'
     }
