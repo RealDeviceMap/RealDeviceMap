@@ -3073,7 +3073,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
       rewardId = 'p' + info.pokemon_id
     } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
       rewardId = 'i-6'
-    else {
+    } else {
       rewardId = rewardString
     }
     const size = getQuestSize(rewardId)
