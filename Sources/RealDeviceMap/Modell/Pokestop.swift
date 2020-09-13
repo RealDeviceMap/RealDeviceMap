@@ -497,7 +497,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        if name != nil {
+        if oldPokestop == nil || name != nil {
             mysqlStmt.bindParam(name)
         }
         mysqlStmt.bindParam(url)
