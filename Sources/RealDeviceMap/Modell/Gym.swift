@@ -364,7 +364,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        if name != nil {
+        if oldGym == nil || name != nil {
             mysqlStmt.bindParam(name)
         }
         mysqlStmt.bindParam(url)
