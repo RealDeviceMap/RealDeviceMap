@@ -482,9 +482,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 questSQL = ""
             }
 
+            let nameSQL = name != nil ? "name = ?, " : ""
             let sql = """
                 UPDATE pokestop
-                SET lat = ?, lon = ?, name = ?, url = ?, enabled = ?, lure_expire_timestamp = ?,
+                SET lat = ?, lon = ?, \(nameSQL) url = ?, enabled = ?, lure_expire_timestamp = ?,
                     last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
                     lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?,
                     deleted = false, sponsor_id = ?
@@ -496,7 +497,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        mysqlStmt.bindParam(name)
+        if oldPokestop == nil || name != nil {
+            mysqlStmt.bindParam(name)
+        }
         mysqlStmt.bindParam(url)
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
