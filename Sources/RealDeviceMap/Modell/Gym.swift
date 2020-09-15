@@ -345,10 +345,11 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 }
 
             }
+            let nameSQL = name != nil ? "name = ?, " : ""
 
             let sql = """
                 UPDATE gym
-                SET lat = ?, lon = ?, name = ?, url = ?, guarding_pokemon_id = ?, last_modified_timestamp = ?,
+                SET lat = ?, lon = ?, \(nameSQL) url = ?, guarding_pokemon_id = ?, last_modified_timestamp = ?,
                     team_id = ?, raid_end_timestamp = ?, raid_spawn_timestamp = ?, raid_battle_timestamp = ?,
                     raid_pokemon_id = ?, enabled = ?, availble_slots = ?, updated = UNIX_TIMESTAMP(), raid_level = ?,
                     ex_raid_eligible = ?, in_battle = ?, raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?,
@@ -363,7 +364,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        mysqlStmt.bindParam(name)
+        if oldGym == nil || name != nil {
+            mysqlStmt.bindParam(name)
+        }
         mysqlStmt.bindParam(url)
         mysqlStmt.bindParam(guardPokemonId)
         mysqlStmt.bindParam(lastModifiedTimestamp)
