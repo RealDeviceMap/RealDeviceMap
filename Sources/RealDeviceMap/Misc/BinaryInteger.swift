@@ -58,6 +58,12 @@ public extension BinaryInteger {
     func secondsToHoursMinutesSeconds() -> (hours: UInt8, minutes: UInt8, seconds: UInt8) {
         return (UInt8(self / 3600), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))
     }
+
+    // swiftlint:disable:next large_tuple
+    func secondsToDaysHoursMinutesSeconds() -> (days: UInt16, hours: UInt8, minutes: UInt8, seconds: UInt8) {
+        return (UInt16(self / 86400), UInt8((self / 3600) % 24), UInt8((self % 3600) / 60), UInt8((self % 3600) % 60))
+    }
+
     func withCommas() -> String {
         let charArray = Array(self.toString()).reversed()
         var charWithCommasArray = [Character]()
