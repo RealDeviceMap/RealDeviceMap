@@ -227,7 +227,7 @@ do {
 }
 
 Log.info(message: "[MAIN] Loading Avilable Items")
-var aviableItems = [-3, -2, -1]
+var aviableItems = [-6, -5, -4, -3, -2, -1]
 for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
     aviableItems.append(itemId.rawValue)
 }

@@ -12,10 +12,6 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve
       run: swift package resolve
-    - uses: actions/cache@v1
-      with:
-        path: .build
-        key: ${{ runner.os }}-debug-5-spm-${{ hashFiles('Package.resolved') }}
     - name: Build
       run: swift build --enable-test-discovery -Xswiftc -g -c debug
     - name: Test

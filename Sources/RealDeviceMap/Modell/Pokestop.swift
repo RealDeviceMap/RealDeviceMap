@@ -321,6 +321,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withDailyBuddyAffection:
                 let info = conditionData.withDailyBuddyAffection
                 infoData["min_buddy_affection_earned_today"] = info.minBuddyAffectionEarnedToday
+            case .withMegaEvoPokemon:
+                let info = conditionData.withMegaEvoPokemon
+                infoData["raid_pokemon_evolutions"] = info.pokemonEvolution.map({ (evolution) -> Int in
+                    return evolution.rawValue
+                })
             case .withWinGymBattleStatus: break
             case .withSuperEffectiveCharge: break
             case .withUniquePokestop: break
@@ -379,9 +384,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .pokecoin:
                 let info = rewardData.pokecoin
                 infoData["amount"] = info
+            case .sticker:
+                let info = rewardData.sticker
+                infoData["amount"] = info.amount
+                infoData["sticker_id"] = info.stickerID
+            case .megaResource:
+                let info = rewardData.megaResource
+                infoData["amount"] = info.amount
+                infoData["pokemon_id"] = info.pokemonID.rawValue
             case .avatarClothing: break
             case .quest: break
-            case .sticker: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -470,9 +482,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 questSQL = ""
             }
 
+            let nameSQL = name != nil ? "name = ?, " : ""
             let sql = """
                 UPDATE pokestop
-                SET lat = ?, lon = ?, name = ?, url = ?, enabled = ?, lure_expire_timestamp = ?,
+                SET lat = ?, lon = ?, \(nameSQL) url = ?, enabled = ?, lure_expire_timestamp = ?,
                     last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
                     lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?,
                     deleted = false, sponsor_id = ?
@@ -484,7 +497,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        mysqlStmt.bindParam(name)
+        if oldPokestop == nil || name != nil {
+            mysqlStmt.bindParam(name)
+        }
         mysqlStmt.bindParam(url)
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
@@ -701,6 +716,14 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 mysqlStmt.bindParam(1)
             } else if id == 3 {
                 mysqlStmt.bindParam(4)
+            } else if id == 4 {
+                mysqlStmt.bindParam(8)
+            } else if id == 5 {
+                mysqlStmt.bindParam(11)
+            } else if id == 6 {
+                mysqlStmt.bindParam(12)
+            } else {
+                mysqlStmt.bindParam(id)
             }
         }
         for id in excludedPokemon {
