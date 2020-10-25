@@ -22,7 +22,7 @@ class AssignmentController: InstanceControllerDelegate {
 
     private init() {}
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next function_body_length
     public func setup() throws {
 
         assignmentsLock.lock()

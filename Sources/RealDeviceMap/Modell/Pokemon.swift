@@ -772,7 +772,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             mysqlStmt.bindParam(displayPokemonId)
             mysqlStmt.bindParam(pvpRankingsGreatLeague?.jsonEncodeForceTry())
             mysqlStmt.bindParam(pvpRankingsUltraLeague?.jsonEncodeForceTry())
-            mysqlStmt.bindParam(staIv && defIv && atkIv ? (Double(atkIv! + defIv! + staIv!) * 100 / 45) : nil)
+            if let atkIv = self.atkIv, let defIv = self.defIv, let staIv = self.staIv {
+                mysqlStmt.bindParam(Double(atkIv + defIv + staIv) * 100 / 45)
+            } else {
+                mysqlStmt.bindParam()
+            }
         }
         mysqlStmt.bindParam(username)
         mysqlStmt.bindParam(gender)
