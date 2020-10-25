@@ -589,13 +589,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
                     level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id,
-                    pvp_rankings_great_league, pvp_rankings_ultra_league, username, gender,
+                    pvp_rankings_great_league, pvp_rankings_ultra_league, iv, username, gender,
                     form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
                     expire_timestamp_verified, is_event
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?
+                    ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?
                 )
             """
             self.updated = now
@@ -727,7 +727,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 ivSQL = "atk_iv = ?, def_iv = ?, sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, " +
                         "weight = ?, size = ?, capture_1 = ?, capture_2 = ?, capture_3 = ?, " +
                         "shiny = ?, display_pokemon_id = ?, pvp_rankings_great_league = ?, " +
-                        "pvp_rankings_ultra_league = ?,"
+                        "pvp_rankings_ultra_league = ?, iv = ?,"
             } else {
                 ivSQL = ""
             }
@@ -772,6 +772,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             mysqlStmt.bindParam(displayPokemonId)
             mysqlStmt.bindParam(pvpRankingsGreatLeague?.jsonEncodeForceTry())
             mysqlStmt.bindParam(pvpRankingsUltraLeague?.jsonEncodeForceTry())
+            mysqlStmt.bindParam(staIv && defIv && atkIv ? (Double(atkIv! + defIv! + staIv!) * 100 / 45) : nil)
         }
         mysqlStmt.bindParam(username)
         mysqlStmt.bindParam(gender)
