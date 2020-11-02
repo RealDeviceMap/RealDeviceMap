@@ -154,7 +154,7 @@
         "unauthorized_title": "You are not authorized to view this page!",
         "unauthorized_discord": "Link your Discord account <a href=\"%{href}\">here</a>!",
         "unauthorized_verifymail": "Verify your email address <a href=\"%{href}\">here</a>!",
-        "poke_0": "Unset",
+        "poke_0": "Missingno.",
         "poke_1": "Bulbasaur",
         "poke_2": "Ivysaur",
         "poke_3": "Venusaur",
