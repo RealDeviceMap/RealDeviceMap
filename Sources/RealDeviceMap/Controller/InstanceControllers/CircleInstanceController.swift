@@ -55,9 +55,7 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     func checkSpacingDevices(uuid: String) -> [String: Int] {
-		let date = Date()
-		let calendar = Calendar.current
-		let deadDeviceCutoff = calendar.component(.second, from: date) - 60
+    let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
 
 		var LiveDevices = [String]()
 
@@ -65,8 +63,7 @@ class CircleInstanceController: InstanceControllerProto {
 		for (k,_) in currentUuidIndexes.sorted (by:{ return $0.1 < $1.1 }) {
 			let lastSeen = currentUuidSeenTime[k]
 			if (lastSeen != nil ) {
-				let sec = calendar.component(.second, from: lastSeen!)
-				if (sec < deadDeviceCutoff) {
+        if (lastSeen! < deadDeviceCutoffTime) {
 					currentUuidIndexes[k] = nil
 					currentUuidSeenTime[k] = nil
 				}else{
@@ -111,13 +108,13 @@ class CircleInstanceController: InstanceControllerProto {
       var shouldJump = false
       var JumpDistance = 0
 
-          if (currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 10) {
+          if (currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15) {
             let live = checkSpacingDevices(uuid: uuid)
             let dist = 10 * live["distanceToNext"]! * live["numLiveDevices"]! + 5
             if (dist < 10 * coords.count) {
               shouldAdvance = false
             }
-            if (dist > 15 * coords.count) {
+            if (dist > 12 * coords.count) {
               shouldJump = true
               JumpDistance = live["distanceToNext"]! - coords.count / live["numLiveDevices"]! - 1
             }
