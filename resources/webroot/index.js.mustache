@@ -2371,6 +2371,10 @@ function getPokestopPopupContent (pokestop) {
     content += '<br>'
   }
 
+  if (pokestop.ar_scan_eligible) {
+    content += '<img src="/static/img/misc/ar.png" height="26" width="26"><br><br>'
+  }
+
   const updatedDate = new Date(pokestop.updated * 1000)
   if (updatedDate) {
     content += '<small><b>Last Updated:</b> ' + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br></small>'
