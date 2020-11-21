@@ -321,9 +321,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withDailyBuddyAffection:
                 let info = conditionData.withDailyBuddyAffection
                 infoData["min_buddy_affection_earned_today"] = info.minBuddyAffectionEarnedToday
-            case .withMegaEvoPokemon:
-                let info = conditionData.withMegaEvoPokemon
-                infoData["raid_pokemon_evolutions"] = info.pokemonEvolution.map({ (evolution) -> Int in
+            case .withTempEvoPokemon:
+                let info = conditionData.withTempEvoID
+                infoData["raid_pokemon_evolutions"] = info.megaForm.map({ (evolution) -> Int in
                     return evolution.rawValue
                 })
             case .withWinGymBattleStatus: break
@@ -339,6 +339,16 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withDailySpinBonus: break
             case .withUniquePokemon: break
             case .withBuddyInterestingPoi: break
+            case .withPokemonLevel: break
+            case .withSingleDay: break
+            case .withUniquePokemonTeam: break
+            case .withMaxCp: break
+            case .withLuckyPokemon: break
+            case .withLegendaryPokemon: break
+            case .withGblRank: break
+            case .withCatchesInARow: break
+            case .withEncounterType: break
+            case .withCombatType: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -394,6 +404,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["pokemon_id"] = info.pokemonID.rawValue
             case .avatarClothing: break
             case .quest: break
+            case .xlCandy: break
+            case .levelCap: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
