@@ -4,6 +4,7 @@ included:
 disabled_rules:
 - nesting
 - legacy_hashing
+- inclusive_language
 identifier_name:
   excluded:
     - i
