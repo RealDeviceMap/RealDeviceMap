@@ -38,7 +38,7 @@ internal class PVPStatsManager {
     private func loadMasterFileIfNeeded() {
         let request = CURLRequest(
             "https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-            "pokemongo-game-master/master/versions/latest/GAME_MASTER.json",
+            "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json",
             .httpMethod(.head)
         )
         guard let result = try? request.perform() else {
@@ -55,23 +55,24 @@ internal class PVPStatsManager {
     private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
         let request = CURLRequest("https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-                                  "pokemongo-game-master/master/versions/1595879989869/GAME_MASTER.json")
+                                  "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json")
         guard let result = try? request.perform() else {
             Log.error(message: "[PVPStatsManager] Failed to load game master file")
             return
         }
         eTag = result.get(.eTag)
-        Log.debug(message: "[PVPStatsManager] Parsing game master file")
-        guard let templates = result.bodyJSON["itemTemplate"] as? [[String: Any]] else {
+        Log.debug(message: "[PVPStatsManager] Parsing game master V2 file")
+        guard let templates = result.bodyJSON["template"] as? [[String: Any]] else {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
         var stats = [PokemonWithForm: Stats]()
         templates.forEach { (template) in
-            guard let id = template["templateId"] as? String else { return }
-            if id.starts(with: "V"), id.contains(string: "_POKEMON_"),
-                let pokemonInfo = template["pokemon"] as? [String: Any],
-                let pokemonName = pokemonInfo["uniqueId"] as? String,
+            guard let data = template["data"] as? [String: Any] else { return }
+            guard let templateId = data["templateId"] as? String else { return }
+            if templateId.starts(with: "V"), templateId.contains(string: "_POKEMON_"),
+                let pokemonInfo = data["pokemon"] as? [String: Any], 
+                let pokemonName = pokemonInfo["uniqueId"] as? String, 
                 let statsInfo = pokemonInfo["stats"] as? [String: Any],
                 let baseStamina = statsInfo["baseStamina"] as? Int,
                 let baseAttack = statsInfo["baseAttack"] as? Int,
