@@ -48,7 +48,7 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     func routeDistance(x: Int, y: Int) -> Int {
-        if (x < y) {
+        if x < y {
           return y - x
         }
         return y + (coords.count - x)
@@ -60,10 +60,10 @@ class CircleInstanceController: InstanceControllerProto {
 		var LiveDevices = [String]()
 
 		// Check if all registered devices are still online and clean list
-		for (k,_) in currentUuidIndexes.sorted (by:{ return $0.1 < $1.1 }) {
+		for (k, _) in currentUuidIndexes.sorted (by: { return $0.1 < $1.1 }) {
 			let lastSeen = currentUuidSeenTime[k]
-			if (lastSeen != nil ) {
-        if (lastSeen! < deadDeviceCutoffTime) {
+			if lastSeen != nil {
+        if lastSeen! < deadDeviceCutoffTime {
 					currentUuidIndexes[k] = nil
 					currentUuidSeenTime[k] = nil
 				}else{
@@ -76,10 +76,10 @@ class CircleInstanceController: InstanceControllerProto {
     var distanceToNext = coords.count
 
 		for i in 0..<nbLiveDevices {
-			if (uuid != LiveDevices[i]) {
+			if uuid != LiveDevices[i] {
 				continue
 			}
-			if (i < nbLiveDevices - 1) {
+			if i < nbLiveDevices - 1 {
 				let nextDevice = LiveDevices[i+1]
 	            distanceToNext = routeDistance(x: currentUuidIndexes[uuid]!, y: currentUuidIndexes[nextDevice]!)
 			}else{
@@ -97,7 +97,7 @@ class CircleInstanceController: InstanceControllerProto {
         var currentCoord = coords[currentIndex]
         if type == .pokemon {
 			lock.lock()
-			if (currentUuidIndexes.count < 1) {
+			if currentUuidIndexes.count < 1 {
 				currentUuidIndex = Int.random(in: 0..<coords.count)
 			}else{
 				currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
@@ -108,33 +108,33 @@ class CircleInstanceController: InstanceControllerProto {
       var shouldJump = false
       var JumpDistance = 0
 
-          if (currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15) {
+          if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15 {
             let live = checkSpacingDevices(uuid: uuid)
             let dist = 10 * live["distanceToNext"]! * live["numLiveDevices"]! + 5
-            if (dist < 10 * coords.count) {
+            if dist < 10 * coords.count {
               shouldAdvance = false
             }
-            if (dist > 12 * coords.count) {
+            if dist > 12 * coords.count {
               shouldJump = true
               JumpDistance = live["distanceToNext"]! - coords.count / live["numLiveDevices"]! - 1
             }
           }
-          if (currentUuidIndex == 0) {
+          if currentUuidIndex == 0 {
             shouldAdvance = true
           }
-          if (shouldAdvance) {
-            if (shouldJump) {
+          if shouldAdvance {
+            if shouldJump {
               currentUuidIndex += JumpDistance
             }
             currentUuidIndex += 1
-            if (currentUuidIndex >= coords.count - 1) {
+            if currentUuidIndex >= coords.count - 1 {
               currentUuidIndex = 0
               lastLastCompletedTime = lastCompletedTime
               lastCompletedTime = Date()
             }
           }else{
             currentUuidIndex -= 1
-            if (currentUuidIndex < 0) {
+            if currentUuidIndex < 0 {
               currentUuidIndex = coords.count - 1
             }
           }
@@ -183,6 +183,8 @@ class CircleInstanceController: InstanceControllerProto {
     func reload() {
         lock.lock()
         lastIndex = 0
+        currentUuidIndexes = [:]
+        currentUuidSeenTime = [:]
         lock.unlock()
     }
 
