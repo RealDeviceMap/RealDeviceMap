@@ -16,6 +16,8 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var accountGroup: String?
+    public private(set) var isEvent: Bool
     public private(set) var scatterPokemon: [UInt16]
 
     public weak var delegate: InstanceControllerDelegate?
@@ -33,11 +35,15 @@ class IVInstanceController: InstanceControllerProto {
     private var shouldExit = false
     private var ivQueueLimit = 100
 
+    // swiftlint:disable:next function_body_length
     init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8,
-         maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16]) {
+         maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16], accountGroup: String?,
+         isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
+        self.accountGroup = accountGroup
+        self.isEvent = isEvent
         self.multiPolygon = multiPolygon
         self.pokemonList = pokemonList
         self.ivQueueLimit = ivQueueLimit
@@ -69,7 +75,7 @@ class IVInstanceController: InstanceControllerProto {
                     var pokemonReal: Pokemon?
                     while !success {
                         do {
-                            pokemonReal = try Pokemon.getWithId(id: first.1.id)
+                            pokemonReal = try Pokemon.getWithId(id: first.1.id, isEvent: first.1.isEvent)
                             success = true
                         } catch {
                             Threading.sleep(seconds: 1.0)
@@ -161,7 +167,7 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func gotPokemon(pokemon: Pokemon) {
-        if pokemonList.contains(pokemon.pokemonId) &&
+        if pokemon.isEvent == isEvent && pokemonList.contains(pokemon.pokemonId) &&
            multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
 
@@ -194,6 +200,13 @@ class IVInstanceController: InstanceControllerProto {
             pokemonLock.lock()
             if let index = pokemonQueue.firstIndex(of: pokemon) {
                 pokemonQueue.remove(at: index)
+            }
+            // Re-Scan 100% none event Pokemon
+            if isEvent && !pokemon.isEvent && (
+                pokemon.atkIv == 15 || pokemon.atkIv == 0 || pokemon.atkIv == 1
+               ) && pokemon.defIv == 15 && pokemon.staIv == 15 {
+                pokemon.isEvent = true
+                pokemonQueue.insert(pokemon, at: 0)
             }
             pokemonLock.unlock()
 
@@ -238,7 +251,8 @@ class IVInstanceController: InstanceControllerProto {
             ignoringWarning: false,
             spins: nil,
             noCooldown: false,
-            device: uuid
+            device: uuid,
+            group: accountGroup
         )
     }
 
@@ -246,7 +260,7 @@ class IVInstanceController: InstanceControllerProto {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid()
+            account.isValid(group: accountGroup)
     }
 
 }

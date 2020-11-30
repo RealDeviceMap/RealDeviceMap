@@ -214,6 +214,9 @@ do {
         let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
         if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
             avilableForms.append("\(pokemonID)-\(formID)")
+        } else if split.count == 3, let pokemonID = Int(split[0]),
+                  let formID = Int(split[1]), let evoId = Int(split[2]) {
+            avilableForms.append("\(pokemonID)-\(formID)-\(evoId)")
         }
     }
     WebReqeustHandler.avilableFormsJson = try avilableForms.jsonEncodedString()
@@ -224,13 +227,15 @@ do {
 }
 
 Log.info(message: "[MAIN] Loading Avilable Items")
-var aviableItems = [-3, -2, -1]
+var aviableItems = [-6, -5, -4, -3, -2, -1]
 for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
     aviableItems.append(itemId.rawValue)
 }
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
 Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
+Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
+InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
 
 if !Pokemon.noPVP {
     Log.info(message: "[MAIN] Getting PVP Stats")
@@ -292,9 +297,6 @@ startupServer = nil
 startupServerContext = nil
 
 ApiRequestHandler.start = Date()
-
-// Ignore SIGPIPE
-signal(SIGPIPE, SIG_IGN)
 
 Log.info(message: "[MAIN] Starting Webserves")
 do {

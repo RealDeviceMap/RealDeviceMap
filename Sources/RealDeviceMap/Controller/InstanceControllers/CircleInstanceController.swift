@@ -20,6 +20,8 @@ class CircleInstanceController: InstanceControllerProto {
     public private(set) var name: String
     public private(set) var minLevel: UInt8
     public private(set) var maxLevel: UInt8
+    public private(set) var accountGroup: String?
+    public private(set) var isEvent: Bool
     public weak var delegate: InstanceControllerDelegate?
 
     private let type: CircleType
@@ -29,10 +31,13 @@ class CircleInstanceController: InstanceControllerProto {
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
 
-    init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8) {
+    init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
+         accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
+        self.accountGroup = accountGroup
+        self.isEvent = isEvent
         self.coords = coords
         self.type = type
         self.lastCompletedTime = Date()
@@ -100,7 +105,8 @@ class CircleInstanceController: InstanceControllerProto {
                 ignoringWarning: false,
                 spins: nil,
                 noCooldown: false,
-                device: uuid
+                device: uuid,
+                group: accountGroup
             )
         case .raid:
             return try Account.getNewAccount(
@@ -110,7 +116,8 @@ class CircleInstanceController: InstanceControllerProto {
                 ignoringWarning: true,
                 spins: nil,
                 noCooldown: false,
-                device: uuid
+                device: uuid,
+                group: accountGroup
             )
         }
     }
@@ -121,12 +128,12 @@ class CircleInstanceController: InstanceControllerProto {
             return
                 account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid()
+                account.isValid(group: accountGroup)
         case .raid:
             return
                 account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid(ignoringWarning: true)
+                account.isValid(ignoringWarning: true, group: accountGroup)
         }
     }
 
