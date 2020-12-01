@@ -47,117 +47,111 @@ class CircleInstanceController: InstanceControllerProto {
         self.currentUuidSeenTime = [:]
     }
 
-    func routeDistance(x: Int, y: Int) -> Int {
-        if x < y {
-          return y - x
+    func routeDistance(xcoord: Int, ycoord: Int) -> Int {
+        if xcoord < ycoord {
+          return ycoord - xcoord
         }
-        return y + (coords.count - x)
+        return ycoord + (coords.count - xcoord)
     }
 
     func checkSpacingDevices(uuid: String) -> [String: Int] {
     let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
 
-		var LiveDevices = [String]()
+		var liveDevices = [String]()
 
 		// Check if all registered devices are still online and clean list
-		for (k, _) in currentUuidIndexes.sorted (by: { return $0.1 < $1.1 }) {
-			let lastSeen = currentUuidSeenTime[k]
+		for (currentUuid, _) in currentUuidIndexes.sorted(by: { return $0.1 < $1.1 }) {
+			let lastSeen = currentUuidSeenTime[currentUuid]
 			if lastSeen != nil {
         if lastSeen! < deadDeviceCutoffTime {
-					currentUuidIndexes[k] = nil
-					currentUuidSeenTime[k] = nil
-				}else{
-					LiveDevices.append(k)
+					currentUuidIndexes[currentUuid] = nil
+					currentUuidSeenTime[currentUuid] = nil
+				} else {
+					liveDevices.append(currentUuid)
 				}
 			}
 		}
 
-		let nbLiveDevices = LiveDevices.count
+		let nbliveDevices = liveDevices.count
     var distanceToNext = coords.count
 
-		for i in 0..<nbLiveDevices {
-			if uuid != LiveDevices[i] {
+		for i in 0..<nbliveDevices {
+			if uuid != liveDevices[i] {
 				continue
 			}
-			if i < nbLiveDevices - 1 {
-				let nextDevice = LiveDevices[i+1]
+			if i < nbliveDevices - 1 {
+				let nextDevice = liveDevices[i+1]
 	            distanceToNext = routeDistance(x: currentUuidIndexes[uuid]!, y: currentUuidIndexes[nextDevice]!)
-			}else{
-				let nextDevice = LiveDevices[0]
+			} else {
+				let nextDevice = liveDevices[0]
 	            distanceToNext = routeDistance(x: currentUuidIndexes[uuid]!, y: currentUuidIndexes[nextDevice]!)
 			}
 		}
-		return ["numLiveDevices": nbLiveDevices, "distanceToNext": distanceToNext]
+		return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
     }
 
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
 
-        var currentIndex = 0
-        var currentUuidIndex = 0
-        var currentCoord = coords[currentIndex]
-        if type == .pokemon {
-			lock.lock()
-			if currentUuidIndexes.count < 1 {
-				currentUuidIndex = Int.random(in: 0..<coords.count)
-			}else{
-				currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
-			}
-			currentUuidIndexes[uuid] = currentUuidIndex
-			currentUuidSeenTime[uuid] = Date()
-      var shouldAdvance = true
-      var shouldJump = false
-      var JumpDistance = 0
+      var currentIndex = 0
+      var currentUuidIndex = 0
+      var currentCoord = coords[currentIndex]
+      if type == .pokemon {
+        lock.lock()
+        currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
+        currentUuidIndexes[uuid] = currentUuidIndex
+        currentUuidSeenTime[uuid] = Date()
+        var shouldAdvance = true
+        var shouldJump = false
+        var jumpDistance = 0
 
-          if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15 {
-            let live = checkSpacingDevices(uuid: uuid)
-            let dist = 10 * live["distanceToNext"]! * live["numLiveDevices"]! + 5
-            if dist < 10 * coords.count {
-              shouldAdvance = false
-            }
-            if dist > 12 * coords.count {
-              shouldJump = true
-              JumpDistance = live["distanceToNext"]! - coords.count / live["numLiveDevices"]! - 1
-            }
+        if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15 {
+          let live = checkSpacingDevices(uuid: uuid)
+          let dist = 10 * live["distanceToNext"]! * live["numliveDevices"]! + 5
+          if dist < 10 * coords.count {
+            shouldAdvance = false
           }
-          if currentUuidIndex == 0 {
-            shouldAdvance = true
+          if dist > 12 * coords.count {
+            shouldJump = true
+            jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
           }
-          if shouldAdvance {
-            if shouldJump {
-              currentUuidIndex += JumpDistance
-            }
-            currentUuidIndex += 1
-            if currentUuidIndex >= coords.count - 1 {
-              currentUuidIndex = 0
-              lastLastCompletedTime = lastCompletedTime
-              lastCompletedTime = Date()
-            }
-          }else{
-            currentUuidIndex -= 1
-            if currentUuidIndex < 0 {
-              currentUuidIndex = coords.count - 1
-            }
-          }
-          lock.unlock()
-			currentUuidIndexes[uuid] = currentUuidIndex
-          currentCoord = coords[currentUuidIndex]
-          return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
-                    "min_level": minLevel, "max_level": maxLevel]
-        } else {
-          lock.lock()
-          currentIndex = self.lastIndex
-          if lastIndex + 1 == coords.count {
-              lastLastCompletedTime = lastCompletedTime
-              lastCompletedTime = Date()
-              lastIndex = 0
-          } else {
-              lastIndex += 1
-          }
-          lock.unlock()
-          currentCoord = coords[currentIndex]
-          return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
-                    "min_level": minLevel, "max_level": maxLevel]
         }
+        if currentUuidIndex == 0 {
+          shouldAdvance = true
+        }
+        if shouldAdvance {
+          if shouldJump {
+            currentUuidIndex += jumpDistance
+          }
+          currentUuidIndex += 1
+          if currentUuidIndex >= coords.count - 1 {
+            currentUuidIndex = 0
+            lastLastCompletedTime = lastCompletedTime
+            lastCompletedTime = Date()
+          }
+        } else {
+          currentUuidIndex -= 1
+          if currentUuidIndex < 0 {
+            currentUuidIndex = coords.count - 1
+          }
+        }
+        lock.unlock()
+        currentUuidIndexes[uuid] = currentUuidIndex
+        currentCoord = coords[currentUuidIndex]
+        return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+      } else {
+        lock.lock()
+        currentIndex = self.lastIndex
+        if lastIndex + 1 == coords.count {
+          lastLastCompletedTime = lastCompletedTime
+          lastCompletedTime = Date()
+          lastIndex = 0
+        } else {
+          lastIndex += 1
+        }
+        lock.unlock()
+        currentCoord = coords[currentIndex]
+        return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+      }
 
     }
 
