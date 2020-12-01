@@ -101,7 +101,6 @@ class CircleInstanceController: InstanceControllerProto {
         currentUuidIndexes[uuid] = currentUuidIndex
         currentUuidSeenTime[uuid] = Date()
         var shouldAdvance = true
-        var shouldJump = false
         var jumpDistance = 0
 
         if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15 {
@@ -111,18 +110,11 @@ class CircleInstanceController: InstanceControllerProto {
             shouldAdvance = false
           }
           if dist > 12 * coords.count {
-            shouldJump = true
             jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
           }
         }
-        if currentUuidIndex == 0 {
-          shouldAdvance = true
-        }
         if shouldAdvance {
-          if shouldJump {
-            currentUuidIndex += jumpDistance
-          }
-          currentUuidIndex += 1
+          currentUuidIndex += jumpDistance + 1
           if currentUuidIndex >= coords.count - 1 {
             currentUuidIndex = 0
             lastLastCompletedTime = lastCompletedTime
@@ -137,7 +129,8 @@ class CircleInstanceController: InstanceControllerProto {
         lock.unlock()
         currentUuidIndexes[uuid] = currentUuidIndex
         currentCoord = coords[currentUuidIndex]
-        return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+        return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                "min_level": minLevel, "max_level": maxLevel]
       } else {
         lock.lock()
         currentIndex = self.lastIndex
@@ -150,7 +143,8 @@ class CircleInstanceController: InstanceControllerProto {
         }
         lock.unlock()
         currentCoord = coords[currentIndex]
-        return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon, "min_level": minLevel, "max_level": maxLevel]
+        return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                "min_level": minLevel, "max_level": maxLevel]
       }
 
     }
