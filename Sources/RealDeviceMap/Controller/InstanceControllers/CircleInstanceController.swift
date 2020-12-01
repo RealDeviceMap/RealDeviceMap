@@ -55,43 +55,42 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     func checkSpacingDevices(uuid: String) -> [String: Int] {
-    let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
+      let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
+      var liveDevices = [String]()
 
-		var liveDevices = [String]()
+  		// Check if all registered devices are still online and clean list
+  		for (currentUuid, _) in currentUuidIndexes.sorted(by: { return $0.1 < $1.1 }) {
+        let lastSeen = currentUuidSeenTime[currentUuid]
+        if lastSeen != nil {
+          if lastSeen! < deadDeviceCutoffTime {
+            currentUuidIndexes[currentUuid] = nil
+  					currentUuidSeenTime[currentUuid] = nil
+          } else {
+            liveDevices.append(currentUuid)
+          }
+        }
+      }
 
-		// Check if all registered devices are still online and clean list
-		for (currentUuid, _) in currentUuidIndexes.sorted(by: { return $0.1 < $1.1 }) {
-			let lastSeen = currentUuidSeenTime[currentUuid]
-			if lastSeen != nil {
-        if lastSeen! < deadDeviceCutoffTime {
-					currentUuidIndexes[currentUuid] = nil
-					currentUuidSeenTime[currentUuid] = nil
-				} else {
-					liveDevices.append(currentUuid)
-				}
-			}
-		}
+  		let nbliveDevices = liveDevices.count
+      var distanceToNext = coords.count
 
-		let nbliveDevices = liveDevices.count
-    var distanceToNext = coords.count
-
-		for i in 0..<nbliveDevices {
-			if uuid != liveDevices[i] {
-				continue
-			}
-			if i < nbliveDevices - 1 {
-				let nextDevice = liveDevices[i+1]
-	            distanceToNext = routeDistance(x: currentUuidIndexes[uuid]!, y: currentUuidIndexes[nextDevice]!)
-			} else {
-				let nextDevice = liveDevices[0]
-	            distanceToNext = routeDistance(x: currentUuidIndexes[uuid]!, y: currentUuidIndexes[nextDevice]!)
-			}
-		}
-		return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
+  		for i in 0..<nbliveDevices {
+        if uuid != liveDevices[i] {
+          continue
+        }
+        if i < nbliveDevices - 1 {
+          let nextDevice = liveDevices[i+1]
+          distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!, ycoord: currentUuidIndexes[nextDevice]!)
+        } else {
+          let nextDevice = liveDevices[0]
+          distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!, ycoord: currentUuidIndexes[nextDevice]!)
+        }
+      }
+      return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
     }
 
+// swiftlint:disable function_body_length
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
-
       var currentIndex = 0
       var currentUuidIndex = 0
       var currentCoord = coords[currentIndex]
@@ -146,11 +145,10 @@ class CircleInstanceController: InstanceControllerProto {
         return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
                 "min_level": minLevel, "max_level": maxLevel]
       }
-
     }
+// swiftlint:enable function_body_length
 
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
-
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))
             if formatted {
@@ -165,7 +163,6 @@ class CircleInstanceController: InstanceControllerProto {
                 return nil
             }
         }
-
     }
 
     func reload() {
