@@ -34,7 +34,7 @@ class CircleInstanceController: InstanceControllerProto {
   private var currentUuidSeenTime: [String: Date]
 
   init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
-  accountGroup: String?, isEvent: Bool) {
+       accountGroup: String?, isEvent: Bool) {
     self.name = name
     self.minLevel = minLevel
     self.maxLevel = maxLevel
@@ -112,10 +112,10 @@ class CircleInstanceController: InstanceControllerProto {
           jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
         }
       }
-      if (currentUuidIndex == 0) {
+      if currentUuidIndex == 0 {
         shouldAdvance = true
       }
-      if (shouldAdvance) {
+      if shouldAdvance {
         currentUuidIndex += jumpDistance + 1
         if currentUuidIndex >= coords.count - 1 {
           currentUuidIndex -= coords.count - 1
