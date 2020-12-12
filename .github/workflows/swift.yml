@@ -38,6 +38,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         while true; do
+          sleep 5
           status=$(curl https://build.realdevicemap.com/workflow/status -X POST -H "Content-Type: application/json" -d '{"ref":"${{github.ref}}","sha":"${{github.sha}}","swift_version":"5"}' --fail -s)
           if [[ $status == "failed" ]]; then
              exit 1
@@ -45,5 +46,4 @@ jobs:
            if [[ $status == "success" ]]; then
              exit 0
           fi
-          sleep 5
         done
