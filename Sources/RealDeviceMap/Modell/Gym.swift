@@ -234,7 +234,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             self.raidPokemonGender = UInt8(fortData.raidInfo.raidPokemon.pokemonDisplay.gender.rawValue)
             self.raidIsExclusive = fortData.raidInfo.isExclusive
             self.raidPokemonCostume = UInt16(fortData.raidInfo.raidPokemon.pokemonDisplay.costume.rawValue)
-            self.raidPokemonEvolution = UInt8(fortData.raidInfo.raidPokemon.pokemonDisplay.pokemonEvolution.rawValue)
+            self.raidPokemonEvolution = UInt8(fortData.raidInfo.raidPokemon.pokemonDisplay.lockedTempEvolution.rawValue)
         }
 
         self.cellId = cellId
