@@ -14,12 +14,19 @@ import PerfectCURL
 
 class WebHookController {
 
-    private init() {}
+    private init() {
+        let enviroment = ProcessInfo.processInfo.environment
+        timeout = enviroment["WEBHOOK_ENDPOINT_TIMEOUT"]?.toInt() ?? 30
+        connectTimeout = enviroment["WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"]?.toInt() ?? 30
+    }
 
     public private(set) static var global = WebHookController()
 
     public var webhookURLStrings = [String]()
     public var webhookSendDelay = 5.0
+
+    private let timeout: Int
+    private let connectTimeout: Int
 
     private var pokemonEventLock = Threading.Lock()
     private var pokemonEvents = [String: Pokemon]()
@@ -238,7 +245,9 @@ class WebHookController {
             .addHeader(.contentType, "application/json"),
             .addHeader(.accept, "application/json"),
             .addHeader(.cacheControl, "no-cache"),
-            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)"),
+            .timeout(timeout),
+            .connectTimeout(connectTimeout)
         )
         request.perform { (_) in }
     }
