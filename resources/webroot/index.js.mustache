@@ -272,7 +272,7 @@ $(function () {
     }
     var json = JSON.stringify(settings)
     var el = document.createElement('a')
-    el.setAttribute('href', 'data:text/plain;chartset=utf-8,' + encodeURIComponent(json))
+    el.setAttribute('href', 'data:application/json;chartset=utf-8,' + encodeURIComponent(json))
     el.setAttribute('download', 'settings.json')
     el.style.display = 'none'
     document.body.appendChild(el)
