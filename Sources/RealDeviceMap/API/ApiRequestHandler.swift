@@ -1550,7 +1550,7 @@ class ApiRequestHandler {
                     Date().timeIntervalSince(Date(timeIntervalSinceNow: Double($0.lastSeen))) < 15 * 60
                 }
                 let activePokemonCounts = try Pokemon.getActiveCounts(mysql: mysql)
-                
+
                 let limits = WebHookRequestHandler.getThreadLimits()
                 data["status"] = [
                     "processing": [

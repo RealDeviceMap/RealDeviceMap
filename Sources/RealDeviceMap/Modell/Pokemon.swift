@@ -1243,7 +1243,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         return sql
 
     }
-    
+
     public static func getActiveCounts(mysql: MySQL?=nil) throws -> (total: Int64, iv: Int64) {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
