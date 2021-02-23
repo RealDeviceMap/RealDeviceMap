@@ -1271,7 +1271,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let result = results.next()!
 
         let total = result[0] as! Int64
-        let iv = result[1] as? Int64 ?? 0
+        let iv = Int64(result[1] as? String ?? "0") ?? 0
         return (total: total, iv: iv)
     }
 
