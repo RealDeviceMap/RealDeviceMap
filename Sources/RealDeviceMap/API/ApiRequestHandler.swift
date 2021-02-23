@@ -1544,10 +1544,10 @@ class ApiRequestHandler {
                 let passed = UInt32(Date().timeIntervalSince(start)).secondsToDaysHoursMinutesSeconds()
                 let devices: [Device] = try Device.getAll(mysql: mysql)
                 let offlineDevices = devices.filter {
-                    Date().timeIntervalSince(Date(timeIntervalSinceNow: Double($0.lastSeen))) >= 15 * 60
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) >= 15 * 60
                 }
                 let onlineDevices = devices.filter {
-                    Date().timeIntervalSince(Date(timeIntervalSinceNow: Double($0.lastSeen))) < 15 * 60
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) < 15 * 60
                 }
                 let activePokemonCounts = try Pokemon.getActiveCounts(mysql: mysql)
 
