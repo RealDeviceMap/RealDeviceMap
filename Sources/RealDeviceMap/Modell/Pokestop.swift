@@ -689,7 +689,12 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                                  "UNIX_TIMESTAMP())"
             let hasNoInvasionSQL = "(incident_expire_timestamp IS NULL OR incident_expire_timestamp < UNIX_TIMESTAMP())"
 
-            excludePokestopSQL = "AND ("
+            excludePokestopSQL = ""
+            if showQuests {
+                excludePokestopSQL += "OR ("
+            } else {
+                excludePokestopSQL += "AND ("
+            }
             if excludeNormal && excludeInvasion {
                 excludePokestopSQL += "(\(hasLureSQL) AND \(hasNoInvasionSQL))"
             } else if excludeNormal && !excludeInvasion {
