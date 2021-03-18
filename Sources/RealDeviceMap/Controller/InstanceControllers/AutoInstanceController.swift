@@ -45,11 +45,13 @@ class AutoInstanceController: InstanceControllerProto {
     private let accountsLock = Threading.Lock()
     private var accounts = [String: String]()
     public var delayLogout: Int
-    private let ignoreRwForQuest = ProcessInfo.processInfo.environment["IGNORE_RW_FOR_QUEST"] == "true"
+    public var ignoreRwForQuest: Bool
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
          minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
          accountGroup: String?, isEvent: Bool) {
+        let environment = ProcessInfo.processInfo.environment
+        self.ignoreRwForQuest = environment["IGNORE_RW_FOR_QUEST"] == "true" ?? false
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
