@@ -680,10 +680,10 @@ class WebReqeustHandler {
                     return
                 }
             } else {
-                data["min_level"] = 0
-                data["max_level"] = 29
+                data["min_level"] = 30
+                data["max_level"] = 40
                 data["timezone_offset"] = 0
-                data["iv_queue_limit"] = 100
+                data["iv_queue_limit"] = 30
                 data["spin_limit"] = 1000
                 data["delay_logout"] = 900
                 data["radius"] = 10000
@@ -1994,7 +1994,7 @@ class WebReqeustHandler {
         }
 
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
-        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
+        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 30
         let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 1000
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
         let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
@@ -2247,8 +2247,8 @@ class WebReqeustHandler {
 
             data["name"] = oldInstance!.name
             data["area"] = areaString
-            data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 0
-            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
+            data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 30
+            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 40
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
