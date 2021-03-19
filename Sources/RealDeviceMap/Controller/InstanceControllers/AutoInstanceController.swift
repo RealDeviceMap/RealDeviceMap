@@ -45,7 +45,7 @@ class AutoInstanceController: InstanceControllerProto {
     private let accountsLock = Threading.Lock()
     private var accounts = [String: String]()
     public var delayLogout: Int
-    static let ignoreRwForQuest =
+    public let ignoreRwForQuest =
       (ProcessInfo.processInfo.environment["IGNORE_RW_FOR_QUEST"] ?? "no") == "yes"
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,

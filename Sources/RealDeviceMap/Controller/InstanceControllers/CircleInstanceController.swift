@@ -32,7 +32,7 @@ class CircleInstanceController: InstanceControllerProto {
   private var lastCompletedTime: Date?
   private var currentUuidIndexes: [String: Int]
   private var currentUuidSeenTime: [String: Date]
-  static let ignoreRwForRaid =
+  public let ignoreRwForRaid =
     (ProcessInfo.processInfo.environment["IGNORE_RW_FOR_RAID"] ?? "no") == "yes"
 
   init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
