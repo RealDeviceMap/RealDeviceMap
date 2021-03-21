@@ -1,5 +1,5 @@
 //
-//  PrivateWebReqeustHandler.swift
+//  PrivateWebRequestHandler.swift
 //  RealDeviceMap
 //
 //  Created by Florian Kostenzer on 18.09.18.
@@ -17,7 +17,7 @@ import PerfectSessionMySQL
 import PerfectThread
 import PerfectCURL
 
-class WebReqeustHandler {
+class WebRequestHandler {
 
     class CompletedEarly: Error {}
 
@@ -31,8 +31,8 @@ class WebReqeustHandler {
     static var maxZoom: Int = 18
     static var maxPokemonId: Int = 649
     static var title: String = "RealDeviceMap"
-    static var avilableFormsJson: String = "[]"
-    static var avilableItemJson: String = "[]"
+    static var availableFormsJson: String = "[]"
+    static var availableItemJson: String = "[]"
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
@@ -69,8 +69,8 @@ class WebReqeustHandler {
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
         data["title"] = title
-        data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
-        data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
+        data["google_analytics_id"] = WebRequestHandler.googleAnalyticsId
+        data["google_adsense_id"] = WebRequestHandler.googleAdSenseId
         data["buttons_left"] = buttonsLeft
         data["buttons_right"] = buttonsRight
 
@@ -114,9 +114,9 @@ class WebReqeustHandler {
 
                 do {
                     if let user = try User.get(username: username!) {
-                        if user.discordId == nil && WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                           WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                           WebReqeustHandler.oauthDiscordClientID != nil {
+                        if user.discordId == nil && WebRequestHandler.oauthDiscordClientSecret != nil &&
+                           WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                           WebRequestHandler.oauthDiscordClientID != nil {
                             data["discord_info"] = localizer.get(
                                 value: "unauthorized_discord",
                                 replace: ["href": "/oauth/discord?link=true"]
@@ -155,7 +155,7 @@ class WebReqeustHandler {
 
         if perms.contains(.viewStats) {
             //data["show_stats"] = true
-            data["stats_url"] = WebReqeustHandler.statsUrl
+            data["stats_url"] = WebRequestHandler.statsUrl
         }
 
         if perms.contains(.admin) {
@@ -586,8 +586,8 @@ class WebReqeustHandler {
             data["pokestop_lure_time"] = Pokestop.lureTime
             data["ex_raid_boss_id"] = Gym.exRaidBossId ?? 0
             data["ex_raid_boss_form"] = Gym.exRaidBossForm ?? 0
-            data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
-            data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
+            data["google_analytics_id"] = WebRequestHandler.googleAnalyticsId
+            data["google_adsense_id"] = WebRequestHandler.googleAdSenseId
             data["mailer_base_uri"] = MailController.baseURI
             data["mailer_name"] = MailController.fromName
             data["mailer_email"] = MailController.fromAddress
@@ -599,10 +599,10 @@ class WebReqeustHandler {
                     return i.description
                 }).joined(separator: ";")
             data["discord_token"] = DiscordController.global.token
-            data["discord_redirect_url"] = WebReqeustHandler.oauthDiscordRedirectURL
-            data["discord_client_id"] = WebReqeustHandler.oauthDiscordClientID
-            data["discord_client_secret"] = WebReqeustHandler.oauthDiscordClientSecret
-            data["stats_url"] = WebReqeustHandler.statsUrl
+            data["discord_redirect_url"] = WebRequestHandler.oauthDiscordRedirectURL
+            data["discord_client_id"] = WebRequestHandler.oauthDiscordClientID
+            data["discord_client_secret"] = WebRequestHandler.oauthDiscordClientSecret
+            data["stats_url"] = WebRequestHandler.statsUrl
             data["deviceapi_host_whitelist"] = WebHookRequestHandler.hostWhitelist?.joined(separator: ";")
             data["deviceapi_host_whitelist_uses_proxy"] = WebHookRequestHandler.hostWhitelistUsesProxy
             data["deviceapi_secret"] = WebHookRequestHandler.loginSecret
@@ -1371,9 +1371,9 @@ class WebReqeustHandler {
             }
             data["login_title"] = localizer.get(value: "login_title", replace: ["name": title])
             data["redirect"] = request.param(name: "redirect") ?? "/"
-            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                                        WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                                        WebReqeustHandler.oauthDiscordClientID != nil
+            data["has_discord_oauth"] = WebRequestHandler.oauthDiscordClientSecret != nil &&
+                                        WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                                        WebRequestHandler.oauthDiscordClientID != nil
             let error = request.param(name: "error")
             if error != nil {
                 if error == "discord_undefined" {
@@ -1416,9 +1416,9 @@ class WebReqeustHandler {
             data["page_is_profile"] = true
             data["page"] = localizer.get(value: "title_profile")
 
-            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                                        WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                                        WebReqeustHandler.oauthDiscordClientID != nil
+            data["has_discord_oauth"] = WebRequestHandler.oauthDiscordClientSecret != nil &&
+                                        WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                                        WebRequestHandler.oauthDiscordClientID != nil
 
             if let success = request.param(name: "success") {
                 if success == "discord_linked" {
@@ -1478,13 +1478,13 @@ class WebReqeustHandler {
             data["start_pokestop"] = request.param(name: "start_pokestop")
             data["start_gym"] = request.param(name: "start_gym")
             data["perm_admin"] = perms.contains(.admin)
-            data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
+            data["available_forms_json"] = availableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")
-            data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
+            data["available_items_json"] = availableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")
-            data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "")
+            data["available_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "")
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
@@ -1611,8 +1611,8 @@ class WebReqeustHandler {
                 }
                 if useAccessToken {
                     try DBController.global.setValueForKey(key: "IS_SETUP", value: "true")
-                    WebReqeustHandler.isSetup = true
-                    WebReqeustHandler.accessToken = nil
+                    WebRequestHandler.isSetup = true
+                    WebRequestHandler.accessToken = nil
                     response.redirect(path: "/")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .seeOther)
@@ -1891,20 +1891,20 @@ class WebReqeustHandler {
             return data
         }
 
-        WebReqeustHandler.startLat = startLat
-        WebReqeustHandler.startLon = startLon
-        WebReqeustHandler.startZoom = startZoom
-        WebReqeustHandler.minZoom = minZoom
-        WebReqeustHandler.maxZoom = maxZoom
-        WebReqeustHandler.title = title
-        WebReqeustHandler.maxPokemonId = maxPokemonId
-        WebReqeustHandler.enableRegister = enableRegister
-        WebReqeustHandler.tileservers = tileservers
-        WebReqeustHandler.cities = citySettings
-        WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
-        WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight
-        WebReqeustHandler.buttonsLeft = buttonsLeft
+        WebRequestHandler.startLat = startLat
+        WebRequestHandler.startLon = startLon
+        WebRequestHandler.startZoom = startZoom
+        WebRequestHandler.minZoom = minZoom
+        WebRequestHandler.maxZoom = maxZoom
+        WebRequestHandler.title = title
+        WebRequestHandler.maxPokemonId = maxPokemonId
+        WebRequestHandler.enableRegister = enableRegister
+        WebRequestHandler.tileservers = tileservers
+        WebRequestHandler.cities = citySettings
+        WebRequestHandler.googleAnalyticsId = googleAnalyticsId ?? ""
+        WebRequestHandler.googleAdSenseId = googleAdSenseId ?? ""
+        WebRequestHandler.buttonsRight = buttonsRight
+        WebRequestHandler.buttonsLeft = buttonsLeft
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
@@ -1923,10 +1923,10 @@ class WebReqeustHandler {
         DiscordController.global.guilds = discordGuilds
         DiscordController.global.token = discordToken
         Localizer.locale = locale
-        WebReqeustHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
-        WebReqeustHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
-        WebReqeustHandler.oauthDiscordClientID = oauthDiscordClientID
-        WebReqeustHandler.statsUrl = statsUrl
+        WebRequestHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
+        WebRequestHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
+        WebRequestHandler.oauthDiscordClientID = oauthDiscordClientID
+        WebRequestHandler.statsUrl = statsUrl
         WebHookRequestHandler.hostWhitelist = deviceAPIhostWhitelist
         WebHookRequestHandler.hostWhitelistUsesProxy = deviceAPIhostWhitelistUsesProxy
         WebHookRequestHandler.loginSecret = deviceAPIloginSecret

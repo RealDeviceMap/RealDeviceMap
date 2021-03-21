@@ -32,7 +32,7 @@ class ApiRequestHandler {
     public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
 
     private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
-        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
+        let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
 
@@ -312,7 +312,7 @@ class ApiRequestHandler {
                 }
             }
 
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let ivLabel: String
                 if permShowIV {
@@ -461,7 +461,7 @@ class ApiRequestHandler {
 
             // Items
             var itemI = 1
-            for item in POGOProtos_Inventory_Item_ItemId.allAvilable {
+            for item in POGOProtos_Inventory_Item_ItemId.allAvailable {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -513,7 +513,7 @@ class ApiRequestHandler {
             }
 
             // Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -683,7 +683,7 @@ class ApiRequestHandler {
             }
 
             //Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">

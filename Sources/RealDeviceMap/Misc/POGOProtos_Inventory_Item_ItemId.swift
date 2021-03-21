@@ -10,7 +10,7 @@ import POGOProtos
 
 extension POGOProtos_Inventory_Item_ItemId {
 
-    public static var allAvilable: [POGOProtos_Inventory_Item_ItemId] = [
+    public static var allAvailable: [POGOProtos_Inventory_Item_ItemId] = [
         .itemPokeBall,
         .itemGreatBall,
         .itemUltraBall,

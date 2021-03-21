@@ -97,13 +97,13 @@ class MailController {
         values["email_confirm_title_1"] = Localizer.global.get(value: "email_confirm_title_1",
                                                                replace: ["name": recipient.name])
         values["email_confirm_title_2"] = Localizer.global.get(value: "email_confirm_title_2",
-                                                               replace: ["name": WebReqeustHandler.title])
+                                                               replace: ["name": WebRequestHandler.title])
         values["email_confirm_subtitle"] = Localizer.global.get(value: "email_confirm_subtitle")
         values["email_confirm_button"] = Localizer.global.get(value: "email_confirm_button")
         values["email_automail_info"] = Localizer.global.get(value: "email_automail_info")
         values["email_confirm_href"] = "\(MailController.baseURI)/confirmemail/\(key.encodeUrl() ?? "")"
 
-        let subject = Localizer.global.get(value: "email_confirm_subject", replace: ["name": WebReqeustHandler.title])
+        let subject = Localizer.global.get(value: "email_confirm_subject", replace: ["name": WebRequestHandler.title])
 
         try sendMail(template: .confirmMail, values: values, recipient: recipient,
                      subject: subject, completion: { (code) in
@@ -124,13 +124,13 @@ class MailController {
         values["email_reset_title_1"] = Localizer.global.get(value: "email_reset_title_1",
                                                              replace: ["name": recipient.name])
         values["email_reset_title_2"] = Localizer.global.get(value: "email_reset_title_2",
-                                                             replace: ["name": WebReqeustHandler.title])
+                                                             replace: ["name": WebRequestHandler.title])
         values["email_reset_subtitle"] = Localizer.global.get(value: "email_reset_subtitle")
         values["email_reset_button"] = Localizer.global.get(value: "email_reset_button")
         values["email_automail_info"] = Localizer.global.get(value: "email_automail_info")
         values["email_reset_href"] = "\(MailController.baseURI)/resetpassword/\(key.encodeUrl() ?? "")"
 
-        let subject = Localizer.global.get(value: "email_reset_subject", replace: ["name": WebReqeustHandler.title])
+        let subject = Localizer.global.get(value: "email_reset_subject", replace: ["name": WebRequestHandler.title])
 
         try sendMail(template: .resetPassword, values: values, recipient: recipient,
                      subject: subject, completion: { (code) in
