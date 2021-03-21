@@ -1289,7 +1289,7 @@ class ApiRequestHandler {
                         let id = deviceGroup.name.encodeUrl()!
                         deviceGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/devicegroup/assign/\(id)\" " +
-                            "role=\"button\" class=\"btn btn-success\">Asign</a>" +
+                            "role=\"button\" class=\"btn btn-success\">Assign</a>" +
                             "<a href=\"/dashboard/devicegroup/edit/\(id)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
                             "<a href=\"/dashboard/devicegroup/delete/\(id)\" " +
