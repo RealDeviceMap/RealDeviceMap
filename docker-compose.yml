@@ -33,6 +33,7 @@ services:
       MEMORY_CACHE_KEEP_TIME: 3600
       IGNORE_RW_FOR_QUEST: "no"
       IGNORE_RW_FOR_RAID: "no"
+      GENERATE_IMAGES: "yes"
       RAW_THREAD_LIMIT: 100
       LOG_LEVEL: debug
 #     LOGINLIMIT_COUNT: 15

@@ -76,7 +76,7 @@ if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
 }
 
 // Load Groups
-Log.info(message: "[MAIN] Loading groups")
+Log.info(message: "[MAIN] Loading Groups")
 do {
     try Group.setup()
 } catch {
@@ -207,7 +207,7 @@ Log.info(message: "[MAIN] Starting Webhook Controller")
 WebHookController.global.start()
 
 // Load Forms
-Log.info(message: "[MAIN] Loading Avilable Forms")
+Log.info(message: "[MAIN] Loading Available Forms")
 var avilableForms = [String]()
 do {
     try Dir("\(projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
@@ -226,7 +226,7 @@ do {
     )
 }
 
-Log.info(message: "[MAIN] Loading Avilable Items")
+Log.info(message: "[MAIN] Loading Available Items")
 var aviableItems = [-6, -5, -4, -3, -2, -1]
 for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
     aviableItems.append(itemId.rawValue)
@@ -275,20 +275,26 @@ if isSetup != nil && isSetup == "true" {
 } else {
     WebReqeustHandler.isSetup = false
     WebReqeustHandler.accessToken = URandom().secureToken
-    Log.info(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
+    Log.info(message: "[MAIN] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
 }
 
 // Start MailController
-Log.info(message: "[MAIL] Starting Mail Controller")
+Log.info(message: "[MAIN] Starting Mail Controller")
 try! MailController.global.setup()
 
 // Start DiscordController
-Log.info(message: "[MAIL] Starting Discord Controller")
+Log.info(message: "[MAIN] Starting Discord Controller")
 try! DiscordController.global.setup()
 
 // Create Raid images
-Log.info(message: "[MAIN] Starting Images Generator")
-ImageGenerator.generate()
+let generateImages =
+  (ProcessInfo.processInfo.environment["GENERATE_IMAGES"] ?? "yes") == "yes"
+if generateImages {
+  Log.info(message: "[MAIN] Starting Images Generator")
+  ImageGenerator.generate()
+} else {
+  Log.info(message: "[MAIN] Image generation disabled - skipping")
+}
 
 // Stopping Startup Webserver
 Log.info(message: "[MAIN] Stopping Startup Webserver")
@@ -298,7 +304,7 @@ startupServerContext = nil
 
 ApiRequestHandler.start = Date()
 
-Log.info(message: "[MAIN] Starting Webserves")
+Log.info(message: "[MAIN] Starting Webservers")
 do {
     try HTTPServer.launch(
         [
