@@ -14,6 +14,7 @@ class CircleInstanceController: InstanceControllerProto {
 
   enum CircleType {
   case pokemon
+  case smartPokemon
   case raid
   }
 
@@ -96,7 +97,7 @@ class CircleInstanceController: InstanceControllerProto {
     var currentIndex = 0
     var currentUuidIndex = 0
     var currentCoord = coords[currentIndex]
-    if type == .pokemon {
+    if type == .smartPokemon {
       lock.lock()
       currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
       currentUuidIndexes[uuid] = currentUuidIndex
@@ -147,8 +148,13 @@ class CircleInstanceController: InstanceControllerProto {
       }
       lock.unlock()
       currentCoord = coords[currentIndex]
-      return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
-      "min_level": minLevel, "max_level": maxLevel]
+      if type == .pokemon {
+          return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                  "min_level": minLevel, "max_level": maxLevel]
+      } else {
+          return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                  "min_level": minLevel, "max_level": maxLevel]
+      }
     }
   }
   // swiftlint:enable function_body_length
@@ -180,7 +186,7 @@ class CircleInstanceController: InstanceControllerProto {
 
   func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
     switch type {
-    case .pokemon:
+    case .pokemon, .smartPokemon:
       return try Account.getNewAccount(
         mysql: mysql,
         minLevel: minLevel,
@@ -207,14 +213,12 @@ class CircleInstanceController: InstanceControllerProto {
 
   func accountValid(account: Account) -> Bool {
     switch type {
-    case .pokemon:
-      return
-      account.level >= minLevel &&
+    case .pokemon, .smartPokemon:
+      return account.level >= minLevel &&
       account.level <= maxLevel &&
       account.isValid(group: accountGroup)
     case .raid:
-      return
-      account.level >= minLevel &&
+      return account.level >= minLevel &&
       account.level <= maxLevel &&
       account.isValid(ignoringWarning: ignoreRwForRaid, group: accountGroup)
     }

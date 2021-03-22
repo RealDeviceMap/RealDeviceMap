@@ -2023,6 +2023,8 @@ class WebRequestHandler {
             switch type! {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
+            case .circleSmartPokemon:
+                data["circle_smart_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
@@ -2279,6 +2281,8 @@ class WebRequestHandler {
             switch oldInstance!.type {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
+            case .circleSmartPokemon:
+                data["circle_smart_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
