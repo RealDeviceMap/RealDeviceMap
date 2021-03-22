@@ -76,7 +76,7 @@ class WebServer {
         SessionConfig.name = "SESSION-TOKEN"
         SessionConfig.idle = 604800 // 7 Days
 
-        //SessionConfig.cookieDomain = "/"
+        // SessionConfig.cookieDomain = "/"
         SessionConfig.cookieSecure = false // <- make secure
         SessionConfig.IPAddressLock = false
         SessionConfig.userAgentLock = false

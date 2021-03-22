@@ -629,7 +629,7 @@ class ApiRequestHandler {
                 "type": generalString
                 ])
 
-            //Level
+            // Level
             for i in 1...6 {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
@@ -682,7 +682,7 @@ class ApiRequestHandler {
                 ])
             }
 
-            //Pokemon
+            // Pokemon
             for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
@@ -749,7 +749,7 @@ class ApiRequestHandler {
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
 
             var gymData = [[String: Any]]()
-            //Team
+            // Team
             for i in 0...3 {
 
                 let gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
@@ -833,7 +833,7 @@ class ApiRequestHandler {
 
             gymData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5), //Need a better way to display, new section?
+                    "formatted": String(format: "%03d", 5), // Need a better way to display, new section?
                     "sort": 5
                 ],
                 "name": Localizer.global.get(value: "filter_raid_ex") ,
@@ -844,7 +844,7 @@ class ApiRequestHandler {
                 "type": gymOptionsString
             ])
 
-            //Available slots
+            // Available slots
             for i in 0...6 {
                 let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
 
@@ -1185,7 +1185,7 @@ class ApiRequestHandler {
             if devices != nil {
                 for device in devices! {
                     var deviceData = [String: Any]()
-                    //deviceData["chk"] = ""
+                    // deviceData["chk"] = ""
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
                     deviceData["instance"] = device.instanceName ?? ""

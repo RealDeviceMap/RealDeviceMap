@@ -154,7 +154,7 @@ class WebRequestHandler {
         }
 
         if perms.contains(.viewStats) {
-            //data["show_stats"] = true
+            // data["show_stats"] = true
             data["stats_url"] = WebRequestHandler.statsUrl
         }
 
@@ -186,8 +186,8 @@ class WebRequestHandler {
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
-            //data["hide_lures"] = !perms.contains(.viewMapLure)
-            //data["hide_invasions"] = !perms.contains(.viewMapInvasion)
+            // data["hide_lures"] = !perms.contains(.viewMapLure)
+            // data["hide_invasions"] = !perms.contains(.viewMapInvasion)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             data["hide_submission_cells"] = !perms.contains(.viewMapSubmissionCells)
             data["hide_weathers"] = !perms.contains(.viewMapWeather)
