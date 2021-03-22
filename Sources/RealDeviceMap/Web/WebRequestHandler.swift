@@ -2052,7 +2052,7 @@ class WebRequestHandler {
 
         var newCoords: Any
 
-        if type != nil && type! == .circlePokemon || type! == .circleRaid || type! == .circleSmartRaid {
+        if type != nil && type! == .circlePokemon || type! == .circleSmartPokemon || type! == .circleRaid || type! == .circleSmartRaid {
             var coords = [Coord]()
             let areaRows = area.components(separatedBy: "\n")
             for areaRow in areaRows {
