@@ -1740,9 +1740,9 @@ class WebReqeustHandler {
             return value.toUInt64() ?? 0
         }) ?? [UInt64]()
         let discordToken = request.param(name: "discord_token")
-        let oauthDiscordRedirectURL = request.param(name: "discord_redirect_url")
-        let oauthDiscordClientID = request.param(name: "discord_client_id")
-        let oauthDiscordClientSecret = request.param(name: "discord_client_secret")
+        let oauthDiscordRedirectURL = request.param(name: "discord_redirect_url")?.emptyToNil()
+        let oauthDiscordClientID = request.param(name: "discord_client_id")?.emptyToNil()
+        let oauthDiscordClientSecret = request.param(name: "discord_client_secret")?.emptyToNil()
         let statsUrl = request.param(name: "stats_url")
         let deviceAPIhostWhitelist = request.param(name: "deviceapi_host_whitelist")?
                                      .emptyToNil()?.components(separatedBy: ";")
