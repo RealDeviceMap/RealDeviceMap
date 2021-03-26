@@ -21,7 +21,7 @@
                 <select class="form-control" style="height: 400px" name="assignments" multiple required>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Assignment(s)</option>
                     {{#assignments}}
-                        <option value="{{id}}" {{#selected}}selected{{/selected}}>{{deviceUUID}} -> {{instanceName}}</option>
+                        <option value="{{id}}" {{#selected}}selected{{/selected}}>{{deviceUUID}}{{deviceGroupName}}{{#deviceGroupName}} (Group){{/deviceGroupName}} -> {{instanceName}}</option>
                     {{/assignments}}
                 </select>
             </div>
