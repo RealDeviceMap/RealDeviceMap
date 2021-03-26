@@ -132,7 +132,7 @@
         </form>
         <br>
         {{#auto_quest_selected}}
-        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to clear all quests for instance {{old_name}}?)');" class="clear_quests_form">
+        <form action="" method="post" onsubmit="return confirm('Are you sure that you want to clear all quests for instance {{old_name}}?');" class="clear_quests_form">
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <input type="hidden" name="clear_quests" value="true">
             <button type="submit" class="btn btn-danger">Clear Quests</button>

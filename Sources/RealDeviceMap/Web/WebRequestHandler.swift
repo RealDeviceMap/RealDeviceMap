@@ -916,6 +916,191 @@ class WebRequestHandler {
             response.redirect(path: "/dashboard/assignments")
             sessionDriver.save(session: request.session!)
             response.completed(status: .seeOther)
+        case .dashboardAssignmentGroups:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Assignment Groups"
+        case .dashboardAssignmentGroupAdd:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Assignment Group"
+            if request.method == .post {
+                do {
+                    data = try addAssignmentGroupPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data["nothing_selected"] = true
+                    data = try addAssignmentGroupGet(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardAssignmentGroupEdit:
+            data["locale"] = "en"
+            let assignmentGroupName = (request.urlVariables["name"] ?? "").decodeUrl()!
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Edit Assignment Group"
+            data["old_name"] = assignmentGroupName
+
+            if request.param(name: "delete") == "true" {
+                do {
+                    try AssignmentGroup.delete(name: assignmentGroupName)
+                    response.redirect(path: "/dashboard/assignmentgroups")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    return
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+            } else if request.method == .post {
+                do {
+                    data = try editAssignmentGroupPost(data: data, request: request, response: response,
+                                                   assignmentGroupName: assignmentGroupName)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editAssignmentGroupGet(data: data, request: request, response: response,
+                                                  assignmentGroupName: assignmentGroupName)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardAssignmentGroupDelete:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Delete Assignment Group"
+
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                do {
+                    try AssignmentGroup.delete(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+        case .dashboardAssignmentGroupStart:
+            data["locale"] = "en"
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                let assignmentGroupT: AssignmentGroup?
+                do {
+                    assignmentGroupT = try AssignmentGroup.getByName(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                guard let assignmentGroup = assignmentGroupT else {
+                    response.setBody(string: "Assignment Group Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+
+                let assignments: [Assignment]
+                do {
+                    assignments = try Assignment.getAll()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+                let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+                for assignment in assignmentsInGroup {
+                  do {
+                    try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                  } catch {
+                    response.setBody(string: "Failed to trigger assignment")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                  }
+                }
+
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+        case .dashboardAssignmentGroupReQuest:
+            data["locale"] = "en"
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                let assignmentGroupT: AssignmentGroup?
+                do {
+                    assignmentGroupT = try AssignmentGroup.getByName(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                guard let assignmentGroup = assignmentGroupT else {
+                    response.setBody(string: "Assignment Group Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+
+                let assignments: [Assignment]
+                do {
+                    assignments = try Assignment.getAll()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+                let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+                for assignment in assignmentsInGroup {
+                    do {
+                        let instance = try Instance.getByName(name: assignment.instanceName)!
+                        if instance.type == .autoQuest {
+                            try Pokestop.clearQuests(instance: instance)
+                        }
+                        try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                    } catch {
+                        response.setBody(string: "Failed to trigger assignment")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .internalServerError)
+                        return
+                    }
+                }
+
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
         case .dashboardAccounts:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -2310,7 +2495,7 @@ class WebRequestHandler {
             instances = try Instance.getAll(getData: false)
             devices = try Device.getAll()
         } catch {
-            response.setBody(string: "Internal Server Errror")
+            response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
             response.completed(status: .internalServerError)
             throw CompletedEarly()
@@ -2388,7 +2573,7 @@ class WebRequestHandler {
             do {
                 devices = try Device.getAll()
             } catch {
-                response.setBody(string: "Internal Server Errror")
+                response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .internalServerError)
                 throw CompletedEarly()
@@ -2902,6 +3087,178 @@ class WebRequestHandler {
         }
 
         response.redirect(path: "/dashboard/assignments")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+    }
+
+    static func addAssignmentGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                      response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        let assignments: [Assignment]
+
+        do {
+            assignments = try Assignment.getAll()
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+
+        var assignmentsData = [[String: Any]]()
+        for assignment in assignments {
+            assignmentsData.append(["id": assignment.id ?? "" as Any,
+                "deviceUUID": assignment.deviceUUID ?? "" as Any,
+                "deviceGroupName": assignment.deviceGroupName ?? "" as Any,
+                "instanceName": assignment.instanceName as Any, "selected": false])
+        }
+
+        data["assignments"] = assignmentsData
+            // swiftlint:disable:next force_cast
+            .sorted { ($0["deviceUUID"] as! String) < ($1["deviceUUID"] as! String) }
+
+        return data
+    }
+
+    static func addAssignmentGroupPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                       response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        guard let groupName = request.param(name: "name") else {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+        let assignmentIDs = request.params(named: "assignments").map { UInt32($0)! }
+
+        let assignmentGroup = AssignmentGroup(name: groupName, assignmentIDs: assignmentIDs)
+        do {
+            try assignmentGroup.create()
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to create assignment group. Does this assignment group already exist?"
+            return data
+        }
+
+        response.redirect(path: "/dashboard/assignmentgroups")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+
+    }
+
+    static func editAssignmentGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                       response: HTTPResponse, assignmentGroupName: String)
+                                        throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+
+        let oldAssignmentGroup: AssignmentGroup?
+        do {
+            oldAssignmentGroup = try AssignmentGroup.getByName(name: assignmentGroupName)
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+        if oldAssignmentGroup == nil {
+            response.setBody(string: "Assignment Group Not Found")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .notFound)
+            throw CompletedEarly()
+        } else {
+            data["old_name"] = oldAssignmentGroup!.name
+            data["name"] = oldAssignmentGroup!.name
+
+            let assignments: [Assignment]
+
+            do {
+                assignments = try Assignment.getAll()
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+
+            var assignmentsData = [[String: Any]]()
+            for assignment in assignments {
+                assignmentsData.append(["id": assignment.id ?? "" as Any,
+                    "deviceUUID": assignment.deviceUUID ?? "" as Any,
+                    "deviceGroupName": assignment.deviceGroupName ?? "" as Any,
+                    "instanceName": assignment.instanceName as Any,
+                    "selected": oldAssignmentGroup!.assignmentIDs.contains(assignment.id!)])
+            }
+
+            data["assignments"] = assignmentsData
+                // swiftlint:disable:next force_cast
+                .sorted { ($0["deviceUUID"] as! String) < ($1["deviceUUID"] as! String) }
+
+            return data
+        }
+    }
+
+    static func editAssignmentGroupPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                        response: HTTPResponse, assignmentGroupName: String? = nil)
+                                            throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        guard
+            let name = request.param(name: "name")
+            else {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+        }
+
+        let assignmentIDs = request.params(named: "assignments").map { UInt32($0)! }
+
+        data["name"] = name
+        if assignmentGroupName != nil {
+            let oldAssignmentGroup: AssignmentGroup?
+            do {
+                oldAssignmentGroup = try AssignmentGroup.getByName(name: assignmentGroupName!)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to update assignment group. Is the name unique?"
+                return data
+            }
+            if oldAssignmentGroup == nil {
+                response.setBody(string: "Assignment Group Not Found")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .notFound)
+                throw CompletedEarly()
+            } else {
+                oldAssignmentGroup!.name = name
+                oldAssignmentGroup!.assignmentIDs = assignmentIDs
+
+                do {
+                    try oldAssignmentGroup!.update(oldName: assignmentGroupName!)
+                } catch {
+                    data["show_error"] = true
+                    data["error"] = "Failed to update assignment group. Is the name unique?"
+                    return data
+                }
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+        } else {
+            let assignmentGroup = AssignmentGroup(name: name, assignmentIDs: assignmentIDs)
+            do {
+                try assignmentGroup.create()
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create assignment group. Is the name unique?"
+                return data
+            }
+        }
+
+        response.redirect(path: "/dashboard/assignmentgroups")
         sessionDriver.save(session: request.session!)
         response.completed(status: .seeOther)
         throw CompletedEarly()
