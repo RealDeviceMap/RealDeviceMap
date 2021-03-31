@@ -139,20 +139,21 @@ class InstanceController {
 
             if instance.type == .circlePokemon {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                    type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
-                    accountGroup: accountGroup, isEvent: isEvent)
+                                                              type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
+                                                              accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .circleSmartPokemon {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                    type: .smartPokemon, minLevel: minLevel, maxLevel: maxLevel,
-                    accountGroup: accountGroup, isEvent: isEvent)
+                                                              type: .smartPokemon, minLevel: minLevel,
+                                                              maxLevel: maxLevel, accountGroup: accountGroup,
+                                                              isEvent: isEvent)
             } else if instance.type == .circleRaid {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                    type: .raid, minLevel: minLevel, maxLevel: maxLevel,
-                    accountGroup: accountGroup, isEvent: isEvent)
+                                                              type: .raid, minLevel: minLevel, maxLevel: maxLevel,
+                                                              accountGroup: accountGroup, isEvent: isEvent)
             } else {
                 instanceController = CircleSmartRaidInstanceController(name: instance.name, coords: coordsArray,
-                    minLevel: minLevel, maxLevel: maxLevel,
-                    accountGroup: accountGroup, isEvent: isEvent)
+                                                                       minLevel: minLevel, maxLevel: maxLevel,
+                                                                       accountGroup: accountGroup, isEvent: isEvent)
             }
         case .pokemonIV, .autoQuest:
             var areaArray = [[Coord]]()
