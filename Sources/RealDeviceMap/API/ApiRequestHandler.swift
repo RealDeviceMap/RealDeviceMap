@@ -1591,23 +1591,46 @@ class ApiRequestHandler {
         }
 
         if showStatus && perms.contains(.admin) {
-            let passed = UInt32(Date().timeIntervalSince(start)).secondsToDaysHoursMinutesSeconds()
-            let limits = WebHookRequestHandler.getThreadLimits()
-            data["status"] = [
-                "processing": [
-                    "current": limits.current,
-                    "total": limits.total,
-                    "ignored": limits.ignored,
-                    "max": WebHookRequestHandler.threadLimitMax
-                ],
-                "uptime": [
-                    "date": start.timeIntervalSince1970,
-                    "days": passed.days,
-                    "hours": passed.hours,
-                    "minutes": passed.minutes,
-                    "seconds": passed.seconds
+            do {
+                let passed = UInt32(Date().timeIntervalSince(start)).secondsToDaysHoursMinutesSeconds()
+                let devices: [Device] = try Device.getAll(mysql: mysql)
+                let offlineDevices = devices.filter {
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) >= 15 * 60
+                }
+                let onlineDevices = devices.filter {
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) < 15 * 60
+                }
+                let activePokemonCounts = try Pokemon.getActiveCounts(mysql: mysql)
+
+                let limits = WebHookRequestHandler.getThreadLimits()
+                data["status"] = [
+                    "processing": [
+                        "current": limits.current,
+                        "total": limits.total,
+                        "ignored": limits.ignored,
+                        "max": WebHookRequestHandler.threadLimitMax
+                    ],
+                    "uptime": [
+                        "date": start.timeIntervalSince1970,
+                        "days": passed.days,
+                        "hours": passed.hours,
+                        "minutes": passed.minutes,
+                        "seconds": passed.seconds
+                    ],
+                    "devices": [
+                        "total": devices.count,
+                        "offline": offlineDevices.count,
+                        "online": onlineDevices.count
+                    ],
+                    "pokemon": [
+                        "active_total": activePokemonCounts.total,
+                        "active_iv": activePokemonCounts.iv
+                    ]
                 ]
-            ]
+            } catch {
+                response.respondWithError(status: .internalServerError)
+                return
+            }
         }
 
         data["timestamp"] = Int(Date().timeIntervalSince1970)
