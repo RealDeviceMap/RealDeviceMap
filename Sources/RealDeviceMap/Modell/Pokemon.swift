@@ -1244,4 +1244,35 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
+    public static func getActiveCounts(mysql: MySQL?=nil) throws -> (total: Int64, iv: Int64) {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKEMON] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+            SELECT COUNT(*) as countTotal, SUM(iv IS NOT NULL) as countIV
+            FROM pokemon
+            WHERE expire_timestamp >= UNIX_TIMESTAMP()
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return  (total: 0, iv: 0)
+        }
+
+        let result = results.next()!
+
+        let total = result[0] as! Int64
+        let iv = Int64(result[1] as? String ?? "0") ?? 0
+        return (total: total, iv: iv)
+    }
+
 }
