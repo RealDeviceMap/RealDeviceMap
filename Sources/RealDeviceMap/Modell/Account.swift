@@ -95,8 +95,8 @@ class Account: WebHookEvent {
         self.group = group?.emptyToNil()
     }
 
-    public func responseInfo(accountData: POGOProtos_Networking_Responses_GetPlayerResponse) {
-        self.creationTimestamp = UInt32(accountData.playerData.creationTimestampMs / 1000)
+    public func responseInfo(accountData: GetPlayerOutProto) {
+        self.creationTimestamp = UInt32(accountData.player.creationTimeMs / 1000)
         self.warn = accountData.warn
         let warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
         if warnExpireTimestamp != 0 {
@@ -114,13 +114,13 @@ class Account: WebHookEvent {
             }
             self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.playerData.username) - Red Warning: \(accountData.warn)")
+                "UserName: \(accountData.player.name) - Red Warning: \(accountData.warn)")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
             self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.playerData.username) - Banned: \(accountData.banned)")
+                "UserName: \(accountData.player.name) - Banned: \(accountData.banned)")
         }
 
     }
