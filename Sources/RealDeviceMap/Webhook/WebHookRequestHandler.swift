@@ -581,7 +581,7 @@ class WebHookRequestHandler {
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
-                    let gym = Gym(fortData: fort.data, cellId: fort.cell, weatherData: raidWeather)
+                    let gym = Gym(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
                     if gymIdsPerCell[fort.cell] == nil {
                         gymIdsPerCell[fort.cell] = [String]()
