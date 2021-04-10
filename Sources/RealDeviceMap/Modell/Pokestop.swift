@@ -94,7 +94,6 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "lure_id": lureId ?? 0,
                 "pokestop_display": pokestopDisplay ?? 0,
                 "incident_expire_timestamp": incidentExpireTimestamp ?? 0,
-                "grunt_type": gruntType ?? 0,
                 "updated": updated ?? 1
             ]
             return [
