@@ -327,6 +327,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
+    public func addEncounter(mysql: MySQL, encounterData: EncounterOutProto,
                              username: String?) {
 
         let pokemonId = UInt16(encounterData.pokemon.pokemon.pokemonID.rawValue)
