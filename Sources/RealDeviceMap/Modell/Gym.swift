@@ -5,7 +5,7 @@
 //  Created by Florian Kostenzer on 18.09.18.
 //
 //  swiftlint:disable:next superfluous_disable_command
-//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast line_length
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast
 
 import Foundation
 import PerfectLib
@@ -45,11 +45,10 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_pokemon_move_2": raidPokemonMove2 as Any,
             "raid_pokemon_cp": raidPokemonCp as Any,
             "raid_pokemon_gender": raidPokemonGender as Any,
+            "raid_pokemon_evolution": raidPokemonEvolution as Any,
             "raid_is_exclusive": raidIsExclusive as Any,
             "total_cp": totalCp as Any,
-            "sponsor_od": sponsorId as Any,
-            "raid_pokemon_evolution": raidPokemonEvolution as Any,
-            "gym_weather": gymWeather as Any
+            "sponsor_od": sponsorId as Any
         ]
     }
 
@@ -72,8 +71,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "slots_available": availbleSlots ?? 6,
                 "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
-                "in_battle": inBattle ?? 0,
-                "total_cp": totalCp ?? 0,
                 "sponsor_od": sponsorId ?? 0
             ]
         } else if type == "gym-info" {
@@ -108,13 +105,11 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "cp": raidPokemonCp ?? 0,
                 "gender": raidPokemonGender ?? 0,
                 "form": raidPokemonForm ?? 0,
-                "costume": raidPokemonCostume ?? 0,
                 "evolution": raidPokemonEvolution ?? 0,
                 "move_1": raidPokemonMove1 ?? 0,
                 "move_2": raidPokemonMove2 ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "is_exclusive": raidIsExclusive ?? false,
-                "total_cp": totalCp ?? 0,
                 "sponsor_od": sponsorId ?? 0
             ]
         } else {
@@ -152,6 +147,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var raidPokemonCostume: UInt16?
     var raidPokemonCp: UInt32?
     var raidPokemonGender: UInt8?
+    var raidPokemonEvolution: UInt8?
     var availbleSlots: UInt16?
     var updated: UInt32?
     var exRaidEligible: Bool?
@@ -160,8 +156,6 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var cellId: UInt64?
     var totalCp: UInt32?
     var sponsorId: UInt16?
-    var raidPokemonEvolution: UInt8?
-    var gymWeather: UInt8?
 
     var hasChanges = false
 
@@ -172,8 +166,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
          raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots: UInt16?,
          updated: UInt32?, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?,
          raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?,
-         raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?, raidPokemonEvolution: UInt8?,
-         gymWeather: UInt8?) {
+         raidPokemonEvolution: UInt8?, raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -198,15 +191,14 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.raidPokemonCostume = raidPokemonCostume
         self.raidPokemonCp = raidPokemonCp
         self.raidPokemonGender = raidPokemonGender
+        self.raidPokemonEvolution = raidPokemonEvolution
         self.raidIsExclusive = raidIsExclusive
         self.cellId = cellId
         self.totalCp = totalCp
         self.sponsorId = sponsorId
-        self.raidPokemonEvolution = raidPokemonEvolution
-        self.gymWeather = gymWeather
     }
 
-    init(fortData: PokemonFortProto, cellId: UInt64, weatherData: UInt8) {
+    init(fortData: PokemonFortProto, cellId: UInt64) {
         self.id = fortData.fortID
         self.lat = fortData.latitude
         self.lon = fortData.longitude

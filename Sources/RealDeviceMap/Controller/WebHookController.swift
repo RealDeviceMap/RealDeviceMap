@@ -214,7 +214,6 @@ class WebHookController {
                         self.accountEventLock.lock()
                         let accountEvents = self.accountEvents
                         self.accountEvents = [String: Account]()
-
                         self.accountEventLock.unlock()
                         events += accountEvents.map({$0.value.getWebhookValues(type: "account")})
 
