@@ -12,6 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 import Regex
+import S2Geometry
 
 class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConvertible {
 
@@ -278,7 +279,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let lat: Double
         let lon: Double
         let pokestop = Pokestop.cache?.get(id: pokestopId)
-        if pokestop != nil {
+        if pokestop == nil {
+            let ns2cell = S2Cell(cellId: S2CellId(uid: cellId))
+            let nlat = ns2cell.capBound.rectBound.center.lat.degrees
+            let nlon = ns2cell.capBound.rectBound.center.lng.degrees
+            lat = nlat
+            lon = nlon
+        } else if pokestop != nil {
             lat = pokestop!.lat
             lon = pokestop!.lon
         } else {
@@ -318,7 +325,11 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.lat = lat
         self.lon = lon
         self.pokemonId = pokemonId
-        self.pokestopId = pokestopId
+        if pokestop == nil {
+            // Pokemon types placeholder
+        } else {
+            self.pokestopId = pokestopId
+        }
         self.gender = gender
         self.form = form
 
