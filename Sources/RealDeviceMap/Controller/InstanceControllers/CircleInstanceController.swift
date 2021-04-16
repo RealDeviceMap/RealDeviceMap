@@ -33,8 +33,8 @@ class CircleInstanceController: InstanceControllerProto {
     private var lastCompletedTime: Date?
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
-    public let ignoreRwForRaid =
-        (ProcessInfo.processInfo.environment["IGNORE_RW_FOR_RAID"] ?? "no") == "yes"
+    public let useRwForRaid =
+        ProcessInfo.processInfo.environment["USE_RW_FOR_RAID"] != nil
 
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {
@@ -204,7 +204,7 @@ class CircleInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: ignoreRwForRaid,
+                ignoringWarning: useRwForRaid,
                 spins: nil,
                 noCooldown: false,
                 device: uuid,
@@ -222,7 +222,7 @@ class CircleInstanceController: InstanceControllerProto {
         case .raid:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid(ignoringWarning: ignoreRwForRaid, group: accountGroup)
+                account.isValid(ignoringWarning: useRwForRaid, group: accountGroup)
         }
     }
 

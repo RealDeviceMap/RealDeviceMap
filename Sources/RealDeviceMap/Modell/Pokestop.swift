@@ -379,7 +379,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 let info = rewardData.candy
                 infoData["amount"] = info.amount
                 infoData["pokemon_id"] = info.pokemonID.rawValue
-            case .xlCandy: break
+            case .xlCandy:
                 let info = rewardData.xlCandy
                 infoData["amount"] = info.amount
                 infoData["pokemon_id"] = info.pokemonID.rawValue
@@ -1119,6 +1119,44 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     areaString += "\(lat!),\(lon!)\n"
                 }
             }
+        }
+
+        let coords = Pokestop.flattenCoords(area: areaString)
+        let sql = """
+            UPDATE pokestop
+            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+            WHERE ST_CONTAINS(
+                ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
+                POINT(pokestop.lat, pokestop.lon)
+            ) AND quest_type IS NOT NULL
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            throw DBController.DBError()
+        }
+
+        Pokestop.cache?.clear()
+
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return
+        }
+    }
+
+    public static func clearQuests(mysql: MySQL?=nil, area: [Coord]) throws {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        var areaString = ""
+        for coordLine in area {
+            areaString += "\(coordLine.lat),\(coordLine.lon)\n"
         }
 
         let coords = Pokestop.flattenCoords(area: areaString)
