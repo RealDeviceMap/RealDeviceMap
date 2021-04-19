@@ -1843,7 +1843,8 @@ function addPokemon(pokemon, ts) {
 
   if (oldPokemon === undefined || pokemon.is_start) {
     if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-      var latOffset = Math.random() * 0.0002 - 0.0001
+      var latOffset = Math.random() * 0.0003 - 0.0001
+
       if (latOffset >= 0) {
         latOffset += 0.00005
       } else {
@@ -1856,7 +1857,22 @@ function addPokemon(pokemon, ts) {
         lonOffset -= 0.00005
       }
       pokemon.lat += latOffset
-      pokemon.lon += +lonOffset
+      pokemon.lon += lonOffset
+    }
+
+    if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
+      if (latOffset >= 0) {
+        latOffset += 0.00008
+      } else {
+        latOffset -= 0.00008
+      }
+      if (lonOffset >= 0) {
+        lonOffset += 0.00008
+      } else {
+        lonOffset -= 0.00008
+      }
+      pokemon.lat += latOffset
+      pokemon.lon += lonOffset
     }
 
     pokemon.marker = getPokemonMarker(pokemon, ts)
@@ -2168,6 +2184,13 @@ function getPokemonPopupContent (pokemon) {
     content += '<b>Despawn Time:</b> '
   } else {
     content += '<b>Despawn Time:</b> ~'
+  }
+  if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
+    content += '<b>Scancell Pokemon</b> '
+  } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
+    content += '<b>Nearby Pokemon</b> ~'
+  } else {
+    content += '<b>Wild Pokemon</b> ~'
   }
   content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>' +
         '</div>' +
