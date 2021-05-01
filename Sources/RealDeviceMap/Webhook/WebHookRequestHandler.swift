@@ -164,16 +164,16 @@ class WebHookRequestHandler {
         let pokemonEncounterIdForEncounter = json["pokemon_encounter_id_for_encounter"] as? String
         let targetMaxDistance = json["target_max_distnace"] as? Double ?? 250
 
-        var wildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon, timestampMs: UInt64)]()
-        var nearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
-        var clientWeathers =  [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
-        var forts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
-        var fortDetails = [POGOProtos_Networking_Responses_FortDetailsResponse]()
-        var gymInfos = [POGOProtos_Networking_Responses_GymGetInfoResponse]()
-        var quests = [POGOProtos_Data_Quests_Quest]()
-        var fortSearch = [POGOProtos_Networking_Responses_FortSearchResponse]()
-        var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
-        var playerdatas = [POGOProtos_Networking_Responses_GetPlayerResponse]()
+        var wildPokemons = [(cell: UInt64, data: WildPokemonProto, timestampMs: UInt64)]()
+        var nearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+        var clientWeathers =  [(cell: Int64, data: ClientWeatherProto)]()
+        var forts = [(cell: UInt64, data: PokemonFortProto)]()
+        var fortDetails = [FortDetailsOutProto]()
+        var gymInfos = [GymGetInfoOutProto]()
+        var quests = [QuestProto]()
+        var fortSearch = [FortSearchOutProto]()
+        var encounters = [EncounterOutProto]()
+        var playerdatas = [GetPlayerOutProto]()
         var cells = [UInt64]()
 
         var isEmtpyGMO = true
@@ -213,13 +213,13 @@ class WebHookRequestHandler {
             }
 
             if method == 2 {
-                if let gpr = try? POGOProtos_Networking_Responses_GetPlayerResponse(serializedData: data) {
+                if let gpr = try? GetPlayerOutProto(serializedData: data) {
                     playerdatas.append(gpr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetPlayerResponse")
                 }
             } else if method == 101 {
-                if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
+                if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         let quest = fsr.challengeQuest.quest
                         quests.append(quest)
@@ -229,45 +229,45 @@ class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortSearchResponse")
                 }
             } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
-                if let enr = try? POGOProtos_Networking_Responses_EncounterResponse(serializedData: data) {
+                if let enr = try? EncounterOutProto(serializedData: data) {
                     encounters.append(enr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
             } else if method == 104 {
-                if let fdr = try? POGOProtos_Networking_Responses_FortDetailsResponse(serializedData: data) {
+                if let fdr = try? FortDetailsOutProto(serializedData: data) {
                     fortDetails.append(fdr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortDetailsResponse")
                 }
             } else if method == 156 {
-                if let ggi = try? POGOProtos_Networking_Responses_GymGetInfoResponse(serializedData: data) {
+                if let ggi = try? GymGetInfoOutProto(serializedData: data) {
                     gymInfos.append(ggi)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
                 }
             } else if method == 106 {
                 containsGMO = true
-                if let gmo = try? POGOProtos_Networking_Responses_GetMapObjectsResponse(serializedData: data) {
+                if let gmo = try? GetMapObjectsOutProto(serializedData: data) {
                     isInvalidGMO = false
 
-                    var newWildPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_WildPokemon,
+                    var newWildPokemons = [(cell: UInt64, data: WildPokemonProto,
                                             timestampMs: UInt64)]()
-                    var newNearbyPokemons = [(cell: UInt64, data: POGOProtos_Map_Pokemon_NearbyPokemon)]()
-                    var newClientWeathers = [(cell: Int64, data: POGOProtos_Map_Weather_ClientWeather)]()
-                    var newForts = [(cell: UInt64, data: POGOProtos_Map_Fort_FortData)]()
+                    var newNearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+                    var newClientWeathers = [(cell: Int64, data: ClientWeatherProto)]()
+                    var newForts = [(cell: UInt64, data: PokemonFortProto)]()
                     var newCells = [UInt64]()
 
-                    for mapCell in gmo.mapCells {
-                        let timestampMs = UInt64(mapCell.currentTimestampMs)
-                        for wildPokemon in mapCell.wildPokemons {
+                    for mapCell in gmo.mapCell {
+                        let timestampMs = UInt64(mapCell.asOfTimeMs)
+                        for wildPokemon in mapCell.wildPokemon {
                             newWildPokemons.append((cell: mapCell.s2CellID, data: wildPokemon,
-                                                    timestampMs: timestampMs))
+                                            timestampMs: timestampMs))
                         }
-                        for nearbyPokemon in mapCell.nearbyPokemons {
+                        for nearbyPokemon in mapCell.nearbyPokemon {
                             newNearbyPokemons.append((cell: mapCell.s2CellID, data: nearbyPokemon))
                         }
-                        for fort in mapCell.forts {
+                        for fort in mapCell.fort {
                             newForts.append((cell: mapCell.s2CellID, data: fort))
                         }
                         newCells.append(mapCell.s2CellID)
@@ -388,7 +388,7 @@ class WebHookRequestHandler {
             //"Guaranteed scan"
             data["encounters"] = 0
             for encounter in encounters where
-                encounter.wildPokemon.encounterID.description == pokemonEncounterIdForEncounter {
+                encounter.pokemon.encounterID.description == pokemonEncounterIdForEncounter {
                 //We actually encountered the target.
                 data["encounters"] = 1
             }
@@ -419,7 +419,7 @@ class WebHookRequestHandler {
                     continue
                 }
 
-                let pokemonId = UInt16(pokemon.data.pokemonData.pokemonID.rawValue)
+                let pokemonId = UInt16(pokemon.data.pokemon.pokemonID.rawValue)
                 do {
                     let oldPokemon = try Pokemon.getWithId(
                         mysql: mysql,
@@ -580,20 +580,20 @@ class WebHookRequestHandler {
 
             let startForts = Date()
             for fort in forts {
-                if fort.data.type == .gym {
+                if fort.data.fortType == .gym {
                     let gym = Gym(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
                     if gymIdsPerCell[fort.cell] == nil {
                         gymIdsPerCell[fort.cell] = [String]()
                     }
-                    gymIdsPerCell[fort.cell]!.append(fort.data.id)
-                } else if fort.data.type == .checkpoint {
+                    gymIdsPerCell[fort.cell]!.append(fort.data.fortID)
+                } else if fort.data.fortType == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
                     if stopsIdsPerCell[fort.cell] == nil {
                         stopsIdsPerCell[fort.cell] = [String]()
                     }
-                    stopsIdsPerCell[fort.cell]!.append(fort.data.id)
+                    stopsIdsPerCell[fort.cell]!.append(fort.data.fortID)
                 }
             }
             if !forts.isEmpty {
@@ -604,10 +604,10 @@ class WebHookRequestHandler {
             if !fortDetails.isEmpty {
                 let start = Date()
                 for fort in fortDetails {
-                    if fort.type == .gym {
+                    if fort.fortType == .gym {
                         let gym: Gym?
                         do {
-                            gym = try Gym.getWithId(mysql: mysql, id: fort.fortID)
+                            gym = try Gym.getWithId(mysql: mysql, id: fort.id)
                         } catch {
                             gym = nil
                         }
@@ -615,10 +615,10 @@ class WebHookRequestHandler {
                             gym!.addDetails(fortData: fort)
                             try? gym!.save(mysql: mysql)
                         }
-                    } else if fort.type == .checkpoint {
+                    } else if fort.fortType == .checkpoint {
                         let pokestop: Pokestop?
                         do {
-                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.fortID)
+                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.id)
                         } catch {
                             pokestop = nil
                         }
@@ -639,7 +639,7 @@ class WebHookRequestHandler {
                 for gymInfo in gymInfos {
                     let gym: Gym?
                     do {
-                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.id)
+                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID)
                     } catch {
                         gym = nil
                     }
@@ -681,7 +681,7 @@ class WebHookRequestHandler {
                     do {
                         pokemon = try Pokemon.getWithId(
                             mysql: mysql,
-                            id: encounter.wildPokemon.encounterID.description,
+                            id: encounter.pokemon.encounterID.description,
                             isEvent: isEvent
                         )
                     } catch {
@@ -691,11 +691,11 @@ class WebHookRequestHandler {
                         pokemon!.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
-                        let centerCoord = CLLocationCoordinate2D(latitude: encounter.wildPokemon.latitude,
-                                                                 longitude: encounter.wildPokemon.longitude)
+                        let centerCoord = CLLocationCoordinate2D(latitude: encounter.pokemon.latitude,
+                                                                 longitude: encounter.pokemon.longitude)
                         let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 15)
                         let newPokemon = Pokemon(
-                            wildPokemon: encounter.wildPokemon,
+                            wildPokemon: encounter.pokemon,
                             cellId: cellID.uid,
                             timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
                             username: username,

@@ -461,7 +461,7 @@ class ApiRequestHandler {
 
             // Items
             var itemI = 1
-            for item in POGOProtos_Inventory_Item_ItemId.allAvilable {
+            for item in Item.allAvilable {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
