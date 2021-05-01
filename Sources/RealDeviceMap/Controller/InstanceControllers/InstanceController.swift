@@ -34,7 +34,7 @@ protocol InstanceControllerProto {
     func shouldStoreData() -> Bool
     func gotPokemon(pokemon: Pokemon)
     func gotIV(pokemon: Pokemon)
-    func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?)
+    func gotFortData(fortData: PokemonFortProto, username: String?)
     func gotPlayerInfo(username: String, level: Int, xp: Int)
 }
 
@@ -42,7 +42,7 @@ extension InstanceControllerProto {
     func shouldStoreData() -> Bool { return true }
     func gotPokemon(pokemon: Pokemon) { }
     func gotIV(pokemon: Pokemon) { }
-    func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) { }
+    func gotFortData(fortData: PokemonFortProto, username: String?) { }
     func gotPlayerInfo(username: String, level: Int, xp: Int) { }
     func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
         return try Account.getNewAccount(mysql: mysql, minLevel: minLevel, maxLevel: maxLevel,
@@ -380,7 +380,7 @@ class InstanceController {
         instancesLock.unlock()
     }
 
-    public func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) {
+    public func gotFortData(fortData: PokemonFortProto, username: String?) {
         instancesLock.lock()
         for instance in instancesByInstanceName {
             instance.value.gotFortData(fortData: fortData, username: username)

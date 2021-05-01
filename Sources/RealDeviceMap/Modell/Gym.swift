@@ -197,25 +197,24 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.sponsorId = sponsorId
     }
 
-    init(fortData: POGOProtos_Map_Fort_FortData, cellId: UInt64) {
-
-        self.id = fortData.id
+    init(fortData: PokemonFortProto, cellId: UInt64) {
+        self.id = fortData.fortID
         self.lat = fortData.latitude
         self.lon = fortData.longitude
         self.enabled = fortData.enabled
         self.guardPokemonId = fortData.guardPokemonID.rawValue.toUInt16()
-        self.teamId = fortData.ownedByTeam.rawValue.toUInt8()
+        self.teamId = fortData.team.rawValue.toUInt8()
         self.availbleSlots = UInt16(fortData.gymDisplay.slotsAvailable)
-        self.lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+        self.lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle
-        if fortData.sponsor != .unsetSponsor {
+        if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
         }
-        if fortData.ownedByTeam == .neutral {
+        if fortData.team == .unset {
             self.totalCp = 0
         } else {
             self.totalCp = UInt32(fortData.gymDisplay.totalGymCp)
@@ -243,9 +242,9 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
-        if !fortData.imageUrls.isEmpty {
-            let url = fortData.imageUrls[0]
+    public func addDetails(fortData: FortDetailsOutProto) {
+        if !fortData.imageURL.isEmpty {
+            let url = fortData.imageURL[0]
             if self.url != url {
                 hasChanges = true
             }
@@ -258,7 +257,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.name = name
     }
 
-    public func addDetails(gymInfo: POGOProtos_Networking_Responses_GymGetInfoResponse) {
+    public func addDetails(gymInfo: GymGetInfoOutProto) {
         let name = gymInfo.name
         let url = gymInfo.url
         if self.url != url || self.name != name {

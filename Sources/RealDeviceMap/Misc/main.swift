@@ -228,7 +228,7 @@ do {
 
 Log.info(message: "[MAIN] Loading Avilable Items")
 var aviableItems = [-6, -5, -4, -3, -2, -1]
-for itemId in POGOProtos_Inventory_Item_ItemId.allAvilable {
+for itemId in Item.allAvilable {
     aviableItems.append(itemId.rawValue)
 }
 WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
