@@ -462,7 +462,7 @@ class ApiRequestHandler {
 
             // Items
             var itemI = 1
-            for item in POGOProtos_Inventory_Item_ItemId.allAvailable {
+            for item in Item.allAvilable {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -965,7 +965,7 @@ class ApiRequestHandler {
                 "type": pokestopOptionsString
             ])
 
-            for i in 1...4 {
+            for i in 1...5 {
                 let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
 
                 let filter = """

@@ -70,7 +70,7 @@ class LevelingInstanceController: InstanceControllerProto {
     private let storeData: Bool
     private let radius: UInt64
     private let unspunPokestopsPerUsernameLock = NSLock()
-    private var unspunPokestopsPerUsername = [String: [String: POGOProtos_Map_Fort_FortData]]()
+    private var unspunPokestopsPerUsername = [String: [String: PokemonFortProto]]()
     private var lastPokestopsPerUsername = [String: [Coord]]()
     private let playerLock = NSLock()
     private var playerLastSeen = [String: Date]()
@@ -116,7 +116,7 @@ class LevelingInstanceController: InstanceControllerProto {
                 account: account
             ) {
             destination = Coord(lat: closestPokestop.latitude, lon: closestPokestop.longitude)
-            unspunPokestopsPerUsername[username]![closestPokestop.id] = nil
+            unspunPokestopsPerUsername[username]![closestPokestop.fortID] = nil
             while lastPokestopsPerUsername[username]!.count > 5 {
                 _ = lastPokestopsPerUsername[username]!.remove(at: 0)
             }
@@ -170,9 +170,9 @@ class LevelingInstanceController: InstanceControllerProto {
 
     }
 
-    private func findClosest(unspunPokestops: [POGOProtos_Map_Fort_FortData], exclude: [Coord], username: String,
-                             account: Account) -> POGOProtos_Map_Fort_FortData? {
-        var closest: POGOProtos_Map_Fort_FortData?
+    private func findClosest(unspunPokestops: [PokemonFortProto], exclude: [Coord], username: String,
+                             account: Account) -> PokemonFortProto? {
+        var closest: PokemonFortProto?
         var closestDistance: Double = 10000000000000000
 
         let current = Coord(
@@ -197,12 +197,12 @@ class LevelingInstanceController: InstanceControllerProto {
         return closest
     }
 
-    func gotFortData(fortData: POGOProtos_Map_Fort_FortData, username: String?) {
+    func gotFortData(fortData: PokemonFortProto, username: String?) {
         guard let username = username else {
             return
         }
 
-        if fortData.type == .checkpoint {
+        if fortData.fortType == .checkpoint {
             let coord = Coord(lat: fortData.latitude, lon: fortData.longitude)
             if UInt64(coord.distance(to: start)) <= radius {
                 unspunPokestopsPerUsernameLock.lock()
@@ -210,9 +210,9 @@ class LevelingInstanceController: InstanceControllerProto {
                     unspunPokestopsPerUsername[username] = [:]
                 }
                 if fortData.visited {
-                    unspunPokestopsPerUsername[username]![fortData.id] = nil
+                    unspunPokestopsPerUsername[username]![fortData.fortID] = nil
                 } else {
-                    unspunPokestopsPerUsername[username]![fortData.id] = fortData
+                    unspunPokestopsPerUsername[username]![fortData.fortID] = fortData
                 }
                 unspunPokestopsPerUsernameLock.unlock()
             }

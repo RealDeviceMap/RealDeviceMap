@@ -226,12 +226,12 @@ do {
     )
 }
 
-Log.info(message: "[MAIN] Loading Available Items")
-var availableItems = [-6, -5, -4, -3, -2, -1]
-for itemId in POGOProtos_Inventory_Item_ItemId.allAvailable {
-    availableItems.append(itemId.rawValue)
+Log.info(message: "[MAIN] Loading Avilable Items")
+var aviableItems = [-6, -5, -4, -3, -2, -1]
+for itemId in Item.allAvailable {
+    aviableItems.append(itemId.rawValue)
 }
-WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
+WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
 
 Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
 Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil

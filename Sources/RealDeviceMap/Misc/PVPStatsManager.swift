@@ -82,7 +82,7 @@ internal class PVPStatsManager {
                     return
                 }
                 let formName = pokemonInfo["form"] as? String
-                let form: POGOProtos_Enums_Form?
+                let form: PokemonDisplayProto.Form?
                 if let formName = formName {
                     guard let formT = formFrom(name: formName) else {
                         Log.warning(message: "[PVPStatsManager] Failed to get form for: \(formName)")
@@ -116,7 +116,7 @@ internal class PVPStatsManager {
         Log.debug(message: "[PVPStatsManager] Done parsing game master file")
     }
 
-    internal func getPVPStats(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?, iv: IV, level: Double,
+    internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?, iv: IV, level: Double,
                               league: League) -> Response? {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
@@ -141,8 +141,8 @@ internal class PVPStatsManager {
         return .init(rank: index + 1, percentage: value/max, ivs: ivs)
     }
 
-    internal func getPVPStatsWithEvolutions(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
-                                            costume: POGOProtos_Enums_Costume, iv: IV, level: Double, league: League)
+    internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
+                                            costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
                                             -> [(pokemon: PokemonWithForm, response: Response?)] {
         let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
         let pokemonWithForm = PokemonWithForm(pokemon: pokemon, form: form)
@@ -161,7 +161,7 @@ internal class PVPStatsManager {
     }
 
     // swiftlint:disable:next cyclomatic_complexity
-    internal func getTopPVP(pokemon: POGOProtos_Enums_PokemonId, form: POGOProtos_Enums_Form?,
+    internal func getTopPVP(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                             league: League) -> [Response]? {
         let info = PokemonWithForm(pokemon: pokemon, form: form)
         let cached: ResponsesOrEvent?
@@ -272,14 +272,14 @@ internal class PVPStatsManager {
         return max(Int(floor(attack * defense * stamina * multiplier / 10)), 10)
     }
 
-    private func formFrom(name: String) -> POGOProtos_Enums_Form? {
-        return POGOProtos_Enums_Form.allCases.first { (form) -> Bool in
+    private func formFrom(name: String) -> PokemonDisplayProto.Form? {
+        return PokemonDisplayProto.Form.allCases.first { (form) -> Bool in
             return String(describing: form).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
-    private func pokemonFrom(name: String) -> POGOProtos_Enums_PokemonId? {
-        return POGOProtos_Enums_PokemonId.allCases.first { (pokemon) -> Bool in
+    private func pokemonFrom(name: String) -> HoloPokemonId? {
+        return HoloPokemonId.allCases.first { (pokemon) -> Bool in
             return String(describing: pokemon).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
@@ -289,8 +289,8 @@ internal class PVPStatsManager {
 extension PVPStatsManager {
 
     struct PokemonWithForm: Hashable {
-        var pokemon: POGOProtos_Enums_PokemonId
-        var form: POGOProtos_Enums_Form?
+        var pokemon: HoloPokemonId
+        var form: PokemonDisplayProto.Form?
     }
 
     struct Stats {
