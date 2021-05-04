@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
-//  swiftlint:disable file_length type_body_length
+//  swiftlint:disable superfluous_disable_command file_length type_body_length
 
 import Foundation
 import PerfectLib
@@ -31,7 +31,7 @@ class ApiRequestHandler {
 
     public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
 
-    // swiftlint:disable:next superfluous_disable_command cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity
     private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
         let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
