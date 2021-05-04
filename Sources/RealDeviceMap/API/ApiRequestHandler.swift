@@ -964,7 +964,7 @@ class ApiRequestHandler {
                 "type": pokestopOptionsString
             ])
 
-            for i in 1...4 {
+            for i in 1...5 {
                 let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
 
                 let filter = """
