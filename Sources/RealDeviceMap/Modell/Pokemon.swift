@@ -209,8 +209,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if wildPokemon.pokemon.hasPokemonDisplay {
             costume = wildPokemon.pokemon.pokemonDisplay.costume.rawValue.toUInt8()
             weather = wildPokemon.pokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
-            //The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
-            //shiny = wildPokemon.pokemon.pokemonDisplay.shiny
+            // The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
+            // shiny = wildPokemon.pokemon.pokemonDisplay.shiny
         }
         self.username = username
 

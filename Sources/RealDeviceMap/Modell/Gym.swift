@@ -204,7 +204,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.enabled = fortData.enabled
         self.guardPokemonId = fortData.guardPokemonID.rawValue.toUInt16()
         self.teamId = fortData.team.rawValue.toUInt8()
-        self.availbleSlots = UInt16(fortData.gymDisplay.slotsAvailable)
+        self.availableSlots = UInt16(fortData.gymDisplay.slotsAvailable)
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle

@@ -1126,7 +1126,6 @@ class WebRequestHandler {
                 }
                 for assignment in assignmentsInGroup {
                     do {
-                        let instance = try Instance.getByName(name: assignment.instanceName)!
                         try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
                     } catch {
                         response.setBody(string: "Failed to trigger assignment")

@@ -389,7 +389,7 @@ class WebHookRequestHandler {
             data["encounters"] = 0
             for encounter in encounters where
                 encounter.pokemon.encounterID.description == pokemonEncounterIdForEncounter {
-                //We actually encountered the target.
+                // We actually encountered the target.
                 data["encounters"] = 1
             }
         }
