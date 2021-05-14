@@ -37,8 +37,8 @@ internal class PVPStatsManager {
 
     private func loadMasterFileIfNeeded() {
         let request = CURLRequest(
-            "https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-            "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json",
+            "https://raw.githubusercontent.com/PokeMiners/" +
+            "game_masters/master/latest/latest.json",
             .httpMethod(.head)
         )
         guard let result = try? request.perform() else {
@@ -54,14 +54,14 @@ internal class PVPStatsManager {
 
     private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
-        let request = CURLRequest("https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-                                  "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json")
+        let request = CURLRequest("https://raw.githubusercontent.com/PokeMiners/" +
+                                  "game_masters/master/latest/latest.json")
         guard let result = try? request.perform() else {
             Log.error(message: "[PVPStatsManager] Failed to load game master file")
             return
         }
         eTag = result.get(.eTag)
-        Log.debug(message: "[PVPStatsManager] Parsing game master V2 file")
+        Log.debug(message: "[PVPStatsManager] Parsing game master file")
         guard let templates = result.bodyJSON["template"] as? [[String: Any]] else {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
