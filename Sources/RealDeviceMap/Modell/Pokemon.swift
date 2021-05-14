@@ -195,22 +195,22 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.isEvent = isEvent
     }
 
-    init(mysql: MySQL?=nil, wildPokemon: POGOProtos_Map_Pokemon_WildPokemon, cellId: UInt64,
+    init(mysql: MySQL?=nil, wildPokemon: WildPokemonProto, cellId: UInt64,
          timestampMs: UInt64, username: String?, isEvent: Bool) {
 
         self.isEvent = isEvent
         id = wildPokemon.encounterID.description
-        pokemonId = wildPokemon.pokemonData.pokemonID.rawValue.toUInt16()
+        pokemonId = wildPokemon.pokemon.pokemonID.rawValue.toUInt16()
         lat = wildPokemon.latitude
         lon = wildPokemon.longitude
         let spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
-        gender = wildPokemon.pokemonData.pokemonDisplay.gender.rawValue.toUInt8()
-        form = wildPokemon.pokemonData.pokemonDisplay.form.rawValue.toUInt16()
-        if wildPokemon.pokemonData.hasPokemonDisplay {
-            costume = wildPokemon.pokemonData.pokemonDisplay.costume.rawValue.toUInt8()
-            weather = wildPokemon.pokemonData.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+        gender = wildPokemon.pokemon.pokemonDisplay.gender.rawValue.toUInt8()
+        form = wildPokemon.pokemon.pokemonDisplay.form.rawValue.toUInt16()
+        if wildPokemon.pokemon.hasPokemonDisplay {
+            costume = wildPokemon.pokemon.pokemonDisplay.costume.rawValue.toUInt8()
+            weather = wildPokemon.pokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
             //The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
-            //shiny = wildPokemon.pokemonData.pokemonDisplay.shiny
+            //shiny = wildPokemon.pokemon.pokemonDisplay.shiny
         }
         self.username = username
 
@@ -258,12 +258,12 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
-    init(mysql: MySQL?=nil, nearbyPokemon: POGOProtos_Map_Pokemon_NearbyPokemon, cellId: UInt64,
+    init(mysql: MySQL?=nil, nearbyPokemon: NearbyPokemonProto, cellId: UInt64,
          username: String?, isEvent: Bool) throws {
 
         self.isEvent = isEvent
         let id = nearbyPokemon.encounterID.description
-        let pokemonId = nearbyPokemon.pokemonID.rawValue.toUInt16()
+        let pokemonId = nearbyPokemon.pokedexNumber.toUInt16()
         let pokestopId = nearbyPokemon.fortID
         let gender = nearbyPokemon.pokemonDisplay.gender.rawValue.toUInt8()
         let form = nearbyPokemon.pokemonDisplay.form.rawValue.toUInt16()
@@ -327,21 +327,21 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
-    public func addEncounter(mysql: MySQL, encounterData: POGOProtos_Networking_Responses_EncounterResponse,
+    public func addEncounter(mysql: MySQL, encounterData: EncounterOutProto,
                              username: String?) {
 
-        let pokemonId = UInt16(encounterData.wildPokemon.pokemonData.pokemonID.rawValue)
-        let cp = UInt16(encounterData.wildPokemon.pokemonData.cp)
-        let move1 = UInt16(encounterData.wildPokemon.pokemonData.move1.rawValue)
-        let move2 = UInt16(encounterData.wildPokemon.pokemonData.move2.rawValue)
-        let size = Double(encounterData.wildPokemon.pokemonData.heightM)
-        let weight = Double(encounterData.wildPokemon.pokemonData.weightKg)
-        let atkIv = UInt8(encounterData.wildPokemon.pokemonData.individualAttack)
-        let defIv = UInt8(encounterData.wildPokemon.pokemonData.individualDefense)
-        let staIv = UInt8(encounterData.wildPokemon.pokemonData.individualStamina)
-        let costume = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.costume.rawValue)
-        let form = UInt16(encounterData.wildPokemon.pokemonData.pokemonDisplay.form.rawValue)
-        let gender = UInt8(encounterData.wildPokemon.pokemonData.pokemonDisplay.gender.rawValue)
+        let pokemonId = UInt16(encounterData.pokemon.pokemon.pokemonID.rawValue)
+        let cp = UInt16(encounterData.pokemon.pokemon.cp)
+        let move1 = UInt16(encounterData.pokemon.pokemon.move1.rawValue)
+        let move2 = UInt16(encounterData.pokemon.pokemon.move2.rawValue)
+        let size = Double(encounterData.pokemon.pokemon.heightM)
+        let weight = Double(encounterData.pokemon.pokemon.weightKg)
+        let atkIv = UInt8(encounterData.pokemon.pokemon.individualAttack)
+        let defIv = UInt8(encounterData.pokemon.pokemon.individualDefense)
+        let staIv = UInt8(encounterData.pokemon.pokemon.individualStamina)
+        let costume = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.costume.rawValue)
+        let form = UInt16(encounterData.pokemon.pokemon.pokemonDisplay.form.rawValue)
+        let gender = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.gender.rawValue)
 
         if pokemonId != self.pokemonId ||
            cp != self.cp ||
@@ -372,7 +372,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.form = form
         self.gender = gender
 
-        self.shiny = encounterData.wildPokemon.pokemonData.pokemonDisplay.shiny
+        self.shiny = encounterData.pokemon.pokemon.pokemonDisplay.shiny
         self.username = username
 
         if hasIvChanges {
@@ -381,7 +381,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 self.capture2 = Double(encounterData.captureProbability.captureProbability[1])
                 self.capture3 = Double(encounterData.captureProbability.captureProbability[2])
             }
-            let cpMultiplier = encounterData.wildPokemon.pokemonData.cpMultiplier
+            let cpMultiplier = encounterData.pokemon.pokemon.cpMultiplier
             let level: UInt8
             if cpMultiplier < 0.734 {
                 level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier -
@@ -404,7 +404,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             setPVP()
         }
 
-        let wildPokemon = encounterData.wildPokemon
+        let wildPokemon = encounterData.pokemon
         self.spawnId = UInt64(wildPokemon.spawnPointID, radix: 16)
         let timestampMs = Date().timeIntervalSince1970 * 1000
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
@@ -455,9 +455,9 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if Pokemon.noPVP {
             return
         }
-        let form = POGOProtos_Enums_Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
-        let pokemonID = POGOProtos_Enums_PokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
-        let costume = POGOProtos_Enums_Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
+        let form = PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        let pokemonID = HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
+        let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
@@ -1242,6 +1242,37 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         return sql
 
+    }
+
+    public static func getActiveCounts(mysql: MySQL?=nil) throws -> (total: Int64, iv: Int64) {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[POKEMON] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+            SELECT COUNT(*) as countTotal, SUM(iv IS NOT NULL) as countIV
+            FROM pokemon
+            WHERE expire_timestamp >= UNIX_TIMESTAMP()
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return  (total: 0, iv: 0)
+        }
+
+        let result = results.next()!
+
+        let total = result[0] as! Int64
+        let iv = Int64(result[1] as? String ?? "0") ?? 0
+        return (total: total, iv: iv)
     }
 
 }
