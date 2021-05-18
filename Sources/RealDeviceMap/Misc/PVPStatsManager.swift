@@ -62,7 +62,7 @@ internal class PVPStatsManager {
         }
         eTag = result.get(.eTag)
         Log.debug(message: "[PVPStatsManager] Parsing game master file")
-        guard let templates = result.bodyJSON["template"] as? [[String: Any]] else {
+        guard let templates = result as? [[String: Any]] else {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
@@ -71,8 +71,8 @@ internal class PVPStatsManager {
             guard let data = template["data"] as? [String: Any] else { return }
             guard let templateId = data["templateId"] as? String else { return }
             if templateId.starts(with: "V"), templateId.contains(string: "_POKEMON_"),
-                let pokemonInfo = data["pokemon"] as? [String: Any],
-                let pokemonName = pokemonInfo["uniqueId"] as? String,
+                let pokemonInfo = data["pokemonSettings"] as? [String: Any],
+                let pokemonName = pokemonInfo["pokemonId"] as? String,
                 let statsInfo = pokemonInfo["stats"] as? [String: Any],
                 let baseStamina = statsInfo["baseStamina"] as? Int,
                 let baseAttack = statsInfo["baseAttack"] as? Int,
