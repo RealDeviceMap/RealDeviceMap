@@ -1844,6 +1844,7 @@ function addPokemon(pokemon, ts) {
   if (oldPokemon === undefined || pokemon.is_start) {
     if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
       var latOffset = Math.random() * 0.0003 - 0.0001
+      var lonOffset = Math.random() * 0.0003 - 0.0001
 
       if (latOffset >= 0) {
         latOffset += 0.00005
