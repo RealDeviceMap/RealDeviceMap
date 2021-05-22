@@ -93,7 +93,8 @@ class SubmissionPlacementCell: JSONConvertibleObject {
             showLures: false,
             showInvasions: false,
             questFilterExclude: nil,
-            pokestopFilterExclude: nil
+            pokestopFilterExclude: nil,
+            invasionFilterExclude: nil
         ).filter({ (pokestop) -> Bool in
             return pokestop.sponsorId == nil || pokestop.sponsorId == 0
         })

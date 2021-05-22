@@ -34,6 +34,9 @@ let gymFilterNew = {}
 let pokestopFilter = {}
 let pokestopFilterNew = {}
 
+let invasionFilter = {}
+let invasionFilterNew = {}
+
 let spawnpointFilter = {}
 let spawnpointFilterNew = {}
 
@@ -48,6 +51,7 @@ let openedWeather
 let openedDevice
 
 let showPokestops
+let showInvasions
 let showQuests
 let showGyms
 let showRaids
@@ -71,6 +75,7 @@ let pokemonFilterLoaded = false
 let questFilterLoaded = false
 let raidFilterLoaded = false
 let gymFilterLoaded = false
+let invasionFilterLoaded = false
 let pokestopFilterLoaded = false
 let spawnpointFilterLoaded = false
 
@@ -191,6 +196,7 @@ $(function () {
     raidFilterNew = $.extend(true, {}, raidFilter)
     gymFilterNew = $.extend(true, {}, gymFilter)
     pokestopFilterNew = $.extend(true, {}, pokestopFilter)
+    invasionFilterNew = $.extend(true, {}, invasionFilter)
     spawnpointFilterNew = $.extend(true, {}, spawnpointFilter)
 
     $('.select-button').each(function () {
@@ -218,6 +224,11 @@ $(function () {
     if (!gymFilterLoaded) {
       gymFilterLoaded = true
       loadGymFilter()
+    }
+
+    if (!invasionFilterLoaded) {
+      invasionFilterLoaded = true
+      loadInvasionFilter()
     }
 
     if (!pokestopFilterLoaded) {
@@ -258,6 +269,7 @@ $(function () {
       show_raids: showRaids,
       show_pokemon: showPokemon,
       show_quests: showQuests,
+      show_invasions: showInvasions,
       show_pokestops: showPokestops,
       show_spawnpoints: showSpawnpoints,
       show_cells: showCells,
@@ -267,6 +279,7 @@ $(function () {
       raid: raidFilterNew,
       pokemon: pokemonFilterNew,
       quest: questFilterNew,
+      invasion: invasionFilterNew,
       pokestop: pokestopFilterNew,
       spawnpoint: spawnpointFilterNew
     }
@@ -418,6 +431,14 @@ function loadStorage () {
     showRaids = true
   } else {
     showRaids = (showRaidsValue === 'true')
+  }
+
+  const showInvasionsValue = retrieve('show_invasions')
+  if (showInvasionsValue === null) {
+    store('show_invasions', false)
+    showInvasions = false
+  } else {
+    showInvasions = (showInvasionsValue === 'false')
   }
 
   const showPokestopsValue = retrieve('show_pokestops')
@@ -643,9 +664,6 @@ function loadStorage () {
         defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
-    if (defaultPokestopFilter.invasion === undefined) {
-      defaultPokestopFilter.invasion = { show: true, size: 'normal' }
-    }
     if (defaultPokestopFilter.ar === undefined) {
       defaultPokestopFilter.ar = { show: false, size: 'normal' }
     }
@@ -663,11 +681,27 @@ function loadStorage () {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
-    if (pokestopFilter.invasion === undefined) {
-      pokestopFilter.invasion = { show: true, size: 'normal' }
-    }
     if (pokestopFilter.ar === undefined) {
       pokestopFilter.ar = { show: false, size: 'normal' }
+    }
+  }
+  
+  const invasionFilterValue = retrieve('invasion_filter')
+  if (invasionFilterValue === null) {
+    const defaultInvasionFilter = {}
+    let i
+    for (i = 1; i <= 50; i++) {
+      defaultInvasionFilter[i] = { show: true, size: 'normal' }
+    }
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilter = defaultInvasionFilter
+  } else {
+    invasionFilter = JSON.parse(invasionFilterValue)
+    let i
+    for (i = 1; i <= 50; i++) {
+      if (invasionFilter[i] === undefined) {
+        invasionFilter[i] = { show: true, size: 'normal' }
+      }
     }
   }
 
@@ -907,13 +941,34 @@ function initMap () {
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
   })
 
+  $('#reset-invasion-filter').on('click', function () {
+    const defaultInvasionFilter = {}
+    for (var i = 1; i <= 50; i++) {
+      defaultInvasionFilter[i] = { show: true, size: 'normal' }
+    }
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilterNew = defaultInvasionFilter
+
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
+  })
+
+  $('#disable-all-invasion-filter').on('click', function () {
+    const defaultInvasionFilter = {}
+    for (var i = 1; i <= 50; i++) {
+      defaultInvasionFilter[i] = { show: false, size: invasionFilterNew[i].size }
+    }
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilterNew = defaultInvasionFilter
+
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
+    })
+
   $('#reset-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     for (var i = 1; i < 6; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
-    defaultPokestopFilter.invasion = { show: true, size: 'normal' }
     defaultPokestopFilter.ar = { show: false, size: 'normal' }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
@@ -928,7 +983,6 @@ function initMap () {
     for (var i = 1; i < 6; i++) {
       defaultPokestopFilter['l' + i] = { show: false, size: pokestopFilterNew['l' + i].size }
     }
-    defaultPokestopFilter.invasion = { show: false, size: pokestopFilterNew.invasion.size }
     defaultPokestopFilter.ar = { show: false, size: pokestopFilterNew.ar.size }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
@@ -965,6 +1019,7 @@ function initMap () {
     const newShowGyms = $('#show-gyms').hasClass('active')
     const newShowRaids = $('#show-raids').hasClass('active')
     const newShowPokestops = $('#show-pokestops').hasClass('active')
+    const newShowInvasions = $('#show-invasions').hasClass('active')
     const newShowQuests = $('#show-quests').hasClass('active')
     const newShowPokemon = $('#show-pokemon').hasClass('active')
     const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active')
@@ -1009,6 +1064,17 @@ function initMap () {
       gymMarkers = newGymMarkers
     }
     if (newShowPokestops !== showPokestops && newShowPokestops === false) {
+      const newPokestopMarkers = []
+      $.each(pokestopMarkers, function (index, pokestop) {
+        if (pokestop.is_start) {
+          newPokestopMarkers.push(pokestop)
+        } else {
+          map.removeLayer(pokestop.marker)
+        }
+      })
+      pokestopMarkers = newPokestopMarkers
+    }
+    if (newShowInvasions !== showInvasions && newShowInvasions === false) {
       const newPokestopMarkers = []
       $.each(pokestopMarkers, function (index, pokestop) {
         if (pokestop.is_start) {
@@ -1099,6 +1165,7 @@ function initMap () {
 
     gymFilter = gymFilterNew
     pokestopFilter = pokestopFilterNew
+    invasionFilter = invasionFilterNew
     raidFilter = raidFilterNew
     spawnpointFilter = spawnpointFilterNew
     // const raidFilterOld = $.extend(true, {}, raidFilter);
@@ -1123,6 +1190,8 @@ function initMap () {
     store('show_raids', newShowRaids)
     showPokestops = newShowPokestops
     store('show_pokestops', newShowPokestops)
+    showInvasions = newShowInvasions
+    store('show_invasions', newShowInvasions)
     showQuests = newShowQuests
     store('show_quests', newShowQuests)
     showPokemon = newShowPokemon
@@ -1134,6 +1203,7 @@ function initMap () {
     store('raid_filter', JSON.stringify(raidFilter))
     store('gym_filter', JSON.stringify(gymFilter))
     store('pokestop_filter', JSON.stringify(pokestopFilter))
+    store('invasion_filter', JSON.stringify(invasionFilter))
     store('spawnpoint_filter', JSON.stringify(spawnpointFilter))
     store('show_cells', newShowCells)
     showCells = newShowCells
@@ -1182,6 +1252,14 @@ function initMap () {
         } else {
           $('#hide-pokestops').addClass('active')
           $('#show-pokestops').removeClass('active')
+        }
+
+        if (retrieve('show_invasions') === 'true') {
+          $('#show-invasions').addClass('active')
+          $('#hide-invasions').removeClass('active')
+        } else {
+          $('#hide-invasions').addClass('active')
+          $('#show-invasions').removeClass('active')
         }
 
         if (retrieve('show_quests') === 'true') {
@@ -1377,6 +1455,16 @@ function loadData () {
     }
   }
 
+  const invasionFilterExclude = []
+  if (showInvasions) {
+    let i
+    for (i = 1; i <= 50; i++) {
+      if (invasionFilter[i].show === false) {
+        invasionFilterExclude.push(i)
+      }
+    }
+  }
+
   const pokestopFilterExclude = []
   if (showPokestops) {
     if (pokestopFilter.normal.show === false) {
@@ -1387,9 +1475,6 @@ function loadData () {
       if (pokestopFilter['l' + i].show === false) {
         pokestopFilterExclude.push('l' + i)
       }
-    }
-    if (pokestopFilter.invasion.show === false) {
-      pokestopFilterExclude.push('invasion')
     }
   }
 
@@ -1412,6 +1497,7 @@ function loadData () {
     show_gyms: showGyms,
     show_raids: showRaids,
     show_pokestops: showPokestops,
+    show_invasions: showInvasions,
     show_quests: showQuests,
     show_pokemon: showPokemon,
     pokemon_filter_event_only: pokemonFilterEventOnly,
@@ -1420,6 +1506,7 @@ function loadData () {
     pokemon_filter_iv: JSON.stringify(pokemonFilterIV),
     raid_filter_exclude: JSON.stringify(raidFilterExclude),
     gym_filter_exclude: JSON.stringify(gymFilterExclude),
+    invasion_filter_exclude: JSON.stringify(invasionFilterExclude),
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
@@ -3117,7 +3204,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let invasionString
     let invasionStringEnd
     let folder
-    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
+    if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
       invasionString = 'i'
       invasionStringEnd = '_' + pokestop.grunt_type
       folder = 'quest_invasion'
@@ -3142,7 +3229,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let invasionString
     let invasionStringEnd
     let folder
-    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
+    if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
       invasionString = 'i'
       invasionStringEnd = '_' + pokestop.grunt_type
       folder = 'invasion'
@@ -3661,7 +3748,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['l' + id].size === 'huge'
         break
     }
-  } else if (type === 'pokestop-invasion' || type === 'pokestop-ar') {
+  } else if (type === 'pokestop-ar') {
     switch (info) {
       case 'hide':
         shouldShow = pokestopFilterNew[id].show === false
@@ -3680,6 +3767,27 @@ function manageSelectButton (e, isNew) {
         break
       case 'huge':
         shouldShow = pokestopFilterNew[id].size === 'huge'
+        break
+    }
+  } else if (type === 'invasion') {
+    switch (info) {
+      case 'hide':
+        shouldShow = invasionFilterNew[id].show === false
+        break
+      case 'show':
+        shouldShow = invasionFilterNew[id].show === true
+        break
+      case 'small':
+        shouldShow = invasionFilterNew[id].size === 'small'
+        break
+      case 'normal':
+        shouldShow = invasionFilterNew[id].size === 'normal'
+        break
+      case 'large':
+        shouldShow = invasionFilterNew[id].size === 'large'
+        break
+      case 'huge':
+        shouldShow = invasionFilterNew[id].size === 'huge'
         break
     }
   } else if (type === 'spawnpoint-timer') {
@@ -3984,7 +4092,7 @@ function manageSelectButton (e, isNew) {
             pokestopFilterNew['l' + id].size = 'huge'
             break
         }
-      } else if (type === 'pokestop-invasion' || type === 'pokestop-ar') {
+      } else if (type === 'pokestop-ar') {
         switch (info) {
           case 'hide':
             pokestopFilterNew[id].show = false
@@ -4003,6 +4111,27 @@ function manageSelectButton (e, isNew) {
             break
           case 'huge':
             pokestopFilterNew[id].size = 'huge'
+            break
+        }
+      } else if (type === 'invasion') {
+        switch (info) {
+          case 'hide':
+            invasionFilterNew[id].show = false
+            break
+          case 'show':
+            invasionFilterNew[id].show = true
+            break
+          case 'small':
+            invasionFilterNew[id].size = 'small'
+            break
+          case 'normal':
+            invasionFilterNew[id].size = 'normal'
+            break
+          case 'large':
+            invasionFilterNew[id].size = 'large'
+            break
+          case 'huge':
+            invasionFilterNew[id].size = 'huge'
             break
         }
       } else if (type === 'spawnpoint-timer') {
@@ -4665,6 +4794,96 @@ function loadPokestopFilter () {
   })
 }
 
+function loadInvasionFilter () {
+  const scrollHeight = $(document).height() * 0.5
+  const table = $('#table-filter-invasion').DataTable({
+    language: {
+      search: i18n('filter_table_search'),
+      emptyTable: i18n('filter_pokestop_table_empty'),
+      zeroRecords: i18n('filter_pokestop_table_empty')
+    },
+    rowGroup: {
+      dataSrc: 'type'
+    },
+    autoWidth: false,
+    columns: [
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
+      {
+        data: {
+          _: 'id.formatted',
+          sort: 'id.sort'
+        },
+        width: '5%',
+        responsivePriority: 5
+      },
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
+    ],
+    ajax: {
+      url: '/api/get_data?show_invasion_filter=true',
+      dataSrc: 'data.invasion_filters'
+    },
+    info: false,
+    order: [[2, 'asc']],
+    'search.caseInsensitive': true,
+    columnDefs: [{
+      targets: [0, 3, 4],
+      orderable: false
+    }, {
+      type: 'num',
+      targets: 2
+    }],
+    deferRender: true,
+    scrollY: scrollHeight,
+    scrollCollapse: false,
+    scroller: true,
+    lengthChange: false,
+    dom: 'lfrti',
+    drawCallback: function () {
+      $('.lazy_load').each(function () {
+        var img = $(this)
+        img.removeClass('lazy_load')
+        img.attr('src', img.data('src'))
+      })
+
+      $('.select-button-new').each(function () {
+        manageSelectButton($(this), true)
+      })
+      $('.configure-button-new').each(function () {
+        manageConfigureButton($(this), true)
+      })
+    },
+    responsive: true
+  })
+
+  $('#table-filter-invasion tbody').on('click', 'td.details-control', function () {
+    $('.select-button-new').each(function () {
+      manageSelectButton($(this), true)
+    })
+    $('.configure-button-new').each(function () {
+      manageConfigureButton($(this), true)
+    })
+  })
+
+  table.on('search.dt', function () {
+    $('tr').each(function () {
+      var tr = $(this).closest('tr')
+      var row = table.row(tr)
+      if (row.child.isShown()) {
+        row.child.hide()
+        tr.removeClass('parent')
+      }
+    })
+  })
+
+  $('#filterinvasionModal').on('shown.bs.modal', function () {
+    const dataTable = $('#table-filter-invasion').DataTable()
+    dataTable.responsive.recalc()
+    dataTable.columns.adjust()
+  })
+}
+
 function loadSpawnpointFilter () {
   const scrollHeight = $(document).height() * 0.5
   const table = $('#table-filter-spawnpoint').DataTable({
@@ -4785,6 +5004,11 @@ function loadFilterSettings (e) {
     store('show_quests', showRaids)
     store('quest_filter', JSON.stringify(questFilterNew))
 
+    showInvasions = obj.show_invasions
+    invasionFilterNew = obj.invasion
+    store('show_invasions', showInvasions)
+    store('invasion_filter', JSON.stringify(invasionFilterNew))
+
     showPokestops = obj.show_pokestops
     pokestopFilterNew = obj.pokestop
     store('show_pokestops', showPokestops)
@@ -4826,6 +5050,14 @@ function loadFilterSettings (e) {
     } else {
       $('#hide-pokestops').addClass('active')
       $('#show-pokestops').removeClass('active')
+    }
+
+    if (showInvasions) {
+      $('#show-invasions').addClass('active')
+      $('#hide-invasions').removeClass('active')
+    } else {
+      $('#hide-invasions').addClass('active')
+      $('#show-invasions').removeClass('active')
     }
 
     if (showQuests) {
@@ -4880,6 +5112,7 @@ function loadFilterSettings (e) {
     $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false)
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   }
