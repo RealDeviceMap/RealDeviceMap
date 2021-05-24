@@ -121,7 +121,7 @@ class Weather: JSONConvertibleObject, WebHookEvent {
     }
 
     init(mysql: MySQL?=nil, id: Int64, level: UInt8, latitude: Double, longitude: Double,
-         conditions: POGOProtos_Map_Weather_ClientWeather, updated: UInt32?) {
+         conditions: ClientWeatherProto, updated: UInt32?) {
         self.id = id
         self.level = level
         self.latitude = latitude

@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
-    - uses: YOCKOW/Action-setup-swift@master
+    - uses: YOCKOW/Action-setup-swift@main
     - name: Install Requirements
       run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve

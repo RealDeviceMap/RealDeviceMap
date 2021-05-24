@@ -164,20 +164,21 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.sponsorId = sponsorId
     }
 
-    init(fortData: POGOProtos_Map_Fort_FortData, cellId: UInt64) {
+    init(fortData: PokemonFortProto, cellId: UInt64) {
 
-        self.id = fortData.id
+        self.id = fortData.fortID
         self.lat = fortData.latitude
         self.lon = fortData.longitude
-        if fortData.sponsor != .unsetSponsor {
+        if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
         self.enabled = fortData.enabled
-        let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
-        if fortData.activeFortModifier.contains(.itemTroyDisk) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskGlacial) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskMossy) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskMagnetic) {
+        let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
+        if fortData.activeFortModifier.contains(.troyDisk) ||
+            fortData.activeFortModifier.contains(.troyDiskGlacial) ||
+            fortData.activeFortModifier.contains(.troyDiskMossy) ||
+            fortData.activeFortModifier.contains(.troyDiskMagnetic) ||
+            fortData.activeFortModifier.contains(.troyDiskRainy) {
             self.lureExpireTimestamp = lastModifiedTimestamp + Pokestop.lureTime
             self.lureId = Int16(fortData.activeFortModifier[0].rawValue)
         }
@@ -199,13 +200,13 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public func addDetails(fortData: POGOProtos_Networking_Responses_FortDetailsResponse) {
+    public func addDetails(fortData: FortDetailsOutProto) {
 
-        self.id = fortData.fortID
+        self.id = fortData.id
         self.lat = fortData.latitude
         self.lon = fortData.longitude
-        if !fortData.imageUrls.isEmpty {
-            let url = fortData.imageUrls[0]
+        if !fortData.imageURL.isEmpty {
+            let url = fortData.imageURL[0]
             if self.url != url {
                 hasChanges = true
             }
@@ -219,7 +220,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public func addQuest(questData: POGOProtos_Data_Quests_Quest) {
+    public func addQuest(questData: QuestProto) {
 
         self.questType = questData.questType.rawValue.toUInt32()
         self.questTarget = UInt16(questData.goal.target)
@@ -349,6 +350,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withCatchesInARow: break
             case .withEncounterType: break
             case .withCombatType: break
+            case .withGeotargetedPoi: break
+            case .withItemType: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -379,7 +382,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 let info = rewardData.candy
                 infoData["amount"] = info.amount
                 infoData["pokemon_id"] = info.pokemonID.rawValue
-            case .xlCandy: break
+            case .xlCandy:
                 let info = rewardData.xlCandy
                 infoData["amount"] = info.amount
                 infoData["pokemon_id"] = info.pokemonID.rawValue
@@ -1119,6 +1122,44 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     areaString += "\(lat!),\(lon!)\n"
                 }
             }
+        }
+
+        let coords = Pokestop.flattenCoords(area: areaString)
+        let sql = """
+            UPDATE pokestop
+            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+            WHERE ST_CONTAINS(
+                ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
+                POINT(pokestop.lat, pokestop.lon)
+            ) AND quest_type IS NOT NULL
+        """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            throw DBController.DBError()
+        }
+
+        Pokestop.cache?.clear()
+
+        let results = mysqlStmt.results()
+        if results.numRows == 0 {
+            return
+        }
+    }
+
+    public static func clearQuests(mysql: MySQL?=nil, area: [Coord]) throws {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        var areaString = ""
+        for coordLine in area {
+            areaString += "\(coordLine.lat),\(coordLine.lon)\n"
         }
 
         let coords = Pokestop.flattenCoords(area: areaString)

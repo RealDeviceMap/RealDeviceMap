@@ -1,5 +1,5 @@
 //
-//  PrivateWebReqeustHandler.swift
+//  PrivateWebRequestHandler.swift
 //  RealDeviceMap
 //
 //  Created by Florian Kostenzer on 18.09.18.
@@ -17,7 +17,7 @@ import PerfectSessionMySQL
 import PerfectThread
 import PerfectCURL
 
-class WebReqeustHandler {
+class WebRequestHandler {
 
     class CompletedEarly: Error {}
 
@@ -31,8 +31,8 @@ class WebReqeustHandler {
     static var maxZoom: Int = 18
     static var maxPokemonId: Int = 649
     static var title: String = "RealDeviceMap"
-    static var avilableFormsJson: String = "[]"
-    static var avilableItemJson: String = "[]"
+    static var availableFormsJson: String = "[]"
+    static var availableItemJson: String = "[]"
     static var enableRegister: Bool = true
     static var tileservers = [String: [String: String]]()
     static var cities = [String: [String: Any]]()
@@ -69,8 +69,8 @@ class WebReqeustHandler {
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
         data["title"] = title
-        data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
-        data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
+        data["google_analytics_id"] = WebRequestHandler.googleAnalyticsId
+        data["google_adsense_id"] = WebRequestHandler.googleAdSenseId
         data["buttons_left"] = buttonsLeft
         data["buttons_right"] = buttonsRight
 
@@ -114,9 +114,9 @@ class WebReqeustHandler {
 
                 do {
                     if let user = try User.get(username: username!) {
-                        if user.discordId == nil && WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                           WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                           WebReqeustHandler.oauthDiscordClientID != nil {
+                        if user.discordId == nil && WebRequestHandler.oauthDiscordClientSecret != nil &&
+                           WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                           WebRequestHandler.oauthDiscordClientID != nil {
                             data["discord_info"] = localizer.get(
                                 value: "unauthorized_discord",
                                 replace: ["href": "/oauth/discord?link=true"]
@@ -154,8 +154,8 @@ class WebReqeustHandler {
         }
 
         if perms.contains(.viewStats) {
-            //data["show_stats"] = true
-            data["stats_url"] = WebReqeustHandler.statsUrl
+            // data["show_stats"] = true
+            data["stats_url"] = WebRequestHandler.statsUrl
         }
 
         if perms.contains(.admin) {
@@ -186,8 +186,8 @@ class WebReqeustHandler {
             data["hide_pokemon"] = !perms.contains(.viewMapPokemon)
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
-            //data["hide_lures"] = !perms.contains(.viewMapLure)
-            //data["hide_invasions"] = !perms.contains(.viewMapInvasion)
+            // data["hide_lures"] = !perms.contains(.viewMapLure)
+            // data["hide_invasions"] = !perms.contains(.viewMapInvasion)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             data["hide_submission_cells"] = !perms.contains(.viewMapSubmissionCells)
             data["hide_weathers"] = !perms.contains(.viewMapWeather)
@@ -586,8 +586,8 @@ class WebReqeustHandler {
             data["pokestop_lure_time"] = Pokestop.lureTime
             data["ex_raid_boss_id"] = Gym.exRaidBossId ?? 0
             data["ex_raid_boss_form"] = Gym.exRaidBossForm ?? 0
-            data["google_analytics_id"] = WebReqeustHandler.googleAnalyticsId
-            data["google_adsense_id"] = WebReqeustHandler.googleAdSenseId
+            data["google_analytics_id"] = WebRequestHandler.googleAnalyticsId
+            data["google_adsense_id"] = WebRequestHandler.googleAdSenseId
             data["mailer_base_uri"] = MailController.baseURI
             data["mailer_name"] = MailController.fromName
             data["mailer_email"] = MailController.fromAddress
@@ -599,10 +599,10 @@ class WebReqeustHandler {
                     return i.description
                 }).joined(separator: ";")
             data["discord_token"] = DiscordController.global.token
-            data["discord_redirect_url"] = WebReqeustHandler.oauthDiscordRedirectURL
-            data["discord_client_id"] = WebReqeustHandler.oauthDiscordClientID
-            data["discord_client_secret"] = WebReqeustHandler.oauthDiscordClientSecret
-            data["stats_url"] = WebReqeustHandler.statsUrl
+            data["discord_redirect_url"] = WebRequestHandler.oauthDiscordRedirectURL
+            data["discord_client_id"] = WebRequestHandler.oauthDiscordClientID
+            data["discord_client_secret"] = WebRequestHandler.oauthDiscordClientSecret
+            data["stats_url"] = WebRequestHandler.statsUrl
             data["deviceapi_host_whitelist"] = WebHookRequestHandler.hostWhitelist?.joined(separator: ";")
             data["deviceapi_host_whitelist_uses_proxy"] = WebHookRequestHandler.hostWhitelistUsesProxy
             data["deviceapi_secret"] = WebHookRequestHandler.loginSecret
@@ -680,10 +680,10 @@ class WebReqeustHandler {
                     return
                 }
             } else {
-                data["min_level"] = 0
-                data["max_level"] = 29
+                data["min_level"] = 30
+                data["max_level"] = 40
                 data["timezone_offset"] = 0
-                data["iv_queue_limit"] = 100
+                data["iv_queue_limit"] = 30
                 data["spin_limit"] = 1000
                 data["delay_logout"] = 900
                 data["radius"] = 10000
@@ -916,6 +916,233 @@ class WebReqeustHandler {
             response.redirect(path: "/dashboard/assignments")
             sessionDriver.save(session: request.session!)
             response.completed(status: .seeOther)
+        case .dashboardAssignmentGroups:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Assignment Groups"
+        case .dashboardAssignmentGroupAdd:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Assignment Group"
+            if request.method == .post {
+                do {
+                    data = try addAssignmentGroupPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data["nothing_selected"] = true
+                    data = try addAssignmentGroupGet(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardAssignmentGroupEdit:
+            data["locale"] = "en"
+            let assignmentGroupName = (request.urlVariables["name"] ?? "").decodeUrl()!
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Edit Assignment Group"
+            data["old_name"] = assignmentGroupName
+
+            if request.param(name: "delete") == "true" {
+                do {
+                    try AssignmentGroup.delete(name: assignmentGroupName)
+                    response.redirect(path: "/dashboard/assignmentgroups")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .seeOther)
+                    return
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+            } else if request.method == .post {
+                do {
+                    data = try editAssignmentGroupPost(data: data, request: request, response: response,
+                                                   assignmentGroupName: assignmentGroupName)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editAssignmentGroupGet(data: data, request: request, response: response,
+                                                  assignmentGroupName: assignmentGroupName)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardAssignmentGroupDelete:
+            data["locale"] = "en"
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Delete Assignment Group"
+
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                do {
+                    try AssignmentGroup.delete(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+        case .dashboardAssignmentGroupStart:
+            data["locale"] = "en"
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                let assignmentGroupT: AssignmentGroup?
+                do {
+                    assignmentGroupT = try AssignmentGroup.getByName(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                guard let assignmentGroup = assignmentGroupT else {
+                    response.setBody(string: "Assignment Group Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+
+                let assignments: [Assignment]
+                do {
+                    assignments = try Assignment.getAll()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+                let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+                for assignment in assignmentsInGroup {
+                  do {
+                    try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                  } catch {
+                    response.setBody(string: "Failed to trigger assignment")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                  }
+                }
+
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
+        case .dashboardAssignmentGroupReQuest:
+            data["locale"] = "en"
+            let nameT = request.urlVariables["name"]
+            if let name = nameT {
+                let assignmentGroupT: AssignmentGroup?
+                do {
+                    assignmentGroupT = try AssignmentGroup.getByName(name: name)
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                guard let assignmentGroup = assignmentGroupT else {
+                    response.setBody(string: "Assignment Group Not Found")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .notFound)
+                    return
+                }
+
+                let assignments: [Assignment]
+                do {
+                    assignments = try Assignment.getAll()
+                } catch {
+                    response.setBody(string: "Internal Server Error")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+
+                let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+                var minLat: Double = 90.0
+                var maxLat: Double = -90.0
+                var minLon: Double = 180.0
+                var maxLon: Double = -180.0
+                for assignment in assignmentsInGroup {
+                    do {
+                        let instance = try Instance.getByName(name: assignment.instanceName)!
+                        if instance.type == .autoQuest {
+                            let areaType1 = instance.data["area"] as? [[String: Double]]
+                            let areaType2 = instance.data["area"] as? [[[String: Double]]]
+                            if areaType1 != nil {
+                                for coordLine in areaType1! {
+                                    minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
+                                    maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
+                                    minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
+                                    maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
+                                }
+                            } else if areaType2 != nil {
+                                for geofence in areaType2! {
+                                    for coordLine in geofence {
+                                        minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
+                                        maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
+                                        minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
+                                        maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
+                                    }
+                                }
+                            }
+                        }
+                    } catch {
+                        response.setBody(string: "Failed to get assignment group quest boundaries")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .internalServerError)
+                        return
+                    }
+                }
+                do {
+                    let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
+                                         Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
+                                         Coord(lat: minLat, lon: minLon)]
+                    try Pokestop.clearQuests(area: bbox)
+                } catch {
+                    response.setBody(string: "Failed to reset assignment group quests")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
+                for assignment in assignmentsInGroup {
+                    do {
+                        try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+                    } catch {
+                        response.setBody(string: "Failed to trigger assignment")
+                        sessionDriver.save(session: request.session!)
+                        response.completed(status: .internalServerError)
+                        return
+                    }
+                }
+
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+            } else {
+                response.setBody(string: "Bad Request")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .badRequest)
+            }
         case .dashboardAccounts:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -1371,9 +1598,9 @@ class WebReqeustHandler {
             }
             data["login_title"] = localizer.get(value: "login_title", replace: ["name": title])
             data["redirect"] = request.param(name: "redirect") ?? "/"
-            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                                        WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                                        WebReqeustHandler.oauthDiscordClientID != nil
+            data["has_discord_oauth"] = WebRequestHandler.oauthDiscordClientSecret != nil &&
+                                        WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                                        WebRequestHandler.oauthDiscordClientID != nil
             let error = request.param(name: "error")
             if error != nil {
                 if error == "discord_undefined" {
@@ -1416,9 +1643,9 @@ class WebReqeustHandler {
             data["page_is_profile"] = true
             data["page"] = localizer.get(value: "title_profile")
 
-            data["has_discord_oauth"] = WebReqeustHandler.oauthDiscordClientSecret != nil &&
-                                        WebReqeustHandler.oauthDiscordRedirectURL != nil &&
-                                        WebReqeustHandler.oauthDiscordClientID != nil
+            data["has_discord_oauth"] = WebRequestHandler.oauthDiscordClientSecret != nil &&
+                                        WebRequestHandler.oauthDiscordRedirectURL != nil &&
+                                        WebRequestHandler.oauthDiscordClientID != nil
 
             if let success = request.param(name: "success") {
                 if success == "discord_linked" {
@@ -1478,13 +1705,13 @@ class WebReqeustHandler {
             data["start_pokestop"] = request.param(name: "start_pokestop")
             data["start_gym"] = request.param(name: "start_gym")
             data["perm_admin"] = perms.contains(.admin)
-            data["avilable_forms_json"] = avilableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
+            data["available_forms_json"] = availableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")
-            data["avilable_items_json"] = avilableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
+            data["available_items_json"] = availableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")
-            data["avilable_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "")
+            data["available_tileservers_json"] = (tileservers.jsonEncodeForceTry() ?? "")
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
@@ -1611,8 +1838,8 @@ class WebReqeustHandler {
                 }
                 if useAccessToken {
                     try DBController.global.setValueForKey(key: "IS_SETUP", value: "true")
-                    WebReqeustHandler.isSetup = true
-                    WebReqeustHandler.accessToken = nil
+                    WebRequestHandler.isSetup = true
+                    WebRequestHandler.accessToken = nil
                     response.redirect(path: "/")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .seeOther)
@@ -1891,20 +2118,20 @@ class WebReqeustHandler {
             return data
         }
 
-        WebReqeustHandler.startLat = startLat
-        WebReqeustHandler.startLon = startLon
-        WebReqeustHandler.startZoom = startZoom
-        WebReqeustHandler.minZoom = minZoom
-        WebReqeustHandler.maxZoom = maxZoom
-        WebReqeustHandler.title = title
-        WebReqeustHandler.maxPokemonId = maxPokemonId
-        WebReqeustHandler.enableRegister = enableRegister
-        WebReqeustHandler.tileservers = tileservers
-        WebReqeustHandler.cities = citySettings
-        WebReqeustHandler.googleAnalyticsId = googleAnalyticsId ?? ""
-        WebReqeustHandler.googleAdSenseId = googleAdSenseId ?? ""
-        WebReqeustHandler.buttonsRight = buttonsRight
-        WebReqeustHandler.buttonsLeft = buttonsLeft
+        WebRequestHandler.startLat = startLat
+        WebRequestHandler.startLon = startLon
+        WebRequestHandler.startZoom = startZoom
+        WebRequestHandler.minZoom = minZoom
+        WebRequestHandler.maxZoom = maxZoom
+        WebRequestHandler.title = title
+        WebRequestHandler.maxPokemonId = maxPokemonId
+        WebRequestHandler.enableRegister = enableRegister
+        WebRequestHandler.tileservers = tileservers
+        WebRequestHandler.cities = citySettings
+        WebRequestHandler.googleAnalyticsId = googleAnalyticsId ?? ""
+        WebRequestHandler.googleAdSenseId = googleAdSenseId ?? ""
+        WebRequestHandler.buttonsRight = buttonsRight
+        WebRequestHandler.buttonsLeft = buttonsLeft
         WebHookController.global.webhookSendDelay = webhookDelay
         WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
@@ -1923,10 +2150,10 @@ class WebReqeustHandler {
         DiscordController.global.guilds = discordGuilds
         DiscordController.global.token = discordToken
         Localizer.locale = locale
-        WebReqeustHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
-        WebReqeustHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
-        WebReqeustHandler.oauthDiscordClientID = oauthDiscordClientID
-        WebReqeustHandler.statsUrl = statsUrl
+        WebRequestHandler.oauthDiscordClientSecret = oauthDiscordClientSecret
+        WebRequestHandler.oauthDiscordRedirectURL = oauthDiscordRedirectURL
+        WebRequestHandler.oauthDiscordClientID = oauthDiscordClientID
+        WebRequestHandler.statsUrl = statsUrl
         WebHookRequestHandler.hostWhitelist = deviceAPIhostWhitelist
         WebHookRequestHandler.hostWhitelistUsesProxy = deviceAPIhostWhitelistUsesProxy
         WebHookRequestHandler.loginSecret = deviceAPIloginSecret
@@ -1994,7 +2221,7 @@ class WebReqeustHandler {
         }
 
         let type = Instance.InstanceType.fromString(request.param(name: "type") ?? "")
-        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 100
+        let ivQueueLimit = Int(request.param(name: "iv_queue_limit") ?? "" ) ?? 30
         let spinLimit = Int(request.param(name: "spin_limit") ?? "" ) ?? 1000
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
         let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
@@ -2023,6 +2250,8 @@ class WebReqeustHandler {
             switch type! {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
+            case .circleSmartPokemon:
+                data["circle_smart_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
@@ -2050,7 +2279,8 @@ class WebReqeustHandler {
 
         var newCoords: Any
 
-        if type != nil && type! == .circlePokemon || type! == .circleRaid || type! == .circleSmartRaid {
+        if type != nil && type! == .circlePokemon || type! == .circleSmartPokemon ||
+            type! == .circleRaid || type! == .circleSmartRaid {
             var coords = [Coord]()
             let areaRows = area.components(separatedBy: "\n")
             for areaRow in areaRows {
@@ -2247,8 +2477,8 @@ class WebReqeustHandler {
 
             data["name"] = oldInstance!.name
             data["area"] = areaString
-            data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 0
-            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 29
+            data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 30
+            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 40
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
@@ -2279,6 +2509,8 @@ class WebReqeustHandler {
             switch oldInstance!.type {
             case .circlePokemon:
                 data["circle_pokemon_selected"] = true
+            case .circleSmartPokemon:
+                data["circle_smart_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
@@ -2305,7 +2537,7 @@ class WebReqeustHandler {
             instances = try Instance.getAll(getData: false)
             devices = try Device.getAll()
         } catch {
-            response.setBody(string: "Internal Server Errror")
+            response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
             response.completed(status: .internalServerError)
             throw CompletedEarly()
@@ -2383,7 +2615,7 @@ class WebReqeustHandler {
             do {
                 devices = try Device.getAll()
             } catch {
-                response.setBody(string: "Internal Server Errror")
+                response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .internalServerError)
                 throw CompletedEarly()
@@ -2897,6 +3129,193 @@ class WebReqeustHandler {
         }
 
         response.redirect(path: "/dashboard/assignments")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+    }
+
+    static func addAssignmentGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                      response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        let assignments: [Assignment]
+
+        do {
+            assignments = try Assignment.getAll()
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+
+        var assignmentsData = [[String: Any]]()
+        var uniqueAssignments = Set<String>()
+        for assignment in assignments {
+            let device = assignment.deviceUUID ?? "" as String
+            let group = assignment.deviceGroupName ?? "" as String
+            let instance = assignment.instanceName
+            if !uniqueAssignments.contains(device + group + " -> " + instance) {
+                assignmentsData.append(["id": assignment.id ?? "" as Any,
+                                        "deviceUUID": assignment.deviceUUID ?? "" as Any,
+                                        "deviceGroupName": assignment.deviceGroupName ?? "" as Any,
+                                        "instanceName": assignment.instanceName as Any, "selected": false])
+            }
+            uniqueAssignments.insert(device + group + " -> " + instance)
+        }
+
+        data["assignments"] = assignmentsData
+            // swiftlint:disable:next force_cast
+            .sorted { ($0["deviceUUID"] as! String) < ($1["deviceUUID"] as! String) }
+
+        return data
+    }
+
+    static func addAssignmentGroupPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                       response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        guard let groupName = request.param(name: "name") else {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+        let assignmentIDs = request.params(named: "assignments").map { UInt32($0)! }
+
+        let assignmentGroup = AssignmentGroup(name: groupName, assignmentIDs: assignmentIDs)
+        do {
+            try assignmentGroup.create()
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to create assignment group. Does this assignment group already exist?"
+            return data
+        }
+
+        response.redirect(path: "/dashboard/assignmentgroups")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+
+    }
+
+    static func editAssignmentGroupGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                       response: HTTPResponse, assignmentGroupName: String)
+                                        throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+
+        let oldAssignmentGroup: AssignmentGroup?
+        do {
+            oldAssignmentGroup = try AssignmentGroup.getByName(name: assignmentGroupName)
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+        if oldAssignmentGroup == nil {
+            response.setBody(string: "Assignment Group Not Found")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .notFound)
+            throw CompletedEarly()
+        } else {
+            data["old_name"] = oldAssignmentGroup!.name
+            data["name"] = oldAssignmentGroup!.name
+
+            let assignments: [Assignment]
+
+            do {
+                assignments = try Assignment.getAll()
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+
+            var assignmentsData = [[String: Any]]()
+            var uniqueAssignments = Set<String>()
+            for assignment in assignments {
+                let device = assignment.deviceUUID ?? "" as String
+                let group = assignment.deviceGroupName ?? "" as String
+                let instance = assignment.instanceName
+                if !uniqueAssignments.contains(device + group + " -> " + instance) ||
+                    oldAssignmentGroup!.assignmentIDs.contains(assignment.id!) {
+                    assignmentsData.append(["id": assignment.id ?? "" as Any,
+                                            "deviceUUID": assignment.deviceUUID ?? "" as Any,
+                                            "deviceGroupName": assignment.deviceGroupName ?? "" as Any,
+                                            "instanceName": assignment.instanceName as Any,
+                                            "selected": oldAssignmentGroup!.assignmentIDs.contains(assignment.id!)])
+                }
+                uniqueAssignments.insert(device + group + " -> " + instance)
+            }
+
+            data["assignments"] = assignmentsData
+                // swiftlint:disable:next force_cast
+                .sorted { ($0["deviceUUID"] as! String) < ($1["deviceUUID"] as! String) }
+
+            return data
+        }
+    }
+
+    static func editAssignmentGroupPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
+                                        response: HTTPResponse, assignmentGroupName: String? = nil)
+                                            throws -> MustacheEvaluationContext.MapType {
+
+        var data = data
+        guard
+            let name = request.param(name: "name")
+            else {
+                data["show_error"] = true
+                data["error"] = "Invalid Request."
+                return data
+        }
+
+        let assignmentIDs = request.params(named: "assignments").map { UInt32($0)! }
+
+        data["name"] = name
+        if assignmentGroupName != nil {
+            let oldAssignmentGroup: AssignmentGroup?
+            do {
+                oldAssignmentGroup = try AssignmentGroup.getByName(name: assignmentGroupName!)
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to update assignment group. Is the name unique?"
+                return data
+            }
+            if oldAssignmentGroup == nil {
+                response.setBody(string: "Assignment Group Not Found")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .notFound)
+                throw CompletedEarly()
+            } else {
+                oldAssignmentGroup!.name = name
+                oldAssignmentGroup!.assignmentIDs = assignmentIDs
+
+                do {
+                    try oldAssignmentGroup!.update(oldName: assignmentGroupName!)
+                } catch {
+                    data["show_error"] = true
+                    data["error"] = "Failed to update assignment group. Is the name unique?"
+                    return data
+                }
+                response.redirect(path: "/dashboard/assignmentgroups")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .seeOther)
+                throw CompletedEarly()
+            }
+        } else {
+            let assignmentGroup = AssignmentGroup(name: name, assignmentIDs: assignmentIDs)
+            do {
+                try assignmentGroup.create()
+            } catch {
+                data["show_error"] = true
+                data["error"] = "Failed to create assignment group. Is the name unique?"
+                return data
+            }
+        }
+
+        response.redirect(path: "/dashboard/assignmentgroups")
         sessionDriver.save(session: request.session!)
         response.completed(status: .seeOther)
         throw CompletedEarly()

@@ -14,6 +14,7 @@
                 $('#processing_max').text(data.data.status.processing.max)
                 $('#processing_total').text(data.data.status.processing.total)
                 $('#processing_processed').text(data.data.status.processing.total - data.data.status.processing.ignored)
+                $('#processing_ignored').text(data.data.status.processing.ignored)
                 $('#uptime_date').text(new Date(data.data.status.uptime.date * 1000).toLocaleString())
                 $('#uptime_days').text(data.data.status.uptime.days)
                 $('#uptime_hours').text(data.data.status.uptime.hours)
@@ -59,6 +60,8 @@
             <a href="/dashboard/accounts" class="list-group-item list-group-item-action">Accounts</a>
             <a href="/dashboard/instances" class="list-group-item list-group-item-action">Instances</a>
             <a href="/dashboard/assignments" class="list-group-item list-group-item-action">Auto-Assignments</a>
+            <a href="/dashboard/assignmentgroups" class="list-group-item
+                list-group-item-action">Assignment Groups</a>
         </div>
     </div>
 
@@ -84,7 +87,7 @@
 
 </div>
 <p class="m-0" align="center">
-    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span> (<span id="processing_processed">?</span>/<span id="processing_total">?</span>)
+    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span> (<span id="processing_processed">?</span>/<span id="processing_total">?</span> - <span id="processing_ignored">?</span> ignored)
 </p>
 <p class="m-0" align="center">
     Device: <span id="devices_online">?</span>/<span id="devices_total">?</span>
