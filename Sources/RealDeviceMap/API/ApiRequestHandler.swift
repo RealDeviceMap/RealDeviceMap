@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
-//  swiftlint:disable file_length type_body_length
+//  swiftlint:disable superfluous_disable_command file_length type_body_length
 
 import Foundation
 import PerfectLib
@@ -31,8 +31,9 @@ class ApiRequestHandler {
 
     public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
 
+    // swiftlint:disable:next cyclomatic_complexity
     private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
-        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
+        let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
 
@@ -130,6 +131,7 @@ class ApiRequestHandler {
         let formatted =  request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
+        let showAssignmentGroups = request.param(name: "show_assignmentgroups")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
@@ -312,7 +314,7 @@ class ApiRequestHandler {
                 }
             }
 
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let ivLabel: String
                 if permShowIV {
@@ -513,7 +515,7 @@ class ApiRequestHandler {
             }
 
             // Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -629,7 +631,7 @@ class ApiRequestHandler {
                 "type": generalString
                 ])
 
-            //Level
+            // Level
             for i in 1...6 {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
@@ -682,8 +684,8 @@ class ApiRequestHandler {
                 ])
             }
 
-            //Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            // Pokemon
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -749,7 +751,7 @@ class ApiRequestHandler {
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
 
             var gymData = [[String: Any]]()
-            //Team
+            // Team
             for i in 0...3 {
 
                 let gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
@@ -833,7 +835,7 @@ class ApiRequestHandler {
 
             gymData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5), //Need a better way to display, new section?
+                    "formatted": String(format: "%03d", 5), // Need a better way to display, new section?
                     "sort": 5
                 ],
                 "name": Localizer.global.get(value: "filter_raid_ex") ,
@@ -844,7 +846,7 @@ class ApiRequestHandler {
                 "type": gymOptionsString
             ])
 
-            //Available slots
+            // Available slots
             for i in 0...6 {
                 let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
 
@@ -1185,7 +1187,7 @@ class ApiRequestHandler {
             if devices != nil {
                 for device in devices! {
                     var deviceData = [String: Any]()
-                    //deviceData["chk"] = ""
+                    // deviceData["chk"] = ""
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
                     deviceData["instance"] = device.instanceName ?? ""
@@ -1232,6 +1234,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Circle Smart Raid"
                     case .circlePokemon:
                         instanceData["type"] = "Circle Pokemon"
+                    case .circleSmartPokemon:
+                        instanceData["type"] = "Circle Smart Pokemon"
                     case .autoQuest:
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
@@ -1278,7 +1282,7 @@ class ApiRequestHandler {
                     let devicesInGroup = devices?.filter({ deviceGroup.deviceUUIDs.contains($0.uuid) }) ?? []
                     let instances = Array(
                         Set(devicesInGroup.filter({ $0.instanceName != nil }).map({ $0.instanceName! }))
-                    )
+                    ).sorted()
 
                     var deviceGroupData = [String: Any]()
                     deviceGroupData["name"] = deviceGroup.name
@@ -1289,7 +1293,7 @@ class ApiRequestHandler {
                         let id = deviceGroup.name.encodeUrl()!
                         deviceGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/devicegroup/assign/\(id)\" " +
-                            "role=\"button\" class=\"btn btn-success\">Asign</a>" +
+                            "role=\"button\" class=\"btn btn-success\">Assign</a>" +
                             "<a href=\"/dashboard/devicegroup/edit/\(id)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
                             "<a href=\"/dashboard/devicegroup/delete/\(id)\" " +
@@ -1361,6 +1365,54 @@ class ApiRequestHandler {
             }
             data["assignments"] = jsonArray
 
+        }
+
+        if showAssignmentGroups && perms.contains(.admin) {
+
+            let assignmentGroups = try? AssignmentGroup.getAll(mysql: mysql)
+            let assignments = try? Assignment.getAll(mysql: mysql)
+
+            var jsonArray = [[String: Any]]()
+
+            if assignmentGroups != nil {
+                for assignmentGroup in assignmentGroups! {
+                    let assignmentsInGroup =
+                        assignments?.filter({ assignmentGroup.assignmentIDs.contains($0.id!) }) ?? []
+                    let assignmentsInGroupDevices = Array(
+                        Set(assignmentsInGroup.filter({ $0.deviceUUID != nil || $0.deviceGroupName != nil })
+                            .map({ ($0.deviceUUID != nil ? $0.deviceUUID! : "") +
+                            ($0.deviceGroupName != nil ? $0.deviceGroupName! : "") + " -> " + $0.instanceName}))
+                        ).sorted()
+
+                    var assignmentGroupData = [String: Any]()
+                    assignmentGroupData["name"] = assignmentGroup.name
+
+                    if formatted {
+                        assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
+                        let id = assignmentGroup.name.encodeUrl()!
+                        assignmentGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
+                            "href=\"/dashboard/assignmentgroup/start/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-success\">Start</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/request/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-warning\" onclick=\"return " +
+                            "confirm('Are you sure that you want to clear all quests " +
+                            "for this assignment group?')\">ReQuest</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/edit/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/delete/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-danger\" onclick=\"return " +
+                            "confirm('Are you sure you want to delete this assignment " +
+                            "group? This action is irreversible and cannot be " +
+                            "undone without backups.')\">Delete</a></div>"
+                    } else {
+                        assignmentGroupData["assignments"] = assignments
+                    }
+
+                    jsonArray.append(assignmentGroupData)
+                }
+            }
+
+            data["assignmentgroups"] = jsonArray
         }
 
         if showIVQueue && perms.contains(.admin), let instance = instance {

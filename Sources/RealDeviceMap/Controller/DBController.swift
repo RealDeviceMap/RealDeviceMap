@@ -143,7 +143,7 @@ class DBController {
 
         setup()
 
-        Log.info(message: "[DBController] done")
+        Log.info(message: "[DBController] Done")
     }
 
     private func setup() {

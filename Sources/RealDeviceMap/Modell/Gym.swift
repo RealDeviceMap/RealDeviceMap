@@ -35,7 +35,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_battle_timestamp": raidBattleTimestamp as Any,
             "raid_pokemon_id": raidPokemonId as Any,
             "raid_level": raidLevel as Any,
-            "availble_slots": availbleSlots as Any,
+            "availble_slots": availableSlots as Any,
             "updated": updated ?? 1,
             "ex_raid_eligible": exRaidEligible as Any,
             "in_battle": inBattle as Any,
@@ -68,7 +68,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "team_id": teamId ?? 0,
                 "last_modified": lastModifiedTimestamp ?? 0,
                 "guard_pokemon_id": guardPokemonId ?? 0,
-                "slots_available": availbleSlots ?? 6,
+                "slots_available": availableSlots ?? 6,
                 "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "sponsor_od": sponsorId ?? 0
@@ -82,7 +82,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "latitude": lat,
                 "longitude": lon,
                 "team": teamId ?? 0,
-                "slots_available": availbleSlots ?? 6,
+                "slots_available": availableSlots ?? 6,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
                 "sponsor_od": sponsorId ?? 0
@@ -147,7 +147,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var raidPokemonCp: UInt32?
     var raidPokemonGender: UInt8?
     var raidPokemonEvolution: UInt8?
-    var availbleSlots: UInt16?
+    var availableSlots: UInt16?
     var updated: UInt32?
     var exRaidEligible: Bool?
     var inBattle: Bool?
@@ -162,7 +162,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, guardPokemonId: UInt16?, enabled: Bool?,
          lastModifiedTimestamp: UInt32?, teamId: UInt8?, raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?,
-         raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availbleSlots: UInt16?,
+         raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?, raidLevel: UInt8?, availableSlots: UInt16?,
          updated: UInt32?, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?,
          raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?,
          raidPokemonEvolution: UInt8?, raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?) {
@@ -180,7 +180,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.raidBattleTimestamp = raidBattleTimestamp
         self.raidPokemonId = raidPokemonId
         self.raidLevel = raidLevel
-        self.availbleSlots = availbleSlots
+        self.availableSlots = availableSlots
         self.updated = updated
         self.exRaidEligible = exRaidEligible
         self.inBattle = inBattle
@@ -204,7 +204,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.enabled = fortData.enabled
         self.guardPokemonId = fortData.guardPokemonID.rawValue.toUInt16()
         self.teamId = fortData.team.rawValue.toUInt8()
-        self.availbleSlots = UInt16(fortData.gymDisplay.slotsAvailable)
+        self.availableSlots = UInt16(fortData.gymDisplay.slotsAvailable)
         self.lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle
@@ -377,7 +377,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(raidBattleTimestamp)
         mysqlStmt.bindParam(raidPokemonId)
         mysqlStmt.bindParam(enabled)
-        mysqlStmt.bindParam(availbleSlots)
+        mysqlStmt.bindParam(availableSlots)
         mysqlStmt.bindParam(raidLevel)
         mysqlStmt.bindParam(exRaidEligible)
         mysqlStmt.bindParam(inBattle)
@@ -435,7 +435,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     WebHookController.global.addRaidEvent(gym: self)
                 }
             }
-            if oldGym!.availbleSlots != self.availbleSlots ||
+            if oldGym!.availableSlots != self.availableSlots ||
                oldGym!.teamId != self.teamId ||
                oldGym!.inBattle != self.inBattle {
                 WebHookController.global.addGymInfoEvent(gym: self)
@@ -621,7 +621,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             }
 
             let enabled = (result[12] as? UInt8)?.toBool()
-            let availbleSlots = result[13] as? UInt16
+            let availableSlots = result[13] as? UInt16
             let updated = result[14] as! UInt32
             let raidLevel = result[15] as? UInt8
             let exRaidEligible = (result[16] as? UInt8)?.toBool()
@@ -642,7 +642,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
                 raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availableSlots: availableSlots, updated: updated,
                 exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
                 raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
                 raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
@@ -707,7 +707,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let raidBattleTimestamp = result[10] as? UInt32
         let raidPokemonId = result[11] as? UInt16
         let enabled = (result[12] as? UInt8)?.toBool()
-        let availbleSlots = result[13] as? UInt16
+        let availableSlots = result[13] as? UInt16
         let updated = result[14] as! UInt32
         let raidLevel = result[15] as? UInt8
         let exRaidEligible = (result[16] as? UInt8)?.toBool()
@@ -728,7 +728,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
             lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
             raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-            raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+            raidPokemonId: raidPokemonId, raidLevel: raidLevel, availableSlots: availableSlots, updated: updated,
             exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
             raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
             raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
@@ -805,7 +805,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidBattleTimestamp = result[10] as? UInt32
             let raidPokemonId = result[11] as? UInt16
             let enabled = (result[12] as? UInt8)?.toBool()
-            let availbleSlots = result[13] as? UInt16
+            let availableSlots = result[13] as? UInt16
             let updated = result[14] as! UInt32
             let raidLevel = result[15] as? UInt8
             let exRaidEligible = (result[16] as? UInt8)?.toBool()
@@ -826,7 +826,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
                 raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availableSlots: availableSlots, updated: updated,
                 exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
                 raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
                 raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
@@ -904,7 +904,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidBattleTimestamp = result[10] as? UInt32
             let raidPokemonId = result[11] as? UInt16
             let enabled = (result[12] as? UInt8)?.toBool()
-            let availbleSlots = result[13] as? UInt16
+            let availableSlots = result[13] as? UInt16
             let updated = result[14] as! UInt32
             let raidLevel = result[15] as? UInt8
             let exRaidEligible = (result[16] as? UInt8)?.toBool()
@@ -925,7 +925,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
                 raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
-                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availbleSlots: availbleSlots, updated: updated,
+                raidPokemonId: raidPokemonId, raidLevel: raidLevel, availableSlots: availableSlots, updated: updated,
                 exRaidEligible: exRaidEligible, inBattle: inBattle, raidPokemonMove1: raidPokemonMove1,
                 raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
                 raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
@@ -1016,7 +1016,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             new.raidPokemonId != old.raidPokemonId ||
             new.teamId != old.teamId ||
             new.guardPokemonId != old.guardPokemonId ||
-            new.availbleSlots != old.availbleSlots ||
+            new.availableSlots != old.availableSlots ||
             new.totalCp != old.totalCp ||
             new.exRaidEligible != old.exRaidEligible ||
             new.sponsorId != old.sponsorId ||

@@ -62,9 +62,9 @@ let showSubmissionCells
 let showGreatLeague
 let showUltraLeague
 
-let avilableForms = []
-let avilableItems = []
-let avilableTileservers = {}
+let availableForms = []
+let availableItems = []
+let availableTileservers = {}
 let selectedTileserver = 'Default'
 
 let pokemonFilterLoaded = false
@@ -158,24 +158,24 @@ $(function () {
     weatherTypes = data
   })
 
-  avilableForms = JSON.parse('{{{avilable_forms_json}}}')
-  avilableItems = JSON.parse('{{{avilable_items_json}}}')
-  avilableTileservers = JSON.parse('{{{avilable_tileservers_json}}}')
+  availableForms = JSON.parse('{{{available_forms_json}}}')
+  availableItems = JSON.parse('{{{available_items_json}}}')
+  availableTileservers = JSON.parse('{{{available_tileservers_json}}}')
 
   loadStorage()
 
-  const avilableTileserverKeys = []
-  for (var avilableTileserverKey in avilableTileservers) {
-    avilableTileserverKeys.push(avilableTileserverKey)
+  const availableTileserverKeys = []
+  for (var availableTileserverKey in availableTileservers) {
+    availableTileserverKeys.push(availableTileserverKey)
   }
-  avilableTileserverKeys.sort()
+  availableTileserverKeys.sort()
   $('#select-mapstyle').append($('<option>', {
     value: 'Default',
     text: 'Default',
     selected: selectedTileserver === 'Default'
   }))
-  for (var i = 0; i < avilableTileserverKeys.length; i++) {
-    const key = avilableTileserverKeys[i]
+  for (var i = 0; i < availableTileserverKeys.length; i++) {
+    const key = availableTileserverKeys[i]
     if (key !== 'Default') {
       $('#select-mapstyle').append($('<option>', {
         value: key,
@@ -242,8 +242,8 @@ $(function () {
     if (L.Browser.retina) {
       scale = '@2x'
     }
-    tileLayer = L.tileLayer(avilableTileservers[selectedTileserver].url, {
-      attribution: avilableTileservers[selectedTileserver].attribution,
+    tileLayer = L.tileLayer(availableTileservers[selectedTileserver].url, {
+      attribution: availableTileservers[selectedTileserver].attribution,
       minZoom: '{{min_zoom}}',
       maxZoom: '{{max_zoom}}',
       scale: scale,
@@ -397,7 +397,7 @@ function loadStorage () {
   if (selectedTileserverTmp === undefined) {
     selectedTileserver = 'Default'
   } else {
-    if (avilableTileservers[selectedTileserverTmp] === undefined) {
+    if (availableTileservers[selectedTileserverTmp] === undefined) {
       selectedTileserver = 'Default'
     } else {
       selectedTileserver = selectedTileserverTmp
@@ -524,7 +524,7 @@ function loadStorage () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: true, size: 'normal' }
     })
 
@@ -538,7 +538,7 @@ function loadStorage () {
         questFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       if (questFilter['i' + itemId] === undefined) {
         questFilter['i' + itemId] = { show: true, size: 'normal' }
       }
@@ -735,8 +735,8 @@ function initMap () {
   if (L.Browser.retina) {
     scale = '@2x'
   }
-  tileLayer = L.tileLayer(avilableTileservers[selectedTileserver].url, {
-    attribution: avilableTileservers[selectedTileserver].attribution,
+  tileLayer = L.tileLayer(availableTileservers[selectedTileserver].url, {
+    attribution: availableTileservers[selectedTileserver].attribution,
     minZoom: '{{min_zoom}}',
     maxZoom: '{{max_zoom}}',
     scale: scale,
@@ -799,7 +799,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: true, size: 'normal' }
     })
 
@@ -815,7 +815,7 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: false, size: questFilterNew['p' + i].size }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: false, size: questFilterNew['i' + itemId].size }
     })
 
@@ -1317,7 +1317,7 @@ function loadData () {
         questFilterExclude.push('p' + i)
       }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       if (questFilter['i' + itemId].show === false) {
         questFilterExclude.push('i' + itemId)
       }
@@ -3052,7 +3052,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
       if (info.form_id !== 0 && info.form_id !== null) {
         const pokemonIdStringTmp = '' + info.pokemon_id + '-' + info.form_id
-        if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+        if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
           rewardString = 'p' + pokemonIdStringTmp
         } else {
           rewardString = 'p' + info.pokemon_id
@@ -4133,16 +4133,16 @@ function getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution) {
   if (pokemonEvolution !== 0 && pokemonEvolution !== null) {
     const pokemonIdStringTmp = '' + pokemonId + '-' + (pokemonForm || 0) + '-' + pokemonEvolution
     const pokemonIdStringTmp2 = '' + pokemonId + '-' + 0 + '-' + pokemonEvolution
-    if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
       pokemonIdString = pokemonIdStringTmp
-    } else if ($.inArray(pokemonIdStringTmp2, avilableForms) !== -1) {
+    } else if ($.inArray(pokemonIdStringTmp2, availableForms) !== -1) {
       pokemonIdString = pokemonIdStringTmp2
     } else {
       pokemonIdString = '' + pokemonId
     }
   } else if (pokemonForm !== 0 && pokemonForm !== null) {
     const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
-    if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
       pokemonIdString = pokemonIdStringTmp
     } else {
       pokemonIdString = '' + pokemonId

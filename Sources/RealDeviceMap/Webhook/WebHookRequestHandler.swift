@@ -383,13 +383,13 @@ class WebHookRequestHandler {
         ]
 
         if pokemonEncounterIdForEncounter != nil {
-            //If the UIC sets pokemon_encounter_id_for_encounter,
-            //only return encounters != 0 if we actually encounter that target.
-            //"Guaranteed scan"
+            // If the UIC sets pokemon_encounter_id_for_encounter,
+            // only return encounters != 0 if we actually encounter that target.
+            // "Guaranteed scan"
             data["encounters"] = 0
             for encounter in encounters where
                 encounter.pokemon.encounterID.description == pokemonEncounterIdForEncounter {
-                //We actually encountered the target.
+                // We actually encountered the target.
                 data["encounters"] = 1
             }
         }
@@ -414,7 +414,7 @@ class WebHookRequestHandler {
             var scatterPokemon = [[String: Any]]()
 
             for pokemon in wildPokemons {
-                //Don't return the main query in the scattershot list
+                // Don't return the main query in the scattershot list
                 if pokemon.data.encounterID.description == pokemonEncounterId {
                     continue
                 }
@@ -427,7 +427,7 @@ class WebHookRequestHandler {
                         isEvent: isEvent
                     )
                     if oldPokemon != nil && oldPokemon!.atkIv != nil {
-                        //Skip going to mons already with IVs.
+                        // Skip going to mons already with IVs.
                         continue
                     }
                 } catch {}

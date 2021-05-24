@@ -54,7 +54,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             "size": size as Any,
             "weather": weather as Any,
             "shiny": shiny as Any,
-            //"username": username as Any,
+            // "username": username as Any,
             "pokestop_id": pokestopId as Any,
             "costume": costume as Any,
             "updated": updated ?? 1,
@@ -209,8 +209,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if wildPokemon.pokemon.hasPokemonDisplay {
             costume = wildPokemon.pokemon.pokemonDisplay.costume.rawValue.toUInt8()
             weather = wildPokemon.pokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
-            //The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
-            //shiny = wildPokemon.pokemon.pokemonDisplay.shiny
+            // The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
+            // shiny = wildPokemon.pokemon.pokemonDisplay.shiny
         }
         self.username = username
 
@@ -270,8 +270,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         if nearbyPokemon.hasPokemonDisplay {
             costume = nearbyPokemon.pokemonDisplay.costume.rawValue.toUInt8()
             weather = nearbyPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
-            //The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
-            //shiny = wildPokemon.pokemonData.pokemonDisplay.shiny
+            // The wildPokemon and nearbyPokemon GMOs don't contain actual shininess.
+            // shiny = wildPokemon.pokemonData.pokemonDisplay.shiny
         }
         self.username = username
 
