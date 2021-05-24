@@ -48,6 +48,12 @@ class WebServer {
         case dashboardAssignmentStart = "dashboard_assignment_start.mustache"
         case dashboardAssignmentDelete = "dashboard_assignment_delete.mustache"
         case dashboardAssignmentsDeleteAll = "dashboard_assignments_delete_all.mustache"
+        case dashboardAssignmentGroups = "dashboard_assignmentgroups.mustache"
+        case dashboardAssignmentGroupAdd = "dashboard_assignmentgroup_add.mustache"
+        case dashboardAssignmentGroupEdit = "dashboard_assignmentgroup_edit.mustache"
+        case dashboardAssignmentGroupDelete = "dashboard_assignmentgroup_delete.mustache"
+        case dashboardAssignmentGroupStart = "dashboard_assignmentgroup_start.mustache"
+        case dashboardAssignmentGroupReQuest = "dashboard_assignmentgroup_request.mustache"
         case dashboardUsers = "dashboard_users.mustache"
         case dashboardUserEdit = "dashboard_user_edit.mustache"
         case dashboardGroups = "dashboard_groups.mustache"
@@ -76,7 +82,7 @@ class WebServer {
         SessionConfig.name = "SESSION-TOKEN"
         SessionConfig.idle = 604800 // 7 Days
 
-        //SessionConfig.cookieDomain = "/"
+        // SessionConfig.cookieDomain = "/"
         SessionConfig.cookieSecure = false // <- make secure
         SessionConfig.IPAddressLock = false
         SessionConfig.userAgentLock = false

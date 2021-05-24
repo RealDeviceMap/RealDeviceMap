@@ -20,7 +20,7 @@ struct Group {
         case viewMapPokemon = 2
         case viewStats = 3
         case admin = 4
-        //case adminUser = 5
+        // case adminUser = 5
         case viewMapGym = 6
         case viewMapPokestop = 7
         case viewMapSpawnpoint = 8

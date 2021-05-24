@@ -15,9 +15,9 @@ import PerfectCURL
 class WebHookController {
 
     private init() {
-        let enviroment = ProcessInfo.processInfo.environment
-        timeout = enviroment["WEBHOOK_ENDPOINT_TIMEOUT"]?.toInt() ?? 30
-        connectTimeout = enviroment["WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"]?.toInt() ?? 30
+        let environment = ProcessInfo.processInfo.environment
+        timeout = environment["WEBHOOK_ENDPOINT_TIMEOUT"]?.toInt() ?? 30
+        connectTimeout = environment["WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"]?.toInt() ?? 30
     }
 
     public private(set) static var global = WebHookController()

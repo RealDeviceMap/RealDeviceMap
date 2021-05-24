@@ -76,7 +76,7 @@ if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
 }
 
 // Load Groups
-Log.info(message: "[MAIN] Loading groups")
+Log.info(message: "[MAIN] Loading Groups")
 do {
     try Group.setup()
 } catch {
@@ -105,24 +105,24 @@ if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with:
 
 // Load Settings
 Log.info(message: "[MAIN] Loading Settings")
-WebReqeustHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
-WebReqeustHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
-WebReqeustHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
-WebReqeustHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")?.toInt() ?? 10
-WebReqeustHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")?.toInt() ?? 18
-WebReqeustHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
-WebReqeustHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
-WebReqeustHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
-WebReqeustHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
+WebRequestHandler.startLat = try! DBController.global.getValueForKey(key: "MAP_START_LAT")!.toDouble()!
+WebRequestHandler.startLon = try! DBController.global.getValueForKey(key: "MAP_START_LON")!.toDouble()!
+WebRequestHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
+WebRequestHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")?.toInt() ?? 10
+WebRequestHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")?.toInt() ?? 18
+WebRequestHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
+WebRequestHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
+WebRequestHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
+WebRequestHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
     .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
-WebReqeustHandler.googleAnalyticsId = try! DBController.global.getValueForKey(key: "GOOGLE_ANALYTICS_ID") ?? ""
-WebReqeustHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
-WebReqeustHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?
+WebRequestHandler.googleAnalyticsId = try! DBController.global.getValueForKey(key: "GOOGLE_ANALYTICS_ID") ?? ""
+WebRequestHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
+WebRequestHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?
     .emptyToNil()
-WebReqeustHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?.emptyToNil()
-WebReqeustHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?
+WebRequestHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?.emptyToNil()
+WebRequestHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?
     .emptyToNil()
-WebReqeustHandler.statsUrl = try! DBController.global.getValueForKey(key: "STATS_URL") ?? ""
+WebRequestHandler.statsUrl = try! DBController.global.getValueForKey(key: "STATS_URL") ?? ""
 WebHookRequestHandler.hostWhitelist = try! DBController.global.getValueForKey(key: "DEVICEAPI_HOST_WHITELIST")?
     .emptyToNil()?.components(separatedBy: ";")
 WebHookRequestHandler.hostWhitelistUsesProxy = try! DBController.global.getValueForKey(
@@ -132,10 +132,10 @@ WebHookRequestHandler.loginSecret = try! DBController.global.getValueForKey(key:
 WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?
     .components(separatedBy: ",").map({ (string) -> UInt16 in
     return string.toUInt16() ?? 0
-}) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] //Default ditto disguises
-WebReqeustHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
+}) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] // Default ditto disguises
+WebRequestHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
     .jsonDecode() as? [[String: String]] ?? []
-WebReqeustHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
+WebRequestHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
     .jsonDecode() as? [[String: String]] ?? []
 
 if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVERS")?
@@ -147,9 +147,9 @@ if let tileserversOld = try! DBController.global.getValueForKey(key: "TILESERVER
             "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"
         ]
     }
-    WebReqeustHandler.tileservers = tileservers
+    WebRequestHandler.tileservers = tileservers
 } else {
-    WebReqeustHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?
+    WebRequestHandler.tileservers = try! DBController.global.getValueForKey(key: "TILESERVERS")?
         .jsonDecodeForceTry() as? [String: [String: String]] ?? [
             "Default": [
                 "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -207,31 +207,31 @@ Log.info(message: "[MAIN] Starting Webhook Controller")
 WebHookController.global.start()
 
 // Load Forms
-Log.info(message: "[MAIN] Loading Avilable Forms")
-var avilableForms = [String]()
+Log.info(message: "[MAIN] Loading Available Forms")
+var availableForms = [String]()
 do {
     try Dir("\(projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
         let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
         if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-            avilableForms.append("\(pokemonID)-\(formID)")
+            availableForms.append("\(pokemonID)-\(formID)")
         } else if split.count == 3, let pokemonID = Int(split[0]),
                   let formID = Int(split[1]), let evoId = Int(split[2]) {
-            avilableForms.append("\(pokemonID)-\(formID)-\(evoId)")
+            availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
         }
     }
-    WebReqeustHandler.avilableFormsJson = try avilableForms.jsonEncodedString()
+    WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
 } catch {
     Log.error(
         message: "Failed to load forms. Frontend will only display default forms. Error: \(error.localizedDescription)"
     )
 }
 
-Log.info(message: "[MAIN] Loading Avilable Items")
-var aviableItems = [-6, -5, -4, -3, -2, -1]
+Log.info(message: "[MAIN] Loading Available Items")
+var availableItems = [-6, -5, -4, -3, -2, -1]
 for itemId in Item.allAvilable {
-    aviableItems.append(itemId.rawValue)
+    availableItems.append(itemId.rawValue)
 }
-WebReqeustHandler.avilableItemJson = try! aviableItems.jsonEncodedString()
+WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
 Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
 Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
@@ -271,24 +271,30 @@ do {
 }
 
 if isSetup != nil && isSetup == "true" {
-    WebReqeustHandler.isSetup = true
+    WebRequestHandler.isSetup = true
 } else {
-    WebReqeustHandler.isSetup = false
-    WebReqeustHandler.accessToken = URandom().secureToken
-    Log.info(message: "[Main] Use this access-token to create the admin user: \(WebReqeustHandler.accessToken!)")
+    WebRequestHandler.isSetup = false
+    WebRequestHandler.accessToken = URandom().secureToken
+    Log.info(message: "[MAIN] Use this access-token to create the admin user: \(WebRequestHandler.accessToken!)")
 }
 
 // Start MailController
-Log.info(message: "[MAIL] Starting Mail Controller")
+Log.info(message: "[MAIN] Starting Mail Controller")
 try! MailController.global.setup()
 
 // Start DiscordController
-Log.info(message: "[MAIL] Starting Discord Controller")
+Log.info(message: "[MAIN] Starting Discord Controller")
 try! DiscordController.global.setup()
 
 // Create Raid images
-Log.info(message: "[MAIN] Starting Images Generator")
-ImageGenerator.generate()
+let noGenerateImages =
+  ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
+if !noGenerateImages {
+  Log.info(message: "[MAIN] Starting Images Generator")
+  ImageGenerator.generate()
+} else {
+  Log.info(message: "[MAIN] Image generation disabled - skipping")
+}
 
 // Stopping Startup Webserver
 Log.info(message: "[MAIN] Stopping Startup Webserver")
@@ -298,7 +304,7 @@ startupServerContext = nil
 
 ApiRequestHandler.start = Date()
 
-Log.info(message: "[MAIN] Starting Webserves")
+Log.info(message: "[MAIN] Starting Webservers")
 do {
     try HTTPServer.launch(
         [

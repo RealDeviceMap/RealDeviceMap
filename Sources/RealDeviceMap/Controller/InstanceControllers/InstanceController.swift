@@ -122,7 +122,7 @@ class InstanceController {
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
         switch instance.type {
-        case .circleSmartRaid, .circlePokemon, .circleRaid:
+        case .circleSmartRaid, .circleSmartPokemon, .circlePokemon, .circleRaid:
             var coordsArray = [Coord]()
             if instance.data["area"] as? [Coord] != nil {
                 coordsArray = instance.data["area"] as? [Coord] ?? [Coord]()
@@ -141,6 +141,11 @@ class InstanceController {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
                                                               type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
                                                               accountGroup: accountGroup, isEvent: isEvent)
+            } else if instance.type == .circleSmartPokemon {
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
+                                                              type: .smartPokemon, minLevel: minLevel,
+                                                              maxLevel: maxLevel, accountGroup: accountGroup,
+                                                              isEvent: isEvent)
             } else if instance.type == .circleRaid {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
                                                               type: .raid, minLevel: minLevel, maxLevel: maxLevel,
