@@ -615,14 +615,14 @@ class WebHookRequestHandler {
                     try? pokemon.save(mysql: mysql, updateIV: true)
                 //} else {
                 //    Log.debug(message: "[WebHookRequestHandler] Received map pokemon, " +
-                //                       "Waiting for disk encounter.".white)
+                //                       "Waiting for disk encounter.")
                 }
             }
 
             if !nearbyPokemons.isEmpty {
                 Log.debug(message: "[WebHookRequestHandler] " +
                                    "[\(uuid ?? "?")] " +
-                                   "Lured Pokemon Count: \(mapPokemons.count) ".magenta +
+                                   "Lured Pokemon Count: \(mapPokemons.count) " +
                                    "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startMapPokemon)))s"
                 )
             }
@@ -785,14 +785,14 @@ class WebHookRequestHandler {
                         }
                     //} else {
                     //    Log.debug(message: "[WebHookRequestHandler] Received diskencounter" +
-                    //                       " before mappokemon.".white)
+                    //                       " before mappokemon.")
                     }
                 }
                 if diskencounters.count > 0 {
                     Log.debug(
                         message: "[WebHookRequestHandler] " +
                                  "[\(uuid ?? "?")] " +
-                                 "Disk Encounter Count: \(diskencounters.count) ".red +
+                                 "Disk Encounter Count: \(diskencounters.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                     )
                 }
