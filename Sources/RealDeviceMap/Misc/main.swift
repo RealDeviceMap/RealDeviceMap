@@ -71,6 +71,8 @@ if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
     SpawnPoint.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     Weather.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     // 900 3600
+    Pokemon.mapPokemonDisplayIdCache = MemoryCache(interval: memoryCacheClearInterval, keepTime: 300)
+    Pokemon.diskEncounterCache = MemoryCache(interval: memoryCacheClearInterval, keepTime: 300)
 } else {
     Log.info(message: "[MAIN] Memory Cache deactivated")
 }

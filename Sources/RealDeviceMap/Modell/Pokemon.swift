@@ -28,6 +28,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var noWeatherIVClearing = false
 
     static var cache: MemoryCache<Pokemon>?
+    static var mapPokemonDisplayIdCache: MemoryCache<String>?
 
     class ParsingError: Error {}
 
@@ -327,6 +328,38 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     }
 
+    init(mysql: MySQL?=nil, fortData: PokemonFortProto,
+         mapPokemon: MapPokemonProto, cellId: UInt64,
+         timestampMs: UInt64, username: String?, isEvent: Bool) {
+
+        self.isEvent = isEvent
+        id = mapPokemon.encounterID.description
+        pokemonId = mapPokemon.pokedexTypeID.toUInt16()
+        pokestopId = fortData.fortID
+        //self.spawnId = UInt64(mapPokemon.spawnpointID)
+        self.lat = fortData.latitude
+        self.lon = fortData.longitude
+        self.gender = mapPokemon.pokemonDisplay.gender.rawValue.toUInt8()
+        self.form = mapPokemon.pokemonDisplay.form.rawValue.toUInt16()
+        if mapPokemon.hasPokemonDisplay {
+            self.costume = mapPokemon.pokemonDisplay.costume.rawValue.toUInt8()
+            self.weather = mapPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+            //The mapPokemon and nearbyPokemon GMOs don't contain actual shininess.
+            //shiny = mapPokemon.pokemonDisplay.shiny
+        }
+        self.username = username
+
+        if mapPokemon.expirationTimeMs > 0 {
+            expireTimestamp = UInt32((0 + UInt64(mapPokemon.expirationTimeMs)) / 1000)
+            expireTimestampVerified = true
+        } else {
+            expireTimestampVerified = false
+        }
+
+        self.cellId = cellId
+
+    }
+
     public func addEncounter(mysql: MySQL, encounterData: EncounterOutProto,
                              username: String?) {
 
@@ -445,6 +478,87 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                                             updated: updated, despawnSecond: nil)
                 try? spawnPoint.save(mysql: mysql, update: true)
             }
+        }
+
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        self.changed = self.updated
+    }
+
+    public func addDiskEncounter(mysql: MySQL, diskencounterData: DiskEncounterOutProto,
+                                 username: String?) {
+
+        let pokemonId = UInt16(diskencounterData.pokemon.pokemonID.rawValue)
+        let cp = UInt16(diskencounterData.pokemon.cp)
+        let move1 = UInt16(diskencounterData.pokemon.move1.rawValue)
+        let move2 = UInt16(diskencounterData.pokemon.move2.rawValue)
+        let size = Double(diskencounterData.pokemon.heightM)
+        let weight = Double(diskencounterData.pokemon.weightKg)
+        let atkIv = UInt8(diskencounterData.pokemon.individualAttack)
+        let defIv = UInt8(diskencounterData.pokemon.individualDefense)
+        let staIv = UInt8(diskencounterData.pokemon.individualStamina)
+        let costume = UInt8(diskencounterData.pokemon.pokemonDisplay.costume.rawValue)
+        let form = UInt16(diskencounterData.pokemon.pokemonDisplay.form.rawValue)
+        let gender = UInt8(diskencounterData.pokemon.pokemonDisplay.gender.rawValue)
+
+        if pokemonId != self.pokemonId ||
+           cp != self.cp ||
+           move1 != self.move1 ||
+           move2 != self.move2 ||
+           size != self.size ||
+           weight != self.weight ||
+           atkIv != self.atkIv ||
+           defIv != self.defIv ||
+           staIv != self.staIv ||
+           costume != self.costume ||
+           form != self.form ||
+           gender != self.gender {
+               self.hasChanges = true
+               self.hasIvChanges = true
+            }
+
+        self.pokemonId = pokemonId
+        self.cp = cp
+        self.move1 = move1
+        self.move2 = move2
+        self.size = size
+        self.weight = weight
+        self.atkIv = atkIv
+        self.defIv = defIv
+        self.staIv = staIv
+        self.costume = costume
+        self.form = form
+        self.gender = gender
+
+        self.shiny = diskencounterData.pokemon.pokemonDisplay.shiny
+        self.username = username
+
+        if hasIvChanges {
+            if diskencounterData.hasCaptureProbability {
+                self.capture1 = Double(diskencounterData.captureProbability.captureProbability[0])
+                self.capture2 = Double(diskencounterData.captureProbability.captureProbability[1])
+                self.capture3 = Double(diskencounterData.captureProbability.captureProbability[2])
+            }
+            let cpMultiplier = diskencounterData.pokemon.cpMultiplier
+            let level: UInt8
+            if cpMultiplier < 0.734 {
+                level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier -
+                                    2.838007664 * cpMultiplier + 0.8539209906))
+            } else {
+                level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
+            }
+            self.level = level
+            self.isDitto = Pokemon.isDittoDisguised(pokemonId: self.pokemonId,
+                                                    level: self.level ?? 0,
+                                                    weather: self.weather ?? 0,
+                                                    atkIv: self.atkIv ?? 0,
+                                                    defIv: self.defIv ?? 0,
+                                                    staIv: self.staIv ?? 0
+            )
+            if self.isDitto {
+                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(self.pokemonId)")
+                self.setDittoAttributes(displayPokemonId: self.pokemonId)
+            }
+            setPVP()
         }
 
         self.updated = UInt32(Date().timeIntervalSince1970)
