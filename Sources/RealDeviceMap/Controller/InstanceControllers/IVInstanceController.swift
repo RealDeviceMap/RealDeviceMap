@@ -123,7 +123,8 @@ class IVInstanceController: InstanceControllerProto {
         scannedPokemonLock.unlock()
 
         return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
-                "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
+                "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel,
+                "lure_encounter": true]
     }
 
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
