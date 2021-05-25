@@ -29,6 +29,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
     static var cache: MemoryCache<Pokemon>?
     static var mapPokemonDisplayIdCache: MemoryCache<String>?
+    static var diskEncounterCache: MemoryCache<DiskEncounterOutProto>?
 
     class ParsingError: Error {}
 
