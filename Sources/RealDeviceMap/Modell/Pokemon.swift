@@ -456,11 +456,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return
         }
         let form = PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        let gender = PokemonDisplayProto.Gender.init(rawValue: Int(self.gender ?? 0)) ?? .unset
         let pokemonID = HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
         let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
+            gender: gender == .unset ? nil : gender,
             costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
@@ -469,6 +471,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
+                "gender": ranking.pokemon.gender?.rawValue ?? 0,
                 "rank": ranking.response?.rank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
@@ -479,6 +482,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
+            gender: gender == .unset ? nil : gender,
             costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
@@ -487,6 +491,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
+                "gender": ranking.pokemon.gender?.rawValue ?? 0,
                 "rank": ranking.response?.rank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
