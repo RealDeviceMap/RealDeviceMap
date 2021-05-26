@@ -37,8 +37,8 @@ internal class PVPStatsManager {
 
     private func loadMasterFileIfNeeded() {
         let request = CURLRequest(
-            "https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-            "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json",
+            "https://raw.githubusercontent.com/PokeMiners/" +
+            "game_masters/master/latest/latest.json",
             .httpMethod(.head)
         )
         guard let result = try? request.perform() else {
@@ -54,15 +54,16 @@ internal class PVPStatsManager {
 
     private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
-        let request = CURLRequest("https://raw.githubusercontent.com/pokemongo-dev-contrib/" +
-                                  "pokemongo-game-master/master/versions/latest/V2_GAME_MASTER.json")
+        let request = CURLRequest("https://raw.githubusercontent.com/PokeMiners/" +
+                                  "game_masters/master/latest/latest.json")
         guard let result = try? request.perform() else {
             Log.error(message: "[PVPStatsManager] Failed to load game master file")
             return
         }
         eTag = result.get(.eTag)
-        Log.debug(message: "[PVPStatsManager] Parsing game master V2 file")
-        guard let templates = result.bodyJSON["template"] as? [[String: Any]] else {
+        Log.debug(message: "[PVPStatsManager] Parsing game master file")
+        let bodyJSON = try? JSONSerialization.jsonObject(with: Data(result.bodyBytes))
+        guard let templates = bodyJSON as? [[String: Any]] else {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
@@ -71,8 +72,8 @@ internal class PVPStatsManager {
             guard let data = template["data"] as? [String: Any] else { return }
             guard let templateId = data["templateId"] as? String else { return }
             if templateId.starts(with: "V"), templateId.contains(string: "_POKEMON_"),
-                let pokemonInfo = data["pokemon"] as? [String: Any],
-                let pokemonName = pokemonInfo["uniqueId"] as? String,
+                let pokemonInfo = data["pokemonSettings"] as? [String: Any],
+                let pokemonName = pokemonInfo["pokemonId"] as? String,
                 let statsInfo = pokemonInfo["stats"] as? [String: Any],
                 let baseStamina = statsInfo["baseStamina"] as? Int,
                 let baseAttack = statsInfo["baseAttack"] as? Int,
