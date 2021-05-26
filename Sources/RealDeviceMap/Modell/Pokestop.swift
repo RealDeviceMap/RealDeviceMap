@@ -184,7 +184,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if fortData.activeFortModifier.contains(.itemTroyDisk) ||
             fortData.activeFortModifier.contains(.itemTroyDiskGlacial) ||
             fortData.activeFortModifier.contains(.itemTroyDiskMossy) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskMagnetic) {
+            fortData.activeFortModifier.contains(.itemTroyDiskMagnetic) ||
             fortData.activeFortModifier.contains(.troyDiskRainy) {
             self.lureExpireTimestamp = lastModifiedTimestamp + Pokestop.lureTime
             self.lureId = Int16(fortData.activeFortModifier[0].rawValue)

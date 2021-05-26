@@ -657,7 +657,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
                 raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
                 raidPokemonGender: raidPokemonGender, raidPokemonEvolution: raidPokemonEvolution,
-                aidIsExclusive: raidIsExclusive, cellId: cellId, totalCp: totalCp, sponsorId: sponsorId,
+                raidIsExclusive: raidIsExclusive, cellId: cellId, totalCp: totalCp, sponsorId: sponsorId,
                 arScanEligible: arScanEligible))
         }
         return gyms
