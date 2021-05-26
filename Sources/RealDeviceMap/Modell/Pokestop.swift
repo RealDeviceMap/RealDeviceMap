@@ -181,10 +181,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
-        if fortData.activeFortModifier.contains(.itemTroyDisk) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskGlacial) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskMossy) ||
-            fortData.activeFortModifier.contains(.itemTroyDiskMagnetic) ||
+        if fortData.activeFortModifier.contains(.troyDisk) ||
+            fortData.activeFortModifier.contains(.troyDiskGlacial) ||
+            fortData.activeFortModifier.contains(.troyDiskMossy) ||
+            fortData.activeFortModifier.contains(.troyDiskMagnetic) ||
             fortData.activeFortModifier.contains(.troyDiskRainy) {
             self.lureExpireTimestamp = lastModifiedTimestamp + Pokestop.lureTime
             self.lureId = Int16(fortData.activeFortModifier[0].rawValue)
