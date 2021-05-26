@@ -180,7 +180,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
-        let lastModifiedTimestamp = UInt32(fortData.lastModifiedTimestampMs / 1000)
+        let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         if fortData.activeFortModifier.contains(.troyDisk) ||
             fortData.activeFortModifier.contains(.troyDiskGlacial) ||
             fortData.activeFortModifier.contains(.troyDiskMossy) ||
