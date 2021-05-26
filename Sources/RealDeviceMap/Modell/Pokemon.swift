@@ -291,10 +291,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                 lon = pokestop!.lon
             } else {
                 let sql = """
-                        SELECT lat, lon
-                        FROM pokestop
-                        WHERE id = ?;
-                    """
+                    SELECT lat, lon
+                    FROM pokestop
+                    WHERE id = ?;
+                """
 
                 guard let mysql = mysql ?? DBController.global.mysql else {
                     Log.error(message: "[POKEMON] Failed to connect to database.")
