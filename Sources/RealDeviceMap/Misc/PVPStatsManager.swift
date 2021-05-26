@@ -16,11 +16,11 @@ internal class PVPStatsManager {
 
     internal static let global = PVPStatsManager()
 
-    private var stats = [PokemonWithForm: Stats]()
+    private var stats = [PokemonWithFormAndGender: Stats]()
     private let rankingGreatLock = Threading.Lock()
-    private var rankingGreat = [PokemonWithForm: ResponsesOrEvent]()
+    private var rankingGreat = [PokemonWithFormAndGender: ResponsesOrEvent]()
     private let rankingUltraLock = Threading.Lock()
-    private var rankingUltra = [PokemonWithForm: ResponsesOrEvent]()
+    private var rankingUltra = [PokemonWithFormAndGender: ResponsesOrEvent]()
     private var eTag: String?
     private let updaterThread: ThreadQueue
 
@@ -67,7 +67,7 @@ internal class PVPStatsManager {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
-        var stats = [PokemonWithForm: Stats]()
+        var stats = [PokemonWithFormAndGender: Stats]()
         templates.forEach { (template) in
             guard let data = template["data"] as? [String: Any] else { return }
             guard let templateId = data["templateId"] as? String else { return }
@@ -93,13 +93,15 @@ internal class PVPStatsManager {
                 } else {
                     form = nil
                 }
-                var evolutions = [PokemonWithForm]()
+                var evolutions = [PokemonWithFormAndGender]()
                 let evolutionsInfo = pokemonInfo["evolutionBranch"] as? [[String: Any]] ?? []
                 for info in evolutionsInfo {
                     if let pokemonName = info["evolution"] as? String, let pokemon = pokemonFrom(name: pokemonName) {
                         let formName = info["form"] as? String
+                        let genderName = info["genderRequirement"] as? String
                         let form = formName == nil ? nil : formFrom(name: formName!)
-                        evolutions.append(.init(pokemon: pokemon, form: form))
+                        let gender = genderName == nil ? nil : genderFrom(name: genderName!)
+                        evolutions.append(.init(pokemon: pokemon, form: form, gender: gender))
                     }
                 }
                 let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
@@ -117,8 +119,8 @@ internal class PVPStatsManager {
         Log.debug(message: "[PVPStatsManager] Done parsing game master file")
     }
 
-    internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?, iv: IV, level: Double,
-                              league: League) -> Response? {
+    internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
+                              iv: IV, level: Double, league: League) -> Response? {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
@@ -143,20 +145,27 @@ internal class PVPStatsManager {
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
+                                            gender: PokemonDisplayProto.Gender?,
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
-                                            -> [(pokemon: PokemonWithForm, response: Response?)] {
+                                            -> [(pokemon: PokemonWithFormAndGender, response: Response?)] {
         let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
-        let pokemonWithForm = PokemonWithForm(pokemon: pokemon, form: form)
-        var result = [(pokemon: pokemonWithForm, response: current)]
+        var result = [(
+                pokemon: PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender),
+                response: current
+        )]
         guard !String(describing: costume).lowercased().contains(string: "noevolve"),
-              let stat = stats[pokemonWithForm],
+              let stat = stats[.init(pokemon: pokemon, form: form)],
               !stat.evolutions.isEmpty else {
             return result
         }
         for evolution in stat.evolutions {
-            let pvpStats = getPVPStatsWithEvolutions(pokemon: evolution.pokemon, form: evolution.form,
-                                                     costume: costume, iv: iv, level: level, league: league)
-            result += pvpStats
+            if evolution.gender == nil || evolution.gender == gender {
+                let pvpStats = getPVPStatsWithEvolutions(
+                        pokemon: evolution.pokemon, form: evolution.form,
+                        gender: gender, costume: costume, iv: iv, level: level, league: league
+                )
+                result += pvpStats
+            }
         }
         return result
     }
@@ -164,7 +173,7 @@ internal class PVPStatsManager {
     // swiftlint:disable:next cyclomatic_complexity
     internal func getTopPVP(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                             league: League) -> [Response]? {
-        let info = PokemonWithForm(pokemon: pokemon, form: form)
+        let info = PokemonWithFormAndGender(pokemon: pokemon, form: form)
         let cached: ResponsesOrEvent?
         switch league {
         case .great:
@@ -285,20 +294,27 @@ internal class PVPStatsManager {
         }
     }
 
+    private func genderFrom(name: String) -> PokemonDisplayProto.Gender? {
+        return PokemonDisplayProto.Gender.allCases.first { (gender) -> Bool in
+            return String(describing: gender).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        }
+    }
+
 }
 
 extension PVPStatsManager {
 
-    struct PokemonWithForm: Hashable {
+    struct PokemonWithFormAndGender: Hashable {
         var pokemon: HoloPokemonId
         var form: PokemonDisplayProto.Form?
+        var gender: PokemonDisplayProto.Gender?
     }
 
     struct Stats {
         var baseAttack: Int
         var baseDefense: Int
         var baseStamina: Int
-        var evolutions: [PokemonWithForm]
+        var evolutions: [PokemonWithFormAndGender]
     }
 
     struct IV: Equatable {
