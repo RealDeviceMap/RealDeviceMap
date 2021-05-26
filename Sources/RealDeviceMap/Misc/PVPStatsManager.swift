@@ -119,9 +119,8 @@ internal class PVPStatsManager {
     }
 
     internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                              gender: PokemonDisplayProto.Gender?, iv: IV, level: Double,
-                              league: League) -> Response? {
-        guard let stats = getTopPVP(pokemon: pokemon, form: form, gender: gender, league: league) else {
+                              iv: IV, level: Double, league: League) -> Response? {
+        guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
         guard let index = stats.firstIndex(where: { value in
@@ -148,7 +147,7 @@ internal class PVPStatsManager {
                                             gender: PokemonDisplayProto.Gender?,
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
                                             -> [(pokemon: PokemonWithFormAndGender, response: Response?)] {
-        let current = getPVPStats(pokemon: pokemon, form: form, gender: gender, iv: iv, level: level, league: league)
+        let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
         let pokemonWithForm = PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender)
         var result = [(pokemon: pokemonWithForm, response: current)]
         guard !String(describing: costume).lowercased().contains(string: "noevolve"),
@@ -157,10 +156,11 @@ internal class PVPStatsManager {
             return result
         }
         for evolution in stat.evolutions {
-            if (evolution.gender == nil && gender == nil) || evolution.gender == gender {
-                let pvpStats = getPVPStatsWithEvolutions(pokemon: evolution.pokemon, form: evolution.form,
-                        gender: evolution.gender,
-                        costume: costume, iv: iv, level: level, league: league)
+            if evolution.gender == nil || evolution.gender == gender {
+                let pvpStats = getPVPStatsWithEvolutions(
+                        pokemon: evolution.pokemon, form: evolution.form,
+                        gender: evolution.gender, costume: costume, iv: iv, level: level, league: league
+                )
                 result += pvpStats
             }
         }
@@ -169,9 +169,8 @@ internal class PVPStatsManager {
 
     // swiftlint:disable:next cyclomatic_complexity
     internal func getTopPVP(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                            gender: PokemonDisplayProto.Gender?,
                             league: League) -> [Response]? {
-        let info = PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender)
+        let info = PokemonWithFormAndGender(pokemon: pokemon, form: form)
         let cached: ResponsesOrEvent?
         switch league {
         case .great:
@@ -232,7 +231,7 @@ internal class PVPStatsManager {
             event.lock()
             _ = event.wait(seconds: 10)
             event.unlock()
-            return getTopPVP(pokemon: pokemon, form: form, gender: gender, league: league)
+            return getTopPVP(pokemon: pokemon, form: form, league: league)
         }
     }
 
