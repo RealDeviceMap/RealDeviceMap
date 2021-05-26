@@ -2566,7 +2566,10 @@ function getGymPopupContent (gym) {
     }
     if (gym.ex_raid_eligible) {
       // content += '<b>Gym is EX-Raid eligible</b>';
-      content += '<img src="/static/img/misc/ex.png" height="24" width="32">'
+      content += '<img src="/static/img/misc/ex.png" height="24" width="32"><br>'
+    }
+    if (gym.ar_scan_eligible) {
+      content += '<img src="/static/img/misc/ar.png" height="26" width="26"><br>'
     }
     content +=
             '</div>' + // END 2ND COL
