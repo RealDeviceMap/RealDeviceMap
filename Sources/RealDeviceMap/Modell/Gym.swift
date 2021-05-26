@@ -88,7 +88,7 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
                 "sponsor_od": sponsorId ?? 0,
-                "ar_scan_eligible": arScanEligible ?? 0,
+                "ar_scan_eligible": arScanEligible ?? 0
             ]
         } else if type == "egg" || type == "raid" {
             realType = "raid"

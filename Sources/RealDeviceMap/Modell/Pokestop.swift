@@ -455,10 +455,10 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 INSERT INTO pokestop (
                     id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type,
                     quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, cell_id, lure_id,
-                    pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible, updated, first_seen_timestamp,
-
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                    pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible,
+                    updated, first_seen_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(),
+                UNIX_TIMESTAMP())
             """
             self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
