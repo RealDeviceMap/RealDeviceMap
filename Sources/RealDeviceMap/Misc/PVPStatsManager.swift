@@ -149,10 +149,9 @@ internal class PVPStatsManager {
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
                                             -> [(pokemon: PokemonWithFormAndGender, response: Response?)] {
         let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
-        let pokemonWithForm = PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender)
-        var result = [(pokemon: pokemonWithForm, response: current)]
+        var result = [(pokemon: PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender), response: current)]
         guard !String(describing: costume).lowercased().contains(string: "noevolve"),
-              let stat = stats[pokemonWithForm],
+              let stat = stats[.init(pokemon: pokemon, form: form)],
               !stat.evolutions.isEmpty else {
             return result
         }
@@ -160,7 +159,7 @@ internal class PVPStatsManager {
             if evolution.gender == nil || evolution.gender == gender {
                 let pvpStats = getPVPStatsWithEvolutions(
                         pokemon: evolution.pokemon, form: evolution.form,
-                        gender: evolution.gender, costume: costume, iv: iv, level: level, league: league
+                        gender: gender, costume: costume, iv: iv, level: level, league: league
                 )
                 result += pvpStats
             }
