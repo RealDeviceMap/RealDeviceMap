@@ -3730,6 +3730,7 @@
         "filter_pokestop_lure_4": "Magnetic Lure",
         "filter_pokestop_lure_5": "Rainy Lure",
         "filter_pokestop_invasion": "Team Rocket Invasions",
+        "filter_pokestop_ar_only": "Only AR Eligible Pokestops",
         "filter_spawnpoint_options": "Options",
         "filter_spawnpoint_with_timer": "With Timer",
         "filter_spawnpoint_without_timer": "Without Timer"

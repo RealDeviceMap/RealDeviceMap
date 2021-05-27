@@ -3724,6 +3724,7 @@
         "filter_pokestop_lure_4": "Magnet-Lockmodul",
         "filter_pokestop_lure_5": "Regen-Lockmodul",
         "filter_pokestop_invasion": "Team Rocket Invasionen",
+        "filter_pokestop_ar_only": "Nur AR geeignet Pokestops",
         "filter_spawnpoint_options": "Optionen",
         "filter_spawnpoint_with_timer": "mit Timer",
         "filter_spawnpoint_without_timer": "ohne Timer",

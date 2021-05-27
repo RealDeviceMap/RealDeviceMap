@@ -591,7 +591,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     public static func getAll(
         mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32,
         questsOnly: Bool, showQuests: Bool, showLures: Bool, showInvasions: Bool, questFilterExclude: [String]?=nil,
-        pokestopFilterExclude: [String]?=nil) throws -> [Pokestop] {
+        pokestopFilterExclude: [String]?=nil, pokestopShowOnlyAr: Bool=false) throws -> [Pokestop] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
@@ -642,6 +642,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludeItemSQL: String
         let excludeLureSQL: String
         var excludePokestopSQL: String
+        var onlyArSQL: String
 
         if showQuests && questsOnly {
             if excludedTypes.isEmpty {
@@ -717,6 +718,12 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePokestopSQL = ""
         }
 
+        if pokestopShowOnlyAr {
+            onlyArSQL = "AND ar_scan_eligible = TRUE"
+        } else {
+            onlyArSQL = ""
+        }
+
         var sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated,
                    quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
@@ -725,6 +732,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             FROM pokestop
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND
                   deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludePokestopSQL)
+                  \(onlyArSQL)
         """
         if questsOnly {
             sql += " AND quest_reward_type IS NOT NULL"
