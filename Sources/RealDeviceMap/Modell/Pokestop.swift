@@ -458,7 +458,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     pokestop_display, incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible,
                     updated, first_seen_timestamp)
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                     UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
             """
             self.updated = now
