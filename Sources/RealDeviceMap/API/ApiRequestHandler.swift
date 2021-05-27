@@ -1055,8 +1055,8 @@ class ApiRequestHandler {
 
             pokestopData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5),
-                    "sort": 5
+                    "formatted": String(format: "%03d", 6),
+                    "sort": 6
                 ],
                 "name": pokestopInvasion,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i0.png\" " +
@@ -1102,8 +1102,8 @@ class ApiRequestHandler {
 
             pokestopData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 6),
-                    "sort": 6
+                    "formatted": String(format: "%03d", 7),
+                    "sort": 7
                 ],
                 "name": arOnly,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
