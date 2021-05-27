@@ -718,7 +718,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePokestopSQL = ""
         }
 
-        if pokestopShowOnlyAr {
+        if pokestopShowOnlyAr && !questsOnly {
             onlyArSQL = "AND ar_scan_eligible = TRUE"
         } else {
             onlyArSQL = ""
