@@ -883,7 +883,7 @@ class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": Localizer.global.get(value: "filter_gym_ar_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/1403.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
