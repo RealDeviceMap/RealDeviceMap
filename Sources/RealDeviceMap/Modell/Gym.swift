@@ -555,8 +555,8 @@ class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
-        if excludeAllButEx {
-            excludeAllButExSQL = "AND (ex_raid_eligible = 1)"
+        if excludeAllButEx && !raidsOnly {
+            excludeAllButExSQL = "AND ex_raid_eligible = TRUE"
         } else {
             excludeAllButExSQL = ""
         }
