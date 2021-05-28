@@ -599,6 +599,9 @@ function loadStorage () {
     if (defaultGymFilter.ex === undefined) {
       defaultGymFilter.ex = { show: false, size: 'normal' }
     }
+    if (defaultGymFilter.ar === undefined) {
+      defaultGymFilter.ar = { show: false, size: 'normal' }
+    }
     for (i = 0; i <= 6; i++) {
       if (defaultGymFilter['s' + i] === undefined) {
         defaultGymFilter['s' + i] = { show: true, size: 'normal' }
@@ -617,6 +620,9 @@ function loadStorage () {
     }
     if (gymFilter.ex === undefined) {
       gymFilter.ex = { show: false, size: 'normal' }
+    }
+    if (gymFilter.ar === undefined) {
+      gymFilter.ar = { show: false, size: 'normal' }
     }
     for (i = 0; i <= 6; i++) {
       if (gymFilter['s' + i] === undefined) {
@@ -872,6 +878,7 @@ function initMap () {
       defaultGymFilter['t' + i] = { show: true, size: 'normal' }
     }
     defaultGymFilter.ex = { show: false, size: 'normal' }
+    defaultGymFilter.ar = { show: false, size: 'normal' }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: true, size: 'normal' }
     }
@@ -889,6 +896,7 @@ function initMap () {
       defaultGymFilter['t' + i] = { show: false, size: gymFilterNew['t' + i].size }
     }
     defaultGymFilter.ex = { show: false, size: gymFilterNew.ex.size }
+    defaultGymFilter.ar = { show: false, size: gymFilterNew.ex.size }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: false, size: gymFilterNew['s' + i].size }
     }
@@ -1414,6 +1422,7 @@ function loadData () {
     gym_filter_exclude: JSON.stringify(gymFilterExclude),
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
+    gym_show_only_ar: gymFilter.ar.show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
     show_cells: showCells && map.getZoom() >= 13,
@@ -1719,6 +1728,7 @@ function getGymSize (teamId) {
 }
 
 function getRaidSize (id) {
+  console.log(id, raidFilter);
   const size = raidFilter[id].size
   if (size === 'small') {
     return 30
@@ -3564,7 +3574,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = gymFilterNew['t' + id].size === 'huge'
         break
     }
-  } else if (type === 'gym-ex') {
+  } else if (type === 'gym-ex' || type === 'gym-ar') {
     switch (info) {
       case 'hide':
         shouldShow = gymFilterNew[id].show === false
@@ -3887,7 +3897,7 @@ function manageSelectButton (e, isNew) {
             gymFilterNew['t' + id].size = 'huge'
             break
         }
-      } else if (type === 'gym-ex') {
+      } else if (type === 'gym-ex' || type === 'gym-ar') {
         switch (info) {
           case 'hide':
             gymFilterNew[id].show = false

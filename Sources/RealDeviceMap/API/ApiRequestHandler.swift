@@ -112,6 +112,7 @@ class ApiRequestHandler {
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -159,7 +160,7 @@ class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -844,6 +845,48 @@ class ApiRequestHandler {
                          "style=\"height:50px; width:50px;\">",
                 "filter": exFilter,
                 "size": exSize,
+                "type": gymOptionsString
+            ])
+
+            // AR gyms
+            let arFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ar" data-type="gym-ar" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="ar" data-type="gym-ar" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let arSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "sort": 6
+                ],
+                "name": Localizer.global.get(value: "filter_gym_ar_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/1403.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": arFilter,
+                "size": arSize,
                 "type": gymOptionsString
             ])
 

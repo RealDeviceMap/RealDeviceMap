@@ -3722,6 +3722,7 @@
         "filter_gym_available_slots_4": "4 Slots Available",
         "filter_gym_available_slots_5": "5 Slots Available",
         "filter_gym_available_slots_6": "Empty",
+        "filter_gym_ar_only": "Only AR Eligible Gyms",
         "filter_pokestop_options": "Options",
         "filter_pokestop_normal": "Normal",
         "filter_pokestop_lure_1": "Normal Lure",
