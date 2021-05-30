@@ -27,6 +27,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var weatherBoostMinIvStat: UInt8 = 4
     static var noPVP = false
     static var noWeatherIVClearing = false
+    static var noCellPokemon = false
 
     static var cache: MemoryCache<Pokemon>?
 
@@ -279,6 +280,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let lat: Double
         let lon: Double
         if pokestopId.isEmpty {
+            if Pokemon.noCellPokemon { throw ParsingError() }
             let s2cell = S2Cell(cellId: S2CellId(uid: cellId))
             let nlat = s2cell.capBound.rectBound.center.lat.degrees
             let nlon = s2cell.capBound.rectBound.center.lng.degrees
