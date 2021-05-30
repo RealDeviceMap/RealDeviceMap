@@ -2170,13 +2170,6 @@ function getPokemonPopupContent (pokemon) {
   } else {
     content += '<b>Despawn Time:</b> ~'
   }
-  if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
-    content += '<b>Scancell Pokemon</b> '
-  } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-    content += '<b>Nearby Pokemon</b> ~'
-  } else {
-    content += '<b>Wild Pokemon</b> ~'
-  }
   content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>' +
         '</div>' +
         '<div class="col-sm text-nowrap">'
@@ -2191,6 +2184,17 @@ function getPokemonPopupContent (pokemon) {
     const updatedDate = new Date(pokemon.updated * 1000)
     content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
+
+  content += '<b>Scan-Type:</b> '
+  if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
+    content += 'Scan-Cell'
+  } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
+    content += 'Nearby'
+  } else {
+    content += 'Wild'
+  }
+  content += '<br>'
+
   if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
     content +=
       '<a href="#" onclick="toggleGreatLeague()">' +
