@@ -2204,7 +2204,7 @@ function getPokemonPopupContent (pokemon) {
     content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
 
-  content += '<b>Scan-Type:</b> '
+  content += '<small><b>Scan-Type:</b> '
   if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
     content += 'Scan-Cell'
   } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
@@ -2212,7 +2212,7 @@ function getPokemonPopupContent (pokemon) {
   } else {
     content += 'Wild'
   }
-  content += '<br>'
+  content += '</small><br>'
 
   if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
     content +=
