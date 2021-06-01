@@ -3729,6 +3729,9 @@
         "filter_spawnpoint_options": "Optionen",
         "filter_spawnpoint_with_timer": "mit Timer",
         "filter_spawnpoint_without_timer": "ohne Timer",
-        "filter_invasion_grunt_type": "Rüpel Typ"
+        "filter_invasion_grunt_type": "Rüpel Typ",
+        "scan_type_cell": "Zelle",
+        "scan_type_spawnpoint": "Spawnpunkt",
+        "scan_type_pokestop": "Pokestop"
     }
 }

@@ -3734,6 +3734,9 @@
         "filter_pokestop_ar_only": "Only AR Eligible Pokestops",
         "filter_spawnpoint_options": "Options",
         "filter_spawnpoint_with_timer": "With Timer",
-        "filter_spawnpoint_without_timer": "Without Timer"
+        "filter_spawnpoint_without_timer": "Without Timer",
+        "scan_type_cell": "Cell",
+        "scan_type_spawnpoint": "Spawnpoint",
+        "scan_type_pokestop": "Pokestop"
     }
 }

@@ -2209,11 +2209,11 @@ function getPokemonPopupContent (pokemon) {
 
   content += '<small><b>Scan-Type:</b> '
   if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
-    content += 'Cell'
+    content += getScanTypeName('cell')
   } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-    content += 'Pokestop'
+    content += getScanTypeName('pokestop')
   } else {
-    content += 'SpawnPoint'
+    content += getScanTypeName('spawnpoint')
   }
   content += '</small><br>'
 
@@ -2799,6 +2799,10 @@ function getAlignmentName (alignmentId) {
 
 function getCharacterCategoryName (characterCategoryId) {
   return i18n('character_category_' + characterCategoryId)
+}
+
+function getScanTypeName (spawnTypeId) {
+  return i18n('scan_type_' + spawnTypeId)
 }
 
 function getQuestReward (reward) {
