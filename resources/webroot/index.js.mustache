@@ -2115,7 +2115,10 @@ function getPokemonPopupContent (pokemon) {
     pokemonName += ' (' + getPokemonNameNoId(pokemon.display_pokemon_id) + ')'
   }
 
-  const pokemonIcon = getPokemonIconString(pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null)
+  const pokemonIcon = getPokemonIconString(
+    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+    pokemon.pokestop_id === null && pokemon.spawn_id === null
+  )
 
   content +=
     '<div class="row">' + // START 1ST ROW
@@ -2206,11 +2209,11 @@ function getPokemonPopupContent (pokemon) {
 
   content += '<small><b>Scan-Type:</b> '
   if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
-    content += 'Scan-Cell'
+    content += 'Cell'
   } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-    content += 'Nearby'
+    content += 'Pokestop'
   } else {
-    content += 'Wild'
+    content += 'SpawnPoint'
   }
   content += '</small><br>'
 
@@ -2489,7 +2492,7 @@ function getGymPopupContent (gym) {
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
-    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, null, null, gym.raid_pokemon_evolution)
+    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, null, null, gym.raid_pokemon_evolution, false)
     content +=
         '<div class="row" style="margin:auto;">' + // START 1ST ROW
             '<div class="col-6 col-md-4">' + // START 1ST COL
@@ -3044,7 +3047,10 @@ function getWeatherStyle (weather, ts) {
 function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
-  const pokemonIdString = getPokemonIconString(pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null)
+  const pokemonIdString = getPokemonIconString(
+    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+    pokemon.pokestop_id === null && pokemon.spawn_id === null
+  )
   const icon = L.icon({
     iconUrl: '/static/img/' + pokemonIdString,
     iconSize: [size, size],
@@ -4194,13 +4200,17 @@ function getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution) {
   return pokemonIdString
 }
 
-function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague, pokemonEvolution) {
+function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague, pokemonEvolution, isCellSpawn) {
   let pokemonIdString = getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution)
 
   let pre
   let post
   if (greatLeague === null || ultraLeague === null) {
-    pre = 'pokemon/'
+    if (isCellSpawn) {
+      pre = 'wild_pokemon/'
+    } else {
+      pre = 'pokemon/'
+    }
     post = '.png'
   } else {
     let bestRank = 4

@@ -28,6 +28,7 @@ class ImageGenerator {
         }
         let pokestopDir = Dir("\(projectroot)/resources/webroot/static/img/pokestop/")
         let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
+        let wildPokemonDir = Dir("\(projectroot)/resources/webroot/static/img/wild_pokemon/")
         let pokemonLeagueDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon_league/")
         let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
         let questDir = Dir("\(projectroot)/resources/webroot/static/img/quest/")
@@ -38,6 +39,8 @@ class ImageGenerator {
         let firstFile = File("\(projectroot)/resources/webroot/static/img/misc/first.png")
         let secondFile = File("\(projectroot)/resources/webroot/static/img/misc/second.png")
         let thirdFile = File("\(projectroot)/resources/webroot/static/img/misc/third.png")
+
+        let grassFile = File("\(projectroot)/resources/webroot/static/img/misc/grass.png")
 
         if !raidDir.exists {
             try! raidDir.create()
@@ -53,6 +56,9 @@ class ImageGenerator {
         }
         if !pokemonLeagueDir.exists {
             try! pokemonLeagueDir.create()
+        }
+        if !wildPokemonDir.exists {
+            try! wildPokemonDir.create()
         }
 
         let thread = Threading.getQueue(type: .serial)
@@ -93,7 +99,7 @@ class ImageGenerator {
                 }
                 Log.info(message: "[ImageGenerator] Pokemon League Images created.")
             } else {
-                Log.warning(message: "[ImageGenerator] Creating Pokemon League Images (missing Dirs)")
+                Log.warning(message: "[ImageGenerator] Not generating  Pokemon League Images (missing Dirs)")
                 if !pokemonDir.exists {
                     Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
                 }
@@ -105,6 +111,32 @@ class ImageGenerator {
                 }
                 if !thirdFile.exists {
                     Log.info(message: "[ImageGenerator] Missing file \(thirdFile.path)")
+                }
+            }
+
+            if pokemonDir.exists && grassFile.exists {
+                Log.info(message: "[ImageGenerator] Creating Wild Pokemon Images...")
+                try! FileManager.default.contentsOfDirectory(atPath: pokemonDir.path).forEach { (pokemonFilename) in
+                    if !pokemonFilename.contains(".png") {
+                        Log.debug(message: "[ImageGenerator] \(pokemonFilename) is not png! Skipping...")
+                        return
+                    }
+                    let pokemonFile = File(pokemonDir.path + pokemonFilename)
+                    let pokemonId = pokemonFilename.replacingOccurrences(of: ".png", with: "")
+                    let newFileWild = File(wildPokemonDir.path + pokemonId + ".png")
+                    if !newFileWild.exists {
+                        Log.debug(message: "[ImageGenerator] Creating Wild Pokemon Image \(pokemonId)")
+                        combineImagesLeague(image1: pokemonFile.path, image2: grassFile.path, output: newFileWild.path)
+                    }
+                }
+                Log.info(message: "[ImageGenerator] Wild Pokemon Images created.")
+            } else {
+                Log.warning(message: "[ImageGenerator] Not generating Wild Pokemon Images (missing Dirs)")
+                if !pokemonDir.exists {
+                    Log.info(message: "[ImageGenerator] Missing dir \(pokemonDir.path)")
+                }
+                if !grassFile.exists {
+                    Log.info(message: "[ImageGenerator] Missing file \(grassFile.path)")
                 }
             }
 
@@ -386,4 +418,5 @@ class ImageGenerator {
         _ = Shell("rm", "-f", "tmp1.png").run()
         _ = Shell("rm", "-f", "tmp2.png").run()
     }
+
 }
