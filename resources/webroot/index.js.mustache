@@ -492,6 +492,7 @@ function loadStorage () {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
     defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.hide_cell = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -507,6 +508,9 @@ function loadStorage () {
     }
     if (pokemonFilter.event_only === undefined) {
       pokemonFilter.event_only = { on: false }
+    }
+    if (pokemonFilter.hide_cell === undefined) {
+      pokemonFilter.hide_cell = { on: false }
     }
     if (pokemonFilter.iv_and === undefined) {
       pokemonFilter.iv_and = { on: false, filter: '0-100' }
@@ -780,6 +784,7 @@ function initMap () {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
     defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.hide_cell = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -796,6 +801,7 @@ function initMap () {
       defaultPokemonFilter[i] = { show: false, size: pokemonFilterNew[i].size, filter: pokemonFilterNew[i].filter }
     }
     defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.hide_cell = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: pokemonFilterNew.iv_and.filter }
     defaultPokemonFilter.iv_or = { on: false, filter: pokemonFilterNew.iv_or.filter }
 
@@ -1324,6 +1330,7 @@ function loadData () {
     }
   }
   let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'] && pokemonFilter['event_only'].on
+  let pokemonFilterHideCell = showPokemon && pokemonFilter['hide_cell'] && pokemonFilter['hide_cell'].on
 
   const questFilterExclude = []
   if (showQuests) {
@@ -1415,6 +1422,7 @@ function loadData () {
     show_quests: showQuests,
     show_pokemon: showPokemon,
     pokemon_filter_event_only: pokemonFilterEventOnly,
+    pokemon_exclude_cell: pokemonFilterHideCell,
     pokemon_filter_exclude: JSON.stringify(pokemonFilterExclude),
     quest_filter_exclude: JSON.stringify(questFilterExclude),
     pokemon_filter_iv: JSON.stringify(pokemonFilterIV),
@@ -3451,6 +3459,12 @@ function manageSelectButton (e, isNew) {
       case 'event_only_show':
         shouldShow = pokemonFilterNew['event_only'] && pokemonFilterNew['event_only'].on
         break
+      case 'hide_cell_hide':
+        shouldShow = !pokemonFilterNew['hide_cell'] || !pokemonFilterNew['hide_cell'].on
+        break
+      case 'hide_cell_show':
+        shouldShow = pokemonFilterNew['hide_cell'] && pokemonFilterNew['hide_cell'].on
+        break
     }
   } else if (type === 'quest-misc') {
     switch (info) {
@@ -3773,6 +3787,12 @@ function manageSelectButton (e, isNew) {
             break
           case 'event_only_hide':
             pokemonFilterNew['event_only'].on = false
+            break
+          case 'hide_cell_show':
+            pokemonFilterNew['hide_cell'].on = true
+            break
+          case 'hide_cell_hide':
+            pokemonFilterNew['hide_cell'].on = false
             break
         }
       } else if (type === 'quest-misc') {

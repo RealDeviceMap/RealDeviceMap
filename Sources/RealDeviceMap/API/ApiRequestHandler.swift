@@ -106,6 +106,7 @@ class ApiRequestHandler {
         let pokemonFilterEventOnly = request.param(name: "pokemon_filter_event_only")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
+        let excludeCellPokemon = request.param(name: "pokemon_exclude_cell")?.toBool() ?? false
         let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let gymFilterExclude = request.param(name: "gym_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let pokestopFilterExclude = request.param(name: "pokestop_filter_exclude")?.jsonDecodeForceTry() as? [String]
@@ -181,7 +182,8 @@ class ApiRequestHandler {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
-                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon
+                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon,
+                excludeCellPokemon: excludeCellPokemon
             )
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint) {
@@ -230,11 +232,12 @@ class ApiRequestHandler {
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
 
+            let miscString = Localizer.global.get(value: "filter_misc")
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let eventsTypeString = Localizer.global.get(value: "filter_event")
             let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let eventOnlyString = Localizer.global.get(value: "filter_event_only")
+            let excludeCellString = Localizer.global.get(value: "filter_exclude_cell")
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
             let andString = Localizer.global.get(value: "filter_and")
@@ -258,13 +261,39 @@ class ApiRequestHandler {
                 pokemonData.append([
                     "id": [
                         "formatted": "",
-                        "sort": -1
+                        "sort": -2
                     ],
                     "name": eventOnlyString,
                     "image": "Event",
                     "filter": filter,
                     "size": "",
-                    "type": eventsTypeString
+                    "type": miscString
+                ])
+            }
+            if !Pokemon.noCellPokemon {
+                let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="hide_cell"
+                         data-type="pokemon-iv" data-info="hide_cell_hide">
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                        </label>
+                        <label class="btn btn-sm btn-on select-button-new" data-id="hide_cell"
+                         data-type="pokemon-iv" data-info="hide_cell_show">
+                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                        </label>
+                    </div>
+                """
+                pokemonData.append([
+                    "id": [
+                        "formatted": "",
+                        "sort": -1
+                    ],
+                    "name": excludeCellString,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
+                            "style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": "",
+                    "type": miscString
                 ])
             }
 
