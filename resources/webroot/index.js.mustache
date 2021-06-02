@@ -689,16 +689,25 @@ function loadStorage () {
   const invasionFilterValue = retrieve('invasion_filter')
   if (invasionFilterValue === null) {
     const defaultInvasionFilter = {}
-    let i
-    for (i = 1; i <= 50; i++) {
+    var i = 1
+    for (i = 1; i <= 44; i++) {
+      defaultInvasionFilter[i] = { show: true, size: 'normal' }
+    }
+    //skip grunt 45-46, because they are covered behind Giovanni
+    for (i = 47; i <= 50; i++) {
       defaultInvasionFilter[i] = { show: true, size: 'normal' }
     }
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
-    let i
-    for (i = 1; i <= 50; i++) {
+    for (i = 1; i <= 44; i++) {
+      if (invasionFilter[i] === undefined) {
+        invasionFilter[i] = { show: true, size: 'normal' }
+      }
+    }
+    //skip grunt 45-46, because they are covered behind Giovanni
+    for (i = 47; i <= 50; i++) {
       if (invasionFilter[i] === undefined) {
         invasionFilter[i] = { show: true, size: 'normal' }
       }
@@ -943,7 +952,11 @@ function initMap () {
 
   $('#reset-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    for (var i = 1; i <= 50; i++) {
+    for (var i = 1; i <= 44; i++) {
+      defaultInvasionFilter[i] = { show: true, size: 'normal' }
+    }
+    //hide grunt 45-46, because they are covered behind Giovanni
+    for (i = 47; i <= 50; i++) {
       defaultInvasionFilter[i] = { show: true, size: 'normal' }
     }
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
@@ -954,7 +967,11 @@ function initMap () {
 
   $('#disable-all-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    for (var i = 1; i <= 50; i++) {
+    for (var i = 1; i <= 44; i++) {
+      defaultInvasionFilter[i] = { show: false, size: invasionFilterNew[i].size }
+    }
+    //hide grunt 45-46, because they are covered behind Giovanni
+    for (i = 47; i <= 50; i++) {
       defaultInvasionFilter[i] = { show: false, size: invasionFilterNew[i].size }
     }
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
@@ -1457,8 +1474,13 @@ function loadData () {
 
   const invasionFilterExclude = []
   if (showInvasions) {
-    let i
-    for (i = 1; i <= 50; i++) {
+    for (var i = 1; i <= 44; i++) {
+      if (invasionFilter[i].show === false) {
+        invasionFilterExclude.push(i)
+      }
+    }
+    //hide grunt 45-46, because they are covered behind Giovanni
+    for (i = 47; i <= 50; i++) {
       if (invasionFilter[i].show === false) {
         invasionFilterExclude.push(i)
       }
