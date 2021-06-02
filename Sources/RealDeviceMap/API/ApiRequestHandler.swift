@@ -237,7 +237,7 @@ class ApiRequestHandler {
             let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let eventOnlyString = Localizer.global.get(value: "filter_event_only")
-            let excludeCellString = Localizer.global.get(value: "filter_exclude_cell")
+            let includeCellString = Localizer.global.get(value: "filter_include_cell")
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
             let andString = Localizer.global.get(value: "filter_and")
@@ -273,12 +273,12 @@ class ApiRequestHandler {
             if !Pokemon.noCellPokemon {
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-sm btn-off select-button-new" data-id="hide_cell"
-                         data-type="pokemon-iv" data-info="hide_cell_hide">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_hide">
                             <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
                         </label>
-                        <label class="btn btn-sm btn-on select-button-new" data-id="hide_cell"
-                         data-type="pokemon-iv" data-info="hide_cell_show">
+                        <label class="btn btn-sm btn-on select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_show">
                             <input type="radio" name="options" id="show" autocomplete="off">\(onString)
                         </label>
                     </div>
@@ -288,7 +288,7 @@ class ApiRequestHandler {
                         "formatted": "",
                         "sort": -1
                     ],
-                    "name": excludeCellString,
+                    "name": includeCellString,
                     "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
                             "style=\"height:50px; width:50px;\">",
                     "filter": filter,

@@ -54,7 +54,7 @@
         "filter_spawnpoint_table_empty": "keine passenden Spawnpunkte gefunden",
         "filter_global_iv": "Globales IV Limit",
         "filter_event_only": "Nur Event Spawns",
-        "filter_exclude_cell": "Zell-Pokemon Verbergen",
+        "filter_include_cell": "Scan-Zellen Spawns",
         "filter_and": "und",
         "filter_or": "oder",
         "filter_on": "ein",
