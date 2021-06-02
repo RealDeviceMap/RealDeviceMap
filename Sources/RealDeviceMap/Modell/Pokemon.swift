@@ -12,6 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 import Regex
+import S2Geometry
 
 class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConvertible {
 
@@ -26,6 +27,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var weatherBoostMinIvStat: UInt8 = 4
     static var noPVP = false
     static var noWeatherIVClearing = false
+    static var noCellPokemon = false
 
     static var cache: MemoryCache<Pokemon>?
     static var mapPokemonDisplayIdCache: MemoryCache<String>?
@@ -279,48 +281,57 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         let lat: Double
         let lon: Double
-        let pokestop = Pokestop.cache?.get(id: pokestopId)
-        if pokestop != nil {
-            lat = pokestop!.lat
-            lon = pokestop!.lon
+        if pokestopId.isEmpty {
+            if Pokemon.noCellPokemon { throw ParsingError() }
+            let s2cell = S2Cell(cellId: S2CellId(uid: cellId))
+            let nlat = s2cell.capBound.rectBound.center.lat.degrees
+            let nlon = s2cell.capBound.rectBound.center.lng.degrees
+            lat = nlat
+            lon = nlon
         } else {
-            let sql = """
+            let pokestop = Pokestop.cache?.get(id: pokestopId)
+            if pokestop != nil {
+                lat = pokestop!.lat
+                lon = pokestop!.lon
+            } else {
+                let sql = """
                     SELECT lat, lon
                     FROM pokestop
                     WHERE id = ?;
                 """
 
-            guard let mysql = mysql ?? DBController.global.mysql else {
-                Log.error(message: "[POKEMON] Failed to connect to database.")
-                throw DBController.DBError()
+                guard let mysql = mysql ?? DBController.global.mysql else {
+                    Log.error(message: "[POKEMON] Failed to connect to database.")
+                    throw DBController.DBError()
+                }
+
+                let mysqlStmt = MySQLStmt(mysql)
+                _ = mysqlStmt.prepare(statement: sql)
+
+                mysqlStmt.bindParam(pokestopId)
+
+                guard mysqlStmt.execute() else {
+                    Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+                    throw DBController.DBError()
+                }
+
+                let results = mysqlStmt.results()
+
+                if results.numRows == 0 {
+                    throw ParsingError()
+                }
+
+                let result = results.next()
+                lat = result![0] as! Double
+                lon = result![1] as! Double
             }
-
-            let mysqlStmt = MySQLStmt(mysql)
-            _ = mysqlStmt.prepare(statement: sql)
-
-            mysqlStmt.bindParam(pokestopId)
-
-            guard mysqlStmt.execute() else {
-                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
-                throw DBController.DBError()
-            }
-
-            let results = mysqlStmt.results()
-
-            if results.numRows == 0 {
-                throw ParsingError()
-            }
-
-            let result = results.next()
-            lat = result![0] as! Double
-            lon = result![1] as! Double
         }
 
         self.id = id
         self.lat = lat
         self.lon = lon
         self.pokemonId = pokemonId
-        self.pokestopId = pokestopId
+        self.pokestopId = (pokestopId.isEmpty ? nil : pokestopId)
         self.gender = gender
         self.form = form
 
@@ -571,11 +582,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return
         }
         let form = PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        let gender = PokemonDisplayProto.Gender.init(rawValue: Int(self.gender ?? 0)) ?? .unset
         let pokemonID = HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
         let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
+            gender: gender == .unset ? nil : gender,
             costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
@@ -584,6 +597,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
+                "gender": ranking.pokemon.gender?.rawValue ?? 0,
                 "rank": ranking.response?.rank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
@@ -594,6 +608,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.pvpRankingsUltraLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
+            gender: gender == .unset ? nil : gender,
             costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
             level: Double(self.level!),
@@ -602,6 +617,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
             return [
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
+                "gender": ranking.pokemon.gender?.rawValue ?? 0,
                 "rank": ranking.response?.rank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
@@ -939,7 +955,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     //  swiftlint:disable:next function_parameter_count
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
                               showIV: Bool, updated: UInt32, pokemonFilterExclude: [Int]?=nil,
-                              pokemonFilterIV: [String: String]?=nil, isEvent: Bool) throws -> [Pokemon] {
+                              pokemonFilterIV: [String: String]?=nil, isEvent: Bool,
+                              excludeCellPokemon: Bool=false) throws -> [Pokemon] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKEMON] Failed to connect to database.")
@@ -1026,6 +1043,13 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         }
 
+        let excludeCellPokemonSql: String
+        if excludeCellPokemon {
+            excludeCellPokemonSql = "AND (spawn_id IS NOT NULL OR pokestop_id IS NOT NULL)"
+        } else {
+            excludeCellPokemonSql = ""
+        }
+
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
                    gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
@@ -1034,7 +1058,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
                    is_event
             FROM pokemon
             WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND
-                  lon <= ? AND updated > ? AND is_event = ? \(sqlAdd)
+                  lon <= ? AND updated > ? AND is_event = ? \(sqlAdd) \(excludeCellPokemonSql)
         """
 
         let mysqlStmt = MySQLStmt(mysql)

@@ -50,8 +50,8 @@
         "filter_pokestop_table_empty": "No matching Pokestops found",
         "filter_spawnpoint_table_empty": "No matching Spawnpoints found",
         "filter_global_iv": "Global IV Limit",
-        "filter_event": "Event Filter",
         "filter_event_only": "Only Event Spawns",
+        "filter_include_cell": "Scan-Cell Spawns",
         "filter_and": "And",
         "filter_or": "Or",
         "filter_on": "On",
@@ -3722,6 +3722,7 @@
         "filter_gym_available_slots_4": "4 Slots Available",
         "filter_gym_available_slots_5": "5 Slots Available",
         "filter_gym_available_slots_6": "Empty",
+        "filter_gym_ar_only": "Only AR Eligible Gyms",
         "filter_pokestop_options": "Options",
         "filter_pokestop_normal": "Normal",
         "filter_pokestop_lure_1": "Normal Lure",
@@ -3730,8 +3731,12 @@
         "filter_pokestop_lure_4": "Magnetic Lure",
         "filter_pokestop_lure_5": "Rainy Lure",
         "filter_pokestop_invasion": "Team Rocket Invasions",
+        "filter_pokestop_ar_only": "Only AR Eligible Pokestops",
         "filter_spawnpoint_options": "Options",
         "filter_spawnpoint_with_timer": "With Timer",
-        "filter_spawnpoint_without_timer": "Without Timer"
+        "filter_spawnpoint_without_timer": "Without Timer",
+        "scan_type_cell": "Cell",
+        "scan_type_spawnpoint": "Spawnpoint",
+        "scan_type_pokestop": "Pokestop"
     }
 }

@@ -53,8 +53,8 @@
         "filter_pokestop_table_empty": "keine passenden Pokestops gefunden",
         "filter_spawnpoint_table_empty": "keine passenden Spawnpunkte gefunden",
         "filter_global_iv": "Globales IV Limit",
-        "filter_event": "Event Filter",
         "filter_event_only": "Nur Event Spawns",
+        "filter_include_cell": "Scan-Zellen Spawns",
         "filter_and": "und",
         "filter_or": "oder",
         "filter_on": "ein",
@@ -3716,6 +3716,7 @@
         "filter_gym_available_slots_4": "4 Plätze frei",
         "filter_gym_available_slots_5": "5 Plätze frei",
         "filter_gym_available_slots_6": "unbesetzt",
+        "filter_gym_ar_only": "Nur AR geeignet Arenen",
         "filter_pokestop_options": "Optionen",
         "filter_pokestop_normal": "Normal",
         "filter_pokestop_lure_1": "Lockmodul",
@@ -3724,9 +3725,13 @@
         "filter_pokestop_lure_4": "Magnet-Lockmodul",
         "filter_pokestop_lure_5": "Regen-Lockmodul",
         "filter_pokestop_invasion": "Team Rocket Invasionen",
+        "filter_pokestop_ar_only": "Nur AR geeignet Pokestops",
         "filter_spawnpoint_options": "Optionen",
         "filter_spawnpoint_with_timer": "mit Timer",
         "filter_spawnpoint_without_timer": "ohne Timer",
-        "filter_invasion_grunt_type": "Rüpel Typ"
+        "filter_invasion_grunt_type": "Rüpel Typ",
+        "scan_type_cell": "Zelle",
+        "scan_type_spawnpoint": "Spawnpunkt",
+        "scan_type_pokestop": "Pokestop"
     }
 }

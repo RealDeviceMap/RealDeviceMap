@@ -106,11 +106,14 @@ class ApiRequestHandler {
         let pokemonFilterEventOnly = request.param(name: "pokemon_filter_event_only")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
+        let excludeCellPokemon = request.param(name: "pokemon_exclude_cell")?.toBool() ?? false
         let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let gymFilterExclude = request.param(name: "gym_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let pokestopFilterExclude = request.param(name: "pokestop_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
+        let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -158,7 +161,7 @@ class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -170,7 +173,7 @@ class ApiRequestHandler {
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 questsOnly: !showPokestops, showQuests: permShowQuests, showLures: permShowLures,
                 showInvasions: permShowInvasions, questFilterExclude: questFilterExclude,
-                pokestopFilterExclude: pokestopFilterExclude
+                pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr
             )
         }
         let permShowIV = perms.contains(.viewMapIV)
@@ -179,7 +182,8 @@ class ApiRequestHandler {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
-                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon
+                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon,
+                excludeCellPokemon: excludeCellPokemon
             )
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint) {
@@ -228,11 +232,12 @@ class ApiRequestHandler {
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
 
+            let miscString = Localizer.global.get(value: "filter_misc")
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let eventsTypeString = Localizer.global.get(value: "filter_event")
             let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let eventOnlyString = Localizer.global.get(value: "filter_event_only")
+            let includeCellString = Localizer.global.get(value: "filter_include_cell")
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
             let andString = Localizer.global.get(value: "filter_and")
@@ -256,13 +261,39 @@ class ApiRequestHandler {
                 pokemonData.append([
                     "id": [
                         "formatted": "",
-                        "sort": -1
+                        "sort": -2
                     ],
                     "name": eventOnlyString,
                     "image": "Event",
                     "filter": filter,
                     "size": "",
-                    "type": eventsTypeString
+                    "type": miscString
+                ])
+            }
+            if !Pokemon.noCellPokemon {
+                let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_hide">
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                        </label>
+                        <label class="btn btn-sm btn-on select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_show">
+                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                        </label>
+                    </div>
+                """
+                pokemonData.append([
+                    "id": [
+                        "formatted": "",
+                        "sort": -1
+                    ],
+                    "name": includeCellString,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
+                            "style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": "",
+                    "type": miscString
                 ])
             }
 
@@ -846,6 +877,48 @@ class ApiRequestHandler {
                 "type": gymOptionsString
             ])
 
+            // AR gyms
+            let arFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ar" data-type="gym-ar" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="ar" data-type="gym-ar" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let arSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "sort": 6
+                ],
+                "name": Localizer.global.get(value: "filter_gym_ar_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": arFilter,
+                "size": arSize,
+                "type": gymOptionsString
+            ])
+
             // Available slots
             for i in 0...6 {
                 let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
@@ -918,6 +991,7 @@ class ApiRequestHandler {
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
+            let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
 
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -1053,8 +1127,8 @@ class ApiRequestHandler {
 
             pokestopData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5),
-                    "sort": 5
+                    "formatted": String(format: "%03d", 6),
+                    "sort": 6
                 ],
                 "name": pokestopInvasion,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i0.png\" " +
@@ -1062,7 +1136,54 @@ class ApiRequestHandler {
                 "filter": trFilter,
                 "size": trSize,
                 "type": pokestopOptionsString
-                ])
+            ])
+
+            let arFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let arSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 7),
+                    "sort": 7
+                ],
+                "name": arOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": arFilter,
+                "size": arSize,
+                "type": pokestopOptionsString
+            ])
 
             data["pokestop_filters"] = pokestopData
         }
