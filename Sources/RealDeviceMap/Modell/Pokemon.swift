@@ -928,10 +928,10 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
 
         }
 
-        let excludeCellPokemonSql: String;
+        let excludeCellPokemonSql: String
         if excludeCellPokemon {
             excludeCellPokemonSql = "AND (spawn_id IS NOT NULL OR pokestop_id IS NOT NULL)"
-        } else{
+        } else {
             excludeCellPokemonSql = ""
         }
 
