@@ -50,8 +50,8 @@
         "filter_pokestop_table_empty": "No matching Pokestops found",
         "filter_spawnpoint_table_empty": "No matching Spawnpoints found",
         "filter_global_iv": "Global IV Limit",
-        "filter_event": "Event Filter",
         "filter_event_only": "Only Event Spawns",
+        "filter_include_cell": "Scan-Cell Spawns",
         "filter_and": "And",
         "filter_or": "Or",
         "filter_on": "On",
@@ -3734,6 +3734,9 @@
         "filter_pokestop_ar_only": "Only AR Eligible Pokestops",
         "filter_spawnpoint_options": "Options",
         "filter_spawnpoint_with_timer": "With Timer",
-        "filter_spawnpoint_without_timer": "Without Timer"
+        "filter_spawnpoint_without_timer": "Without Timer",
+        "scan_type_cell": "Cell",
+        "scan_type_spawnpoint": "Spawnpoint",
+        "scan_type_pokestop": "Pokestop"
     }
 }

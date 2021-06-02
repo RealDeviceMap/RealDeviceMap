@@ -235,6 +235,7 @@ WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
 Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
 Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
+Pokemon.noCellPokemon = ProcessInfo.processInfo.environment["NO_CELL_POKEMON"] != nil
 InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
 
 if !Pokemon.noPVP {
