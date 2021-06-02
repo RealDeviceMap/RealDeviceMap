@@ -167,7 +167,9 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func gotPokemon(pokemon: Pokemon) {
-        if pokemon.isEvent == isEvent && pokemonList.contains(pokemon.pokemonId) &&
+        if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
+           pokemon.isEvent == isEvent &&
+           pokemonList.contains(pokemon.pokemonId) &&
            multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
 
