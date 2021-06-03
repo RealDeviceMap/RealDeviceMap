@@ -746,10 +746,17 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                   deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludePokestopSQL)
                   \(onlyArSQL) \(excludeInvasionSQL)
         """
-        if showQuests && !showPokestops {
+
+        if showQuests && showInvasions && !showPokestops {
+            sql += """
+                AND (
+                    (quest_reward_type IS NOT NULL) OR
+                    (incident_expire_timestamp IS NOT NULL AND incident_expire_timestamp >= UNIX_TIMESTAMP())
+                )
+            """
+        } else if showQuests && !showPokestops {
             sql += " AND quest_reward_type IS NOT NULL"
-        }
-        if showInvasions && !showPokestops {
+        } else if showInvasions && !showPokestops {
             sql += " AND incident_expire_timestamp IS NOT NULL AND incident_expire_timestamp >= UNIX_TIMESTAMP()"
         }
 
