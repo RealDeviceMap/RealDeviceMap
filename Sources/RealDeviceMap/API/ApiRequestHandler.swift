@@ -171,12 +171,15 @@ class ApiRequestHandler {
         let permShowQuests = perms.contains(.viewMapQuest)
         let permShowLures = perms.contains(.viewMapLure)
         let permShowInvasions = perms.contains(.viewMapInvasion)
-        if isPost && (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests
-            || showInvasions && permShowInvasions)) {
+        if isPost && (permViewMap && (
+                (showPokestops && permShowStops) ||
+                (showQuests && permShowQuests) ||
+                (showInvasions && permShowInvasions)
+        )) {
             data["pokestops"] = try? Pokestop.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
-                questsOnly: !showPokestops, showQuests: permShowQuests, showLures: permShowLures,
-                showInvasions: permShowInvasions, questFilterExclude: questFilterExclude,
+                showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
+                showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
                 invasionFilterExclude: invasionFilterExclude
             )

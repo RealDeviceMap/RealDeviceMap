@@ -187,7 +187,7 @@ class WebRequestHandler {
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             // data["hide_lures"] = !perms.contains(.viewMapLure)
-            // data["hide_invasions"] = !perms.contains(.viewMapInvasion)
+            data["hide_invasions"] = !perms.contains(.viewMapInvasion)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             data["hide_submission_cells"] = !perms.contains(.viewMapSubmissionCells)
             data["hide_weathers"] = !perms.contains(.viewMapWeather)

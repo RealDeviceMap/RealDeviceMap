@@ -438,7 +438,7 @@ function loadStorage () {
     store('show_invasions', false)
     showInvasions = false
   } else {
-    showInvasions = (showInvasionsValue === 'false')
+    showInvasions = (showInvasionsValue === 'true')
   }
 
   const showPokestopsValue = retrieve('show_pokestops')
@@ -1567,7 +1567,10 @@ function loadData () {
       const pokestops = data.data.pokestops
       ts = Math.round((new Date()).getTime() / 1000)
       $.each(pokestops, function (index, pokestop) {
-        if (showPokestops || (showQuests && pokestop.quest_type !== null)) {
+        if (
+            showPokestops ||
+            (showQuests && pokestop.quest_type !== null) ||
+            (showInvasions && pokestop.incident_expire_timestamp && pokestop.incident_expire_timestamp >= ts)) {
           addPokestop(pokestop, ts)
         }
       })

@@ -590,7 +590,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     //  swiftlint:disable:next function_parameter_count
     public static func getAll(
         mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32,
-        questsOnly: Bool, showQuests: Bool, showLures: Bool, showInvasions: Bool, questFilterExclude: [String]?=nil,
+        showPokestops: Bool, showQuests: Bool, showLures: Bool, showInvasions: Bool, questFilterExclude: [String]?=nil,
         pokestopFilterExclude: [String]?=nil, pokestopShowOnlyAr: Bool=false,
         invasionFilterExclude: [Int]?=nil) throws -> [Pokestop] {
 
@@ -654,13 +654,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if excludedInvasions.isEmpty {
                 excludeInvasionSQL = ""
             } else {
-                var sqlExcludeCreate = "AND grunt_type NOT IN ("
+                excludeInvasionSQL = "AND grunt_type NOT IN ("
                 for _ in 1..<excludedInvasions.count {
-                    sqlExcludeCreate += "?, "
+                    excludeInvasionSQL += "?, "
                 }
-                sqlExcludeCreate += "?)"
-                excludeInvasionSQL = "(incident_expire_timestamp IS NOT NULL AND incident_expire_timestamp >= " +
-                    "UNIX_TIMESTAMP() \(sqlExcludeCreate)"
+                excludeInvasionSQL += "?)"
             }
         } else {
             excludeInvasionSQL = ""
@@ -732,7 +730,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePokestopSQL = ""
         }
 
-        if pokestopShowOnlyAr && !questsOnly {
+        if pokestopShowOnlyAr && showPokestops {
             onlyArSQL = "AND ar_scan_eligible = TRUE"
         } else {
             onlyArSQL = ""
@@ -748,8 +746,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                   deleted = false \(excludeTypeSQL) \(excludePokemonSQL) \(excludeItemSQL) \(excludePokestopSQL)
                   \(onlyArSQL) \(excludeInvasionSQL)
         """
-        if questsOnly {
+        if showQuests && !showPokestops {
             sql += " AND quest_reward_type IS NOT NULL"
+        }
+        if showInvasions && !showPokestops {
+            sql += " AND incident_expire_timestamp IS NOT NULL AND incident_expire_timestamp >= UNIX_TIMESTAMP()"
         }
 
         let mysqlStmt = MySQLStmt(mysql)
