@@ -726,6 +726,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 excludePokestopSQL += "(\(hasNoLureSQL) OR \(hasLureSQL))"
             }
             excludePokestopSQL += ")"
+        } else if showPokestops {
+            excludePokestopSQL = " AND TRUE"
         } else {
             excludePokestopSQL = ""
         }
