@@ -1862,7 +1862,7 @@ function getRaidSize (id) {
 }
 
 function getPokestopSize (id) {
-  const size = pokestopFilter[id].size
+  const size = pokestopFilter[id]?.size
   if (size === 'small') {
     return 20
   } else if (size === 'large') {
