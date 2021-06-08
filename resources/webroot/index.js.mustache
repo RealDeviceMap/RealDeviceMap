@@ -707,7 +707,6 @@ function loadStorage () {
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
-    var i;
     for (i in filteredGrunts) {
       if (invasionFilter[i] === undefined) {
         invasionFilter[i] = { show: true, size: 'normal' }
