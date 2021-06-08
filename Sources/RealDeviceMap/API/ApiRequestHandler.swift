@@ -996,59 +996,8 @@ class ApiRequestHandler {
             let invasionTypeString = Localizer.global.get(value: "filter_invasion_grunt_type")
 
             var invasionData = [[String: Any]]()
-
-            for i in 1...44 {
-                let grunt = Localizer.global.get(value: "grunt_\(i)")
-
-                let filter = """
-                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                             <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
-                              data-type="invasion" data-info="hide">
-                             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                             </label>
-                             <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
-                              data-type="invasion" data-info="show">
-                             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                             </label>
-                             </div>
-                             """
-
-                let size = """
-                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                            data-type="invasion" data-info="small">
-                           <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                           </label>
-                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                            data-type="invasion" data-info="normal">
-                           <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                           </label>
-                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                            data-type="invasion" data-info="large">
-                           <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                           </label>
-                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                            data-type="invasion" data-info="huge">
-                           <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                           </label>
-                           </div>
-                           """
-
-                invasionData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", i),
-                        "sort": i
-                    ],
-                    "name": grunt,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/grunt/\(i).png\" " +
-                        "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": invasionTypeString
-                ])
-            }
-
-            for i in 47...50 {
+            var filteredGrunts = [1...7, 10...44, 47...50].joined()
+            for i in filteredGrunts {
                 let grunt = Localizer.global.get(value: "grunt_\(i)")
 
                 let filter = """
