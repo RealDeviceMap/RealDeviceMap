@@ -699,16 +699,16 @@ function loadStorage () {
   const invasionFilterValue = retrieve('invasion_filter')
   if (invasionFilterValue === null) {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((index, _gruntId, ) => {
-      defaultInvasionFilter[index] = { show: true, size: 'normal' }
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
     });
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
-    availableGrunts.forEach((index, _gruntId) => {
-      if (invasionFilter[index] === undefined) {
-        invasionFilter[index] = { show: true, size: 'normal' }
+    availableGrunts.forEach((gruntId) => {
+      if (invasionFilter[gruntId] === undefined) {
+        invasionFilter[gruntId] = { show: true, size: 'normal' }
       }
     })
   }
@@ -953,8 +953,8 @@ function initMap () {
 
   $('#reset-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((index, _gruntId) => {
-      defaultInvasionFilter[index] = { show: true, size: 'normal' }
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
     })
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilterNew = defaultInvasionFilter
@@ -964,8 +964,8 @@ function initMap () {
 
   $('#disable-all-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((index, _gruntId) => {
-      defaultInvasionFilter[index] = { show: false, size: invasionFilterNew[index].size }
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: false, size: invasionFilterNew[gruntId].size }
     })
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilterNew = defaultInvasionFilter
@@ -1468,8 +1468,8 @@ function loadData () {
 
   const invasionFilterExclude = []
   if (showInvasions) {
-    availableGrunts.forEach((index, gruntId) => {
-      if (invasionFilter[index].show === false) {
+    availableGrunts.forEach((gruntId) => {
+      if (invasionFilter[gruntId].show === false) {
         invasionFilterExclude.push(gruntId)
       }
     })
