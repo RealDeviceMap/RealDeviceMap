@@ -699,14 +699,14 @@ function loadStorage () {
   const invasionFilterValue = retrieve('invasion_filter')
   if (invasionFilterValue === null) {
     const defaultInvasionFilter = {}
-    $.each(availableGrunts, function(index, gruntId) {
+    $.each(availableGrunts, function(index, _) {
       defaultInvasionFilter[index] = { show: true, size: 'normal' }
     })
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
-    $.each(availableGrunts, function(index, gruntId) {
+    $.each(availableGrunts, function(index, _) {
       if (invasionFilter[index] === undefined) {
         invasionFilter[index] = { show: true, size: 'normal' }
       }
@@ -953,7 +953,7 @@ function initMap () {
 
   $('#reset-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    $.each(availableGrunts, function(index, gruntId) {
+    $.each(availableGrunts, function(index, _) {
       defaultInvasionFilter[index] = { show: true, size: 'normal' }
     })
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
@@ -964,7 +964,7 @@ function initMap () {
 
   $('#disable-all-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    $.each(availableGrunts, function(index, gruntId) {
+    $.each(availableGrunts, function(index, _) {
       defaultInvasionFilter[index] = { show: false, size: invasionFilterNew[index].size }
     })
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
