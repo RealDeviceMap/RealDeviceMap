@@ -3562,6 +3562,7 @@
         "quest_condition_41": "GO-Kampfliga",
         "quest_condition_42": "Scannen",
         "quest_condition_42_formatted": "%{poi} scannen",
+        "quest_condition_44": "innerhalb bestimmter Zeit",
         "alignment_1": "Schatten",
         "alignment_2": "Erlöst",
         "character_category_1": "Team Leiter",

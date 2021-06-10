@@ -3567,6 +3567,7 @@
         "quest_condition_41": "GO Battle League",
         "quest_condition_42": "Scan",
         "quest_condition_42_formatted": "Scan %{poi}",
+        "quest_condition_44": "In specific time",
         "alignment_1": "Shadow",
         "alignment_2": "Purified",
         "character_category_1": "Team Leader",
