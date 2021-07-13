@@ -2960,7 +2960,7 @@ function getQuestCondition (condition) {
     })
     return i18n('quest_condition_43_formatted', { types: typesString })
   } else if (id === 44 && info !== undefined && info.time !== undefined) {
-      return i18n('quest_condition_44_formatted', { time: time })
+      return i18n('quest_condition_44_formatted', { time: info.time })
   } else {
     return i18n('quest_condition_' + id)
   }
