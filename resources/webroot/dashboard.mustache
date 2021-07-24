@@ -14,10 +14,16 @@
                 $('#processing_max').text(data.data.status.processing.max)
                 $('#processing_total').text(data.data.status.processing.total)
                 $('#processing_processed').text(data.data.status.processing.total - data.data.status.processing.ignored)
+                $('#processing_ignored').text(data.data.status.processing.ignored)
                 $('#uptime_date').text(new Date(data.data.status.uptime.date * 1000).toLocaleString())
+                $('#uptime_days').text(data.data.status.uptime.days)
                 $('#uptime_hours').text(data.data.status.uptime.hours)
                 $('#uptime_minutes').text(data.data.status.uptime.minutes)
                 $('#uptime_seconds').text(data.data.status.uptime.seconds)
+                $('#devices_total').text(data.data.status.devices.total)
+                $('#devices_online').text(data.data.status.devices.online)
+                $('#pokemon_active_total').text(data.data.status.pokemon['active_total'])
+                $('#pokemon_active_iv').text(data.data.status.pokemon['active_iv'])
             },
             error: function(xhr) {
                 console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
@@ -54,6 +60,8 @@
             <a href="/dashboard/accounts" class="list-group-item list-group-item-action">Accounts</a>
             <a href="/dashboard/instances" class="list-group-item list-group-item-action">Instances</a>
             <a href="/dashboard/assignments" class="list-group-item list-group-item-action">Auto-Assignments</a>
+            <a href="/dashboard/assignmentgroups" class="list-group-item
+                list-group-item-action">Assignment Groups</a>
         </div>
     </div>
 
@@ -78,11 +86,17 @@
     </div>
 
 </div>
-<p class="mt-3" align="center">
-    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span> (<span id="processing_processed">?</span>/<span id="processing_total">?</span>)
+<p class="m-0" align="center">
+    Processing: <span id="processing_current">?</span>/<span id="processing_max">?</span> (<span id="processing_processed">?</span>/<span id="processing_total">?</span> - <span id="processing_ignored">?</span> ignored)
 </p>
-<p class="mt-3" align="center">
-    Uptime: <span id="uptime_date">?</span> (<span id="uptime_hours">?</span>h <span id="uptime_minutes">?</span>m <span id="uptime_seconds">?</span>s)
+<p class="m-0" align="center">
+    Device: <span id="devices_online">?</span>/<span id="devices_total">?</span>
+</p>
+<p class="m-0" align="center">
+    Active Pokemon: <span id="pokemon_active_total">?</span> (IV: <span id="pokemon_active_iv">?</span>)
+</p>
+<p class="m-0" align="center">
+    Uptime: <span id="uptime_date">?</span> (<span id="uptime_days">?</span>d <span id="uptime_hours">?</span>h <span id="uptime_minutes">?</span>m <span id="uptime_seconds">?</span>s)
 </p>
 <p class="mt-3" align="center">
     Version: <a href="{{version_url}}">{{version}}</a> (<a href="https://github.com/RealDeviceMap/RealDeviceMap/commit/{{version_commit}}">{{version_commit}}</a>)

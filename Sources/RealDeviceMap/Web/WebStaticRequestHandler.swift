@@ -8,7 +8,7 @@
 import PerfectLib
 import PerfectHTTP
 
-class WebStaticReqeustHandler {
+class WebStaticRequestHandler {
 
     private static let staticFileHandler = StaticFileHandler(documentRoot: "\(projectroot)/resources/webroot")
 

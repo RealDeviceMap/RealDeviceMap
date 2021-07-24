@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
-//  swiftlint:disable file_length type_body_length
+//  swiftlint:disable superfluous_disable_command file_length type_body_length
 
 import Foundation
 import PerfectLib
@@ -31,8 +31,9 @@ class ApiRequestHandler {
 
     public internal(set) static var start: Date = Date(timeIntervalSince1970: 0)
 
+    // swiftlint:disable:next cyclomatic_complexity
     private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
-        let tmp = WebReqeustHandler.getPerms(request: request, fromCache: true)
+        let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
 
@@ -99,37 +100,44 @@ class ApiRequestHandler {
         let showGyms = request.param(name: "show_gyms")?.toBool() ?? false
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
+        let showInvasions = request.param(name: "show_invasions")?.toBool() ?? false
         let showQuests = request.param(name: "show_quests")?.toBool() ?? false
         let questFilterExclude = request.param(name: "quest_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let showPokemon = request.param(name: "show_pokemon")?.toBool() ?? false
         let pokemonFilterEventOnly = request.param(name: "pokemon_filter_event_only")?.toBool() ?? false
         let pokemonFilterExclude = request.param(name: "pokemon_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let pokemonFilterIV = request.param(name: "pokemon_filter_iv")?.jsonDecodeForceTry() as? [String: String]
+        let excludeCellPokemon = request.param(name: "pokemon_exclude_cell")?.toBool() ?? false
         let raidFilterExclude = request.param(name: "raid_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let gymFilterExclude = request.param(name: "gym_filter_exclude")?.jsonDecodeForceTry() as? [String]
         let pokestopFilterExclude = request.param(name: "pokestop_filter_exclude")?.jsonDecodeForceTry() as? [String]
+        let invasionFilterExclude = request.param(name: "invasion_filter_exclude")?.jsonDecodeForceTry() as? [Int]
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
-        let showSpawnpoints =  request.param(name: "show_spawnpoints")?.toBool() ?? false
+        let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
+        let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
         let showSubmissionTypeCells = request.param(name: "show_submission_type_cells")?.toBool() ?? false
         let showWeathers = request.param(name: "show_weathers")?.toBool() ?? false
-        let showDevices =  request.param(name: "show_devices")?.toBool() ?? false
+        let showDevices = request.param(name: "show_devices")?.toBool() ?? false
         let showActiveDevices = request.param(name: "show_active_devices")?.toBool() ?? false
-        let showInstances =  request.param(name: "show_instances")?.toBool() ?? false
+        let showInstances = request.param(name: "show_instances")?.toBool() ?? false
         let showDeviceGroups = request.param(name: "show_devicegroups")?.toBool() ?? false
-        let showUsers =  request.param(name: "show_users")?.toBool() ?? false
-        let showGroups =  request.param(name: "show_groups")?.toBool() ?? false
+        let showUsers = request.param(name: "show_users")?.toBool() ?? false
+        let showGroups = request.param(name: "show_groups")?.toBool() ?? false
         let showPokemonFilter = request.param(name: "show_pokemon_filter")?.toBool() ?? false
         let showQuestFilter = request.param(name: "show_quest_filter")?.toBool() ?? false
         let showRaidFilter = request.param(name: "show_raid_filter")?.toBool() ?? false
         let showGymFilter = request.param(name: "show_gym_filter")?.toBool() ?? false
         let showPokestopFilter = request.param(name: "show_pokestop_filter")?.toBool() ?? false
+        let showInvasionFilter = request.param(name: "show_invasion_filter")?.toBool() ?? false
         let showSpawnpointFilter = request.param(name: "show_spawnpoint_filter")?.toBool() ?? false
-        let formatted =  request.param(name: "formatted")?.toBool() ?? false
+        let formatted = request.param(name: "formatted")?.toBool() ?? false
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
+        let showAssignmentGroups = request.param(name: "show_assignmentgroups")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
@@ -156,19 +164,24 @@ class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
-        let permShowQuests =  perms.contains(.viewMapQuest)
+        let permShowQuests = perms.contains(.viewMapQuest)
         let permShowLures = perms.contains(.viewMapLure)
         let permShowInvasions = perms.contains(.viewMapInvasion)
-        if isPost && (permViewMap && (showPokestops && permShowStops || showQuests && permShowQuests)) {
+        if isPost && (permViewMap && (
+                (showPokestops && permShowStops) ||
+                (showQuests && permShowQuests) ||
+                (showInvasions && permShowInvasions)
+        )) {
             data["pokestops"] = try? Pokestop.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
-                questsOnly: !showPokestops, showQuests: permShowQuests, showLures: permShowLures,
-                showInvasions: permShowInvasions, questFilterExclude: questFilterExclude,
-                pokestopFilterExclude: pokestopFilterExclude
+                showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
+                showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
+                pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
+                invasionFilterExclude: invasionFilterExclude
             )
         }
         let permShowIV = perms.contains(.viewMapIV)
@@ -177,7 +190,8 @@ class ApiRequestHandler {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
-                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon
+                pokemonFilterIV: pokemonFilterIV, isEvent: pokemonFilterEventOnly && permShowEventPokemon,
+                excludeCellPokemon: excludeCellPokemon
             )
         }
         if isPost && permViewMap && showSpawnpoints && perms.contains(.viewMapSpawnpoint) {
@@ -226,11 +240,12 @@ class ApiRequestHandler {
             let largeString = Localizer.global.get(value: "filter_large")
             let hugeString = Localizer.global.get(value: "filter_huge")
 
+            let miscString = Localizer.global.get(value: "filter_misc")
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
-            let eventsTypeString = Localizer.global.get(value: "filter_event")
             let globalIVTypeString = Localizer.global.get(value: "filter_global_iv")
 
             let eventOnlyString = Localizer.global.get(value: "filter_event_only")
+            let includeCellString = Localizer.global.get(value: "filter_include_cell")
             let globalIV = Localizer.global.get(value: "filter_global_iv")
             let configureString = Localizer.global.get(value: "filter_configure")
             let andString = Localizer.global.get(value: "filter_and")
@@ -254,13 +269,39 @@ class ApiRequestHandler {
                 pokemonData.append([
                     "id": [
                         "formatted": "",
-                        "sort": -1
+                        "sort": -2
                     ],
                     "name": eventOnlyString,
                     "image": "Event",
                     "filter": filter,
                     "size": "",
-                    "type": eventsTypeString
+                    "type": miscString
+                ])
+            }
+            if !Pokemon.noCellPokemon {
+                let filter = """
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_hide">
+                            <input type="radio" name="options" id="hide" autocomplete="off">\(offString)
+                        </label>
+                        <label class="btn btn-sm btn-on select-button-new" data-id="show_cell"
+                         data-type="pokemon-iv" data-info="show_cell_show">
+                            <input type="radio" name="options" id="show" autocomplete="off">\(onString)
+                        </label>
+                    </div>
+                """
+                pokemonData.append([
+                    "id": [
+                        "formatted": "",
+                        "sort": -1
+                    ],
+                    "name": includeCellString,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
+                            "style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": "",
+                    "type": miscString
                 ])
             }
 
@@ -312,7 +353,7 @@ class ApiRequestHandler {
                 }
             }
 
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let ivLabel: String
                 if permShowIV {
@@ -461,7 +502,7 @@ class ApiRequestHandler {
 
             // Items
             var itemI = 1
-            for item in POGOProtos_Inventory_Item_ItemId.allAvilable {
+            for item in Item.allAvilable {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -513,7 +554,7 @@ class ApiRequestHandler {
             }
 
             // Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -629,7 +670,7 @@ class ApiRequestHandler {
                 "type": generalString
                 ])
 
-            //Level
+            // Level
             for i in 1...6 {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
@@ -682,8 +723,8 @@ class ApiRequestHandler {
                 ])
             }
 
-            //Pokemon
-            for i in 1...WebReqeustHandler.maxPokemonId {
+            // Pokemon
+            for i in 1...WebRequestHandler.maxPokemonId {
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -749,7 +790,7 @@ class ApiRequestHandler {
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
 
             var gymData = [[String: Any]]()
-            //Team
+            // Team
             for i in 0...3 {
 
                 let gymTeam = Localizer.global.get(value: "filter_gym_team_\(i)")
@@ -833,7 +874,7 @@ class ApiRequestHandler {
 
             gymData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5), //Need a better way to display, new section?
+                    "formatted": String(format: "%03d", 5), // Need a better way to display, new section?
                     "sort": 5
                 ],
                 "name": Localizer.global.get(value: "filter_raid_ex") ,
@@ -844,7 +885,49 @@ class ApiRequestHandler {
                 "type": gymOptionsString
             ])
 
-            //Available slots
+            // AR gyms
+            let arFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ar" data-type="gym-ar" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="ar" data-type="gym-ar" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let arSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar" data-type="gym-ar" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "sort": 6
+                ],
+                "name": Localizer.global.get(value: "filter_gym_ar_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": arFilter,
+                "size": arSize,
+                "type": gymOptionsString
+            ])
+
+            // Available slots
             for i in 0...6 {
                 let availableSlots = Localizer.global.get(value: "filter_gym_available_slots_\(i)")
 
@@ -901,6 +984,73 @@ class ApiRequestHandler {
             data["gym_filters"] = gymData
         }
 
+        if permViewMap && showInvasionFilter {
+            let hideString = Localizer.global.get(value: "filter_hide")
+            let showString = Localizer.global.get(value: "filter_show")
+
+            let smallString = Localizer.global.get(value: "filter_small")
+            let normalString = Localizer.global.get(value: "filter_normal")
+            let largeString = Localizer.global.get(value: "filter_large")
+            let hugeString = Localizer.global.get(value: "filter_huge")
+
+            let invasionTypeString = Localizer.global.get(value: "filter_invasion_grunt_type")
+
+            var invasionData = [[String: Any]]()
+            var filteredGrunts = [1...7, 10...44, 47...50].joined()
+            for i in filteredGrunts {
+                let grunt = Localizer.global.get(value: "grunt_\(i)")
+
+                let filter = """
+                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                             <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                              data-type="invasion" data-info="hide">
+                             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                             </label>
+                             <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                              data-type="invasion" data-info="show">
+                             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                             </label>
+                             </div>
+                             """
+
+                let size = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                            data-type="invasion" data-info="small">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                           </label>
+                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                            data-type="invasion" data-info="normal">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                           </label>
+                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                            data-type="invasion" data-info="large">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                           </label>
+                           <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                            data-type="invasion" data-info="huge">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                           </label>
+                           </div>
+                           """
+
+                invasionData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i
+                    ],
+                    "name": grunt,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/grunt/\(i).png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                    "filter": filter,
+                    "size": size,
+                    "type": invasionTypeString
+                ])
+            }
+
+            data["invasion_filters"] = invasionData
+        }
+
         if permViewMap && showPokestopFilter {
             let hideString = Localizer.global.get(value: "filter_hide")
             let showString = Localizer.global.get(value: "filter_show")
@@ -916,6 +1066,7 @@ class ApiRequestHandler {
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
+            let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
 
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -964,7 +1115,7 @@ class ApiRequestHandler {
                 "type": pokestopOptionsString
             ])
 
-            for i in 1...4 {
+            for i in 1...5 {
                 let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
 
                 let filter = """
@@ -1015,35 +1166,35 @@ class ApiRequestHandler {
                 ])
             }
 
-            let trFilter = """
+            let arFilter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-off select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="hide">
+            <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="hide">
             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
             </label>
-            <label class="btn btn-sm btn-on select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="show">
+            <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="show">
             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
             </label>
             </div>
             """
 
-            let trSize = """
+            let arSize = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-size select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="small">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="small">
             <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="normal">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="normal">
             <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="large">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="large">
             <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
             </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="invasion"
-             data-type="pokestop-invasion" data-info="huge">
+            <label class="btn btn-sm btn-size select-button-new" data-id="ar"
+             data-type="pokestop-ar" data-info="huge">
             <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
             </label>
             </div>
@@ -1051,16 +1202,16 @@ class ApiRequestHandler {
 
             pokestopData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 5),
-                    "sort": 5
+                    "formatted": String(format: "%03d", 6),
+                    "sort": 6
                 ],
-                "name": pokestopInvasion,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/i0.png\" " +
-                         "style=\"height:50px; width:50px;\">",
-                "filter": trFilter,
-                "size": trSize,
+                "name": arOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": arFilter,
+                "size": arSize,
                 "type": pokestopOptionsString
-                ])
+            ])
 
             data["pokestop_filters"] = pokestopData
         }
@@ -1185,7 +1336,7 @@ class ApiRequestHandler {
             if devices != nil {
                 for device in devices! {
                     var deviceData = [String: Any]()
-                    //deviceData["chk"] = ""
+                    // deviceData["chk"] = ""
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
                     deviceData["instance"] = device.instanceName ?? ""
@@ -1232,6 +1383,8 @@ class ApiRequestHandler {
                         instanceData["type"] = "Circle Smart Raid"
                     case .circlePokemon:
                         instanceData["type"] = "Circle Pokemon"
+                    case .circleSmartPokemon:
+                        instanceData["type"] = "Circle Smart Pokemon"
                     case .autoQuest:
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
@@ -1278,7 +1431,7 @@ class ApiRequestHandler {
                     let devicesInGroup = devices?.filter({ deviceGroup.deviceUUIDs.contains($0.uuid) }) ?? []
                     let instances = Array(
                         Set(devicesInGroup.filter({ $0.instanceName != nil }).map({ $0.instanceName! }))
-                    )
+                    ).sorted()
 
                     var deviceGroupData = [String: Any]()
                     deviceGroupData["name"] = deviceGroup.name
@@ -1289,7 +1442,7 @@ class ApiRequestHandler {
                         let id = deviceGroup.name.encodeUrl()!
                         deviceGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/devicegroup/assign/\(id)\" " +
-                            "role=\"button\" class=\"btn btn-success\">Asign</a>" +
+                            "role=\"button\" class=\"btn btn-success\">Assign</a>" +
                             "<a href=\"/dashboard/devicegroup/edit/\(id)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
                             "<a href=\"/dashboard/devicegroup/delete/\(id)\" " +
@@ -1361,6 +1514,54 @@ class ApiRequestHandler {
             }
             data["assignments"] = jsonArray
 
+        }
+
+        if showAssignmentGroups && perms.contains(.admin) {
+
+            let assignmentGroups = try? AssignmentGroup.getAll(mysql: mysql)
+            let assignments = try? Assignment.getAll(mysql: mysql)
+
+            var jsonArray = [[String: Any]]()
+
+            if assignmentGroups != nil {
+                for assignmentGroup in assignmentGroups! {
+                    let assignmentsInGroup =
+                        assignments?.filter({ assignmentGroup.assignmentIDs.contains($0.id!) }) ?? []
+                    let assignmentsInGroupDevices = Array(
+                        Set(assignmentsInGroup.filter({ $0.deviceUUID != nil || $0.deviceGroupName != nil })
+                            .map({ ($0.deviceUUID != nil ? $0.deviceUUID! : "") +
+                            ($0.deviceGroupName != nil ? $0.deviceGroupName! : "") + " -> " + $0.instanceName}))
+                        ).sorted()
+
+                    var assignmentGroupData = [String: Any]()
+                    assignmentGroupData["name"] = assignmentGroup.name
+
+                    if formatted {
+                        assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
+                        let id = assignmentGroup.name.encodeUrl()!
+                        assignmentGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
+                            "href=\"/dashboard/assignmentgroup/start/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-success\">Start</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/request/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-warning\" onclick=\"return " +
+                            "confirm('Are you sure that you want to clear all quests " +
+                            "for this assignment group?')\">ReQuest</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/edit/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
+                            "<a href=\"/dashboard/assignmentgroup/delete/\(id)\" " +
+                            "role=\"button\" class=\"btn btn-danger\" onclick=\"return " +
+                            "confirm('Are you sure you want to delete this assignment " +
+                            "group? This action is irreversible and cannot be " +
+                            "undone without backups.')\">Delete</a></div>"
+                    } else {
+                        assignmentGroupData["assignments"] = assignments
+                    }
+
+                    jsonArray.append(assignmentGroupData)
+                }
+            }
+
+            data["assignmentgroups"] = jsonArray
         }
 
         if showIVQueue && perms.contains(.admin), let instance = instance {
@@ -1540,22 +1741,46 @@ class ApiRequestHandler {
         }
 
         if showStatus && perms.contains(.admin) {
-            let passed = UInt32(Date().timeIntervalSince(start)).secondsToHoursMinutesSeconds()
-            let limits = WebHookRequestHandler.getThreadLimits()
-            data["status"] = [
-                "processing": [
-                    "current": limits.current,
-                    "total": limits.total,
-                    "ignored": limits.ignored,
-                    "max": WebHookRequestHandler.threadLimitMax
-                ],
-                "uptime": [
-                    "date": start.timeIntervalSince1970,
-                    "hours": passed.hours,
-                    "minutes": passed.minutes,
-                    "seconds": passed.seconds
+            do {
+                let passed = UInt32(Date().timeIntervalSince(start)).secondsToDaysHoursMinutesSeconds()
+                let devices: [Device] = try Device.getAll(mysql: mysql)
+                let offlineDevices = devices.filter {
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) >= 15 * 60
+                }
+                let onlineDevices = devices.filter {
+                    Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) < 15 * 60
+                }
+                let activePokemonCounts = try Pokemon.getActiveCounts(mysql: mysql)
+
+                let limits = WebHookRequestHandler.getThreadLimits()
+                data["status"] = [
+                    "processing": [
+                        "current": limits.current,
+                        "total": limits.total,
+                        "ignored": limits.ignored,
+                        "max": WebHookRequestHandler.threadLimitMax
+                    ],
+                    "uptime": [
+                        "date": start.timeIntervalSince1970,
+                        "days": passed.days,
+                        "hours": passed.hours,
+                        "minutes": passed.minutes,
+                        "seconds": passed.seconds
+                    ],
+                    "devices": [
+                        "total": devices.count,
+                        "offline": offlineDevices.count,
+                        "online": onlineDevices.count
+                    ],
+                    "pokemon": [
+                        "active_total": activePokemonCounts.total,
+                        "active_iv": activePokemonCounts.iv
+                    ]
                 ]
-            ]
+            } catch {
+                response.respondWithError(status: .internalServerError)
+                return
+            }
         }
 
         data["timestamp"] = Int(Date().timeIntervalSince1970)
@@ -1593,7 +1818,7 @@ class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else  if setPokestopName, perms.contains(.admin), let id = pokestopId, let name = pokestopName {
+        } else if setPokestopName, perms.contains(.admin), let id = pokestopId, let name = pokestopName {
            do {
                guard let oldPokestop = try Pokestop.getWithId(id: id) else {
                    return response.respondWithError(status: .custom(code: 404, message: "Pokestop not found"))

@@ -24,7 +24,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
     override func getJSONValues() -> [String: Any] {
 
         let s2cell = S2Cell(cellId: S2CellId(uid: id))
-        var polygon =  [[Double]]()
+        var polygon = [[Double]]()
         for i in 0...3 {
             let coord = S2LatLng(point: s2cell.getVertex(i)).coord
             polygon.append([
@@ -50,7 +50,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
         self.count = countPokestops + countGyms
     }
 
-    public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double,
+    public static func getAll(mysql: MySQL? = nil, minLat: Double, maxLat: Double,
                               minLon: Double, maxLon: Double) throws -> [SubmissionTypeCell] {
 
         let minLatReal = minLat - 0.01
@@ -70,12 +70,13 @@ class SubmissionTypeCell: JSONConvertibleObject {
             minLon: minLonReal - 0.02,
             maxLon: maxLonReal + 0.02,
             updated: 0,
-            questsOnly: false,
+            showPokestops: true,
             showQuests: false,
             showLures: false,
             showInvasions: false,
             questFilterExclude: nil,
-            pokestopFilterExclude: nil
+            pokestopFilterExclude: nil,
+            invasionFilterExclude: nil
         ).filter({ (pokestop) -> Bool in
             return pokestop.sponsorId == nil || pokestop.sponsorId == 0
         })
