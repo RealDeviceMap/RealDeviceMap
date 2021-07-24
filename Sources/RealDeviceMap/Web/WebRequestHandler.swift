@@ -187,7 +187,7 @@ class WebRequestHandler {
             data["hide_spawnpoints"] = !perms.contains(.viewMapSpawnpoint)
             data["hide_quests"] = !perms.contains(.viewMapQuest)
             // data["hide_lures"] = !perms.contains(.viewMapLure)
-            // data["hide_invasions"] = !perms.contains(.viewMapInvasion)
+            data["hide_invasions"] = !perms.contains(.viewMapInvasion)
             data["hide_cells"] = !perms.contains(.viewMapCell)
             data["hide_submission_cells"] = !perms.contains(.viewMapSubmissionCells)
             data["hide_weathers"] = !perms.contains(.viewMapWeather)
@@ -322,9 +322,9 @@ class WebRequestHandler {
             data["areas"] = areas
 
             // Localize
-            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_spawnpoints",
-                           "filter_pokemon", "filter_filter", "filter_cancel", "filter_close", "filter_hide",
-                           "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter",
+            let homeLoc = ["filter_title", "filter_gyms", "filter_raids", "filter_pokestops", "filter_invasions",
+                           "filter_spawnpoints", "filter_pokemon", "filter_filter", "filter_cancel", "filter_close",
+                           "filter_hide", "filter_show", "filter_reset", "filter_disable_all", "filter_pokemon_filter",
                            "filter_save", "filter_image", "filter_size_properties", "filter_quests", "filter_name",
                            "filter_quest_filter", "filter_raid_filter", "filter_gym_filter",
                            "filter_pokestop_filter", "filter_spawnpoint_filter", "filter_cells",
