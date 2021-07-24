@@ -88,12 +88,13 @@ class SubmissionPlacementCell: JSONConvertibleObject {
             minLon: minLonReal - 0.002,
             maxLon: maxLonReal + 0.002,
             updated: 0,
-            questsOnly: false,
+            showPokestops: true,
             showQuests: false,
             showLures: false,
             showInvasions: false,
             questFilterExclude: nil,
-            pokestopFilterExclude: nil
+            pokestopFilterExclude: nil,
+            invasionFilterExclude: nil
         ).filter({ (pokestop) -> Bool in
             return pokestop.sponsorId == nil || pokestop.sponsorId == 0
         })
