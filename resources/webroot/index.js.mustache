@@ -2781,6 +2781,10 @@ function getItemName (itemId) {
   return i18n('item_' + itemId)
 }
 
+function getItemTypeName (itemTypeId) {
+  return i18n('item_type_' + itemTypeId)
+}
+
 function getLureName (lureId) {
   return i18n('lure_' + lureId)
 }
@@ -2941,6 +2945,22 @@ function getQuestCondition (condition) {
       evolutionsString += formatted + getEvolutionName(evolution)
     })
     return i18n('quest_condition_37_formatted', { evolutions: evolutionsString })
+  } else if (id === 43 && info !== undefined && info.item_type_ids !== undefined) {
+    let typesString = ''
+    $.each(info.item_type_ids, function (index, itemTypeId) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.item_type_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      typesString += formatted + getItemTypeName(itemTypeId)
+    })
+    return i18n('quest_condition_43_formatted', { types: typesString })
+  } else if (id === 44 && info !== undefined && info.time !== undefined) {
+      return i18n('quest_condition_44_formatted', { time: info.time })
   } else {
     return i18n('quest_condition_' + id)
   }
