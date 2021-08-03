@@ -350,8 +350,8 @@ class AutoInstanceController: InstanceControllerProto {
                     var nearbyStops = [pokestop]
                     let pokestopCoord = Coord(lat: pokestop.lat, lon: pokestop.lon)
                     for stop in todayStopsC! {
-                        // MARK: Revert back to 40m once reverted ingame
-                        if pokestopCoord.distance(to: Coord(lat: stop.lat, lon: stop.lon)) <= 80 {
+                        // MARK: Revert back to 40m once reverted ingame. Reverted for US and NZ 3.8.21.
+                        if pokestopCoord.distance(to: Coord(lat: stop.lat, lon: stop.lon)) <= 40 {
                             nearbyStops.append(stop)
                         }
                     }
