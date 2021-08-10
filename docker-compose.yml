@@ -33,6 +33,11 @@ services:
       MEMORY_CACHE_KEEP_TIME: 3600
       RAW_THREAD_LIMIT: 100
       LOG_LEVEL: debug
+#     QUEST_TYPE options: normal/ar/any
+#       normal = target normal quest scans with accounts that keep an AR quest in inventory
+#       ar = target AR type scans, accounts will discard AR quests from their inventory
+#       any = client will ignore what is type of quest is targeted
+      QUEST_TYPE: normal 
 #     LOGINLIMIT_COUNT: 15
 #     LOGINLIMIT_INTERVALL: 300
 ### Uncommenting the following lines will set these values to TRUE (regardless of their value)
