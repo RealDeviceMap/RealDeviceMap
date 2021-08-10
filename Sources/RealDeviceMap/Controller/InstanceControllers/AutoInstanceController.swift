@@ -47,6 +47,8 @@ class AutoInstanceController: InstanceControllerProto {
     public var delayLogout: Int
     public let useRwForQuest =
       ProcessInfo.processInfo.environment["USE_RW_FOR_QUEST"] != nil
+    public let questType =
+      ProcessInfo.processInfo.environment["QUEST_TYPE"] ?? "normal"
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
          minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
@@ -496,7 +498,7 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 return ["action": "scan_quest", "deploy_egg": false, "lat": pokestop.lat, "lon": pokestop.lon,
-                        "delay": delay, "min_level": minLevel, "max_level": maxLevel]
+                        "delay": delay, "min_level": minLevel, "max_level": maxLevel, "quest_type": questType]
             }
         }
 
