@@ -141,6 +141,7 @@ class ApiRequestHandler {
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
+        let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -1781,6 +1782,16 @@ class ApiRequestHandler {
                 response.respondWithError(status: .internalServerError)
                 return
             }
+        }
+
+        if reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
         }
 
         data["timestamp"] = Int(Date().timeIntervalSince1970)
