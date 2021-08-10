@@ -1965,6 +1965,16 @@ public class ApiRequestHandler {
             }
         }
 
+        if reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
+        }
+
         data["timestamp"] = Int(Date().timeIntervalSince1970)
 
         do {
