@@ -551,6 +551,9 @@ function loadStorage () {
   const questFilterValue = retrieve('quest_filter')
   if (questFilterValue === null) {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
@@ -563,6 +566,9 @@ function loadStorage () {
     questFilter = defaultQuestFilter
   } else {
     questFilter = JSON.parse(questFilterValue)
+    if (questFilter.ar === undefined) {
+      questFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       if (questFilter['p' + i] === undefined) {
@@ -851,6 +857,9 @@ function initMap () {
 
   $('#reset-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
@@ -867,6 +876,9 @@ function initMap () {
 
   $('#disable-all-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: false, size: questFilterNew['p' + i].size }
@@ -1520,6 +1532,7 @@ function loadData () {
     invasion_filter_exclude: JSON.stringify(invasionFilterExclude),
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
+    quest_show_only_ar: questFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
@@ -1550,7 +1563,8 @@ function loadData () {
       $.each(pokestops, function (index, pokestop) {
         if (
             showPokestops ||
-            (showQuests && pokestop.quest_type !== null) ||
+            (showQuests && questFilter.ar.show === false && pokestop.quest_type !== null) ||
+            (showQuests && questFilter.ar.show === true && pokestop.alternative_quest_type !== null) ||
             (showInvasions && pokestop.incident_expire_timestamp && pokestop.incident_expire_timestamp >= ts)) {
           addPokestop(pokestop, ts)
         }
@@ -2073,6 +2087,15 @@ function addPokestop(pokestop, ts) {
       oldPokestop.quest_timestamp = pokestop.quest_timestamp
       oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
     }
+    if (oldPokestop.alternative_quest_type !== pokestop.alternative_quest_type) {
+      oldPokestop.alternative_quest_type = pokestop.alternative_quest_type
+      oldPokestop.alternative_quest_target = pokestop.alternative_quest_target
+      oldPokestop.alternative_quest_template = pokestop.alternative_quest_template
+      oldPokestop.alternative_quest_conditions = pokestop.alternative_quest_conditions
+      oldPokestop.alternative_quest_rewards = pokestop.alternative_quest_rewards
+      oldPokestop.alternative_quest_timestamp = pokestop.alternative_quest_timestamp
+      oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
+    }
     if (oldPokestop.willUpdate === false && oldPokestop.lure_expire_timestamp >= ts) {
       oldPokestop.willUpdate = true
       startPokestopTimer(oldPokestop, oldPokestop.lure_expire_timestamp, ts)
@@ -2503,6 +2526,33 @@ function getPokestopPopupContent (pokestop) {
 
     $.each(pokestop.quest_rewards, function (index, reward) {
       content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
+    })
+
+    content += '<br>'
+  }
+
+  if (pokestop.alternative_quest_type !== null) {
+    const conditions = pokestop.alternative_quest_conditions
+    let conditionsString = ''
+    if (conditions !== undefined && conditions.length > 0) {
+      conditionsString += ' ('
+      $.each(conditions, function (index, condition) {
+        let formating
+        if (index === 0) {
+          formating = ''
+        } else {
+          formating = ', '
+        }
+
+        conditionsString += formating + getQuestCondition(condition)
+      })
+      conditionsString += ')'
+    }
+
+    content += '<b>AR-Quest Condition:</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
+
+    $.each(pokestop.alternative_quest_rewards, function (index, reward) {
+      content += '<b>AR-Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
     })
 
     content += '<br>'
@@ -3207,9 +3257,20 @@ function getPokemonMarker (pokemon, ts) {
 
 function getPokestopMarkerIcon (pokestop, ts) {
   let icon
-  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
-    const id = pokestop.quest_rewards[0].type
-    const info = pokestop.quest_rewards[0].info
+  if ((showQuests || pokestop.is_start) && (
+    (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
+    (questFilter.ar.show === true && pokestop.alternative_quest_type !== null && pokestop.alternative_quest_rewards[0] !== undefined)
+  )) {
+    let id
+    let info
+    
+    if (questFilter.ar.show === true) {
+      id = pokestop.alternative_quest_rewards[0].type
+      info = pokestop.alternative_quest_rewards[0].info
+    } else {
+      id = pokestop.quest_rewards[0].type
+      info = pokestop.quest_rewards[0].info
+    }
 
     let rewardString
 
@@ -3314,10 +3375,22 @@ function getPokestopMarkerIcon (pokestop, ts) {
 
 function getPokestopMarker (pokestop, ts) {
   let zIndex
-  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+    if ((showQuests || pokestop.is_start) && (
+      (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
+      (questFilter.ar.show === true && pokestop.alternative_quest_type !== null && pokestop.alternative_quest_rewards[0] !== undefined)
+    )) {
+    let id
+    let info
+
+    if (questFilter.ar.show === true) {
+      id = pokestop.alternative_quest_rewards[0].type
+      info = pokestop.alternative_quest_rewards[0].info
+    } else {
+      id = pokestop.quest_rewards[0].type
+      info = pokestop.quest_rewards[0].info
+    }
+    
     let rewardString
-    const id = pokestop.quest_rewards[0].type
-    const info = pokestop.quest_rewards[0].info
     if (id === 1 && info !== undefined && info.amount !== undefined) {
       rewardString = 'i-2'
     } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
@@ -3873,6 +3946,15 @@ function manageSelectButton (e, isNew) {
         shouldShow = spawnpointFilterNew[id].size === 'huge'
         break
     }
+  } else if (type === 'quest-ar') {
+    switch (info) {
+      case 'hide':
+        shouldShow = questFilterNew[id].show === false
+        break
+      case 'show':
+        shouldShow = questFilterNew[id].show === true
+        break
+    }
   } else {
     shouldShow = false
   }
@@ -4221,6 +4303,15 @@ function manageSelectButton (e, isNew) {
             break
           case 'huge':
             spawnpointFilterNew[id].size = 'huge'
+            break
+        }
+      } else if (type === 'quest-ar') {
+        switch (info) {
+          case 'hide':
+            questFilterNew[id].show = false
+            break
+          case 'show':
+            questFilterNew[id].show = true
             break
         }
       }
