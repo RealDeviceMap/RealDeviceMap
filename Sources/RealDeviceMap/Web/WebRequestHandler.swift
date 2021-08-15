@@ -2275,9 +2275,9 @@ class WebRequestHandler {
 
         if type == .autoQuest {
             switch questMode {
-                case "alternative": data["quest_mode_alternative_selected"] = true
-                case "both": data["quest_mode_both_selected"] = true
-                default: data["quest_mode_normal_selected"] = true
+            case "alternative": data["quest_mode_alternative_selected"] = true
+            case "both": data["quest_mode_both_selected"] = true
+            default: data["quest_mode_normal_selected"] = true
             }
         }
 
@@ -2537,7 +2537,7 @@ class WebRequestHandler {
             }
 
             if oldInstance!.type == .autoQuest {
-                switch data["quest_mode"] as! String {
+                switch data["quest_mode"] as? String {
                 case "alternative": data["quest_mode_alternative_selected"] = true
                 case "both": data["quest_mode_both_selected"] = true
                 default: data["quest_mode_normal_selected"] = true
