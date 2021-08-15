@@ -53,6 +53,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var spinLimit: Int
     private let accountsLock = Threading.Lock()
     private var accounts = [String: String]()
+    private var lastMode = [String: Bool]()
     private var questMode: QuestMode
     public var delayLogout: Int
     public let useRwForQuest =
@@ -350,8 +351,15 @@ class AutoInstanceController: InstanceControllerProto {
 
                 if lastCoord != nil {
 
-                    var closest: PokestopWithMode?
-                    var closestDistance: Double = 10000000000000000
+                    var closestOverall: PokestopWithMode?
+                    var closestOverallDistance: Double = 10000000000000000
+
+                    var closestNormal: PokestopWithMode?
+                    var closestNormalDistance: Double = 10000000000000000
+
+                    var closestAlternative: PokestopWithMode?
+                    var closestAlternativeDistance: Double = 10000000000000000
+
                     stopsLock.lock()
                     let todayStopsC = todayStops
                     stopsLock.unlock()
@@ -362,10 +370,28 @@ class AutoInstanceController: InstanceControllerProto {
                     for stop in todayStopsC! {
                         let coord = Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)
                         let dist = lastCoord!.distance(to: coord)
-                        if dist < closestDistance {
-                            closest = stop
-                            closestDistance = dist
+                        if dist < closestOverallDistance {
+                            closestOverall = stop
+                            closestOverallDistance = dist
                         }
+                        if !stop.alternative && dist < closestNormalDistance {
+                            closestNormal = stop
+                            closestNormalDistance = dist
+                        }
+                        if stop.alternative && dist < closestAlternativeDistance {
+                            closestAlternative = stop
+                            closestAlternativeDistance = dist
+                        }
+                    }
+
+                    var closest: PokestopWithMode? = nil
+                    let mode = lastMode[username ?? uuid]
+                    if mode == nil {
+                        closest = closestOverall
+                    } else if mode == true {
+                        closest = closestNormal ?? closestOverall
+                    } else {
+                        closest = closestAlternative ?? closestOverall
                     }
 
                     if closest == nil {
@@ -532,6 +558,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.unlock()
                 }
+                lastMode[username ?? uuid] = pokestop.alternative
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,
