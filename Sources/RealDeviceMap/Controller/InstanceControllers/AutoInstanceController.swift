@@ -384,7 +384,7 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
 
-                    var closest: PokestopWithMode? = nil
+                    var closest: PokestopWithMode?
                     let mode = lastMode[username ?? uuid]
                     if mode == nil {
                         closest = closestOverall
