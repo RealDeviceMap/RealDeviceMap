@@ -675,7 +675,7 @@ class WebHookRequestHandler {
             if !quests.isEmpty {
                 let start = Date()
                 let usernameOrId = username ?? uuid
-                let hasARQuest = usernameOrId != nil ? hasARQuest[usernameOrId!] ?? false : false
+                let hasARQuest = usernameOrId != nil ? self.hasARQuest[usernameOrId!] ?? false : false
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
