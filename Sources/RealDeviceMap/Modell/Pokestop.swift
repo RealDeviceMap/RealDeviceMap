@@ -64,7 +64,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "pokestop_name": name ?? "Unknown",
                 "ar_scan_eligible": arScanEligible ?? 0,
                 "pokestop_url": url ?? "",
-                "is_ar": false
+                "is_alternative": false
             ]
             return [
                 "type": "quest",
@@ -84,7 +84,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "pokestop_name": name ?? "Unknown",
                 "ar_scan_eligible": arScanEligible ?? 0,
                 "pokestop_url": url ?? "",
-                "is_ar": true
+                "is_alternative": true
             ]
             return [
                 "type": "quest",
@@ -269,7 +269,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public func addQuest(questData: QuestProto) {
+    public func addQuest(questData: QuestProto, hasARQuest: Bool) {
 
         let questType = questData.questType.rawValue.toUInt32()
         let questTarget = UInt16(questData.goal.target)
@@ -479,7 +479,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let questRewards = rewards
         let questTimestamp = UInt32(Date().timeIntervalSince1970)
 
-         if questData.questType == .questGeotargetedArScan {
+         if hasARQuest {
              self.alternativeQuestType = questType
              self.alternativeQuestTarget = questTarget
              self.alternativeQuestTemplate = questTemplate

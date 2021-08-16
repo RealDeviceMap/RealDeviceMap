@@ -47,6 +47,7 @@ class WebHookRequestHandler {
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
+    private static var hasARQuest = [String: Bool]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -202,6 +203,9 @@ class WebHookRequestHandler {
             } else if let ggi = rawData["GymGetInfoResponse"] as? String {
                 data = Data(base64Encoded: ggi) ?? Data()
                 method = 156
+            } else if let inv = rawData["GetHoloholoInventoryOutProto"] as? String {
+                data = Data(base64Encoded: inv) ?? Data()
+                method = 4
             } else if let dataString = rawData["data"] as? String {
                 data = Data(base64Encoded: dataString) ?? Data()
                 method = rawData["method"] as? Int ?? 106
@@ -245,6 +249,20 @@ class WebHookRequestHandler {
                     gymInfos.append(ggi)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
+                }
+            } else if method == 4, let usernameOrId = username ?? uuid {
+                if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
+                    var hasARQuest = false
+                    for item in inv.inventoryDelta.inventoryItem {
+                        for quest in item.inventoryItemData.quests.quest {
+                            if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
+                                hasARQuest = true
+                            }
+                        }
+                    }
+                    self.hasARQuest[usernameOrId] = hasARQuest
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
             } else if method == 106 {
                 containsGMO = true
@@ -656,6 +674,8 @@ class WebHookRequestHandler {
 
             if !quests.isEmpty {
                 let start = Date()
+                let usernameOrId = username ?? uuid
+                let hasARQuest = usernameOrId != nil ? hasARQuest[usernameOrId!] ?? false : false
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
@@ -664,7 +684,7 @@ class WebHookRequestHandler {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        pokestop!.addQuest(questData: quest)
+                        pokestop!.addQuest(questData: quest, hasARQuest: hasARQuest)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }

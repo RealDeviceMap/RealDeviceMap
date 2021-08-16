@@ -1025,7 +1025,7 @@ class ApiRequestHandler {
             let invasionTypeString = Localizer.global.get(value: "filter_invasion_grunt_type")
 
             var invasionData = [[String: Any]]()
-            var filteredGrunts = [1...7, 10...44, 47...50].joined()
+            let filteredGrunts = [1...7, 10...44, 47...50].joined()
             for i in filteredGrunts {
                 let grunt = Localizer.global.get(value: "grunt_\(i)")
 
@@ -1094,7 +1094,6 @@ class ApiRequestHandler {
             var pokestopData = [[String: Any]]()
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
-            let pokestopInvasion = Localizer.global.get(value: "filter_pokestop_invasion")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
 
             let filter = """
