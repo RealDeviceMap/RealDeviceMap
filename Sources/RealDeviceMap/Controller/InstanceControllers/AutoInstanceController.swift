@@ -114,9 +114,9 @@ class AutoInstanceController: InstanceControllerProto {
                         }
 
                         Log.debug(message: "[AutoInstanceController] [\(name)] Getting stop ids.")
-                        let ids = self.allStops!.map({ (stop) -> String in
+                        let ids = Array(Set(self.allStops!.map({ (stop) -> String in
                             return stop.pokestop.id
-                        })
+                        })))
                         var done = false
                         Log.info(message: "[AutoInstanceController] [\(name)] Clearing Quests.")
                         while !done {
@@ -301,9 +301,9 @@ class AutoInstanceController: InstanceControllerProto {
                         return [:]
                     }
                     lastDoneCheck = Date()
-                    let ids = self.allStops!.map({ (stop) -> String in
+                    let ids = Array(Set(self.allStops!.map({ (stop) -> String in
                         return stop.pokestop.id
-                    })
+                    })))
                     let newStops: [Pokestop]
                     do {
                         newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
@@ -325,7 +325,7 @@ class AutoInstanceController: InstanceControllerProto {
                         if questMode == .alternative || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: true)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
-                            if stop.questType == nil && stop.enabled == true && count <= 5 {
+                            if stop.alternativeQuestType == nil && stop.enabled == true && count <= 5 {
                                 self.allStops!.append(pokestopWithMode)
                             }
                         }
@@ -391,14 +391,14 @@ class AutoInstanceController: InstanceControllerProto {
                     let mode = lastMode[username ?? uuid]
                     if mode == nil {
                         closest = closestOverall
-                    } else if mode == true {
+                    } else if mode == false {
                         closest = closestNormal ?? closestOverall
                     } else {
                         closest = closestAlternative ?? closestOverall
                     }
 
                     if closest == nil {
-                        return [String: Any]()
+                        return [:]
                     }
                     pokestop = closest!
 
@@ -406,7 +406,8 @@ class AutoInstanceController: InstanceControllerProto {
                     let pokestopCoord = Coord(lat: pokestop.pokestop.lat, lon: pokestop.pokestop.lon)
                     for stop in todayStopsC! {
                         // MARK: Revert back to 40m once reverted ingame
-                        if pokestopCoord.distance(to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= 80 {
+                        if pokestop.alternative == stop.alternative &&
+                           pokestopCoord.distance(to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= 80 {
                             nearbyStops.append(stop)
                         }
                     }
@@ -424,7 +425,7 @@ class AutoInstanceController: InstanceControllerProto {
                         _ = todayStops!.removeFirst()
                     } else {
                         stopsLock.unlock()
-                        return [String: Any]()
+                        return [:]
                     }
                     stopsLock.unlock()
                 }
@@ -517,9 +518,9 @@ class AutoInstanceController: InstanceControllerProto {
                 }
                 if todayStops!.isEmpty {
                     lastDoneCheck = Date()
-                    let ids = self.allStops!.map({ (stop) -> String in
+                    let ids = Array(Set(self.allStops!.map({ (stop) -> String in
                         return stop.pokestop.id
-                    })
+                    })))
                     stopsLock.unlock()
                     let newStops: [Pokestop]
                     do {
@@ -543,7 +544,7 @@ class AutoInstanceController: InstanceControllerProto {
                         if questMode == .alternative || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: true)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
-                            if stop.questType == nil && stop.enabled == true && count <= 5 {
+                            if stop.alternativeQuestType == nil && stop.enabled == true && count <= 5 {
                                 self.allStops!.append(pokestopWithMode)
                             }
                         }
@@ -599,9 +600,9 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 bootstrappLock.unlock()
                 stopsLock.lock()
-                let ids = self.allStops!.map({ (stop) -> String in
+                let ids = Array(Set(self.allStops!.map({ (stop) -> String in
                     return stop.pokestop.id
-                })
+                })))
                 stopsLock.unlock()
                 let currentCountDb = (try? Pokestop.questCountIn(mysql: mysql, ids: ids)) ?? 0
                 stopsLock.lock()
