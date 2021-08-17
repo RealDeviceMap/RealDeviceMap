@@ -9,7 +9,8 @@ ALTER TABLE pokestop
     ADD INDEX `ix_alternative_quest_alternative_quest_pokemon_id` (alternative_quest_pokemon_id),
     ADD COLUMN `alternative_quest_reward_type` smallint(6) unsigned GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(alternative_quest_rewards, '$[*].type'), '$[0]') ),
     ADD INDEX `ix_alternative_quest_reward_type` (alternative_quest_reward_type),
-    ADD COLUMN `alternative_quest_item_id` smallint(6) unsigned  GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(alternative_quest_rewards, '$[*].info.item_id'), '$[0]') );
+    ADD COLUMN `alternative_quest_item_id` smallint(6) unsigned  GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(alternative_quest_rewards, '$[*].info.item_id'), '$[0]') ),
+    ADD INDEX `ix_alternative_quest_item_id` (alternative_quest_item_id);
 
 DROP TRIGGER IF EXISTS pokestop_updated;
 DROP TRIGGER IF EXISTS pokestop_inserted;
