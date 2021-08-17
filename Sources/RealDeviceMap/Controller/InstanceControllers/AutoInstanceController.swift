@@ -207,12 +207,15 @@ class AutoInstanceController: InstanceControllerProto {
             self.todayStopsTries = [:]
             self.doneDate = nil
             for stop in self.allStops! {
-                if stop.pokestop.questType == nil && stop.pokestop.enabled == true {
+                if (
+                    (!stop.alternative && stop.pokestop.questType == nil) ||
+                    (stop.alternative && stop.pokestop.alternativeQuestType == nil)
+                ) &&
+                stop.pokestop.enabled == true {
                     self.todayStops!.append(stop)
                 }
             }
             stopsLock.unlock()
-
         }
     }
 
