@@ -1188,7 +1188,11 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             SELECT id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, updated,
                    quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, cell_id, lure_id, pokestop_display,
+                   CAST(quest_rewards AS CHAR), quest_template, 
+                   alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
+                   CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
+                   alternative_quest_template,
+                   cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible
             FROM pokestop
             WHERE id = ? \(withDeletedSQL)
