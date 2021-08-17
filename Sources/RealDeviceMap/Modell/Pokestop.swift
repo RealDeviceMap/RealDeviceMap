@@ -1117,7 +1117,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public static func questCountIn(mysql: MySQL?=nil, ids: [String]) throws -> Int64 {
+    public static func questCountIn(
+        mysql: MySQL?=nil, ids: [String], mode: AutoInstanceController.QuestMode
+    ) throws -> Int64 {
         if ids.count > 10000 {
             var result: Int64 = 0
             for i in 0..<(Int(ceil(Double(ids.count)/10000.0))) {
@@ -1146,10 +1148,23 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         inSQL += "?)"
 
+        let conditionSQL: String
+        let sumSQL: String
+        switch mode {
+        case .normal:
+            conditionSQL = "quest_reward_type IS NOT NULL"
+            sumSQL = "COUNT(*)"
+        case .alternative: conditionSQL = "alternative_quest_reward_type IS NOT NULL"
+            sumSQL = "COUNT(*)"
+        case .both:
+            conditionSQL = "quest_reward_type IS NOT NULL OR alternative_quest_reward_type IS NOT NULL"
+            sumSQL = "SUM(IF(quest_reward_type AND alternative_quest_reward_type), 2, 1)"
+        }
+
         let sql = """
-            SELECT COUNT(*)
+            SELECT \(sumSQL)
             FROM pokestop
-            WHERE id IN \(inSQL) AND deleted = false AND quest_reward_type IS NOT NULL
+            WHERE id IN \(inSQL) AND deleted = false AND \(conditionSQL)
         """
 
         let mysqlStmt = MySQLStmt(mysql)

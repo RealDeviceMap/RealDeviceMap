@@ -604,7 +604,7 @@ class AutoInstanceController: InstanceControllerProto {
                     return stop.pokestop.id
                 })))
                 stopsLock.unlock()
-                let currentCountDb = (try? Pokestop.questCountIn(mysql: mysql, ids: ids)) ?? 0
+                let currentCountDb = (try? Pokestop.questCountIn(mysql: mysql, ids: ids, mode: questMode)) ?? 0
                 stopsLock.lock()
                 let maxCount = self.allStops?.count ?? 0
                 let currentCount = maxCount - (self.todayStops?.count ?? 0)
