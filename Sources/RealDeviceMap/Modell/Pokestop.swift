@@ -1126,7 +1126,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 let start = 10000 * i
                 let end = min(10000 * (i+1) - 1, ids.count - 1)
                 let splice = Array(ids[start...end])
-                if let spliceResult = try? questCountIn(mysql: mysql, ids: splice) {
+                if let spliceResult = try? questCountIn(mysql: mysql, ids: splice, mode: mode) {
                     result += spliceResult
                 }
             }
