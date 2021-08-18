@@ -47,6 +47,7 @@ class WebHookRequestHandler {
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
+    private static let hasARQuestLock = Threading.Lock()
     private static var hasARQuest = [String: Bool]()
 
     // swiftlint:disable:next large_tuple
@@ -128,6 +129,12 @@ class WebHookRequestHandler {
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         let trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
+        let usernameOrId = username ?? uuid
+
+        hasARQuestLock.lock()
+        let hasARQuest = usernameOrId != nil ? self.hasARQuest[usernameOrId!] ?? false : false
+        hasARQuestLock.unlock()
+
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
         let isEvent = controller?.isEvent ?? false
         if username != nil && trainerLevel > 0 {
@@ -250,7 +257,7 @@ class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
                 }
-            } else if method == 4, let usernameOrId = username ?? uuid {
+            } else if method == 4 && usernameOrId != nil {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     var hasARQuest = false
                     for item in inv.inventoryDelta.inventoryItem {
@@ -260,7 +267,9 @@ class WebHookRequestHandler {
                             }
                         }
                     }
-                    self.hasARQuest[usernameOrId] = hasARQuest
+                    hasARQuestLock.lock()
+                    self.hasARQuest[usernameOrId!] = hasARQuest
+                    hasARQuestLock.unlock()
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
@@ -674,8 +683,6 @@ class WebHookRequestHandler {
 
             if !quests.isEmpty {
                 let start = Date()
-                let usernameOrId = username ?? uuid
-                let hasARQuest = usernameOrId != nil ? self.hasARQuest[usernameOrId!] ?? false : false
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
