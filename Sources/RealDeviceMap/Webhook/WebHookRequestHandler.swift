@@ -118,6 +118,8 @@ class WebHookRequestHandler {
             return
         }
 
+        print("request:", json.jsonEncodeForceTry() ?? "")
+
         let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
