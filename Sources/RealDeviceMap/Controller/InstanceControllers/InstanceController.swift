@@ -206,11 +206,15 @@ class InstanceController {
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
+                let questModeString = instance.data["quest_mode"] as? String
+                let questMode = questModeString != nil ?
+                        AutoInstanceController.QuestMode(rawValue: questModeString!) ?? .normal :
+                        .normal
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
                     timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel,
                     spinLimit: spinLimit, delayLogout: delayLogout,
-                    accountGroup: accountGroup, isEvent: isEvent
+                    accountGroup: accountGroup, isEvent: isEvent, questMode: questMode
                 )
             }
         case .leveling:
