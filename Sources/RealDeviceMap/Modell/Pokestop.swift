@@ -1159,7 +1159,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             sumSQL = "COUNT(*)"
         case .both:
             conditionSQL = "quest_reward_type IS NOT NULL OR alternative_quest_reward_type IS NOT NULL"
-            sumSQL = "SUM(IF(quest_reward_type AND alternative_quest_reward_type, 2, 1))"
+            sumSQL = "CAST(SUM(IF(quest_reward_type AND alternative_quest_reward_type, 2, 1)) AS SIGNED)"
         }
 
         let sql = """
