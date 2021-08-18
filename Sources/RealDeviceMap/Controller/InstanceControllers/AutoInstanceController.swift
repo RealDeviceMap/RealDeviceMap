@@ -54,7 +54,7 @@ class AutoInstanceController: InstanceControllerProto {
     private let accountsLock = Threading.Lock()
     private var accounts = [String: String]()
     private var lastMode = [String: Bool]()
-    private var questMode: QuestMode
+    private let questMode: QuestMode
     public var delayLogout: Int
     public let useRwForQuest =
       ProcessInfo.processInfo.environment["USE_RW_FOR_QUEST"] != nil
@@ -319,14 +319,14 @@ class AutoInstanceController: InstanceControllerProto {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: false)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
                             if stop.questType == nil && stop.enabled == true && count <= 5 {
-                                self.allStops!.append(pokestopWithMode)
+                                todayStops!.append(pokestopWithMode)
                             }
                         }
                         if questMode == .alternative || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: true)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
                             if stop.alternativeQuestType == nil && stop.enabled == true && count <= 5 {
-                                self.allStops!.append(pokestopWithMode)
+                                todayStops!.append(pokestopWithMode)
                             }
                         }
                     }
@@ -538,14 +538,14 @@ class AutoInstanceController: InstanceControllerProto {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: false)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
                             if stop.questType == nil && stop.enabled == true && count <= 5 {
-                                self.allStops!.append(pokestopWithMode)
+                                todayStops!.append(pokestopWithMode)
                             }
                         }
                         if questMode == .alternative || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: true)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
                             if stop.alternativeQuestType == nil && stop.enabled == true && count <= 5 {
-                                self.allStops!.append(pokestopWithMode)
+                                todayStops!.append(pokestopWithMode)
                             }
                         }
                     }
