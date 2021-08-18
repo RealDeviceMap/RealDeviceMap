@@ -479,7 +479,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let questRewards = rewards
         let questTimestamp = UInt32(Date().timeIntervalSince1970)
 
-         if hasARQuest {
+         if !hasARQuest {
              self.alternativeQuestType = questType
              self.alternativeQuestTarget = questTarget
              self.alternativeQuestTemplate = questTemplate
