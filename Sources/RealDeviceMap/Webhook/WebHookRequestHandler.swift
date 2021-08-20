@@ -118,8 +118,6 @@ class WebHookRequestHandler {
             return
         }
 
-        print("request:", json.jsonEncodeForceTry() ?? "")
-
         let uuid = json["uuid"] as? String
 
         guard let mysql = DBController.global.mysql else {
@@ -261,16 +259,16 @@ class WebHookRequestHandler {
                 }
             } else if method == 4 && usernameOrId != nil {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
-                    var hasARQuest = false
+                    var newHasARQuest = false
                     for item in inv.inventoryDelta.inventoryItem {
                         for quest in item.inventoryItemData.quests.quest {
                             if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
-                                hasARQuest = true
+                                newHasARQuest = true
                             }
                         }
                     }
                     hasARQuestLock.lock()
-                    self.hasARQuest[usernameOrId!] = hasARQuest
+                    self.hasARQuest[usernameOrId!] = newHasARQuest
                     hasARQuestLock.unlock()
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")

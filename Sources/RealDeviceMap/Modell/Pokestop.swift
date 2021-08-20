@@ -1159,13 +1159,14 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             sumSQL = "COUNT(*)"
         case .both:
             conditionSQL = "quest_reward_type IS NOT NULL OR alternative_quest_reward_type IS NOT NULL"
-            sumSQL = "CAST(SUM(IF(quest_reward_type AND alternative_quest_reward_type, 2, 1)) AS SIGNED)"
+            sumSQL = "CAST(SUM(IF(quest_reward_type IS NOT NULL AND " +
+                     "alternative_quest_reward_type IS NOT NULL, 2, 1)) AS SIGNED)"
         }
 
         let sql = """
             SELECT \(sumSQL)
             FROM pokestop
-            WHERE id IN \(inSQL) AND deleted = false AND \(conditionSQL)
+            WHERE id IN \(inSQL) AND deleted = false AND (\(conditionSQL))
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -1178,8 +1179,8 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
-        let result = results.next()!
-        let count = result[0] as! Int64
+        let result = results.next()
+        let count = result?[0] as? Int64 ?? 0
 
         return count
     }
@@ -1302,7 +1303,9 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE pokestop
             SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL,
+                alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
+                alternative_quest_conditions = NULL, alternative_quest_rewards = NULL, alternative_quest_template = NULL
             \(whereSQL)
         """
 
@@ -1394,7 +1397,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
                 quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL,
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
-                alternative_quest_conditions = NULL, alternative_quest_rewards = NULL, alternative_quest_template = NUL
+                alternative_quest_conditions = NULL, alternative_quest_rewards = NULL, alternative_quest_template = NULL
             WHERE ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
