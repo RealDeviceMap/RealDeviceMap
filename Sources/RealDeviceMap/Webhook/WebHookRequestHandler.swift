@@ -69,6 +69,7 @@ class WebHookRequestHandler {
             if hasARQuest[key]!.count >= 100 {
                 _ = hasARQuest[key]!.dropFirst()
             }
+            hasARQuest[key]!.sort(by: {lhs, rhs in lhs.timestamp < rhs.timestamp})
         }
         hasARQuestLock.unlock()
     }
