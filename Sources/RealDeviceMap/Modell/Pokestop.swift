@@ -1361,7 +1361,7 @@ class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             WHERE ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
-            ) AND quest_type IS NOT NULL
+            ) AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
