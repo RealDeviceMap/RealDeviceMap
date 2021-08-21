@@ -48,7 +48,7 @@ class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
     private static let hasARQuestLock = Threading.Lock()
-    private static var hasARQuest = [String: Bool]()
+    private static var hasARQuest = [String: [(value: Bool, timestamp: Int64)]]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -58,6 +58,29 @@ class WebHookRequestHandler {
         let ignored = threadLimitIgnoredCount
         threadLimitLock.unlock()
         return (current: current, total: total, ignored: ignored)
+    }
+
+    private static func setArQuest(key: String, value: Bool, timestamp: Int64) {
+        hasARQuestLock.lock()
+        if hasARQuest[key] == nil {
+            hasARQuest[key] = [(value, timestamp)]
+        } else {
+            hasARQuest[key]!.append((value, timestamp))
+            if hasARQuest[key]!.count >= 100 {
+                _ = hasARQuest[key]!.dropFirst()
+            }
+        }
+        hasARQuestLock.unlock()
+    }
+
+    private static func getArQuest(key: String?, timestamp: Int64) -> Bool {
+        if key == nil {
+            return true
+        }
+        hasARQuestLock.lock()
+        let value = hasARQuest[key!]?.last(where: {element in element.timestamp < timestamp})?.value ?? true
+        hasARQuestLock.unlock()
+        return value
     }
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
@@ -130,10 +153,6 @@ class WebHookRequestHandler {
         let trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
         let usernameOrId = username ?? uuid
-
-        hasARQuestLock.lock()
-        let hasARQuest = usernameOrId != nil ? self.hasARQuest[usernameOrId!] ?? false : false
-        hasARQuestLock.unlock()
 
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
         let isEvent = controller?.isEvent ?? false
@@ -259,17 +278,20 @@ class WebHookRequestHandler {
                 }
             } else if method == 4 && usernameOrId != nil {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
-                    var newHasARQuest = false
-                    for item in inv.inventoryDelta.inventoryItem {
-                        for quest in item.inventoryItemData.quests.quest {
-                            if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
-                                newHasARQuest = true
+                    var newHasARQuestTimestamp: Int64 = inv.inventoryDelta.newTimestamp
+                    if inv.inventoryDelta.inventoryItem.count > 0 {
+                        var newHasARQuest = false
+                        for item in inv.inventoryDelta.inventoryItem {
+                            for quest in item.inventoryItemData.quests.quest {
+                                if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
+                                    newHasARQuest = true
+                                    newHasARQuestTimestamp = item.modifiedTimestamp
+                                }
                             }
                         }
+                        print("set", usernameOrId, newHasARQuest, newHasARQuestTimestamp)
+                        setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
                     }
-                    hasARQuestLock.lock()
-                    self.hasARQuest[usernameOrId!] = newHasARQuest
-                    hasARQuestLock.unlock()
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
@@ -691,6 +713,9 @@ class WebHookRequestHandler {
                         pokestop = nil
                     }
                     if pokestop != nil {
+                        // quest.lastUpdateTimestampMs
+                        let hasARQuest = getArQuest(key: usernameOrId, timestamp: quest.lastUpdateTimestampMs)
+                        print("has", usernameOrId, hasARQuest, quest.lastUpdateTimestampMs)
                         pokestop!.addQuest(questData: quest, hasARQuest: hasARQuest)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
