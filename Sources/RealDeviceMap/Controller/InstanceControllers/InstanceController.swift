@@ -32,6 +32,7 @@ protocol InstanceControllerProto {
     func reload()
     func stop()
     func shouldStoreData() -> Bool
+    func shouldStoreExp() -> Bool
     func gotPokemon(pokemon: Pokemon)
     func gotIV(pokemon: Pokemon)
     func gotFortData(fortData: PokemonFortProto, username: String?)
@@ -40,6 +41,7 @@ protocol InstanceControllerProto {
 
 extension InstanceControllerProto {
     func shouldStoreData() -> Bool { return true }
+    func shouldStoreExp() -> Bool { return false }
     func gotPokemon(pokemon: Pokemon) { }
     func gotIV(pokemon: Pokemon) { }
     func gotFortData(fortData: PokemonFortProto, username: String?) { }
@@ -231,12 +233,14 @@ class InstanceController {
             let isEvent = instance.data["is_event"] as? Bool ?? false
             let radius = instance.data["radius"] as? UInt64 ?? (instance.data["radius"] as? Int)?.toUInt64() ?? 100000
             let storeData = instance.data["store_data"] as? Bool ?? false
+            let storeExp = instance.data["store_exp"] as? Bool ?? false
             instanceController = LevelingInstanceController(
                 name: instance.name,
                 start: coord,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
                 storeData: storeData,
+                storeExp: storeExp,
                 radius: radius,
                 accountGroup: accountGroup,
                 isEvent: isEvent
@@ -328,6 +332,13 @@ class InstanceController {
             return instanceController.shouldStoreData()
         }
         return true
+    }
+
+    public func shouldStoreExp(deviceUUID: String) -> Bool {
+        if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
+            return instanceController.shouldStoreExp()
+        }
+        return false
     }
 
     public func getAccount(mysql: MySQL, deviceUUID: String) throws -> Account? {

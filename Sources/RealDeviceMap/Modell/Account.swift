@@ -300,6 +300,29 @@ class Account: WebHookEvent {
         }
     }
 
+    public static func setTotalExp(mysql: MySQL?=nil, username: String, totalExp: Int) throws {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                UPDATE account
+                SET total_exp = ?
+                WHERE username = ?
+            """
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(totalExp)
+        mysqlStmt.bindParam(username)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+
     public static func didEncounter(mysql: MySQL?=nil, username: String, lon: Double,
                                     lat: Double, time: UInt32) throws {
 

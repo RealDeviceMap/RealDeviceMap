@@ -688,6 +688,7 @@ class WebRequestHandler {
                 data["delay_logout"] = 900
                 data["radius"] = 10000
                 data["store_data"] = false
+                data["store_exp"] = false
                 data["nothing_selected"] = true
                 data["account_group"] = nil
                 data["is_event"] = false
@@ -2226,6 +2227,7 @@ class WebRequestHandler {
         let delayLogout = Int(request.param(name: "delay_logout") ?? "" ) ?? 900
         let radius = UInt64(request.param(name: "radius") ?? "" ) ?? 10000
         let storeData = request.param(name: "store_data") == "true"
+        let storeExp = request.param(name: "store_exp") == "true"
         let accountGroup = request.param(name: "account_group")?.emptyToNil()
         let isEvent = request.param(name: "is_event") == "true"
 
@@ -2241,6 +2243,7 @@ class WebRequestHandler {
         data["delay_logout"] = delayLogout
         data["radius"] = radius
         data["store_data"] = storeData
+        data["store_exp"] = storeExp
         data["account_group"] = accountGroup
         data["is_event"] = isEvent
 
@@ -2376,6 +2379,7 @@ class WebRequestHandler {
                 } else if type == .leveling {
                     oldInstance!.data["radius"] = radius
                     oldInstance!.data["store_data"] = storeData
+                    oldInstance!.data["store_exp"] = storeExp
                 }
                 do {
                     try oldInstance!.update(oldName: instanceName!)
@@ -2410,6 +2414,7 @@ class WebRequestHandler {
             } else if type == .leveling {
                 instanceData["radius"] = radius
                 instanceData["store_data"] = storeData
+                instanceData["store_exp"] = storeExp
             }
             let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
             do {
@@ -2485,6 +2490,7 @@ class WebRequestHandler {
             data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900
             data["radius"] = (oldInstance!.data["radius"] as? Int)?.toUInt64() ?? 100000
             data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
+            data["store_exp"] = oldInstance!.data["store_exp"] as? Bool ?? false
             data["account_group"] = (oldInstance!.data["account_group"] as? String)?.emptyToNil()
             data["is_event"] = oldInstance!.data["is_event"] as? Bool ?? false
 

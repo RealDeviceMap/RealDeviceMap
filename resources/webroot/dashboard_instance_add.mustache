@@ -12,6 +12,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.store_exp_text').addClass('d-none');
             } else if ($(this).val() === 'auto_quest') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -21,6 +22,7 @@
                 $('.delay_logout_text').removeClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.store_exp_text').addClass('d-none');
             } else if ($(this).val() === 'leveling') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -30,6 +32,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').removeClass('d-none');
                 $('.store_data_text').removeClass('d-none');
+                $('.store_exp_text').removeClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -39,6 +42,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.store_exp_text').addClass('d-none');
             }
         });
     })
@@ -113,6 +117,9 @@
             </div>
             <div class="checkbox store_data_text {{^leveling_selected}}d-none{{/leveling_selected}}">
                 <label><input type="checkbox" name="store_data" value="true" {{#store_data}}checked{{/store_data}}> Store Data in Database</label>
+            </div>
+            <div class="checkbox store_exp_text {{^leveling_selected}}d-none{{/leveling_selected}}">
+                <label><input type="checkbox" name="store_exp" value="true" {{#store_exp}}checked{{/store_exp}}> Store Exp in Database</label>
             </div>
             <div class="form-group">
                 Account Group

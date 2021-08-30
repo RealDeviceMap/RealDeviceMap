@@ -68,6 +68,7 @@ class LevelingInstanceController: InstanceControllerProto {
 
     private let start: Coord
     private let storeData: Bool
+    private let storeExp: Bool
     private let radius: UInt64
     private let unspunPokestopsPerUsernameLock = NSLock()
     private var unspunPokestopsPerUsername = [String: [String: PokemonFortProto]]()
@@ -80,7 +81,7 @@ class LevelingInstanceController: InstanceControllerProto {
     private var lastLocactionUsername = [String: Coord]()
 
     init(name: String, start: Coord, minLevel: UInt8, maxLevel: UInt8, storeData: Bool,
-         radius: UInt64, accountGroup: String?, isEvent: Bool) {
+         storeExp: Bool, radius: UInt64, accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -88,6 +89,7 @@ class LevelingInstanceController: InstanceControllerProto {
         self.isEvent = isEvent
         self.start = start
         self.storeData = storeData
+        self.storeExp = storeExp
         self.radius = radius
     }
 
@@ -321,6 +323,10 @@ class LevelingInstanceController: InstanceControllerProto {
 
     func shouldStoreData() -> Bool {
         return storeData
+    }
+
+    func shouldStoreExp() -> Bool {
+        return storeExp
     }
 
     func reload() {
