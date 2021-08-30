@@ -489,7 +489,7 @@ class WebHookRequestHandler {
             if !holodatas.isEmpty && username != nil {
                 let start = Date()
                 for holodata in holodatas {
-                    let items = holodata.inventoryDelta.inventoryItems
+                    let items = holodata.inventoryDelta.inventoryItem
                     for item in items {
                         let playerstats = item.inventoryItemData.playerStats
                         trainerXP = Int(playerstats.experience) > 0 ? Int(playerstats.experience) : trainerXP
