@@ -28,6 +28,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     static var noPVP = false
     static var noWeatherIVClearing = false
     static var noCellPokemon = false
+    static var noDittoListCheck = false
 
     static var cache: MemoryCache<Pokemon>?
 
@@ -1172,6 +1173,7 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
     private static func isDittoDisguised(pokemonId: UInt16, level: UInt8, weather: UInt8,
                                          atkIv: UInt8, defIv: UInt8, staIv: UInt8) -> Bool {
         let isDisguised = (pokemonId == Pokemon.dittoPokemonId) ||
+                          (Pokemon.noDittoListCheck) ||
                           (WebHookRequestHandler.dittoDisguises?.contains(pokemonId) ?? false)
         let isUnderLevelBoosted = level > 0 && level < Pokemon.weatherBoostMinLevel
         let isUnderIvStatBoosted = level > 0 &&
