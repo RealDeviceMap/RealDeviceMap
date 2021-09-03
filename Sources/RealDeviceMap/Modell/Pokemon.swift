@@ -353,6 +353,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         let costume = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.costume.rawValue)
         let form = UInt16(encounterData.pokemon.pokemon.pokemonDisplay.form.rawValue)
         let gender = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.gender.rawValue)
+        let lat = encounterData.pokemon.latitude
+        let lon = encounterData.pokemon.longitude
 
         if pokemonId != self.pokemonId ||
            cp != self.cp ||
@@ -382,6 +384,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
         self.costume = costume
         self.form = form
         self.gender = gender
+        self.lat = lat
+        self.lon = lon
 
         self.shiny = encounterData.pokemon.pokemon.pokemonDisplay.shiny
         self.username = username
