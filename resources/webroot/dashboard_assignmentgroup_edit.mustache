@@ -1,0 +1,34 @@
+{{> header}}
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Edit Assignment Group "{{old_name}}"!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Name
+                <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="30">
+            </div>
+            <div class="form-group">
+                Select Assignment(s)
+                <select class="form-control" style="height: 400px" name="assignments" multiple required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Assignment(s)</option>
+                    {{#assignments}}
+                        <option value="{{id}}" {{#selected}}selected{{/selected}}>{{deviceUUID}}{{deviceGroupName}}{{#deviceGroupName}} (Group){{/deviceGroupName}} -> {{instanceName}}</option>
+                    {{/assignments}}
+                </select>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <input type="hidden" name="old_assignments" value="{{old_assignments}}">
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+    <br>
+</body>

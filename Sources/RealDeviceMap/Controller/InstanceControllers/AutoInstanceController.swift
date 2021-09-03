@@ -45,6 +45,8 @@ class AutoInstanceController: InstanceControllerProto {
     private let accountsLock = Threading.Lock()
     private var accounts = [String: String]()
     public var delayLogout: Int
+    public let useRwForQuest =
+      ProcessInfo.processInfo.environment["USE_RW_FOR_QUEST"] != nil
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
          minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
@@ -173,7 +175,7 @@ class AutoInstanceController: InstanceControllerProto {
                     let stops = try? Pokestop.getAll(
                         minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude,
                         minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude,
-                        updated: 0, questsOnly: false, showQuests: true, showLures: true, showInvasions: true) {
+                        updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: true) {
 
                     for stop in stops {
                         let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
@@ -596,7 +598,7 @@ class AutoInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: true,
+                ignoringWarning: useRwForQuest,
                 spins: spinLimit,
                 noCooldown: true,
                 encounterTarget: encounterTarget,
@@ -610,7 +612,7 @@ class AutoInstanceController: InstanceControllerProto {
         return
             account.level >= minLevel &&
             account.level <= maxLevel &&
-            account.isValid(ignoringWarning: true, group: accountGroup) &&
+            account.isValid(ignoringWarning: useRwForQuest, group: accountGroup) &&
             account.hasSpinsLeft(spins: spinLimit)
     }
 }
