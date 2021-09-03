@@ -1978,7 +1978,7 @@ public class ApiRequestHandler {
         let setPokestopName = request.param(name: "set_pokestop_name")?.toBool() ?? false
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
-	let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
+        let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
