@@ -141,7 +141,6 @@ class ApiRequestHandler {
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
-        let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -1784,16 +1783,6 @@ class ApiRequestHandler {
             }
         }
 
-        if reloadInstances && perms.contains(.admin) {
-           do {
-               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
-               try InstanceController.setup()
-               response.respondWithOk()
-           } catch {
-               response.respondWithError(status: .internalServerError)
-           }
-        }
-
         data["timestamp"] = Int(Date().timeIntervalSince1970)
 
         do {
@@ -1816,6 +1805,7 @@ class ApiRequestHandler {
         let setPokestopName = request.param(name: "set_pokestop_name")?.toBool() ?? false
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
+	let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -1841,6 +1831,15 @@ class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+	} else reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
+        }
         } else {
             response.respondWithError(status: .badRequest)
         }
