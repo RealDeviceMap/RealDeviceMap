@@ -88,15 +88,6 @@ public class ApiRequestHandler {
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
 
-        WebHookController.global.addAccountEvent(account: Account(
-            username: "test", password: "test", level: 1, firstWarningTimestamp: nil,
-            failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
-            lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
-            warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-            suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
-            lastUsedTimestamp: nil, group: nil
-        ))
-
         guard let perms = getPerms(request: request, response: response) else {
             return
         }
@@ -1965,16 +1956,6 @@ public class ApiRequestHandler {
             }
         }
 
-        if reloadInstances && perms.contains(.admin) {
-           do {
-               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
-               try InstanceController.setup()
-               response.respondWithOk()
-           } catch {
-               response.respondWithError(status: .internalServerError)
-           }
-        }
-
         data["timestamp"] = Int(Date().timeIntervalSince1970)
 
         do {
@@ -1997,6 +1978,7 @@ public class ApiRequestHandler {
         let setPokestopName = request.param(name: "set_pokestop_name")?.toBool() ?? false
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
+	let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2022,6 +2004,15 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+	} else reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
+        }
         } else {
             response.respondWithError(status: .badRequest)
         }
