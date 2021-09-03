@@ -170,7 +170,6 @@ class WebHookRequestHandler {
         var fortSearch = [POGOProtos_Networking_Responses_FortSearchResponse]()
         var encounters = [POGOProtos_Networking_Responses_EncounterResponse]()
         var playerdatas = [POGOProtos_Networking_Responses_GetPlayerResponse]()
-        var holodatas = [POGOProtos_Networking_Responses_GetHoloInventoryResponse]()
         var cells = [UInt64]()
 
         var isEmtpyGMO = true
@@ -199,6 +198,9 @@ class WebHookRequestHandler {
             } else if let ggi = rawData["GymGetInfoResponse"] as? String {
                 data = Data(base64Encoded: ggi) ?? Data()
                 method = 156
+            } else if let inv = rawData["GetHoloholoInventoryOutProto"] as? String {
+                data = Data(base64Encoded: inv) ?? Data()
+                method = 4
             } else if let dataString = rawData["data"] as? String {
                 data = Data(base64Encoded: dataString) ?? Data()
                 method = rawData["method"] as? Int ?? 106
@@ -216,10 +218,16 @@ class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetPlayerResponse")
                 }
             } else if method == 4 {
-                if let hir = try? POGOProtos_Networking_Responses_GetHoloInventoryResponse(serializedData: data) {
-                    holodatas.append(hir)
+                if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
+                    if inv.inventoryDelta.inventoryItem.count > 0 {
+                        for item in inv.inventoryDelta.inventoryItem {
+                            if item.inventoryItemData.playerStats.experience > 0 {
+                                trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                            }
+                        }
+                    }
                 } else {
-                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloInventoryResponse")
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
             } else if method == 101 {
                 if let fsr = try? POGOProtos_Networking_Responses_FortSearchResponse(serializedData: data) {
@@ -317,6 +325,10 @@ class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
             }
+        }
+
+        if username != nil && trainerXP > 0 && trainerLevel > 0 {
+            InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
         let targetCoord: CLLocationCoordinate2D?
@@ -481,23 +493,6 @@ class WebHookRequestHandler {
                 }
                 Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Player Detail parsed in " +
                                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
-            }
-
-            if !holodatas.isEmpty && username != nil {
-                let start = Date()
-                for holodata in holodatas {
-                    let items = holodata.inventoryDelta.inventoryItems
-                    for item in items {
-                        let playerstats = item.inventoryItemData.playerStats
-                        trainerXP = Int(playerstats.experience) > 0 ? Int(playerstats.experience) : trainerXP
-                    }
-                }
-                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Holo Inventory parsed in " +
-                "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
-            }
-
-            if username != nil && trainerXP > 0 && trainerLevel > 0 {
-                InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
             }
 
             guard InstanceController.global.shouldStoreData(deviceUUID: uuid ?? "") else {
