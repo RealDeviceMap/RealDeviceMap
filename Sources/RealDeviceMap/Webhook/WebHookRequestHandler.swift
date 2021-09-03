@@ -220,7 +220,7 @@ class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        for item in inv.inventoryDelta.inventoryItem where 
+                        for item in inv.inventoryDelta.inventoryItem where
                             item.inventoryItemData.playerStats.experience > 0 {
                             trainerXP = Int(item.inventoryItemData.playerStats.experience)
                         }
