@@ -2012,7 +2012,6 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
-        }
         } else {
             response.respondWithError(status: .badRequest)
         }
