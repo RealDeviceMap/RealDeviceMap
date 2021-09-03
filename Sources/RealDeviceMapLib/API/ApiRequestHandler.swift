@@ -2004,7 +2004,7 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
-	} else reloadInstances && perms.contains(.admin) {
+	} else if reloadInstances && perms.contains(.admin) {
            do {
                Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
                try InstanceController.setup()
