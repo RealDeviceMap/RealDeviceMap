@@ -1180,7 +1180,8 @@ class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStringConve
              staIv < Pokemon.weatherBoostMinIvStat)
         let isWeatherBoosted = weather > 0
         let isOverLevel = level > 30
-        return (isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted) || (isDisguised && isOverLevel && !isWeatherBoosted)
+        return (isDisguised && (isUnderLevelBoosted || isUnderIvStatBoosted) && isWeatherBoosted) ||
+               (isDisguised && isOverLevel && !isWeatherBoosted)
     }
 
     public static func truncate(mysql: MySQL?=nil) throws {
