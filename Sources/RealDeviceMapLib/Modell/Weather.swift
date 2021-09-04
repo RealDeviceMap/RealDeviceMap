@@ -426,7 +426,7 @@ public class Weather: JSONConvertibleObject, WebHookEvent {
 
     public static func shouldUpdate(old: Weather, new: Weather) -> Bool {
         var hasChanged: Bool
-            
+
         hasChanged = (
             new.id != old.id ||
             new.level != old.level ||
@@ -440,29 +440,29 @@ public class Weather: JSONConvertibleObject, WebHookEvent {
             new.sELevel != old.sELevel ||
             new.severity != old.severity ||
             new.warnWeather != old.warnWeather)
-        
+
         if hasChanged == true {
             return true
         }
 
         let dLatitude = fabs(new.latitude - old.latitude)
         let dLongitude = fabs(new.longitude - old.longitude)
-        
+
         hasChanged = (dLatitude >= 0.000001 || dLongitude >= 0.000001)
-        
+
         if hasChanged == true {
             return true
         }
 
         let oldUpdated = old.updated ?? 0
         let newUpdated = UInt32(Date().timeIntervalSince1970)
-        
+
         hasChanged = ((newUpdated - (newUpdated % 3600)) > (oldUpdated - (oldUpdated % 3600)))
-        
+
         if hasChanged == true {
             return true
         }
-        
+
         return false
     }
 
