@@ -142,7 +142,7 @@ public class PVPStatsManager {
             denseIndex += 1
         }
 
-        if (foundMatch == false) {
+        if foundMatch == false {
             return nil
         }
 
@@ -155,7 +155,11 @@ public class PVPStatsManager {
         } else {
             ivs = []
         }
-        return .init(competitionRank: competitionIndex + 1, denseRank: denseIndex + 1, ordinalRank: ordinalIndex + 1, percentage: value/max, ivs: ivs)
+        return .init(competitionRank: competitionIndex + 1,
+                     denseRank: denseIndex + 1,
+                     ordinalRank: ordinalIndex + 1,
+                     percentage: value/max,
+                     ivs: ivs)
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
@@ -268,7 +272,11 @@ public class PVPStatsManager {
             if maxLevel != 0 {
                 let value = getPVPValue(iv: iv, level: maxLevel, stats: stats)
                 if ranking[value] == nil {
-                    ranking[value] = Response(competitionRank: value, denseRank: value, ordinalRank: value, percentage: 0.0, ivs: [])
+                    ranking[value] = Response(competitionRank: value,
+                                              denseRank: value,
+                                              ordinalRank: value,
+                                              percentage: 0.0,
+                                              ivs: [])
                 }
                 ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
             }
