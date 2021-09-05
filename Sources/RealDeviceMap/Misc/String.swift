@@ -7,6 +7,7 @@
 
 import Foundation
 import PerfectLib
+import COpenSSL
 
 extension String {
 
@@ -115,3 +116,22 @@ extension String {
     }
 
 }
+
+extension String.UTF8View {
+
+    // Source: https://github.com/PerfectlySoft/Perfect-HTTP/blob/master/Sources/PerfectHTTP/StaticFileHandler.swift
+    var sha1: [UInt8] {
+        let bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:  Int(SHA_DIGEST_LENGTH))
+        defer { bytes.deallocate() }
+
+        SHA1(Array<UInt8>(self), (self.count), bytes)
+
+        var r = [UInt8]()
+        for idx in 0..<Int(SHA_DIGEST_LENGTH) {
+            r.append(bytes[idx])
+        }
+        return r
+    }
+
+}
+

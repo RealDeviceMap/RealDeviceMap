@@ -287,16 +287,6 @@ try! MailController.global.setup()
 Log.info(message: "[MAIN] Starting Discord Controller")
 try! DiscordController.global.setup()
 
-// Create Raid images
-let noGenerateImages =
-  ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
-if !noGenerateImages {
-  Log.info(message: "[MAIN] Starting Images Generator")
-  ImageGenerator.generate()
-} else {
-  Log.info(message: "[MAIN] Image generation disabled - skipping")
-}
-
 // Stopping Startup Webserver
 Log.info(message: "[MAIN] Stopping Startup Webserver")
 startupServerContext!.terminate()
