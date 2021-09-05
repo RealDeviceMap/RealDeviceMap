@@ -17,7 +17,9 @@ class ImageGenerator {
 
     private init() {}
 
-    internal static func buildPokemonImage(baseImage: String, image: String, spawnTypeImage: String?, rankingImage: String?) {
+    internal static func buildPokemonImage(
+        baseImage: String, image: String, spawnTypeImage: String?, rankingImage: String?
+    ) {
         print(baseImage, image, spawnTypeImage, rankingImage)
 
         var markerAgs = [String]()
@@ -41,14 +43,14 @@ class ImageGenerator {
         print(([
             "/usr/local/bin/convert",
             "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "Center",
+            "-gravity", "Center"
             ] + markerAgs + [
             image
         ]).joined(separator: " "))
         Shell([
             "/usr/local/bin/convert",
             "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "Center",
+            "-gravity", "Center"
             ] + markerAgs + [
             image
         ]).run(environment: magickEnv)

@@ -2,7 +2,7 @@
 //  ApiRequestHandler.swift
 //  RealDeviceMap
 //
-//  Created by Florian Kostenzer on 18.09.18.
+//  Created by Florian Kostenzer on 05.09.21.
 //
 //  swiftlint:disable superfluous_disable_command file_length type_body_length
 
@@ -17,6 +17,7 @@ class ImageApiRequestHandler {
     internal static let pokemonPathCacheLock = Threading.Lock()
     internal static var pokemonPathCache = [Pokemon: File]()
 
+    // MARK: Pokemon
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
               let id = request.param(name: "id")?.toInt() else {
@@ -70,7 +71,9 @@ class ImageApiRequestHandler {
         if file.exists { return file }
 
         let basePath = "\(projectroot)/resources/webroot/static/img/\(pokemon.style)/misc"
-        let spawnTypeFile = pokemon.spawnType != nil ? File("\(basePath)/spawn_type/\(pokemon.spawnType!.rawValue).png") : nil
+        let spawnTypeFile = pokemon.spawnType != nil ?
+                File("\(basePath)/spawn_type/\(pokemon.spawnType!.rawValue).png") :
+                nil
         let rankingFile = pokemon.ranking != nil ? File("\(basePath)/ranking/\(pokemon.ranking!.rawValue).png") : nil
 
         ImageGenerator.buildPokemonImage(
@@ -82,11 +85,14 @@ class ImageApiRequestHandler {
         return file
     }
 
+    // MARK: Gym
+
+    // MARK: Utils
     private static func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
         let basePath = "\(projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
 
         var combinations: [[String]] = []
-        let bitValues = (0...postfixes.count).map{ i in Int(pow(2, Double(i))) }
+        let bitValues = (0...postfixes.count).map { i in Int(pow(2, Double(i))) }
 
         for i in 0..<bitValues.last! {
             var combination: [String] = []
@@ -96,7 +102,7 @@ class ImageApiRequestHandler {
             combinations.append(combination)
         }
 
-        combinations.sort{ lhs, rhs in
+        combinations.sort { lhs, rhs in
             var index = 0
             while lhs.count > index || rhs.count > index {
                 let lhsFirstPrio = lhs.count > index ? postfixes.firstIndex(of: lhs[index])! : Int.max
@@ -118,7 +124,7 @@ class ImageApiRequestHandler {
                 possiblePaths.append(File("\(basePath)_\(combination.joined(separator: "_")).png"))
             }
         }
-        return possiblePaths.first{$0.exists}
+        return possiblePaths.first {$0.exists}
     }
 
     private static func sendFile(response: HTTPResponse, file: File?) {
@@ -127,7 +133,7 @@ class ImageApiRequestHandler {
                 try file.open(.read)
                 response.setHeader(.cacheControl, value: "max-age=604800, must-revalidate")
                 response.addHeader(.acceptRanges, value: "bytes")
-                response.addHeader(.contentType, value:  MimeType.forExtension(file.path.filePathExtension))
+                response.addHeader(.contentType, value: MimeType.forExtension(file.path.filePathExtension))
                 response.addHeader(.contentLength, value: "\(file.size)")
                 response.addHeader(.eTag, value: file.eTag)
                 response.appendBody(bytes: try file.readSomeBytes(count: file.size))

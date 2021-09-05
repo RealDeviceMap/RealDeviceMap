@@ -2,7 +2,7 @@
 //  APIRoutes.swift
 //  RealDeviceMap
 //
-//  Created by Florian Kostenzer on 18.08.18.
+//  Created by Florian Kostenzer on 05.09.21.
 //
 
 import PerfectLib
