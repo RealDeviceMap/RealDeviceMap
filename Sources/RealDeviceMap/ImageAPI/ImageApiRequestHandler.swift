@@ -172,8 +172,46 @@ extension ImageApiRequestHandler {
         }
 
         var hash: String {
-            return "\(id)_e\(evolution ?? 0)_f\(form ?? 0)_c\(costume ?? 0)_g\(gender ?? 0)_st\(spawnType?.rawValue ?? "0")_r\(ranking?.rawValue ?? "0")"
+            return "\(id)_e\(evolution ?? 0)_f\(form ?? 0)_c\(costume ?? 0)_g\(gender ?? 0)" +
+                   "_st\(spawnType?.rawValue ?? "0")_r\(ranking?.rawValue ?? "0")"
         }
+    }
+
+    struct Gym: Hashable {
+
+        // Standard
+        var style: String
+        var id: Int
+        var level: Int?
+        var battle: Bool = false
+        var ex: Bool = false
+
+        // Generated
+        var raid: Raid?
+
+        var isStandard: Bool {
+            return raid == nil
+        }
+
+        var hash: String {
+            return "\(id)_t\(level ?? 0)\(battle ? "_b" : "")\(ex ? "_ex": "")\(raid ? "_r\(raid!.hash)" : "")"
+        }
+
+    }
+
+    struct Raid: Hashable {
+
+        // Standard
+        var level: Int
+        var hatched: Bool = false
+        var ex: Bool = false
+
+        var isStandard: Bool = true
+
+        var hash: String {
+            return "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
+        }
+
     }
 
 }
