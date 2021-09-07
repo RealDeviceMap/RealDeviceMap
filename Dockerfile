@@ -4,6 +4,8 @@
 FROM swift:5.4-focal as build
 WORKDIR /build
 
+
+
 # Perfect-COpenSSL
 RUN apt-get -y update && apt-get install -y libssl-dev
 
@@ -20,7 +22,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 RUN apt-get -y update && apt-get install -y wget
 
 # MySQL Client
-RUN apt-get -y update && \
+RUN export DEBIAN_FRONTEND=noninteractive && \
+	apt-get -y update && \
 	apt-get install -y lsb-release && \
 	wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
 	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
@@ -56,7 +59,7 @@ RUN swift build \
 # ================================
 # Run image
 # ================================
-FROM swift:5.4-focal
+FROM swift:5.4
 WORKDIR /app
 
 # Perfect-COpenSSL
@@ -75,7 +78,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 RUN apt-get -y update && apt-get install -y wget
 
 # MySQL Client
-RUN apt-get -y update && \
+RUN export DEBIAN_FRONTEND=noninteractive && \
+	apt-get -y update && \
 	apt-get install -y lsb-release && \
 	wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
 	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
