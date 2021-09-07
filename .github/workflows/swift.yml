@@ -11,7 +11,7 @@ jobs:
     - name: Install Requirements
       run: export DEBIAN_FRONTEND=noninteractive &&
            sudo apt-get -y update &&
-           sudo apt-get install -y libssl-dev libcurl4-openssl-dev uuid-dev imagemagick lsb-release
+           sudo apt-get install -y libssl-dev libcurl4-openssl-dev uuid-dev imagemagick lsb-release &&
            wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb &&
            echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | sudo debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | sudo debconf-set-selections &&
