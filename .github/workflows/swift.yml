@@ -9,13 +9,12 @@ jobs:
     - uses: actions/checkout@v2
     - uses: YOCKOW/Action-setup-swift@main
     - name: Install Requirements
-      run: wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
-           echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
-           echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
-           echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
-           echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
-           dpkg -i mysql-apt-config_0.8.16-1_all.deb && \
-           apt-get update && \
+      run: sudo wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
+           sudo echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
+           sudo echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
+           sudo echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
+           sudo echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
+           sudo dpkg -i mysql-apt-config_0.8.16-1_all.deb && \
            sudo apt-get update && \
            sudo apt-get install -y libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client-5.7 && \
            sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && \
@@ -57,4 +56,3 @@ jobs:
              exit 0
           fi
         done
-
