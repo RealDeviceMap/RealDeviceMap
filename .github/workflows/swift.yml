@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   Test:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - uses: YOCKOW/Action-setup-swift@main
@@ -17,7 +17,7 @@ jobs:
     - name: Test
       run: swift test --enable-test-discovery -Xswiftc -g -c debug
   Deploy:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: Set .gitsha
