@@ -4,8 +4,6 @@
 FROM swift:5.4-focal as build
 WORKDIR /build
 
-
-
 # Perfect-COpenSSL
 RUN apt-get -y update && apt-get install -y libssl-dev
 
