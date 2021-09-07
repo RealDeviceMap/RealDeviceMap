@@ -9,13 +9,13 @@ jobs:
     - uses: actions/checkout@v2
     - uses: YOCKOW/Action-setup-swift@main
     - name: Install Requirements
-      run: export DEBIAN_FRONTEND=noninteractive &&
+      run: sudo export DEBIAN_FRONTEND=noninteractive &&
            sudo apt-get -y update &&
-           wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb &&
-           echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections &&
+           sudo wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb &&
+           sudo echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections &&
+           sudo echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections &&
+           sudo echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections &&
+           sudo echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections &&
            sudo dpkg -i mysql-apt-config_0.8.16-1_all.deb &&
            sudo apt-get -y update &&
            sudo apt-get install -y -f libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client=5.7* libmysqlclient-dev=5.7* &&   
