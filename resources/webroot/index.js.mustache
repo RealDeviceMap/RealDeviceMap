@@ -1994,13 +1994,17 @@ function addPokemon(pokemon, ts) {
     if (oldPokemon.expire_timestamp !== pokemon.expire_timestamp) {
       oldPokemon.expire_timestamp = pokemon.expire_timestamp
     }
-    if (oldPokemon.atk_iv !== pokemon.atk_iv) {
+    if (oldPokemon.atk_iv !== pokemon.atk_iv 
+      || oldPokemon.def_iv !== pokemon.def_iv 
+      || oldPokemon.sta_iv !== pokemon.sta_iv) {
       oldPokemon.atk_iv = pokemon.atk_iv
       oldPokemon.def_iv = pokemon.def_iv
       oldPokemon.sta_iv = pokemon.sta_iv
       oldPokemon.cp = pokemon.cp
       oldPokemon.weight = pokemon.weight
       oldPokemon.size = pokemon.size
+      oldPokemon.baseHeight = pokemon.baseHeight
+      oldPokemon.baseWeight = pokemon.baseWeight
       oldPokemon.move_1 = pokemon.move_1
       oldPokemon.move_2 = pokemon.move_2
       oldPokemon.level = pokemon.level
@@ -2275,8 +2279,12 @@ function getPokemonPopupContent (pokemon) {
   if (pokemon.move_2 !== null) {
     content += '<b>Charge:</b> ' + getMoveName(pokemon.move_2) + '<br>'
   }
-  if (pokemon.height !== null && pokemon.weight !== null) {
-    content += '<b>Size:</b> ' + getSize(pokemon.size) + ' | <b>Weight:</b> ' + Math.round(pokemon.weight) + 'kg<br>'
+  if (pokemon.size !== null && pokemon.weight !== null) {
+    if (pokemon.baseHeight !== null && pokemon.baseWeight !== null) {
+      content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + '-' + getSize(pokemon.weight, pokemon.baseWeight) + ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + '-' + getSize(pokemon.size, pokemon.baseHeight) + '<br>'
+    } else {
+      content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + 'kg | <b>Size:</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
+    }
   }
   if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
     content += '<b>Catch Chances:</b><br>'
@@ -4348,12 +4356,20 @@ function getLureIconId (lureId) {
   return 1
 }
 
-function getSize (size) {
-  if (size < 1.5) return 'Tiny'
-  if (size <= 1.75) return 'Small'
-  if (size < 2.25) return 'Normal'
-  if (size <= 2.5) return 'Large'
-  return 'Big'
+function getSize (value, baseValue) {
+  var deviation = value - baseValue
+  var secondDeviation = baseValue*2/8
+  var absoluteDeviation = Math.abs(deviation)
+  if (absoluteDeviation >= secondDeviation) {
+    var signDeviation = Math.sign(deviation)
+    if (signDeviation > 0) {
+      return "XL"
+    } else {
+      return "XS"
+    }
+  } else {
+    return "N"
+  }
 }
 
 function getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution) {
