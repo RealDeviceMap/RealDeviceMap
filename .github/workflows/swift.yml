@@ -15,6 +15,7 @@ jobs:
            echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections &&
+           sudo apt-get -y update &&
            sudo dpkg -i mysql-apt-config_0.8.16-1_all.deb &&
            sudo apt-get -y update &&
            sudo apt-get install -y -f libssl-dev libcurl4-openssl-dev libmysqlclient-dev uuid-dev imagemagick mysql-client=5.7* libmysqlclient-dev=5.7* &&   
