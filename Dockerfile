@@ -95,4 +95,4 @@ COPY resources resources
 COPY .gitsha .
 COPY .gitref .
 
-ENTRYPOINT ["./RealDeviceMap"]
+ENTRYPOINT ["./RealDeviceMapApp"]
