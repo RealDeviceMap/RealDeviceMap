@@ -18,13 +18,7 @@ import RealDeviceMapLib
 Backtrace.install()
 
 let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
-extension Log {
-    public static func debug(message: @autoclosure () -> String) {
-        if logDebug {
-            Log.logger.debug(message: message(), even)
-        }
-    }
-}
+Log.logDebug = logDebug
 Log.even = true
 
 Log.info(message: "[MAIN] Getting Version")
