@@ -4,7 +4,7 @@
 //
 //  Created by Florian Kostenzer on 18.09.18.
 //
-//  swiftlint:disable force_try
+//  swiftlint:disable force_try cyclomatic_complexity function_body_length
 
 import Foundation
 import PerfectLib
@@ -39,7 +39,8 @@ public func setupRealDeviceMap() {
     try? backups.create()
     #endif
     if !backups.exists {
-        let message = "[MAIN] Backups directory doesn't exist! Make sure to persist the backups folder before continuing."
+        let message = "[MAIN] Backups directory doesn't exist! " +
+                      "Make sure to persist the backups folder before continuing."
         Log.critical(message: message)
         fatalError(message)
     }
@@ -50,10 +51,12 @@ public func setupRealDeviceMap() {
 
     // Init MemoryCache
     if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
-        let memoryCacheClearInterval = ProcessInfo.processInfo.environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
+        let memoryCacheClearInterval = ProcessInfo.processInfo
+            .environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
         let memoryCacheKeepTime = ProcessInfo.processInfo.environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
         Log.info(message:
-            "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) and keep time \(memoryCacheKeepTime)"
+            "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
+            "and keep time \(memoryCacheKeepTime)"
         )
         Pokestop.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
@@ -108,7 +111,8 @@ public func setupRealDeviceMap() {
     WebRequestHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
     WebRequestHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?
         .emptyToNil()
-    WebRequestHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?.emptyToNil()
+    WebRequestHandler.oauthDiscordClientID = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_ID")?
+        .emptyToNil()
     WebRequestHandler.oauthDiscordClientSecret = try! DBController.global.getValueForKey(key: "DISCORD_CLIENT_SECRET")?
         .emptyToNil()
     WebRequestHandler.statsUrl = try! DBController.global.getValueForKey(key: "STATS_URL") ?? ""
@@ -133,7 +137,8 @@ public func setupRealDeviceMap() {
         for tileserver in tileserversOld {
             tileservers[tileserver.key] = [
                 "url": tileserver.value,
-                "attribution": "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"
+                "attribution": "Map data &copy; " +
+                               "<a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors"
             ]
         }
         WebRequestHandler.tileservers = tileservers
@@ -212,7 +217,8 @@ public func setupRealDeviceMap() {
         WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
     } catch {
         Log.error(
-            message: "Failed to load forms. Frontend will only display default forms. Error: \(error.localizedDescription)"
+            message: "Failed to load forms. Frontend will only display default forms. " +
+                     "Error: \(error.localizedDescription)"
         )
     }
 
