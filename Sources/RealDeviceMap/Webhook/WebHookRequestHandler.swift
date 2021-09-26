@@ -151,7 +151,7 @@ class WebHookRequestHandler {
         }
 
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
-        let trainerXP = json["trainerexp"] as? Int ?? 0
+        var trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
         let usernameOrId = username ?? uuid
 
@@ -169,10 +169,6 @@ class WebHookRequestHandler {
                     levelCacheLock.unlock()
                 } catch {}
             }
-        }
-
-        if username != nil && trainerXP > 0 && trainerLevel > 0 {
-            InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
         guard let contents = json["contents"] as? [[String: Any]] ??
@@ -248,6 +244,17 @@ class WebHookRequestHandler {
                     playerdatas.append(gpr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetPlayerResponse")
+                }
+            } else if method == 4 {
+                if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
+                    if inv.inventoryDelta.inventoryItem.count > 0 {
+                        for item in inv.inventoryDelta.inventoryItem where
+                            item.inventoryItemData.playerStats.experience > 0 {
+                            trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                        }
+                    }
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
@@ -364,6 +371,10 @@ class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
             }
+        }
+
+        if username != nil && trainerXP > 0 && trainerLevel > 0 {
+            InstanceController.global.gotPlayerInfo(username: username!, level: trainerLevel, xp: trainerXP)
         }
 
         let targetCoord: CLLocationCoordinate2D?
