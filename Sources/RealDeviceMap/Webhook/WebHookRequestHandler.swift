@@ -153,6 +153,7 @@ class WebHookRequestHandler {
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         var trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
+        let hasArQuestReq = json["have_ar"] as? Bool
         let usernameOrId = username ?? uuid
 
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
@@ -726,7 +727,9 @@ class WebHookRequestHandler {
                     }
                     if pokestop != nil {
                         // quest.lastUpdateTimestampMs
-                        let hasARQuest = getArQuest(key: usernameOrId, timestamp: quest.lastUpdateTimestampMs)
+                        let hasARQuest = hasArQuestReq ?? getArQuest(
+                            key: usernameOrId, timestamp: quest.lastUpdateTimestampMs
+                        )
                         print("has", usernameOrId, hasARQuest, quest.lastUpdateTimestampMs)
                         pokestop!.addQuest(questData: quest, hasARQuest: hasARQuest)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
