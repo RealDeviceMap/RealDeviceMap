@@ -217,15 +217,15 @@ public class WebHookController {
                         self.accountEventLock.unlock()
                         events += accountEvents.map({$0.value.getWebhookValues(type: "account")})
 
-                        Log.info(message: "[WebHookController] Events: \(events.count)")
                         if !events.isEmpty {
+                            Log.debug(message: "[WebHookController] Sending \(events.count) events to" +
+                                               "\(self.webhookURLStrings.count) endpoints")
                             guard let body = events.jsonEncodeForceTry() else {
                                 Log.error(message: "[WebHookController] Failed to parse events into json string")
                                 continue
                             }
                             let byteArray = [UInt8](body.utf8)
                             for url in self.webhookURLStrings {
-                                Log.info(message: "[WebHookController] Sending event to: \(url)")
                                 self.sendEvents(data: byteArray, url: url)
                             }
                         }

@@ -179,6 +179,7 @@ let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_UR
 if let webhookDelay = Double(webhookDelayString) {
     WebHookController.global.webhookSendDelay = webhookDelay
 }
+WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
 // Init Instance Contoller
 do {
@@ -232,9 +233,6 @@ if !Pokemon.noPVP {
 } else {
     Log.info(message: "[MAIN] PVP Stats deactivated")
 }
-
-Log.info(message: "[MAIN] Starting Webhook")
-WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
 
 Log.info(message: "[MAIN] Starting Account Controller")
 AccountController.global.setup()
