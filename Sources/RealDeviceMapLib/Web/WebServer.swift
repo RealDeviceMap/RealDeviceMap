@@ -114,13 +114,13 @@ public class WebServer {
             response.setBody(string: """
             <html lang="en">
                 <head>
-                    <title>RealDeviceMapLib - Starting...</title>
+                    <title>RealDeviceMap - Starting...</title>
                     <meta http-equiv="refresh" content="30"/>
                 </head>
 
                 <body>
                     <br>
-                    <h1 align="center">RealDeviceMapLib is starting!</h1>
+                    <h1 align="center">RealDeviceMap is starting!</h1>
                     <h2 align="center">Please wait...<h2>
                     <h2 align="center">(This page will auto reload in 30 seconds.)</h2>
                 </body>

@@ -247,7 +247,7 @@ public class WebHookController {
             .addHeader(.contentType, "application/json"),
             .addHeader(.accept, "application/json"),
             .addHeader(.cacheControl, "no-cache"),
-            .addHeader(.userAgent, "RealDeviceMapLib \(VersionManager.global.version)"),
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)"),
             .timeout(timeout),
             .connectTimeout(connectTimeout)
         )

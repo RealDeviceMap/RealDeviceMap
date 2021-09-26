@@ -3808,7 +3808,7 @@ public class WebRequestHandler {
 
             let curl = CURLRequest("https://discordapp.com/api/oauth2/token",
                                    options: [
-                                    .addHeader(.userAgent, "RealDeviceMapLib"),
+                                    .addHeader(.userAgent, "RealDeviceMap"),
                                     .addHeader(.accept, "application/json"),
                                     .postField(CURLRequest.POSTField(name: "client_id", value: oauthDiscordClientID!)),
                                     .postField(CURLRequest.POSTField(
@@ -3843,7 +3843,7 @@ public class WebRequestHandler {
 
             let curlUser = CURLRequest("https://discordapp.com/api/users/@me",
                                        options: [
-                                        .addHeader(.userAgent, "RealDeviceMapLib"),
+                                        .addHeader(.userAgent, "RealDeviceMap"),
                                         .addHeader(.accept, "application/json"),
                                         .addHeader(.authorization, "Bearer \(accessToken)")
                 ])
