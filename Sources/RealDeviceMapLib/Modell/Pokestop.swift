@@ -1117,7 +1117,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    public static func questCountIn(
+    internal static func questCountIn(
         mysql: MySQL?=nil, ids: [String], mode: AutoInstanceController.QuestMode
     ) throws -> Int64 {
         if ids.count > 10000 {
