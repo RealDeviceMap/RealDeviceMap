@@ -155,7 +155,7 @@ public class WebRequestHandler {
         }
 
         if perms.contains(.viewStats) {
-            // data["show_stats"] = true
+            data["show_stats"] = true
             data["stats_url"] = WebRequestHandler.statsUrl
         }
 
@@ -333,6 +333,50 @@ public class WebRequestHandler {
                            "filter_export", "filter_import", "filter_submission_cells"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
+            }
+        case .stats:
+            if perms.contains(.viewStats) {
+                data["page_is_stats"] = true
+                data["show_stats"] = true
+                data["title"] = title
+                data["page"] = localizer.get(value: "title_stats")
+
+                data["pokemon"] = try? Stats.getPokemonIVStats()
+                data["raids"] = try? Stats.getRaidStats()
+                data["eggs"] = try? Stats.getRaidEggStats()
+                data["quests_items"] = try? Stats.getQuestItemStats()
+                data["quests_pokemon"] = try? Stats.getQuestPokemonStats()
+                data["invasions"] = try? Stats.getInvasionStats()
+                data["new_pokestops"] = try? Stats.getNewPokestops(hours: 24)
+                data["new_gyms"] = try? Stats.getNewGyms(hours: 24)
+                var ids = [[String: Any]]()
+                for id in 1...WebRequestHandler.maxPokemonId {
+                    let name = Localizer.global.get(value: "poke_\(id)")
+                    ids.append(["id": id, "name": name])
+                }
+                data["pokemon_ids"] = ids
+
+                // Localize
+                let statLoc = [
+                    "title_stats", "stats_tab_overview", "stats_tab_pokemon", "stats_tab_raids", "stats_tab_quests",
+                    "stats_tab_invasions", "stats_tab_commday", "stats_overview", "stats_active_pokemon",
+                    "stats_total_gyms", "stats_active_raids", "stats_total_pokestops", "stats_pokemon",
+                    "stats_total_pokemon", "stats_total_ivs", "stats_active_ivs", "stats_gyms", "stats_neutral_gyms",
+                    "stats_valor_gyms", "stats_mystic_gyms", "stats_instinct_gyms", "stats_pokestops",
+                    "stats_invasions", "stats_normal_lures", "stats_glacial_lures", "stats_mossy_lures",
+                    "stats_magnetic_lures", "stats_field_research", "stats_spawnpoint_timers", "stats_spawnpoint_total",
+                    "stats_spawnpoint_found", "stats_spawnpoint_missing", "stats_spawnpoint_percentage",
+                    "stats_community_day", "stats_filter_start_date", "stats_filter_end_date", "stats_filter_select",
+                    "stats_scans", "stats_seen", "stats_scanned", "stats_male_spawns", "stats_female_spawns",
+                    "stats_sex", "stats_100iv", "stats_90iv", "stats_0iv", "stats_date", "stats_eggs", "stats_raids",
+                    "stats_quests", "stats_quests_item_rewards", "stats_quests_pokemon_rewards", "stats_grunt_types",
+                    "stats_statistics", "stats_active_100iv", "stats_active_90iv", "stats_active_0iv",
+                    "stats_active_shiny", "stats_total_shiny", "stats_active_iv_statistics", "stats_top10_pokemon",
+                    "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms"
+                ]
+                for loc in statLoc {
+                    data[loc] = localizer.get(value: loc)
+                }
             }
         case .confirmemail:
             data["page_is_profile"] = true
