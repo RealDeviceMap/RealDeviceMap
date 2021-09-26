@@ -54,7 +54,6 @@ public class WebHookController {
     private var queue: ThreadQueue?
 
     public func addPokemonEvent(pokemon: Pokemon) {
-        print("[TEST] addPokemonEvent \(pokemon.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             pokemonEventLock.lock()
             pokemonEvents[pokemon.id] = pokemon
@@ -63,7 +62,6 @@ public class WebHookController {
     }
 
     public func addPokestopEvent(pokestop: Pokestop) {
-        print("[TEST] addPokestopEvent \(pokestop.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             pokestopEventLock.lock()
             pokestopEvents[pokestop.id] = pokestop
@@ -72,7 +70,6 @@ public class WebHookController {
     }
 
     public func addLureEvent(pokestop: Pokestop) {
-        print("[TEST] addLureEvent \(pokestop.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             lureEventLock.lock()
             lureEvents[pokestop.id] = pokestop
@@ -81,7 +78,6 @@ public class WebHookController {
     }
 
     public func addInvasionEvent(pokestop: Pokestop) {
-        print("[TEST] addInvasionEvent \(pokestop.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             invasionEventLock.lock()
             invasionEvents[pokestop.id] = pokestop
@@ -90,7 +86,6 @@ public class WebHookController {
     }
 
     public func addQuestEvent(pokestop: Pokestop) {
-        print("[TEST] addQuestEvent \(pokestop.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             questEventLock.lock()
             questEvents[pokestop.id] = pokestop
@@ -99,7 +94,6 @@ public class WebHookController {
     }
 
     public func addGymEvent(gym: Gym) {
-        print("[TEST] addGymEvent \(gym.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             gymEventLock.lock()
             gymEvents[gym.id] = gym
@@ -108,7 +102,6 @@ public class WebHookController {
     }
 
     public func addGymInfoEvent(gym: Gym) {
-        print("[TEST] addGymInfoEvent \(gym.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             gymInfoEventLock.lock()
             gymInfoEvents[gym.id] = gym
@@ -117,7 +110,6 @@ public class WebHookController {
     }
 
     public func addEggEvent(gym: Gym) {
-        print("[TEST] addEggEvent \(gym.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             eggEventLock.lock()
             eggEvents[gym.id] = gym
@@ -126,7 +118,6 @@ public class WebHookController {
     }
 
     public func addRaidEvent(gym: Gym) {
-        print("[TEST] addRaidEvent \(gym.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             raidEventLock.lock()
             raidEvents[gym.id] = gym
@@ -135,7 +126,6 @@ public class WebHookController {
     }
 
     public func addWeatherEvent(weather: Weather) {
-        print("[TEST] addWeatherEvent \(weather.id) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             weatherEventLock.lock()
             weatherEvents[weather.id] = weather
@@ -144,7 +134,6 @@ public class WebHookController {
     }
 
     public func addAccountEvent(account: Account) {
-        print("[TEST] addAccountEvent \(account.username) (urls: \(webhookURLStrings.count))")
         if !self.webhookURLStrings.isEmpty {
             accountEventLock.lock()
             accountEvents[account.username] = account
@@ -166,80 +155,68 @@ public class WebHookController {
                         let pokemonEvents = self.pokemonEvents
                         self.pokemonEvents = [:]
                         self.pokemonEventLock.unlock()
-                        print("[TEST] pokemonEvents \(pokemonEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += pokemonEvents.map({$0.value.getWebhookValues(type: "pokemon")})
 
                         self.pokestopEventLock.lock()
                         let pokestopEvents = self.pokestopEvents
                         self.pokestopEvents = [:]
                         self.pokestopEventLock.unlock()
-                        print("[TEST] pokestopEvents \(pokestopEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += pokestopEvents.map({$0.value.getWebhookValues(type: "pokestop")})
 
                         self.lureEventLock.lock()
                         let lureEvents = self.lureEvents
                         self.lureEvents = [:]
                         self.lureEventLock.unlock()
-                        print("[TEST] lureEvents \(lureEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += lureEvents.map({$0.value.getWebhookValues(type: "lure")})
 
                         self.invasionEventLock.lock()
                         let invasionEvents = self.invasionEvents
                         self.invasionEvents = [String: Pokestop]()
                         self.invasionEventLock.unlock()
-                        print("[TEST] invasionEvents \(invasionEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += invasionEvents.map({$0.value.getWebhookValues(type: "invasion")})
 
                         self.questEventLock.lock()
                         let questEvents = self.questEvents
                         self.questEvents = [String: Pokestop]()
                         self.questEventLock.unlock()
-                        print("[TEST] questEvents \(questEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += questEvents.map({$0.value.getWebhookValues(type: "quest")})
 
                         self.gymEventLock.lock()
                         let gymEvents = self.gymEvents
                         self.gymEvents = [String: Gym]()
                         self.gymEventLock.unlock()
-                        print("[TEST] gymEvents \(gymEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += gymEvents.map({$0.value.getWebhookValues(type: "gym")})
 
                         self.gymInfoEventLock.lock()
                         let gymInfoEvents = self.gymInfoEvents
                         self.gymInfoEvents = [String: Gym]()
                         self.gymInfoEventLock.unlock()
-                        print("[TEST] gymInfoEvents \(gymInfoEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += gymInfoEvents.map({$0.value.getWebhookValues(type: "gym-info")})
 
                         self.raidEventLock.lock()
                         let raidEvents = self.raidEvents
                         self.raidEvents = [String: Gym]()
                         self.raidEventLock.unlock()
-                        print("[TEST] raidEvents \(raidEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += raidEvents.map({$0.value.getWebhookValues(type: "raid")})
 
                         self.eggEventLock.lock()
                         let eggEvents = self.eggEvents
                         self.eggEvents = [String: Gym]()
                         self.eggEventLock.unlock()
-                        print("[TEST] eggEvents \(eggEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += eggEvents.map({$0.value.getWebhookValues(type: "egg")})
 
                         self.weatherEventLock.lock()
                         let weatherEvents = self.weatherEvents
                         self.weatherEvents = [Int64: Weather]()
                         self.weatherEventLock.unlock()
-                        print("[TEST] weatherEvents \(weatherEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += weatherEvents.map({$0.value.getWebhookValues(type: "weather")})
 
                         self.accountEventLock.lock()
                         let accountEvents = self.accountEvents
                         self.accountEvents = [String: Account]()
                         self.accountEventLock.unlock()
-                        print("[TEST] accountEvents \(accountEvents.count) (urls: \(self.webhookURLStrings.count))")
                         events += accountEvents.map({$0.value.getWebhookValues(type: "account")})
 
-                        print("[TEST] events \(events.count) (urls: \(self.webhookURLStrings.count))")
                         if !events.isEmpty {
                             Log.debug(message: "[WebHookController] Sending \(events.count) events to" +
                                                "\(self.self.webhookURLStrings.count) endpoints")

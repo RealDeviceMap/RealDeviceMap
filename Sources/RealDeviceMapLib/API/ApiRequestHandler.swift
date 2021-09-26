@@ -88,6 +88,15 @@ public class ApiRequestHandler {
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
 
+        WebHookController.global.addAccountEvent(account: Account(
+            username: "test", password: "test", level: 1, firstWarningTimestamp: nil,
+            failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
+            lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
+            warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
+            suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
+            lastUsedTimestamp: nil, group: nil
+        ))
+
         guard let perms = getPerms(request: request, response: response) else {
             return
         }
