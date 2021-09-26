@@ -38,26 +38,20 @@ COPY Package.swift Package.swift
 COPY .emptysources Sources
 COPY .emptytests Tests
 RUN swift package update
-RUN swift build \
-    --enable-test-discovery \
-    -c release \
-    -Xswiftc -g
+RUN swift build -c release -Xswiftc -g
 RUN rm -rf Sources
 RUN rm -rf Tests
 
 # Build with optimizations
 COPY Sources Sources
 COPY Tests Tests
-RUN swift build \
-    --enable-test-discovery \
-    -c release \
-    -Xswiftc -g
+RUN swift build -c release -Xswiftc -g
 
 
 # ================================
 # Run image
 # ================================
-FROM swift:5.4
+FROM swift:5.4-focal
 WORKDIR /app
 
 # Perfect-COpenSSL
