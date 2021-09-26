@@ -40,14 +40,14 @@ let package = Package(
                 .product(name: "Regex", package: "Regex"),
                 .product(name: "Turf", package: "Turf"),
                 .product(name: "S2Geometry", package: "S2Geometry"),
-                .product(name: "POGOProtos", package: "POGOProtos")
+                .product(name: "POGOProtos", package: "POGOProtos"),
+                .product(name: "Backtrace", package: "swift-backtrace")
             ]
         ),
         .executableTarget(
             name: "RealDeviceMapApp",
             dependencies: [
-                .target(name: "RealDeviceMapLib"),
-                .product(name: "Backtrace", package: "swift-backtrace")
+                .target(name: "RealDeviceMapLib")
             ]
         ),
         .testTarget(
