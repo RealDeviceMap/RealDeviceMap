@@ -217,6 +217,7 @@ public class WebHookController {
                         self.accountEventLock.unlock()
                         events += accountEvents.map({$0.value.getWebhookValues(type: "account")})
 
+                        Log.info("[WebHookController] Events: \(events.count)")
                         if !events.isEmpty {
                             guard let body = events.jsonEncodeForceTry() else {
                                 Log.error(message: "[WebHookController] Failed to parse events into json string")
@@ -224,6 +225,7 @@ public class WebHookController {
                             }
                             let byteArray = [UInt8](body.utf8)
                             for url in self.webhookURLStrings {
+                                Log.info("[WebHookController] Sending event to: \(url)")
                                 self.sendEvents(data: byteArray, url: url)
                             }
                         }
