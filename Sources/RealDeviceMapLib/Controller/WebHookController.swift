@@ -193,9 +193,9 @@ public class WebHookController {
 
                         self.alternativeQuestEventsLock.lock()
                         let alternativeQuestEvents = self.alternativeQuestEvents
+                        events += alternativeQuestEvents.map({$0.value.getWebhookValues(type: "alternative_quest")})
                         self.alternativeQuestEvents = [String: Pokestop]()
                         self.alternativeQuestEventsLock.unlock()
-                        events += alternativeQuestEvents.map({$0.value.getWebhookValues(type: "alternative_quest")})
 
                         self.gymEventLock.lock()
                         let gymEvents = self.gymEvents
