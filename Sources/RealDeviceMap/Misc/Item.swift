@@ -44,7 +44,7 @@ extension Item {
         .goldenRazzBerry,
         // .goldenNanabBerry,
         .goldenPinapBerry,
-        // .poffin,
+        .poffin,
         // .specialCamera,
         // .stickerInventory,
         // .incubatorBasicUnlimited,
