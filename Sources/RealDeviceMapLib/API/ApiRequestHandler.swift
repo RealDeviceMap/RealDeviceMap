@@ -1034,7 +1034,7 @@ public class ApiRequestHandler {
             let invasionTypeString = Localizer.global.get(value: "filter_invasion_grunt_type")
 
             var invasionData = [[String: Any]]()
-            let filteredGrunts = [1...7, 10...44, 47...50].joined()
+            let filteredGrunts = [1...7, 10...44, 47...50, 500...510].joined()
             for i in filteredGrunts {
                 let grunt = Localizer.global.get(value: "grunt_\(i)")
 
