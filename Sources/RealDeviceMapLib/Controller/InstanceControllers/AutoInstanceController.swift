@@ -400,6 +400,27 @@ class AutoInstanceController: InstanceControllerProto {
                     if closest == nil {
                         return [:]
                     }
+                    if (mode == nil || mode == true) && closest!.alternative == false {
+                        print("[TMP] switching mode from \(mode == true ? "alternative" : "none") to normal")
+                        var closestAR: PokestopWithMode?
+                        var closestARDistance: Double = 10000000000000000
+                        for stop in allStops! where stop.pokestop.arScanEligible == true {
+                            let coord = Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)
+                            let dist = lastCoord!.distance(to: coord)
+                            if dist < closestARDistance {
+                                closestAR = stop
+                                closestARDistance = dist
+                            }
+                        }
+                        if closestAR != nil {
+                            closestAR!.alternative = closest!.alternative
+                            closest = closestAR
+                            print("[TMP] scanning AR eligible stop \(closest!.pokestop.id)")
+                        } else {
+                            print("[TMP] no AR eligible stop found")
+                        }
+                    }
+
                     pokestop = closest!
 
                     var nearbyStops = [pokestop]
