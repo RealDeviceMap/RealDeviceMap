@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.4
 
 import PackageDescription
 
@@ -26,7 +26,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "RealDeviceMap",
+            name: "RealDeviceMapLib",
             dependencies: [
                 .product(name: "PerfectHTTPServer", package: "PerfectHTTPServer"),
                 .product(name: "PerfectSessionMySQL", package: "PerfectSessionMySQL"),
@@ -44,10 +44,16 @@ let package = Package(
                 .product(name: "Backtrace", package: "swift-backtrace")
             ]
         ),
+        .executableTarget(
+            name: "RealDeviceMapApp",
+            dependencies: [
+                .target(name: "RealDeviceMapLib")
+            ]
+        ),
         .testTarget(
             name: "RealDeviceMapTests",
             dependencies: [
-                "RealDeviceMap"
+                .target(name: "RealDeviceMapLib")
             ]
         )
     ],
