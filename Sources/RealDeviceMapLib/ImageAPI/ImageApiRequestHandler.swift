@@ -55,6 +55,7 @@ class ImageApiRequestHandler {
 
         let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
         let file: File?
+        // TODO: always generate even if only for resizing
         if let baseFile = baseFile, !pokemon.isStandard {
             file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
         } else {
@@ -66,14 +67,14 @@ class ImageApiRequestHandler {
     }
 
     private static func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
-        let baseGeneratedPath = Dir("\(projectroot)/resources/webroot/static/img/\(pokemon.style)/generated")
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
         let file = File("\(baseGeneratedPath.path)\(pokemon.hash).png")
         if file.exists { return file }
 
-        let basePath = "\(projectroot)/resources/webroot/static/img/\(pokemon.style)"
+        let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
         let spawnTypeFile = pokemon.spawnType != nil ?
                 File("\(basePath)/misc/spawn_type/\(pokemon.spawnType!.rawValue).png") :
                 nil
@@ -134,6 +135,7 @@ class ImageApiRequestHandler {
 
         let baseFile = getFirstPath(style: gym.style, folder: "gym", id: "\(gym.id)", postfixes: postfixes)
         let file: File?
+        // TODO: always generate even if only for resizing
         if let baseFile = baseFile, !gym.isStandard {
             file = buildGymImage(gym: gym, baseFile: baseFile)
         } else {
@@ -145,7 +147,7 @@ class ImageApiRequestHandler {
     }
 
     private static func buildGymImage(gym: Gym, baseFile: File) -> File? {
-        let baseGeneratedPath = Dir("\(projectroot)/resources/webroot/static/img/\(gym.style)/generated")
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(gym.style)/generated")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
@@ -180,7 +182,7 @@ class ImageApiRequestHandler {
 
     // MARK: Utils
     private static func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
-        let basePath = "\(projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
+        let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
 
         var combinations: [[String]] = []
         let bitValues = (0...postfixes.count).map { i in Int(pow(2, Double(i))) }

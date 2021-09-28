@@ -11,45 +11,37 @@ import Foundation
 import PerfectLib
 import PerfectThread
 
-public class ImageGenerator {
+class ImageGenerator {
 
     private static let magickEnv = ["MAGICK_THREAD_LIMIT": "1"]
 
     private init() {}
 
-    //  swiftlint:disable force_try
-    static func generate() {
-        let raidDir = Dir("\(projectroot)/resources/webroot/static/img/raid/")
-        let gymDir = Dir("\(projectroot)/resources/webroot/static/img/gym/")
-        let eggDir = Dir("\(projectroot)/resources/webroot/static/img/egg/")
-        var unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unkown_egg/")
-        if !unkownEggDir.exists {
-            unkownEggDir = Dir("\(projectroot)/resources/webroot/static/img/unknown_egg/")
+    internal static func buildPokemonImage(
+        baseImage: String, image: String, spawnTypeImage: String?, rankingImage: String?
+    ) {
+        var markerAgs = [String]()
+        if let spawnTypeImage = spawnTypeImage {
+            markerAgs += [
+                "(", spawnTypeImage, "-resize", "48x48", ")",
+                "-gravity", "Center",
+                "-geometry", "-24+24",
+                "-composite"
+            ]
         }
-        let pokestopDir = Dir("\(projectroot)/resources/webroot/static/img/pokestop/")
-        let pokemonDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon/")
-        let wildPokemonDir = Dir("\(projectroot)/resources/webroot/static/img/wild_pokemon/")
-        let pokemonLeagueDir = Dir("\(projectroot)/resources/webroot/static/img/pokemon_league/")
-        let itemDir = Dir("\(projectroot)/resources/webroot/static/img/item/")
-        let questDir = Dir("\(projectroot)/resources/webroot/static/img/quest/")
-        let gruntDir = Dir("\(projectroot)/resources/webroot/static/img/grunt/")
-        let invasionDir = Dir("\(projectroot)/resources/webroot/static/img/invasion/")
-        let questInvasionDir = Dir("\(projectroot)/resources/webroot/static/img/quest_invasion/")
-
-        let firstFile = File("\(projectroot)/resources/webroot/static/img/misc/first.png")
-        let secondFile = File("\(projectroot)/resources/webroot/static/img/misc/second.png")
-        let thirdFile = File("\(projectroot)/resources/webroot/static/img/misc/third.png")
-
-        let grassFile = File("\(projectroot)/resources/webroot/static/img/misc/grass.png")
-
-        if !raidDir.exists {
-            try! raidDir.create()
+        if let rankingImage = rankingImage {
+            markerAgs += [
+                "(", rankingImage, "-resize", "48x48", ")",
+                "-gravity", "Center",
+                "-geometry", "+24+24",
+                "-composite"
+            ]
         }
         Shell([
             "/usr/local/bin/convert",
             "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "center"
-            ] + markerAgs + [
+            "-gravity", "center",
+        ] + markerAgs + [
             image
         ]).run(environment: magickEnv)
     }
@@ -57,8 +49,8 @@ public class ImageGenerator {
     internal static func buildRaidImage(baseImage: String, raidImage: String, image: String) {
         Shell([
             "/usr/local/bin/convert",
-            "(", raidImage, "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "-background", "none", ")",
-            "(", baseImage, "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "-background", "none", ")",
+            "(", raidImage, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", ")",
+            "(", baseImage, "-background", "none", "-resize", "96x96", "-gravity", "south", "-extent", "96x160", ")",
             "-gravity", "center",
             "-compose", "over",
             "-composite",

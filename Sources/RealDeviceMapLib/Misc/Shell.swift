@@ -11,6 +11,10 @@ public class Shell {
 
     private var args: [String]
 
+    public init (_ args: [String]) {
+        self.args = args
+    }
+
     public init (_ args: String...) {
         self.args = args
     }
