@@ -1,3 +1,10 @@
+//
+//  Double.swift
+//  RealDeviceMapLib
+//
+//  Created by Florian Kostenzer on 05.08.21.
+//
+
 import PerfectLib
 
 extension File {

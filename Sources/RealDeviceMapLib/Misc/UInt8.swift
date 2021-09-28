@@ -1,3 +1,10 @@
+//
+//  UInt8.swift
+//  RealDeviceMapLib
+//
+//  Created by Florian Kostenzer on 05.08.21.
+//
+
 extension UInt8 {
 
     // Source: https://github.com/PerfectlySoft/Perfect-HTTP/blob/master/Sources/PerfectHTTP/StaticFileHandler.swift

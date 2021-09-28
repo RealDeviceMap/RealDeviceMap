@@ -1,6 +1,6 @@
 //
 //  APIRoutes.swift
-//  RealDeviceMap
+//  RealDeviceMapLib
 //
 //  Created by Florian Kostenzer on 05.09.21.
 //
