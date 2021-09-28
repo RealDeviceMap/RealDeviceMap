@@ -20,8 +20,6 @@ class ImageGenerator {
     internal static func buildPokemonImage(
         baseImage: String, image: String, spawnTypeImage: String?, rankingImage: String?
     ) {
-        print(baseImage, image, spawnTypeImage, rankingImage)
-
         var markerAgs = [String]()
         if let spawnTypeImage = spawnTypeImage {
             markerAgs += [
@@ -39,69 +37,25 @@ class ImageGenerator {
                 "-composite"
             ]
         }
-
-        print(([
-            "/usr/local/bin/convert",
-            "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "Center"
-            ] + markerAgs + [
-            image
-        ]).joined(separator: " "))
         Shell([
             "/usr/local/bin/convert",
             "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "Center"
+            "-gravity", "center"
             ] + markerAgs + [
             image
         ]).run(environment: magickEnv)
-
     }
 
-    private static func combineImages(image1: String, image2: String, method: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none",
-                  "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "tmp1.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none",
-                  "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "tmp2.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
-                  "-gravity", "center", "-compose", method, "-composite", output).run(environment: magickEnv)
-        _ = Shell("rm", "-f", "tmp1.png").run()
-        _ = Shell("rm", "-f", "tmp2.png").run()
-    }
-
-    private static func combineImagesGrunt(image1: String, image2: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none",
-                  "-resize", "96x96", "-gravity", "center", "tmp1.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none",
-                  "-resize", "64x64", "-gravity", "center", "tmp2.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
-                  "-gravity", "center", "-geometry", "+0-19", "-compose", "over", "-composite", output)
-            .run(environment: magickEnv)
-        _ = Shell("rm", "-f", "tmp1.png").run()
-        _ = Shell("rm", "-f", "tmp2.png").run()
-    }
-
-    private static func combineImagesGruntQuest(image1: String, image2: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none",
-                  "-resize", "96x160", "-gravity", "center", "tmp1.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none",
-                  "-resize", "64x64", "-gravity", "center", "tmp2.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
-                  "-gravity", "center", "-geometry", "+0+13", "-compose", "over", "-composite", output)
-            .run(environment: magickEnv)
-        _ = Shell("rm", "-f", "tmp1.png").run()
-        _ = Shell("rm", "-f", "tmp2.png").run()
-    }
-
-    private static func combineImagesLeague(image1: String, image2: String, output: String) {
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image1, "-background", "none",
-                  "-resize", "96x96", "-gravity", "center", "tmp1.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", image2, "-background", "none",
-                  "-resize", "64x64", "-gravity", "center", "tmp2.png").run(environment: magickEnv)
-        _ = Shell("/usr/local/bin/convert", "-limit", "thread", "1", "tmp1.png", "tmp2.png",
-                  "-gravity", "SouthWest", "-compose", "over", "-composite", output)
-            .run(environment: magickEnv)
-        _ = Shell("rm", "-f", "tmp1.png").run()
-        _ = Shell("rm", "-f", "tmp2.png").run()
+    internal static func buildRaidImage(baseImage: String, raidImage: String, image: String) {
+        Shell([
+            "/usr/local/bin/convert",
+            "(", raidImage, "-resize", "96x96", "-gravity", "north", "-extent", "96x160", "-background", "none", ")",
+            "(", baseImage, "-resize", "96x96", "-gravity", "south", "-extent", "96x160", "-background", "none", ")",
+            "-gravity", "center",
+            "-compose", "over",
+            "-composite",
+            image
+        ]).run(environment: magickEnv)
     }
 
 }

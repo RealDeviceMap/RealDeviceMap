@@ -16,6 +16,9 @@ class ImageAPIRoutes {
         let routes = [
             Route(method: .get, uri: "/image-api/pokemon", handler: { (request, response) in
                 ImageApiRequestHandler.handlePokemon(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/gym", handler: { (request, response) in
+                ImageApiRequestHandler.handleGym(request: request, response: response)
             })
         ]
 

@@ -19,6 +19,7 @@ class Shell {
         self.args = args
     }
 
+    @discardableResult
     func run(errorPipe: Any?=nil, inputPipe: Any?=nil, environment: [String: String]?=nil) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"
@@ -40,6 +41,7 @@ class Shell {
         return String(data: data, encoding: String.Encoding.utf8)
     }
 
+    @discardableResult
     func runError(standartPipe: Any?=nil, inputPipe: Any?=nil, environment: [String: String]?=nil) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"

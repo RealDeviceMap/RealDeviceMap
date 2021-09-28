@@ -16,6 +16,10 @@ class ImageApiRequestHandler {
     internal static var defaultIconSet: String?
     internal static let pokemonPathCacheLock = Threading.Lock()
     internal static var pokemonPathCache = [Pokemon: File]()
+    internal static let gymPathCacheLock = Threading.Lock()
+    internal static var gymPathCache = [Gym: File]()
+    internal static let raidPathCacheLock = Threading.Lock()
+    internal static var raidPathCache = [Raid: File]()
 
     // MARK: Pokemon
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
@@ -67,14 +71,15 @@ class ImageApiRequestHandler {
             try? baseGeneratedPath.create()
         }
         let file = File("\(baseGeneratedPath.path)\(pokemon.hash).png")
-        print(file.path)
         if file.exists { return file }
 
-        let basePath = "\(projectroot)/resources/webroot/static/img/\(pokemon.style)/misc"
+        let basePath = "\(projectroot)/resources/webroot/static/img/\(pokemon.style)"
         let spawnTypeFile = pokemon.spawnType != nil ?
-                File("\(basePath)/spawn_type/\(pokemon.spawnType!.rawValue).png") :
+                File("\(basePath)/misc/spawn_type/\(pokemon.spawnType!.rawValue).png") :
                 nil
-        let rankingFile = pokemon.ranking != nil ? File("\(basePath)/ranking/\(pokemon.ranking!.rawValue).png") : nil
+        let rankingFile = pokemon.ranking != nil ?
+                File("\(basePath)/misc/ranking/\(pokemon.ranking!.rawValue).png") :
+                nil
 
         ImageGenerator.buildPokemonImage(
             baseImage: baseFile.path,
@@ -86,6 +91,92 @@ class ImageApiRequestHandler {
     }
 
     // MARK: Gym
+    public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+
+        let level = request.param(name: "level")?.toInt()
+        let battle = request.param(name: "battle")?.toBool() ?? false
+        let ex = request.param(name: "ex")?.toBool() ?? false
+
+        let raidLevel = request.param(name: "raid_level")?.toInt()
+        let raidEx = request.param(name: "raid_ex")?.toBool() ?? false
+        let raidHatched = request.param(name: "raid_hatched")?.toBool() ?? false
+        let raid = raidLevel != nil ? Raid(style: style, level: raidLevel!, hatched: raidHatched, ex: raidEx) : nil
+
+        let raidPokemonId = request.param(name: "raid_pokemon_id")?.toInt()
+        let raidPokemonEvolution = request.param(name: "raid_pokemon_evolution")?.toInt()
+        let raidPokemonForm = request.param(name: "raid_pokemon_form")?.toInt()
+        let raidPokemonCostume = request.param(name: "raid_pokemon_costume")?.toInt()
+        let raidPokemonGender = request.param(name: "raid_pokemon_gender")?.toInt()
+        let raidPokemon = raidPokemonId != nil ? Pokemon(
+            style: style, id: raidPokemonId!, evolution: raidPokemonEvolution,
+            form: raidPokemonForm, costume: raidPokemonCostume, gender: raidPokemonGender
+        ) : nil
+
+        let gym = Gym(
+            style: style, id: id, level: level, battle: battle, ex: ex, raid: raid, raidPokemon: raidPokemon
+        )
+        let file = findGymImage(gym: gym)
+        sendFile(response: response, file: file)
+    }
+
+    private static func findGymImage(gym: Gym) -> File? {
+        let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if let level = gym.level { postfixes.append("t\(level)") }
+        if gym.battle { postfixes.append("b") }
+        if gym.ex { postfixes.append("ex") }
+
+        let baseFile = getFirstPath(style: gym.style, folder: "gym", id: "\(gym.id)", postfixes: postfixes)
+        let file: File?
+        if let baseFile = baseFile, !gym.isStandard {
+            file = buildGymImage(gym: gym, baseFile: baseFile)
+        } else {
+            file = baseFile
+        }
+
+        gymPathCacheLock.doWithLock { gymPathCache[gym] = file }
+        return file
+    }
+
+    private static func buildGymImage(gym: Gym, baseFile: File) -> File? {
+        let baseGeneratedPath = Dir("\(projectroot)/resources/webroot/static/img/\(gym.style)/generated")
+        if !baseGeneratedPath.exists {
+            try? baseGeneratedPath.create()
+        }
+        let file = File("\(baseGeneratedPath.path)\(gym.hash).png")
+        if file.exists { return file }
+
+        let raidImage = gym.raid != nil ? findRaidImage(raid: gym.raid!) : nil
+        let raidPokemonImage = gym.raidPokemon != nil ? findPokemonImage(pokemon: gym.raidPokemon!) : nil
+
+        guard let usedRaidImage = raidPokemonImage ?? raidImage else {
+            return baseFile
+        }
+
+        ImageGenerator.buildRaidImage(baseImage: baseFile.path, raidImage: usedRaidImage.path, image: file.path)
+        return file
+    }
+
+    // MARK: Raid
+    private static func findRaidImage(raid: Raid) -> File? {
+        let existingFile = raidPathCacheLock.doWithLock { raidPathCache[raid] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if raid.hatched { postfixes.append("h") }
+        if raid.ex { postfixes.append("ex") }
+
+        let file = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
+
+        raidPathCacheLock.doWithLock { raidPathCache[raid] = file }
+        return file
+    }
 
     // MARK: Utils
     private static func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
@@ -194,13 +285,16 @@ extension ImageApiRequestHandler {
 
         // Generated
         var raid: Raid?
+        var raidPokemon: Pokemon?
 
         var isStandard: Bool {
-            return raid == nil
+            return raid == nil && raidPokemon == nil
         }
 
         var hash: String {
-            return "\(id)_t\(level ?? 0)\(battle ? "_b" : "")\(ex ? "_ex": "")\(raid ? "_r\(raid!.hash)" : "")"
+            return "\(id)_t\(level ?? 0)\(battle ? "_b" : "")\(ex ? "_ex": "")" +
+                "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
+                "\(raidPokemon != nil ? "_p(\(raidPokemon!.hash)" : ""))"
         }
 
     }
@@ -208,6 +302,7 @@ extension ImageApiRequestHandler {
     struct Raid: Hashable {
 
         // Standard
+        var style: String
         var level: Int
         var hatched: Bool = false
         var ex: Bool = false
