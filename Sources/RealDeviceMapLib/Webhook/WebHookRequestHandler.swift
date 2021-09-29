@@ -249,9 +249,22 @@ public class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        for item in inv.inventoryDelta.inventoryItem where
-                            item.inventoryItemData.playerStats.experience > 0 {
-                            trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                        var newHasARQuestTimestamp: Int64 = inv.inventoryDelta.newTimestamp
+                        var newHasARQuest = false
+                        for item in inv.inventoryDelta.inventoryItem {
+                            if item.inventoryItemData.playerStats.experience > 0 {
+                                trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                            }
+                            for quest in item.inventoryItemData.quests.quest {
+                                if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
+                                    newHasARQuest = true
+                                    newHasARQuestTimestamp = item.modifiedTimestamp
+                                }
+                            }
+                        }
+                        if usernameOrId != nil {
+                            print("set", usernameOrId, newHasARQuest, newHasARQuestTimestamp)
+                            setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
                         }
                     }
                 } else {
@@ -284,25 +297,6 @@ public class WebHookRequestHandler {
                     gymInfos.append(ggi)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
-                }
-            } else if method == 4 && usernameOrId != nil {
-                if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
-                    var newHasARQuestTimestamp: Int64 = inv.inventoryDelta.newTimestamp
-                    if inv.inventoryDelta.inventoryItem.count > 0 {
-                        var newHasARQuest = false
-                        for item in inv.inventoryDelta.inventoryItem {
-                            for quest in item.inventoryItemData.quests.quest {
-                                if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
-                                    newHasARQuest = true
-                                    newHasARQuestTimestamp = item.modifiedTimestamp
-                                }
-                            }
-                        }
-                        print("set", usernameOrId, newHasARQuest, newHasARQuestTimestamp)
-                        setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
-                    }
-                } else {
-                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
                 }
             } else if method == 106 {
                 containsGMO = true
