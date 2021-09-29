@@ -263,7 +263,8 @@ public class WebHookRequestHandler {
                             }
                         }
                         if usernameOrId != nil {
-                            print("set", usernameOrId, newHasARQuest, newHasARQuestTimestamp)
+                            print("[TMP2] inv", usernameOrId!, inv)
+                            print("[TMP2] set", usernameOrId!, newHasARQuest, newHasARQuestTimestamp)
                             setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
                         }
                     }
@@ -720,11 +721,11 @@ public class WebHookRequestHandler {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        // quest.lastUpdateTimestampMs
                         let hasARQuest = hasArQuestReq ?? getArQuest(
                             key: usernameOrId, timestamp: quest.lastUpdateTimestampMs
                         )
-                        print("has", usernameOrId, hasARQuest, quest.lastUpdateTimestampMs)
+                        print("[TMP2] quest", usernameOrId, quest)
+                        print("[TMP2] has", usernameOrId, hasARQuest, quest.lastUpdateTimestampMs)
                         pokestop!.addQuest(questData: quest, hasARQuest: hasARQuest)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
