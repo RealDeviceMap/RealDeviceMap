@@ -251,18 +251,20 @@ public class WebHookRequestHandler {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
                         var newHasARQuestTimestamp: Int64 = inv.inventoryDelta.newTimestamp
                         var newHasARQuest = false
+                        var hasQuests = false
                         for item in inv.inventoryDelta.inventoryItem {
                             if item.inventoryItemData.playerStats.experience > 0 {
                                 trainerXP = Int(item.inventoryItemData.playerStats.experience)
                             }
                             for quest in item.inventoryItemData.quests.quest {
+                                hasQuests = true
                                 if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
                                     newHasARQuest = true
                                     newHasARQuestTimestamp = item.modifiedTimestamp
                                 }
                             }
                         }
-                        if usernameOrId != nil {
+                        if hasQuests == true && usernameOrId != nil {
                             print("[TMP2] inv", usernameOrId!, inv)
                             print("[TMP2] set", usernameOrId!, newHasARQuest, newHasARQuestTimestamp)
                             setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
