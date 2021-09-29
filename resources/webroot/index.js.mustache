@@ -2524,6 +2524,7 @@ function getPokestopPopupContent (pokestop) {
       conditionsString += ')'
     }
 
+    content += '<b>AR-Quest in Inventory:</b><br>'
     content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>'
 
     $.each(pokestop.quest_rewards, function (index, reward) {
@@ -2551,10 +2552,11 @@ function getPokestopPopupContent (pokestop) {
       conditionsString += ')'
     }
 
-    content += '<b>AR-Quest Condition:</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
+    content += '<b>No AR-Quest in Inventory:</b><br>'
+    content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
 
     $.each(pokestop.alternative_quest_rewards, function (index, reward) {
-      content += '<b>AR-Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
+      content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
     })
 
     content += '<br>'
