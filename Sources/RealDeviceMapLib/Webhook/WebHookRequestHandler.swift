@@ -263,13 +263,17 @@ public class WebHookRequestHandler {
                                     newHasARQuestTimestamp = item.modifiedTimestamp
                                 }
                             }
+                            if item.deletedItemKey.questType == .questGeotargetedArScan {
+                                print("[TMP2] quest deleted", usernameOrId ?? "")
+                                newHasARQuest = false
+                            }
                         }
+                        print(
+                            "[TMP2] inv",
+                            usernameOrId!,
+                            (try? inv.jsonString().replacingOccurrences(of: "\n", with: "")) ?? ""
+                        )
                         if hasQuests && usernameOrId != nil {
-                            print(
-                                "[TMP2] inv",
-                                usernameOrId!,
-                                (try? inv.jsonString().replacingOccurrences(of: "\n", with: "")) ?? ""
-                            )
                             print("[TMP2] set", usernameOrId!, newHasARQuest, newHasARQuestTimestamp)
                             setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
                         }
