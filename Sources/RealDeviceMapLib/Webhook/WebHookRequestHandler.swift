@@ -265,6 +265,8 @@ public class WebHookRequestHandler {
                             }
                             if item.deletedItemKey.questType == .questGeotargetedArScan {
                                 print("[TMP2] quest deleted", usernameOrId ?? "")
+                                hasQuests = true
+                                newHasARQuestTimestamp = item.modifiedTimestamp
                                 newHasARQuest = false
                             }
                         }
