@@ -47,8 +47,6 @@ public class WebHookRequestHandler {
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
-    private static let hasARQuestLock = Threading.Lock()
-    private static var hasARQuest = [String: [(value: Bool, timestamp: Int64)]]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -58,30 +56,6 @@ public class WebHookRequestHandler {
         let ignored = threadLimitIgnoredCount
         threadLimitLock.unlock()
         return (current: current, total: total, ignored: ignored)
-    }
-
-    private static func setArQuest(key: String, value: Bool, timestamp: Int64) {
-        hasARQuestLock.lock()
-        if hasARQuest[key] == nil {
-            hasARQuest[key] = [(value, timestamp)]
-        } else {
-            hasARQuest[key]!.append((value, timestamp))
-            if hasARQuest[key]!.count >= 100 {
-                _ = hasARQuest[key]!.dropFirst()
-            }
-            hasARQuest[key]!.sort(by: {lhs, rhs in lhs.timestamp <= rhs.timestamp})
-        }
-        hasARQuestLock.unlock()
-    }
-
-    private static func getArQuest(key: String?, timestamp: Int64) -> Bool {
-        if key == nil {
-            return true
-        }
-        hasARQuestLock.lock()
-        let value = hasARQuest[key!]?.last(where: {element in element.timestamp < timestamp})?.value ?? true
-        hasARQuestLock.unlock()
-        return value
     }
 
     static func handle(request: HTTPRequest, response: HTTPResponse, type: WebHookServer.Action) {
@@ -153,7 +127,7 @@ public class WebHookRequestHandler {
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         var trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
-        let hasArQuestReq = json["have_ar"] as? Bool
+        let hasArQuestReqGlobal = json["have_ar"] as? Bool
         let usernameOrId = username ?? uuid
 
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
@@ -195,7 +169,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
-        var quests = [QuestProto]()
+        var quests = [(quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
@@ -207,6 +181,7 @@ public class WebHookRequestHandler {
 
         for rawData in contents {
 
+            let hasArQuestReq = rawData["have_ar"] as? Bool
             let data: Data
             let method: Int
             if let prr = rawData["GetPlayerResponse"] as? String {
@@ -249,35 +224,9 @@ public class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        var newHasARQuestTimestamp: Int64 = inv.inventoryDelta.newTimestamp
-                        var newHasARQuest = false
-                        var hasQuests = false
-                        for item in inv.inventoryDelta.inventoryItem {
-                            if item.inventoryItemData.playerStats.experience > 0 {
-                                trainerXP = Int(item.inventoryItemData.playerStats.experience)
-                            }
-                            for quest in item.inventoryItemData.quests.quest {
-                                hasQuests = true
-                                if quest.questContext == .challengeQuest && quest.questType == .questGeotargetedArScan {
-                                    newHasARQuest = true
-                                    newHasARQuestTimestamp = item.modifiedTimestamp
-                                }
-                            }
-                            if item.deletedItemKey.questType == .questGeotargetedArScan {
-                                print("[TMP2] quest deleted", usernameOrId ?? "")
-                                hasQuests = true
-                                newHasARQuestTimestamp = item.modifiedTimestamp
-                                newHasARQuest = false
-                            }
-                        }
-                        print(
-                            "[TMP2] inv",
-                            usernameOrId!,
-                            (try? inv.jsonString().replacingOccurrences(of: "\n", with: "")) ?? ""
-                        )
-                        if hasQuests && usernameOrId != nil {
-                            print("[TMP2] set", usernameOrId!, newHasARQuest, newHasARQuestTimestamp)
-                            setArQuest(key: usernameOrId!, value: newHasARQuest, timestamp: newHasARQuestTimestamp)
+                        for item in inv.inventoryDelta.inventoryItem
+                            where item.inventoryItemData.playerStats.experience > 0 {
+                            trainerXP = Int(item.inventoryItemData.playerStats.experience)
                         }
                     }
                 } else {
@@ -286,8 +235,9 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
+                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
                         let quest = fsr.challengeQuest.quest
-                        quests.append(quest)
+                        quests.append((quest: quest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
                 } else {
@@ -728,21 +678,12 @@ public class WebHookRequestHandler {
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
-                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.fortID)
+                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.quest.fortID)
                     } catch {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        let hasARQuest = hasArQuestReq ?? getArQuest(
-                            key: usernameOrId, timestamp: quest.lastUpdateTimestampMs
-                        )
-                        print(
-                            "[TMP2] quest",
-                            usernameOrId ?? "",
-                            (try? quest.jsonString().replacingOccurrences(of: "\n", with: "")) ?? ""
-                        )
-                        print("[TMP2] has", usernameOrId ?? "", hasARQuest, quest.lastUpdateTimestampMs)
-                        pokestop!.addQuest(questData: quest, hasARQuest: hasARQuest)
+                        pokestop!.addQuest(questData: quest.quest, hasARQuest: quest.hasAr)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
