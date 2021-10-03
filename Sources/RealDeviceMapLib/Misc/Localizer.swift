@@ -55,7 +55,7 @@ public class Localizer {
                     Log.error(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
                     return
             }
-            cachedData = values
+            cachedData.merge(values) { (_, new) in new }
         } catch {
             Log.error(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
         }
@@ -97,10 +97,11 @@ public class Localizer {
             "https://raw.githubusercontent.com/WatWowMap/pogo-translations/master/static/locales/\(language).json"
         )
         guard let result = try? request.perform() else {
-            Log.error(message: "[pogo-translations] Failed to load translation file")
+            Log.error(message: "[Localizer] Failed to load pogo-translations file")
             return
         }
         eTag = result.get(.eTag)
+        // save translation file for JS frontend
         let file = File("\(Dir.projectroot)/resources/webroot/static/data/www_\(language).json")
         do {
             try file.open(.readWrite)
@@ -108,8 +109,15 @@ public class Localizer {
             wwwLastModified = file.modificationTime
             file.close()
         } catch {
-            Log.error(message: "[pogo-translations] Failed to save file: \(error)")
+            Log.error(message: "[Localizer] Failed to save pogo-translations file: \(error)")
         }
+        // save translation into cache
+        let bodyJSON = try? JSONSerialization.jsonObject(with: Data(result.bodyBytes))
+        guard let values = bodyJSON as? [String: String] else {
+            Log.error(message: "[Localizer] Failed to read pogo-translations file for locale: \(Localizer.locale)")
+            return
+        }
+        cachedData.merge(values) { (_, new) in new }
     }
 
     func get(value: String) -> String {
