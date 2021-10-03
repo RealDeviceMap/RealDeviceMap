@@ -156,7 +156,6 @@ public class ApiRequestHandler {
         let showQuestStats = request.param(name: "show_quest_stats")?.toBool() ?? false
         let showInvasionStats = request.param(name: "show_invasion_stats")?.toBool() ?? false
         let showTop10Stats = request.param(name: "show_top10_stats")?.toBool() ?? false
-        let showTop10ivStats = request.param(name: "show_top10iv_stats")?.toBool() ?? false
         let iv = request.param(name: "iv")?.toDouble() ?? 0
         let date = request.param(name: "date") ?? ""
         let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
@@ -1794,14 +1793,15 @@ public class ApiRequestHandler {
         }
 
         if permViewStats && permShowPokemon && showTop10Stats {
-            let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: true)
-            let today = try? Stats.getTopPokemonStats(mysql: mysql, lifetime: false)
+            let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, mode: "lifetime")
+            let today = try? Stats.getTopPokemonStats(mysql: mysql, mode: "today")
             data["lifetime"] = lifetime
             data["today"] = today
-        }
-        if permViewStats && permShowPokemon && permShowIV && showTop10ivStats {
-            let top10iv = try? Stats.getTopPokemonIVStats(mysql: mysql, iv: iv)
-            data["top10_100iv"] = top10iv
+
+            if permShowIV {
+                let hundo = try? Stats.getTopPokemonStats(mysql: mysql, mode: "iv")
+                data["top10_100iv"] = hundo
+            }
         }
 
         if permViewStats && permShowPokemon && showPokemonStats {

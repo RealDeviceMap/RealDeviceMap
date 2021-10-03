@@ -232,7 +232,6 @@
 
         getDashboardStats();
         getTopPokemonStats();
-        getTopPokemonIVStats();
         getHistoricalPokemonStats();
         getHistoricalRaidStats();
         getHistoricalQuestStats();
@@ -325,7 +324,8 @@
                         console.log("Failed to parse result value.");
                         return;
                     }
-                    if (result.data.lifetime === null || result.data.today === null) {
+                    if (result.data.lifetime === null || result.data.today === null
+                        || result.data.top10_100iv === null) {
                         console.log("Failed to parse result value.");
                         return;
                     }
@@ -371,30 +371,6 @@
                         }
                     });
                     $('#top-10-pokemon-today').html(html);
-                }
-            });
-        }
-
-        function getTopPokemonIVStats() {
-            var data = {
-                'show_top10iv_stats': true,
-                'iv': '100',
-                'formatted': true,
-                '_csrf': "{{csrf}}"
-            };
-            $.ajax({
-                url: "/api/get_data",
-                data: data,
-                type: "POST",
-                success: function(result) {
-                    if (result === null) {
-                        console.log("Failed to parse result value.");
-                        return;
-                    }
-                    if (result.data.top10_100iv === null) {
-                        console.log("Failed to parse result value.");
-                        return;
-                    }
 
                     html = "";
                     count = 0;
@@ -406,7 +382,7 @@
                         html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
                         html +=   "<img src='./static/img/pokemon/" + value.pokemon_id + ".png' width='64' height='64'>";
                         html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
-                        html +=   "<span class='text-nowrap'>" + value.count + " 100%</span>";
+                        html +=   "<span class='text-nowrap'>" + value.count + "x 100%</span>";
                         html += "</div>";
                         if (count === 4) {
                             html += "</div>";

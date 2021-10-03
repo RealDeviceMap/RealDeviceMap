@@ -59,7 +59,7 @@ class Stats: JSONConvertibleObject {
         ]
     }
 
-    public static func getTopPokemonStats(mysql: MySQL?=nil, lifetime: Bool, limit: Int?=10) throws -> [Any] {
+    public static func getTopPokemonStats(mysql: MySQL?=nil, mode: String, limit: Int?=10) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -67,9 +67,10 @@ class Stats: JSONConvertibleObject {
         }
 
         let sql: String
-        if lifetime {
+        switch mode {
+        case "lifetime":
             sql = """
-                  SELECT iv.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
+                  SELECT iv.pokemon_id, SUM(iv.count) as count, SUM(shiny.count) as shiny
                   FROM pokemon_iv_stats iv
                     LEFT JOIN pokemon_shiny_stats shiny
                     ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
@@ -77,9 +78,9 @@ class Stats: JSONConvertibleObject {
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
                   """
-        } else {
+        case "today":
             sql = """
-                  SELECT iv.pokemon_id, SUM(shiny.count) as shiny, SUM(iv.count) as count
+                  SELECT iv.pokemon_id, SUM(iv.count) as count, SUM(shiny.count) as shiny
                   FROM pokemon_iv_stats iv
                     LEFT JOIN pokemon_shiny_stats shiny
                     ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
@@ -88,57 +89,21 @@ class Stats: JSONConvertibleObject {
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
                   """
-        }
-
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-        let results = mysqlStmt.results()
-
-        var stats = [Any]()
-        while let result = results.next() {
-
-            let pokemonId = result[0] as! UInt16
-            let shiny = Int(result[1] as? String ?? "0") ?? 0
-            let count = Int(result[2] as? String ?? "0") ?? 0
-            let name = Localizer.global.get(value: "poke_\(pokemonId)")
-
-            stats.append([
-                "pokemon_id": pokemonId,
-                "name": name,
-                "shiny": shiny.withCommas(),
-                "count": count.withCommas()
-            ])
-
-        }
-        return stats
-    }
-
-    public static func getTopPokemonIVStats(mysql: MySQL?=nil, iv: Double?=100, limit: Int?=10) throws -> [Any] {
-
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[STATS] Failed to connect to database.")
-            throw DBController.DBError()
-        }
-
-        let sql = """
-                  SELECT pokemon_id, iv, COUNT(iv) as count
-                  FROM `pokemon`
-                  WHERE first_seen_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 24 HOUR) AND
-                    iv = ?
-                  GROUP BY pokemon_id, iv
+        case "iv":
+            sql = """
+                  SELECT pokemon_id, SUM(count) as count
+                  FROM pokemon_hundo_stats
+                  WHERE date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+                  GROUP BY pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
                   """
+        default:
+            return [Any]()
+        }
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-
-        mysqlStmt.bindParam(iv)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[STATS] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -150,17 +115,16 @@ class Stats: JSONConvertibleObject {
         while let result = results.next() {
 
             let pokemonId = result[0] as! UInt16
-            let iv = result[1] as! Float
-            let count = result[2] as! Int64
+            let count = Int(result[1] as? String ?? "0") ?? 0
+            let shiny = mode == "iv" ? nil : Int(result[2] as? String ?? "0") ?? 0
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
 
             stats.append([
                 "pokemon_id": pokemonId,
-                "iv": iv,
                 "name": name,
+                "shiny": shiny?.withCommas(),
                 "count": count.withCommas()
             ])
-
         }
         return stats
     }
