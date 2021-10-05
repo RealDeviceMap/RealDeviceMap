@@ -59,7 +59,7 @@ class Stats: JSONConvertibleObject {
         ]
     }
 
-    public static func getTopPokemonStats(mysql: MySQL?=nil, mode: String, limit: Int?=10) throws -> [Any] {
+    public static func getTopPokemonStats(mysql: MySQL? = nil, mode: String, limit: Int? = 10) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -74,6 +74,17 @@ class Stats: JSONConvertibleObject {
                   FROM pokemon_iv_stats iv
                     LEFT JOIN pokemon_shiny_stats shiny
                     ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
+                  GROUP BY iv.pokemon_id
+                  ORDER BY count DESC
+                  LIMIT \(limit ?? 10)
+                  """
+        case "month":
+            sql = """
+                  SELECT iv.pokemon_id, SUM(iv.count) as count, SUM(shiny.count) as shiny
+                  FROM pokemon_iv_stats iv
+                      JOIN pokemon_shiny_stats shiny
+                      ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
+                  WHERE iv.date > FROM_UNIXTIME(UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY), '%Y-%m-%d')
                   GROUP BY iv.pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
@@ -118,18 +129,28 @@ class Stats: JSONConvertibleObject {
             let count = Int(result[1] as? String ?? "0") ?? 0
             let shiny = mode == "iv" ? nil : Int(result[2] as? String ?? "0") ?? 0
             let name = Localizer.global.get(value: "poke_\(pokemonId)")
-
+            var shinyRate = 0
+            if shiny != nil && shiny! > 0 {
+                shinyRate = count / shiny!
+            }
+            let shinyResult: String
+            if shinyRate > 0 {
+                shinyResult = "1/\(shinyRate) | "
+            } else {
+                shinyResult = "-/- | "
+            }
             stats.append([
                 "pokemon_id": pokemonId,
                 "name": name,
-                "shiny": shiny?.withCommas(),
+                "shiny": shiny?.withCommas() ?? "",
+                "shinyRate": shinyResult,
                 "count": count.withCommas()
             ])
         }
         return stats
     }
 
-    public static func getAllPokemonStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getAllPokemonStats(mysql: MySQL? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -166,7 +187,7 @@ class Stats: JSONConvertibleObject {
         return stats
     }
 
-    public static func getAllRaidStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getAllRaidStats(mysql: MySQL? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -203,7 +224,7 @@ class Stats: JSONConvertibleObject {
         return stats
     }
 
-    public static func getAllQuestStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getAllQuestStats(mysql: MySQL? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -240,7 +261,7 @@ class Stats: JSONConvertibleObject {
         return stats
     }
 
-    public static func getAllInvasionStats(mysql: MySQL?=nil) throws -> [Any] {
+    public static func getAllInvasionStats(mysql: MySQL? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -277,7 +298,7 @@ class Stats: JSONConvertibleObject {
         return stats
     }
 
-    public static func getPokemonIVStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getPokemonIVStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -330,7 +351,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getPokemonStats(mysql: MySQL?=nil) throws -> [Int64] {
+    public static func getPokemonStats(mysql: MySQL? = nil) throws -> [Int64] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -397,7 +418,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getRaidStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getRaidStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -444,7 +465,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getRaidEggStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getRaidEggStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -488,7 +509,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getPokestopStats(mysql: MySQL?=nil) throws -> [Int64] {
+    public static func getPokestopStats(mysql: MySQL? = nil) throws -> [Int64] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -540,7 +561,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getQuestItemStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getQuestItemStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -590,7 +611,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getQuestPokemonStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getQuestPokemonStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -636,7 +657,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getInvasionStats(mysql: MySQL?=nil, date: String?=nil) throws -> [Any] {
+    public static func getInvasionStats(mysql: MySQL? = nil, date: String? = nil) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -683,7 +704,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getSpawnpointStats(mysql: MySQL?=nil) throws -> [Int64] {
+    public static func getSpawnpointStats(mysql: MySQL? = nil) throws -> [Int64] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -729,7 +750,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getGymStats(mysql: MySQL?=nil) throws -> [Int64] {
+    public static func getGymStats(mysql: MySQL? = nil) throws -> [Int64] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -778,7 +799,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getNewPokestops(mysql: MySQL?=nil, hours: Int?=24) throws -> [Any] {
+    public static func getNewPokestops(mysql: MySQL? = nil, hours: Int? = 24) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -816,7 +837,7 @@ class Stats: JSONConvertibleObject {
                 "id": id,
                 "lat": lat,
                 "lon": lon,
-                "name": name ?? "",
+                "name": name ?? "Unknown Name",
                 "url": url ?? "",
                 "first_seen": firstSeen ?? 0
             ])
@@ -826,7 +847,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getNewGyms(mysql: MySQL?=nil, hours: Int?=24) throws -> [Any] {
+    public static func getNewGyms(mysql: MySQL? = nil, hours: Int? = 24) throws -> [Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[STATS] Failed to connect to database.")
@@ -864,7 +885,7 @@ class Stats: JSONConvertibleObject {
                 "id": id,
                 "lat": lat,
                 "lon": lon,
-                "name": name ?? "",
+                "name": name ?? "Unknown Name",
                 "url": url ?? "",
                 "first_seen": firstSeen ?? 0
             ])
@@ -874,7 +895,7 @@ class Stats: JSONConvertibleObject {
 
     }
 
-    public static func getCommDayStats(mysql: MySQL?=nil, pokemonId: UInt16, start: String, end: String)
+    public static func getCommDayStats(mysql: MySQL? = nil, pokemonId: UInt16, start: String, end: String)
     throws -> [String: Any] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
