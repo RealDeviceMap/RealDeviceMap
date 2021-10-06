@@ -334,7 +334,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["raid_pokemon_evolutions"] = info.megaForm.map({ (evolution) -> Int in
                     return evolution.rawValue
                 })
-            case .withItemType: break
+            case .withItemType:
                 let info = conditionData.withItemType
                 infoData["item_type_ids"] = info.itemType.map({ (type) -> Int in
                     return type.rawValue
