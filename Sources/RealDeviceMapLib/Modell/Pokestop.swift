@@ -1319,7 +1319,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
         SELECT id
         FROM `pokestop`
-        WHERE id IN (SELECT id FROM `gym`)
+        WHERE id IN (SELECT id FROM `gym` where deleted = 0)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -1366,7 +1366,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         let sql = """
         DELETE FROM `pokestop`
-        WHERE id IN (SELECT id FROM `gym`)
+        WHERE id IN (SELECT id FROM `gym` where deleted = 0)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
