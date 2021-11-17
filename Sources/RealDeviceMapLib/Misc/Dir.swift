@@ -9,8 +9,8 @@ import PerfectLib
 
 public extension Dir {
     #if DEBUG
-    public static let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.workingDir.path
+    static let projectroot = ProcessInfo.processInfo.environment["PROJECT_DIR"] ?? Dir.workingDir.path
     #else
-    public static let projectroot = Dir.workingDir.path
+    static let projectroot = Dir.workingDir.path
     #endif
 }

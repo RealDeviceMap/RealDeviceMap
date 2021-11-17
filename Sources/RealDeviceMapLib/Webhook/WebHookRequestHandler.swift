@@ -169,7 +169,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
-        var quests = [(quest: QuestProto, hasAr: Bool)]()
+        var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
@@ -237,7 +237,8 @@ public class WebHookRequestHandler {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
                         let quest = fsr.challengeQuest.quest
-                        quests.append((quest: quest, hasAr: hasAr))
+                        let title = fsr.challengeQuest.questDisplay.title
+                        quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
                 } else {
@@ -683,7 +684,7 @@ public class WebHookRequestHandler {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        pokestop!.addQuest(questData: quest.quest, hasARQuest: quest.hasAr)
+                        pokestop!.addQuest(title: quest.name, questData: quest.quest, hasARQuest: quest.hasAr)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }
