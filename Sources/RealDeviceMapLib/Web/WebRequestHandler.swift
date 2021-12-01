@@ -264,6 +264,7 @@ public class WebRequestHandler {
                                 pokestop.questConditions = nil
                                 pokestop.questRewards = nil
                                 pokestop.questTemplate = nil
+                                pokestop.questTitle = nil
                             }
                             data["start_pokestop"] = try pokestop.jsonEncodedString()
                             lat = pokestop.lat
