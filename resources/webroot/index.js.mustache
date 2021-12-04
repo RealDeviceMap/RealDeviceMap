@@ -2282,7 +2282,7 @@ function getPokemonPopupContent (pokemon) {
   if (pokemon.size !== null && pokemon.weight !== null) {
     content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + 'kg'
     if (pokemon.baseHeight !== null) {
-      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + '-' + getSize(pokemon.size, pokemon.baseHeight) + '<br>'
+      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.baseHeight) + '<br>'
     } else {
       content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
     }
@@ -4364,12 +4364,12 @@ function getSize (value, baseValue) {
   if (absoluteDeviation >= secondDeviation) {
     var signDeviation = Math.sign(deviation)
     if (signDeviation > 0) {
-      return "XL"
+      return " XL"
     } else {
-      return "XS"
+      return " XS"
     }
   } else {
-    return "N"
+    return "m"
   }
 }
 
