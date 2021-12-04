@@ -1148,7 +1148,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE pokestop
             SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL
             \(whereSQL)
         """
 
@@ -1198,7 +1198,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE pokestop
             SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL
             WHERE ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
@@ -1236,7 +1236,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
             UPDATE pokestop
             SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL
+                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL
             WHERE ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
