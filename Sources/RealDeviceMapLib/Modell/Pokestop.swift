@@ -334,7 +334,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 infoData["raid_pokemon_evolutions"] = info.megaForm.map({ (evolution) -> Int in
                     return evolution.rawValue
                 })
-            case .withItemType: break
+            case .withItemType:
                 let info = conditionData.withItemType
                 infoData["item_type_ids"] = info.itemType.map({ (type) -> Int in
                     return type.rawValue
@@ -1319,7 +1319,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
         SELECT id
         FROM `pokestop`
-        WHERE id IN (SELECT id FROM `gym`)
+        WHERE id IN (SELECT id FROM `gym` WHERE deleted = 0)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -1366,7 +1366,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         let sql = """
         DELETE FROM `pokestop`
-        WHERE id IN (SELECT id FROM `gym`)
+        WHERE id IN (SELECT id FROM `gym` WHERE deleted = 0)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
