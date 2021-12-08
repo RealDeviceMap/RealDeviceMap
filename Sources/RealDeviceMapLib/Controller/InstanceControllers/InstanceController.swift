@@ -14,7 +14,7 @@ import PerfectMySQL
 import Turf
 import POGOProtos
 
-public protocol InstanceControllerDelegate: class {
+public protocol InstanceControllerDelegate: AnyObject {
     func instanceControllerDone(mysql: MySQL?, name: String)
 }
 
