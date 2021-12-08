@@ -160,8 +160,15 @@ $(function () {
 
   $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
     i18n.translator.add(data)
+  })
+
+  $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
+    var translations = {}
+    translations.values = data
+    i18n.translator.add(translations)
     initPreview()
   })
+  
 
   $.getJSON('/static/data/pokemon.json', function (data) {
     pokemonDb = data
@@ -2949,7 +2956,7 @@ function getQuestReward (reward) {
   } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
     return i18n('quest_reward_11_formatted', { amount: info.amount, sticker_id: info.sticker_id })
   } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-    return i18n('quest_reward_12_formatted', { amount: info.amount, type: getPokemonName(info.pokemon_id) })
+    return i18n('quest_reward_12_formatted', { amount: info.amount, pokemon: getPokemonName(info.pokemon_id) })
   } else {
     return i18n('quest_reward_' + id)
   }

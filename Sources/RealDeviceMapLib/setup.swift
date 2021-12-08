@@ -76,6 +76,10 @@ public func setupRealDeviceMap() {
         fatalError(message)
     }
 
+    // Load locales
+    Log.info(message: "[MAIN] Loading Locales")
+    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
+
     // Load timezone
     Log.info(message: "[MAIN] Loading Timezone")
     if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
@@ -151,8 +155,6 @@ public func setupRealDeviceMap() {
                 ]
             ]
     }
-
-    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 
     Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
     Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600
