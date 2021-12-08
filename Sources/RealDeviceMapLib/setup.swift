@@ -13,7 +13,6 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 import Backtrace
-import RealDeviceMapLib
 
 public func setupRealDeviceMap() {
     Backtrace.install()
@@ -76,6 +75,10 @@ public func setupRealDeviceMap() {
         Log.critical(message: message)
         fatalError(message)
     }
+
+    // Load locales
+    Log.info(message: "[MAIN] Loading Locales")
+    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 
     // Load timezone
     Log.info(message: "[MAIN] Loading Timezone")
@@ -152,8 +155,6 @@ public func setupRealDeviceMap() {
                 ]
             ]
     }
-
-    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
 
     Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
     Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600
