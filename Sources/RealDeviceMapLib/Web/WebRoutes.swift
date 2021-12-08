@@ -61,6 +61,10 @@ class WebRoutes {
                 WebRequestHandler.handle(request: request, response: response, page: .home,
                                          requiredPerms: [.viewMap, .viewMapGym])
             }),
+            Route(method: .get, uri: "/stats", handler: { (request, response) in
+                WebRequestHandler.handle(request: request, response: response, page: .stats,
+                    requiredPerms: [.viewMap, .viewStats])
+            }),
             Route(method: .get, uri: "/index.js", handler: { (request, response) in
                 WebRequestHandler.handle(request: request, response: response, page: .homeJs, requiredPerms: [.viewMap])
             }),
