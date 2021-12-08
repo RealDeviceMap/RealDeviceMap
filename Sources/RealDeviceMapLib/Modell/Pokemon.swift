@@ -506,10 +506,13 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
                 "gender": ranking.pokemon.gender?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
+                "rank": ranking.response?.denseRank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
+                "level": ranking.response?.ivs.first?.level as Any,
+                "competition_rank": ranking.response?.competitionRank as Any,
+                "dense_rank": ranking.response?.denseRank as Any,
+                "ordinal_rank": ranking.response?.ordinalRank as Any
             ]
         })
 
@@ -526,10 +529,13 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
                 "gender": ranking.pokemon.gender?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
+                "rank": ranking.response?.denseRank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
+                "level": ranking.response?.ivs.first?.level as Any,
+                "competition_rank": ranking.response?.competitionRank as Any,
+                "dense_rank": ranking.response?.denseRank as Any,
+                "ordinal_rank": ranking.response?.ordinalRank as Any
             ]
         })
     }
