@@ -13,7 +13,6 @@ import PerfectHTTPServer
 import TurnstileCrypto
 import POGOProtos
 import Backtrace
-import RealDeviceMapLib
 
 public func setupRealDeviceMap() {
     Backtrace.install()
