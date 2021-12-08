@@ -625,7 +625,6 @@ public class WebRequestHandler {
             data["locale_new"] = Localizer.locale
             data["enable_register_new"] = enableRegister
             data["enable_clearing"] = WebHookRequestHandler.enableClearing
-            data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
             data["pokemon_time_old"] = Pokemon.defaultTimeReseen
             data["pokestop_lure_time"] = Pokestop.lureTime
@@ -1228,21 +1227,21 @@ public class WebRequestHandler {
         case .dashboardWebhookDelete:
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Delete Webhook"
-            
-            if request.method == .post {
-                let name = (request.urlVariables["name"] ?? "").decodeUrl()!
-                let webhook = try? Webhook.getByName(name: name)!
-                do {
-                    try webhook!.delete()
-                } catch {
-                    response.setBody(string: "Internal Server Error")
-                    sessionDriver.save(session: request.session!)
-                    response.completed(status: .internalServerError)
-                }
-                response.redirect(path: "/dashboard/webhooks")
+
+            let name = (request.urlVariables["name"] ?? "").decodeUrl()!
+
+            do {
+                try Webhook.delete(name: name)
+                WebHookController.global.reload()
+            } catch {
+                response.setBody(string: "Internal Server Error")
                 sessionDriver.save(session: request.session!)
-                response.completed(status: .seeOther)
+                response.completed(status: .internalServerError)
             }
+            response.redirect(path: "/dashboard/webhooks")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+
         case .dashboardAccounts:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -3414,20 +3413,25 @@ public class WebRequestHandler {
         throw CompletedEarly()
     }
 
-    
-    static func addWebhookGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
-        
+    static func addWebhookGet(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
         var data = data
         var typesData = [[String: Any]]()
         for type in WebhookType.allCases {
-            typesData.append(["name": WebhookType.toString(type), "selected": false])
+            typesData.append(["name": type.rawValue, "selected": false])
         }
         data["types"] = typesData
         return data
     }
-    
-    static func addWebhookPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
-        
+
+    static func addWebhookPost(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
         let name = request.param(name: "name")!
         let url = request.param(name: "url")
         let delay = request.param(name: "delay")
@@ -3436,45 +3440,58 @@ public class WebRequestHandler {
         let raidIds = request.param(name: "raid_ids")
         let eggIds = request.param(name: "egg_ids")
         let lureIds = request.param(name: "lure_ids")
+        let questIds = request.param(name: "quest_ids")
         let invasionIds = request.param(name: "invasion_ids")
         let gymIds = request.param(name: "gym_ids")
         let weatherIds = request.param(name: "weather_ids")
-        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
         let enabled = request.param(name: "enabled")
-        
+
         if url == nil {
             response.setBody(string: "Internal Server Error")
             sessionDriver.save(session: request.session!)
             response.completed(status: .internalServerError)
             throw CompletedEarly()
         }
-        
+
         var webhookTypes = [WebhookType]()
         for type in types {
-            webhookTypes.append(WebhookType.fromString(type)!)
+            webhookTypes.append(WebhookType(rawValue: type)!)
         }
-        
-        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
-        
-        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
-        
-        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
-        
-        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
-        
-        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let questIDsText = questIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let questIDs: [UInt16] = generateRange(ids: questIDsText, range: Array(1...50))
+
+        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
-        
-        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
-        
-        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
-        
+
         var data = data
         var newCoords: [Any]
         var coordArray = [[Coord]]()
@@ -3487,7 +3504,7 @@ public class WebRequestHandler {
                     let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
                     let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
                     if lat != nil && lon != nil {
-                        while coordArray.count != currentIndex + 1{
+                        while coordArray.count != currentIndex + 1 {
                             coordArray.append([Coord]())
                         }
                         coordArray[currentIndex].append(Coord(lat: lat!, lon: lon!))
@@ -3498,9 +3515,8 @@ public class WebRequestHandler {
                 }
             }
         }
-        
+
         newCoords = coordArray
-        
         let webhook: Webhook?
         do {
             webhook = try Webhook.getByName(name: name)
@@ -3510,7 +3526,7 @@ public class WebRequestHandler {
             response.completed(status: .internalServerError)
             throw CompletedEarly()
         }
-        
+
         if webhook != nil {
             data["show_error"] = true
             data["error"] = "Webhook name already exists, invalid request."
@@ -3524,26 +3540,32 @@ public class WebRequestHandler {
             webhookData["raid_ids"] = raidIDs
             webhookData["egg_ids"] = eggIDs
             webhookData["lure_ids"] = lureIDs
+            webhookData["quest_ids"] = questIDs
             webhookData["invasion_ids"] = invasionIDs
             webhookData["gym_ids"] = gymIDs
             webhookData["weather_ids"] = weatherIDs
-            let webhook = Webhook(name: name, url: url!, delay: Double(delay ?? "5.0")!, types: webhookTypes, data: webhookData, enabled: webhookEnabled)
+            let webhook = Webhook(name: name, url: url!, delay: Double(delay ?? "5.0")!,
+                types: webhookTypes, data: webhookData, enabled: webhookEnabled)
             try webhook.create()
+            WebHookController.global.reload()
         } catch {
             data["show_error"] = true
             data["error"] = "Failed to create Webhook."
             return data
         }
-        
+
         response.redirect(path: "/dashboard/webhooks")
         sessionDriver.save(session: request.session!)
         response.completed(status: .seeOther)
         throw CompletedEarly()
-        
     }
-    
-    static func editWebhookGet(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse, name: String) throws -> MustacheEvaluationContext.MapType {
-        
+
+    static func editWebhookGet(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse,
+        name: String
+    ) throws -> MustacheEvaluationContext.MapType {
         let name = (request.urlVariables["name"] ?? "").decodeUrl()!
         var data = data
         let webhook: Webhook?
@@ -3555,13 +3577,13 @@ public class WebRequestHandler {
             response.completed(status: .internalServerError)
             throw CompletedEarly()
         }
-        
+
         if webhook == nil {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
         }
-        
+
         data["name"] = webhook!.name
         data["url"] = webhook!.url
         data["delay"] = webhook!.delay
@@ -3569,35 +3591,34 @@ public class WebRequestHandler {
         for type in WebhookType.allCases {
             if webhook!.types.contains(type) {
                 switch type {
-                    case .pokemon:
-                        data["pokemon_selected"] = true
+                case .pokemon:
+                    data["pokemon_selected"] = true
+                case .raid:
+                    data["raid_selected"] = true
+                case .egg:
+                    data["egg_selected"] = true
+                case .pokestop:
                     break
-                    case .raids:
-                        data["raids_selected"] = true
-                    break
-                    case .eggs:
-                        data["eggs_selected"] = true
-                    break
-                    case .lures:
-                        data["lures_selected"] = true
-                    break
-                    case .invasions:
-                        data["invasions_selected"] = true
-                    break
-                    case .gyms:
-                        data["gyms_selected"] = true
-                    break
-                    case .weather:
-                        data["weather_selected"] = true
-                    break
+                case .lure:
+                    data["lure_selected"] = true
+                case .invasion:
+                    data["invasion_selected"] = true
+                case .gym:
+                    data["gym_selected"] = true
+                case .weather:
+                    data["weather_selected"] = true
+                case .quest:
+                    data["quest_selected"] = true
+                case .account:
+                    data["quest_selected"] = true
                 }
             }
-            typesData.append(["name": WebhookType.toString(type), "selected": webhook!.types.contains(type)])
+            typesData.append(["name": type.rawValue, "selected": webhook!.types.contains(type)])
         }
         data["types"] = typesData
         let pokemonIDsData = webhook!.data["pokemon_ids"]
-        let pokemonIDs = pokemonIDsData as? [UInt16] ?? (pokemonIDsData as? [Int])?.map({ (e) -> UInt16 in
-            return UInt16(e)
+        let pokemonIDs = pokemonIDsData as? [UInt16] ?? (pokemonIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
         }) ?? [UInt16]()
         var pokemonText = ""
         for id in pokemonIDs {
@@ -3605,8 +3626,8 @@ public class WebRequestHandler {
         }
         data["pokemon_ids"] = pokemonText
         let raidIDsData = webhook!.data["raid_ids"]
-        let raidIDs = raidIDsData as? [UInt16] ?? (raidIDsData as? [Int])?.map({ (e) -> UInt16 in
-            return UInt16(e)
+        let raidIDs = raidIDsData as? [UInt16] ?? (raidIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
         }) ?? [UInt16]()
         var raidText = ""
         for id in raidIDs {
@@ -3614,8 +3635,8 @@ public class WebRequestHandler {
         }
         data["raid_ids"] = raidText
         let eggIDsData = webhook!.data["egg_ids"]
-        let eggIDs = eggIDsData as? [UInt8] ?? (eggIDsData as? [Int])?.map({ (e) -> UInt8 in
-            return UInt8(e)
+        let eggIDs = eggIDsData as? [UInt8] ?? (eggIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
         }) ?? [UInt8]()
         var eggText = ""
         for id in eggIDs {
@@ -3623,17 +3644,26 @@ public class WebRequestHandler {
         }
         data["egg_ids"] = eggText
         let lureIDsData = webhook!.data["lure_ids"]
-        let lureIDs = lureIDsData as? [UInt16] ?? (lureIDsData as? [Int])?.map({ (e) -> UInt16 in
-            return UInt16(e)
+        let lureIDs = lureIDsData as? [UInt16] ?? (lureIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
         }) ?? [UInt16]()
         var lureText = ""
         for id in lureIDs {
             lureText.append("\(id)\n")
         }
         data["lure_ids"] = lureText
+        let questIDsData = webhook!.data["quest_ids"]
+        let questIDs = questIDsData as? [UInt16] ?? (questIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var questText = ""
+        for id in questIDs {
+            questText.append("\(id)\n")
+        }
+        data["quest_ids"] = questText
         let invasionIDsData = webhook!.data["invasion_ids"]
-        let invasionIDs = invasionIDsData as? [UInt16] ?? (invasionIDsData as? [Int])?.map({ (e) -> UInt16 in
-            return UInt16(e)
+        let invasionIDs = invasionIDsData as? [UInt16] ?? (invasionIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
         }) ?? [UInt16]()
         var invasionText = ""
         for id in invasionIDs {
@@ -3641,8 +3671,8 @@ public class WebRequestHandler {
         }
         data["invasion_ids"] = invasionText
         let gymIDsData = webhook!.data["gym_ids"]
-        let gymIDs = gymIDsData as? [UInt8] ?? (gymIDsData as? [Int])?.map({ (e) -> UInt8 in
-            return UInt8(e)
+        let gymIDs = gymIDsData as? [UInt8] ?? (gymIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
         }) ?? [UInt8]()
         var gymText = ""
         for id in gymIDs {
@@ -3650,15 +3680,15 @@ public class WebRequestHandler {
         }
         data["gym_ids"] = gymText
         let weatherIDsData = webhook!.data["weather_ids"]
-        let weatherIDs = weatherIDsData as? [UInt8] ?? (weatherIDsData as? [Int])?.map({ (e) -> UInt8 in
-            return UInt8(e)
+        let weatherIDs = weatherIDsData as? [UInt8] ?? (weatherIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
         }) ?? [UInt8]()
         var weatherText = ""
         for id in weatherIDs {
             weatherText.append("\(id)\n")
         }
         data["weather_ids"] = weatherText
-        
+
         var areaString = ""
         let areaType1 = webhook!.data["area"] as? [[String: Double]]
         let areaType2 = webhook!.data["area"] as? [[[String: Double]]]
@@ -3682,11 +3712,14 @@ public class WebRequestHandler {
         }
         data["area"] = areaString
         data["enabled"] = webhook!.enabled ? "checked" : ""
-        
         return data
     }
-    
-    static func editWebhookPost(data: MustacheEvaluationContext.MapType, request: HTTPRequest, response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
+
+    static func editWebhookPost(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
         let name = request.param(name: "name")
         let url = request.param(name: "url")
         let types = request.params(named: "types")
@@ -3697,43 +3730,51 @@ public class WebRequestHandler {
         let invasionIds = request.param(name: "invasion_ids")
         let gymIds = request.param(name: "gym_ids")
         let weatherIds = request.param(name: "weather_ids")
-        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "").replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
         let enabled = request.param(name: "enabled")
-        
+
         var data = data
-        
+
         if name == nil || url == nil {
             data["show_error"] = true
             data["error"] = "Invalid Request."
             return data
         }
-        
+
         var webhookTypes = [WebhookType]()
         for type in types {
-            webhookTypes.append(WebhookType.fromString(type)!)
+            webhookTypes.append(WebhookType(rawValue: type)!)
         }
-        
-        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
-        
-        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
-        
-        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
-        
-        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
-        
-        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
-        
-        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
-        
-        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+
+        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
         let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
-        
+
         var newCoords: [Any]
         var coordArray = [[Coord]]()
         let areaRows = area?.components(separatedBy: "\n")
@@ -3745,7 +3786,7 @@ public class WebRequestHandler {
                     let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
                     let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
                     if lat != nil && lon != nil {
-                        while coordArray.count != currentIndex + 1{
+                        while coordArray.count != currentIndex + 1 {
                             coordArray.append([Coord]())
                         }
                         coordArray[currentIndex].append(Coord(lat: lat!, lon: lon!))
@@ -3756,9 +3797,9 @@ public class WebRequestHandler {
                 }
             }
         }
-        
+
         newCoords = coordArray
-        
+
         let oldName = data["old_name"] as? String
         if oldName == nil {
             response.setBody(string: "Bad Request")
@@ -3774,7 +3815,7 @@ public class WebRequestHandler {
                 response.completed(status: .internalServerError)
                 throw CompletedEarly()
             }
-            
+
             let webhookEnabled = enabled == "on"
             var webhookData = [String: Any]()
             webhookData["area"] = newCoords
@@ -3791,8 +3832,9 @@ public class WebRequestHandler {
             oldWebhook.data = webhookData
             oldWebhook.enabled = webhookEnabled
             try oldWebhook.save(oldName: oldName!)
+            WebHookController.global.reload()
         }
-        
+
         response.redirect(path: "/dashboard/webhooks")
         sessionDriver.save(session: request.session!)
         response.completed(status: .seeOther)
@@ -4516,13 +4558,12 @@ public class WebRequestHandler {
 
     }
 
-}
-
-public static func generateRange<T>(ids: String, range: Array<T>) -> [T] {
+    static func generateRange<T>(ids: String, range: [T]) -> [T] {
         if ids.isEmpty {
             return [T]()
         }
-        let text = ids.replacingOccurrences(of: "<br>", with: ",").replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
+        let text = ids.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
         var list = [T]()
         if text.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
             list = range
@@ -4539,4 +4580,8 @@ public static func generateRange<T>(ids: String, range: Array<T>) -> [T] {
         }
         return list
     }
+}
+
+struct Area {
+    let city: String
 }

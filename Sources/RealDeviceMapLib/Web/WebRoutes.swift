@@ -173,16 +173,21 @@ class WebRoutes {
                 WebRequestHandler.handle(request: request, response: response, page: .dashboardAssignments,
                                          requiredPerms: [.admin])
             }),
-            Route(methods: [.get], uri: "/dashboard/webhooks", handler: { (request, response) in WebReqeustHandler.handle(request: request, response: response, page: .dashboardWebhooks, requiredPerms: [.admin])
+            Route(methods: [.get], uri: "/dashboard/webhooks", handler: { (request, response) in
+                WebRequestHandler.handle(request: request, response: response, page: .dashboardWebhooks,
+                                         requiredPerms: [.admin])
             }),
             Route(methods: [.get, .post], uri: "/dashboard/webhook/add", handler: { (request, response) in
-                WebReqeustHandler.handle(request: request, response: response, page: .dashboardWebhookAdd, requiredPerms: [.admin])
+                WebRequestHandler.handle(request: request, response: response, page: .dashboardWebhookAdd,
+                                         requiredPerms: [.admin])
             }),
             Route(methods: [.get, .post], uri: "/dashboard/webhook/edit/{name}", handler: { (request, response) in
-                WebReqeustHandler.handle(request: request, response: response, page: .dashboardWebhookEdit, requiredPerms: [.admin])
+                WebRequestHandler.handle(request: request, response: response, page: .dashboardWebhookEdit,
+                                         requiredPerms: [.admin])
             }),
-            Route(methods: [.post], uri: "/dashboard/webhook/delete/{name}", handler: { (request, response) in
-                WebReqeustHandler.handle(request: request, response: response, page: .dashboardWebhookDelete, requiredPerms: [.admin])
+            Route(methods: [.get, .post], uri: "/dashboard/webhook/delete/{name}", handler: { (request, response) in
+                WebRequestHandler.handle(request: request, response: response, page: .dashboardWebhookDelete,
+                                         requiredPerms: [.admin])
             }),
             Route(methods: [.get, .post], uri: "/dashboard/assignment/add", handler: { (request, response) in
                 WebRequestHandler.handle(request: request, response: response, page: .dashboardAssignmentAdd,

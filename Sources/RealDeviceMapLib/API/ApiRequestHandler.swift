@@ -1586,10 +1586,8 @@ public class ApiRequestHandler {
         }
 
         if showWebhooks && perms.contains(.admin) {
-            
             let webhooks = try? Webhook.getAll(mysql: mysql)
             var jsonArray = [[String: Any]]()
-
             if webhooks != nil {
                 for webhook in webhooks! {
                     var webhookData = [String: Any]()
@@ -1598,24 +1596,25 @@ public class ApiRequestHandler {
                     webhookData["delay"] = webhook.delay
                     var types = ""
                     for (index, type) in webhook.types.enumerated() {
-                        types.append("\(WebhookType.toString(type))")
-                        if (index != webhook.types.count - 1) {
+                        types.append("\(type.rawValue)")
+                        if index != webhook.types.count - 1 {
                             types.append(",")
                         }
                     }
                     webhookData["types"] = types
-                    webhookData["enabled"] = webhook.enabled ? "Yes" : "No";
-                    
-                    if formatted {
-                        webhookData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a href=\"/dashboard/webhook/edit/\(webhook.name.encodeUrl()!)\" role=\"button\" class=\"btn btn-primary\">Edit</a></div>"
-                    }
                     webhookData["enabled"] = webhook.enabled ? "Yes" : "No"
-                    
+
+                    if formatted {
+                        webhookData["buttons"] = "<div class=\"btn-group\" role=\"group\">" +
+                        "<a href=\"/dashboard/webhook/edit/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
+                        "class=\"btn btn-primary\">Edit</a>" +
+                        "<a href=\"/dashboard/webhook/delete/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
+                        "class=\"btn btn-danger\">Delete</a></div>"
+                    }
                     jsonArray.append(webhookData)
                 }
             }
             data["webhooks"] = jsonArray
-            
         }
 
         if showIVQueue && perms.contains(.admin), let instance = instance {
