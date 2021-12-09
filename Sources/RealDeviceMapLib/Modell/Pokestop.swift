@@ -968,6 +968,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let alternativeQuestConditions: [[String: Any]]?
             let alternativeQuestRewards: [[String: Any]]?
             let alternativeQuestTemplate: String?
+            let alternativeQuestTitle: String?
 
             if showQuests {
                 questType = result[9] as? UInt32
@@ -1033,7 +1034,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 arScanEligible: arScanEligible, alternativeQuestType: alternativeQuestType,
                 alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
                 alternativeQuestConditions: alternativeQuestConditions,
-                alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate
+                alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate,
+                alternativeQuestTitle: alternativeQuestTitle
             ))
         }
         return pokestops
@@ -1139,7 +1141,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 arScanEligible: arScanEligible, alternativeQuestType: alternativeQuestType,
                 alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
                 alternativeQuestConditions: alternativeQuestConditions,
-                alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate
+                alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate,
+                alternativeQuestTitle: alternativeQuestTitle
             ))
         }
         return pokestops
@@ -1301,7 +1304,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             arScanEligible: arScanEligible, alternativeQuestType: alternativeQuestType,
             alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
             alternativeQuestConditions: alternativeQuestConditions,
-            alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate
+            alternativeQuestRewards: alternativeQuestRewards, alternativeQuestTemplate: alternativeQuestTemplate,
+            alternativeQuestTitle: alternativeQuestTitle
         )
         cache?.set(id: pokestop.id, value: pokestop)
         return pokestop

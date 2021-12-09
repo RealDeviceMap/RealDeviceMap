@@ -97,7 +97,7 @@ public class WebHookController {
     }
 
     public func addAlternativeQuestEvent(pokestop: Pokestop) {
-        if !self.webhookURLStrings.isEmpty {
+        if !self.webhooks.isEmpty && self.types.contains(.quest) {
             alternativeQuestEventsLock.lock()
             alternativeQuestEvents[pokestop.id] = pokestop
             alternativeQuestEventsLock.unlock()
@@ -222,7 +222,6 @@ public class WebHookController {
 
                         self.alternativeQuestEventsLock.lock()
                         let alternativeQuestEvents = self.alternativeQuestEvents
-                        events += alternativeQuestEvents.map({$0.value.getWebhookValues(type: "alternative_quest")})
                         self.alternativeQuestEvents = [String: Pokestop]()
                         self.alternativeQuestEventsLock.unlock()
 
@@ -327,6 +326,16 @@ public class WebHookController {
                                         }
                                     }
                                     events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
+                                }
+                                for (_, quest) in alternativeQuestEvents {
+                                    if area.isEmpty ||
+                                           self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon!) {
+                                        if webhook.data["quest_ids"] != nil && (webhook.data["quest_ids"] as! [UInt16])
+                                            .contains(UInt16(quest.questType ?? 0)) {
+                                            continue
+                                        }
+                                    }
+                                    events.append(quest.getWebhookValues(type: "alternative_quest"))
                                 }
                             }
 
