@@ -181,7 +181,7 @@ public func setupRealDeviceMap() {
     MailController.footerHtml = try! DBController.global.getValueForKey(key: "MAILER_FOOTER_HTML") ?? ""
     MailController.baseURI = try! DBController.global.getValueForKey(key: "MAILER_BASE_URI") ?? ""
 
-    // Init Instance Contoller
+    // Init Instance Controller
     do {
         Log.info(message: "[MAIN] Starting Instance Controller")
         try InstanceController.setup()
@@ -238,11 +238,11 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Account Controller")
     AccountController.global.setup()
 
-    Log.info(message: "[MAIN] Starting Assignement Controller")
+    Log.info(message: "[MAIN] Starting Assignment Controller")
     do {
         try AssignmentController.global.setup()
     } catch {
-        let message = "[MAIN] Failed to start Assignement Controller"
+        let message = "[MAIN] Failed to start Assignment Controller"
         Log.critical(message: message)
         fatalError(message)
     }

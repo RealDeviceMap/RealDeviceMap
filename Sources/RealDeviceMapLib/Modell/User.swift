@@ -101,7 +101,7 @@ public class User {
         guard checkUsernameValid(username: username) else {
             throw RegisterError(type: .usernameInvalid)
         }
-        guard checkEmailVaild(email: email) else {
+        guard checkEmailValid(email: email) else {
             throw RegisterError(type: .emailInvalid)
         }
         guard checkPasswordValid(password: password) else {
@@ -158,7 +158,7 @@ public class User {
 
     }
 
-    private static func checkEmailVaild(email: String) -> Bool {
+    private static func checkEmailValid(email: String) -> Bool {
         //  swiftlint:disable:next line_length
         let regex = "^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])+$"
         return email =~ regex
@@ -512,7 +512,7 @@ public class User {
 
     public func setEmail(mysql: MySQL?=nil, email: String) throws {
 
-        guard User.checkEmailVaild(email: email) else {
+        guard User.checkEmailValid(email: email) else {
             throw RegisterError(type: .emailInvalid)
         }
 
@@ -654,7 +654,7 @@ public class User {
 
     public func verifyEmail(mysql: MySQL?=nil) throws {
 
-        guard User.checkEmailVaild(email: email) else {
+        guard User.checkEmailValid(email: email) else {
             throw RegisterError(type: .emailInvalid)
         }
 

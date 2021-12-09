@@ -231,7 +231,6 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        fsr.challengeQuest.questDisplay
                         let quest = fsr.challengeQuest.quest
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, data: quest))
