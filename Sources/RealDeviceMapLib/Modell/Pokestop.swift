@@ -371,6 +371,11 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withEncounterType: break
             case .withCombatType: break
             case .withGeotargetedPoi: break
+            case .withFriendLevel: break
+            case .withSticker: break
+            case .withPokemonCp: break
+            case .withRaidLocation: break
+            case .withFriendsRaid: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -431,6 +436,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .avatarClothing: break
             case .quest: break
             case .levelCap: break
+            case .incident: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
