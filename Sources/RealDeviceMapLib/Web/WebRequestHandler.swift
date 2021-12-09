@@ -625,8 +625,6 @@ public class WebRequestHandler {
             data["locale_new"] = Localizer.locale
             data["enable_register_new"] = enableRegister
             data["enable_clearing"] = WebHookRequestHandler.enableClearing
-            data["webhook_urls"] = WebHookController.global.webhookURLStrings.joined(separator: ";")
-            data["webhook_delay"] = WebHookController.global.webhookSendDelay
             data["pokemon_time_new"] = Pokemon.defaultTimeUnseen
             data["pokemon_time_old"] = Pokemon.defaultTimeReseen
             data["pokestop_lure_time"] = Pokestop.lureTime
@@ -1189,6 +1187,61 @@ public class WebRequestHandler {
                 sessionDriver.save(session: request.session!)
                 response.completed(status: .badRequest)
             }
+        case .dashboardWebhooks:
+            data["page_is_dashboard"] = true
+             data["page"] = "Dashboard - Webhooks"
+        case .dashboardWebhookAdd:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Add Webhook"
+            if request.method == .get {
+                do {
+                    data = try addWebhookGet(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try addWebhookPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardWebhookEdit:
+            let name = (request.urlVariables["name"] ?? "").decodeUrl()!
+            data["page_is_dashboard"] = true
+            data["old_name"] = name
+            data["page"] = "Dashboard - Edit Webhook"
+            if request.method == .get {
+                do {
+                    data = try editWebhookGet(data: data, request: request, response: response, name: name)
+                } catch {
+                    return
+                }
+            } else {
+                do {
+                    data = try editWebhookPost(data: data, request: request, response: response)
+                } catch {
+                    return
+                }
+            }
+        case .dashboardWebhookDelete:
+            data["page_is_dashboard"] = true
+            data["page"] = "Dashboard - Delete Webhook"
+
+            let name = (request.urlVariables["name"] ?? "").decodeUrl()!
+
+            do {
+                try Webhook.delete(name: name)
+                WebHookController.global.reload()
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+            }
+            response.redirect(path: "/dashboard/webhooks")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .seeOther)
+
         case .dashboardAccounts:
             data["locale"] = "en"
             data["page_is_dashboard"] = true
@@ -1995,9 +2048,6 @@ public class WebRequestHandler {
         let googleAnalyticsId = request.param(name: "google_analytics_id")
         let googleAdSenseId = request.param(name: "google_adsense_id")
 
-        let webhookDelay = request.param(name: "webhook_delay")?.toDouble() ?? 5.0
-        let webhookUrlsString = request.param(name: "webhook_urls") ?? ""
-        let webhookUrls = webhookUrlsString.components(separatedBy: ";")
         let enableRegister = request.param(name: "enable_register_new") != nil
         let enableClearing = request.param(name: "enable_clearing") != nil
 
@@ -2119,8 +2169,6 @@ public class WebRequestHandler {
             try DBController.global.setValueForKey(key: "MAP_MIN_ZOOM", value: minZoom.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_ZOOM", value: maxZoom.description)
             try DBController.global.setValueForKey(key: "TITLE", value: title)
-            try DBController.global.setValueForKey(key: "WEBHOOK_DELAY", value: webhookDelay.description)
-            try DBController.global.setValueForKey(key: "WEBHOOK_URLS", value: webhookUrlsString)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_UNSEEN", value: defaultTimeUnseen.description)
             try DBController.global.setValueForKey(key: "POKEMON_TIME_RESEEN", value: defaultTimeReseen.description)
             try DBController.global.setValueForKey(key: "POKESTOP_LURE_TIME", value: pokestopLureTime.description)
@@ -2178,8 +2226,6 @@ public class WebRequestHandler {
         WebRequestHandler.googleAdSenseId = googleAdSenseId ?? ""
         WebRequestHandler.buttonsRight = buttonsRight
         WebRequestHandler.buttonsLeft = buttonsLeft
-        WebHookController.global.webhookSendDelay = webhookDelay
-        WebHookController.global.webhookURLStrings = webhookUrls
         WebHookRequestHandler.enableClearing = enableClearing
         Pokemon.defaultTimeUnseen = defaultTimeUnseen
         Pokemon.defaultTimeReseen = defaultTimeReseen
@@ -3367,6 +3413,434 @@ public class WebRequestHandler {
         throw CompletedEarly()
     }
 
+    static func addWebhookGet(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
+        var data = data
+        var typesData = [[String: Any]]()
+        for type in WebhookType.allCases {
+            typesData.append(["name": type.rawValue, "selected": false])
+        }
+        data["types"] = typesData
+        return data
+    }
+
+    static func addWebhookPost(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
+        let name = request.param(name: "name")!
+        let url = request.param(name: "url")
+        let delay = request.param(name: "delay")
+        let types = request.params(named: "types")
+        let pokemonIds = request.param(name: "pokemon_ids")
+        let raidIds = request.param(name: "raid_ids")
+        let eggIds = request.param(name: "egg_ids")
+        let lureIds = request.param(name: "lure_ids")
+        let questIds = request.param(name: "quest_ids")
+        let invasionIds = request.param(name: "invasion_ids")
+        let gymIds = request.param(name: "gym_ids")
+        let weatherIds = request.param(name: "weather_ids")
+        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+        let enabled = request.param(name: "enabled")
+
+        if url == nil {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+
+        var webhookTypes = [WebhookType]()
+        for type in types {
+            webhookTypes.append(WebhookType(rawValue: type)!)
+        }
+
+        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
+
+        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
+
+        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
+
+        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
+
+        let questIDsText = questIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let questIDs: [UInt16] = generateRange(ids: questIDsText, range: Array(1...50))
+
+        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
+
+        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
+
+        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
+
+        var data = data
+        var newCoords: [Any]
+        var coordArray = [[Coord]]()
+        let areaRows = area?.components(separatedBy: "\n")
+        var currentIndex = 0
+        if areaRows != nil {
+            for areaRow in areaRows! {
+                let rowSplit = areaRow.components(separatedBy: ",")
+                if rowSplit.count == 2 {
+                    let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                    let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
+                    if lat != nil && lon != nil {
+                        while coordArray.count != currentIndex + 1 {
+                            coordArray.append([Coord]())
+                        }
+                        coordArray[currentIndex].append(Coord(lat: lat!, lon: lon!))
+                    }
+                } else if areaRow.contains(string: "[") && areaRow.contains(string: "]") &&
+                    coordArray.count > currentIndex && coordArray[currentIndex].count != 0 {
+                    currentIndex += 1
+                }
+            }
+        }
+
+        newCoords = coordArray
+        let webhook: Webhook?
+        do {
+            webhook = try Webhook.getByName(name: name)
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+
+        if webhook != nil {
+            data["show_error"] = true
+            data["error"] = "Webhook name already exists, invalid request."
+            return data
+        }
+        do {
+            let webhookEnabled = enabled == "on"
+            var webhookData = [String: Any]()
+            webhookData["area"] = newCoords
+            webhookData["pokemon_ids"] = pokemonIDs
+            webhookData["raid_ids"] = raidIDs
+            webhookData["egg_ids"] = eggIDs
+            webhookData["lure_ids"] = lureIDs
+            webhookData["quest_ids"] = questIDs
+            webhookData["invasion_ids"] = invasionIDs
+            webhookData["gym_ids"] = gymIDs
+            webhookData["weather_ids"] = weatherIDs
+            let webhook = Webhook(name: name, url: url!, delay: Double(delay ?? "5.0")!,
+                types: webhookTypes, data: webhookData, enabled: webhookEnabled)
+            try webhook.create()
+            WebHookController.global.reload()
+        } catch {
+            data["show_error"] = true
+            data["error"] = "Failed to create Webhook."
+            return data
+        }
+
+        response.redirect(path: "/dashboard/webhooks")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+    }
+
+    static func editWebhookGet(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse,
+        name: String
+    ) throws -> MustacheEvaluationContext.MapType {
+        let name = (request.urlVariables["name"] ?? "").decodeUrl()!
+        var data = data
+        let webhook: Webhook?
+        do {
+            webhook = try Webhook.getByName(name: name)
+        } catch {
+            response.setBody(string: "Internal Server Error")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .internalServerError)
+            throw CompletedEarly()
+        }
+
+        if webhook == nil {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+
+        data["name"] = webhook!.name
+        data["url"] = webhook!.url
+        data["delay"] = webhook!.delay
+        var typesData = [[String: Any]]()
+        for type in WebhookType.allCases {
+            if webhook!.types.contains(type) {
+                switch type {
+                case .pokemon:
+                    data["pokemon_selected"] = true
+                case .raid:
+                    data["raid_selected"] = true
+                case .egg:
+                    data["egg_selected"] = true
+                case .pokestop:
+                    break
+                case .lure:
+                    data["lure_selected"] = true
+                case .invasion:
+                    data["invasion_selected"] = true
+                case .gym:
+                    data["gym_selected"] = true
+                case .weather:
+                    data["weather_selected"] = true
+                case .quest:
+                    data["quest_selected"] = true
+                case .account:
+                    data["quest_selected"] = true
+                }
+            }
+            typesData.append(["name": type.rawValue, "selected": webhook!.types.contains(type)])
+        }
+        data["types"] = typesData
+        let pokemonIDsData = webhook!.data["pokemon_ids"]
+        let pokemonIDs = pokemonIDsData as? [UInt16] ?? (pokemonIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var pokemonText = ""
+        for id in pokemonIDs {
+            pokemonText.append("\(id)\n")
+        }
+        data["pokemon_ids"] = pokemonText
+        let raidIDsData = webhook!.data["raid_ids"]
+        let raidIDs = raidIDsData as? [UInt16] ?? (raidIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var raidText = ""
+        for id in raidIDs {
+            raidText.append("\(id)\n")
+        }
+        data["raid_ids"] = raidText
+        let eggIDsData = webhook!.data["egg_ids"]
+        let eggIDs = eggIDsData as? [UInt8] ?? (eggIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
+        }) ?? [UInt8]()
+        var eggText = ""
+        for id in eggIDs {
+            eggText.append("\(id)\n")
+        }
+        data["egg_ids"] = eggText
+        let lureIDsData = webhook!.data["lure_ids"]
+        let lureIDs = lureIDsData as? [UInt16] ?? (lureIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var lureText = ""
+        for id in lureIDs {
+            lureText.append("\(id)\n")
+        }
+        data["lure_ids"] = lureText
+        let questIDsData = webhook!.data["quest_ids"]
+        let questIDs = questIDsData as? [UInt16] ?? (questIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var questText = ""
+        for id in questIDs {
+            questText.append("\(id)\n")
+        }
+        data["quest_ids"] = questText
+        let invasionIDsData = webhook!.data["invasion_ids"]
+        let invasionIDs = invasionIDsData as? [UInt16] ?? (invasionIDsData as? [Int])?.map({ (data) -> UInt16 in
+            UInt16(data)
+        }) ?? [UInt16]()
+        var invasionText = ""
+        for id in invasionIDs {
+            invasionText.append("\(id)\n")
+        }
+        data["invasion_ids"] = invasionText
+        let gymIDsData = webhook!.data["gym_ids"]
+        let gymIDs = gymIDsData as? [UInt8] ?? (gymIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
+        }) ?? [UInt8]()
+        var gymText = ""
+        for id in gymIDs {
+            gymText.append("\(id)\n")
+        }
+        data["gym_ids"] = gymText
+        let weatherIDsData = webhook!.data["weather_ids"]
+        let weatherIDs = weatherIDsData as? [UInt8] ?? (weatherIDsData as? [Int])?.map({ (data) -> UInt8 in
+            UInt8(data)
+        }) ?? [UInt8]()
+        var weatherText = ""
+        for id in weatherIDs {
+            weatherText.append("\(id)\n")
+        }
+        data["weather_ids"] = weatherText
+
+        var areaString = ""
+        let areaType1 = webhook!.data["area"] as? [[String: Double]]
+        let areaType2 = webhook!.data["area"] as? [[[String: Double]]]
+        if areaType1 != nil {
+            for coordLine in areaType1! {
+                let lat = coordLine["lat"]
+                let lon = coordLine["lon"]
+                areaString += "\(lat!),\(lon!)\n"
+            }
+        } else if areaType2 != nil {
+            var index = 1
+            for geofence in areaType2! {
+                areaString += "[Geofence \(index)]\n"
+                index += 1
+                for coordLine in geofence {
+                    let lat = coordLine["lat"]
+                    let lon = coordLine["lon"]
+                    areaString += "\(lat!),\(lon!)\n"
+                }
+            }
+        }
+        data["area"] = areaString
+        data["enabled"] = webhook!.enabled ? "checked" : ""
+        return data
+    }
+
+    static func editWebhookPost(
+        data: MustacheEvaluationContext.MapType,
+        request: HTTPRequest,
+        response: HTTPResponse
+    ) throws -> MustacheEvaluationContext.MapType {
+        let name = request.param(name: "name")
+        let url = request.param(name: "url")
+        let types = request.params(named: "types")
+        let pokemonIds = request.param(name: "pokemon_ids")
+        let raidIds = request.param(name: "raid_ids")
+        let eggIds = request.param(name: "egg_ids")
+        let lureIds = request.param(name: "lure_ids")
+        let invasionIds = request.param(name: "invasion_ids")
+        let gymIds = request.param(name: "gym_ids")
+        let weatherIds = request.param(name: "weather_ids")
+        let area = request.param(name: "area")?.replacingOccurrences(of: "<br>", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+        let enabled = request.param(name: "enabled")
+
+        var data = data
+
+        if name == nil || url == nil {
+            data["show_error"] = true
+            data["error"] = "Invalid Request."
+            return data
+        }
+
+        var webhookTypes = [WebhookType]()
+        for type in types {
+            webhookTypes.append(WebhookType(rawValue: type)!)
+        }
+
+        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
+
+        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
+
+        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
+
+        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
+
+        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
+
+        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
+
+        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
+        let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
+
+        var newCoords: [Any]
+        var coordArray = [[Coord]]()
+        let areaRows = area?.components(separatedBy: "\n")
+        var currentIndex = 0
+        if areaRows != nil {
+            for areaRow in areaRows! {
+                let rowSplit = areaRow.components(separatedBy: ",")
+                if rowSplit.count == 2 {
+                    let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                    let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
+                    if lat != nil && lon != nil {
+                        while coordArray.count != currentIndex + 1 {
+                            coordArray.append([Coord]())
+                        }
+                        coordArray[currentIndex].append(Coord(lat: lat!, lon: lon!))
+                    }
+                } else if areaRow.contains(string: "[") && areaRow.contains(string: "]") &&
+                    coordArray.count > currentIndex && coordArray[currentIndex].count != 0 {
+                    currentIndex += 1
+                }
+            }
+        }
+
+        newCoords = coordArray
+
+        let oldName = data["old_name"] as? String
+        if oldName == nil {
+            response.setBody(string: "Bad Request")
+            sessionDriver.save(session: request.session!)
+            response.completed(status: .badRequest)
+        } else {
+            let oldWebhook: Webhook
+            do {
+                oldWebhook = try Webhook.getByName(name: oldName!)!
+            } catch {
+                response.setBody(string: "Internal Server Error")
+                sessionDriver.save(session: request.session!)
+                response.completed(status: .internalServerError)
+                throw CompletedEarly()
+            }
+
+            let webhookEnabled = enabled == "on"
+            var webhookData = [String: Any]()
+            webhookData["area"] = newCoords
+            webhookData["pokemon_ids"] = pokemonIDs
+            webhookData["raid_ids"] = raidIDs
+            webhookData["egg_ids"] = eggIDs
+            webhookData["lure_ids"] = lureIDs
+            webhookData["invasion_ids"] = invasionIDs
+            webhookData["gym_ids"] = gymIDs
+            webhookData["weather_ids"] = weatherIDs
+            oldWebhook.name = name!
+            oldWebhook.url = url!
+            oldWebhook.types = webhookTypes
+            oldWebhook.data = webhookData
+            oldWebhook.enabled = webhookEnabled
+            try oldWebhook.save(oldName: oldName!)
+            WebHookController.global.reload()
+        }
+
+        response.redirect(path: "/dashboard/webhooks")
+        sessionDriver.save(session: request.session!)
+        response.completed(status: .seeOther)
+        throw CompletedEarly()
+    }
+
     static func addAccounts(data: MustacheEvaluationContext.MapType, request: HTTPRequest,
                             response: HTTPResponse) throws -> MustacheEvaluationContext.MapType {
 
@@ -4084,6 +4558,28 @@ public class WebRequestHandler {
 
     }
 
+    static func generateRange<T>(ids: String, range: [T]) -> [T] {
+        if ids.isEmpty {
+            return [T]()
+        }
+        let text = ids.replacingOccurrences(of: "<br>", with: ",")
+            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
+        var list = [T]()
+        if text.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
+            list = range
+        } else {
+            let split = text.components(separatedBy: ",")
+            if split.count > 0 {
+                for idText in split {
+                    let id = idText.trimmingCharacters(in: .whitespaces) as? T
+                    if id != nil {
+                        list.append(id!)
+                    }
+                }
+            }
+        }
+        return list
+    }
 }
 
 struct Area {

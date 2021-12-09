@@ -181,13 +181,6 @@ public func setupRealDeviceMap() {
     MailController.footerHtml = try! DBController.global.getValueForKey(key: "MAILER_FOOTER_HTML") ?? ""
     MailController.baseURI = try! DBController.global.getValueForKey(key: "MAILER_BASE_URI") ?? ""
 
-    let webhookDelayString = try! DBController.global.getValueForKey(key: "WEBHOOK_DELAY") ?? "5.0"
-    let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_URLS") ?? ""
-    if let webhookDelay = Double(webhookDelayString) {
-        WebHookController.global.webhookSendDelay = webhookDelay
-    }
-    WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
-
     // Init Instance Contoller
     do {
         Log.info(message: "[MAIN] Starting Instance Controller")
