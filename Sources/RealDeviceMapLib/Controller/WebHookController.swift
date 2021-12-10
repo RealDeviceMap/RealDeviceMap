@@ -188,6 +188,7 @@ public class WebHookController {
                         var lureEvents = [String: Pokestop]()
                         var invasionEvents = [String: Pokestop]()
                         var questEvents = [String: Pokestop]()
+                        var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
                         var gymInfoEvents = [String: Gym]()
                         var eggEvents = [String: Gym]()
@@ -221,7 +222,7 @@ public class WebHookController {
                         self.questEventLock.unlock()
 
                         self.alternativeQuestEventsLock.lock()
-                        let alternativeQuestEvents = self.alternativeQuestEvents
+                        alternativeQuestEvents = self.alternativeQuestEvents
                         self.alternativeQuestEvents = [String: Pokestop]()
                         self.alternativeQuestEventsLock.unlock()
 

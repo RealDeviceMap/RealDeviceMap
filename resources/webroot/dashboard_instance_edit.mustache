@@ -118,7 +118,7 @@
             <div class="checkbox store_data_text {{^leveling_selected}}d-none{{/leveling_selected}}">
                 <label><input type="checkbox" name="store_data" value="true" {{#store_data}}checked{{/store_data}}> Store Data in Database</label>
             </div>
-             <div class="form-group quest_mode">
+             <div class="form-group quest_mode {{^auto_quest_selected}}d-none{{/auto_quest_selected}}">
                 Quest Mode
                 <select class="form-control quest-mode-select" name="quest_mode" required>
                     <option value="normal" {{#quest_mode_normal_selected}}selected{{/quest_mode_normal_selected}}>Normal</option>

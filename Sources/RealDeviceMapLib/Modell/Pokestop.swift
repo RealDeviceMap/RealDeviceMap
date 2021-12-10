@@ -700,8 +700,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 hasQuestChanges = false
                 WebHookController.global.addQuestEvent(pokestop: self)
             }
-            if updateQuest && (
-                hasAlternativeQuestChanges ||
+            if updateQuest && (hasAlternativeQuestChanges ||
                 alternativeQuestTimestamp ?? 0 > oldPokestop!.alternativeQuestTimestamp ?? 0
             ) {
                 hasAlternativeQuestChanges = false
@@ -885,8 +884,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
-                   alternative_quest_template, alternative_quest_title,
-                   cell_id, lure_id, pokestop_display,
+                   alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible
             FROM pokestop
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND
@@ -1078,8 +1076,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
-                   alternative_quest_template, alternative_quest_title,
-                   cell_id, lure_id, pokestop_display,
+                   alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible
             FROM pokestop
             WHERE id IN \(inSQL) AND deleted = false
@@ -1240,8 +1237,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
-                   alternative_quest_template, alternative_quest_title,
-                   cell_id, lure_id, pokestop_display,
+                   alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, ar_scan_eligible
             FROM pokestop
             WHERE id = ? \(withDeletedSQL)
@@ -1439,7 +1435,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             WHERE ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
-            ) AND quest_type IS NOT NULL
+            ) AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
