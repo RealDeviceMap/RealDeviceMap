@@ -1,0 +1,134 @@
+{{> header}}
+
+<script>
+    $(document).ready(function() {
+        $('.types-select').change(function() {
+            var vals = $(this).val()
+            if (vals.indexOf('pokemon')>-1) {
+                $('.pokemon_ids_text').removeClass('d-none');
+            } else {
+                $('.pokemon_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('raid')>-1) {
+                $('.raid_ids_text').removeClass('d-none');
+            } else {
+                $('.raid_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('egg')>-1) {
+                $('.egg_ids_text').removeClass('d-none');
+            } else {
+                $('.egg_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('lure')>-1) {
+                $('.lure_ids_text').removeClass('d-none');
+            } else {
+                $('.lure_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('invasion')>-1) {
+                $('.invasion_ids_text').removeClass('d-none');
+            } else {
+                $('.invasion_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('quest')>-1) {
+                $('.quest_ids_text').removeClass('d-none');
+            } else {
+                $('.quest_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('gym')>-1) {
+                $('.gym_ids_text').removeClass('d-none');
+            } else {
+                $('.gym_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('weather')>-1) {
+                $('.weather_ids_text').removeClass('d-none');
+            } else {
+                $('.weather_ids_text').addClass('d-none');
+            }
+            if (vals.indexOf('account')>-1) {
+                $('.account_ids_text').removeClass('d-none');
+            } else {
+                $('.account_ids_text').addClass('d-none');
+            }
+        });
+    })
+</script>
+
+<body>
+
+    <br>
+    <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
+        <strong>Error!</strong> {{error}}</a>
+    </div>
+    {{#show_error}}<br>{{/show_error}}
+
+    <h1 align="center">Add a new Webhook to {{title}}!</h1>
+    <br>
+    <div class="w-75" style="float: none; margin: 0 auto;">
+        <form action="" method="post">
+            <div class="form-group">
+                Name
+                <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="30">
+                URL
+                <input type="text" class="form-control" name="url" value="{{url}}" required minlength="5" maxlength="100">
+                Delay
+                <input type="number" class="form-control" name="delay" value="{{delay}}" step=1 min="1" max="50" required>
+            </div>
+            <div class="form-group">
+                Select Type(s)
+                <select class="form-control" style="height: 400px" name="types" multiple required>
+                    <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Type(s)</option>
+                    {{#types}}
+                        <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/types}}
+                </select>
+            </div>
+            <div class="form-group">
+                Area
+                <textarea class="form-control types-select" rows="5" name="area">{{{area}}}</textarea>
+            </div>
+            <div class="form-group pokemon_ids_text {{^pokemon_selected}}d-none{{/pokemon_selected}}">
+                Blacklist Pokemon IDs
+                <textarea class="form-control" rows="5" name="pokemon_ids">{{{pokemon_ids}}}</textarea>
+            </div>
+            <div class="form-group lure_ids_text {{^lure_selected}}d-none{{/lure_selected}}">
+                Blacklist Lure IDs
+                <textarea class="form-control" rows="5" name="lure_ids">{{{lure_ids}}}</textarea>
+            </div>
+            <div class="form-group invasion_ids_text {{^invasion_selected}}d-none{{/invasion_selected}}">
+                Blacklist Invasion IDs
+                <textarea class="form-control" rows="5" name="invasion_ids">{{{invasion_ids}}}</textarea>
+            </div>
+            <div class="form-group quest_ids_text {{^quest_selected}}d-none{{/quest_selected}}">
+                Blacklist Quest Type IDs
+                <textarea class="form-control" rows="5" name="quest_ids">{{{quest_ids}}}</textarea>
+            </div>
+            <div class="form-group gym_ids_text {{^gym_selected}}d-none{{/gym_selected}}">
+                Blacklist Gym Team IDs
+                <textarea class="form-control" rows="5" name="gym_ids">{{{gym_ids}}}</textarea>
+            </div>
+            <div class="form-group raid_ids_text {{^raid_selected}}d-none{{/raid_selected}}">
+                Blacklist Raid Pokemon IDs
+                <textarea class="form-control" rows="5" name="raid_ids">{{{raid_ids}}}</textarea>
+            </div>
+            <div class="form-group egg_ids_text {{^egg_selected}}d-none{{/egg_selected}}">
+                Blacklist Raid Egg Level IDs
+                <textarea class="form-control" rows="5" name="egg_ids">{{{egg_ids}}}</textarea>
+            </div>
+            <div class="form-group weather_ids_text {{^weather_selected}}d-none{{/weather_selected}}">
+                Blacklist Weather Gameplay Condition IDs
+                <textarea class="form-control" rows="5" name="weather_ids">{{{weather_ids}}}</textarea>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="enabled" {{enabled}}>
+                <label class="form-check-label" for="enabled">Enable Webhook</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="enabled" checked>
+                <label class="form-check-label" for="enabled">Enable Webhook</label>
+            </div>
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+    <br>
+</body>

@@ -1,0 +1,17 @@
+a { transition: all .3s ease;-webkit-transition: all .3s ease;-moz-transition: all .3s ease;-o-transition: all .3s ease; }
+/* Neutral */
+a.neutral i,.neutral h4.list-group-item-heading { color:#dddddd; }
+a.neutral:hover { background-color:#dddddd; }
+a.neutral:hover * { color:#FFF; }
+/* Valor */
+a.valor i,.valor h4.list-group-item-heading { color:#dd4b39; }
+a.valor:hover { background-color:#dd4b39; }
+a.valor:hover * { color:#FFF; }
+/* Mystic */
+a.mystic i,.mystic h4.list-group-item-heading { color:#3b5998; }
+a.mystic:hover { background-color:#3b5998; }
+a.mystic:hover * { color:#FFF; }
+/* Instinct */
+a.instinct i,.instinct h4.list-group-item-heading { color:#FFF444; }
+a.instinct:hover { background-color:#FFF444; }
+a.instinct:hover * { color:black; }
