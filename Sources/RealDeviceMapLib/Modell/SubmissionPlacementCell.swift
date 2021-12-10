@@ -112,13 +112,13 @@ class SubmissionPlacementCell: JSONConvertibleObject {
         ).filter({ (gym) -> Bool in
             return gym.sponsorId == nil || gym.sponsorId == 0
         })
-        let allStopCoods = allStops.map { (pokestop) -> CLLocationCoordinate2D in
+        let allStopCoords = allStops.map { (pokestop) -> CLLocationCoordinate2D in
             return CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
         }
-        let allGymCoods = allGyms.map { (gym) -> CLLocationCoordinate2D in
+        let allGymCoords = allGyms.map { (gym) -> CLLocationCoordinate2D in
             return CLLocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
         }
-        let allCoords = allStopCoods + allGymCoods
+        let allCoords = allStopCoords + allGymCoords
 
         let regionCoverer = S2RegionCoverer()
         regionCoverer.maxCells = 1000
@@ -142,7 +142,7 @@ class SubmissionPlacementCell: JSONConvertibleObject {
             }
         }
 
-        let rings = (allGymCoods + allStopCoods).map { (coord) -> Ring in
+        let rings = (allGymCoords + allStopCoords).map { (coord) -> Ring in
             return Ring(lat: coord.latitude, lon: coord.longitude, radius: 20)
         }
 

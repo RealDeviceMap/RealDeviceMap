@@ -2153,11 +2153,11 @@ function addGym(gym, ts) {
     oldGym.updated = gym.updated
     oldGym.last_modified_timestamp = gym.last_modified_timestamp
 
-    if (oldGym.availble_slots !== gym.availble_slots ||
+    if (oldGym.available_slots !== gym.available_slots ||
         oldGym.team_id !== gym.team_id ||
         oldGym.raid_end_timestamp !== gym.raid_end_timestamp ||
         oldGym.raid_pokemon_id !== gym.raid_pokemon_id) {
-      oldGym.availble_slots = gym.availble_slots
+      oldGym.available_slots = gym.available_slots
       oldGym.team_id = gym.team_id
       oldGym.raid_end_timestamp = gym.raid_end_timestamp
       oldGym.raid_battle_timestamp = gym.raid_battle_timestamp
@@ -2762,7 +2762,7 @@ function getGymPopupContent (gym) {
             // '<div class="col-12 col-md-8 ' + (hasGymUrl ? 'text-center' : '') + ' center-vertical">' + //START 2ND COL
             '<div class="col-12 col-md-7 center-vertical p-4">' + // START 2ND COL
                 '<b>Team:</b> ' + getTeamName(gym.team_id) + '<br>' +
-                '<b>Slots Available:</b> ' + (gym.availble_slots === 0 ? 'Full' : gym.availble_slots === 6 ? 'Empty' : gym.availble_slots) + '<br>'
+                '<b>Slots Available:</b> ' + (gym.available_slots === 0 ? 'Full' : gym.available_slots === 6 ? 'Empty' : gym.available_slots) + '<br>'
     if (gym.guard_pokemon_id !== null) {
       content += '<b>Guard:</b> ' + getPokemonName(gym.guard_pokemon_id) + '<br>'
     }
@@ -3482,10 +3482,10 @@ function getSpawnpointMarker (spawnpoint, ts) {
 
 function getGymMarkerIcon (gym, ts) {
   let size
-  if (gym.availble_slots === 6 || gym.team_id === 0) {
+  if (gym.available_slots === 6 || gym.team_id === 0) {
     size = 0
   } else {
-    size = (6 - gym.availble_slots)
+    size = (6 - gym.available_slots)
   }
 
   const raidLevel = gym.raid_level

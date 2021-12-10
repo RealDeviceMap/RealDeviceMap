@@ -35,7 +35,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_battle_timestamp": raidBattleTimestamp as Any,
             "raid_pokemon_id": raidPokemonId as Any,
             "raid_level": raidLevel as Any,
-            "availble_slots": availableSlots as Any,
+            "available_slots": availableSlots as Any,
             "updated": updated ?? 1,
             "ex_raid_eligible": exRaidEligible as Any,
             "in_battle": inBattle as Any,
@@ -302,7 +302,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let sql = """
                 INSERT INTO gym (
                     id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
-                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, raid_level,
+                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, raid_level,
                     ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                     raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
                     sponsor_id, raid_pokemon_evolution, ar_scan_eligible, updated, first_seen_timestamp)
@@ -360,7 +360,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 UPDATE gym
                 SET lat = ?, lon = ?, \(nameSQL) url = ?, guarding_pokemon_id = ?, last_modified_timestamp = ?,
                     team_id = ?, raid_end_timestamp = ?, raid_spawn_timestamp = ?, raid_battle_timestamp = ?,
-                    raid_pokemon_id = ?, enabled = ?, availble_slots = ?, updated = UNIX_TIMESTAMP(), raid_level = ?,
+                    raid_pokemon_id = ?, enabled = ?, available_slots = ?, updated = UNIX_TIMESTAMP(), raid_level = ?,
                     ex_raid_eligible = ?, in_battle = ?, raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?,
                     raid_pokemon_form = ?, raid_pokemon_costume = ?, raid_pokemon_cp = ?, raid_pokemon_gender = ?,
                     raid_is_exclusive = ?, cell_id = ?, deleted = false, total_cp = ?, sponsor_id = ?,
@@ -547,7 +547,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         if excludedAvailableSlots.isEmpty {
             excludeAvailableSlotsSQL = ""
         } else {
-            var sqlExcludeCreate = "AND (availble_slots NOT IN ("
+            var sqlExcludeCreate = "AND (available_slots NOT IN ("
             for _ in excludedAvailableSlots {
                 sqlExcludeCreate += "?, "
             }
@@ -569,7 +569,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         var sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
-                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated,
+                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
                    raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                    raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
                    sponsor_id, raid_pokemon_evolution, ar_scan_eligible
@@ -690,7 +690,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         let sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
-                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated,
+                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
                    raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                    raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
                    sponsor_id, raid_pokemon_evolution, ar_scan_eligible
@@ -791,7 +791,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let sql = """
         SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
-               availble_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
+               available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
                raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
                raid_is_exclusive, cell_id, total_cp, sponsor_id, raid_pokemon_evolution, ar_scan_eligible
         FROM gym
@@ -891,7 +891,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         let sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
-                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, availble_slots, updated,
+                   raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
                    raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                    raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
                    sponsor_id, raid_pokemon_evolution, ar_scan_eligible
