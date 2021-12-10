@@ -67,7 +67,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "pokestop_name": name ?? "Unknown",
                 "ar_scan_eligible": arScanEligible ?? 0,
                 "pokestop_url": url ?? "",
-                "is_alternative": false
+                "with_ar": true
             ]
             return [
                 "type": "quest",
@@ -88,7 +88,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "pokestop_name": name ?? "Unknown",
                 "ar_scan_eligible": arScanEligible ?? 0,
                 "pokestop_url": url ?? "",
-                "is_alternative": true
+                "with_ar": false
             ]
             return [
                 "type": "quest",
