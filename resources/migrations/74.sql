@@ -5,6 +5,7 @@ ALTER TABLE pokestop
     ADD COLUMN `alternative_quest_conditions` text DEFAULT NULL,
     ADD COLUMN `alternative_quest_rewards` text DEFAULT NULL,
     ADD COLUMN `alternative_quest_template` varchar(100) DEFAULT NULL,
+    ADD COLUMN `alternative_quest_title` varchar(100) DEFAULT NULL,
     ADD COLUMN `alternative_quest_pokemon_id` smallint(6) unsigned  GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(alternative_quest_rewards, '$[*].info.pokemon_id'), '$[0]') ),
     ADD INDEX `ix_alternative_quest_alternative_quest_pokemon_id` (alternative_quest_pokemon_id),
     ADD COLUMN `alternative_quest_reward_type` smallint(6) unsigned GENERATED ALWAYS AS (JSON_EXTRACT(JSON_EXTRACT(alternative_quest_rewards, '$[*].type'), '$[0]') ),
