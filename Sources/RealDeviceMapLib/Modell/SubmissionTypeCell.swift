@@ -94,10 +94,10 @@ class SubmissionTypeCell: JSONConvertibleObject {
         ).filter({ (gym) -> Bool in
             return gym.sponsorId == nil || gym.sponsorId == 0
         })
-        let allStopCoods = allStops.map { (pokestop) -> CLLocationCoordinate2D in
+        let allStopCoords = allStops.map { (pokestop) -> CLLocationCoordinate2D in
             return CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
         }
-        let allGymCoods = allGyms.map { (gym) -> CLLocationCoordinate2D in
+        let allGymCoords = allGyms.map { (gym) -> CLLocationCoordinate2D in
             return CLLocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
         }
 
@@ -115,7 +115,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
             indexedCells[cell.uid] = SubmissionTypeCell(id: cell.uid, countPokestops: 0, countGyms: 0)
         }
 
-        for coord in allGymCoods {
+        for coord in allGymCoords {
             let level1Cell = S2CellId(latlng: S2LatLng(coord: coord))
             let level14Cell = level1Cell.parent(level: 14)
             if let cell = indexedCells[level14Cell.uid] {
@@ -124,7 +124,7 @@ class SubmissionTypeCell: JSONConvertibleObject {
             }
         }
 
-        for coord in allStopCoods {
+        for coord in allStopCoords {
             let level1Cell = S2CellId(latlng: S2LatLng(coord: coord))
             let level14Cell = level1Cell.parent(level: 14)
             if let cell = indexedCells[level14Cell.uid] {
