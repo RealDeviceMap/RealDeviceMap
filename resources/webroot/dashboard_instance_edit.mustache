@@ -12,6 +12,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').addClass('d-none');
             } else if ($(this).val() === 'auto_quest') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -21,6 +22,7 @@
                 $('.delay_logout_text').removeClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').removeClass('d-none');
             } else if ($(this).val() === 'leveling') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -30,6 +32,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').removeClass('d-none');
                 $('.store_data_text').removeClass('d-none');
+                $('.quest_mode').addClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -39,6 +42,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').addClass('d-none');
             }
         });
     })
@@ -113,6 +117,14 @@
             </div>
             <div class="checkbox store_data_text {{^leveling_selected}}d-none{{/leveling_selected}}">
                 <label><input type="checkbox" name="store_data" value="true" {{#store_data}}checked{{/store_data}}> Store Data in Database</label>
+            </div>
+             <div class="form-group quest_mode {{^auto_quest_selected}}d-none{{/auto_quest_selected}}">
+                Quest Mode
+                <select class="form-control quest-mode-select" name="quest_mode" required>
+                    <option value="normal" {{#quest_mode_normal_selected}}selected{{/quest_mode_normal_selected}}>Normal</option>
+                    <option value="alternative" {{#quest_mode_alternative_selected}}selected{{/quest_mode_alternative_selected}}>Alternative</option>
+                    <option value="both" {{#quest_mode_both_selected}}selected{{/quest_mode_both_selected}}>Both</option>
+                </select>
             </div>
             <div class="form-group">
                 Account Group

@@ -38,6 +38,8 @@ public class WebHookController {
     private var invasionEvents = [String: Pokestop]()
     private var questEventLock = Threading.Lock()
     private var questEvents = [String: Pokestop]()
+    private var alternativeQuestEventsLock = Threading.Lock()
+    private var alternativeQuestEvents = [String: Pokestop]()
     private var gymEventLock = Threading.Lock()
     private var gymEvents = [String: Gym]()
     private var gymInfoEventLock = Threading.Lock()
@@ -91,6 +93,14 @@ public class WebHookController {
             questEventLock.lock()
             questEvents[pokestop.id] = pokestop
             questEventLock.unlock()
+        }
+    }
+
+    public func addAlternativeQuestEvent(pokestop: Pokestop) {
+        if !self.webhooks.isEmpty && self.types.contains(.quest) {
+            alternativeQuestEventsLock.lock()
+            alternativeQuestEvents[pokestop.id] = pokestop
+            alternativeQuestEventsLock.unlock()
         }
     }
 
@@ -178,6 +188,7 @@ public class WebHookController {
                         var lureEvents = [String: Pokestop]()
                         var invasionEvents = [String: Pokestop]()
                         var questEvents = [String: Pokestop]()
+                        var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
                         var gymInfoEvents = [String: Gym]()
                         var eggEvents = [String: Gym]()
@@ -209,6 +220,11 @@ public class WebHookController {
                         questEvents = self.questEvents
                         self.questEvents = [String: Pokestop]()
                         self.questEventLock.unlock()
+
+                        self.alternativeQuestEventsLock.lock()
+                        alternativeQuestEvents = self.alternativeQuestEvents
+                        self.alternativeQuestEvents = [String: Pokestop]()
+                        self.alternativeQuestEventsLock.unlock()
 
                         self.gymEventLock.lock()
                         gymEvents = self.gymEvents
@@ -311,6 +327,16 @@ public class WebHookController {
                                         }
                                     }
                                     events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
+                                }
+                                for (_, quest) in alternativeQuestEvents {
+                                    if area.isEmpty ||
+                                           self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon!) {
+                                        if webhook.data["quest_ids"] != nil && (webhook.data["quest_ids"] as! [UInt16])
+                                            .contains(UInt16(quest.questType ?? 0)) {
+                                            continue
+                                        }
+                                    }
+                                    events.append(quest.getWebhookValues(type: "alternative_quest"))
                                 }
                             }
 

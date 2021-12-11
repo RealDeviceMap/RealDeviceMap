@@ -124,6 +124,7 @@ public class ApiRequestHandler {
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
@@ -202,7 +203,7 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
-                invasionFilterExclude: invasionFilterExclude
+                invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
         let permShowPokemon = perms.contains(.viewMapPokemon)
@@ -452,8 +453,36 @@ public class ApiRequestHandler {
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
             let miscTypeString = Localizer.global.get(value: "filter_misc")
             let itemsTypeString = Localizer.global.get(value: "filter_items")
+            let generalString = Localizer.global.get(value: "filter_general")
+
+            let showArQuestsString = Localizer.global.get(value: "filter_quest_show_ar")
 
             var questData = [[String: Any]]()
+
+            let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+                     data-type="quest-ar" data-info="hide">
+                        <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                    </label>
+                    <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+                     data-type="quest-ar" data-info="show">
+                        <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                    </label>
+                </div>
+            """
+            questData.append([
+                "id": [
+                    "formatted": "",
+                    "sort": -1
+                ],
+                "name": showArQuestsString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\"" +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": "",
+                "type": generalString
+            ])
 
             // Misc
             for i in 1...6 {
