@@ -21,6 +21,8 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     enum QuestMode: String {
+        // normal - keep ar in inventory when questing
+        // alternative - remove ar quest when questing
         case normal, alternative, both
     }
 
