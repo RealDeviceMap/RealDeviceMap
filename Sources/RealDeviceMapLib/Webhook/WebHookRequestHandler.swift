@@ -48,6 +48,10 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
+    static var questModeLock = Threading.Lock()
+    // device uuid to quest mode
+    static var questModeLookup = [String: AutoInstanceController.QuestMode]()
+
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
         threadLimitLock.lock()
@@ -236,8 +240,16 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
-                        // MARK: maybe compare with instance questMode?!
+                        questModeLock.lock()
+                        let mode = questModeLookup[uuid ?? ""]
+                        questModeLock.unlock()
+                        var shouldHaveAr: Bool?
+                        switch mode {
+                        case .alternative: shouldHaveAr = false
+                        case .normal: shouldHaveAr = true
+                        default: shouldHaveAr = nil
+                        }
+                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? shouldHaveAr ?? true
                         let quest = fsr.challengeQuest.quest
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))

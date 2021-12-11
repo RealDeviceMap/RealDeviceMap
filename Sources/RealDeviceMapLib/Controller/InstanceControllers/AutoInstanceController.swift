@@ -203,8 +203,13 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                     }
                 }
-
             }
+            let deviceUUIDs = InstanceController.global.getDeviceUUIDsInInstance(instanceName: name)
+            WebHookRequestHandler.questModeLock.lock()
+            for device in deviceUUIDs {
+                WebHookRequestHandler.questModeLookup[device] = questMode
+            }
+            WebHookRequestHandler.questModeLock.unlock()
             self.todayStops = []
             self.todayStopsTries = [:]
             self.doneDate = nil
