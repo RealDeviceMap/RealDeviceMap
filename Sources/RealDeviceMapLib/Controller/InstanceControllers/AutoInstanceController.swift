@@ -401,7 +401,8 @@ class AutoInstanceController: InstanceControllerProto {
                         return [:]
                     }
                     if (mode == nil || mode == true) && closest!.alternative == false {
-                        print("[TMP] switching mode from \(mode == true ? "alternative" : "none") to normal")
+                        Log.debug(message: "[AutoInstanceController] [\(username ?? "?")] switching quest mode from " +
+                            "\(mode == true ? "alternative" : "none") to normal")
                         var closestAR: PokestopWithMode?
                         var closestARDistance: Double = 10000000000000000
                         for stop in allStops! where stop.pokestop.arScanEligible == true {
@@ -415,9 +416,11 @@ class AutoInstanceController: InstanceControllerProto {
                         if closestAR != nil {
                             closestAR!.alternative = closest!.alternative
                             closest = closestAR
-                            print("[TMP] scanning AR eligible stop \(closest!.pokestop.id)")
+                            Log.debug(message: "[AutoInstanceController] [\(username ?? "?")] scanning " +
+                                "AR eligible stop \(closest!.pokestop.id)")
                         } else {
-                            print("[TMP] no AR eligible stop found")
+                            Log.debug(message: "[AutoInstanceController] [\(username ?? "?")] " +
+                                "no AR eligible stop found to scan")
                         }
                     }
 
