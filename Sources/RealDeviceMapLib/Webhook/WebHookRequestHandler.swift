@@ -236,6 +236,7 @@ public class WebHookRequestHandler {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
+                        // MARK: maybe compare with instance questMode?!
                         let quest = fsr.challengeQuest.quest
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))
