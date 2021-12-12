@@ -245,7 +245,7 @@ public class WebHookRequestHandler {
                         print("[TMP] \(fsr.fortID) does contain an alternative quest information: " +
                             (isAlternative == nil ? "unset" : isAlternative! ? "true" : "false"))
                         if isAlternative == nil {
-                            print("[TMP] lookup table: " + (questModeLookup.jsonEncodeForceTry() ?? ""))
+                            print("[TMP] no value isAlternative found - lookup table size: \(questModeLookup.count)")
                         }
                         let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? !(isAlternative ?? false)
                         let quest = fsr.challengeQuest.quest
