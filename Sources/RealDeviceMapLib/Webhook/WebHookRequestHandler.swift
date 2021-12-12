@@ -49,8 +49,8 @@ public class WebHookRequestHandler {
     private static var loginLimitCount = [String: UInt32]()
 
     static var questModeLock = Threading.Lock()
-    // device uuid to quest mode
-    static var questModeLookup = [String: AutoInstanceController.QuestMode]()
+    // device uuid to quest mode : [device-uuid : [pokestop-id : is_alternative]]
+    static var questModeLookup = [String: [String: Bool]]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -240,16 +240,16 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
+                        print("[TMP] found quest, check quest lookup for \(uuid ?? "") at \(fsr.fortID)")
                         questModeLock.lock()
-                        let mode = questModeLookup[uuid ?? ""]
+                        let isAlternative = questModeLookup[uuid ?? ""]?[fsr.fortID]
                         questModeLock.unlock()
-                        var shouldHaveAr: Bool?
-                        switch mode {
-                        case .alternative: shouldHaveAr = false
-                        case .normal: shouldHaveAr = true
-                        default: shouldHaveAr = nil
+                        print("[TMP] \(fsr.fortID) does contain an alternative quest information: " +
+                            (isAlternative == nil ? "unset" : isAlternative! ? "true" : "false"))
+                        if isAlternative == nil {
+                            print("[TMP] lookup table: " + (questModeLookup.jsonEncodeForceTry() ?? ""))
                         }
-                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? shouldHaveAr ?? true
+                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? !(isAlternative ?? false)
                         let quest = fsr.challengeQuest.quest
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))

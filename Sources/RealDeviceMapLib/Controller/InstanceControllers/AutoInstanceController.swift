@@ -204,12 +204,6 @@ class AutoInstanceController: InstanceControllerProto {
                     }
                 }
             }
-            let deviceUUIDs = InstanceController.global.getDeviceUUIDsInInstance(instanceName: name)
-            WebHookRequestHandler.questModeLock.lock()
-            for device in deviceUUIDs {
-                WebHookRequestHandler.questModeLookup[device] = questMode
-            }
-            WebHookRequestHandler.questModeLock.unlock()
             self.todayStops = []
             self.todayStopsTries = [:]
             self.doneDate = nil
@@ -550,7 +544,7 @@ class AutoInstanceController: InstanceControllerProto {
                 if todayStops!.isEmpty {
                     lastDoneCheck = Date()
                     let ids = Array(Set(self.allStops!.map({ (stop) -> String in
-                        return stop.pokestop.id
+                        stop.pokestop.id
                     })))
                     stopsLock.unlock()
                     let newStops: [Pokestop]
@@ -594,6 +588,9 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 lastMode[username ?? uuid] = pokestop.alternative
+                WebHookRequestHandler.questModeLock.lock()
+                WebHookRequestHandler.questModeLookup[uuid]?[pokestop.pokestop.id] = pokestop.alternative
+                WebHookRequestHandler.questModeLock.unlock()
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,
