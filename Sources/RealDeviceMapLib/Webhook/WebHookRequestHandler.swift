@@ -128,7 +128,6 @@ public class WebHookRequestHandler {
         var trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
         let hasArQuestReqGlobal = json["have_ar"] as? Bool
-        let usernameOrId = username ?? uuid
 
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
         let isEvent = controller?.isEvent ?? false
@@ -139,6 +138,8 @@ public class WebHookRequestHandler {
             if oldLevel != trainerLevel {
                 do {
                     try Account.setLevel(mysql: mysql, username: username!, level: trainerLevel)
+                    Log.debug(message: "[WebHookRequestHandler] Account \(username!) on \(uuid ?? "") " +
+                        "from \(String(describing: oldLevel)) to \(trainerLevel) with \(trainerXP) XP")
                     levelCacheLock.lock()
                     levelCache[username!] = trainerLevel
                     levelCacheLock.unlock()

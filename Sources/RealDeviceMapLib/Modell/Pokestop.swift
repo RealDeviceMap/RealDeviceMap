@@ -668,7 +668,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[POKESTOP] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[POKESTOP] Failed to execute query 'save'. (\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
@@ -930,7 +930,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1089,7 +1089,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'getIn'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1204,7 +1204,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             mysqlStmt.bindParam(id)
         }
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'questCountIn'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1248,7 +1248,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'getWithId'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1350,7 +1350,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1401,7 +1401,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            Log.error(message: "[INSTANCE] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage()))")
             throw DBController.DBError()
         }
 
@@ -1442,7 +1442,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+            Log.error(message: "[INSTANCE] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage()))")
             throw DBController.DBError()
         }
 
@@ -1509,7 +1509,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'clearOld'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1533,7 +1533,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'convertibleCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1557,7 +1557,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'staleCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1580,7 +1580,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'deleteConverted'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1604,7 +1604,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKESTOP] Failed to execute query 'deleteStale'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 

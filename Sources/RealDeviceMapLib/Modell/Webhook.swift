@@ -47,7 +47,7 @@ public class Webhook {
         mysqlStmt.bindParam(enabled)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[WEBHOOK] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[WEBHOOK] Failed to execute query 'create'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -76,7 +76,7 @@ public class Webhook {
         mysqlStmt.bindParam(oldName)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[WEBHOOK] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[WEBHOOK] Failed to execute query 'save'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -98,7 +98,7 @@ public class Webhook {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[WEBHOOK] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[WEBHOOK] Failed to execute query 'delete'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -119,7 +119,7 @@ public class Webhook {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[WEBHOOK] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[WEBHOOK] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -163,7 +163,7 @@ public class Webhook {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[WEBHOOK] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[WEBHOOK] Failed to execute query 'getByName'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

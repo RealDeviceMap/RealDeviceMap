@@ -295,7 +295,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'setLevel'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -321,7 +321,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'didEncounter'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -343,7 +343,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'spin'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -363,7 +363,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'clearSpins'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -386,7 +386,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'setLastUsed'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -522,7 +522,7 @@ public class Account: WebHookEvent {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getNewAccount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -588,7 +588,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getWithUsername'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -686,7 +686,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getNewCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -713,7 +713,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getSpinLimitCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -741,7 +741,7 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(level)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getLevelCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -769,7 +769,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getInUseCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -796,7 +796,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getWarnedCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -823,7 +823,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getFailedCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -868,7 +868,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getStats'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -930,7 +930,7 @@ public class Account: WebHookEvent {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[ACCOUNT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[ACCOUNT] Failed to execute query 'warningBannedStats'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

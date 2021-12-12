@@ -410,7 +410,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[GYM] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[GYM] Failed to execute query 'save'. (\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
@@ -604,7 +604,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[GYM] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -703,7 +703,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[GYM] Failed to execute query 'getWithId'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -805,7 +805,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[GYM] Failed to execute query 'getWithIds'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -994,7 +994,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[GYM] Failed to execute query 'getWithCellIDs'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1017,7 +1017,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[GYM] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[GYM] Failed to execute query 'convertToGyms'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 

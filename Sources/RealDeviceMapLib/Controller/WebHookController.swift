@@ -180,6 +180,7 @@ public class WebHookController {
                     if !self.webhooks.isEmpty {
                         let countEnabled = self.webhooks.filter({ webhook in webhook.enabled == true }).count
                         if countEnabled == 0 {
+                            Threading.sleep(seconds: 30.0)
                             continue
                         }
 
@@ -264,16 +265,17 @@ public class WebHookController {
                             let area = webhook.data["area"] as? [[Coord]] ?? [[Coord]]()
                             let polygon = area.isEmpty ? nil : self.createPolygon(coords: area)
                             var events = [[String: Any]]()
+
                             if webhook.types.contains(.pokemon) {
+                                let pokemonIDs = webhook.data["pokemon_ids"] as? [UInt16] ?? [UInt16]()
                                 for (_, pokemon) in pokemonEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: pokemon.lat, lon: pokemon.lon, multiPolygon: polygon!) {
-                                        if webhook.data["pokemon_ids"] != nil &&
-                                               (webhook.data["pokemon_ids"] as! [UInt16]).contains(pokemon.pokemonId) {
+                                        if pokemonIDs.contains(pokemon.pokemonId) {
                                             continue
                                         }
+                                        events.append(pokemon.getWebhookValues(type: WebhookType.pokemon.rawValue))
                                     }
-                                    events.append(pokemon.getWebhookValues(type: WebhookType.pokemon.rawValue))
                                 }
                             }
 
@@ -290,43 +292,42 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.lure) {
+                                let lureIDs = webhook.data["lure_ids"] as? [UInt16] ?? [UInt16]()
                                 for (_, lure) in lureEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: lure.lat, lon: lure.lon, multiPolygon: polygon!) {
-                                        if webhook.data["lure_ids"] != nil && (webhook.data["lure_ids"] as! [UInt16])
-                                            .contains(UInt16(lure.lureId ?? 0)) {
+                                        if lureIDs.contains(UInt16(lure.lureId ?? 0)) {
                                             continue
                                         }
+                                        events.append(lure.getWebhookValues(type: WebhookType.lure.rawValue))
                                     }
-                                    events.append(lure.getWebhookValues(type: WebhookType.lure.rawValue))
                                 }
                             }
 
                             if webhook.types.contains(.invasion) {
+                                let invasionIDs = webhook.data["invasion_ids"] as? [UInt16] ?? [UInt16]()
                                 for (_, invasion) in invasionEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: invasion.lat, lon: invasion.lon,
                                                multiPolygon: polygon!) {
-                                        if webhook.data["invasion_ids"] != nil &&
-                                               (webhook.data["invasion_ids"] as! [UInt16]).contains(
-                                                   invasion.gruntType ?? 0) {
+                                        if invasionIDs.contains(invasion.gruntType ?? 0) {
                                             continue
                                         }
+                                        events.append(invasion.getWebhookValues(type: WebhookType.invasion.rawValue))
                                     }
-                                    events.append(invasion.getWebhookValues(type: WebhookType.invasion.rawValue))
                                 }
                             }
 
                             if webhook.types.contains(.quest) {
+                                let questIDs = webhook.data["quest_ids"] as? [UInt16] ?? [UInt16]()
                                 for (_, quest) in questEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon!) {
-                                        if webhook.data["quest_ids"] != nil && (webhook.data["quest_ids"] as! [UInt16])
-                                            .contains(UInt16(quest.questType ?? 0)) {
+                                        if questIDs.contains(UInt16(quest.questType ?? 0)) {
                                             continue
                                         }
+                                        events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
                                     }
-                                    events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
                                 }
                                 for (_, quest) in alternativeQuestEvents {
                                     if area.isEmpty ||
@@ -335,76 +336,71 @@ public class WebHookController {
                                             .contains(UInt16(quest.questType ?? 0)) {
                                             continue
                                         }
+                                        events.append(quest.getWebhookValues(type: "alternative_quest"))
                                     }
-                                    events.append(quest.getWebhookValues(type: "alternative_quest"))
                                 }
                             }
 
                             if webhook.types.contains(.gym) {
+                                let gymIDs = webhook.data["gym_ids"] as? [UInt8] ?? [UInt8]()
                                 for (_, gym) in gymEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: gym.lat, lon: gym.lon, multiPolygon: polygon!) {
-                                        if gym.teamId ?? 0 > 0 && webhook.data["gym_ids"] != nil &&
-                                               (webhook.data["gym_ids"] as! [UInt8]).contains(
-                                                   gym.teamId ?? 0) {
+                                        if gym.teamId ?? 0 > 0 && gymIDs.contains(gym.teamId ?? 0) {
                                             continue
                                         }
+                                        events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
                                     }
-                                    events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
                                 }
                                 for (_, gymInfo) in gymInfoEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: gymInfo.lat, lon: gymInfo.lon, multiPolygon: polygon!) {
-                                        if gymInfo.teamId ?? 0 > 0 && webhook.data["gym_ids"] != nil &&
-                                               (webhook.data["gym_ids"] as! [UInt8]).contains(
-                                                   gymInfo.teamId ?? 0) {
+                                        if gymInfo.teamId ?? 0 > 0 && gymIDs.contains(gymInfo.teamId ?? 0) {
                                             continue
                                         }
+                                        events.append(gymInfo.getWebhookValues(type: "gym-info"))
                                     }
-                                    events.append(gymInfo.getWebhookValues(type: "gym-info"))
                                 }
                             }
 
                             if webhook.types.contains(.raid) {
+                                let raidIDs = webhook.data["raid_ids"] as? [UInt16] ?? [UInt16]()
                                 for (_, raid) in raidEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: raid.lat, lon: raid.lon, multiPolygon: polygon!) {
-                                        if raid.raidPokemonId ?? 0 > 0 && webhook.data["raid_ids"] != nil &&
-                                               (webhook.data["raid_ids"] as! [UInt16]).contains(
-                                                   raid.raidPokemonId!) {
+                                        if raid.raidPokemonId ?? 0 > 0 && raidIDs.contains(raid.raidPokemonId!) {
                                             continue
                                         }
+                                        events.append(raid.getWebhookValues(type: WebhookType.raid.rawValue))
                                     }
-                                    events.append(raid.getWebhookValues(type: WebhookType.raid.rawValue))
                                 }
                             }
 
                             if webhook.types.contains(.egg) {
+                                let eggIDs = webhook.data["egg_ids"] as? [UInt8] ?? [UInt8]()
                                 for (_, egg) in eggEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: egg.lat, lon: egg.lon, multiPolygon: polygon!) {
-                                        if egg.raidLevel ?? 0 > 0 && webhook.data["egg_ids"] != nil &&
-                                               (webhook.data["egg_ids"] as! [UInt8]).contains(
-                                                   egg.raidLevel ?? 0) {
+                                        if egg.raidLevel ?? 0 > 0 && eggIDs.contains(egg.raidLevel ?? 0) {
                                             continue
                                         }
+                                        events.append(egg.getWebhookValues(type: WebhookType.egg.rawValue))
                                     }
-                                    events.append(egg.getWebhookValues(type: WebhookType.egg.rawValue))
                                 }
                             }
 
                             if webhook.types.contains(.weather) {
+                                let weatherIDs = webhook.data["weather_ids"] as? [UInt8] ?? [UInt8]()
                                 for (_, weather) in weatherEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: weather.latitude, lon: weather.longitude,
                                                multiPolygon: polygon!) {
-                                        if weather.gameplayCondition > 0 && webhook.data["weather_ids"] != nil &&
-                                               (webhook.data["weather_ids"] as! [UInt8]).contains(
+                                        if weather.gameplayCondition > 0 && weatherIDs.contains(
                                                    weather.gameplayCondition) {
                                             continue
                                         }
+                                        events.append(weather.getWebhookValues(type: WebhookType.weather.rawValue))
                                     }
-                                    events.append(weather.getWebhookValues(type: WebhookType.weather.rawValue))
                                 }
                             }
 
@@ -444,8 +440,7 @@ public class WebHookController {
             .timeout(timeout),
             .connectTimeout(connectTimeout)
         )
-        request.perform { (_) in
-        }
+        request.perform { (_) in }
 
     }
 
