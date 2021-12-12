@@ -1061,9 +1061,12 @@ public class WebHookRequestHandler {
 
     }
 
-    static func addToQuestLookup(device: String, pokestop: String, isAlternative: Bool) {
+    static func addToQuestLookup(device: String, pokestops: [String], isAlternative: Bool) {
+        print("[TMP] add information to Quest lookup: \(pokestops.count)")
         self.questModeLock.lock()
-        self.questModeLookup[device + "-" + pokestop] = isAlternative
+        for pokestop in pokestops {
+            self.questModeLookup[device + "-" + pokestop] = isAlternative
+        }
         self.questModeLock.unlock()
     }
 
@@ -1077,6 +1080,7 @@ public class WebHookRequestHandler {
         self.questModeLock.lock()
         let isAlternative = self.questModeLookup[device + "-" + pokestop]
         self.questModeLock.unlock()
+        print("[TMP] \(device) with \(pokestop) found with isAlternative: \(String(describing: isAlternative))")
         return isAlternative
     }
 
