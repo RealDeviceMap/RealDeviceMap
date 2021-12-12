@@ -48,9 +48,9 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
-    static var questModeLock = Threading.Lock()
+    private static var questModeLock = Threading.Lock()
     // device uuid to quest mode : [device-uuid : [pokestop-id : is_alternative]]
-    static var questModeLookup = [String: [String: Bool]]()
+    private static var questModeLookup = [String: Bool]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -241,9 +241,7 @@ public class WebHookRequestHandler {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         print("[TMP] found quest, check quest lookup for \(uuid ?? "") at \(fsr.fortID)")
-                        questModeLock.lock()
-                        let isAlternative = questModeLookup[uuid ?? ""]?[fsr.fortID]
-                        questModeLock.unlock()
+                        let isAlternative = self.questLookup(device: uuid ?? "", pokestop: fsr.fortID)
                         print("[TMP] \(fsr.fortID) does contain an alternative quest information: " +
                             (isAlternative == nil ? "unset" : isAlternative! ? "true" : "false"))
                         if isAlternative == nil {
@@ -1061,6 +1059,25 @@ public class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
         }
 
+    }
+
+    static func addToQuestLookup(device: String, pokestop: String, isAlternative: Bool) {
+        self.questModeLock.lock()
+        self.questModeLookup[device + "-" + pokestop] = isAlternative
+        self.questModeLock.unlock()
+    }
+
+    static func clearQuestLookup() {
+        self.questModeLock.lock()
+        self.questModeLookup = [String: Bool]()
+        self.questModeLock.unlock()
+    }
+
+    static func questLookup(device: String, pokestop: String) -> Bool? {
+        self.questModeLock.lock()
+        let isAlternative = self.questModeLookup[device + "-" + pokestop]
+        self.questModeLock.unlock()
+        return isAlternative
     }
 
 }

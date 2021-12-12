@@ -588,9 +588,8 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 lastMode[username ?? uuid] = pokestop.alternative
-                WebHookRequestHandler.questModeLock.lock()
-                WebHookRequestHandler.questModeLookup[uuid]?[pokestop.pokestop.id] = pokestop.alternative
-                WebHookRequestHandler.questModeLock.unlock()
+                WebHookRequestHandler.addToQuestLookup(
+                    device: uuid, pokestop: pokestop.pokestop.id, isAlternative: pokestop.alternative)
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,
