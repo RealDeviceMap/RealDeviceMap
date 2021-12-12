@@ -319,7 +319,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 mysqlStmt.bindParam(pokestopId)
 
                 guard mysqlStmt.execute() else {
-                    Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+                    Log.error(message: "[POKEMON] Failed to execute query 'init'. (\(mysqlStmt.errorMessage())")
                     throw DBController.DBError()
                 }
 
@@ -843,7 +843,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[POKEMON] Failed to execute query 'save'. (\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
@@ -988,7 +988,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1104,7 +1104,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         mysqlStmt.bindParam(isEvent)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'getWithId'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1223,7 +1223,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'truncate'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1315,7 +1315,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'activeCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
