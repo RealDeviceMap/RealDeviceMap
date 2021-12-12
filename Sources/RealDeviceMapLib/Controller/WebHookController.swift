@@ -263,7 +263,9 @@ public class WebHookController {
                                 continue
                             }
                             let area = webhook.data["area"] as? [[Coord]] ?? [[Coord]]()
-                            let polygon = area.isEmpty ? nil : self.createPolygon(coords: area)
+                            print("[TMP] \(area)")
+                            print("[TMP] \(webhook.data["area"] as! [[[String: Double]]])")
+                            let polygon = area.isEmpty ? nil : self.createMultiPolygon(coords: area)
                             var events = [[String: Any]]()
 
                             if webhook.types.contains(.pokemon) {
@@ -444,7 +446,7 @@ public class WebHookController {
 
     }
 
-    private func createPolygon(coords: [[Coord]]) -> MultiPolygon {
+    private func createMultiPolygon(coords: [[Coord]]) -> MultiPolygon {
         var geofences = [[[CLLocationCoordinate2D]]]()
         for coord in coords {
             var geofence = [CLLocationCoordinate2D]()
