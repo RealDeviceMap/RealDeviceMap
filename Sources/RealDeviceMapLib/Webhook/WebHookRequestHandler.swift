@@ -127,6 +127,8 @@ public class WebHookRequestHandler {
         let trainerLevel = json["trainerlvl"] as? Int ?? (json["trainerLevel"] as? String)?.toInt() ?? 0
         var trainerXP = json["trainerexp"] as? Int ?? 0
         let username = json["username"] as? String
+        let hasArQuestReqGlobal = json["have_ar"] as? Bool
+
         let controller = uuid != nil ? InstanceController.global.getInstanceController(deviceUUID: uuid!) : nil
         let isEvent = controller?.isEvent ?? false
         if username != nil && trainerLevel > 0 {
@@ -136,6 +138,8 @@ public class WebHookRequestHandler {
             if oldLevel != trainerLevel {
                 do {
                     try Account.setLevel(mysql: mysql, username: username!, level: trainerLevel)
+                    Log.debug(message: "[WebHookRequestHandler] Account \(username!) on \(uuid ?? "") " +
+                        "from \(String(describing: oldLevel)) to \(trainerLevel) with \(trainerXP) XP")
                     levelCacheLock.lock()
                     levelCache[username!] = trainerLevel
                     levelCacheLock.unlock()
@@ -166,7 +170,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
-        var quests = [QuestProto]()
+        var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
@@ -178,6 +182,7 @@ public class WebHookRequestHandler {
 
         for rawData in contents {
 
+            let hasArQuestReq = rawData["have_ar"] as? Bool
             let data: Data
             let method: Int
             if let prr = rawData["GetPlayerResponse"] as? String {
@@ -220,8 +225,8 @@ public class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        for item in inv.inventoryDelta.inventoryItem where
-                            item.inventoryItemData.playerStats.experience > 0 {
+                        for item in inv.inventoryDelta.inventoryItem
+                            where item.inventoryItemData.playerStats.experience > 0 {
                             trainerXP = Int(item.inventoryItemData.playerStats.experience)
                         }
                     }
@@ -231,8 +236,11 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
+                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
+                        // MARK: maybe compare with instance questMode?!
                         let quest = fsr.challengeQuest.quest
-                        quests.append(quest)
+                        let title = fsr.challengeQuest.questDisplay.title
+                        quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
                 } else {
@@ -673,12 +681,12 @@ public class WebHookRequestHandler {
                 for quest in quests {
                     let pokestop: Pokestop?
                     do {
-                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.fortID)
+                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.quest.fortID)
                     } catch {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        pokestop!.addQuest(questData: quest)
+                        pokestop!.addQuest(title: quest.name, questData: quest.quest, hasARQuest: quest.hasAr)
                         try? pokestop!.save(mysql: mysql, updateQuest: true)
                     }
                 }

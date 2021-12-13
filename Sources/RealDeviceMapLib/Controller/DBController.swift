@@ -125,14 +125,14 @@ public class DBController {
 
         Log.info(message: "[DBController] Initializing database")
 
-        let enviroment = ProcessInfo.processInfo.environment
-        database = enviroment["DB_DATABASE"] ?? "rdmdb"
-        host = enviroment["DB_HOST"] ?? "127.0.0.1"
-        port = UInt32(enviroment["DB_PORT"] ?? "") ?? 3306
-        username = enviroment["DB_USERNAME"] ?? "rdmuser"
-        password = enviroment["DB_PASSWORD"]
-        rootUsername = enviroment["DB_ROOT_USERNAME"] ?? "root"
-        rootPassword = enviroment["DB_ROOT_PASSWORD"]
+        let environment = ProcessInfo.processInfo.environment
+        database = environment["DB_DATABASE"] ?? "rdmdb"
+        host = environment["DB_HOST"] ?? "127.0.0.1"
+        port = UInt32(environment["DB_PORT"] ?? "") ?? 3306
+        username = environment["DB_USERNAME"] ?? "rdmuser"
+        password = environment["DB_PASSWORD"]
+        rootUsername = environment["DB_ROOT_USERNAME"] ?? "root"
+        rootPassword = environment["DB_ROOT_PASSWORD"]
 
         MySQLSessionConnector.host = host
         MySQLSessionConnector.port = Int(port)
@@ -280,6 +280,7 @@ public class DBController {
                     "pokemon": true,
                     "pokemon_stats": false,
                     "pokemon_shiny_stats": false,
+                    "pokemon_hundo_stats": false,
                     "pokestop": true,
                     "quest_stats": false,
                     "raid_stats": false,
