@@ -1,15 +1,12 @@
 import XCTest
 import Foundation
 
-@testable import RealDeviceMap
+@testable import RealDeviceMapLib
 
 final class RealDeviceMapTests: XCTestCase {
-    
+
     func test01Example() {
         print("HI")
     }
-    
-    static var allTests = [
-        ("test01Example", test01Example)
-    ]
+
 }

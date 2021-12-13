@@ -1,11 +1,17 @@
 included:
  - Sources
+ - Tests
 disabled_rules:
 - nesting
 - legacy_hashing
+- inclusive_language
 identifier_name:
   excluded:
     - i
     - id
     - cp
     - xp
+    - iv
+type_name:
+  excluded:
+    - IV

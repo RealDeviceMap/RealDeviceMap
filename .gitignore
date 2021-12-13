@@ -5,6 +5,7 @@
 .build/
 .build_lin/
 .packages_lin/
+.swiftpm/
 Package.resolved
 
 # Xcode
@@ -17,3 +18,5 @@ resources/webroot/static/img/
 backups/
 .gitref
 .gitsha
+tmp1.png
+tmp2.png

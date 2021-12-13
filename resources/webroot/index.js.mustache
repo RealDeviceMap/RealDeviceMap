@@ -34,6 +34,17 @@ let gymFilterNew = {}
 let pokestopFilter = {}
 let pokestopFilterNew = {}
 
+let availableGrunts = [
+  1,2,3,4,5,6,7,
+  10,11,12,13,14,15,16,17,18,19,
+  20,21,22,23,24,25,26,27,28,29,
+  30,31,32,33,34,35,36,37,38,39,
+  40,41,42,43,44,47,48,49,50,
+  500,501,502,503,504,505,506,507,508,509,510
+]
+let invasionFilter = {}
+let invasionFilterNew = {}
+
 let spawnpointFilter = {}
 let spawnpointFilterNew = {}
 
@@ -48,6 +59,7 @@ let openedWeather
 let openedDevice
 
 let showPokestops
+let showInvasions
 let showQuests
 let showGyms
 let showRaids
@@ -59,15 +71,19 @@ let showDevices
 let showRaidTimers
 let showSubmissionCells
 
-let avilableForms = []
-let avilableItems = []
-let avilableTileservers = {}
+let showGreatLeague
+let showUltraLeague
+
+let availableForms = []
+let availableItems = []
+let availableTileservers = {}
 let selectedTileserver = 'Default'
 
 let pokemonFilterLoaded = false
 let questFilterLoaded = false
 let raidFilterLoaded = false
 let gymFilterLoaded = false
+let invasionFilterLoaded = false
 let pokestopFilterLoaded = false
 let spawnpointFilterLoaded = false
 
@@ -144,8 +160,15 @@ $(function () {
 
   $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
     i18n.translator.add(data)
+  })
+
+  $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
+    var translations = {}
+    translations.values = data
+    i18n.translator.add(translations)
     initPreview()
   })
+  
 
   $.getJSON('/static/data/pokemon.json', function (data) {
     pokemonDb = data
@@ -155,24 +178,24 @@ $(function () {
     weatherTypes = data
   })
 
-  avilableForms = JSON.parse('{{{avilable_forms_json}}}')
-  avilableItems = JSON.parse('{{{avilable_items_json}}}')
-  avilableTileservers = JSON.parse('{{{avilable_tileservers_json}}}')
+  availableForms = JSON.parse('{{{available_forms_json}}}')
+  availableItems = JSON.parse('{{{available_items_json}}}')
+  availableTileservers = JSON.parse('{{{available_tileservers_json}}}')
 
   loadStorage()
 
-  const avilableTileserverKeys = []
-  for (var avilableTileserverKey in avilableTileservers) {
-    avilableTileserverKeys.push(avilableTileserverKey)
+  const availableTileserverKeys = []
+  for (var availableTileserverKey in availableTileservers) {
+    availableTileserverKeys.push(availableTileserverKey)
   }
-  avilableTileserverKeys.sort()
+  availableTileserverKeys.sort()
   $('#select-mapstyle').append($('<option>', {
     value: 'Default',
     text: 'Default',
     selected: selectedTileserver === 'Default'
   }))
-  for (var i = 0; i < avilableTileserverKeys.length; i++) {
-    const key = avilableTileserverKeys[i]
+  for (var i = 0; i < availableTileserverKeys.length; i++) {
+    const key = availableTileserverKeys[i]
     if (key !== 'Default') {
       $('#select-mapstyle').append($('<option>', {
         value: key,
@@ -188,6 +211,7 @@ $(function () {
     raidFilterNew = $.extend(true, {}, raidFilter)
     gymFilterNew = $.extend(true, {}, gymFilter)
     pokestopFilterNew = $.extend(true, {}, pokestopFilter)
+    invasionFilterNew = $.extend(true, {}, invasionFilter)
     spawnpointFilterNew = $.extend(true, {}, spawnpointFilter)
 
     $('.select-button').each(function () {
@@ -217,6 +241,11 @@ $(function () {
       loadGymFilter()
     }
 
+    if (!invasionFilterLoaded) {
+      invasionFilterLoaded = true
+      loadInvasionFilter()
+    }
+
     if (!pokestopFilterLoaded) {
       pokestopFilterLoaded = true
       loadPokestopFilter()
@@ -239,8 +268,8 @@ $(function () {
     if (L.Browser.retina) {
       scale = '@2x'
     }
-    tileLayer = L.tileLayer(avilableTileservers[selectedTileserver].url, {
-      attribution: avilableTileservers[selectedTileserver].attribution,
+    tileLayer = L.tileLayer(availableTileservers[selectedTileserver].url, {
+      attribution: availableTileservers[selectedTileserver].attribution,
       minZoom: '{{min_zoom}}',
       maxZoom: '{{max_zoom}}',
       scale: scale,
@@ -255,6 +284,7 @@ $(function () {
       show_raids: showRaids,
       show_pokemon: showPokemon,
       show_quests: showQuests,
+      show_invasions: showInvasions,
       show_pokestops: showPokestops,
       show_spawnpoints: showSpawnpoints,
       show_cells: showCells,
@@ -264,12 +294,13 @@ $(function () {
       raid: raidFilterNew,
       pokemon: pokemonFilterNew,
       quest: questFilterNew,
+      invasion: invasionFilterNew,
       pokestop: pokestopFilterNew,
       spawnpoint: spawnpointFilterNew
     }
     var json = JSON.stringify(settings)
     var el = document.createElement('a')
-    el.setAttribute('href', 'data:text/plain;chartset=utf-8,' + encodeURIComponent(json))
+    el.setAttribute('href', 'data:application/json;chartset=utf-8,' + encodeURIComponent(json))
     el.setAttribute('download', 'settings.json')
     el.style.display = 'none'
     document.body.appendChild(el)
@@ -394,7 +425,7 @@ function loadStorage () {
   if (selectedTileserverTmp === undefined) {
     selectedTileserver = 'Default'
   } else {
-    if (avilableTileservers[selectedTileserverTmp] === undefined) {
+    if (availableTileservers[selectedTileserverTmp] === undefined) {
       selectedTileserver = 'Default'
     } else {
       selectedTileserver = selectedTileserverTmp
@@ -415,6 +446,14 @@ function loadStorage () {
     showRaids = true
   } else {
     showRaids = (showRaidsValue === 'true')
+  }
+
+  const showInvasionsValue = retrieve('show_invasions')
+  if (showInvasionsValue === null) {
+    store('show_invasions', false)
+    showInvasions = false
+  } else {
+    showInvasions = (showInvasionsValue === 'true')
   }
 
   const showPokestopsValue = retrieve('show_pokestops')
@@ -488,6 +527,8 @@ function loadStorage () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.show_cell = { on: true }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -501,6 +542,12 @@ function loadStorage () {
         pokemonFilter[i] = { show: true, size: 'normal' }
       }
     }
+    if (pokemonFilter.event_only === undefined) {
+      pokemonFilter.event_only = { on: false }
+    }
+    if (pokemonFilter.show_cell === undefined) {
+      pokemonFilter.show_cell = { on: true }
+    }
     if (pokemonFilter.iv_and === undefined) {
       pokemonFilter.iv_and = { on: false, filter: '0-100' }
     }
@@ -513,11 +560,14 @@ function loadStorage () {
   const questFilterValue = retrieve('quest_filter')
   if (questFilterValue === null) {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: true, size: 'normal' }
     })
 
@@ -525,13 +575,16 @@ function loadStorage () {
     questFilter = defaultQuestFilter
   } else {
     questFilter = JSON.parse(questFilterValue)
+    if (questFilter.ar === undefined) {
+      questFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       if (questFilter['p' + i] === undefined) {
         questFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       if (questFilter['i' + itemId] === undefined) {
         questFilter['i' + itemId] = { show: true, size: 'normal' }
       }
@@ -546,7 +599,7 @@ function loadStorage () {
       defaultRaidFilter.timers = { show: true, size: 'normal' }
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (defaultRaidFilter['l' + i] === undefined) {
         defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -568,7 +621,7 @@ function loadStorage () {
       showRaidTimers = raidFilter.timers.show
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (raidFilter['l' + i] === undefined) {
         raidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -592,6 +645,9 @@ function loadStorage () {
     if (defaultGymFilter.ex === undefined) {
       defaultGymFilter.ex = { show: false, size: 'normal' }
     }
+    if (defaultGymFilter.ar === undefined) {
+      defaultGymFilter.ar = { show: false, size: 'normal' }
+    }
     for (i = 0; i <= 6; i++) {
       if (defaultGymFilter['s' + i] === undefined) {
         defaultGymFilter['s' + i] = { show: true, size: 'normal' }
@@ -611,6 +667,9 @@ function loadStorage () {
     if (gymFilter.ex === undefined) {
       gymFilter.ex = { show: false, size: 'normal' }
     }
+    if (gymFilter.ar === undefined) {
+      gymFilter.ar = { show: false, size: 'normal' }
+    }
     for (i = 0; i <= 6; i++) {
       if (gymFilter['s' + i] === undefined) {
         gymFilter['s' + i] = { show: true, size: 'normal' }
@@ -625,13 +684,13 @@ function loadStorage () {
       defaultPokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
-    for (i = 1; i < 5; i++) {
+    for (i = 1; i < 6; i++) {
       if (defaultPokestopFilter['l' + i] === undefined) {
         defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
-    if (defaultPokestopFilter.invasion === undefined) {
-      defaultPokestopFilter.invasion = { show: true, size: 'normal' }
+    if (defaultPokestopFilter.ar === undefined) {
+      defaultPokestopFilter.ar = { show: false, size: 'normal' }
     }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
@@ -642,14 +701,31 @@ function loadStorage () {
       pokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
-    for (i = 1; i < 5; i++) {
+    for (i = 1; i < 6; i++) {
       if (pokestopFilter['l' + i] === undefined) {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
-    if (pokestopFilter.invasion === undefined) {
-      pokestopFilter.invasion = { show: true, size: 'normal' }
+    if (pokestopFilter.ar === undefined) {
+      pokestopFilter.ar = { show: false, size: 'normal' }
     }
+  }
+  
+  const invasionFilterValue = retrieve('invasion_filter')
+  if (invasionFilterValue === null) {
+    const defaultInvasionFilter = {}
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
+    });
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilter = defaultInvasionFilter
+  } else {
+    invasionFilter = JSON.parse(invasionFilterValue)
+    availableGrunts.forEach((gruntId) => {
+      if (invasionFilter[gruntId] === undefined) {
+        invasionFilter[gruntId] = { show: true, size: 'normal' }
+      }
+    })
   }
 
   const spawnpointFilterValue = retrieve('spawnpoint_filter')
@@ -672,6 +748,22 @@ function loadStorage () {
     if (spawnpointFilter['with-timer'] === undefined) {
       spawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     }
+  }
+
+  const showGreatLeagueValue = retrieve('show_great_league')
+  if (showGreatLeagueValue === null) {
+    store('show_great_league', false)
+    showGreatLeague = false
+  } else {
+    showGreatLeague = (showGreatLeagueValue === 'true')
+  }
+
+  const showUltraLeagueValue = retrieve('show_ultra_league')
+  if (showUltraLeagueValue === null) {
+    store('show_ultra_league', false)
+    showUltraLeague = false
+  } else {
+    showUltraLeague = (showUltraLeagueValue === 'true')
   }
 }
 
@@ -712,8 +804,8 @@ function initMap () {
   if (L.Browser.retina) {
     scale = '@2x'
   }
-  tileLayer = L.tileLayer(avilableTileservers[selectedTileserver].url, {
-    attribution: avilableTileservers[selectedTileserver].attribution,
+  tileLayer = L.tileLayer(availableTileservers[selectedTileserver].url, {
+    attribution: availableTileservers[selectedTileserver].attribution,
     minZoom: '{{min_zoom}}',
     maxZoom: '{{max_zoom}}',
     scale: scale,
@@ -744,6 +836,8 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: true, size: 'normal' }
     }
+    defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.show_cell = { on: true }
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
@@ -759,6 +853,8 @@ function initMap () {
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultPokemonFilter[i] = { show: false, size: pokemonFilterNew[i].size, filter: pokemonFilterNew[i].filter }
     }
+    defaultPokemonFilter.event_only = { on: false }
+    defaultPokemonFilter.show_cell = { on: false }
     defaultPokemonFilter.iv_and = { on: false, filter: pokemonFilterNew.iv_and.filter }
     defaultPokemonFilter.iv_or = { on: false, filter: pokemonFilterNew.iv_or.filter }
 
@@ -770,11 +866,14 @@ function initMap () {
 
   $('#reset-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: true, size: 'normal' }
     })
 
@@ -786,11 +885,14 @@ function initMap () {
 
   $('#disable-all-quest-filter').on('click', function () {
     const defaultQuestFilter = {}
+    if (defaultQuestFilter.ar === undefined) {
+      defaultQuestFilter.ar = { show: false, size: 'normal' }
+    }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: false, size: questFilterNew['p' + i].size }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       defaultQuestFilter['i' + itemId] = { show: false, size: questFilterNew['i' + itemId].size }
     })
 
@@ -804,7 +906,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -821,7 +923,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       defaultRaidFilter['l' + i] = { show: false, size: raidFilterNew['l' + i].size }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -841,6 +943,7 @@ function initMap () {
       defaultGymFilter['t' + i] = { show: true, size: 'normal' }
     }
     defaultGymFilter.ex = { show: false, size: 'normal' }
+    defaultGymFilter.ar = { show: false, size: 'normal' }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: true, size: 'normal' }
     }
@@ -858,6 +961,7 @@ function initMap () {
       defaultGymFilter['t' + i] = { show: false, size: gymFilterNew['t' + i].size }
     }
     defaultGymFilter.ex = { show: false, size: gymFilterNew.ex.size }
+    defaultGymFilter.ar = { show: false, size: gymFilterNew.ex.size }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: false, size: gymFilterNew['s' + i].size }
     }
@@ -868,13 +972,35 @@ function initMap () {
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
   })
 
+  $('#reset-invasion-filter').on('click', function () {
+    const defaultInvasionFilter = {}
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
+    })
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilterNew = defaultInvasionFilter
+
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
+  })
+
+  $('#disable-all-invasion-filter').on('click', function () {
+    const defaultInvasionFilter = {}
+    availableGrunts.forEach((gruntId) => {
+      defaultInvasionFilter[gruntId] = { show: false, size: invasionFilterNew[gruntId].size }
+    })
+    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
+    invasionFilterNew = defaultInvasionFilter
+
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
+    })
+
   $('#reset-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
-    for (var i = 1; i < 5; i++) {
+    for (var i = 1; i < 6; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
-    defaultPokestopFilter.invasion = { show: true, size: 'normal' }
+    defaultPokestopFilter.ar = { show: false, size: 'normal' }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -885,10 +1011,10 @@ function initMap () {
   $('#disable-all-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: false, size: pokestopFilterNew.normal.size }
-    for (var i = 1; i < 5; i++) {
+    for (var i = 1; i < 6; i++) {
       defaultPokestopFilter['l' + i] = { show: false, size: pokestopFilterNew['l' + i].size }
     }
-    defaultPokestopFilter.invasion = { show: false, size: pokestopFilterNew.invasion.size }
+    defaultPokestopFilter.ar = { show: false, size: pokestopFilterNew.ar.size }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -924,6 +1050,7 @@ function initMap () {
     const newShowGyms = $('#show-gyms').hasClass('active')
     const newShowRaids = $('#show-raids').hasClass('active')
     const newShowPokestops = $('#show-pokestops').hasClass('active')
+    const newShowInvasions = $('#show-invasions').hasClass('active')
     const newShowQuests = $('#show-quests').hasClass('active')
     const newShowPokemon = $('#show-pokemon').hasClass('active')
     const newShowSpawnpoints = $('#show-spawnpoints').hasClass('active')
@@ -968,6 +1095,17 @@ function initMap () {
       gymMarkers = newGymMarkers
     }
     if (newShowPokestops !== showPokestops && newShowPokestops === false) {
+      const newPokestopMarkers = []
+      $.each(pokestopMarkers, function (index, pokestop) {
+        if (pokestop.is_start) {
+          newPokestopMarkers.push(pokestop)
+        } else {
+          map.removeLayer(pokestop.marker)
+        }
+      })
+      pokestopMarkers = newPokestopMarkers
+    }
+    if (newShowInvasions !== showInvasions && newShowInvasions === false) {
       const newPokestopMarkers = []
       $.each(pokestopMarkers, function (index, pokestop) {
         if (pokestop.is_start) {
@@ -1058,6 +1196,7 @@ function initMap () {
 
     gymFilter = gymFilterNew
     pokestopFilter = pokestopFilterNew
+    invasionFilter = invasionFilterNew
     raidFilter = raidFilterNew
     spawnpointFilter = spawnpointFilterNew
     // const raidFilterOld = $.extend(true, {}, raidFilter);
@@ -1082,6 +1221,8 @@ function initMap () {
     store('show_raids', newShowRaids)
     showPokestops = newShowPokestops
     store('show_pokestops', newShowPokestops)
+    showInvasions = newShowInvasions
+    store('show_invasions', newShowInvasions)
     showQuests = newShowQuests
     store('show_quests', newShowQuests)
     showPokemon = newShowPokemon
@@ -1093,6 +1234,7 @@ function initMap () {
     store('raid_filter', JSON.stringify(raidFilter))
     store('gym_filter', JSON.stringify(gymFilter))
     store('pokestop_filter', JSON.stringify(pokestopFilter))
+    store('invasion_filter', JSON.stringify(invasionFilter))
     store('spawnpoint_filter', JSON.stringify(spawnpointFilter))
     store('show_cells', newShowCells)
     showCells = newShowCells
@@ -1141,6 +1283,14 @@ function initMap () {
         } else {
           $('#hide-pokestops').addClass('active')
           $('#show-pokestops').removeClass('active')
+        }
+
+        if (retrieve('show_invasions') === 'true') {
+          $('#show-invasions').addClass('active')
+          $('#hide-invasions').removeClass('active')
+        } else {
+          $('#hide-invasions').addClass('active')
+          $('#show-invasions').removeClass('active')
         }
 
         if (retrieve('show_quests') === 'true') {
@@ -1282,6 +1432,8 @@ function loadData () {
       pokemonFilterIV.or = pokemonFilter.iv_or.filter.replace(/\s/g, '')
     }
   }
+  let pokemonFilterEventOnly = showPokemon && pokemonFilter['event_only'] && pokemonFilter['event_only'].on
+  let pokemonFilterHideCell = showPokemon && pokemonFilter['show_cell'] && pokemonFilter['show_cell'].on === false
 
   const questFilterExclude = []
   if (showQuests) {
@@ -1291,7 +1443,7 @@ function loadData () {
         questFilterExclude.push('p' + i)
       }
     }
-    $.each(avilableItems, function (index, itemId) {
+    $.each(availableItems, function (index, itemId) {
       if (questFilter['i' + itemId].show === false) {
         questFilterExclude.push('i' + itemId)
       }
@@ -1305,7 +1457,7 @@ function loadData () {
       raidFilterExclude.push('timers')
     }
     let i
-    for (i = 1; i <= 5; i++) {
+    for (i = 1; i <= 6; i++) {
       if (raidFilter['l' + i].show === false) {
         raidFilterExclude.push('l' + i)
       }
@@ -1335,19 +1487,25 @@ function loadData () {
     }
   }
 
+  const invasionFilterExclude = []
+  if (showInvasions) {
+    availableGrunts.forEach((gruntId) => {
+      if (invasionFilter[gruntId].show === false) {
+        invasionFilterExclude.push(gruntId)
+      }
+    })
+  }
+
   const pokestopFilterExclude = []
   if (showPokestops) {
     if (pokestopFilter.normal.show === false) {
       pokestopFilterExclude.push('normal')
     }
     let i
-    for (i = 1; i < 5; i++) {
+    for (i = 1; i < 6; i++) {
       if (pokestopFilter['l' + i].show === false) {
         pokestopFilterExclude.push('l' + i)
       }
-    }
-    if (pokestopFilter.invasion.show === false) {
-      pokestopFilterExclude.push('invasion')
     }
   }
 
@@ -1370,14 +1528,21 @@ function loadData () {
     show_gyms: showGyms,
     show_raids: showRaids,
     show_pokestops: showPokestops,
+    show_invasions: showInvasions,
     show_quests: showQuests,
     show_pokemon: showPokemon,
+    pokemon_filter_event_only: pokemonFilterEventOnly,
+    pokemon_exclude_cell: pokemonFilterHideCell,
     pokemon_filter_exclude: JSON.stringify(pokemonFilterExclude),
     quest_filter_exclude: JSON.stringify(questFilterExclude),
     pokemon_filter_iv: JSON.stringify(pokemonFilterIV),
     raid_filter_exclude: JSON.stringify(raidFilterExclude),
     gym_filter_exclude: JSON.stringify(gymFilterExclude),
+    invasion_filter_exclude: JSON.stringify(invasionFilterExclude),
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
+    pokestop_show_only_ar: pokestopFilter.ar.show === true,
+    quest_show_only_ar: questFilter.ar.show === true,
+    gym_show_only_ar: gymFilter.ar.show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
     show_cells: showCells && map.getZoom() >= 13,
@@ -1405,7 +1570,11 @@ function loadData () {
       const pokestops = data.data.pokestops
       ts = Math.round((new Date()).getTime() / 1000)
       $.each(pokestops, function (index, pokestop) {
-        if (showPokestops || (showQuests && pokestop.quest_type !== null)) {
+        if (
+            showPokestops ||
+            (showQuests && questFilter.ar.show === false && pokestop.quest_type !== null) ||
+            (showQuests && questFilter.ar.show === true && pokestop.alternative_quest_type !== null) ||
+            (showInvasions && pokestop.incident_expire_timestamp && pokestop.incident_expire_timestamp >= ts)) {
           addPokestop(pokestop, ts)
         }
       })
@@ -1601,8 +1770,31 @@ function getPokemonSize (pokemonId) {
   }
 }
 
-function getPokemonIndex (pokemonId) {
-  const size = pokemonFilter[pokemonId].size
+function getPokemonIndex (pokemon) {
+  const size = pokemonFilter[pokemon.pokemon_id].size
+  if (pokemon.atk_iv === 15 && pokemon.def_iv === 15 && pokemon.sta_iv === 15) {
+    return 9
+  }
+  if (pokemon.pvp_rankings_great_league !== null && pokemon.pvp_rankings_ultra_league !== null) {
+    let bestRank = 4
+    $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    if (bestRank === 1) {
+      return 7
+    } else if (bestRank === 2) {
+      return 6
+    } else if (bestRank === 3) {
+      return 5
+    }
+  }
   if (size === 'small') {
     return 1
   } else if (size === 'large') {
@@ -1660,6 +1852,7 @@ function getGymSize (teamId) {
 }
 
 function getRaidSize (id) {
+  console.log(id, raidFilter);
   const size = raidFilter[id].size
   if (size === 'small') {
     return 30
@@ -1673,7 +1866,7 @@ function getRaidSize (id) {
 }
 
 function getPokestopSize (id) {
-  const size = pokestopFilter[id].size
+  const size = pokestopFilter[id] ? pokestopFilter[id].size : null
   if (size === 'small') {
     return 20
   } else if (size === 'large') {
@@ -1788,25 +1981,26 @@ function addPokemon(pokemon, ts) {
     lastUpdateServer = pokemon.updated
   }
   const oldPokemon = pokemonMarkers.find(function (value) {
-    return pokemon.id === value.id
+    return pokemon.id === value.id && pokemon.is_event === value.is_event
   })
 
   if (oldPokemon === undefined || pokemon.is_start) {
-    if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-      var latOffset = Math.random() * 0.0002 - 0.0001
+
+    if (pokemon.spawn_id === null) {
+      var latOffset = Math.random() * 0.0003 - 0.0001
       if (latOffset >= 0) {
         latOffset += 0.00005
       } else {
         latOffset -= 0.00005
       }
-      var lonOffset = Math.random() * 0.0002 - 0.0001
+      var lonOffset = Math.random() * 0.0003 - 0.0001
       if (lonOffset >= 0) {
         lonOffset += 0.00005
       } else {
         lonOffset -= 0.00005
       }
       pokemon.lat += latOffset
-      pokemon.lon += +lonOffset
+      pokemon.lon += lonOffset
     }
 
     pokemon.marker = getPokemonMarker(pokemon, ts)
@@ -1821,13 +2015,17 @@ function addPokemon(pokemon, ts) {
     if (oldPokemon.expire_timestamp !== pokemon.expire_timestamp) {
       oldPokemon.expire_timestamp = pokemon.expire_timestamp
     }
-    if (oldPokemon.atk_iv !== pokemon.atk_iv) {
+    if (oldPokemon.atk_iv !== pokemon.atk_iv 
+      || oldPokemon.def_iv !== pokemon.def_iv 
+      || oldPokemon.sta_iv !== pokemon.sta_iv) {
       oldPokemon.atk_iv = pokemon.atk_iv
       oldPokemon.def_iv = pokemon.def_iv
       oldPokemon.sta_iv = pokemon.sta_iv
       oldPokemon.cp = pokemon.cp
       oldPokemon.weight = pokemon.weight
       oldPokemon.size = pokemon.size
+      oldPokemon.baseHeight = pokemon.baseHeight
+      oldPokemon.baseWeight = pokemon.baseWeight
       oldPokemon.move_1 = pokemon.move_1
       oldPokemon.move_2 = pokemon.move_2
       oldPokemon.level = pokemon.level
@@ -1902,6 +2100,15 @@ function addPokestop(pokestop, ts) {
       oldPokestop.quest_timestamp = pokestop.quest_timestamp
       oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
     }
+    if (oldPokestop.alternative_quest_type !== pokestop.alternative_quest_type) {
+      oldPokestop.alternative_quest_type = pokestop.alternative_quest_type
+      oldPokestop.alternative_quest_target = pokestop.alternative_quest_target
+      oldPokestop.alternative_quest_template = pokestop.alternative_quest_template
+      oldPokestop.alternative_quest_conditions = pokestop.alternative_quest_conditions
+      oldPokestop.alternative_quest_rewards = pokestop.alternative_quest_rewards
+      oldPokestop.alternative_quest_timestamp = pokestop.alternative_quest_timestamp
+      oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
+    }
     if (oldPokestop.willUpdate === false && oldPokestop.lure_expire_timestamp >= ts) {
       oldPokestop.willUpdate = true
       startPokestopTimer(oldPokestop, oldPokestop.lure_expire_timestamp, ts)
@@ -1946,11 +2153,11 @@ function addGym(gym, ts) {
     oldGym.updated = gym.updated
     oldGym.last_modified_timestamp = gym.last_modified_timestamp
 
-    if (oldGym.availble_slots !== gym.availble_slots ||
+    if (oldGym.available_slots !== gym.available_slots ||
         oldGym.team_id !== gym.team_id ||
         oldGym.raid_end_timestamp !== gym.raid_end_timestamp ||
         oldGym.raid_pokemon_id !== gym.raid_pokemon_id) {
-      oldGym.availble_slots = gym.availble_slots
+      oldGym.available_slots = gym.available_slots
       oldGym.team_id = gym.team_id
       oldGym.raid_end_timestamp = gym.raid_end_timestamp
       oldGym.raid_battle_timestamp = gym.raid_battle_timestamp
@@ -1958,6 +2165,7 @@ function addGym(gym, ts) {
       oldGym.raid_pokemon_id = gym.raid_pokemon_id
       oldGym.raid_pokemon_form = gym.raid_pokemon_form
       oldGym.raid_pokemon_gender = gym.raid_pokemon_gender
+      oldGym.raid_pokemon_evolution = gym.raid_pokemon_evolution
       oldGym.raid_pokemon_costume = gym.raid_pokemon_costume
       oldGym.raid_pokemon_cp = gym.raid_pokemon_cp
       oldGym.raid_pokemon_move_1 = gym.raid_pokemon_move_1
@@ -2044,7 +2252,10 @@ function getPokemonPopupContent (pokemon) {
     pokemonName += ' (' + getPokemonNameNoId(pokemon.display_pokemon_id) + ')'
   }
 
-  const pokemonIcon = getPokemonIconString(pokemon.pokemon_id, pokemon.form)
+  const pokemonIcon = getPokemonIconString(
+    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+    pokemon.pokestop_id === null && pokemon.spawn_id === null
+  )
 
   content +=
     '<div class="row">' + // START 1ST ROW
@@ -2064,7 +2275,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="row">' + // START 2ND ROW
         '<div class="' + (hasIV ? 'col-6 col-md-4' : 'col text-center') + '">' +
             '<div class="row' + (hasIV ? '' : 'text-center') + '" style="margin: auto;">' +
-                '<img src="/static/img/pokemon/' + pokemonIcon + '.png" height="64" width="64">' +
+                '<img src="/static/img/' + pokemonIcon + '" height="64" width="64">' +
             '</div>' + // END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">'
   var pkmn = pokemonDb[pokemon.pokemon_id]
@@ -2098,8 +2309,13 @@ function getPokemonPopupContent (pokemon) {
   if (pokemon.move_2 !== null) {
     content += '<b>Charge:</b> ' + getMoveName(pokemon.move_2) + '<br>'
   }
-  if (pokemon.height !== null && pokemon.weight !== null) {
-    content += '<b>Size:</b> ' + getSize(pokemon.size) + ' | <b>Weight:</b> ' + Math.round(pokemon.weight) + 'kg<br>'
+  if (pokemon.size !== null && pokemon.weight !== null) {
+    content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + 'kg'
+    if (pokemon.baseHeight !== null) {
+      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.baseHeight) + '<br>'
+    } else {
+      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
+    }
   }
   if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
     content += '<b>Catch Chances:</b><br>'
@@ -2132,14 +2348,79 @@ function getPokemonPopupContent (pokemon) {
     const updatedDate = new Date(pokemon.updated * 1000)
     content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
+
+  content += '<small><b>Scan-Type:</b> '
+  if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
+    content += getScanTypeName('cell')
+  } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
+    content += getScanTypeName('pokestop')
+  } else {
+    content += getScanTypeName('spawnpoint')
+  }
+  content += '</small><br>'
+
+  if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
+    content +=
+      '<a href="#" onclick="toggleGreatLeague()">' +
+      '<b>Great League:</b>' +
+      '</a><br>'
+    if (showGreatLeague) {
+      $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
+  }
+
+  if (pokemon.pvp_rankings_ultra_league !== undefined && pokemon.pvp_rankings_ultra_league !== null) {
+    content +=
+      '<a href="#" onclick="toggleUltraLeague()">' +
+      '<b>Ultra League:</b>' +
+      '</a><br>'
+    if (showUltraLeague) {
+      $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+        let pokemonName
+        if (ranking.form !== 0) {
+          pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
+        } else {
+          pokemonName = getPokemonName(ranking.pokemon)
+        }
+        let infoString
+        if (ranking.rank === null) {
+          infoString = 'CP too high'
+        } else {
+          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+        }
+        if (ranking.cp !== null) {
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+        }
+        content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+      })
+    }
+  }
+
   content +=
-        '</div>' +
+    '</div>' +
     '</div>' + // END 3RD ROW
     '<br>' +
     '<div class="text-center">' +
         '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>[Hide]</b></a>&nbsp;' +
         '<a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>[Exclude]</b></a> ' +
-        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'"><b>[Direct Link]</b></a>' +
+        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'/'+pokemon.is_event+'"><b>[Direct Link]</b></a>' +
         '<br>' +
         '<br>' +
         '<div class="row">' +
@@ -2198,11 +2479,16 @@ function getPokestopPopupContent (pokestop) {
   const isActiveLure = lureExpireDate >= now
 
   let content = '<div class="text-center">'
+  let pokestopName
   if (pokestop.name === null || pokestop.name === '') {
-    content += '<h6><b>Unknown Pokestop Name</b></h6>'
+    pokestopName = 'Unknown Pokestop Name'
   } else {
-    content += '<h6><b>' + pokestop.name + '</b></h6>'
+    pokestopName = pokestop.name
   }
+
+  content += '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editPokestopName(\''+pokestop.id+'\',\''+pokestop.name+'\')">{{/perm_admin}}' +
+      pokestopName +
+  '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></span>'
 
   if (pokestop.url !== null) {
     var lureClass = isActiveLure && pokestop.lure_id !== 0
@@ -2214,7 +2500,9 @@ function getPokestopPopupContent (pokestop) {
             ? 'lure-mossy'
             : pokestop.lure_id === 504
               ? 'lure-magnetic'
-              : 'lure-normal')
+              : pokestop.lure_id === 505
+                ? 'lure-rainy'
+                : 'lure-normal')
       : ''
     content += '<img src="' + pokestop.url.replace('http://', 'https://') + '" class="circle-image ' + lureClass + '"/><br><br>'
   }
@@ -2252,6 +2540,7 @@ function getPokestopPopupContent (pokestop) {
       conditionsString += ')'
     }
 
+    content += '<b>AR-Quest in Inventory:</b><br>'
     content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>'
 
     $.each(pokestop.quest_rewards, function (index, reward) {
@@ -2259,6 +2548,38 @@ function getPokestopPopupContent (pokestop) {
     })
 
     content += '<br>'
+  }
+
+  if (pokestop.alternative_quest_type !== null) {
+    const conditions = pokestop.alternative_quest_conditions
+    let conditionsString = ''
+    if (conditions !== undefined && conditions.length > 0) {
+      conditionsString += ' ('
+      $.each(conditions, function (index, condition) {
+        let formating
+        if (index === 0) {
+          formating = ''
+        } else {
+          formating = ', '
+        }
+
+        conditionsString += formating + getQuestCondition(condition)
+      })
+      conditionsString += ')'
+    }
+
+    content += '<b>No AR-Quest in Inventory:</b><br>'
+    content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
+
+    $.each(pokestop.alternative_quest_rewards, function (index, reward) {
+      content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
+    })
+
+    content += '<br>'
+  }
+
+  if (pokestop.ar_scan_eligible) {
+    content += '<img src="/static/img/misc/ar.png" height="26" width="26"><br><br>'
   }
 
   const updatedDate = new Date(pokestop.updated * 1000)
@@ -2312,7 +2633,9 @@ function getGymPopupContent (gym) {
   var content =
     '<div class="row">' + // START 1ST ROW
         '<div class="col-12 col-md-8 center-vertical">' +
-            '<span class="text-nowrap"><h6><b>' + gymName + '</b></h6></span>' +
+            '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editGymName(\''+gym.id+'\',\''+gym.name+'\')">{{/perm_admin}}' +
+                gymName +
+            '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></span>' +
         '</div>' +
         '<div class="col-6 col-md-4 center-vertical">' +
             '<div style="float:right; margin: auto;">' +
@@ -2333,16 +2656,20 @@ function getGymPopupContent (gym) {
       pokemonName += ' ' + getGenderIcon(gym.raid_pokemon_gender)
     } else if (isRaidBattle) {
       pokemonName = 'Unknown Raid Boss'
+    } else if (gym.raid_is_exclusive) {
+      pokemonName = 'EX Egg'
+    } else if (gym.raid_level === 6) {
+      pokemonName = 'Mega Egg'
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
-    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
+    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, null, null, gym.raid_pokemon_evolution, false)
     content +=
         '<div class="row" style="margin:auto;">' + // START 1ST ROW
             '<div class="col-6 col-md-4">' + // START 1ST COL
                 '<div class="row" style="margin:auto;">'
     if (hasRaidBoss && isRaidBattle) {
-      content += '<img src="/static/img/pokemon/' + pokemonIcon + '.png" height="64" width="64">'
+      content += '<img src="/static/img/' + pokemonIcon + '" "height="64" width="64">'
     } else {
       content += '<img src="/static/img/egg/' + gym.raid_level + '.png" height="64" width="64">'
     }
@@ -2370,14 +2697,21 @@ function getGymPopupContent (gym) {
             '</div>' + // END 1ST COLUMN
             '<div class="col-12 col-md-8 text-nowrap">' + // START 2ND COL
                 '<h7><b>' + pokemonName + '</b></h7><br>'
-    if (hasRaidBoss && isRaidBattle) {
+    if (hasRaidBoss && isRaidBattle && gym.raid_pokemon_evolution) {
+      content += '<b>Evolution:</b> ' + getEvolutionName(gym.raid_pokemon_evolution) + '<br>'
+    }
+    if (isRaidBattle) {
       if (gym.raid_pokemon_cp !== null) {
         if (gym.raid_is_exclusive) {
           content += '<b>Level:</b> EX<br>'
+        } else if (gym.raid_level === 6) {
+          content += '<b>Level:</b> Mega<br>'
         } else {
           content += '<b>Level:</b> ' + gym.raid_level + '<br>'
         }
       }
+    }
+    if (hasRaidBoss && isRaidBattle) {
       if (gym.raid_pokemon_move_1 !== null) {
         var move1 = getMoveName(gym.raid_pokemon_move_1)
         if (move1 !== null) {
@@ -2396,6 +2730,9 @@ function getGymPopupContent (gym) {
     }
     if (gym.ex_raid_eligible) {
       content += '<img src="/static/img/misc/ex.png" height="24" width="32">'
+    }
+    if (gym.ar_scan_eligible) {
+      content += '<img src="/static/img/misc/ar.png" height="26" width="26">'
     }
     content +=
             '</div>' + // END 2ND COL
@@ -2416,16 +2753,16 @@ function getGymPopupContent (gym) {
               : ''
       var url = gym.url.replace('http://', 'https://')
       content +=
-            '<div class="col-6 col-md-4">' + // START 1ST COL
+            '<div class="col-6 col-md-5">' + // START 1ST COL
                 // '<a href="' + url + '" target="_blank"><img src="' + url + '" style="border-radius:50%; height:96px; width:96px;"></a>' +
                 '<a href="' + url + '" target="_blank"><img src="' + url + '" class="circle-image ' + teamClass + '" style="height:96px; width:96px;"></a>' +
             '</div>' // END 1ST COL
     }
     content +=
             // '<div class="col-12 col-md-8 ' + (hasGymUrl ? 'text-center' : '') + ' center-vertical">' + //START 2ND COL
-            '<div class="col-12 col-md-8 center-vertical p-4">' + // START 2ND COL
+            '<div class="col-12 col-md-7 center-vertical p-4">' + // START 2ND COL
                 '<b>Team:</b> ' + getTeamName(gym.team_id) + '<br>' +
-                '<b>Slots Available:</b> ' + (gym.availble_slots === 0 ? 'Full' : gym.availble_slots === 6 ? 'Empty' : gym.availble_slots) + '<br>'
+                '<b>Slots Available:</b> ' + (gym.available_slots === 0 ? 'Full' : gym.available_slots === 6 ? 'Empty' : gym.available_slots) + '<br>'
     if (gym.guard_pokemon_id !== null) {
       content += '<b>Guard:</b> ' + getPokemonName(gym.guard_pokemon_id) + '<br>'
     }
@@ -2438,6 +2775,9 @@ function getGymPopupContent (gym) {
     if (gym.ex_raid_eligible) {
       // content += '<b>Gym is EX-Raid eligible</b>';
       content += '<img src="/static/img/misc/ex.png" height="24" width="32">'
+    }
+    if (gym.ar_scan_eligible) {
+      content += '<img src="/static/img/misc/ar.png" height="26" width="26">'
     }
     content +=
             '</div>' + // END 2ND COL
@@ -2588,6 +2928,10 @@ function getMoveName (moveId) {
   return i18n('move_' + moveId)
 }
 
+function getEvolutionName (evoId) {
+  return i18n('evo_' + evoId)
+}
+
 // function getWeatherName (weatherId) {
 //  return i18n('weather_' + weatherId)
 // }
@@ -2598,6 +2942,10 @@ function getQuestName (questId, amount) {
 
 function getItemName (itemId) {
   return i18n('item_' + itemId)
+}
+
+function getItemTypeName (itemTypeId) {
+  return i18n('item_type_' + itemTypeId)
 }
 
 function getLureName (lureId) {
@@ -2628,6 +2976,10 @@ function getCharacterCategoryName (characterCategoryId) {
   return i18n('character_category_' + characterCategoryId)
 }
 
+function getScanTypeName (spawnTypeId) {
+  return i18n('scan_type_' + spawnTypeId)
+}
+
 function getQuestReward (reward) {
   const id = reward.type
   const info = reward.info
@@ -2639,7 +2991,7 @@ function getQuestReward (reward) {
   } else if (id === 3 && info !== undefined && info.amount !== undefined) {
     return i18n('quest_reward_3_formatted', { amount: info.amount })
   } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-    return i18n('quest_reward_4_formatted', { amount: info.amount, pokemon: getPokemonName(info.pokemon_id) })
+    return i18n('quest_reward_4_formatted', { amount: info.amount, type: getPokemonName(info.pokemon_id) })
   } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
     var string
     if (info.form_id !== 0 && info.form_id !== null) {
@@ -2653,6 +3005,10 @@ function getQuestReward (reward) {
     return string
   } else if (id === 8 && info !== undefined && info.amount !== undefined) {
     return i18n('quest_reward_8_formatted', { amount: info.amount })
+  } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+    return i18n('quest_reward_11_formatted', { amount: info.amount, sticker_id: info.sticker_id })
+  } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+    return i18n('quest_reward_12_formatted', { amount: info.amount, pokemon: getPokemonName(info.pokemon_id) })
   } else {
     return i18n('quest_reward_' + id)
   }
@@ -2738,6 +3094,36 @@ function getQuestCondition (condition) {
       categoriesString += formatted + getCharacterCategoryName(characterCategory)
     })
     return i18n('quest_condition_27_formatted', { categories: categoriesString })
+  } else if (id === 37 && info !== undefined && info.raid_pokemon_evolutions !== undefined) {
+    let evolutionsString = ''
+    $.each(info.raid_pokemon_evolutions, function (index, evolution) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.raid_pokemon_evolutions.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      evolutionsString += formatted + getEvolutionName(evolution)
+    })
+    return i18n('quest_condition_37_formatted', { evolutions: evolutionsString })
+  } else if (id === 43 && info !== undefined && info.item_type_ids !== undefined) {
+    let typesString = ''
+    $.each(info.item_type_ids, function (index, itemTypeId) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.item_type_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      typesString += formatted + getItemTypeName(itemTypeId)
+    })
+    return i18n('quest_condition_43_formatted', { types: typesString })
+  } else if (id === 44 && info !== undefined && info.time !== undefined) {
+      return i18n('quest_condition_44_formatted', { time: info.time })
   } else {
     return i18n('quest_condition_' + id)
   }
@@ -2856,9 +3242,12 @@ function getWeatherStyle (weather, ts) {
 function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
-  const pokemonIdString = getPokemonIconString(pokemon.pokemon_id, pokemon.form)
+  const pokemonIdString = getPokemonIconString(
+    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+    pokemon.pokestop_id === null && pokemon.spawn_id === null
+  )
   const icon = L.icon({
-    iconUrl: '/static/img/pokemon/' + pokemonIdString + '.png',
+    iconUrl: '/static/img/' + pokemonIdString,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2)]
@@ -2871,7 +3260,7 @@ function getPokemonMarker (pokemon, ts) {
   if (pokemon.is_start) {
     zIndex = 1000
   } else {
-    zIndex = 40 + getPokemonIndex(pokemon.pokemon_id)
+    zIndex = 40 + getPokemonIndex(pokemon)
   }
   const marker = L.marker([pokemon.lat, pokemon.lon], {
     icon: getPokemonMarkerIcon(pokemon, ts),
@@ -2888,9 +3277,20 @@ function getPokemonMarker (pokemon, ts) {
 
 function getPokestopMarkerIcon (pokestop, ts) {
   let icon
-  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
-    const id = pokestop.quest_rewards[0].type
-    const info = pokestop.quest_rewards[0].info
+  if ((showQuests || pokestop.is_start) && (
+    (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
+    (questFilter.ar.show === true && pokestop.alternative_quest_type !== null && pokestop.alternative_quest_rewards[0] !== undefined)
+  )) {
+    let id
+    let info
+    
+    if (questFilter.ar.show === true) {
+      id = pokestop.alternative_quest_rewards[0].type
+      info = pokestop.alternative_quest_rewards[0].info
+    } else {
+      id = pokestop.quest_rewards[0].type
+      info = pokestop.quest_rewards[0].info
+    }
 
     let rewardString
 
@@ -2905,7 +3305,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
       if (info.form_id !== 0 && info.form_id !== null) {
         const pokemonIdStringTmp = '' + info.pokemon_id + '-' + info.form_id
-        if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+        if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
           rewardString = 'p' + pokemonIdStringTmp
         } else {
           rewardString = 'p' + info.pokemon_id
@@ -2913,10 +3313,23 @@ function getPokestopMarkerIcon (pokestop, ts) {
       } else {
         rewardString = 'p' + info.pokemon_id
       }
+    } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+      rewardString = 'i-4'
+    } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+      rewardString = 'i-5'
+    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+      rewardString = 'i-6'
     } else {
       rewardString = 'i0'
     }
-    const size = getQuestSize(rewardString)
+
+    let rewardId
+    if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
+      rewardId = 'p' + info.pokemon_id
+    } else {
+      rewardId = rewardString
+    }
+    const size = getQuestSize(rewardId)
 
     let lureId
     if (pokestop.lure_expire_timestamp >= ts) {
@@ -2928,7 +3341,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let invasionString
     let invasionStringEnd
     let folder
-    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
+    if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
       invasionString = 'i'
       invasionStringEnd = '_' + pokestop.grunt_type
       folder = 'quest_invasion'
@@ -2953,7 +3366,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
     let invasionString
     let invasionStringEnd
     let folder
-    if ((pokestop.is_start || pokestopFilter.invasion.show === true) && pokestop.incident_expire_timestamp >= ts) {
+    if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
       invasionString = 'i'
       invasionStringEnd = '_' + pokestop.grunt_type
       folder = 'invasion'
@@ -2982,10 +3395,22 @@ function getPokestopMarkerIcon (pokestop, ts) {
 
 function getPokestopMarker (pokestop, ts) {
   let zIndex
-  if ((showQuests || pokestop.is_start) && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) {
+    if ((showQuests || pokestop.is_start) && (
+      (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
+      (questFilter.ar.show === true && pokestop.alternative_quest_type !== null && pokestop.alternative_quest_rewards[0] !== undefined)
+    )) {
+    let id
+    let info
+
+    if (questFilter.ar.show === true) {
+      id = pokestop.alternative_quest_rewards[0].type
+      info = pokestop.alternative_quest_rewards[0].info
+    } else {
+      id = pokestop.quest_rewards[0].type
+      info = pokestop.quest_rewards[0].info
+    }
+    
     let rewardString
-    const id = pokestop.quest_rewards[0].type
-    const info = pokestop.quest_rewards[0].info
     if (id === 1 && info !== undefined && info.amount !== undefined) {
       rewardString = 'i-2'
     } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
@@ -2996,6 +3421,12 @@ function getPokestopMarker (pokestop, ts) {
       rewardString = 'i-3'
     } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
       rewardString = 'p' + info.pokemon_id
+    } else if (id === 8 && info !== undefined && info.amount !== undefined) {
+      rewardString = 'i-4'
+    } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+      rewardString = 'i-5'
+    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+      rewardString = 'i-6'
     } else {
       rewardString = 'i0'
     }
@@ -3051,10 +3482,10 @@ function getSpawnpointMarker (spawnpoint, ts) {
 
 function getGymMarkerIcon (gym, ts) {
   let size
-  if (gym.availble_slots === 6 || gym.team_id === 0) {
+  if (gym.available_slots === 6 || gym.team_id === 0) {
     size = 0
   } else {
-    size = (6 - gym.availble_slots)
+    size = (6 - gym.available_slots)
   }
 
   const raidLevel = gym.raid_level
@@ -3062,7 +3493,7 @@ function getGymMarkerIcon (gym, ts) {
   let iconSize
   if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && (showRaids || gym.is_start) && parseInt(gym.raid_level) > 0) {
     if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
-      const pokemonIdString = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form)
+      const pokemonIdString = getPokemonIdIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, gym.raid_pokemon_evolution)
       // Raid Boss
       iconSize = getRaidSize('p' + gym.raid_pokemon_id)
       icon = L.icon({
@@ -3228,26 +3659,38 @@ function manageSelectButton (e, isNew) {
       case 'on':
         shouldShow = pokemonFilterNew['iv_' + id].on
         break
+      case 'event_only_hide':
+        shouldShow = !pokemonFilterNew['event_only'] || !pokemonFilterNew['event_only'].on
+        break
+      case 'event_only_show':
+        shouldShow = pokemonFilterNew['event_only'] && pokemonFilterNew['event_only'].on
+        break
+      case 'show_cell_hide':
+        shouldShow = !pokemonFilterNew['show_cell'] || !pokemonFilterNew['show_cell'].on
+        break
+      case 'show_cell_show':
+        shouldShow = pokemonFilterNew['show_cell'] && pokemonFilterNew['show_cell'].on
+        break
     }
   } else if (type === 'quest-misc') {
     switch (info) {
       case 'hide':
-        shouldShow = questFilterNew['i' + -id].show === false
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].show === false
         break
       case 'show':
-        shouldShow = questFilterNew['i' + -id].show === true
+        shouldShow = !questFilterNew['i' + -id] || questFilterNew['i' + -id].show === true
         break
       case 'small':
-        shouldShow = questFilterNew['i' + -id].size === 'small'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'small'
         break
       case 'normal':
-        shouldShow = questFilterNew['i' + -id].size === 'normal'
+        shouldShow = !questFilterNew['i' + -id] ||questFilterNew['i' + -id].size === 'normal'
         break
       case 'large':
-        shouldShow = questFilterNew['i' + -id].size === 'large'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'large'
         break
       case 'huge':
-        shouldShow = questFilterNew['i' + -id].size === 'huge'
+        shouldShow = questFilterNew['i' + -id] && questFilterNew['i' + -id].size === 'huge'
         break
     }
   } else if (type === 'quest-item') {
@@ -3316,22 +3759,22 @@ function manageSelectButton (e, isNew) {
   } else if (type === 'raid-level') {
     switch (info) {
       case 'hide':
-        shouldShow = raidFilterNew['l' + id].show === false
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].show === false
         break
       case 'show':
-        shouldShow = raidFilterNew['l' + id].show === true
+        shouldShow = !raidFilterNew['l' + id] || raidFilterNew['l' + id].show === true
         break
       case 'small':
-        shouldShow = raidFilterNew['l' + id].size === 'small'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'small'
         break
       case 'normal':
-        shouldShow = raidFilterNew['l' + id].size === 'normal'
+        shouldShow = !raidFilterNew['l' + id] || raidFilterNew['l' + id].size === 'normal'
         break
       case 'large':
-        shouldShow = raidFilterNew['l' + id].size === 'large'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'large'
         break
       case 'huge':
-        shouldShow = raidFilterNew['l' + id].size === 'huge'
+        shouldShow = raidFilterNew['l' + id] && raidFilterNew['l' + id].size === 'huge'
         break
     }
   } else if (type === 'raid-pokemon') {
@@ -3376,7 +3819,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = gymFilterNew['t' + id].size === 'huge'
         break
     }
-  } else if (type === 'gym-ex') {
+  } else if (type === 'gym-ex' || type === 'gym-ar') {
     switch (info) {
       case 'hide':
         shouldShow = gymFilterNew[id].show === false
@@ -3460,7 +3903,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['l' + id].size === 'huge'
         break
     }
-  } else if (type === 'pokestop-invasion') {
+  } else if (type === 'pokestop-ar') {
     switch (info) {
       case 'hide':
         shouldShow = pokestopFilterNew[id].show === false
@@ -3479,6 +3922,27 @@ function manageSelectButton (e, isNew) {
         break
       case 'huge':
         shouldShow = pokestopFilterNew[id].size === 'huge'
+        break
+    }
+  } else if (type === 'invasion') {
+    switch (info) {
+      case 'hide':
+        shouldShow = invasionFilterNew[id].show === false
+        break
+      case 'show':
+        shouldShow = invasionFilterNew[id].show === true
+        break
+      case 'small':
+        shouldShow = invasionFilterNew[id].size === 'small'
+        break
+      case 'normal':
+        shouldShow = invasionFilterNew[id].size === 'normal'
+        break
+      case 'large':
+        shouldShow = invasionFilterNew[id].size === 'large'
+        break
+      case 'huge':
+        shouldShow = invasionFilterNew[id].size === 'huge'
         break
     }
   } else if (type === 'spawnpoint-timer') {
@@ -3500,6 +3964,15 @@ function manageSelectButton (e, isNew) {
         break
       case 'huge':
         shouldShow = spawnpointFilterNew[id].size === 'huge'
+        break
+    }
+  } else if (type === 'quest-ar') {
+    switch (info) {
+      case 'hide':
+        shouldShow = questFilterNew[id].show === false
+        break
+      case 'show':
+        shouldShow = questFilterNew[id].show === true
         break
     }
   } else {
@@ -3544,6 +4017,18 @@ function manageSelectButton (e, isNew) {
             break
           case 'on':
             pokemonFilterNew['iv_' + id].on = true
+            break
+          case 'event_only_show':
+            pokemonFilterNew['event_only'].on = true
+            break
+          case 'event_only_hide':
+            pokemonFilterNew['event_only'].on = false
+            break
+          case 'show_cell_show':
+            pokemonFilterNew['show_cell'].on = true
+            break
+          case 'show_cell_hide':
+            pokemonFilterNew['show_cell'].on = false
             break
         }
       } else if (type === 'quest-misc') {
@@ -3693,7 +4178,7 @@ function manageSelectButton (e, isNew) {
             gymFilterNew['t' + id].size = 'huge'
             break
         }
-      } else if (type === 'gym-ex') {
+      } else if (type === 'gym-ex' || type === 'gym-ar') {
         switch (info) {
           case 'hide':
             gymFilterNew[id].show = false
@@ -3777,7 +4262,7 @@ function manageSelectButton (e, isNew) {
             pokestopFilterNew['l' + id].size = 'huge'
             break
         }
-      } else if (type === 'pokestop-invasion') {
+      } else if (type === 'pokestop-ar') {
         switch (info) {
           case 'hide':
             pokestopFilterNew[id].show = false
@@ -3796,6 +4281,27 @@ function manageSelectButton (e, isNew) {
             break
           case 'huge':
             pokestopFilterNew[id].size = 'huge'
+            break
+        }
+      } else if (type === 'invasion') {
+        switch (info) {
+          case 'hide':
+            invasionFilterNew[id].show = false
+            break
+          case 'show':
+            invasionFilterNew[id].show = true
+            break
+          case 'small':
+            invasionFilterNew[id].size = 'small'
+            break
+          case 'normal':
+            invasionFilterNew[id].size = 'normal'
+            break
+          case 'large':
+            invasionFilterNew[id].size = 'large'
+            break
+          case 'huge':
+            invasionFilterNew[id].size = 'huge'
             break
         }
       } else if (type === 'spawnpoint-timer') {
@@ -3817,6 +4323,15 @@ function manageSelectButton (e, isNew) {
             break
           case 'huge':
             spawnpointFilterNew[id].size = 'huge'
+            break
+        }
+      } else if (type === 'quest-ar') {
+        switch (info) {
+          case 'hide':
+            questFilterNew[id].show = false
+            break
+          case 'show':
+            questFilterNew[id].show = true
             break
         }
       }
@@ -3936,23 +4451,43 @@ function getLureIconId (lureId) {
       return 3
     case 504:
       return 4
+    case 505:
+      return 5
   }
   return 1
 }
 
-function getSize (size) {
-  if (size < 1.5) return 'Tiny'
-  if (size <= 1.75) return 'Small'
-  if (size < 2.25) return 'Normal'
-  if (size <= 2.5) return 'Large'
-  return 'Big'
+function getSize (value, baseValue) {
+  var deviation = value - baseValue
+  var secondDeviation = baseValue*2/8
+  var absoluteDeviation = Math.abs(deviation)
+  if (absoluteDeviation >= secondDeviation) {
+    var signDeviation = Math.sign(deviation)
+    if (signDeviation > 0) {
+      return " XL"
+    } else {
+      return " XS"
+    }
+  } else {
+    return "m"
+  }
 }
 
-function getPokemonIconString (pokemonId, pokemonForm) {
+function getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution) {
   let pokemonIdString
-  if (pokemonForm !== 0 && pokemonForm !== null) {
+  if (pokemonEvolution !== 0 && pokemonEvolution !== null) {
+    const pokemonIdStringTmp = '' + pokemonId + '-' + (pokemonForm || 0) + '-' + pokemonEvolution
+    const pokemonIdStringTmp2 = '' + pokemonId + '-' + 0 + '-' + pokemonEvolution
+    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
+      pokemonIdString = pokemonIdStringTmp
+    } else if ($.inArray(pokemonIdStringTmp2, availableForms) !== -1) {
+      pokemonIdString = pokemonIdStringTmp2
+    } else {
+      pokemonIdString = '' + pokemonId
+    }
+  } else if (pokemonForm !== 0 && pokemonForm !== null) {
     const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
-    if ($.inArray(pokemonIdStringTmp, avilableForms) !== -1) {
+    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
       pokemonIdString = pokemonIdStringTmp
     } else {
       pokemonIdString = '' + pokemonId
@@ -3961,6 +4496,41 @@ function getPokemonIconString (pokemonId, pokemonForm) {
     pokemonIdString = '' + pokemonId
   }
   return pokemonIdString
+}
+
+function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague, pokemonEvolution, isCellSpawn) {
+  let pokemonIdString = getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution)
+
+  let pre
+  let post
+  if (greatLeague === null || ultraLeague === null) {
+    if (isCellSpawn) {
+      pre = 'wild_pokemon/'
+    } else {
+      pre = 'pokemon/'
+    }
+    post = '.png'
+  } else {
+    let bestRank = 4
+    $.each(greatLeague, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    $.each(ultraLeague, function (index, ranking) {
+      if (ranking.rank !== null && ranking.rank < bestRank) {
+        bestRank = ranking.rank
+      }
+    })
+    if (bestRank <= 3) {
+      pre = 'pokemon_league/'
+      post = '_' + bestRank +'.png'
+    } else {
+      pre = 'pokemon/'
+      post = '.png'
+    }
+  }
+  return pre + pokemonIdString + post
 }
 
 // MARK: - Init Filter
@@ -4415,6 +4985,96 @@ function loadPokestopFilter () {
   })
 }
 
+function loadInvasionFilter () {
+  const scrollHeight = $(document).height() * 0.5
+  const table = $('#table-filter-invasion').DataTable({
+    language: {
+      search: i18n('filter_table_search'),
+      emptyTable: i18n('filter_pokestop_table_empty'),
+      zeroRecords: i18n('filter_pokestop_table_empty')
+    },
+    rowGroup: {
+      dataSrc: 'type'
+    },
+    autoWidth: false,
+    columns: [
+      { data: 'image', width: '5%', className: 'details-control', responsivePriority: 1 },
+      { data: 'name', width: '15%', responsivePriority: 4 },
+      {
+        data: {
+          _: 'id.formatted',
+          sort: 'id.sort'
+        },
+        width: '5%',
+        responsivePriority: 5
+      },
+      { data: 'filter', responsivePriority: 2 },
+      { data: 'size', responsivePriority: 3 }
+    ],
+    ajax: {
+      url: '/api/get_data?show_invasion_filter=true',
+      dataSrc: 'data.invasion_filters'
+    },
+    info: false,
+    order: [[2, 'asc']],
+    'search.caseInsensitive': true,
+    columnDefs: [{
+      targets: [0, 3, 4],
+      orderable: false
+    }, {
+      type: 'num',
+      targets: 2
+    }],
+    deferRender: true,
+    scrollY: scrollHeight,
+    scrollCollapse: false,
+    scroller: true,
+    lengthChange: false,
+    dom: 'lfrti',
+    drawCallback: function () {
+      $('.lazy_load').each(function () {
+        var img = $(this)
+        img.removeClass('lazy_load')
+        img.attr('src', img.data('src'))
+      })
+
+      $('.select-button-new').each(function () {
+        manageSelectButton($(this), true)
+      })
+      $('.configure-button-new').each(function () {
+        manageConfigureButton($(this), true)
+      })
+    },
+    responsive: true
+  })
+
+  $('#table-filter-invasion tbody').on('click', 'td.details-control', function () {
+    $('.select-button-new').each(function () {
+      manageSelectButton($(this), true)
+    })
+    $('.configure-button-new').each(function () {
+      manageConfigureButton($(this), true)
+    })
+  })
+
+  table.on('search.dt', function () {
+    $('tr').each(function () {
+      var tr = $(this).closest('tr')
+      var row = table.row(tr)
+      if (row.child.isShown()) {
+        row.child.hide()
+        tr.removeClass('parent')
+      }
+    })
+  })
+
+  $('#filterinvasionModal').on('shown.bs.modal', function () {
+    const dataTable = $('#table-filter-invasion').DataTable()
+    dataTable.responsive.recalc()
+    dataTable.columns.adjust()
+  })
+}
+
 function loadSpawnpointFilter () {
   const scrollHeight = $(document).height() * 0.5
   const table = $('#table-filter-spawnpoint').DataTable({
@@ -4527,13 +5187,18 @@ function loadFilterSettings (e) {
 
     showPokemon = obj.show_pokemon
     pokemonFilterNew = obj.pokemon
-    store('show_pokemon', showRaids)
+    store('show_pokemon', showPokemon)
     store('pokemon_filter', JSON.stringify(pokemonFilterNew))
 
     showQuests = obj.show_quests
     questFilterNew = obj.quest
     store('show_quests', showRaids)
     store('quest_filter', JSON.stringify(questFilterNew))
+
+    showInvasions = obj.show_invasions
+    invasionFilterNew = obj.invasion
+    store('show_invasions', showInvasions)
+    store('invasion_filter', JSON.stringify(invasionFilterNew))
 
     showPokestops = obj.show_pokestops
     pokestopFilterNew = obj.pokestop
@@ -4576,6 +5241,14 @@ function loadFilterSettings (e) {
     } else {
       $('#hide-pokestops').addClass('active')
       $('#show-pokestops').removeClass('active')
+    }
+
+    if (showInvasions) {
+      $('#show-invasions').addClass('active')
+      $('#hide-invasions').removeClass('active')
+    } else {
+      $('#hide-invasions').addClass('active')
+      $('#show-invasions').removeClass('active')
     }
 
     if (showQuests) {
@@ -4630,8 +5303,75 @@ function loadFilterSettings (e) {
     $('#table-filter-raid').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-gym').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-pokestop').DataTable().rows().invalidate('data').draw(false)
+    $('#table-filter-invasion').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-quest').DataTable().rows().invalidate('data').draw(false)
     $('#table-filter-spawnpoint').DataTable().rows().invalidate('data').draw(false)
   }
   reader.readAsText(file)
+}
+
+// eslint-disable-next-line no-unused-vars
+function toggleGreatLeague() {
+  showGreatLeague = !showGreatLeague
+  store('show_great_league', showGreatLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
+}
+
+// eslint-disable-next-line no-unused-vars
+function toggleUltraLeague() {
+  showUltraLeague = !showUltraLeague
+  store('show_ultra_league', showUltraLeague)
+  if (openedPokemon !== undefined) {
+    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
+  }
+}
+
+// eslint-disable-next-line no-unused-vars
+function editGymName(id, oldName) {
+  const newName = prompt('Edit Name for Gym: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
+  $.ajax({
+    url: '/api/set_data',
+    data: {
+      set_gym_name: true,
+      gym_id: id,
+      gym_name: newName,
+      _csrf: '{{csrf}}'
+    },
+    type: 'post',
+    success: function() {
+      const gym = gymMarkers.find(function (value) { return value.id === id })
+      gym.name = newName
+      updateOpenedPopupLoop()
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
+}
+
+// eslint-disable-next-line no-unused-vars
+function editPokestopName(id, oldName) {
+  const newName = prompt('Edit Name for pokestop: ' + id, oldName !== 'null' ? oldName : '')
+  if (!newName) return
+  $.ajax({
+    url: '/api/set_data',
+    data: {
+      set_pokestop_name: true,
+      pokestop_id: id,
+      pokestop_name: newName,
+      _csrf: '{{csrf}}'
+    },
+    type: 'post',
+    success: function() {
+      const pokestop = pokestopMarkers.find(function (value) { return value.id === id })
+      pokestop.name = newName
+      updateOpenedPopupLoop()
+    },
+    error: function(xhr) {
+      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
 }
