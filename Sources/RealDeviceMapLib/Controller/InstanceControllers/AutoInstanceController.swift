@@ -143,7 +143,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     }
 
-    private func bootstrap() {
+    private func bootstrap() throws {
         Log.debug(message: "[AutoInstanceController] [\(name)] Checking Bootstrap Status...")
 
         let multiPolygonHash = multiPolygon.persistentHash
