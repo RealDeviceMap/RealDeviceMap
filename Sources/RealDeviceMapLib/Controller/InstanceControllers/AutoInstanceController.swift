@@ -221,7 +221,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
 
         switch type {
         case .quest:
@@ -589,6 +589,7 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 lastMode[username ?? uuid] = pokestop.alternative
+                WebHookRequestHandler.setArQuestTarget(device: uuid, timestamp: timestamp, isAr: pokestop.alternative)
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,
