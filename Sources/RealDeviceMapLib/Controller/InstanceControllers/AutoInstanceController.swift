@@ -353,8 +353,6 @@ class AutoInstanceController: InstanceControllerProto {
                     return [String: Any]()
                 }
 
-                var nearbyStops = [PokestopWithMode]()
-
                 if lastCoord != nil {
 
                     var closestOverall: PokestopWithMode?
@@ -428,7 +426,8 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     pokestop = closest!
-                    nearbyStops.append(pokestop)
+
+                    var nearbyStops = [pokestop]
 
                     let pokestopCoord = Coord(lat: pokestop.pokestop.lat, lon: pokestop.pokestop.lon)
                     for stop in todayStopsC! {
@@ -590,12 +589,9 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 lastMode[username ?? uuid] = pokestop.alternative
-                if !nearbyStops.contains(pokestop) {
-                    nearbyStops.append(pokestop)
-                }
-                let stopIDsToAdd = nearbyStops.map({stop in stop.pokestop.id})
-                WebHookRequestHandler.addToQuestLookup(
-                    device: uuid, pokestops: stopIDsToAdd, isAlternative: pokestop.alternative)
+                WebHookRequestHandler.addToTaskLookup(instance: name,
+                    device: uuid, task: "scan_quest", isAlternative: pokestop.alternative)
+                print("[TMP] send scan_quest task to \(uuid) - " + (pokestop.alternative ? "ar" : "normal"))
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,

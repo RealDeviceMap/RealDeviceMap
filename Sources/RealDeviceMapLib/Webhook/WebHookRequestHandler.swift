@@ -48,9 +48,9 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
-    private static var questModeLock = Threading.Lock()
+    private static var taskLookupLock = Threading.Lock()
     // device uuid to quest mode : [device-uuid : [pokestop-id : is_alternative]]
-    private static var questModeLookup = [String: Bool]()
+    private static var taskLookup = [String: Bool]()
 
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
@@ -240,12 +240,12 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        print("[TMP] found quest, check quest lookup for \(uuid ?? "") at \(fsr.fortID)")
-                        let isAlternative = self.questLookup(device: uuid ?? "", pokestop: fsr.fortID)
-                        print("[TMP] \(fsr.fortID) does contain an alternative quest information: " +
-                            (isAlternative == nil ? "unset" : isAlternative! ? "true" : "false"))
+                        let isAlternative = self.taskLookup(
+                            instance: controller?.name ?? "", device: uuid ?? "", task: "scan_quest")
                         if isAlternative == nil {
-                            print("[TMP] no value isAlternative found - lookup table size: \(questModeLookup.count)")
+                            print("[TMP] no value isAlternative found. instance: \(controller?.name ?? "unset")")
+                        } else {
+                            print("[TMP] found value for isAlternative. instance: \(controller?.name ?? "unset")")
                         }
                         let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? !(isAlternative ?? false)
                         let quest = fsr.challengeQuest.quest
@@ -1061,26 +1061,24 @@ public class WebHookRequestHandler {
 
     }
 
-    static func addToQuestLookup(device: String, pokestops: [String], isAlternative: Bool) {
-        print("[TMP] add information to Quest lookup: \(pokestops.count)")
-        self.questModeLock.lock()
-        for pokestop in pokestops {
-            self.questModeLookup[device + "-" + pokestop] = isAlternative
-        }
-        self.questModeLock.unlock()
+    static func addToTaskLookup(instance: String, device: String, task: String, isAlternative: Bool) {
+        print("[TMP] add information to Quest lookup: \(instance) \(device) \(isAlternative)")
+        self.taskLookupLock.lock()
+        self.taskLookup[instance + "-" + device + "-" + task] = isAlternative
+        self.taskLookupLock.unlock()
     }
 
-    static func clearQuestLookup() {
-        self.questModeLock.lock()
-        self.questModeLookup = [String: Bool]()
-        self.questModeLock.unlock()
+    static func clearTaskLookup() {
+        self.taskLookupLock.lock()
+        self.taskLookup = [String: Bool]()
+        self.taskLookupLock.unlock()
     }
 
-    static func questLookup(device: String, pokestop: String) -> Bool? {
-        self.questModeLock.lock()
-        let isAlternative = self.questModeLookup[device + "-" + pokestop]
-        self.questModeLock.unlock()
-        print("[TMP] \(device) with \(pokestop) found with isAlternative: \(String(describing: isAlternative))")
+    static func taskLookup(instance: String, device: String, task: String) -> Bool? {
+        self.taskLookupLock.lock()
+        let isAlternative = self.taskLookup[instance + "-" + device + "-" + task]
+        self.taskLookupLock.unlock()
+        print("[TMP] \(device) on \(instance) found with isAlternative: \(String(describing: isAlternative))")
         return isAlternative
     }
 
