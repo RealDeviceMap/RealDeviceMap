@@ -1066,7 +1066,7 @@ public class WebHookRequestHandler {
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
         print("[TMP] \(device) setArQuestMode: \(isAr) with \(timestamp)")
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
-        if isAr {
+        if !isAr {
             // ar mode is sent to client -> client will clear ar quest
             questArActualMap.setValue(key: device, value: false, time: timestamp)
         }
