@@ -629,7 +629,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 SET lat = ?, lon = ?, \(nameSQL) url = ?, enabled = ?, lure_expire_timestamp = ?,
                     last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
                     lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?,
-                    deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?, location_points = ?, 
+                    deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?, location_points = ?,
                     power_up_end_ms = ?
                 WHERE id = ?
             """
