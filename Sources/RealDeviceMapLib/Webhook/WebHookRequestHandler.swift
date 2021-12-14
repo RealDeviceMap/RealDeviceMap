@@ -246,7 +246,7 @@ public class WebHookRequestHandler {
                         }
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
-                            !getArQuestMode(device: uuid, timestamp: timestamp) //returns isAr, not haveAr
+                            getArQuestMode(device: uuid, timestamp: timestamp)
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
@@ -1065,10 +1065,9 @@ public class WebHookRequestHandler {
 
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
         print("[TMP] \(device) setArQuestMode: \(isAr) with \(timestamp)")
-        // isAr means the task was send to spin without AR in inventory
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
-        if !isAr {
-            // save that we actually send a task to spin with AR in inventory
+        if isAr {
+            // ar mode is sent to client -> client will clear ar quest
             questArActualMap.setValue(key: device, value: false, time: timestamp)
         }
     }
@@ -1077,11 +1076,15 @@ public class WebHookRequestHandler {
         if device == nil {
             return true
         }
-        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp)
-        let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp)
+        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
+        let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? false
         print("[TMP] \(device!) getArQuestMode targetMode: \(String(describing: targetMode)) - " +
             "actualMode: \(String(describing: actualMode))")
-        return targetMode ?? false || actualMode ?? false // default: is not scan_quest with quest_mode 'ar'
+        if targetMode {
+            return false
+        } else {
+            return actualMode
+        }
     }
 
 }
