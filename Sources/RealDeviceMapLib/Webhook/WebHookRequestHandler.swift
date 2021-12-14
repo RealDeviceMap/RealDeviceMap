@@ -246,7 +246,7 @@ public class WebHookRequestHandler {
                         }
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
-                            getArQuestMode(device: uuid, timestamp: timestamp)
+                            !getArQuestMode(device: uuid, timestamp: timestamp) //returns isAr, not haveAr
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
