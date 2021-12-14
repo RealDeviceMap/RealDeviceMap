@@ -246,7 +246,10 @@ public class WebHookRequestHandler {
                         let title = fsr.challengeQuest.questDisplay.title
                         let quest = fsr.challengeQuest.quest
                         if quest.questType == .questGeotargetedArScan && uuid != nil {
+                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: ar, hasAr: \(hasAr)")
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
+                        } else {
+                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: not ar, hasAr: \(hasAr)")
                         }
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
@@ -1064,7 +1067,7 @@ public class WebHookRequestHandler {
     }
 
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
-        print("[TMP] \(device) setArQuestMode: \(isAr) with \(timestamp)")
+        print("[TMP] \(device) setArQuestMode: timestamp: \(timestamp), isAr: \(isAr)")
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
         if isAr {
             // ar mode is sent to client -> client will clear ar quest
@@ -1078,8 +1081,8 @@ public class WebHookRequestHandler {
         }
         let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
         let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? false
-        print("[TMP] \(device!) getArQuestMode targetMode: \(String(describing: targetMode)) - " +
-            "actualMode: \(String(describing: actualMode))")
+        print("[TMP] \(device!) getArQuestMode: timestamp: \(timestamp), targetMode: \(targetMode), " +
+              "actualMode: \(actualMode)")
         if targetMode {
             return false
         } else {
