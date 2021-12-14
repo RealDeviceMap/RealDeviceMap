@@ -87,16 +87,6 @@ public class ApiRequestHandler {
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
-
-        WebHookController.global.addAccountEvent(account: Account(
-            username: "test", password: "test", level: 1, firstWarningTimestamp: nil,
-            failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
-            lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
-            warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-            suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
-            lastUsedTimestamp: nil, group: nil
-        ))
-
         guard let perms = getPerms(request: request, response: response) else {
             return
         }
@@ -126,6 +116,8 @@ public class ApiRequestHandler {
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
+        let pokestopShowOnlyPoweredUp = request.param(name: "pokestop_show_only_powerup")?.toBool() ?? false
+        let gymShowOnlyPoweredUp = request.param(name: "gym_show_only_powerup")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -186,7 +178,8 @@ public class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr,
+                gymShowOnlyPoweredUp: gymShowOnlyPoweredUp
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -975,6 +968,54 @@ public class ApiRequestHandler {
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
+                "type": gymOptionsString
+            ])
+
+            // Powered-up gyms
+            let poweredUpFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="power-up"
+                                  data-type="gym-power-up" data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="power-up"
+                                  data-type="gym-power-up" data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let poweredUpSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
+                                data-type="gym-power-up" data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
+                                data-type="gym-power-up" data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
+                                data-type="gym-power-up" data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
+                                data-type="gym-power-up" data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "sort": 6
+                ],
+                "name": Localizer.global.get(value: "filter_gym_powered_up_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": poweredUpFilter,
+                "size": poweredUpSize,
                 "type": gymOptionsString
             ])
 
