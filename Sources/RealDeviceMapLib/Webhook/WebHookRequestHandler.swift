@@ -1080,7 +1080,7 @@ public class WebHookRequestHandler {
         let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp)
         print("[TMP] \(device!) targetMode: \(String(describing: targetMode)) - " +
             "actualMode: \(String(describing: actualMode))")
-        return targetMode ?? true || actualMode ?? true
+        return targetMode ?? false || actualMode ?? false // default: is not scan_quest with quest_mode 'ar'
     }
 
 }

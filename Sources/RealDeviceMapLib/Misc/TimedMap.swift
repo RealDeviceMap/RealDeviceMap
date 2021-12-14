@@ -33,6 +33,7 @@ public class TimedMap<K: Hashable, V> {
         mapLock.lock()
         let value: V?
         if map[key] != nil {
+            print("[TMP] getValueAt of \(key) with \(time): \(map[key]!)")
             value = map[key]!.first {value in value.time >= time}?.value
         } else {
             value = nil
