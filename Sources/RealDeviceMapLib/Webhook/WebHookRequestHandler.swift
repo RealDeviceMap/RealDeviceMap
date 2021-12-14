@@ -240,13 +240,13 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        let hasAr = hasArQuestReqGlobal ??
-                            hasArQuestReq ??
-                            getArQuestMode(device: uuid, timestamp: timestamp)
                         let quest = fsr.challengeQuest.quest
                         if quest.questType == .questGeotargetedArScan && uuid != nil {
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
                         }
+                        let hasAr = hasArQuestReqGlobal ??
+                            hasArQuestReq ??
+                            getArQuestMode(device: uuid, timestamp: timestamp)
                         let title = fsr.challengeQuest.questDisplay.title
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
@@ -1064,8 +1064,10 @@ public class WebHookRequestHandler {
     }
 
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
+        // isAr means the task was send to spin without AR in inventory
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
         if !isAr {
+            // save that we actually send a task to spin with AR in inventory
             questArActualMap.setValue(key: device, value: false, time: timestamp)
         }
     }
@@ -1074,9 +1076,11 @@ public class WebHookRequestHandler {
         if device == nil {
             return true
         }
-        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
-        let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? true
-        return targetMode || actualMode
+        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp)
+        let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp)
+        print("[TMP] \(device!) targetMode: \(String(describing: targetMode)) - " +
+            "actualMode: \(String(describing: actualMode))")
+        return targetMode ?? true || actualMode ?? true
     }
 
 }

@@ -21,7 +21,7 @@ public class TimedMap<K: Hashable, V> {
                 map[key]!.append((time: time, value: value))
             }
             if map[key]!.count > length {
-                map[key]!.dropFirst()
+                _ = map[key]!.dropFirst()
             }
         } else {
             map[key] = [(time: time, value: value)]
