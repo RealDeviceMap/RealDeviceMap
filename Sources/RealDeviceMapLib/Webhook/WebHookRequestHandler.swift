@@ -1064,6 +1064,7 @@ public class WebHookRequestHandler {
     }
 
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
+        print("[TMP] \(device) setArQuestMode: \(isAr) with \(timestamp)")
         // isAr means the task was send to spin without AR in inventory
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
         if !isAr {
@@ -1078,7 +1079,7 @@ public class WebHookRequestHandler {
         }
         let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp)
         let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp)
-        print("[TMP] \(device!) targetMode: \(String(describing: targetMode)) - " +
+        print("[TMP] \(device!) getArQuestMode targetMode: \(String(describing: targetMode)) - " +
             "actualMode: \(String(describing: actualMode))")
         return targetMode ?? false || actualMode ?? false // default: is not scan_quest with quest_mode 'ar'
     }
