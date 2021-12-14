@@ -246,10 +246,12 @@ public class WebHookRequestHandler {
                         let title = fsr.challengeQuest.questDisplay.title
                         let quest = fsr.challengeQuest.quest
                         if quest.questType == .questGeotargetedArScan && uuid != nil {
-                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: ar, hasAr: \(hasAr)")
+                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: ar, hasAr: \(hasAr), " +
+                                  "id: \(fsr.fortID)")
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
                         } else {
-                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: not ar, hasAr: \(hasAr)")
+                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: not ar, hasAr: \(hasAr), " +
+                                  "id: \(fsr.fortID)")
                         }
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
