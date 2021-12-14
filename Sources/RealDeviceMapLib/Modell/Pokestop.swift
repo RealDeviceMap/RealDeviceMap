@@ -232,7 +232,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.id = fortData.fortID
         self.lat = fortData.latitude
         self.lon = fortData.longitude
-        self.partnerId = fortData.partnerID
+        self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }

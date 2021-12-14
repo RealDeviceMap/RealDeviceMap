@@ -226,7 +226,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.arScanEligible = fortData.isArScanEligible
         self.locationPoints = UInt32(fortData.locationPoints)
         self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
-        self.partnerId = fortData.partnerID
+        self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
         }
