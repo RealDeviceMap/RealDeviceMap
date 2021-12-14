@@ -34,7 +34,7 @@ public class TimedMap<K: Hashable, V> {
         let value: V?
         if map[key] != nil {
             print("[TMP] getValueAt of \(key) with \(time): \(map[key]!)")
-            value = map[key]!.first {value in value.time >= time}?.value
+            value = map[key]!.last {value in value.time <= time}?.value
         } else {
             value = nil
         }
