@@ -240,14 +240,14 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        let quest = fsr.challengeQuest.quest
-                        if quest.questType == .questGeotargetedArScan && uuid != nil {
-                            questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
-                        }
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
                             getArQuestMode(device: uuid, timestamp: timestamp)
                         let title = fsr.challengeQuest.questDisplay.title
+                        let quest = fsr.challengeQuest.quest
+                        if quest.questType == .questGeotargetedArScan && uuid != nil {
+                            questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
+                        }
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
