@@ -239,7 +239,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
         self.locationPoints = UInt32(fortData.locationPoints)
-        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs)
+        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         if fortData.activeFortModifier.contains(.troyDisk) ||
             fortData.activeFortModifier.contains(.troyDiskGlacial) ||
@@ -552,7 +552,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                     alternative_quest_conditions, alternative_quest_rewards, alternative_quest_template,
                     alternative_quest_title, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type,
-                    sponsor_id, partner_id, ar_scan_eligible, location_points, power_up_end_ms,
+                    sponsor_id, partner_id, ar_scan_eligible, location_points, power_up_end_timestamp,
                     updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -630,7 +630,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
                     lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?,
                     deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?, location_points = ?,
-                    power_up_end_ms = ?
+                    power_up_end_timestamp = ?
                 WHERE id = ?
             """
             self.updated = now
@@ -901,7 +901,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
-                   power_up_end_ms
+                   power_up_end_timestamp
             FROM pokestop
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND
                   deleted = false
@@ -1098,7 +1098,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
-                   power_up_end_ms
+                   power_up_end_timestamp
             FROM pokestop
             WHERE id IN \(inSQL) AND deleted = false
         """
@@ -1264,7 +1264,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
                    incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
-                   power_up_end_ms
+                   power_up_end_timestamp
             FROM pokestop
             WHERE id = ? \(withDeletedSQL)
         """

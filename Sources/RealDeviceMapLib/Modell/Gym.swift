@@ -225,7 +225,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
         self.locationPoints = UInt32(fortData.locationPoints)
-        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs)
+        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
         self.partnerId = fortData.partnerID
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
@@ -317,7 +317,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                     raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
                     sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible, location_points,
-                    power_up_end_ms, updated, first_seen_timestamp)
+                    power_up_end_timestamp, updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
@@ -376,7 +376,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     ex_raid_eligible = ?, in_battle = ?, raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?,
                     raid_pokemon_form = ?, raid_pokemon_costume = ?, raid_pokemon_cp = ?, raid_pokemon_gender = ?,
                     raid_is_exclusive = ?, cell_id = ?, deleted = false, total_cp = ?, sponsor_id = ?, partner_id = ?,
-                    raid_pokemon_evolution = ?, ar_scan_eligible = ?, location_points = ?, power_up_end_ms = ?
+                    raid_pokemon_evolution = ?, ar_scan_eligible = ?, location_points = ?, power_up_end_timestamp = ?
                 WHERE id = ?
             """
             self.updated = now
@@ -595,7 +595,8 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
                    raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                    raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
-                   sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible, location_points, power_up_end_ms
+                   sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible, location_points,
+                   power_up_end_timestamp
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
@@ -720,7 +721,8 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
                    raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2, raid_pokemon_form,
                    raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp,
-                   sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible, location_points, power_up_end_ms
+                   sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible, location_points,
+                   power_up_end_timestamp
             FROM gym
             WHERE id = ? \(withDeletedSQL)
         """
@@ -825,7 +827,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
                raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
                raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible,
-               location_points, power_up_end_ms
+               location_points, power_up_end_timestamp
         FROM gym
         WHERE id IN \(inSQL) AND deleted = false
         """
