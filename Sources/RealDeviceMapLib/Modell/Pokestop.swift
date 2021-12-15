@@ -155,7 +155,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var partnerId: String?
     var updated: UInt32?
     var arScanEligible: Bool?
-    var locationPoints: UInt32?
+    var powerUpPoints: UInt32?
     var powerUpEndTimestamp: UInt64?
     var questType: UInt32?
     var questTemplate: String?
@@ -188,7 +188,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
          questRewards: [[String: Any]]?, questTemplate: String?, questTitle: String?, cellId: UInt64?, lureId: Int16?,
          pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?,
-         partnerId: String?, arScanEligible: Bool?, locationPoints: UInt32?, powerUpEndTimestamp: UInt64?,
+         partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpEndTimestamp: UInt64?,
          alternativeQuestType: UInt32?, alternativeQuestTarget: UInt16?,
          alternativeQuestTimestamp: UInt32?, alternativeQuestConditions: [[String: Any]]?,
          alternativeQuestRewards: [[String: Any]]?, alternativeQuestTemplate: String?, alternativeQuestTitle: String?) {
@@ -224,7 +224,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.partnerId = partnerId
         self.arScanEligible = arScanEligible
         self.powerUpEndTimestamp = powerUpEndTimestamp
-        self.locationPoints = locationPoints
+        self.powerUpPoints = powerUpPoints
     }
 
     init(fortData: PokemonFortProto, cellId: UInt64) {
@@ -238,7 +238,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
-        self.locationPoints = UInt32(fortData.locationPoints)
+        self.powerUpPoints = UInt32(fortData.locationPoints)
         self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         if fortData.activeFortModifier.contains(.troyDisk) ||
@@ -552,7 +552,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                     alternative_quest_conditions, alternative_quest_rewards, alternative_quest_template,
                     alternative_quest_title, cell_id, lure_id, pokestop_display, incident_expire_timestamp, grunt_type,
-                    sponsor_id, partner_id, ar_scan_eligible, location_points, power_up_end_timestamp,
+                    sponsor_id, partner_id, ar_scan_eligible, power_up_points, power_up_end_timestamp,
                     updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -629,7 +629,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 SET lat = ?, lon = ?, \(nameSQL) url = ?, enabled = ?, lure_expire_timestamp = ?,
                     last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
                     lure_id = ?, pokestop_display = ?, incident_expire_timestamp = ?, grunt_type = ?,
-                    deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?, location_points = ?,
+                    deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?, power_up_points = ?,
                     power_up_end_timestamp = ?
                 WHERE id = ?
             """
@@ -672,7 +672,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(sponsorId)
         mysqlStmt.bindParam(partnerId)
         mysqlStmt.bindParam(arScanEligible)
-        mysqlStmt.bindParam(locationPoints)
+        mysqlStmt.bindParam(powerUpPoints)
         mysqlStmt.bindParam(powerUpEndTimestamp)
 
         if oldPokestop != nil {
@@ -900,7 +900,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
-                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
+                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, power_up_points,
                    power_up_end_timestamp
             FROM pokestop
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND
@@ -1038,7 +1038,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let sponsorId = result[28] as? UInt16
             let partnerId = result[29] as? String
             let arScanEligible = (result[30] as? UInt8)?.toBool()
-            let locationPoints = result[31] as? UInt32
+            let powerUpPoints = result[31] as? UInt32
             let powerUpEndTimestamp = result[32] as? UInt64
 
             pokestops.append(Pokestop(
@@ -1048,7 +1048,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
                 questTitle: questTitle, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
                 incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
-                partnerId: partnerId, arScanEligible: arScanEligible, locationPoints: locationPoints,
+                partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
                 powerUpEndTimestamp: powerUpEndTimestamp, alternativeQuestType: alternativeQuestType,
                 alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
                 alternativeQuestConditions: alternativeQuestConditions,
@@ -1097,7 +1097,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
-                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
+                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, power_up_points,
                    power_up_end_timestamp
             FROM pokestop
             WHERE id IN \(inSQL) AND deleted = false
@@ -1149,7 +1149,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let sponsorId = result[28] as? UInt16
             let partnerId = result[29] as? String
             let arScanEligible = (result[30] as? UInt8)?.toBool()
-            let locationPoints = result[31] as? UInt32
+            let powerUpPoints = result[31] as? UInt32
             let powerUpEndTimestamp = result[32] as? UInt64
 
             pokestops.append(Pokestop(
@@ -1159,7 +1159,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
                 questTitle: questTitle, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
                 incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
-                partnerId: partnerId, arScanEligible: arScanEligible, locationPoints: locationPoints,
+                partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
                 powerUpEndTimestamp: powerUpEndTimestamp, alternativeQuestType: alternativeQuestType,
                 alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
                 alternativeQuestConditions: alternativeQuestConditions,
@@ -1263,7 +1263,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, pokestop_display,
-                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, location_points,
+                   incident_expire_timestamp, grunt_type, sponsor_id, partner_id, ar_scan_eligible, power_up_points,
                    power_up_end_timestamp
             FROM pokestop
             WHERE id = ? \(withDeletedSQL)
@@ -1316,7 +1316,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let sponsorId = result[28] as? UInt16
         let partnerId = result[29] as? String
         let arScanEligible = (result[30] as? UInt8)?.toBool()
-        let locationPoints = result[31] as? UInt32
+        let powerUpPoints = result[31] as? UInt32
         let powerUpEndTimestamp = result[32] as? UInt64
 
         let pokestop = Pokestop(
@@ -1326,7 +1326,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
             questTitle: questTitle, cellId: cellId, lureId: lureId, pokestopDisplay: pokestopDisplay,
             incidentExpireTimestamp: incidentExpireTimestamp, gruntType: gruntType, sponsorId: sponsorId,
-            partnerId: partnerId, arScanEligible: arScanEligible, locationPoints: locationPoints,
+            partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
             powerUpEndTimestamp: powerUpEndTimestamp, alternativeQuestType: alternativeQuestType,
             alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
             alternativeQuestConditions: alternativeQuestConditions,
