@@ -229,9 +229,19 @@ public class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        for item in inv.inventoryDelta.inventoryItem
-                            where item.inventoryItemData.playerStats.experience > 0 {
-                            trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                        for item in inv.inventoryDelta.inventoryItem {
+                            if item.inventoryItemData.playerStats.experience > 0 {
+                                trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                            }
+                            if uuid != nil && item.inventoryItemData.quests.quest.count > 0 {
+                                for quest in item.inventoryItemData.quests.quest {
+                                    if quest.questContext == .challengeQuest &&
+                                       quest.questType == .questGeotargetedArScan {
+                                        print("[TMP] \(uuid!) timestamp: \(timestamp), ar quest in inv proto")
+                                        questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {
