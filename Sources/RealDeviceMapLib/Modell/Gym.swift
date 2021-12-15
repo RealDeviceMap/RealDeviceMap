@@ -541,7 +541,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludePokemonSQL: String
         let excludeAllButExSQL: String
         var onlyArSQL: String
-        var onlyPoweredUpSQL: String
+        var onlyPowerUpSQL: String
         let excludeTeamSQL: String
         let excludeAvailableSlotsSQL: String
 
@@ -609,9 +609,9 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         if gymShowOnlyPowerUp && !raidsOnly {
-            onlyPoweredUpSQL = "power_up_level > 0"
+            onlyPowerUpSQL = "AND power_up_level > 0"
         } else {
-            onlyPoweredUpSQL = ""
+            onlyPowerUpSQL = ""
         }
 
         var sql = """
@@ -624,7 +624,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
-                  \(excludeAllButExSQL) \(onlyArSQL) \(onlyPoweredUpSQL)
+                  \(excludeAllButExSQL) \(onlyArSQL) \(onlyPowerUpSQL)
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"
