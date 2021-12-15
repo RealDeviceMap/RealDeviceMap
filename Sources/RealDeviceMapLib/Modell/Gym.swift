@@ -633,7 +633,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
-                  \(excludePowerUpLevelsSQL) \(excludeAllButExSQL) \(onlyArSQL) 
+                  \(excludePowerUpLevelsSQL) \(excludeAllButExSQL) \(onlyArSQL)
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"

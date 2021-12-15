@@ -1501,6 +1501,11 @@ function loadData () {
         gymFilterExclude.push('s' + i)
       }
     }
+    for (i = 0; i <= 3; i++) {
+      if (gymFilter['p' + i].show === false) {
+        gymFilterExclude.push('p' + i)
+      }
+    }
   }
 
   const invasionFilterExclude = []
