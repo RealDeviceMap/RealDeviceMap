@@ -1528,6 +1528,11 @@ function loadData () {
         pokestopFilterExclude.push('l' + i)
       }
     }
+    for (i = 0; i <= 3; i++) {
+      if (pokestopFilter['p' + i].show === false) {
+        pokestopFilterExclude.push('p' + i)
+      }
+    }
   }
 
   const spawnpointFilterExclude = []
@@ -3945,6 +3950,27 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['l' + id].size === 'huge'
         break
     }
+  } else if (type === 'pokestop-power-up') {
+    switch (info) {
+      case 'hide':
+        shouldShow = pokestopFilterNew['p' + id].show === false
+        break
+      case 'show':
+        shouldShow = pokestopFilterNew['p' + id].show === true
+        break
+      case 'small':
+        shouldShow = pokestopFilterNew['p' + id].size === 'small'
+        break
+      case 'normal':
+        shouldShow = pokestopFilterNew['p' + id].size === 'normal'
+        break
+      case 'large':
+        shouldShow = pokestopFilterNew['p' + id].size === 'large'
+        break
+      case 'huge':
+        shouldShow = pokestopFilterNew['p' + id].size === 'huge'
+        break
+    }
   } else if (type === 'pokestop-ar') {
     switch (info) {
       case 'hide':
@@ -4323,6 +4349,27 @@ function manageSelectButton (e, isNew) {
             break
           case 'huge':
             pokestopFilterNew['l' + id].size = 'huge'
+            break
+        }
+      } else if (type === 'pokestop-power-up') {
+        switch (info) {
+          case 'hide':
+            pokestopFilterNew['p' + id].show = false
+            break
+          case 'show':
+            pokestopFilterNew['p' + id].show = true
+            break
+          case 'small':
+            pokestopFilterNew['p' + id].size = 'small'
+            break
+          case 'normal':
+            pokestopFilterNew['p' + id].size = 'normal'
+            break
+          case 'large':
+            pokestopFilterNew['p' + id].size = 'large'
+            break
+          case 'huge':
+            pokestopFilterNew['p' + id].size = 'huge'
             break
         }
       } else if (type === 'pokestop-ar') {

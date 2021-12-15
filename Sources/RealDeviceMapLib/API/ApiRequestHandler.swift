@@ -829,7 +829,7 @@ public class ApiRequestHandler {
             let gymTeamString = Localizer.global.get(value: "filter_gym_team")
             let gymOptionsString = Localizer.global.get(value: "filter_gym_options")
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
-            let powerUpLevelString = Localizer.global.get(value: "filter_gym_power_up_level")
+            let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             var gymData = [[String: Any]]()
             // Team
@@ -971,7 +971,7 @@ public class ApiRequestHandler {
 
             // Powered-up gyms
             for i in 0...3 {
-                let powerUpLevel = Localizer.global.get(value: "filter_gym_power_up_level_\(i)")
+                let powerUpLevel = Localizer.global.get(value: "filter_poi_power_up_level_\(i)")
                 let powerUpFilter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
@@ -1014,7 +1014,7 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(team)_\(i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(i).png\"" +
                         " style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
@@ -1161,6 +1161,7 @@ public class ApiRequestHandler {
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
+            let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -1257,6 +1258,59 @@ public class ApiRequestHandler {
                     "filter": filter,
                     "size": size,
                     "type": pokestopOptionsString
+                ])
+            }
+
+            // Powered-up pokestops
+            for i in 0...3 {
+                let powerUpLevel = Localizer.global.get(value: "filter_poi_power_up_level_\(i)")
+                let powerUpFilter = """
+                                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                                          data-type="pokestop-power-up" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                    </label>
+                                    <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                                          data-type="pokestop-power-up" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                    </label>
+                                    </div>
+                                    """
+
+                let powerUpSize = """
+                                  <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="small">
+                                  <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="normal">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="large">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="huge">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                  </label>
+                                  </div>
+                                  """
+
+                let team = (UInt16.random % 3) + 1
+
+                pokestopData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+10
+                    ],
+                    "name": powerUpLevel,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(i).png\"" +
+                        " style=\"height:50px; width:50px;\">",
+                    "filter": powerUpFilter,
+                    "size": powerUpSize,
+                    "type": powerUpLevelString
                 ])
             }
 
