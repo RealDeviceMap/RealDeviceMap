@@ -648,6 +648,9 @@ function loadStorage () {
     if (defaultGymFilter.ar === undefined) {
       defaultGymFilter.ar = { show: false, size: 'normal' }
     }
+    if (defaultGymFilter['power-up'] === undefined) {
+      defaultGymFilter['power-up'] = { show: false, size: 'normal' }
+    }
     for (i = 0; i <= 6; i++) {
       if (defaultGymFilter['s' + i] === undefined) {
         defaultGymFilter['s' + i] = { show: true, size: 'normal' }
@@ -669,6 +672,9 @@ function loadStorage () {
     }
     if (gymFilter.ar === undefined) {
       gymFilter.ar = { show: false, size: 'normal' }
+    }
+    if (gymFilter['power-up'] === undefined) {
+      gymFilter['power-up'] = { show: false, size: 'normal' }
     }
     for (i = 0; i <= 6; i++) {
       if (gymFilter['s' + i] === undefined) {
@@ -944,6 +950,7 @@ function initMap () {
     }
     defaultGymFilter.ex = { show: false, size: 'normal' }
     defaultGymFilter.ar = { show: false, size: 'normal' }
+    defaultGymFilter['power-up'] = { show: false, size: 'normal' }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: true, size: 'normal' }
     }
@@ -962,6 +969,7 @@ function initMap () {
     }
     defaultGymFilter.ex = { show: false, size: gymFilterNew.ex.size }
     defaultGymFilter.ar = { show: false, size: gymFilterNew.ex.size }
+    defaultGymFilter['power-up'] = { show: false, size: gymFilterNew.ex.size }
     for (i = 0; i <= 6; i++) {
       defaultGymFilter['s' + i] = { show: false, size: gymFilterNew['s' + i].size }
     }
@@ -1543,6 +1551,7 @@ function loadData () {
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
     quest_show_only_ar: questFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
+    gym_show_only_powered_up: gymFilter['power-up'].show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
     show_cells: showCells && map.getZoom() >= 13,

@@ -116,8 +116,8 @@ public class ApiRequestHandler {
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
-        let pokestopShowOnlyPoweredUp = request.param(name: "pokestop_show_only_powerup")?.toBool() ?? false
-        let gymShowOnlyPoweredUp = request.param(name: "gym_show_only_powerup")?.toBool() ?? false
+        let pokestopShowOnlyPoweredUp = request.param(name: "pokestop_show_only_powered_up")?.toBool() ?? false
+        let gymShowOnlyPoweredUp = request.param(name: "gym_show_only_powered_up")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -1008,8 +1008,8 @@ public class ApiRequestHandler {
 
             gymData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
-                    "sort": 6
+                    "formatted": String(format: "%03d", 7), // Need a better way to display, new section?
+                    "sort": 7
                 ],
                 "name": Localizer.global.get(value: "filter_gym_powered_up_only") ,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
