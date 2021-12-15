@@ -47,6 +47,11 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             "incident_expire_timestamp": incidentExpireTimestamp as Any,
             "grunt_type": gruntType as Any,
             "ar_scan_eligible": arScanEligible as Any,
+            "sponsor_id": sponsorId as Any,
+            "partner_id": partnerId as Any,
+            "power_up_level": powerUpLevel as Any,
+            "power_up_points": powerUpPoints as Any,
+            "power_up_end_timestamp": powerUpEndTimestamp as Any,
             "updated": updated ?? 1
         ]
     }

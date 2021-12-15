@@ -48,9 +48,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_pokemon_evolution": raidPokemonEvolution as Any,
             "raid_is_exclusive": raidIsExclusive as Any,
             "total_cp": totalCp as Any,
-            "sponsor_od": sponsorId as Any,
+            "sponsor_id": sponsorId as Any,
             "ar_scan_eligible": arScanEligible as Any,
-            "location_points": powerUpPoints as Any,
+            "power_up_points": powerUpPoints as Any,
+            "power_up_level": powerUpLevel as Any,
             "power_up_end_timestamp": powerUpEndTimestamp as Any
         ]
     }
@@ -74,7 +75,11 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "slots_available": availableSlots ?? 6,
                 "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
-                "sponsor_od": sponsorId ?? 0,
+                "sponsor_id": sponsorId ?? 0,
+                "partner_id": partnerId ?? 0,
+                "power_up_points": powerUpPoints ?? 0,
+                "power_up_level": powerUpLevel ?? 0,
+                "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
                 "ar_scan_eligible": arScanEligible ?? 0
             ]
         } else if type == "gym-info" {
@@ -89,7 +94,11 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "slots_available": availableSlots ?? 6,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
-                "sponsor_od": sponsorId ?? 0,
+                "sponsor_id": sponsorId ?? 0,
+                "partner_id": partnerId ?? 0,
+                "power_up_points": powerUpPoints ?? 0,
+                "power_up_level": powerUpLevel ?? 0,
+                "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
                 "ar_scan_eligible": arScanEligible ?? 0
             ]
         } else if type == "egg" || type == "raid" {
@@ -114,11 +123,12 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "move_2": raidPokemonMove2 ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "is_exclusive": raidIsExclusive ?? false,
-                "sponsor_od": sponsorId ?? 0,
+                "sponsor_id": sponsorId ?? 0,
+                "partner_id": partnerId ?? 0,
                 "ar_scan_eligible": arScanEligible ?? 0
             ]
         } else {
-            realType = "unkown"
+            realType = "unknown"
             message = [String: Any]()
         }
         return [
