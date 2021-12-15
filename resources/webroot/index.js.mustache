@@ -1551,7 +1551,7 @@ function loadData () {
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
     quest_show_only_ar: questFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
-    gym_show_only_powered_up: gymFilter['power-up'].show === true,
+    gym_show_only_power_up: gymFilter['power-up'].show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
     show_cells: showCells && map.getZoom() >= 13,
@@ -3828,7 +3828,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = gymFilterNew['t' + id].size === 'huge'
         break
     }
-  } else if (type === 'gym-ex' || type === 'gym-ar') {
+  } else if (type === 'gym-ex' || type === 'gym-ar' || type === 'gym-power-up') {
     switch (info) {
       case 'hide':
         shouldShow = gymFilterNew[id].show === false
@@ -4187,7 +4187,7 @@ function manageSelectButton (e, isNew) {
             gymFilterNew['t' + id].size = 'huge'
             break
         }
-      } else if (type === 'gym-ex' || type === 'gym-ar') {
+      } else if (type === 'gym-ex' || type === 'gym-ar' || type === 'gym-power-up') {
         switch (info) {
           case 'hide':
             gymFilterNew[id].show = false

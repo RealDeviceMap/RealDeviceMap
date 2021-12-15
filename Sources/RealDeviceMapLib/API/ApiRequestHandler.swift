@@ -116,8 +116,8 @@ public class ApiRequestHandler {
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
-        let pokestopShowOnlyPoweredUp = request.param(name: "pokestop_show_only_powered_up")?.toBool() ?? false
-        let gymShowOnlyPoweredUp = request.param(name: "gym_show_only_powered_up")?.toBool() ?? false
+        let pokestopShowOnlyPowerUp = request.param(name: "pokestop_show_only_powered_up")?.toBool() ?? false
+        let gymShowOnlyPowerUp = request.param(name: "gym_show_only_power_up")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -179,7 +179,7 @@ public class ApiRequestHandler {
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
                 gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr,
-                gymShowOnlyPoweredUp: gymShowOnlyPoweredUp
+                gymShowOnlyPowerUp: gymShowOnlyPowerUp
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -972,7 +972,7 @@ public class ApiRequestHandler {
             ])
 
             // Powered-up gyms
-            let poweredUpFilter = """
+            let powerUpFilter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-off select-button-new" data-id="power-up"
                                   data-type="gym-power-up" data-info="hide">
@@ -985,7 +985,7 @@ public class ApiRequestHandler {
             </div>
             """
 
-            let poweredUpSize = """
+            let powerUpSize = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
                                 data-type="gym-power-up" data-info="small">
@@ -1011,11 +1011,11 @@ public class ApiRequestHandler {
                     "formatted": String(format: "%03d", 7), // Need a better way to display, new section?
                     "sort": 7
                 ],
-                "name": Localizer.global.get(value: "filter_gym_powered_up_only") ,
+                "name": Localizer.global.get(value: "filter_gym_power_up_only") ,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
                         "style=\"height:50px; width:50px;\">",
-                "filter": poweredUpFilter,
-                "size": poweredUpSize,
+                "filter": powerUpFilter,
+                "size": powerUpSize,
                 "type": gymOptionsString
             ])
 

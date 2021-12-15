@@ -495,7 +495,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
                               updated: UInt32, raidsOnly: Bool, showRaids: Bool, raidFilterExclude: [String]?=nil,
                               gymFilterExclude: [String]?=nil, gymShowOnlyAr: Bool=false,
-                              gymShowOnlyPoweredUp: Bool=false) throws -> [Gym] {
+                              gymShowOnlyPowerUp: Bool=false) throws -> [Gym] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
@@ -608,8 +608,8 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             onlyArSQL = ""
         }
 
-        if gymShowOnlyPoweredUp && !raidsOnly {
-            onlyPoweredUpSQL = "power_up_points >= 50"
+        if gymShowOnlyPowerUp && !raidsOnly {
+            onlyPoweredUpSQL = "power_up_level > 0"
         } else {
             onlyPoweredUpSQL = ""
         }
