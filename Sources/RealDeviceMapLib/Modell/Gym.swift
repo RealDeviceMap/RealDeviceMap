@@ -494,8 +494,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     //  swiftlint:disable:next function_parameter_count
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
                               updated: UInt32, raidsOnly: Bool, showRaids: Bool, raidFilterExclude: [String]?=nil,
-                              gymFilterExclude: [String]?=nil, gymShowOnlyAr: Bool=false,
-                              gymShowOnlyPowerUp: Bool=false) throws -> [Gym] {
+                              gymFilterExclude: [String]?=nil, gymShowOnlyAr: Bool=false) throws -> [Gym] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
@@ -507,6 +506,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         var excludeAllButEx = false
         var excludedTeams = [Int]()
         var excludedAvailableSlots = [Int]()
+        var excludedPowerUpLevels = [Int]()
 
         if showRaids && raidFilterExclude != nil {
             for filter in raidFilterExclude! {
@@ -533,6 +533,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                     }
                 } else if filter.contains(string: "ex") {
                     excludeAllButEx = true
+                } else if filter.contains(string: "p") {
+                    if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
+                        excludedPowerUpLevels.append(id)
+                    }
                 }
             }
         }
@@ -541,9 +545,9 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludePokemonSQL: String
         let excludeAllButExSQL: String
         var onlyArSQL: String
-        var onlyPowerUpSQL: String
         let excludeTeamSQL: String
         let excludeAvailableSlotsSQL: String
+        let excludePowerUpLevelsSQL: String
 
         if showRaids {
             if excludedLevels.isEmpty {
@@ -596,6 +600,17 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
+        if excludedPowerUpLevels.isEmpty {
+            excludePowerUpLevelsSQL = ""
+        } else {
+            var sqlExcludeCreate = "AND (power_up_level NOT IN ("
+            for _ in excludedPowerUpLevels {
+                sqlExcludeCreate += "?, "
+            }
+            sqlExcludeCreate += "?))"
+            excludePowerUpLevelsSQL = sqlExcludeCreate
+        }
+
         if excludeAllButEx && !raidsOnly {
             excludeAllButExSQL = "AND ex_raid_eligible = TRUE"
         } else {
@@ -608,12 +623,6 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             onlyArSQL = ""
         }
 
-        if gymShowOnlyPowerUp && !raidsOnly {
-            onlyPowerUpSQL = "AND power_up_level > 0"
-        } else {
-            onlyPowerUpSQL = ""
-        }
-
         var sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
@@ -624,7 +633,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
-                  \(excludeAllButExSQL) \(onlyArSQL) \(onlyPowerUpSQL)
+                  \(excludePowerUpLevelsSQL) \(excludeAllButExSQL) \(onlyArSQL) 
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"
@@ -648,6 +657,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             mysqlStmt.bindParam(id)
         }
         for id in excludedAvailableSlots {
+            mysqlStmt.bindParam(id)
+        }
+
+        for id in excludedPowerUpLevels {
             mysqlStmt.bindParam(id)
         }
 

@@ -116,8 +116,6 @@ public class ApiRequestHandler {
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
-        let pokestopShowOnlyPowerUp = request.param(name: "pokestop_show_only_powered_up")?.toBool() ?? false
-        let gymShowOnlyPowerUp = request.param(name: "gym_show_only_power_up")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -178,8 +176,7 @@ public class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr,
-                gymShowOnlyPowerUp: gymShowOnlyPowerUp
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -832,6 +829,7 @@ public class ApiRequestHandler {
             let gymTeamString = Localizer.global.get(value: "filter_gym_team")
             let gymOptionsString = Localizer.global.get(value: "filter_gym_options")
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
+            let powerUpLevelString = Localizer.global.get(value: "filter_gym_power_up_level")
 
             var gymData = [[String: Any]]()
             // Team
@@ -972,52 +970,57 @@ public class ApiRequestHandler {
             ])
 
             // Powered-up gyms
-            let powerUpFilter = """
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-off select-button-new" data-id="power-up"
-                                  data-type="gym-power-up" data-info="hide">
-            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-            </label>
-            <label class="btn btn-sm btn-on select-button-new" data-id="power-up"
-                                  data-type="gym-power-up" data-info="show">
-            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-            </label>
-            </div>
-            """
+            for i in 0...3 {
+                let powerUpLevel = Localizer.global.get(value: "filter_gym_power_up_level_\(i)")
+                let powerUpFilter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                      data-type="gym-power-up" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                      data-type="gym-power-up" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
 
-            let powerUpSize = """
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
-                                data-type="gym-power-up" data-info="small">
-            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
-                                data-type="gym-power-up" data-info="normal">
-            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
-                                data-type="gym-power-up" data-info="large">
-            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-            </label>
-            <label class="btn btn-sm btn-size select-button-new" data-id="power-up"
-                                data-type="gym-power-up" data-info="huge">
-            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-            </label>
-            </div>
-            """
+                let powerUpSize = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
 
-            gymData.append([
-                "id": [
-                    "formatted": String(format: "%03d", 7), // Need a better way to display, new section?
-                    "sort": 7
-                ],
-                "name": Localizer.global.get(value: "filter_gym_power_up_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
-                        "style=\"height:50px; width:50px;\">",
-                "filter": powerUpFilter,
-                "size": powerUpSize,
-                "type": gymOptionsString
-            ])
+                let team = (UInt16.random % 3) + 1
+
+                gymData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+10
+                    ],
+                    "name": powerUpLevel,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(team)_\(i).png\"" +
+                        " style=\"height:50px; width:50px;\">",
+                    "filter": powerUpFilter,
+                    "size": powerUpSize,
+                    "type": powerUpLevelString
+                ])
+            }
 
             // Available slots
             for i in 0...6 {
