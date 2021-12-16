@@ -25,7 +25,7 @@ public protocol InstanceControllerProto {
     var accountGroup: String? { get }
     var isEvent: Bool { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any]
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any]
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
     func getAccount(mysql: MySQL, uuid: String) throws -> Account?
     func accountValid(account: Account) -> Bool
