@@ -1966,6 +1966,7 @@ public class ApiRequestHandler {
         }
     }
 
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleSetData(request: HTTPRequest, response: HTTPResponse) {
 
         guard let perms = getPerms(request: request, response: response) else {
@@ -1979,6 +1980,9 @@ public class ApiRequestHandler {
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
         let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
+        let assignDeviceGroup = request.param(name: "assign_device_group")?.toBool() ?? false
+        let deviceGroupName = request.param(name: "device_group_name")
+        let instanceName = request.param(name: "instance_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2012,6 +2016,23 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
+                guard let deviceGroup = try DeviceGroup.getByName(name: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(
+                        status: .custom(code: 404, message: "Device Group  or instance not found"))
+                }
+                let devices = try Device.getAllInGroup(deviceGroupName: deviceGroup.name)
+                for device in devices {
+                    device.instanceName = instance.name
+                    try device.save(oldUUID: device.uuid)
+                    InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                }
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
             response.respondWithError(status: .badRequest)
         }
