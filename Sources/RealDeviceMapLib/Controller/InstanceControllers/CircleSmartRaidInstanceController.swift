@@ -98,7 +98,10 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
     }
 
     // swiftlint:disable:next function_body_length
-    override func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
+    override func getTask(
+        mysql: MySQL, uuid: String, username: String?,
+        account: Account?, timestamp: UInt64
+    ) -> [String: Any] {
 
         // Get gyms without raid and gyms without boss where updated ago > ignoreTime
         var gymsNoRaid = [(Gym, Date, Coord)]()
