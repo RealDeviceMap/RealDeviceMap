@@ -2192,7 +2192,7 @@ public class ApiRequestHandler {
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
         let instanceName = request.param(name: "instance_name")
-        let reQuest = request.param(name: "re_quest")?.toBool() == false
+        let reQuest = request.param(name: "re_quest")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignment_group_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
