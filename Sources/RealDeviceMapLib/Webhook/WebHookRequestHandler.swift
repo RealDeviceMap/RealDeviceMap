@@ -237,7 +237,6 @@ public class WebHookRequestHandler {
                                 for quest in item.inventoryItemData.quests.quest {
                                     if quest.questContext == .challengeQuest &&
                                        quest.questType == .questGeotargetedArScan {
-                                        print("[TMP] \(uuid!) timestamp: \(timestamp), ar quest in inv proto")
                                         questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
                                     }
                                 }
@@ -256,12 +255,7 @@ public class WebHookRequestHandler {
                         let title = fsr.challengeQuest.questDisplay.title
                         let quest = fsr.challengeQuest.quest
                         if quest.questType == .questGeotargetedArScan && uuid != nil {
-                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: ar, hasAr: \(hasAr), " +
-                                  "id: \(fsr.fortID)")
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
-                        } else {
-                            print("[TMP] \(uuid ?? "?") timestamp: \(timestamp), quest: not ar, hasAr: \(hasAr), " +
-                                  "id: \(fsr.fortID)")
                         }
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
@@ -1079,7 +1073,6 @@ public class WebHookRequestHandler {
     }
 
     static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
-        print("[TMP] \(device) setArQuestMode: timestamp: \(timestamp), isAr: \(isAr)")
         questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
         if isAr {
             // ar mode is sent to client -> client will clear ar quest
@@ -1093,8 +1086,6 @@ public class WebHookRequestHandler {
         }
         let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
         let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? false
-        print("[TMP] \(device!) getArQuestMode: timestamp: \(timestamp), targetMode: \(targetMode), " +
-              "actualMode: \(actualMode)")
         if targetMode {
             return false
         } else {
