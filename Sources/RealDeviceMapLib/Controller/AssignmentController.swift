@@ -163,6 +163,14 @@ public class AssignmentController: InstanceControllerDelegate {
                     instances.append(instance)
                 }
             }
+            let targetInstances = assignments.filter({ $0.sourceInstanceName == instance.name})
+            for targetInstance in targetInstances {
+                if instance.type == .autoQuest {
+                    if !instances.contains(targetInstance) {
+                        instances.append(targetInstance)
+                    }
+                }
+            }
         }
         for instance in instances {
             try Pokestop.clearQuests(instance: instance)
