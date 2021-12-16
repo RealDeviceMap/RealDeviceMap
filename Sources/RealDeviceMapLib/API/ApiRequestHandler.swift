@@ -2032,6 +2032,7 @@ public class ApiRequestHandler {
                     try device.save(oldUUID: device.uuid)
                     InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
                 }
+                response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
@@ -2046,6 +2047,7 @@ public class ApiRequestHandler {
                 device.instanceName = instance.name
                 try device.save(oldUUID: device.uuid)
                 InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
