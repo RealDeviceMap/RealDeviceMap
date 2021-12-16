@@ -1982,6 +1982,8 @@ public class ApiRequestHandler {
         let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
         let assignDeviceGroup = request.param(name: "assign_device_group")?.toBool() ?? false
         let deviceGroupName = request.param(name: "device_group_name")
+        let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
+        let deviceName = request.param(name: "device_name")
         let instanceName = request.param(name: "instance_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
@@ -2030,6 +2032,20 @@ public class ApiRequestHandler {
                     try device.save(oldUUID: device.uuid)
                     InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
                 }
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
+                guard let device = try Device.getById(id: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(
+                        status: .custom(code: 404, message: "Device or instance not found"))
+                }
+                device.instanceName = instance.name
+                try device.save(oldUUID: device.uuid)
+                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
