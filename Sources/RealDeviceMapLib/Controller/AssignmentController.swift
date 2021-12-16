@@ -163,9 +163,10 @@ public class AssignmentController: InstanceControllerDelegate {
                     instances.append(instance)
                 }
             }
-            let targetInstances = assignments.filter({ $0.sourceInstanceName == instance.name})
-            for targetInstance in targetInstances {
-                if instance.type == .autoQuest {
+            let followUpAssignments = assignments.filter({ $0.sourceInstanceName == instance.name})
+            for followUpAssignment in followUpAssignments {
+                let targetInstance = try Instance.getByName(name: followUpAssignment.instanceName)!
+                if targetInstance.type == .autoQuest {
                     if !instances.contains(targetInstance) {
                         instances.append(targetInstance)
                     }
