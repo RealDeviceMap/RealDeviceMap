@@ -2192,6 +2192,8 @@ public class ApiRequestHandler {
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
         let instanceName = request.param(name: "instance_name")
+        let reQuest = request.param(name: "re_quest")?.toBool() == false
+        let assignmentGroupName = request.param(name: "assignment_group_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2230,8 +2232,7 @@ public class ApiRequestHandler {
                 Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
                 guard let deviceGroup = try DeviceGroup.getByName(name: name),
                       let instance = try Instance.getByName(name: goal) else {
-                    return response.respondWithError(
-                        status: .custom(code: 404, message: "Device Group  or instance not found"))
+                    return response.respondWithError(status: .notFound)
                 }
                 let devices = try Device.getAllInGroup(deviceGroupName: deviceGroup.name)
                 for device in devices {
@@ -2248,12 +2249,22 @@ public class ApiRequestHandler {
                 Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
                 guard let device = try Device.getById(id: name),
                       let instance = try Instance.getByName(name: goal) else {
-                    return response.respondWithError(
-                        status: .custom(code: 404, message: "Device or instance not found"))
+                    return response.respondWithError(status: .notFound)
                 }
                 device.instanceName = instance.name
                 try device.save(oldUUID: device.uuid)
                 InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if reQuest && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to reQuest assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)

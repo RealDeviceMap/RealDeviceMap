@@ -153,6 +153,25 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
+    internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
+        let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+        var instances = [Instance]()
+        for assignment in assignmentsInGroup {
+            let instance = try Instance.getByName(name: assignment.instanceName)!
+            if instance.type == .autoQuest {
+                if !instances.contains(instance) {
+                    instances.append(instance)
+                }
+            }
+        }
+        for instance in instances {
+            try Pokestop.clearQuests(instance: instance)
+        }
+        for assignment in assignmentsInGroup {
+            try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+        }
+    }
+
     private func todaySeconds() -> UInt32 {
         let date = Date()
         let formatter = DateFormatter()
