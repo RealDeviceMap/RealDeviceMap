@@ -2623,7 +2623,7 @@ function getPokestopPopupContent (pokestop) {
     content += '<img src="/static/img/misc/ar.png" height="26" width="26"><br><br>'
   }
 
-  content += '<div class="text-center">'
+  content += '<div class="text-left">'
   if (isPoweredUp) {
     content += 
       '<b>Power Up Level:</b> ' + pokestop.power_up_level + '<br>' +
@@ -2836,7 +2836,7 @@ function getGymPopupContent (gym) {
         '<br>'
   }
 
-  content += '<div class="text-center">'
+  content += '<div class="text-left">'
   if (isRaid && !isRaidBattle) {
     content += '<b>Raid Start:</b> ' + raidBattleDate.toLocaleTimeString() + ' (' + getTimeUntill(raidBattleDate) + ')<br>'
   }

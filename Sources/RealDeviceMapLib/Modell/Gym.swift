@@ -248,6 +248,8 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             self.powerUpLevel = 3
         }
         self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
+        print("[TMP] powerUpRemaining: \(fortData.powerUpRemainingUntilMs) " +
+            "behind now: \(fortData.powerUpRemainingUntilMs < Date().timestampMs)")
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
