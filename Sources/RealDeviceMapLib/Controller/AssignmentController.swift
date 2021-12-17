@@ -175,6 +175,7 @@ public class AssignmentController: InstanceControllerDelegate {
         var clearQuests = [Instance]()
         for assignment in assignmentsInGroup {
             let affectedInstanceNames = self.resolveAssignmentChain(assignment: assignment)
+            print("[TMP] affected: \(affectedInstanceNames)")
             let affectedInstances = instances.filter({ affectedInstanceNames.contains($0.name) })
 
             for instance in affectedInstances where !clearQuests.contains(instance) {
@@ -183,10 +184,7 @@ public class AssignmentController: InstanceControllerDelegate {
         }
         Log.info(message: "[AssignmentController] ReQuest will clear quests on \(clearQuests.count) instances")
         do {
-            for instance in clearQuests {
-                try Pokestop.clearQuests(instance: instance)
-                Threading.sleep(seconds: 5)
-            }
+            try Pokestop.clearQuests(instances: clearQuests)
         } catch {
             Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
