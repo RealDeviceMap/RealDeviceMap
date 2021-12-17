@@ -1988,6 +1988,20 @@ function startRaidTimer (gym, ts) {
     }, (gym.raid_battle_timestamp - ts) * 1000)
 }
 
+function startPowerUpTimer (gym, ts) {
+  setTimeout(
+    function () {
+      const ts2 = Math.round((new Date()).getTime() / 1000)
+      const realGym = gymMarkers.find(function (value) {
+        return gym.id === value.id
+      })
+      if (realGym === undefined) {
+        return
+      }
+      realGym.marker.setIcon(getGymMarkerIcon(realGym, ts2 + 1))
+    }, (gym.power_up_end_timestamp - ts) * 1000)
+}
+
 function startPokestopTimer (pokestop, expireTimestamp, ts) {
   setTimeout(
     function () {
@@ -2190,6 +2204,12 @@ function addGym(gym, ts) {
     } else {
       gym.raidTimerSet = false
     }
+    if (gym.power_up_end_timestamp >= ts) {
+      startPowerUpTimer(gym, ts)
+      gym.powerUpTimerSet = true
+    } else {
+      gym.powerUpTimerSet = false
+    }
     if (gym.is_start) {
       gym.marker.openPopup()
     }
@@ -2227,6 +2247,10 @@ function addGym(gym, ts) {
         if (showRaidTimers) {
           setDespawnTimer(oldGym)
         }
+      }
+      if (oldGym.power_up_end_timestamp >= ts && !oldGym.powerUpTimerSet) {
+        startPowerUpTimer(oldGym, ts)
+        oldGym.powerUpTimerSet = true
       }
     }
   }
