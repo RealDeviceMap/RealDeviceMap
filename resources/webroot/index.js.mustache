@@ -2217,6 +2217,9 @@ function addGym(gym, ts) {
       oldGym.raid_pokemon_move_2 = gym.raid_pokemon_move_2
       oldGym.raid_level = gym.raid_level
       oldGym.raid_is_exclusive = gym.raid_is_exclusive
+      oldGym.power_up_end_timestamp = gym.power_up_end_timestamp
+      oldGym.power_up_level = gym.power_up_level
+      oldGym.power_up_points = gym.power_up_points
       oldGym.marker.setIcon(getGymMarkerIcon(oldGym, ts))
       if (oldGym.raid_end_timestamp >= ts && !oldGym.raidTimerSet) {
         startRaidTimer(oldGym, ts)
