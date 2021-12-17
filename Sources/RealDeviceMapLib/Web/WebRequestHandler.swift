@@ -1122,41 +1122,35 @@ public class WebRequestHandler {
                 }
 
                 let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
-                var instances = [Instance]()
-                for assignment in assignmentsInGroup {
-                    do {
-                        let instance = try Instance.getByName(name: assignment.instanceName)!
-                        if instance.type == .autoQuest {
-                            if !instances.contains(instance) {
-                                instances.append(instance)
-                            }
+                var clearQuests = [Instance]()
+                do {
+                    let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
+                    for assignment in assignmentsInGroup {
+                        let affectedInstanceNames = AssignmentController.global.resolveAssignmentChain(
+                            assignment: assignment)
+                        print("[TMP] affected: \(affectedInstanceNames)")
+                        let affectedInstances = instances.filter({ affectedInstanceNames.contains($0.name) })
+
+                        for instance in affectedInstances where !clearQuests.contains(instance) {
+                            clearQuests.append(instance)
                         }
-                        let followUpAssignments = assignments.filter({ $0.sourceInstanceName == instance.name})
-                        for followUpAssignment in followUpAssignments {
-                            let targetInstance = try Instance.getByName(name: followUpAssignment.instanceName)!
-                            if targetInstance.type == .autoQuest {
-                                if !instances.contains(targetInstance) {
-                                    instances.append(targetInstance)
-                                }
-                            }
-                        }
-                    } catch {
-                        response.setBody(string: "Failed to pick up assignment instances")
-                        sessionDriver.save(session: request.session!)
-                        response.completed(status: .internalServerError)
-                        return
                     }
+                } catch {
+                    response.setBody(string: "Failed to pick up assignment instances")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
                 }
-                for instance in instances {
-                    do {
-                        try Pokestop.clearQuests(instance: instance)
-                    } catch {
-                        response.setBody(string: "Failed to clear quests")
-                        sessionDriver.save(session: request.session!)
-                        response.completed(status: .internalServerError)
-                        return
-                    }
+
+                do {
+                    try Pokestop.clearQuests(instances: clearQuests)
+                } catch {
+                    response.setBody(string: "Failed to clear quests")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
                 }
+
                 for assignment in assignmentsInGroup {
                     do {
                         try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)

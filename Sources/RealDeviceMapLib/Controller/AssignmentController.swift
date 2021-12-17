@@ -153,7 +153,7 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
-    private func resolveAssignmentChain(assignment: Assignment) -> [String] {
+    func resolveAssignmentChain(assignment: Assignment) -> [String] {
         var toVisit = [assignment]
         var result = [Assignment]()
         let assignments = assignments
