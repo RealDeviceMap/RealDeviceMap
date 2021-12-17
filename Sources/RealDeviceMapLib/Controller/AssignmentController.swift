@@ -153,29 +153,44 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
+    private func resolveAssignmentChain(assignment: Assignment) -> [String] {
+        var toVisit = [assignment]
+        var result = [Assignment]()
+        let assignments = assignments
+        while !toVisit.isEmpty {
+            for source in toVisit {
+                for target in assignments.filter({ $0.sourceInstanceName == source.instanceName}) {
+                    toVisit.append(target)
+                }
+                result.append(source)
+                toVisit.remove(at: toVisit.firstIndex(of: source)!)
+            }
+        }
+        return result.map({ $0.instanceName}) // instances names
+    }
+
     internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
         let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
-        var instances = [Instance]()
+        let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
+        var clearQuests = [Instance]()
         for assignment in assignmentsInGroup {
-            let instance = try Instance.getByName(name: assignment.instanceName)!
-            if instance.type == .autoQuest {
-                if !instances.contains(instance) {
-                    instances.append(instance)
-                }
-            }
-            let followUpAssignments = assignments.filter({ $0.sourceInstanceName == instance.name})
-            for followUpAssignment in followUpAssignments {
-                let targetInstance = try Instance.getByName(name: followUpAssignment.instanceName)!
-                if targetInstance.type == .autoQuest {
-                    if !instances.contains(targetInstance) {
-                        instances.append(targetInstance)
-                    }
-                }
+            let affectedInstanceNames = self.resolveAssignmentChain(assignment: assignment)
+            let affectedInstances = instances.filter({ affectedInstanceNames.contains($0.name) })
+
+            for instance in affectedInstances where !clearQuests.contains(instance) {
+                clearQuests.append(instance)
             }
         }
-        for instance in instances {
-            try Pokestop.clearQuests(instance: instance)
+        Log.info(message: "[AssignmentController] ReQuest will clear quests on \(clearQuests.count) instances")
+        do {
+            for instance in clearQuests {
+                try Pokestop.clearQuests(instance: instance)
+                Threading.sleep(seconds: 5)
+            }
+        } catch {
+            Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
+
         for assignment in assignmentsInGroup {
             try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
         }
