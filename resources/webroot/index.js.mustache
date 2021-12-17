@@ -2126,6 +2126,11 @@ function addPokestop(pokestop, ts) {
       oldPokestop.grunt_type = pokestop.grunt_type
       oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
     }
+    if (oldPokestop.power_up_end_timestamp !== pokestop.power_up_end_timestamp) {
+      oldPokestop.power_up_end_timestamp = pokestop.power_up_end_timestamp
+      oldPokestop.power_up_level = pokestop.power_up_level
+      oldPokestop.power_up_points = pokestop.power_up_points
+    }
 
     oldPokestop.updated = pokestop.updated
     oldPokestop.last_modified_timestamp = pokestop.last_modified_timestamp
@@ -2195,7 +2200,8 @@ function addGym(gym, ts) {
     if (oldGym.available_slots !== gym.available_slots ||
         oldGym.team_id !== gym.team_id ||
         oldGym.raid_end_timestamp !== gym.raid_end_timestamp ||
-        oldGym.raid_pokemon_id !== gym.raid_pokemon_id) {
+        oldGym.raid_pokemon_id !== gym.raid_pokemon_id ||
+        oldGym.power_up_end_timestamp !== gym.power_up_end_timestamp) {
       oldGym.available_slots = gym.available_slots
       oldGym.team_id = gym.team_id
       oldGym.raid_end_timestamp = gym.raid_end_timestamp
