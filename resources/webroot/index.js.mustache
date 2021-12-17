@@ -2515,7 +2515,7 @@ function getPokestopPopupContent (pokestop) {
   const now = new Date()
   const lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000)
   const invasionExpireDate = new Date(pokestop.incident_expire_timestamp * 1000)
-  const powerUpEndDate = new Date(pokestop.power_up_end_date * 1000)
+  const powerUpEndDate = new Date(pokestop.power_up_end_timestamp * 1000)
   const isActiveLure = lureExpireDate >= now
   const isPoweredUp = powerUpEndDate >= now && parseInt(pokestop.power_up_level) > 0
 
@@ -2668,7 +2668,7 @@ function getGymPopupContent (gym) {
   const now = new Date()
   const raidBattleDate = new Date(gym.raid_battle_timestamp * 1000)
   const raidEndDate = new Date(gym.raid_end_timestamp * 1000)
-  const powerUpEndDate = new Date(gym.power_up_end_date * 1000)
+  const powerUpEndDate = new Date(gym.power_up_end_timestamp * 1000)
 
   const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0
   const isRaidBattle = (raidBattleDate <= now || (gym.raid_pokemon_id !== null && gym.raid_pokemon_id !== 0)) && isRaid
