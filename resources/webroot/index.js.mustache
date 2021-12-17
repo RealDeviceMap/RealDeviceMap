@@ -1036,8 +1036,12 @@ function initMap () {
   $('#disable-all-pokestop-filter').on('click', function () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: false, size: pokestopFilterNew.normal.size }
-    for (var i = 1; i < 6; i++) {
+    let i
+    for (i = 1; i < 6; i++) {
       defaultPokestopFilter['l' + i] = { show: false, size: pokestopFilterNew['l' + i].size }
+    }
+    for (i = 0; i <= 3; i++) {
+      defaultPokestopFilter['p' + i] = { show: false, size: pokestopFilterNew['p' + i].size }
     }
     defaultPokestopFilter.ar = { show: false, size: pokestopFilterNew.ar.size }
 
@@ -2511,7 +2515,9 @@ function getPokestopPopupContent (pokestop) {
   const now = new Date()
   const lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000)
   const invasionExpireDate = new Date(pokestop.incident_expire_timestamp * 1000)
+  const powerUpEndDate = new Date(pokestop.power_up_end_date * 1000)
   const isActiveLure = lureExpireDate >= now
+  const isPoweredUp = powerUpEndDate >= now && parseInt(pokestop.power_up_level) > 0
 
   let content = '<div class="text-center">'
   let pokestopName
@@ -2617,6 +2623,14 @@ function getPokestopPopupContent (pokestop) {
     content += '<img src="/static/img/misc/ar.png" height="26" width="26"><br><br>'
   }
 
+  content += '<div class="text-center">'
+  if (isPoweredUp) {
+    content += 
+      '<b>Power Up Level:</b> ' + pokestop.power_up_level + '<br>' +
+      '<b>Power Up End:</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
+  } 
+  content += '</div>'
+
   const updatedDate = new Date(pokestop.updated * 1000)
   if (updatedDate) {
     content += '<small><b>Last Updated:</b> ' + updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')<br></small>'
@@ -2654,9 +2668,11 @@ function getGymPopupContent (gym) {
   const now = new Date()
   const raidBattleDate = new Date(gym.raid_battle_timestamp * 1000)
   const raidEndDate = new Date(gym.raid_end_timestamp * 1000)
+  const powerUpEndDate = new Date(gym.power_up_end_date * 1000)
 
   const isRaid = raidEndDate >= now && parseInt(gym.raid_level) > 0
   const isRaidBattle = (raidBattleDate <= now || (gym.raid_pokemon_id !== null && gym.raid_pokemon_id !== 0)) && isRaid
+  const isPoweredUp = powerUpEndDate >= now && parseInt(gym.power_up_level) > 0
 
   var gymName = ''
   if (gym.name === null || gym.name === '') {
@@ -2797,7 +2813,7 @@ function getGymPopupContent (gym) {
             // '<div class="col-12 col-md-8 ' + (hasGymUrl ? 'text-center' : '') + ' center-vertical">' + //START 2ND COL
             '<div class="col-12 col-md-7 center-vertical p-4">' + // START 2ND COL
                 '<b>Team:</b> ' + getTeamName(gym.team_id) + '<br>' +
-                '<b>Slots Available:</b> ' + (gym.available_slots === 0 ? 'Full' : gym.available_slots === 6 ? 'Empty' : gym.available_slots) + '<br>'
+                '<b>Slots Available:</b> ' + getSlotsAvailable(gym.available_slots) + '<br>'          
     if (gym.guard_pokemon_id !== null) {
       content += '<b>Guard:</b> ' + getPokemonName(gym.guard_pokemon_id) + '<br>'
     }
@@ -2827,6 +2843,11 @@ function getGymPopupContent (gym) {
   if (isRaid) {
     content += '<b>Raid End:</b> ' + raidEndDate.toLocaleTimeString() + ' (' + getTimeUntill(raidEndDate) + ')<br><br>'
   }
+  if (isPoweredUp) {
+    content += 
+      '<b>Power Up Level:</b> ' + gym.power_up_level + '<br>' +
+      '<b>Power Up End:</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
+  } 
   content += '</div>'
 
   const updatedDate = new Date(gym.updated * 1000)
@@ -2997,6 +3018,10 @@ function getTeamName (teamId) {
 
 function getGenderIcon (genderId) {
   return i18n('gender_icon_' + genderId)
+}
+
+function getSlotsAvailable (amount) {
+  return i18n('filter_gym_available_slots_' + amount)
 }
 
 // function getWeatherIcon (weatherId) {
