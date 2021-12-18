@@ -1014,7 +1014,7 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 0 ? 0 : team)_\(i).png\"" +
                         " style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
