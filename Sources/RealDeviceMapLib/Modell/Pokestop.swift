@@ -134,6 +134,9 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 "pokestop_display": pokestopDisplay ?? 0,
                 "incident_expire_timestamp": incidentExpireTimestamp ?? 0,
                 "ar_scan_eligible": arScanEligible ?? 0,
+                "power_up_level": powerUpLevel ?? 0,
+                "power_up_points": powerUpPoints ?? 0,
+                "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
                 "updated": updated ?? 1
             ]
             return [
