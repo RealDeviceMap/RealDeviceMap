@@ -2064,7 +2064,6 @@ public class ApiRequestHandler {
         data["timestamp"] = Int(Date().timeIntervalSince1970)
 
         do {
-            print("[TMP] data send with API Request Handler: \(String(describing: data["gyms"].jsonEncodeForceTry()))")
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
