@@ -114,8 +114,10 @@ public class ApiRequestHandler {
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let pokestopShowOnlySponsored = request.param(name: "pokestop_show_only_sponsored")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
+        let gymShowOnlySponsored = request.param(name: "gym_show_only_sponsored")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -176,7 +178,8 @@ public class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr,
+                gymShowOnlySponsored: gymShowOnlySponsored
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -193,6 +196,7 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
+                pokestopShowOnlySponsored: pokestopShowOnlySponsored,
                 invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
@@ -969,6 +973,55 @@ public class ApiRequestHandler {
                 "type": gymOptionsString
             ])
 
+            // Sponsored gyms
+            let sponsoredFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="sponsored" data-type="gym-sponsored" 
+                                data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let sponsoredSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "sort": 7
+                ],
+                "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsored.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": sponsoredFilter,
+                "size": sponsoredSize,
+                "type": gymOptionsString
+            ])
+
             // Powered-up gyms
             for i in 0...3 {
                 let powerUpLevel = Localizer.global.get(value: "filter_poi_power_up_level_\(i)")
@@ -1161,6 +1214,7 @@ public class ApiRequestHandler {
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
+            let sponsoredOnly = Localizer.global.get(value: "filter_pokestop_sponsored_only")
             let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
@@ -1312,6 +1366,7 @@ public class ApiRequestHandler {
                 ])
             }
 
+            // AR pokestop
             let arFilter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-off select-button-new" data-id="ar"
@@ -1356,6 +1411,54 @@ public class ApiRequestHandler {
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
+                "type": pokestopOptionsString
+            ])
+
+            // Sponsored Pokestop
+            let sponsoredFilter = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-off select-button-new" data-id="sponsored"
+                            data-type="pokestop-sponsored" data-info="hide">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                           </label>
+                           <label class="btn btn-sm btn-on select-button-new" data-id="sponsored"
+                            data-type="pokestop-sponsored" data-info="show">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                           </label>
+                           </div>
+                           """
+
+            let sponsoredSize = """
+                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="small">
+                         <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="normal">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="large">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="huge">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                         </label>
+                         </div>
+                         """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 6),
+                    "sort": 6
+                ],
+                "name": sponsoredOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsored.png\" " +
+                    "style=\"height:50px; width:50px;\">",
+                "filter": sponsoredFilter,
+                "size": sponsoredSize,
                 "type": pokestopOptionsString
             ])
 
