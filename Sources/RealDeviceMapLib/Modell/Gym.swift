@@ -49,6 +49,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             "raid_is_exclusive": raidIsExclusive as Any,
             "total_cp": totalCp as Any,
             "sponsor_id": sponsorId as Any,
+            "partner_id": partnerId as Any,
             "ar_scan_eligible": arScanEligible as Any,
             "power_up_points": powerUpPoints as Any,
             "power_up_level": powerUpLevel as Any,
