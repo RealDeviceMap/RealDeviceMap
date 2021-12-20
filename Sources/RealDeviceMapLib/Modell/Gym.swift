@@ -177,7 +177,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var partnerId: String?
     var arScanEligible: Bool?
     var powerUpPoints: UInt32?
-    var powerUpLevel: UInt8?
+    var powerUpLevel: UInt16?
     var powerUpEndTimestamp: UInt32?
 
     var hasChanges = false
@@ -190,7 +190,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
          updated: UInt32?, exRaidEligible: Bool?, inBattle: Bool?, raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?,
          raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?,
          raidPokemonEvolution: UInt8?, raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?,
-         partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt8?,
+         partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt16?,
          powerUpEndTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
@@ -720,15 +720,15 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidPokemonEvolution = result[29] as? UInt8
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
-            let powerUpLevel = result[32] as? UInt8
+            let powerUpLevel = result[32] as? UInt16
             let powerUpEndTimestamp = result[33] as? UInt32
 
             print("[TMP] result[26] \(String(describing: result[26] as? UInt32))")
             print("[TMP] result[31] \(String(describing: result[31] as? UInt32))")
             print("[TMP] result[32] \(String(describing: result[32] as? UInt8))")
             print("[TMP] result[33] \(String(describing: result[33] as? UInt32))")
-
-            let gym = Gym(
+            print("[TMP] Gym DB: \(id) with powerUpEndTimeStamp \(String(describing: powerUpEndTimestamp))")
+            gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
                 raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
@@ -739,10 +739,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 raidPokemonGender: raidPokemonGender, raidPokemonEvolution: raidPokemonEvolution,
                 raidIsExclusive: raidIsExclusive, cellId: cellId, totalCp: totalCp, sponsorId: sponsorId,
                 partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
-                powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp)
-            cache?.set(id: gym.id, value: gym)
-            print("[TMP] Gym DB: \(gym.id) with powerUpEndTimeStamp \(String(describing: gym.powerUpEndTimestamp))")
-            gyms.append(gym)
+                powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp))
         }
         return gyms
 
@@ -822,7 +819,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let raidPokemonEvolution = result[29] as? UInt8
         let arScanEligible = (result[30] as? UInt8)?.toBool()
         let powerUpPoints = result[31] as? UInt32
-        let powerUpLevel = result[32] as? UInt8
+        let powerUpLevel = result[32] as? UInt16
         let powerUpEndTimestamp = result[33] as? UInt32
 
         let gym = Gym(
@@ -928,7 +925,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidPokemonEvolution = result[29] as? UInt8
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
-            let powerUpLevel = result[32] as? UInt8
+            let powerUpLevel = result[32] as? UInt16
             let powerUpEndTimestamp = result[33] as? UInt32
 
             gyms.append(Gym(
@@ -1035,7 +1032,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let raidPokemonEvolution = result[29] as? UInt8
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
-            let powerUpLevel = result[32] as? UInt8
+            let powerUpLevel = result[32] as? UInt16
             let powerUpEndTimestamp = result[33] as? UInt32
 
             gyms.append(Gym(
