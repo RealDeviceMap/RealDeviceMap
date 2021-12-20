@@ -980,7 +980,7 @@ public class ApiRequestHandler {
                                 data-info="hide">
             <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
             </label>
-            <label class="btn btn-sm btn-on select-button-new" data-id="sponsored" data-type="gym-sponsored" 
+            <label class="btn btn-sm btn-on select-button-new" data-id="sponsored" data-type="gym-sponsored"
                                 data-info="show">
             <input type="radio" name="options" id="show" autocomplete="off">\(showString)
             </label>
@@ -1007,7 +1007,6 @@ public class ApiRequestHandler {
             </label>
             </div>
             """
-
 
             gymData.append([
                 "id": [
