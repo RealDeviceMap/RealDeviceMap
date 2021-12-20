@@ -723,10 +723,9 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let powerUpLevel = result[32] as? UInt8
             let powerUpEndTimestamp = result[33] as? UInt64
 
-            print("[TMP] result[26] \(String(describing: result[26] as! UInt32))")
-            print("[TMP] result[31] \(String(describing: result[31] as! UInt32))")
-            print("[TMP] result[32] \(String(describing: result[32] as! UInt8))")
-            print("[TMP] result[33] \(String(describing: result[33] as! UInt64))")
+            print("[TMP] result[31] \(String(describing: result[31]))")
+            print("[TMP] result[32] \(String(describing: result[32]))")
+            print("[TMP] result[33] \(String(describing: result[33]))")
 
             let gym = Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -741,7 +740,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
                 powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp)
             cache?.set(id: gym.id, value: gym)
-            print("[TMP] Gym DB: \(gym.id) with powerUpEndTimeStamp \(String(describing: powerUpEndTimestamp))")
+            print("[TMP] Gym DB: \(gym.id) with powerUpEndTimeStamp \(String(describing: gym.powerUpEndTimestamp))")
             gyms.append(gym)
         }
         return gyms
