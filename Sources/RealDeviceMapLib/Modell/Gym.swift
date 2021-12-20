@@ -722,7 +722,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt16
             let powerUpEndTimestamp = result[33] as? UInt32
-            
+
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
