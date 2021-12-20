@@ -1010,7 +1010,7 @@ public class ApiRequestHandler {
 
             gymData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 6), // Need a better way to display, new section?
+                    "formatted": String(format: "%03d", 7), // Need a better way to display, new section?
                     "sort": 7
                 ],
                 "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
@@ -1450,8 +1450,8 @@ public class ApiRequestHandler {
 
             pokestopData.append([
                 "id": [
-                    "formatted": String(format: "%03d", 6),
-                    "sort": 6
+                    "formatted": String(format: "%03d", 7),
+                    "sort": 7
                 ],
                 "name": sponsoredOnly,
                 "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
