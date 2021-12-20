@@ -164,8 +164,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var updated: UInt32?
     var arScanEligible: Bool?
     var powerUpPoints: UInt32?
-    var powerUpLevel: UInt8?
-    var powerUpEndTimestamp: UInt64?
+    var powerUpLevel: UInt16?
+    var powerUpEndTimestamp: UInt32?
     var questType: UInt32?
     var questTemplate: String?
     var questTitle: String?
@@ -197,8 +197,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
          questRewards: [[String: Any]]?, questTemplate: String?, questTitle: String?, cellId: UInt64?, lureId: Int16?,
          pokestopDisplay: UInt16?, incidentExpireTimestamp: UInt32?, gruntType: UInt16?, sponsorId: UInt16?,
-         partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt8?,
-         powerUpEndTimestamp: UInt64?, alternativeQuestType: UInt32?, alternativeQuestTarget: UInt16?,
+         partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt16?,
+         powerUpEndTimestamp: UInt32?, alternativeQuestType: UInt32?, alternativeQuestTarget: UInt16?,
          alternativeQuestTimestamp: UInt32?, alternativeQuestConditions: [[String: Any]]?,
          alternativeQuestRewards: [[String: Any]]?, alternativeQuestTemplate: String?, alternativeQuestTitle: String?) {
         self.id = id
@@ -258,7 +258,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         } else {
             self.powerUpLevel = 3
         }
-        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
+        self.powerUpEndTimestamp = UInt32(fortData.powerUpRemainingUntilMs / 1000)
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         if fortData.activeFortModifier.contains(.troyDisk) ||
             fortData.activeFortModifier.contains(.troyDiskGlacial) ||
@@ -1081,8 +1081,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let partnerId = result[29] as? String
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
-            let powerUpLevel = result[32] as? UInt8
-            let powerUpEndTimestamp = result[33] as? UInt64
+            let powerUpLevel = result[32] as? UInt16
+            let powerUpEndTimestamp = result[33] as? UInt32
 
             pokestops.append(Pokestop(
                 id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
@@ -1194,8 +1194,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             let partnerId = result[29] as? String
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
-            let powerUpLevel = result[32] as? UInt8
-            let powerUpEndTimestamp = result[32] as? UInt64
+            let powerUpLevel = result[32] as? UInt16
+            let powerUpEndTimestamp = result[32] as? UInt32
 
             pokestops.append(Pokestop(
                 id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
@@ -1363,8 +1363,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let partnerId = result[29] as? String
         let arScanEligible = (result[30] as? UInt8)?.toBool()
         let powerUpPoints = result[31] as? UInt32
-        let powerUpLevel = result[32] as? UInt8
-        let powerUpEndTimestamp = result[33] as? UInt64
+        let powerUpLevel = result[32] as? UInt16
+        let powerUpEndTimestamp = result[33] as? UInt32
 
         let pokestop = Pokestop(
             id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
