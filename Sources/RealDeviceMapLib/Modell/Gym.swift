@@ -178,7 +178,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     var arScanEligible: Bool?
     var powerUpPoints: UInt32?
     var powerUpLevel: UInt8?
-    var powerUpEndTimestamp: UInt64?
+    var powerUpEndTimestamp: UInt32?
 
     var hasChanges = false
 
@@ -191,7 +191,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
          raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?,
          raidPokemonEvolution: UInt8?, raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?,
          partnerId: String?, arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt8?,
-         powerUpEndTimestamp: UInt64?) {
+         powerUpEndTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -250,7 +250,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         } else {
             self.powerUpLevel = 3
         }
-        self.powerUpEndTimestamp = UInt64(fortData.powerUpRemainingUntilMs / 1000)
+        self.powerUpEndTimestamp = UInt32(fortData.powerUpRemainingUntilMs / 1000)
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
@@ -721,11 +721,12 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt8
-            let powerUpEndTimestamp = result[33] as? UInt64
+            let powerUpEndTimestamp = result[33] as? UInt32
 
-            print("[TMP] result[31] \(String(describing: result[31]))")
-            print("[TMP] result[32] \(String(describing: result[32]))")
-            print("[TMP] result[33] \(String(describing: result[33]))")
+            print("[TMP] result[26] \(String(describing: result[26] as? UInt32))")
+            print("[TMP] result[31] \(String(describing: result[31] as? UInt32))")
+            print("[TMP] result[32] \(String(describing: result[32] as? UInt8))")
+            print("[TMP] result[33] \(String(describing: result[33] as? UInt32))")
 
             let gym = Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -822,7 +823,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let arScanEligible = (result[30] as? UInt8)?.toBool()
         let powerUpPoints = result[31] as? UInt32
         let powerUpLevel = result[32] as? UInt8
-        let powerUpEndTimestamp = result[33] as? UInt64
+        let powerUpEndTimestamp = result[33] as? UInt32
 
         let gym = Gym(
             id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -928,7 +929,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt8
-            let powerUpEndTimestamp = result[33] as? UInt64
+            let powerUpEndTimestamp = result[33] as? UInt32
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
@@ -1035,7 +1036,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let arScanEligible = (result[30] as? UInt8)?.toBool()
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt8
-            let powerUpEndTimestamp = result[33] as? UInt64
+            let powerUpEndTimestamp = result[33] as? UInt32
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
