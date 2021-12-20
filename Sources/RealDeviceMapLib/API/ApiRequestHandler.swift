@@ -1015,7 +1015,7 @@ public class ApiRequestHandler {
                     "sort": 7
                 ],
                 "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsored.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
@@ -1455,7 +1455,7 @@ public class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": sponsoredOnly,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsored.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
                     "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
