@@ -48,6 +48,9 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
+    private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
+    private static let questArActualMap = TimedMap<String, Bool>(length: 100)
+
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
         threadLimitLock.lock()
@@ -117,6 +120,7 @@ public class WebHookRequestHandler {
         }
 
         let uuid = json["uuid"] as? String
+        let timestamp = json["timestamp"] as? UInt64 ?? Date().timestampMs
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Failed to connect to database.")
@@ -225,9 +229,18 @@ public class WebHookRequestHandler {
             } else if method == 4 {
                 if let inv = try? GetHoloholoInventoryOutProto(serializedData: data) {
                     if inv.inventoryDelta.inventoryItem.count > 0 {
-                        for item in inv.inventoryDelta.inventoryItem
-                            where item.inventoryItemData.playerStats.experience > 0 {
-                            trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                        for item in inv.inventoryDelta.inventoryItem {
+                            if item.inventoryItemData.playerStats.experience > 0 {
+                                trainerXP = Int(item.inventoryItemData.playerStats.experience)
+                            }
+                            if uuid != nil && item.inventoryItemData.quests.quest.count > 0 {
+                                for quest in item.inventoryItemData.quests.quest {
+                                    if quest.questContext == .challengeQuest &&
+                                       quest.questType == .questGeotargetedArScan {
+                                        questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {
@@ -236,10 +249,14 @@ public class WebHookRequestHandler {
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
-                        let hasAr = hasArQuestReqGlobal ?? hasArQuestReq ?? true
-                        // MARK: maybe compare with instance questMode?!
-                        let quest = fsr.challengeQuest.quest
+                        let hasAr = hasArQuestReqGlobal ??
+                            hasArQuestReq ??
+                            getArQuestMode(device: uuid, timestamp: timestamp)
                         let title = fsr.challengeQuest.questDisplay.title
+                        let quest = fsr.challengeQuest.quest
+                        if quest.questType == .questGeotargetedArScan && uuid != nil {
+                            questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
+                        }
                         quests.append((name: title, quest: quest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
@@ -763,6 +780,7 @@ public class WebHookRequestHandler {
         }
 
         let username = (jsonO?["username"] as? String)?.emptyToNil()
+        let timestamp = jsonO?["timestamp"] as? UInt64 ?? Date().timestampMs
 
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to connect to database.")
@@ -840,7 +858,10 @@ public class WebHookRequestHandler {
                         ])
                         return
                     }
-                    let task = controller!.getTask(mysql: mysql, uuid: uuid, username: username, account: account)
+                    let task = controller!.getTask(
+                        mysql: mysql, uuid: uuid, username: username,
+                        account: account, timestamp: timestamp
+                    )
                     Log.debug(
                         message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
                         " at \((task["lat"] as? Double)?.description ?? "?")," +
@@ -1049,6 +1070,27 @@ public class WebHookRequestHandler {
             response.respondWithError(status: .badRequest)
         }
 
+    }
+
+    static func setArQuestTarget(device: String, timestamp: UInt64, isAr: Bool) {
+        questArTargetMap.setValue(key: device, value: isAr, time: timestamp)
+        if isAr {
+            // ar mode is sent to client -> client will clear ar quest
+            questArActualMap.setValue(key: device, value: false, time: timestamp)
+        }
+    }
+
+    static func getArQuestMode(device: String?, timestamp: UInt64) -> Bool {
+        if device == nil {
+            return true
+        }
+        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
+        let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? false
+        if targetMode {
+            return false
+        } else {
+            return actualMode
+        }
     }
 
 }
