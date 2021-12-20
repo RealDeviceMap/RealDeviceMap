@@ -20,7 +20,6 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     class ParsingError: Error {}
 
     public override func getJSONValues() -> [String: Any] {
-        print("[TMP] level: \(powerUpLevel ?? 0) ts: \(powerUpEndTimestamp ?? 0)")
         return [
             "id": id,
             "lat": lat,
@@ -723,6 +722,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt8
             let powerUpEndTimestamp = result[33] as? UInt64
+
+            print("[TMP] result[31] \(String(describing: result[31]))")
+            print("[TMP] result[32] \(String(describing: result[32]))")
+            print("[TMP] result[33] \(String(describing: result[33]))")
 
             let gym = Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
