@@ -497,7 +497,8 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     //  swiftlint:disable:next function_parameter_count
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double,
                               updated: UInt32, raidsOnly: Bool, showRaids: Bool, raidFilterExclude: [String]?=nil,
-                              gymFilterExclude: [String]?=nil, gymShowOnlyAr: Bool=false) throws -> [Gym] {
+                              gymFilterExclude: [String]?=nil, gymShowOnlyAr: Bool=false,
+                              gymShowOnlySponsored: Bool=false) throws -> [Gym] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[GYM] Failed to connect to database.")
@@ -548,6 +549,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludePokemonSQL: String
         let excludeAllButExSQL: String
         var onlyArSQL: String
+        var onlySponsoredSQL: String
         let excludeTeamSQL: String
         let excludeAvailableSlotsSQL: String
         let excludePowerUpLevelsSQL: String
@@ -626,6 +628,12 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             onlyArSQL = ""
         }
 
+        if gymShowOnlySponsored && !raidsOnly {
+            onlySponsoredSQL = "AND partner_id is not null"
+        } else {
+            onlySponsoredSQL = ""
+        }
+
         var sql = """
             SELECT id, lat, lon, name, url, guarding_pokemon_id, last_modified_timestamp, team_id, raid_end_timestamp,
                    raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled, available_slots, updated,
@@ -636,7 +644,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
-                  \(excludePowerUpLevelsSQL) \(excludeAllButExSQL) \(onlyArSQL)
+                  \(excludePowerUpLevelsSQL) \(excludeAllButExSQL) \(onlyArSQL) \(onlySponsoredSQL)
         """
         if raidsOnly {
             sql += " AND raid_end_timestamp >= UNIX_TIMESTAMP()"

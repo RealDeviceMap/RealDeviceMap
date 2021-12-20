@@ -748,7 +748,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     public static func getAll(
         mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32,
         showPokestops: Bool, showQuests: Bool, showLures: Bool, showInvasions: Bool, questFilterExclude: [String]?=nil,
-        pokestopFilterExclude: [String]?=nil, pokestopShowOnlyAr: Bool=false,
+        pokestopFilterExclude: [String]?=nil, pokestopShowOnlyAr: Bool=false, pokestopShowOnlySponsored: Bool=false,
         invasionFilterExclude: [Int]?=nil, showAlternativeQuests: Bool=false
     ) throws -> [Pokestop] {
 
@@ -811,6 +811,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let excludeLureSQL: String
         var excludePokestopSQL: String
         var onlyArSQL: String
+        var onlySponsoredSQL: String
         var excludeInvasionSQL: String
         let excludePowerUpLevelsSQL: String
 
@@ -906,6 +907,12 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             onlyArSQL = ""
         }
 
+        if pokestopShowOnlySponsored && showPokestops {
+            onlySponsoredSQL = "AND partner_id is not null"
+        } else {
+            onlySponsoredSQL = ""
+        }
+
         if excludedPowerUpLevels.isEmpty {
             excludePowerUpLevelsSQL = ""
         } else {
@@ -923,7 +930,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 ""
 
         let sqlOrParts: [String] = [
-            "\(excludePokestopSQL) \(excludePowerUpLevelsSQL) \(onlyArSQL)",
+            "\(excludePokestopSQL) \(excludePowerUpLevelsSQL) \(onlyArSQL) \(onlySponsoredSQL)",
             "\(onlyQuestsSQL) \(excludeQuestTypeSQL) \(excludeQuestPokemonSQL) \(excludeQuestItemSQL)",
             "\(onlyInvasionsSQL) \(excludeInvasionSQL)"
         ]
