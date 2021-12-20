@@ -724,7 +724,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let powerUpLevel = result[32] as? UInt8
             let powerUpEndTimestamp = result[33] as? UInt64
 
-            gyms.append(Gym(
+            let gym = Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
                 raidSpawnTimestamp: raidSpawnTimestamp, raidBattleTimestamp: raidBattleTimestamp,
@@ -735,7 +735,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 raidPokemonGender: raidPokemonGender, raidPokemonEvolution: raidPokemonEvolution,
                 raidIsExclusive: raidIsExclusive, cellId: cellId, totalCp: totalCp, sponsorId: sponsorId,
                 partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
-                powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp))
+                powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp)
+            cache?.set(id: gym.id, value: gym)
+            print("[TMP] Gym DB: \(gym.id) with powerUpEndTimeStamp \(String(describing: gym.powerUpEndTimestamp))")
+            gyms.append(gym)
         }
         return gyms
 
