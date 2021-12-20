@@ -3915,7 +3915,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = gymFilterNew['t' + id].size === 'huge'
         break
     }
-  } else if (type === 'gym-ex' || type === 'gym-ar') {
+  } else if (type === 'gym-ex' || type === 'gym-ar' || type === 'gym-sponsored') {
     switch (info) {
       case 'hide':
         shouldShow = gymFilterNew[id].show === false
@@ -4041,7 +4041,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['p' + id].size === 'huge'
         break
     }
-  } else if (type === 'pokestop-ar') {
+  } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
     switch (info) {
       case 'hide':
         shouldShow = pokestopFilterNew[id].show === false
@@ -4316,7 +4316,7 @@ function manageSelectButton (e, isNew) {
             gymFilterNew['t' + id].size = 'huge'
             break
         }
-      } else if (type === 'gym-ex' || type === 'gym-ar') {
+      } else if (type === 'gym-ex' || type === 'gym-ar' || type === 'gym-sponsored') {
         switch (info) {
           case 'hide':
             gymFilterNew[id].show = false
@@ -4442,7 +4442,7 @@ function manageSelectButton (e, isNew) {
             pokestopFilterNew['p' + id].size = 'huge'
             break
         }
-      } else if (type === 'pokestop-ar') {
+      } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
         switch (info) {
           case 'hide':
             pokestopFilterNew[id].show = false
