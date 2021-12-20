@@ -722,12 +722,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             let powerUpPoints = result[31] as? UInt32
             let powerUpLevel = result[32] as? UInt16
             let powerUpEndTimestamp = result[33] as? UInt32
-
-            print("[TMP] result[26] \(String(describing: result[26] as? UInt32))")
-            print("[TMP] result[31] \(String(describing: result[31] as? UInt32))")
-            print("[TMP] result[32] \(String(describing: result[32] as? UInt16))")
-            print("[TMP] result[33] \(String(describing: result[33] as? UInt32))")
-            print("[TMP] Gym DB: \(id) with powerUpEndTimeStamp \(String(describing: powerUpEndTimestamp))")
+            
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, url: url, guardPokemonId: guardPokemonId, enabled: enabled,
                 lastModifiedTimestamp: lastModifiedTimestamp, teamId: teamId, raidEndTimestamp: raidEndTimestamp,
