@@ -648,6 +648,9 @@ function loadStorage () {
     if (defaultGymFilter.ar === undefined) {
       defaultGymFilter.ar = { show: false, size: 'normal' }
     }
+    if (defaultGymFilter.sponsored === undefined) {
+      defaultGymFilter.sponsored = { show: false, size: 'normal' }
+    }
     for (i = 0; i<= 3; i++) {
       if (defaultGymFilter['p' + i] === undefined) {
         defaultGymFilter['p' + i] = { show: true, size: 'normal' }
@@ -674,6 +677,9 @@ function loadStorage () {
     }
     if (gymFilter.ar === undefined) {
       gymFilter.ar = { show: false, size: 'normal' }
+    }
+    if (gymFilter.sponsored === undefined) {
+      gymFilter.sponsored = { show: false, size: 'normal' }
     }
     for (i = 0; i<= 3; i++) {
       if (gymFilter['p' + i] === undefined) {
@@ -707,6 +713,9 @@ function loadStorage () {
     if (defaultPokestopFilter.ar === undefined) {
       defaultPokestopFilter.ar = { show: false, size: 'normal' }
     }
+    if (defaultPokestopFilter.sponsored === undefined) {
+      defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
+    }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilter = defaultPokestopFilter
@@ -723,6 +732,9 @@ function loadStorage () {
     }
     if (pokestopFilter.ar === undefined) {
       pokestopFilter.ar = { show: false, size: 'normal' }
+    }
+    if (pokestopFilter.sponsored === undefined) {
+      pokestopFilter.sponsored = { show: false, size: 'normal' }
     }
   }
   
@@ -959,6 +971,7 @@ function initMap () {
     }
     defaultGymFilter.ex = { show: false, size: 'normal' }
     defaultGymFilter.ar = { show: false, size: 'normal' }
+    defaultGymFilter.sponsored = { show: false, size: 'normal' }
     for (i = 0; i <= 3; i++) {
       defaultGymFilter['p' + i] = { show: true, size: 'normal' }
     }
@@ -979,7 +992,8 @@ function initMap () {
       defaultGymFilter['t' + i] = { show: false, size: gymFilterNew['t' + i].size }
     }
     defaultGymFilter.ex = { show: false, size: gymFilterNew.ex.size }
-    defaultGymFilter.ar = { show: false, size: gymFilterNew.ex.size }
+    defaultGymFilter.ar = { show: false, size: gymFilterNew.ar.size }
+    defaultGymFilter.sponsored = { show: false, size: gymFilterNew.sponsored.size }
     for (i = 0; i <= 3; i++) {
       defaultGymFilter['p' + i] = { show: false, size: gymFilterNew['p' + i].size }
     }
@@ -1026,6 +1040,7 @@ function initMap () {
       defaultPokestopFilter['p' + i] = { show: true, size: 'normal' }
     }
     defaultPokestopFilter.ar = { show: false, size: 'normal' }
+    defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -1044,6 +1059,7 @@ function initMap () {
       defaultPokestopFilter['p' + i] = { show: false, size: pokestopFilterNew['p' + i].size }
     }
     defaultPokestopFilter.ar = { show: false, size: pokestopFilterNew.ar.size }
+    defaultPokestopFilter.sponsored = { show: false, size: pokestopFilterNew.sponsored.size }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -1580,8 +1596,10 @@ function loadData () {
     invasion_filter_exclude: JSON.stringify(invasionFilterExclude),
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
+    pokestop_show_only_sponsored: pokestopFilter.sponsored.show === true,
     quest_show_only_ar: questFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
+    gym_show_only_sponsored: gymFilter.sponsored.show === true,
     spawnpoint_filter_exclude: JSON.stringify(spawnpointFilterExclude),
     show_spawnpoints: showSpawnpoints,
     show_cells: showCells && map.getZoom() >= 13,
