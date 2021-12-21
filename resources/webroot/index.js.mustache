@@ -638,26 +638,26 @@ function loadStorage () {
     const defaultGymFilter = {}
     let i
     for (i = 0; i <= 3; i++) {
-      if (defaultGymFilter['t' + i] === undefined) {
+      if (defaultGymFilter['t' + i] === undefined || defaultGymFilter['t' + i] === null) {
         defaultGymFilter['t' + i] = { show: true, size: 'normal' }
       }
     }
-    if (defaultGymFilter.ex === undefined) {
+    if (defaultGymFilter.ex === undefined || defaultGymFilter.ex === null) {
       defaultGymFilter.ex = { show: false, size: 'normal' }
     }
-    if (defaultGymFilter.ar === undefined) {
+    if (defaultGymFilter.ar === undefined || defaultGymFilter.ar === null) {
       defaultGymFilter.ar = { show: false, size: 'normal' }
     }
-    if (defaultGymFilter.sponsored === undefined) {
+    if (defaultGymFilter.sponsored === undefined || defaultGymFilter.sponsored === null) {
       defaultGymFilter.sponsored = { show: false, size: 'normal' }
     }
     for (i = 0; i<= 3; i++) {
-      if (defaultGymFilter['p' + i] === undefined) {
+      if (defaultGymFilter['p' + i] === undefined || defaultGymFilter['p' + i] === null) {
         defaultGymFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 0; i <= 6; i++) {
-      if (defaultGymFilter['s' + i] === undefined) {
+      if (defaultGymFilter['s' + i] === undefined || defaultGymFilter['s' + i] === null) {
         defaultGymFilter['s' + i] = { show: true, size: 'normal' }
       }
     }
@@ -668,26 +668,26 @@ function loadStorage () {
     gymFilter = JSON.parse(gymFilterValue)
     let i
     for (i = 0; i <= 3; i++) {
-      if (gymFilter['t' + i] === undefined) {
+      if (gymFilter['t' + i] === undefined || gymFilter['t' + i] === null) {
         gymFilter['t' + i] = { show: true, size: 'normal' }
       }
     }
-    if (gymFilter.ex === undefined) {
+    if (gymFilter.ex === undefined || gymFilter.ex === null) {
       gymFilter.ex = { show: false, size: 'normal' }
     }
-    if (gymFilter.ar === undefined) {
+    if (gymFilter.ar === undefined || gymFilter.ar === null) {
       gymFilter.ar = { show: false, size: 'normal' }
     }
-    if (gymFilter.sponsored === undefined) {
+    if (gymFilter.sponsored === undefined || gymFilter.sponsored === null) {
       gymFilter.sponsored = { show: false, size: 'normal' }
     }
     for (i = 0; i<= 3; i++) {
-      if (gymFilter['p' + i] === undefined) {
+      if (gymFilter['p' + i] === undefined || gymFilter['p' + i] === null) {
         gymFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 0; i <= 6; i++) {
-      if (gymFilter['s' + i] === undefined) {
+      if (gymFilter['s' + i] === undefined || gymFilter['s' + i] === null) {
         gymFilter['s' + i] = { show: true, size: 'normal' }
       }
     }
@@ -696,24 +696,24 @@ function loadStorage () {
   const pokestopFilterValue = retrieve('pokestop_filter')
   if (pokestopFilterValue === null) {
     const defaultPokestopFilter = {}
-    if (defaultPokestopFilter.normal === undefined) {
+    if (defaultPokestopFilter.normal === undefined || defaultPokestopFilter.normal === null) {
       defaultPokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
     for (i = 1; i < 6; i++) {
-      if (defaultPokestopFilter['l' + i] === undefined) {
+      if (defaultPokestopFilter['l' + i] === undefined || defaultPokestopFilter['l' + i] === null) {
         defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 0; i <= 3; i++) {
-      if (defaultPokestopFilter['p' + i] === undefined) {
+      if (defaultPokestopFilter['p' + i] === undefined || defaultPokestopFilter['p' + i] === null) {
         defaultPokestopFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
-    if (defaultPokestopFilter.ar === undefined) {
+    if (defaultPokestopFilter.ar === undefined || defaultPokestopFilter.ar === null) {
       defaultPokestopFilter.ar = { show: false, size: 'normal' }
     }
-    if (defaultPokestopFilter.sponsored === undefined) {
+    if (defaultPokestopFilter.sponsored === undefined || defaultPokestopFilter.sponsored === null) {
       defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
     }
 
@@ -721,19 +721,19 @@ function loadStorage () {
     pokestopFilter = defaultPokestopFilter
   } else {
     pokestopFilter = JSON.parse(pokestopFilterValue)
-    if (pokestopFilter.normal === undefined) {
+    if (pokestopFilter.normal === undefined || pokestopFilter.normal === null) {
       pokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
     for (i = 1; i < 6; i++) {
-      if (pokestopFilter['l' + i] === undefined) {
+      if (pokestopFilter['l' + i] === undefined || pokestopFilter['l' + i] === null) {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
-    if (pokestopFilter.ar === undefined) {
+    if (pokestopFilter.ar === undefined || pokestopFilter.ar === null) {
       pokestopFilter.ar = { show: false, size: 'normal' }
     }
-    if (pokestopFilter.sponsored === undefined) {
+    if (pokestopFilter.sponsored === undefined || pokestopFilter.sponsored === null) {
       pokestopFilter.sponsored = { show: false, size: 'normal' }
     }
   }
