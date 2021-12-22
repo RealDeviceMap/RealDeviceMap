@@ -581,7 +581,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeLevelSQL = ""
             excludePokemonSQL = ""
         }
-        if excludedTeams.isEmpty {
+        if excludedTeams.isEmpty || raidsOnly {
             excludeTeamSQL = ""
         } else {
             var sqlExcludeCreate = "AND (team_id NOT IN ("
@@ -595,7 +595,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeTeamSQL = sqlExcludeCreate
         }
 
-        if excludedAvailableSlots.isEmpty {
+        if excludedAvailableSlots.isEmpty || raidsOnly {
             excludeAvailableSlotsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (available_slots NOT IN ("
@@ -606,7 +606,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
-        if excludedPowerUpLevels.isEmpty {
+        if excludedPowerUpLevels.isEmpty || raidsOnly {
             excludePowerUpLevelsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (power_up_level NOT IN ("
