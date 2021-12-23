@@ -1146,7 +1146,7 @@ public class WebRequestHandler {
                 var minLon: Double = 180.0
                 var maxLon: Double = -180.0
                 do {
-                    for instance in instances {
+                    for instance in clearQuests {
                         let areaType1 = instance.data["area"] as? [[String: Double]]
                         let areaType2 = instance.data["area"] as? [[[String: Double]]]
                         if areaType1 != nil {
