@@ -1141,9 +1141,36 @@ public class WebRequestHandler {
                     response.completed(status: .internalServerError)
                     return
                 }
-
+                var minLat: Double = 90.0
+                var maxLat: Double = -90.0
+                var minLon: Double = 180.0
+                var maxLon: Double = -180.0
                 do {
-                    try Pokestop.clearQuests(instances: clearQuests)
+                    for instance in instances {
+                        let areaType1 = instance.data["area"] as? [[String: Double]]
+                        let areaType2 = instance.data["area"] as? [[[String: Double]]]
+                        if areaType1 != nil {
+                            for coordLine in areaType1! {
+                                minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
+                                maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
+                                minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
+                                maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
+                            }
+                        } else if areaType2 != nil {
+                            for geofence in areaType2! {
+                                for coordLine in geofence {
+                                    minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
+                                    maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
+                                    minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
+                                    maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
+                                }
+                            }
+                        }
+                    }
+                    let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
+                                         Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
+                                         Coord(lat: minLat, lon: minLon)]
+                    try Pokestop.clearQuests(area: bbox)
                 } catch {
                     response.setBody(string: "Failed to clear quests")
                     sessionDriver.save(session: request.session!)

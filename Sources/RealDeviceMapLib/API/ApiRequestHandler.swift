@@ -2187,6 +2187,7 @@ public class ApiRequestHandler {
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
         let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
+        let clearAllQuests = request.param(name: "clear_all_quests")?.toBool() ?? false
         let assignDeviceGroup = request.param(name: "assign_device_group")?.toBool() ?? false
         let deviceGroupName = request.param(name: "device_group_name")
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
@@ -2227,6 +2228,14 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+        } else if clearAllQuests && perms.contains(.admin) {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to clear all quests")
+                try Pokestop.clearQuests()
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
