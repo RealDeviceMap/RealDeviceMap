@@ -532,7 +532,6 @@ function loadStorage () {
     defaultPokemonFilter.iv_and = { on: false, filter: '0-100' }
     defaultPokemonFilter.iv_or = { on: false, filter: '0-100' }
 
-    store('pokemon_filter', JSON.stringify(defaultPokemonFilter))
     pokemonFilter = defaultPokemonFilter
   } else {
     pokemonFilter = JSON.parse(pokemonFilterValue)
@@ -554,8 +553,8 @@ function loadStorage () {
     if (pokemonFilter.iv_or === undefined) {
       pokemonFilter.iv_or = { on: false, filter: '0-100' }
     }
-    store('pokemon_filter', JSON.stringify(pokemonFilter))
   }
+  store('pokemon_filter', JSON.stringify(pokemonFilter))
 
   const questFilterValue = retrieve('quest_filter')
   if (questFilterValue === null) {
@@ -571,7 +570,6 @@ function loadStorage () {
       defaultQuestFilter['i' + itemId] = { show: true, size: 'normal' }
     })
 
-    store('quest_filter', JSON.stringify(defaultQuestFilter))
     questFilter = defaultQuestFilter
   } else {
     questFilter = JSON.parse(questFilterValue)
@@ -589,28 +587,21 @@ function loadStorage () {
         questFilter['i' + itemId] = { show: true, size: 'normal' }
       }
     })
-    store('quest_filter', JSON.stringify(questFilter))
   }
+  store('quest_filter', JSON.stringify(questFilter))
 
   const raidFilterValue = retrieve('raid_filter')
   if (raidFilterValue === null) {
     const defaultRaidFilter = {}
-    if (defaultRaidFilter.timers === undefined) {
-      defaultRaidFilter.timers = { show: true, size: 'normal' }
-    }
+    defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
     for (i = 1; i <= 6; i++) {
-      if (defaultRaidFilter['l' + i] === undefined) {
-        defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
-      }
+      defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
-      if (defaultRaidFilter['p' + i] === undefined) {
-        defaultRaidFilter['p' + i] = { show: true, size: 'normal' }
-      }
+      defaultRaidFilter['p' + i] = { show: true, size: 'normal' }
     }
 
-    store('raid_filter', JSON.stringify(defaultRaidFilter))
     raidFilter = defaultRaidFilter
   } else {
     raidFilter = JSON.parse(raidFilterValue)
@@ -632,37 +623,25 @@ function loadStorage () {
       }
     }
   }
+  store('raid_filter', JSON.stringify(raidFilter))
 
   const gymFilterValue = retrieve('gym_filter')
   if (gymFilterValue === null) {
     const defaultGymFilter = {}
     let i
     for (i = 0; i <= 3; i++) {
-      if (defaultGymFilter['t' + i] === undefined || defaultGymFilter['t' + i] === null) {
-        defaultGymFilter['t' + i] = { show: true, size: 'normal' }
-      }
+      defaultGymFilter['t' + i] = { show: true, size: 'normal' }
     }
-    if (defaultGymFilter.ex === undefined || defaultGymFilter.ex === null) {
-      defaultGymFilter.ex = { show: false, size: 'normal' }
-    }
-    if (defaultGymFilter.ar === undefined || defaultGymFilter.ar === null) {
-      defaultGymFilter.ar = { show: false, size: 'normal' }
-    }
-    if (defaultGymFilter.sponsored === undefined || defaultGymFilter.sponsored === null) {
-      defaultGymFilter.sponsored = { show: false, size: 'normal' }
-    }
+    defaultGymFilter.ex = { show: false, size: 'normal' }
+    defaultGymFilter.ar = { show: false, size: 'normal' }
+    defaultGymFilter.sponsored = { show: false, size: 'normal' }
     for (i = 0; i<= 3; i++) {
-      if (defaultGymFilter['p' + i] === undefined || defaultGymFilter['p' + i] === null) {
-        defaultGymFilter['p' + i] = { show: true, size: 'normal' }
-      }
+      defaultGymFilter['p' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 6; i++) {
-      if (defaultGymFilter['s' + i] === undefined || defaultGymFilter['s' + i] === null) {
-        defaultGymFilter['s' + i] = { show: true, size: 'normal' }
-      }
+      defaultGymFilter['s' + i] = { show: true, size: 'normal' }
     }
 
-    store('gym_filter', JSON.stringify(defaultGymFilter))
     gymFilter = defaultGymFilter
   } else {
     gymFilter = JSON.parse(gymFilterValue)
@@ -692,32 +671,22 @@ function loadStorage () {
       }
     }
   }
+  store('gym_filter', JSON.stringify(gymFilter))
 
   const pokestopFilterValue = retrieve('pokestop_filter')
   if (pokestopFilterValue === null) {
     const defaultPokestopFilter = {}
-    if (defaultPokestopFilter.normal === undefined || defaultPokestopFilter.normal === null) {
-      defaultPokestopFilter.normal = { show: true, size: 'normal' }
-    }
+    defaultPokestopFilter.normal = { show: true, size: 'normal' }
     let i
     for (i = 1; i < 6; i++) {
-      if (defaultPokestopFilter['l' + i] === undefined || defaultPokestopFilter['l' + i] === null) {
-        defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
-      }
+      defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 3; i++) {
-      if (defaultPokestopFilter['p' + i] === undefined || defaultPokestopFilter['p' + i] === null) {
-        defaultPokestopFilter['p' + i] = { show: true, size: 'normal' }
-      }
+      defaultPokestopFilter['p' + i] = { show: true, size: 'normal' }
     }
-    if (defaultPokestopFilter.ar === undefined || defaultPokestopFilter.ar === null) {
-      defaultPokestopFilter.ar = { show: false, size: 'normal' }
-    }
-    if (defaultPokestopFilter.sponsored === undefined || defaultPokestopFilter.sponsored === null) {
-      defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
-    }
+    defaultPokestopFilter.ar = { show: false, size: 'normal' }
+    defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
 
-    store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilter = defaultPokestopFilter
   } else {
     pokestopFilter = JSON.parse(pokestopFilterValue)
@@ -737,6 +706,7 @@ function loadStorage () {
       pokestopFilter.sponsored = { show: false, size: 'normal' }
     }
   }
+  store('pokestop_filter', JSON.stringify(pokestopFilter))
   
   const invasionFilterValue = retrieve('invasion_filter')
   if (invasionFilterValue === null) {
@@ -744,7 +714,6 @@ function loadStorage () {
     availableGrunts.forEach((gruntId) => {
       defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
     });
-    store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
@@ -754,18 +723,13 @@ function loadStorage () {
       }
     })
   }
+  store('invasion_filter', JSON.stringify(invasionFilter))
 
   const spawnpointFilterValue = retrieve('spawnpoint_filter')
   if (spawnpointFilterValue === null) {
     const defaultSpawnpointFilter = {}
-    if (defaultSpawnpointFilter['no-timer'] === undefined) {
-      defaultSpawnpointFilter['no-timer'] = { show: true, size: 'normal' }
-    }
-    if (defaultSpawnpointFilter['with-timer'] === undefined) {
-      defaultSpawnpointFilter['with-timer'] = { show: true, size: 'normal' }
-    }
-
-    store('spawnpoint_filter', JSON.stringify(defaultSpawnpointFilter))
+    defaultSpawnpointFilter['no-timer'] = { show: true, size: 'normal' }
+    defaultSpawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     spawnpointFilter = defaultSpawnpointFilter
   } else {
     spawnpointFilter = JSON.parse(spawnpointFilterValue)
@@ -776,22 +740,23 @@ function loadStorage () {
       spawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     }
   }
+  store('spawnpoint_filter', JSON.stringify(spawnpointFilter))
 
   const showGreatLeagueValue = retrieve('show_great_league')
   if (showGreatLeagueValue === null) {
-    store('show_great_league', false)
     showGreatLeague = false
   } else {
     showGreatLeague = (showGreatLeagueValue === 'true')
   }
+  store('show_great_league', showGreatLeague)
 
   const showUltraLeagueValue = retrieve('show_ultra_league')
   if (showUltraLeagueValue === null) {
-    store('show_ultra_league', false)
     showUltraLeague = false
   } else {
     showUltraLeague = (showUltraLeagueValue === 'true')
   }
+  store('show_ultra_league', showUltraLeague)
 }
 
 function initPreview () {
