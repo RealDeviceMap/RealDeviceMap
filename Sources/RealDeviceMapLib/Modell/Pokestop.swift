@@ -1443,66 +1443,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
     }
 
-    internal static func clearQuests(mysql: MySQL?=nil, instances: [Instance]) throws {
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[INSTANCE] Failed to connect to database.")
-            throw DBController.DBError()
-        }
-        var allCoords = [String]()
-        for instance in instances {
-            var areaString = ""
-            let areaType1 = instance.data["area"] as? [[String: Double]]
-            let areaType2 = instance.data["area"] as? [[[String: Double]]]
-            if areaType1 != nil {
-                for coordLine in areaType1! {
-                    let lat = coordLine["lat"]
-                    let lon = coordLine["lon"]
-                    areaString += "\(lat!),\(lon!)\n"
-                }
-            } else if areaType2 != nil {
-                for geofence in areaType2! {
-                    for coordLine in geofence {
-                        let lat = coordLine["lat"]
-                        let lon = coordLine["lon"]
-                        areaString += "\(lat!),\(lon!)\n"
-                    }
-                }
-            }
-            allCoords.append(Pokestop.flattenCoords(area: areaString))
-        }
-        var query = ""
-        for coords in allCoords {
-            query += "ST_CONTAINS(ST_GEOMFROMTEXT('POLYGON((\(coords)))'),POINT(pokestop.lat, pokestop.lon))"
-            if allCoords.firstIndex(of: coords) != allCoords.count - 1 {
-                query += " OR "
-            }
-        }
-        let sql = """
-            UPDATE pokestop
-            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-            quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
-            alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
-            alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
-            alternative_quest_template = NULL, alternative_quest_title = NULL
-            WHERE (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL) AND (\(query))
-            """
-
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[INSTANCE] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage()))")
-            throw DBController.DBError()
-        }
-
-        Pokestop.cache?.clear()
-
-        let results = mysqlStmt.results()
-        if results.numRows == 0 {
-            return
-        }
-    }
-
     internal static func clearQuests(mysql: MySQL?=nil, instance: Instance) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
