@@ -14,7 +14,7 @@ import PerfectMySQL
 import Turf
 import POGOProtos
 
-public protocol InstanceControllerDelegate: class {
+public protocol InstanceControllerDelegate: AnyObject {
     func instanceControllerDone(mysql: MySQL?, name: String)
 }
 
@@ -25,7 +25,7 @@ public protocol InstanceControllerProto {
     var accountGroup: String? { get }
     var isEvent: Bool { get }
     var delegate: InstanceControllerDelegate? { get set }
-    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any]
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any]
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
     func getAccount(mysql: MySQL, uuid: String) throws -> Account?
     func accountValid(account: Account) -> Bool
@@ -206,11 +206,15 @@ public class InstanceController {
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
+                let questModeString = instance.data["quest_mode"] as? String
+                let questMode = questModeString != nil ?
+                        AutoInstanceController.QuestMode(rawValue: questModeString!) ?? .normal :
+                        .normal
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
                     timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel,
                     spinLimit: spinLimit, delayLogout: delayLogout,
-                    accountGroup: accountGroup, isEvent: isEvent
+                    accountGroup: accountGroup, isEvent: isEvent, questMode: questMode
                 )
             }
         case .leveling:

@@ -52,6 +52,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             "form": form as Any,
             "cp": cp as Any,
             "level": level as Any,
+            "baseWeight": baseWeight as Any,
+            "baseHeight": baseHeight as Any,
             "weight": weight as Any,
             "size": size as Any,
             "weather": weather as Any,
@@ -149,6 +151,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     var displayPokemonId: UInt16?
     var pvpRankingsGreatLeague: [[String: Any]]?
     var pvpRankingsUltraLeague: [[String: Any]]?
+    var baseHeight: Double?
+    var baseWeight: Double?
     var isEvent: Bool
 
     var hasChanges = false
@@ -195,6 +199,12 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.pvpRankingsGreatLeague = pvpRankingsGreatLeague
         self.pvpRankingsUltraLeague = pvpRankingsUltraLeague
         self.isEvent = isEvent
+        let stats = PVPStatsManager.global.getStats(
+            pokemon: HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno,
+            form: PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        )
+        self.baseHeight = stats?.baseHeight
+        self.baseWeight = stats?.baseWeight
     }
 
     init(mysql: MySQL?=nil, wildPokemon: WildPokemonProto, cellId: UInt64,
@@ -309,7 +319,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 mysqlStmt.bindParam(pokestopId)
 
                 guard mysqlStmt.execute() else {
-                    Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+                    Log.error(message: "[POKEMON] Failed to execute query 'init'. (\(mysqlStmt.errorMessage())")
                     throw DBController.DBError()
                 }
 
@@ -467,13 +477,22 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     }
 
     private func setPVP() {
+        let form = PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
+        let pokemonID = HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
+        let gender = PokemonDisplayProto.Gender.init(rawValue: Int(self.gender ?? 0)) ?? .unset
+        if self.baseHeight == nil || self.baseWeight == nil {
+            let stats = PVPStatsManager.global.getStats(
+                pokemon: pokemonID,
+                form: form == .unset ? nil : form
+            )
+            self.baseHeight = stats?.baseHeight
+            self.baseWeight = stats?.baseWeight
+        }
         if Pokemon.noPVP {
             return
         }
-        let form = PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
-        let gender = PokemonDisplayProto.Gender.init(rawValue: Int(self.gender ?? 0)) ?? .unset
-        let pokemonID = HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno
         let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
+
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
             pokemon: pokemonID,
             form: form == .unset ? nil : form,
@@ -487,10 +506,13 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
                 "gender": ranking.pokemon.gender?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
+                "rank": ranking.response?.denseRank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
+                "level": ranking.response?.ivs.first?.level as Any,
+                "competition_rank": ranking.response?.competitionRank as Any,
+                "dense_rank": ranking.response?.denseRank as Any,
+                "ordinal_rank": ranking.response?.ordinalRank as Any
             ]
         })
 
@@ -507,10 +529,13 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 "pokemon": ranking.pokemon.pokemon.rawValue,
                 "form": ranking.pokemon.form?.rawValue ?? 0,
                 "gender": ranking.pokemon.gender?.rawValue ?? 0,
-                "rank": ranking.response?.rank as Any,
+                "rank": ranking.response?.denseRank as Any,
                 "percentage": ranking.response?.percentage as Any,
                 "cp": ranking.response?.ivs.first?.cp as Any,
-                "level": ranking.response?.ivs.first?.level as Any
+                "level": ranking.response?.ivs.first?.level as Any,
+                "competition_rank": ranking.response?.competitionRank as Any,
+                "dense_rank": ranking.response?.denseRank as Any,
+                "ordinal_rank": ranking.response?.ordinalRank as Any
             ]
         })
     }
@@ -818,7 +843,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[POKEMON] Failed to execute query 'save'. (\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
@@ -963,7 +988,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1079,7 +1104,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         mysqlStmt.bindParam(isEvent)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'getWithId'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -1198,7 +1223,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'truncate'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1290,7 +1315,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'activeCount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

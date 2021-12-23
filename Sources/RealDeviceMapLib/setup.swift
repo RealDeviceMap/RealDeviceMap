@@ -76,6 +76,10 @@ public func setupRealDeviceMap() {
         fatalError(message)
     }
 
+    // Load locales
+    Log.info(message: "[MAIN] Loading Locales")
+    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
+
     // Load timezone
     Log.info(message: "[MAIN] Loading Timezone")
     if let result = Shell("date", "+%z").run()?.replacingOccurrences(of: "\n", with: "") {
@@ -152,8 +156,6 @@ public func setupRealDeviceMap() {
             ]
     }
 
-    Localizer.locale = try! DBController.global.getValueForKey(key: "LOCALE")?.lowercased() ?? "en"
-
     Pokemon.defaultTimeUnseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_UNSEEN")?.toUInt32() ?? 1200
     Pokemon.defaultTimeReseen = try! DBController.global.getValueForKey(key: "POKEMON_TIME_RESEEN")?.toUInt32() ?? 600
 
@@ -179,14 +181,7 @@ public func setupRealDeviceMap() {
     MailController.footerHtml = try! DBController.global.getValueForKey(key: "MAILER_FOOTER_HTML") ?? ""
     MailController.baseURI = try! DBController.global.getValueForKey(key: "MAILER_BASE_URI") ?? ""
 
-    let webhookDelayString = try! DBController.global.getValueForKey(key: "WEBHOOK_DELAY") ?? "5.0"
-    let webhookUrlStrings = try! DBController.global.getValueForKey(key: "WEBHOOK_URLS") ?? ""
-    if let webhookDelay = Double(webhookDelayString) {
-        WebHookController.global.webhookSendDelay = webhookDelay
-    }
-    WebHookController.global.webhookURLStrings = webhookUrlStrings.components(separatedBy: ";")
-
-    // Init Instance Contoller
+    // Init Instance Controller
     do {
         Log.info(message: "[MAIN] Starting Instance Controller")
         try InstanceController.setup()
@@ -243,11 +238,11 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Account Controller")
     AccountController.global.setup()
 
-    Log.info(message: "[MAIN] Starting Assignement Controller")
+    Log.info(message: "[MAIN] Starting Assignment Controller")
     do {
         try AssignmentController.global.setup()
     } catch {
-        let message = "[MAIN] Failed to start Assignement Controller"
+        let message = "[MAIN] Failed to start Assignment Controller"
         Log.critical(message: message)
         fatalError(message)
     }
