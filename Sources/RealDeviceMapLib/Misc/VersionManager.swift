@@ -68,21 +68,22 @@ public class VersionManager {
                let first = tags.first(where: { $0.commit.sha == sha }) {
                 version = "Version \(first.name)"
             } else {
-                if branch == nil {
-                    version = "?"
+                if branch != nil && branch == "development" {
+                    version = "Branch Development"
                 } else {
-                    version = branch!
+                    version = "?"
                 }
-
             }
         } else {
             version = "Pull Request #\(pullRequest!)"
         }
 
-        if pullRequest == nil {
-            self.url = "https://github.com/RealDeviceMap/RealDeviceMap/releases"
-        } else {
+        if pullRequest != nil {
             self.url = "https://github.com/RealDeviceMap/RealDeviceMap/pull/\(pullRequest!)"
+        } else if pullRequest == nil && version == "Branch Development" {
+            self.url = "https://github.com/RealDeviceMap/RealDeviceMap/tree/development"
+        } else {
+            self.url = "https://github.com/RealDeviceMap/RealDeviceMap/releases"
         }
         self.version = version
         self.commit = sha
