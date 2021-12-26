@@ -75,6 +75,8 @@ public class PVPStatsManager {
                 let pokemonInfo = data["pokemonSettings"] as? [String: Any],
                 let pokemonName = pokemonInfo["pokemonId"] as? String,
                 let statsInfo = pokemonInfo["stats"] as? [String: Any],
+                let pokedexHeightM = pokemonInfo["pokedexHeightM"] as? Double,
+                let pokedexWeightKg = pokemonInfo["pokedexWeightKg"] as? Double,
                 let baseStamina = statsInfo["baseStamina"] as? Int,
                 let baseAttack = statsInfo["baseAttack"] as? Int,
                 let baseDefense = statsInfo["baseDefense"] as? Int {
@@ -105,7 +107,8 @@ public class PVPStatsManager {
                     }
                 }
                 let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
-                                  baseStamina: baseStamina, evolutions: evolutions)
+                                  baseStamina: baseStamina, evolutions: evolutions,
+                                  baseHeight: pokedexHeightM, baseWeight: pokedexWeightKg)
                 stats[.init(pokemon: pokemon, form: form)] = stat
             }
         }
@@ -124,24 +127,42 @@ public class PVPStatsManager {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
-        guard let index = stats.firstIndex(where: { value in
-            for ivlevel in value.ivs where ivlevel.iv == iv && ivlevel.level >= level {
-                return true
+
+        var competitionIndex: Int = 0
+        var denseIndex: Int = 0
+        var ordinalIndex: Int = 0
+        var foundMatch: Bool = false
+
+        statLoop: for stat in stats {
+            competitionIndex = ordinalIndex
+            for ivlevel in stat.ivs {
+                if ivlevel.iv == iv && ivlevel.level >= level {
+                    foundMatch = true
+                    break statLoop
+                }
+                ordinalIndex += 1
             }
-            return false
-        }) else {
+            denseIndex += 1
+        }
+
+        if foundMatch == false {
             return nil
         }
-        let max = Double(stats[0].rank)
-        let result = stats[index]
-        let value = Double(result.rank)
+
+        let max = Double(stats[0].competitionRank)
+        let result = stats[denseIndex]
+        let value = Double(result.competitionRank)
         let ivs: [Response.IVWithCP]
         if let currentIV = result.ivs.first(where: { return $0.iv == iv }) {
             ivs = [currentIV]
         } else {
             ivs = []
         }
-        return .init(rank: index + 1, percentage: value/max, ivs: ivs)
+        return .init(competitionRank: competitionIndex + 1,
+                     denseRank: denseIndex + 1,
+                     ordinalRank: ordinalIndex + 1,
+                     percentage: value/max,
+                     ivs: ivs)
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
@@ -254,7 +275,11 @@ public class PVPStatsManager {
             if maxLevel != 0 {
                 let value = getPVPValue(iv: iv, level: maxLevel, stats: stats)
                 if ranking[value] == nil {
-                    ranking[value] = Response(rank: value, percentage: 0.0, ivs: [])
+                    ranking[value] = Response(competitionRank: value,
+                                              denseRank: value,
+                                              ordinalRank: value,
+                                              percentage: 0.0,
+                                              ivs: [])
                 }
                 ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
             }
@@ -266,11 +291,18 @@ public class PVPStatsManager {
         }
     }
 
+    internal func getStats(
+        pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?
+    ) -> Stats? {
+        return stats[PokemonWithFormAndGender(pokemon: pokemon, form: form)]
+
+    }
+
     private func getPVPValue(iv: IV, level: Double, stats: Stats) -> Int {
-        let mutliplier = (PVPStatsManager.cpMultiplier[level] ?? 0)
-        let attack = Double(iv.attack + stats.baseAttack) * mutliplier
-        let defense = Double(iv.defense + stats.baseDefense) * mutliplier
-        let stamina = Double(iv.stamina + stats.baseStamina) * mutliplier
+        let multiplier = (PVPStatsManager.cpMultiplier[level] ?? 0)
+        let attack = Double(iv.attack + stats.baseAttack) * multiplier
+        let defense = Double(iv.defense + stats.baseDefense) * multiplier
+        let stamina = Double(iv.stamina + stats.baseStamina) * multiplier
         return Int(round(attack * defense * floor(stamina)))
     }
 
@@ -315,6 +347,8 @@ extension PVPStatsManager {
         var baseDefense: Int
         var baseStamina: Int
         var evolutions: [PokemonWithFormAndGender]
+        var baseHeight: Double
+        var baseWeight: Double
     }
 
     struct IV: Equatable {
@@ -350,7 +384,9 @@ extension PVPStatsManager {
             var level: Double
             var cp: Int
         }
-        var rank: Int
+        var competitionRank: Int
+        var denseRank: Int
+        var ordinalRank: Int
         var percentage: Double
         var ivs: [IVWithCP]
     }

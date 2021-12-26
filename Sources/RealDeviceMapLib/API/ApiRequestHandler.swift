@@ -87,16 +87,6 @@ public class ApiRequestHandler {
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
-
-        WebHookController.global.addAccountEvent(account: Account(
-            username: "test", password: "test", level: 1, firstWarningTimestamp: nil,
-            failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
-            lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
-            warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-            suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
-            lastUsedTimestamp: nil, group: nil
-        ))
-
         guard let perms = getPerms(request: request, response: response) else {
             return
         }
@@ -124,7 +114,10 @@ public class ApiRequestHandler {
         let spawnpointFilterExclude = request.param(name: "spawnpoint_filter_exclude")?
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
+        let pokestopShowOnlySponsored = request.param(name: "pokestop_show_only_sponsored")?.toBool() ?? false
+        let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
+        let gymShowOnlySponsored = request.param(name: "gym_show_only_sponsored")?.toBool() ?? false
         let showSpawnpoints = request.param(name: "show_spawnpoints")?.toBool() ?? false
         let showCells = request.param(name: "show_cells")?.toBool() ?? false
         let showSubmissionPlacementCells = request.param(name: "show_submission_placement_cells")?.toBool() ?? false
@@ -147,9 +140,21 @@ public class ApiRequestHandler {
         let lastUpdate = request.param(name: "last_update")?.toUInt32() ?? 0
         let showAssignments = request.param(name: "show_assignments")?.toBool() ?? false
         let showAssignmentGroups = request.param(name: "show_assignmentgroups")?.toBool() ?? false
+        let showWebhooks = request.param(name: "show_webhooks")?.toBool() ?? false
         let showIVQueue = request.param(name: "show_ivqueue")?.toBool() ?? false
         let showDiscordRules = request.param(name: "show_discordrules")?.toBool() ?? false
         let showStatus = request.param(name: "show_status")?.toBool() ?? false
+        let showDashboardStats = request.param(name: "show_dashboard_stats")?.toBool() ?? false
+        let showPokemonStats = request.param(name: "show_pokemon_stats")?.toBool() ?? false
+        let showRaidStats = request.param(name: "show_raid_stats")?.toBool() ?? false
+        let showQuestStats = request.param(name: "show_quest_stats")?.toBool() ?? false
+        let showInvasionStats = request.param(name: "show_invasion_stats")?.toBool() ?? false
+        let showTop10Stats = request.param(name: "show_top10_stats")?.toBool() ?? false
+        let date = request.param(name: "date") ?? ""
+        let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
+        let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
+        let start = request.param(name: "start") ?? ""
+        let end = request.param(name: "end") ?? ""
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -173,7 +178,8 @@ public class ApiRequestHandler {
             data["gyms"] = try? Gym.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!, updated: lastUpdate,
                 raidsOnly: !showGyms, showRaids: permShowRaid, raidFilterExclude: raidFilterExclude,
-                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr
+                gymFilterExclude: gymFilterExclude, gymShowOnlyAr: gymShowOnlyAr,
+                gymShowOnlySponsored: gymShowOnlySponsored
             )
         }
         let permShowStops = perms.contains(.viewMapPokestop)
@@ -190,12 +196,14 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
-                invasionFilterExclude: invasionFilterExclude
+                pokestopShowOnlySponsored: pokestopShowOnlySponsored,
+                invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
+        let permShowPokemon = perms.contains(.viewMapPokemon)
         let permShowIV = perms.contains(.viewMapIV)
         let permShowEventPokemon = perms.contains(.viewMapEventPokemon)
-        if isPost && permViewMap && showPokemon && perms.contains(.viewMapPokemon) {
+        if isPost && permViewMap && showPokemon && permShowPokemon {
             data["pokemon"] = try? Pokemon.getAll(
                 mysql: mysql, minLat: minLat!, maxLat: maxLat!, minLon: minLon!, maxLon: maxLon!,
                 showIV: permShowIV, updated: lastUpdate, pokemonFilterExclude: pokemonFilterExclude,
@@ -439,8 +447,36 @@ public class ApiRequestHandler {
             let pokemonTypeString = Localizer.global.get(value: "filter_pokemon")
             let miscTypeString = Localizer.global.get(value: "filter_misc")
             let itemsTypeString = Localizer.global.get(value: "filter_items")
+            let generalString = Localizer.global.get(value: "filter_general")
+
+            let showArQuestsString = Localizer.global.get(value: "filter_quest_show_ar")
 
             var questData = [[String: Any]]()
+
+            let filter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+                     data-type="quest-ar" data-info="hide">
+                        <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                    </label>
+                    <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+                     data-type="quest-ar" data-info="show">
+                        <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                    </label>
+                </div>
+            """
+            questData.append([
+                "id": [
+                    "formatted": "",
+                    "sort": -1
+                ],
+                "name": showArQuestsString,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\"" +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": filter,
+                "size": "",
+                "type": generalString
+            ])
 
             // Misc
             for i in 1...6 {
@@ -797,6 +833,7 @@ public class ApiRequestHandler {
             let gymTeamString = Localizer.global.get(value: "filter_gym_team")
             let gymOptionsString = Localizer.global.get(value: "filter_gym_options")
             let availableSlotsString = Localizer.global.get(value: "filter_gym_available_slots")
+            let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             var gymData = [[String: Any]]()
             // Team
@@ -935,6 +972,107 @@ public class ApiRequestHandler {
                 "size": arSize,
                 "type": gymOptionsString
             ])
+
+            // Sponsored gyms
+            let sponsoredFilter = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-off select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="hide">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+            </label>
+            <label class="btn btn-sm btn-on select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="show">
+            <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+            </label>
+            </div>
+            """
+
+            let sponsoredSize = """
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="small">
+            <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="normal">
+            <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="large">
+            <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+            </label>
+            <label class="btn btn-sm btn-size select-button-new" data-id="sponsored" data-type="gym-sponsored"
+                                data-info="huge">
+            <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+            </label>
+            </div>
+            """
+
+            gymData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 7), // Need a better way to display, new section?
+                    "sort": 7
+                ],
+                "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                        "style=\"height:50px; width:50px;\">",
+                "filter": sponsoredFilter,
+                "size": sponsoredSize,
+                "type": gymOptionsString
+            ])
+
+            // Powered-up gyms
+            for i in 0...3 {
+                let powerUpLevel = Localizer.global.get(value: "filter_poi_power_up_level_\(i)")
+                let powerUpFilter = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                      data-type="gym-power-up" data-info="hide">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                </label>
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                      data-type="gym-power-up" data-info="show">
+                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                </label>
+                </div>
+                """
+
+                let powerUpSize = """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="small">
+                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="normal">
+                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="large">
+                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                </label>
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="gym-power-up" data-info="huge">
+                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                </label>
+                </div>
+                """
+
+                let team = (UInt16.random % 3) + 1
+
+                gymData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+10
+                    ],
+                    "name": powerUpLevel,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 0 ? 0 : team)_\(i).png\"" +
+                        " style=\"height:50px; width:50px;\">",
+                    "filter": powerUpFilter,
+                    "size": powerUpSize,
+                    "type": powerUpLevelString
+                ])
+            }
 
             // Available slots
             for i in 0...6 {
@@ -1075,6 +1213,8 @@ public class ApiRequestHandler {
 
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
+            let sponsoredOnly = Localizer.global.get(value: "filter_pokestop_sponsored_only")
+            let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -1174,6 +1314,58 @@ public class ApiRequestHandler {
                 ])
             }
 
+            // Powered-up pokestops
+            for i in 0...3 {
+                let powerUpLevel = Localizer.global.get(value: "filter_poi_power_up_level_\(i)")
+                let powerUpFilter = """
+                                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                                          data-type="pokestop-power-up" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                    </label>
+                                    <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                                          data-type="pokestop-power-up" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                    </label>
+                                    </div>
+                                    """
+
+                let powerUpSize = """
+                                  <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="small">
+                                  <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="normal">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="large">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                  </label>
+                                  <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                                      data-type="pokestop-power-up" data-info="huge">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                  </label>
+                                  </div>
+                                  """
+
+                pokestopData.append([
+                    "id": [
+                        "formatted": String(format: "%03d", i),
+                        "sort": i+10
+                    ],
+                    "name": powerUpLevel,
+                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\"" +
+                        " style=\"height:50px; width:50px;\">",
+                    "filter": powerUpFilter,
+                    "size": powerUpSize,
+                    "type": powerUpLevelString
+                ])
+            }
+
+            // AR pokestop
             let arFilter = """
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-sm btn-off select-button-new" data-id="ar"
@@ -1218,6 +1410,54 @@ public class ApiRequestHandler {
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
+                "type": pokestopOptionsString
+            ])
+
+            // Sponsored Pokestop
+            let sponsoredFilter = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-off select-button-new" data-id="sponsored"
+                            data-type="pokestop-sponsored" data-info="hide">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                           </label>
+                           <label class="btn btn-sm btn-on select-button-new" data-id="sponsored"
+                            data-type="pokestop-sponsored" data-info="show">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                           </label>
+                           </div>
+                           """
+
+            let sponsoredSize = """
+                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="small">
+                         <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="normal">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="large">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="sponsored"
+                          data-type="pokestop-sponsored" data-info="huge">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                         </label>
+                         </div>
+                         """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 7),
+                    "sort": 7
+                ],
+                "name": sponsoredOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                    "style=\"height:50px; width:50px;\">",
+                "filter": sponsoredFilter,
+                "size": sponsoredSize,
                 "type": pokestopOptionsString
             ])
 
@@ -1572,6 +1812,38 @@ public class ApiRequestHandler {
             data["assignmentgroups"] = jsonArray
         }
 
+        if showWebhooks && perms.contains(.admin) {
+            let webhooks = try? Webhook.getAll(mysql: mysql)
+            var jsonArray = [[String: Any]]()
+            if webhooks != nil {
+                for webhook in webhooks! {
+                    var webhookData = [String: Any]()
+                    webhookData["name"] = webhook.name
+                    webhookData["url"] = webhook.url
+                    webhookData["delay"] = webhook.delay
+                    var types = ""
+                    for (index, type) in webhook.types.enumerated() {
+                        types.append("\(type.rawValue)")
+                        if index != webhook.types.count - 1 {
+                            types.append(",")
+                        }
+                    }
+                    webhookData["types"] = types
+                    webhookData["enabled"] = webhook.enabled ? "Yes" : "No"
+
+                    if formatted {
+                        webhookData["buttons"] = "<div class=\"btn-group\" role=\"group\">" +
+                        "<a href=\"/dashboard/webhook/edit/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
+                        "class=\"btn btn-primary\">Edit</a>" +
+                        "<a href=\"/dashboard/webhook/delete/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
+                        "class=\"btn btn-danger\">Delete</a></div>"
+                    }
+                    jsonArray.append(webhookData)
+                }
+            }
+            data["webhooks"] = jsonArray
+        }
+
         if showIVQueue && perms.contains(.admin), let instance = instance {
 
             let queue = InstanceController.global.getIVQueue(name: instance.decodeUrl() ?? "")
@@ -1748,9 +2020,109 @@ public class ApiRequestHandler {
             data["discordrules"] = jsonArray
         }
 
+        let permViewStats = perms.contains(.viewStats)
+        if permViewStats && showDashboardStats {
+            let stats = Stats().getJSONValues()
+            data["pokemon_total"] = stats["pokemon_total"]
+            data["pokemon_active"] = stats["pokemon_active"]
+            data["pokemon_iv_total"] = stats["pokemon_iv_total"]
+            data["pokemon_iv_active"] = stats["pokemon_iv_active"]
+            data["pokemon_active_100iv"] = stats["pokemon_active_100iv"]
+            data["pokemon_active_90iv"] = stats["pokemon_active_90iv"]
+            data["pokemon_active_0iv"] = stats["pokemon_active_0iv"]
+            data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
+            data["pokemon_active_shiny"] = stats["pokemon_active_shiny"]
+            data["pokestops_total"] = stats["pokestops_total"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["pokestops_lures_glacial"] = stats["pokestops_lures_glacial"]
+            data["pokestops_lures_mossy"] = stats["pokestops_lures_mossy"]
+            data["pokestops_lures_magnetic"] = stats["pokestops_lures_magnetic"]
+            data["pokestops_quests"] = stats["pokestops_quests"]
+            data["pokestops_invasions"] = stats["pokestops_invasions"]
+            data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
+            data["gyms_total"] = stats["gyms_total"]
+            data["gyms_neutral"] = stats["gyms_neutral"]
+            data["gyms_mystic"] = stats["gyms_mystic"]
+            data["gyms_valor"] = stats["gyms_valor"]
+            data["gyms_instinct"] = stats["gyms_instinct"]
+            data["gyms_raids"] = stats["gyms_raids"]
+            data["spawnpoints_total"] = stats["spawnpoints_total"]
+            data["spawnpoints_found"] = stats["spawnpoints_found"]
+            data["spawnpoints_missing"] = stats["spawnpoints_missing"]
+        }
+
+        if permViewStats && permShowPokemon && showTop10Stats {
+            let lifetime = try? Stats.getTopPokemonStats(mysql: mysql, mode: "lifetime")
+            let today = try? Stats.getTopPokemonStats(mysql: mysql, mode: "today")
+            let month = try? Stats.getTopPokemonStats(mysql: mysql, mode: "month")
+            data["lifetime"] = lifetime
+            data["today"] = today
+            data["month"] = month
+
+            if permShowIV {
+                let hundo = try? Stats.getTopPokemonStats(mysql: mysql, mode: "iv")
+                data["top10_100iv"] = hundo
+            }
+        }
+
+        if permViewStats && permShowPokemon && showPokemonStats {
+            if date == "lifetime" {
+                let stats = try? Stats.getAllPokemonStats(mysql: mysql)
+                data["stats"] = stats
+            } else {
+                let stats = try? Stats.getPokemonIVStats(mysql: mysql, date: date)
+                data["date"] = date
+                data["stats"] = stats
+            }
+        }
+
+        if permViewStats && permShowRaid && showRaidStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllRaidStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["raid_stats"] = try? Stats.getRaidStats(mysql: mysql, date: date)
+                data["egg_stats"] = try? Stats.getRaidEggStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowQuests && showQuestStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllQuestStats(mysql: mysql)
+            } else {
+                data["date"] = date
+                data["quest_item_stats"] = try? Stats.getQuestItemStats(mysql: mysql, date: date)
+                data["quest_pokemon_stats"] = try? Stats.getQuestPokemonStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowInvasions && showInvasionStats {
+            if date == "lifetime" {
+                data["stats"] = try? Stats.getAllInvasionStats(mysql: mysql)
+            } else {
+                data["stats"] = try? Stats.getInvasionStats(mysql: mysql, date: date)
+            }
+        }
+
+        if permViewStats && permShowPokemon && showCommdayStats {
+            if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
+                let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
+                let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
+                let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
+                data["pokemon_id"] = pokemonId
+                data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
+                data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
+                data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
+                data["start"] = start
+                data["end"] = end
+                data["stats"] = stats
+            }
+        }
+
         if showStatus && perms.contains(.admin) {
             do {
-                let passed = UInt32(Date().timeIntervalSince(start)).secondsToDaysHoursMinutesSeconds()
+                let passed = UInt32(Date().timeIntervalSince(self.start)).secondsToDaysHoursMinutesSeconds()
                 let devices: [Device] = try Device.getAll(mysql: mysql)
                 let offlineDevices = devices.filter {
                     Date().timeIntervalSince(Date(timeIntervalSince1970: Double($0.lastSeen))) >= 15 * 60
@@ -1769,7 +2141,7 @@ public class ApiRequestHandler {
                         "max": WebHookRequestHandler.threadLimitMax
                     ],
                     "uptime": [
-                        "date": start.timeIntervalSince1970,
+                        "date": self.start.timeIntervalSince1970,
                         "days": passed.days,
                         "hours": passed.hours,
                         "minutes": passed.minutes,

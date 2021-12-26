@@ -60,7 +60,7 @@ public class Assignment: Equatable {
         mysqlStmt.bindParam(oldId)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'save'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -89,7 +89,7 @@ public class Assignment: Equatable {
         mysqlStmt.bindParam(enabled)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'create'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -111,7 +111,7 @@ public class Assignment: Equatable {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'delete'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -130,7 +130,7 @@ public class Assignment: Equatable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'deleteAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -151,7 +151,7 @@ public class Assignment: Equatable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -201,7 +201,7 @@ public class Assignment: Equatable {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[Assignment] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[Assignment] Failed to execute query 'getByUUID'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
