@@ -28,6 +28,7 @@ public class VersionManager {
     private init() {
         let sha: String
         let pullRequest: String?
+        let branch: String?
         let version: String
         let shaFile = File("\(Dir.projectroot)/.gitsha")
         do {
@@ -46,11 +47,17 @@ public class VersionManager {
             if ref.starts(with: "refs/pull/") && ref.contains(string: "/merge") {
                 pullRequest = ref.replacingOccurrences(of: "refs/pull/", with: "")
                                  .replacingOccurrences(of: "/merge", with: "")
+                branch = nil
+            } else if ref.starts(with: "refs/heads/") {
+                branch = ref.replacingOccurrences(of: "refs/heads/", with: "")
+                pullRequest = nil
             } else {
                 pullRequest = nil
+                branch = nil
             }
         } catch {
             pullRequest = nil
+            branch = nil
             Log.error(message: "[VersionManager] Failed to read .gitref")
         }
 
@@ -61,7 +68,12 @@ public class VersionManager {
                let first = tags.first(where: { $0.commit.sha == sha }) {
                 version = "Version \(first.name)"
             } else {
-                version = "?"
+                if branch == nil {
+                    version = "?"
+                } else {
+                    version = branch!
+                }
+
             }
         } else {
             version = "Pull Request #\(pullRequest!)"
