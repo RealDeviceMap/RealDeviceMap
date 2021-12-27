@@ -40,10 +40,16 @@ jobs:
     - name: Set .gitref
       if: github.event_name == 'push'
       run: "echo ${{github.ref}} > .gitref"
-    - name: Publish
+    - name: Publish Version
       uses: 123FLO321/github-docker-temp@0.5.0
       if: github.event_name == 'push'
       with:
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish Commit
+      uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
+      with:
+        imageTag: ${{ github.sha }}
         accessToken: ${{ secrets.GITHUB_TOKEN }}
     - name: Start MR Build System
       if: github.event_name == 'pull_request'
