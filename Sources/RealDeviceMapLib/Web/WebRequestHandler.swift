@@ -2320,6 +2320,7 @@ public class WebRequestHandler {
         let storeData = request.param(name: "store_data") == "true"
         let accountGroup = request.param(name: "account_group")?.emptyToNil()
         let isEvent = request.param(name: "is_event") == "true"
+        let questMode = request.param(name: "quest_mode") ?? "normal"
 
         data["name"] = name
         data["area"] = area
@@ -2335,6 +2336,7 @@ public class WebRequestHandler {
         data["store_data"] = storeData
         data["account_group"] = accountGroup
         data["is_event"] = isEvent
+        data["quest_mode"] = questMode
 
         if type == nil {
             data["nothing_selected"] = true
@@ -2361,6 +2363,14 @@ public class WebRequestHandler {
             data["show_error"] = true
             data["error"] = "Failed to parse Pokemon IDs."
             return data
+        }
+
+        if type == .autoQuest {
+            switch questMode {
+            case "alternative": data["quest_mode_alternative_selected"] = true
+            case "both": data["quest_mode_both_selected"] = true
+            default: data["quest_mode_normal_selected"] = true
+            }
         }
 
         if minLevel > maxLevel || minLevel < 0 || minLevel > 40 || maxLevel < 0 || maxLevel > 40 {
@@ -2465,6 +2475,7 @@ public class WebRequestHandler {
                 } else if type == .autoQuest {
                     oldInstance!.data["spin_limit"] = spinLimit
                     oldInstance!.data["delay_logout"] = delayLogout
+                    oldInstance!.data["quest_mode"] = questMode
                 } else if type == .leveling {
                     oldInstance!.data["radius"] = radius
                     oldInstance!.data["store_data"] = storeData
@@ -2499,6 +2510,7 @@ public class WebRequestHandler {
             } else if type == .autoQuest {
                 instanceData["spin_limit"] = spinLimit
                 instanceData["delay_logout"] = delayLogout
+                instanceData["quest_mode"] = questMode
             } else if type == .leveling {
                 instanceData["radius"] = radius
                 instanceData["store_data"] = storeData
@@ -2579,6 +2591,7 @@ public class WebRequestHandler {
             data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
             data["account_group"] = (oldInstance!.data["account_group"] as? String)?.emptyToNil()
             data["is_event"] = oldInstance!.data["is_event"] as? Bool ?? false
+            data["quest_mode"] = oldInstance!.data["quest_mode"] ?? "normal"
 
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
             if pokemonIDs != nil {
@@ -2614,6 +2627,15 @@ public class WebRequestHandler {
             case .leveling:
                 data["leveling_selected"] = true
             }
+
+            if oldInstance!.type == .autoQuest {
+                switch data["quest_mode"] as? String {
+                case "alternative": data["quest_mode_alternative_selected"] = true
+                case "both": data["quest_mode_both_selected"] = true
+                default: data["quest_mode_normal_selected"] = true
+                }
+            }
+
             return data
         }
     }

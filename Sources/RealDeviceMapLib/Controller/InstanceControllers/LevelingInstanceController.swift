@@ -91,7 +91,7 @@ class LevelingInstanceController: InstanceControllerProto {
         self.radius = radius
     }
 
-    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
 
         guard let username = username else {
             Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] No username specified.")
