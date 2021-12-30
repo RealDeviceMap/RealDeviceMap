@@ -41,4 +41,8 @@ public class TimedMap<K: Hashable, V> {
         return value
     }
 
+    public func isEmpty() -> Bool {
+        map.isEmpty
+    }
+
 }

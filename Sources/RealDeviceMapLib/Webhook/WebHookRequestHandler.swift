@@ -1081,7 +1081,7 @@ public class WebHookRequestHandler {
     }
 
     static func getArQuestMode(device: String?, timestamp: UInt64) -> Bool {
-        if device == nil {
+        if device == nil || questArTargetMap.isEmpty() {
             return true
         }
         let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
