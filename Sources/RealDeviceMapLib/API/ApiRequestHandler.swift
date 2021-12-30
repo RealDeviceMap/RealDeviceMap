@@ -2193,7 +2193,8 @@ public class ApiRequestHandler {
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
         let instanceName = request.param(name: "instance_name")
-        let reQuest = request.param(name: "re_quest")?.toBool() ?? false
+        let assignmentGroupReQuest = request.param(name: "assignment_group_re_quest")?.toBool() ?? false
+        let assignmentGroupStart = request.param(name: "assignment_group_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignment_group_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
@@ -2267,13 +2268,24 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if reQuest && perms.contains(.admin), let name = assignmentGroupName {
+        } else if assignmentGroupReQuest && perms.contains(.admin), let name = assignmentGroupName {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to reQuest assignment group \(name)")
                 guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
                     return response.respondWithError(status: .notFound)
                 }
                 try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignmentGroupStart && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to start assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.startAssignmentGroup(assignmentGroup: assignmentGroup)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)

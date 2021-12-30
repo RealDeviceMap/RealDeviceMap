@@ -169,6 +169,13 @@ public class AssignmentController: InstanceControllerDelegate {
         return result.map({ $0.instanceName}) // instances names
     }
 
+    internal func startAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
+        let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+        for assignment in assignmentsInGroup {
+            try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
+        }
+    }
+
     internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
         let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
         let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
