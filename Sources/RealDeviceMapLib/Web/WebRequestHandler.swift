@@ -1122,52 +1122,61 @@ public class WebRequestHandler {
                 }
 
                 let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
+                var clearQuests = [Instance]()
+                do {
+                    let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
+                    for assignment in assignmentsInGroup {
+                        let affectedInstanceNames = AssignmentController.global.resolveAssignmentChain(
+                            assignment: assignment)
+                        let affectedInstances = instances.filter({ affectedInstanceNames.contains($0.name) })
+
+                        for instance in affectedInstances where !clearQuests.contains(instance) {
+                            clearQuests.append(instance)
+                        }
+                    }
+                } catch {
+                    response.setBody(string: "Failed to pick up assignment instances")
+                    sessionDriver.save(session: request.session!)
+                    response.completed(status: .internalServerError)
+                    return
+                }
                 var minLat: Double = 90.0
                 var maxLat: Double = -90.0
                 var minLon: Double = 180.0
                 var maxLon: Double = -180.0
-                for assignment in assignmentsInGroup {
-                    do {
-                        let instance = try Instance.getByName(name: assignment.instanceName)!
-                        if instance.type == .autoQuest {
-                            let areaType1 = instance.data["area"] as? [[String: Double]]
-                            let areaType2 = instance.data["area"] as? [[[String: Double]]]
-                            if areaType1 != nil {
-                                for coordLine in areaType1! {
+                do {
+                    for instance in clearQuests {
+                        let areaType1 = instance.data["area"] as? [[String: Double]]
+                        let areaType2 = instance.data["area"] as? [[[String: Double]]]
+                        if areaType1 != nil {
+                            for coordLine in areaType1! {
+                                minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
+                                maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
+                                minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
+                                maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
+                            }
+                        } else if areaType2 != nil {
+                            for geofence in areaType2! {
+                                for coordLine in geofence {
                                     minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
                                     maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
                                     minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
                                     maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
                                 }
-                            } else if areaType2 != nil {
-                                for geofence in areaType2! {
-                                    for coordLine in geofence {
-                                        minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
-                                        maxLat = coordLine["lat"]! > maxLat ? coordLine["lat"]! : maxLat
-                                        minLon = coordLine["lon"]! < minLon ? coordLine["lon"]! : minLon
-                                        maxLon = coordLine["lon"]! > maxLon ? coordLine["lon"]! : maxLon
-                                    }
-                                }
                             }
                         }
-                    } catch {
-                        response.setBody(string: "Failed to get assignment group quest boundaries")
-                        sessionDriver.save(session: request.session!)
-                        response.completed(status: .internalServerError)
-                        return
                     }
-                }
-                do {
                     let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
                                          Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
                                          Coord(lat: minLat, lon: minLon)]
                     try Pokestop.clearQuests(area: bbox)
                 } catch {
-                    response.setBody(string: "Failed to reset assignment group quests")
+                    response.setBody(string: "Failed to clear quests")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .internalServerError)
                     return
                 }
+
                 for assignment in assignmentsInGroup {
                     do {
                         try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
