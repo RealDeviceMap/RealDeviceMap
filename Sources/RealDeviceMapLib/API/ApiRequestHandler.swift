@@ -2188,14 +2188,14 @@ public class ApiRequestHandler {
         let pokestopName = request.param(name: "pokestop_name")
         let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
         let clearAllQuests = request.param(name: "clear_all_quests")?.toBool() ?? false
-        let assignDeviceGroup = request.param(name: "assign_device_group")?.toBool() ?? false
-        let deviceGroupName = request.param(name: "device_group_name")
+        let assignDeviceGroup = request.param(name: "assign_devicegroup")?.toBool() ?? false
+        let deviceGroupName = request.param(name: "devicegroup_name")
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
         let instanceName = request.param(name: "instance_name")
-        let assignmentGroupReQuest = request.param(name: "assignment_group_re_quest")?.toBool() ?? false
-        let assignmentGroupStart = request.param(name: "assignment_group_start")?.toBool() ?? false
-        let assignmentGroupName = request.param(name: "assignment_group_name")
+        let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
+        let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
+        let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
