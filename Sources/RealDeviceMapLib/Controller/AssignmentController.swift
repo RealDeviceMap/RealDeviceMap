@@ -182,7 +182,6 @@ public class AssignmentController: InstanceControllerDelegate {
         var clearQuests = [Instance]()
         for assignment in assignmentsInGroup {
             let affectedInstanceNames = self.resolveAssignmentChain(assignment: assignment)
-            print("[TMP] affected: \(affectedInstanceNames)")
             let affectedInstances = instances.filter({ affectedInstanceNames.contains($0.name) })
 
             for instance in affectedInstances where !clearQuests.contains(instance) {
