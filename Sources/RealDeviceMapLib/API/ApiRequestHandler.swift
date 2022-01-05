@@ -2173,6 +2173,7 @@ public class ApiRequestHandler {
         }
     }
 
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleSetData(request: HTTPRequest, response: HTTPResponse) {
 
         guard let perms = getPerms(request: request, response: response) else {
@@ -2185,6 +2186,16 @@ public class ApiRequestHandler {
         let setPokestopName = request.param(name: "set_pokestop_name")?.toBool() ?? false
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
+        let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
+        let clearAllQuests = request.param(name: "clear_all_quests")?.toBool() ?? false
+        let assignDeviceGroup = request.param(name: "assign_devicegroup")?.toBool() ?? false
+        let deviceGroupName = request.param(name: "devicegroup_name")
+        let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
+        let deviceName = request.param(name: "device_name")
+        let instanceName = request.param(name: "instance_name")
+        let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
+        let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
+        let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2210,6 +2221,75 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+	    } else if reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
+        } else if clearAllQuests && perms.contains(.admin) {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to clear all quests")
+                try Pokestop.clearQuests()
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
+                guard let deviceGroup = try DeviceGroup.getByName(name: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                let devices = try Device.getAllInGroup(deviceGroupName: deviceGroup.name)
+                for device in devices {
+                    device.instanceName = instance.name
+                    try device.save(oldUUID: device.uuid)
+                    InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
+                guard let device = try Device.getById(id: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                device.instanceName = instance.name
+                try device.save(oldUUID: device.uuid)
+                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignmentGroupReQuest && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to reQuest assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignmentGroupStart && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to start assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.startAssignmentGroup(assignmentGroup: assignmentGroup)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
             response.respondWithError(status: .badRequest)
         }
