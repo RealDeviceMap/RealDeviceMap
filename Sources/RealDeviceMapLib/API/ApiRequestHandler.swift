@@ -126,6 +126,7 @@ public class ApiRequestHandler {
         let showDevices = request.param(name: "show_devices")?.toBool() ?? false
         let showActiveDevices = request.param(name: "show_active_devices")?.toBool() ?? false
         let showInstances = request.param(name: "show_instances")?.toBool() ?? false
+        let skipInstanceStatus = request.param(name: "skip_instance_status")?.toBool() ?? false
         let showDeviceGroups = request.param(name: "show_devicegroups")?.toBool() ?? false
         let showUsers = request.param(name: "show_users")?.toBool() ?? false
         let showGroups = request.param(name: "show_groups")?.toBool() ?? false
@@ -1641,7 +1642,9 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Leveling"
                     }
 
-                    if formatted {
+                    if skipInstanceStatus {
+                        instanceData["status"] = nil
+                    } else if formatted {
                         let status = InstanceController.global.getInstanceStatus(
                             mysql: mysql,
                             instance: instance,
