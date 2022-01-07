@@ -1786,9 +1786,9 @@ public class ApiRequestHandler {
 
                     var assignmentGroupData = [String: Any]()
                     assignmentGroupData["name"] = assignmentGroup.name
+                    assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
 
                     if formatted {
-                        assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
                         let id = assignmentGroup.name.encodeUrl()!
                         assignmentGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignmentgroup/start/\(id)\" " +
@@ -1804,8 +1804,6 @@ public class ApiRequestHandler {
                             "confirm('Are you sure you want to delete this assignment " +
                             "group? This action is irreversible and cannot be " +
                             "undone without backups.')\">Delete</a></div>"
-                    } else {
-                        assignmentGroupData["assignments"] = assignments
                     }
 
                     jsonArray.append(assignmentGroupData)
