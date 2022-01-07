@@ -12,6 +12,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').addClass('d-none');
             } else if ($(this).val() === 'auto_quest') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -21,6 +22,7 @@
                 $('.delay_logout_text').removeClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').removeClass('d-none');
             } else if ($(this).val() === 'leveling') {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -30,6 +32,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').removeClass('d-none');
                 $('.store_data_text').removeClass('d-none');
+                $('.quest_mode').addClass('d-none');
             } else {
                 $('.pokemon_ids_text').addClass('d-none');
                 $('.scatter_pokemon_ids_text').addClass('d-none');
@@ -39,6 +42,7 @@
                 $('.delay_logout_text').addClass('d-none');
                 $('.radius_text').addClass('d-none');
                 $('.store_data_text').addClass('d-none');
+                $('.quest_mode').addClass('d-none');
             }
         });
     })
@@ -65,6 +69,7 @@
                 <select class="form-control type-select" name="type" required>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Scheduler Type</option>
                     <option value="circle_pokemon" {{#circle_pokemon_selected}}selected{{/circle_pokemon_selected}}>Circle Pokemon</option>
+                    <option value="circle_smart_pokemon" {{#circle_smart_pokemon_selected}}selected{{/circle_smart_pokemon_selected}}>Circle Smart Pokemon</option>
                     <option value="circle_raid" {{#circle_raid_selected}}selected{{/circle_raid_selected}}>Circle Raid</option>
                     <option value="circle_smart_raid" {{#circle_smart_raid_selected}}selected{{/circle_smart_raid_selected}}>Circle Smart Raid</option>
                     <option value="auto_quest" {{#auto_quest_selected}}selected{{/auto_quest_selected}}>Auto Quest</option>
@@ -112,6 +117,21 @@
             </div>
             <div class="checkbox store_data_text {{^leveling_selected}}d-none{{/leveling_selected}}">
                 <label><input type="checkbox" name="store_data" value="true" {{#store_data}}checked{{/store_data}}> Store Data in Database</label>
+            </div>
+            <div class="form-group quest_mode {{^auto_quest_selected}}d-none{{/auto_quest_selected}}">
+                Quest Mode
+                <select class="form-control quest-mode-select" name="quest_mode" required>
+                    <option value="normal" {{#quest_mode_normal_selected}}selected{{/quest_mode_normal_selected}}>Normal</option>
+                    <option value="alternative" {{#quest_mode_alternative_selected}}selected{{/quest_mode_alternative_selected}}>Alternative</option>
+                    <option value="both" {{#quest_mode_both_selected}}selected{{/quest_mode_both_selected}}>Both</option>
+                </select>
+            </div>
+            <div class="form-group">
+                Account Group
+                <input type="text" class="form-control" name="account_group" value="{{account_group}}" maxlength="50">
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="is_event" value="true" {{#is_event}}checked{{/is_event}}> Is Unique Event</label>
             </div>
             <input type="hidden" name="_csrf" value="{{csrf}}">
             <button type="submit" class="btn btn-primary">Create</button>

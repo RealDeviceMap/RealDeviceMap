@@ -1,0 +1,63 @@
+{{> header}}
+
+<style>
+table.dataTable tbody td {
+    vertical-align: middle;
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    const table = $('#table').DataTable( {
+        "stateSave": true,
+        "stateDuration": 0,
+        "ajax": {
+            "url": "/api/get_data?show_assignmentgroups=true&formatted=true",
+            "dataSrc": "data.assignmentgroups"
+        },
+        "paging":   true,
+        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        "columns": [
+             { "data": "name" },
+             { "data": "assignments" },
+             { "data": "buttons" }
+        ],
+        "info":     true,
+        "order": [[ 0, "asc" ]],
+        "search.caseInsensitive": true,
+        "columnDefs": [ {
+            "targets": [2],
+            "orderable": false
+        }],
+        "responsive": true
+    });
+    $('#table').on( 'draw.dt', function () {
+        setTimeout( function () {
+            table.ajax.reload(null, false);
+        }, 5000);
+    } );
+} );
+</script>
+
+<body>
+
+    <br>
+    <h1 align="center">Configure {{title}}'s Assignment Groups!</h1>
+    <br>
+    <div style="width:90%; margin-left:calc(5%);">
+        <a href="/dashboard/assignmentgroup/add" role="button" style="float: right;" class="btn btn-success">Add New Assignment Group</a>
+        <br><br>
+        <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Assignments</th>
+                    <th width="5%"></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <br>
+</body>
