@@ -1184,6 +1184,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.size = 0
         self.weight = 0
         if weather == 0 && level > 30 {
+            Log.info(message: "[POKEMON] Pokemon \(id) weather boosted Ditto - reset IV")
             self.level = level - 5
             self.atkIv = nil
             self.defIv = nil
