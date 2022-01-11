@@ -674,7 +674,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                     )
                 } else if oldPokemon!.displayPokemonId ?? 0 != self.pokemonId {
                     Log.debug(
-                        message: "[POKEMON] Pokemon \(id) Ditto diguised as \(oldPokemon!.displayPokemonId ?? 0) " +
+                        message: "[POKEMON] Pokemon \(id) Ditto disguised as \(oldPokemon!.displayPokemonId ?? 0) " +
                                  "now seen as \(self.pokemonId)"
                     )
                 }
