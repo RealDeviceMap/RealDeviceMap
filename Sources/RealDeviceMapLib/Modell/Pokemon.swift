@@ -492,6 +492,10 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         if Pokemon.noPVP {
             return
         }
+        if self.atkIv == nil || self.defIv == nil || self.staIv == nil {
+            // e.g. if weather boosted ditto found
+            return
+        }
         let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
 
         self.pvpRankingsGreatLeague = PVPStatsManager.global.getPVPStatsWithEvolutions(
