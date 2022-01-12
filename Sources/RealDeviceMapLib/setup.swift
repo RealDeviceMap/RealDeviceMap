@@ -17,10 +17,9 @@ import Backtrace
 public func setupRealDeviceMap() {
     Backtrace.install()
 
-    let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
-    Log.logDebug = logDebug
+    let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug"
     Log.even = true
-
+    Log.setThreshold(value: logLevel)
     Log.info(message: "[MAIN] Getting Version")
     _ = VersionManager.global
 
