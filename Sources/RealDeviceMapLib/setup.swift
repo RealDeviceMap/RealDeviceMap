@@ -28,9 +28,6 @@ public func setupRealDeviceMap() {
     var startupServer: HTTPServer.Server? = WebServer.startupServer
     var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
 
-    Log.info(message: "[MAIN] Getting Version")
-    _ = VersionManager.global
-
     // Check if /backups exists
     let backups = Dir("\(Dir.projectroot)/backups")
     #if DEBUG
