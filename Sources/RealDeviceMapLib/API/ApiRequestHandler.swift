@@ -31,8 +31,9 @@ public class ApiRequestHandler {
 
     public static var start: Date = Date(timeIntervalSince1970: 0)
 
-    // swiftlint:disable:next cyclomatic_complexity
-    private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    private static func getPerms(request: HTTPRequest, response: HTTPResponse, route: WebServer.APIPage)
+	-> [Group.Perm]? {
         let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
@@ -75,7 +76,12 @@ public class ApiRequestHandler {
                             request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
                         }
                         sessionDriver.save(session: request.session!)
-                        handleGetData(request: request, response: response)
+                        switch route {
+                        case .getData:
+                            handleGetData(request: request, response: response)
+                        case .setData:
+                            handleSetData(request: request, response: response)
+                        }
                         return nil
                     }
                 }
@@ -87,7 +93,7 @@ public class ApiRequestHandler {
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
-        guard let perms = getPerms(request: request, response: response) else {
+        guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
 
@@ -2177,7 +2183,7 @@ public class ApiRequestHandler {
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleSetData(request: HTTPRequest, response: HTTPResponse) {
 
-        guard let perms = getPerms(request: request, response: response) else {
+        guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.setData) else {
             return
         }
 
