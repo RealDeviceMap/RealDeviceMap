@@ -10,12 +10,12 @@ import PerfectLib
 public extension Log {
     static var threshold = LogPriority.debug
     static func info(message: @autoclosure () -> String) {
-        if threshold >= .info {
+        if threshold <= .info {
             Log.logger.info(message: message(), even)
         }
     }
     static func debug(message: @autoclosure () -> String) {
-        if threshold >= .debug {
+        if threshold <= .debug {
             Log.logger.debug(message: message(), even)
         }
     }
@@ -41,23 +41,19 @@ public enum LogPriority: Int {
 
 extension LogPriority: Comparable {
     public static func == (lhs: LogPriority, rhs: LogPriority) -> Bool {
-        print("[TMP] == \(lhs.rawValue) - \(rhs.rawValue)")
         return lhs.rawValue == rhs.rawValue
     }
 
     public static func < (lhs: LogPriority, rhs: LogPriority) -> Bool {
-        print("[TMP] < \(lhs.rawValue) - \(rhs.rawValue)")
         return lhs.rawValue < rhs.rawValue
     }
 
     public static func > (lhs: LogPriority, rhs: LogPriority) -> Bool {
-        print("[TMP] > \(lhs.rawValue) - \(rhs.rawValue)")
         return lhs.rawValue > rhs.rawValue
     }
 
-    public static func >= (lhs: LogPriority, rhs: LogPriority) -> Bool {
-        print("[TMP] >= \(lhs.rawValue) - \(rhs.rawValue)")
-        return lhs.rawValue >= rhs.rawValue
+    public static func <= (lhs: LogPriority, rhs: LogPriority) -> Bool {
+        return lhs.rawValue <= rhs.rawValue
     }
 
 }
