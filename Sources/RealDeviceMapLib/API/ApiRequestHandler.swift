@@ -31,7 +31,7 @@ public class ApiRequestHandler {
 
     public static var start: Date = Date(timeIntervalSince1970: 0)
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func getPerms(request: HTTPRequest, response: HTTPResponse, target: String) -> [Group.Perm]? {
         let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
