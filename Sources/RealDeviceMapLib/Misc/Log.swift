@@ -27,6 +27,7 @@ public extension Log {
         } else {
             Log.threshold = .debug
         }
+        print("[TMP] threshold \(String(describing: Log.threshold))")
     }
 }
 
@@ -41,6 +42,7 @@ public enum LogPriority: Int {
 
 extension LogPriority: Comparable {
     public static func > (lhs: LogPriority, rhs: LogPriority) -> Bool {
+        print("[TMP] > \(lhs.rawValue) - \(rhs.rawValue)")
         return lhs.rawValue > rhs.rawValue
     }
 
