@@ -450,6 +450,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withPokemonCp: break
             case .withRaidLocation: break
             case .withFriendsRaid: break
+            case .withPokemonCostume: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -1476,10 +1477,10 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
                 alternative_quest_template = NULL, alternative_quest_title = NULL
-            WHERE ST_CONTAINS(
+            WHERE (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL) AND ST_CONTAINS(
                 ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
                 POINT(pokestop.lat, pokestop.lon)
-            ) AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
+            )
         """
 
         let mysqlStmt = MySQLStmt(mysql)

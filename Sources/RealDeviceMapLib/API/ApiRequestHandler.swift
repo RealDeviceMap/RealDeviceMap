@@ -31,8 +31,9 @@ public class ApiRequestHandler {
 
     public static var start: Date = Date(timeIntervalSince1970: 0)
 
-    // swiftlint:disable:next cyclomatic_complexity
-    private static func getPerms(request: HTTPRequest, response: HTTPResponse) -> [Group.Perm]? {
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    private static func getPerms(request: HTTPRequest, response: HTTPResponse, route: WebServer.APIPage)
+	-> [Group.Perm]? {
         let tmp = WebRequestHandler.getPerms(request: request, fromCache: true)
         let perms = tmp.perms
         let username = tmp.username
@@ -75,7 +76,12 @@ public class ApiRequestHandler {
                             request.session?.data["perms"] = Group.Perm.permsToNumber(perms: user.group!.perms)
                         }
                         sessionDriver.save(session: request.session!)
-                        handleGetData(request: request, response: response)
+                        switch route {
+                        case .getData:
+                            handleGetData(request: request, response: response)
+                        case .setData:
+                            handleSetData(request: request, response: response)
+                        }
                         return nil
                     }
                 }
@@ -87,7 +93,7 @@ public class ApiRequestHandler {
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleGetData(request: HTTPRequest, response: HTTPResponse) {
-        guard let perms = getPerms(request: request, response: response) else {
+        guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
 
@@ -126,6 +132,7 @@ public class ApiRequestHandler {
         let showDevices = request.param(name: "show_devices")?.toBool() ?? false
         let showActiveDevices = request.param(name: "show_active_devices")?.toBool() ?? false
         let showInstances = request.param(name: "show_instances")?.toBool() ?? false
+        let skipInstanceStatus = request.param(name: "skip_instance_status")?.toBool() ?? false
         let showDeviceGroups = request.param(name: "show_devicegroups")?.toBool() ?? false
         let showUsers = request.param(name: "show_users")?.toBool() ?? false
         let showGroups = request.param(name: "show_groups")?.toBool() ?? false
@@ -1641,7 +1648,9 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Leveling"
                     }
 
-                    if formatted {
+                    if skipInstanceStatus {
+                        instanceData["status"] = nil
+                    } else if formatted {
                         let status = InstanceController.global.getInstanceStatus(
                             mysql: mysql,
                             instance: instance,
@@ -1783,9 +1792,9 @@ public class ApiRequestHandler {
 
                     var assignmentGroupData = [String: Any]()
                     assignmentGroupData["name"] = assignmentGroup.name
+                    assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
 
                     if formatted {
-                        assignmentGroupData["assignments"] = assignmentsInGroupDevices.joined(separator: ", ")
                         let id = assignmentGroup.name.encodeUrl()!
                         assignmentGroupData["buttons"] = "<div class=\"btn-group\" role=\"group\"><a " +
                             "href=\"/dashboard/assignmentgroup/start/\(id)\" " +
@@ -1801,8 +1810,6 @@ public class ApiRequestHandler {
                             "confirm('Are you sure you want to delete this assignment " +
                             "group? This action is irreversible and cannot be " +
                             "undone without backups.')\">Delete</a></div>"
-                    } else {
-                        assignmentGroupData["assignments"] = assignments
                     }
 
                     jsonArray.append(assignmentGroupData)
@@ -2173,9 +2180,10 @@ public class ApiRequestHandler {
         }
     }
 
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private static func handleSetData(request: HTTPRequest, response: HTTPResponse) {
 
-        guard let perms = getPerms(request: request, response: response) else {
+        guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.setData) else {
             return
         }
 
@@ -2185,6 +2193,16 @@ public class ApiRequestHandler {
         let setPokestopName = request.param(name: "set_pokestop_name")?.toBool() ?? false
         let pokestopId = request.param(name: "pokestop_id")
         let pokestopName = request.param(name: "pokestop_name")
+        let reloadInstances = request.param(name: "reload_instances")?.toBool() ?? false
+        let clearAllQuests = request.param(name: "clear_all_quests")?.toBool() ?? false
+        let assignDeviceGroup = request.param(name: "assign_devicegroup")?.toBool() ?? false
+        let deviceGroupName = request.param(name: "devicegroup_name")
+        let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
+        let deviceName = request.param(name: "device_name")
+        let instanceName = request.param(name: "instance_name")
+        let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
+        let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
+        let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2210,6 +2228,75 @@ public class ApiRequestHandler {
            } catch {
                response.respondWithError(status: .internalServerError)
            }
+	    } else if reloadInstances && perms.contains(.admin) {
+           do {
+               Log.info(message: "[ApiRequestHandler] API request to restart all instances.")
+               try InstanceController.setup()
+               response.respondWithOk()
+           } catch {
+               response.respondWithError(status: .internalServerError)
+           }
+        } else if clearAllQuests && perms.contains(.admin) {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to clear all quests")
+                try Pokestop.clearQuests()
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
+                guard let deviceGroup = try DeviceGroup.getByName(name: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                let devices = try Device.getAllInGroup(deviceGroupName: deviceGroup.name)
+                for device in devices {
+                    device.instanceName = instance.name
+                    try device.save(oldUUID: device.uuid)
+                    InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instanceName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
+                guard let device = try Device.getById(id: name),
+                      let instance = try Instance.getByName(name: goal) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                device.instanceName = instance.name
+                try device.save(oldUUID: device.uuid)
+                InstanceController.global.reloadDevice(newDevice: device, oldDeviceUUID: device.uuid)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignmentGroupReQuest && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to reQuest assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if assignmentGroupStart && perms.contains(.admin), let name = assignmentGroupName {
+            do {
+                Log.info(message: "[ApiRequestHandler] API request to start assignment group \(name)")
+                guard let assignmentGroup = try AssignmentGroup.getByName(name: name) else {
+                    return response.respondWithError(status: .notFound)
+                }
+                try AssignmentController.global.startAssignmentGroup(assignmentGroup: assignmentGroup)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
             response.respondWithError(status: .badRequest)
         }

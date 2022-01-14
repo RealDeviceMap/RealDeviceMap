@@ -133,8 +133,8 @@ class CircleInstanceController: InstanceControllerProto {
                     currentUuidIndex = coords.count - 1
                 }
             }
-            lock.unlock()
             currentUuidIndexes[uuid] = currentUuidIndex
+            lock.unlock()
             currentCoord = coords[currentUuidIndex]
             return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]

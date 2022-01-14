@@ -1084,9 +1084,11 @@ public class WebHookRequestHandler {
         if device == nil {
             return true
         }
-        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp) ?? true
+        let targetMode = questArTargetMap.getValueAt(key: device!, time: timestamp)
         let actualMode = questArActualMap.getValueAt(key: device!, time: timestamp) ?? false
-        if targetMode {
+        if targetMode == nil {
+            return true
+        } else if targetMode! {
             return false
         } else {
             return actualMode

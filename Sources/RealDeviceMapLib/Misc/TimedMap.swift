@@ -40,5 +40,4 @@ public class TimedMap<K: Hashable, V> {
         mapLock.unlock()
         return value
     }
-
 }
