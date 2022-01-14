@@ -216,7 +216,7 @@ public func setupRealDeviceMap() {
             )
         }
     } else {
-        Log.info(message: "[MAIN] Image generation disabled - skipping loading Forms")
+        Log.info(message: "[MAIN] Loading Available Forms skipped - Image generation disabled")
     }
 
     Log.info(message: "[MAIN] Loading Available Items")
