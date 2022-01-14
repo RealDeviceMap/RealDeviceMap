@@ -20,12 +20,12 @@ public extension Log {
         }
     }
     static func setThreshold(value: String) {
-        if value == "info" {
-            Log.threshold = .info
+        if value == "debug" {
+            Log.threshold = .debug
         } else if value == "warning" {
             Log.threshold = .warning
         } else {
-            Log.threshold = .debug
+            Log.threshold = .info
         }
     }
 }
