@@ -24,7 +24,6 @@ public class WebHookRequestHandler {
     public static var hostWhitelist: [String]?
     public static var hostWhitelistUsesProxy: Bool = false
     public static var loginSecret: String?
-    public static var dittoDisguises: [UInt16]?
 
     private static var limiter = LoginLimiter()
 
