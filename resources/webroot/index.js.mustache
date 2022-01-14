@@ -3292,9 +3292,9 @@ function getWeatherStyle (weather, ts) {
   let thisHour = ts - (ts % 3600)
   let value
   if (updatedHour >= thisHour) {
-  value = 0
+    value = 0
   } else {
-  value = 1
+    value = 1
   }
   const hue = ((1 - value) * 120).toString(10)
   return { fillColor: ['hsl(', hue, ',100%,50%)'].join(''), color: 'black', opacity: 0.75, fillOpacity: 0.5, weight: 1.0 }
