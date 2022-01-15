@@ -10,7 +10,7 @@ import POGOProtos
 
 extension Item {
 
-    public static var allAvilable: [Item] = [
+    public static var allAvailable: [Item] = [
         .pokeBall,
         .greatBall,
         .ultraBall,
