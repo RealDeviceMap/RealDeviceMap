@@ -17,10 +17,9 @@ import Backtrace
 public func setupRealDeviceMap() {
     Backtrace.install()
 
-    let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
-    Log.logDebug = logDebug
+    let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "info"
     Log.even = true
-
+    Log.setThreshold(value: logLevel)
     Log.info(message: "[MAIN] Getting Version")
     _ = VersionManager.global
 
@@ -28,9 +27,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Startup Webserver")
     var startupServer: HTTPServer.Server? = WebServer.startupServer
     var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
-
-    Log.info(message: "[MAIN] Getting Version")
-    _ = VersionManager.global
 
     // Check if /backups exists
     let backups = Dir("\(Dir.projectroot)/backups")
@@ -195,30 +191,37 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Webhook Controller")
     WebHookController.global.start()
 
+    // disable image generation, no Frontend is used
+    let noGenerateImages =
+        ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
     // Load Forms
-    Log.info(message: "[MAIN] Loading Available Forms")
-    var availableForms = [String]()
-    do {
-        try Dir("\(Dir.projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
-            let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
-            if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-                availableForms.append("\(pokemonID)-\(formID)")
-            } else if split.count == 3, let pokemonID = Int(split[0]),
-                      let formID = Int(split[1]), let evoId = Int(split[2]) {
-                availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
+    if !noGenerateImages {
+        Log.info(message: "[MAIN] Loading Available Forms")
+        var availableForms = [String]()
+        do {
+            try Dir("\(Dir.projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
+                let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
+                if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
+                    availableForms.append("\(pokemonID)-\(formID)")
+                } else if split.count == 3, let pokemonID = Int(split[0]),
+                          let formID = Int(split[1]), let evoId = Int(split[2]) {
+                    availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
+                }
             }
+            WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
+        } catch {
+            Log.error(
+                message: "Failed to load forms. Frontend will only display default forms. " +
+                    "Error: \(error.localizedDescription)"
+            )
         }
-        WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
-    } catch {
-        Log.error(
-            message: "Failed to load forms. Frontend will only display default forms. " +
-                     "Error: \(error.localizedDescription)"
-        )
+    } else {
+        Log.info(message: "[MAIN] Loading Available Forms skipped - Image generation disabled")
     }
 
     Log.info(message: "[MAIN] Loading Available Items")
     var availableItems = [-6, -5, -4, -3, -2, -1]
-    for itemId in Item.allAvilable {
+    for itemId in Item.allAvailable {
         availableItems.append(itemId.rawValue)
     }
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
@@ -274,9 +277,7 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Discord Controller")
     try! DiscordController.global.setup()
 
-    // Create Raid images
-    let noGenerateImages =
-      ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
+    // Create images
     if !noGenerateImages {
       Log.info(message: "[MAIN] Starting Images Generator")
       ImageGenerator.generate()
