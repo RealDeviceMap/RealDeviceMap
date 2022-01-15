@@ -125,6 +125,10 @@ public func setupRealDeviceMap() {
         key: "DEVICEAPI_HOST_WHITELIST_USES_PROXY"
     )?.toBool() ?? false
     WebHookRequestHandler.loginSecret = try! DBController.global.getValueForKey(key: "DEVICEAPI_SECRET")?.emptyToNil()
+    WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?
+        .components(separatedBy: ",").map({ (string) -> UInt16 in
+        return string.toUInt16() ?? 0
+    }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] // Default ditto disguises
     WebRequestHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
         .jsonDecode() as? [[String: String]] ?? []
     WebRequestHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
