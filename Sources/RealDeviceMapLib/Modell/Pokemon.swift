@@ -1210,8 +1210,6 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     //  swiftlint:disable:next function_parameter_count
     private static func isDittoDisguised(id: String, pokemonId: UInt16, level: UInt8, weather: UInt8,
                                          atkIv: UInt8, defIv: UInt8, staIv: UInt8) -> Bool {
-        let isDisguised = (pokemonId == Pokemon.dittoPokemonId) ||
-                          (WebHookRequestHandler.dittoDisguises?.contains(pokemonId) ?? false)
         let isUnderLevelBoosted = level > 0 && level < Pokemon.weatherBoostMinLevel
         let isUnderIvStatBoosted = level > 0 &&
             (atkIv < Pokemon.weatherBoostMinIvStat ||
@@ -1220,9 +1218,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         let isWeatherBoosted = weather > 0
         let isOverLevel = level > 30
 
-        if !isDisguised {
-            return false
-        } else if isWeatherBoosted {
+        if isWeatherBoosted {
             if isUnderLevelBoosted || isUnderIvStatBoosted {
                 Log.info(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(pokemonId)")
                 return true
