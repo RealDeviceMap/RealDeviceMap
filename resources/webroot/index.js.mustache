@@ -3288,12 +3288,13 @@ function getWeatherMarker (weather, ts) {
 }
 
 function getWeatherStyle (weather, ts) {
-  const ago = ts - weather.updated
+  let updatedHour = weather.updated - (weather.updated % 3600)
+  let thisHour = ts - (ts % 3600)
   let value
-  if (ago <= 150) {
+  if (updatedHour >= thisHour) {
     value = 0
   } else {
-    value = Math.min((ago - 150) / 1800, 1)
+    value = 1
   }
   const hue = ((1 - value) * 120).toString(10)
   return { fillColor: ['hsl(', hue, ',100%,50%)'].join(''), color: 'black', opacity: 0.75, fillOpacity: 0.5, weight: 1.0 }
