@@ -12,21 +12,21 @@
             altFormat: "F j, Y",
             dateFormat: "Y-m-d",
             enableTime: false,
-            defaultDate: now.getDate()
+            defaultDate: now
         });
         $("#filter-date-start").flatpickr({
             altInput: true,
             altFormat: "F j, Y h\:00 K",
             dateFormat: "U",//"Y-m-d h K",
             enableTime: true,
-            defaultDate: now.getDate()
+            defaultDate: now
         });
         $("#filter-date-end").flatpickr({
             altInput: true,
             altFormat: "F j, Y h\:00 K",
             dateFormat: "U",//"Y-m-d h K",
             enableTime: true,
-            defaultDate: now.getDate()
+            defaultDate: now
         });
         $("#filter-pokemon-date").change(filterPokemon);
         $("#filter-raids-date").change(filterRaids);
