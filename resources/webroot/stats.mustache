@@ -5,24 +5,28 @@
 
 <script>
     $(document).ready(function() {
+        var now = Date.now();
         var csrf = "{{csrf}}";
         $("[data-toggle='datetimepicker']").flatpickr({
             altInput: true,
             altFormat: "F j, Y",
             dateFormat: "Y-m-d",
-            enableTime: false
+            enableTime: false,
+            defaultDate: now.getDate()
         });
         $("#filter-date-start").flatpickr({
             altInput: true,
             altFormat: "F j, Y h\:00 K",
             dateFormat: "U",//"Y-m-d h K",
-            enableTime: true
+            enableTime: true,
+            defaultDate: now.getDate()
         });
         $("#filter-date-end").flatpickr({
             altInput: true,
             altFormat: "F j, Y h\:00 K",
             dateFormat: "U",//"Y-m-d h K",
-            enableTime: true
+            enableTime: true,
+            defaultDate: now.getDate()
         });
         $("#filter-pokemon-date").change(filterPokemon);
         $("#filter-raids-date").change(filterRaids);
