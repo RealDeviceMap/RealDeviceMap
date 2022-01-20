@@ -860,7 +860,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 if !excludedTypes.contains(6) { // mega energy reward type = 12
                     sqlExcludeCreate += " OR \(questRewardTypeSql) = 12"
                 }
-                excludeQuestPokemonSQL = sqlExcludeCreate
+                excludeQuestPokemonSQL = "("+sqlExcludeCreate+")"
             }
 
             if excludedItems.isEmpty {
