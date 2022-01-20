@@ -384,10 +384,18 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             self.hasIvChanges = true
         }
 
+        self.pokemonId = pokemonId
         self.cp = cp
+        self.move1 = move1
+        self.move2 = move2
+        self.size = size
+        self.weight = weight
         self.atkIv = atkIv
         self.defIv = defIv
         self.staIv = staIv
+        self.costume = costume
+        self.form = form
+        self.gender = gender
         self.weather = weather
         self.lat = lat
         self.lon = lon
@@ -410,27 +418,18 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
             }
             self.level = level
-            self.isDitto = Pokemon.isDittoDisguised(id: self.id,
-                                                    pokemonId: pokemonId,
-                                                    level: level,
-                                                    weather: weather,
-                                                    atkIv: atkIv,
-                                                    defIv: defIv,
-                                                    staIv: staIv
+            self.isDitto = Pokemon.isDittoDisguised(
+                id: self.id,
+                pokemonId: pokemonId,
+                level: level,
+                weather: weather,
+                atkIv: atkIv,
+                defIv: defIv,
+                staIv: staIv
             )
             if self.isDitto {
                 self.setDittoAttributes(displayPokemonId: pokemonId,
                     weather: weather, level: level)
-            } else {
-                self.pokemonId = pokemonId
-                self.costume = costume
-                self.form = form
-                self.gender = gender
-                self.move1 = move1
-                self.move2 = move2
-                self.size = size
-                self.weight = weight
-                // self.weather = weather
             }
             setPVP()
         }
@@ -687,6 +686,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                         message: "[POKEMON] Pokemon \(id) Ditto disguised as \(oldPokemon!.displayPokemonId ?? 0) " +
                                  "now seen as \(self.pokemonId)"
                     )
+                } else if oldPokemon!.displayPokemonId != nil && oldPokemon!.pokemonId != self.pokemonId {
+                    Log.debug(message: "[POKEMON] Pokemon \(id) Ditto from \(oldPokemon!.pokemonId) to \(pokemonId)")
                 }
             }
 
@@ -725,13 +726,6 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
             let weatherChanged = (oldPokemon!.weather == nil || oldPokemon!.weather! == 0) && (self.weather ?? 0 > 0) ||
                                  (self.weather == nil || self.weather! == 0 ) && (oldPokemon!.weather ?? 0 > 0)
-
-            if oldPokemon!.displayPokemonId != nil {
-                // old pokemon is a ditto, instead displayPokemonId would be unset
-                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto with id from \(oldPokemon!.pokemonId) " +
-                                   "to \(pokemonId) instead of 132")
-                self.pokemonId = Pokemon.dittoPokemonId
-            }
 
             if oldPokemon!.atkIv != nil && self.atkIv == nil && !weatherChanged {
                 setIVForWeather = false
@@ -879,9 +873,6 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             oldPokemon?.hasIvChanges = false
             WebHookController.global.addPokemonEvent(pokemon: self)
             InstanceController.global.gotIV(pokemon: self)
-        }
-        if self.displayPokemonId != nil {
-            Log.debug(message: "[POKEMON] Ditto: \(self.getJSONValues())")
         }
         let uuid = self.isEvent ? "\(self.id)-1" : self.id
         Pokemon.cache?.set(id: uuid, value: self)
