@@ -363,6 +363,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         let costume = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.costume.rawValue)
         let form = UInt16(encounterData.pokemon.pokemon.pokemonDisplay.form.rawValue)
         let gender = UInt8(encounterData.pokemon.pokemon.pokemonDisplay.gender.rawValue)
+        let weather = encounterData.pokemon.pokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
         let lat = encounterData.pokemon.latitude
         let lon = encounterData.pokemon.longitude
 
@@ -377,7 +378,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
            staIv != self.staIv ||
            costume != self.costume ||
            form != self.form ||
-           gender != self.gender {
+           gender != self.gender ||
+           weather != self.weather {
             self.hasChanges = true
             self.hasIvChanges = true
         }
@@ -394,6 +396,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.costume = costume
         self.form = form
         self.gender = gender
+        self.weather = weather
         self.lat = lat
         self.lon = lon
 
@@ -415,17 +418,18 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
             }
             self.level = level
-            self.isDitto = Pokemon.isDittoDisguised(id: self.id,
-                                                    pokemonId: self.pokemonId,
-                                                    level: self.level ?? 0,
-                                                    weather: self.weather ?? 0,
-                                                    atkIv: self.atkIv ?? 0,
-                                                    defIv: self.defIv ?? 0,
-                                                    staIv: self.staIv ?? 0
+            self.isDitto = Pokemon.isDittoDisguised(
+                id: self.id,
+                pokemonId: pokemonId,
+                level: level,
+                weather: weather,
+                atkIv: atkIv,
+                defIv: defIv,
+                staIv: staIv
             )
             if self.isDitto {
-                self.setDittoAttributes(displayPokemonId: self.pokemonId,
-                    weather: self.weather ?? 0, level: self.level ?? 0)
+                self.setDittoAttributes(displayPokemonId: pokemonId,
+                    weather: weather, level: level)
             }
             setPVP()
         }
@@ -457,14 +461,14 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
                 let components = Calendar.current.dateComponents([.second, .minute], from: date)
                 let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
-                let depsawnOffset: Int
+                let despawnOffset: Int
                 if despawnSecond < secondOfHour {
-                    depsawnOffset = 3600 + Int(despawnSecond) - secondOfHour
+                    despawnOffset = 3600 + Int(despawnSecond) - secondOfHour
                 } else {
-                    depsawnOffset = Int(despawnSecond) - secondOfHour
+                    despawnOffset = Int(despawnSecond) - secondOfHour
                 }
 
-                self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
+                self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
                 self.expireTimestampVerified = true
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
@@ -682,6 +686,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                         message: "[POKEMON] Pokemon \(id) Ditto disguised as \(oldPokemon!.displayPokemonId ?? 0) " +
                                  "now seen as \(self.pokemonId)"
                     )
+                } else if oldPokemon!.displayPokemonId != nil && oldPokemon!.pokemonId != self.pokemonId {
+                    Log.debug(message: "[POKEMON] Pokemon \(id) Ditto from \(oldPokemon!.pokemonId) to \(pokemonId)")
                 }
             }
 
@@ -1185,31 +1191,44 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.move2 = moveStruggle
         self.gender = 3
         self.costume = 0
-        self.size = 0
-        self.weight = 0
+        self.size = nil
+        self.weight = nil
         if weather == 0 && level > 30 {
-            Log.info(message: "[POKEMON] Pokemon \(id) weather boosted Ditto - reset IV")
-            self.level = level - 5
-            self.atkIv = nil
-            self.defIv = nil
-            self.staIv = nil
+            Log.debug(message: "[POKEMON] Pokemon \(id) weather boosted Ditto - reset IV is needed")
+            // self.level = level - 5
+            // self.atkIv = nil
+            // self.defIv = nil
+            // self.staIv = nil
+            // self.cp = nil
+            // self.capture1 = nil
+            // self.capture2 = nil
+            // self.capture3 = nil
+            // self.pvpRankingsGreatLeague = nil
+            // self.pvpRankingsUltraLeague = nil
+            // self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.partlyCloudy.rawValue)
+        } else {
+            // self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.none.rawValue)
         }
     }
 
     private static func isDittoDisguised(pokemon: Pokemon) -> Bool {
         return isDittoDisguised(id: pokemon.id,
-                                pokemonId: pokemon.pokemonId,
-                                level: pokemon.level ?? 0,
-                                weather: pokemon.weather ?? 0,
-                                atkIv: pokemon.atkIv ?? 0,
-                                defIv: pokemon.defIv ?? 0,
-                                staIv: pokemon.staIv ?? 0
+            pokemonId: pokemon.pokemonId,
+            level: pokemon.level ?? 0,
+            weather: pokemon.weather ?? 0,
+            atkIv: pokemon.atkIv ?? 0,
+            defIv: pokemon.defIv ?? 0,
+            staIv: pokemon.staIv ?? 0
         )
     }
 
     //  swiftlint:disable:next function_parameter_count
     private static func isDittoDisguised(id: String, pokemonId: UInt16, level: UInt8, weather: UInt8,
                                          atkIv: UInt8, defIv: UInt8, staIv: UInt8) -> Bool {
+        if pokemonId == Pokemon.dittoPokemonId {
+            Log.debug(message: "[POKEMON] Pokemon \(id) was already detected as Ditto.")
+            return true
+        }
         let isUnderLevelBoosted = level > 0 && level < Pokemon.weatherBoostMinLevel
         let isUnderIvStatBoosted = level > 0 &&
             (atkIv < Pokemon.weatherBoostMinIvStat ||
@@ -1220,12 +1239,12 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
         if isWeatherBoosted {
             if isUnderLevelBoosted || isUnderIvStatBoosted {
-                Log.info(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(pokemonId)")
+                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(pokemonId)")
                 return true
             }
         } else {
             if isOverLevel {
-                Log.info(message: "[POKEMON] Pokemon \(id) weather boosted Ditto found, disguised as \(pokemonId)")
+                Log.debug(message: "[POKEMON] Pokemon \(id) weather boosted Ditto found, disguised as \(pokemonId)")
                 return true
             }
         }
