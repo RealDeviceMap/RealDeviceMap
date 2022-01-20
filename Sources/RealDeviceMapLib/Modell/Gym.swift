@@ -92,6 +92,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "latitude": lat,
                 "longitude": lon,
                 "team": teamId ?? 0,
+                "guard_pokemon_id": guardPokemonId ?? 0,
                 "slots_available": availableSlots ?? 6,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
