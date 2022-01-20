@@ -388,6 +388,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.atkIv = atkIv
         self.defIv = defIv
         self.staIv = staIv
+        self.weather = weather
         self.lat = lat
         self.lon = lon
 
@@ -429,7 +430,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 self.move2 = move2
                 self.size = size
                 self.weight = weight
-                self.weather = weather
+                // self.weather = weather
             }
             setPVP()
         }
@@ -1202,7 +1203,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.size = nil
         self.weight = nil
         if weather == 0 && level > 30 {
-            Log.debug(message: "[POKEMON] Pokemon \(id) weather boosted Ditto - reset IV")
+            Log.debug(message: "[POKEMON] Pokemon \(id) weather boosted Ditto - reset IV is needed")
             // self.level = level - 5
             // self.atkIv = nil
             // self.defIv = nil
@@ -1213,9 +1214,9 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             // self.capture3 = nil
             // self.pvpRankingsGreatLeague = nil
             // self.pvpRankingsUltraLeague = nil
-            self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.partlyCloudy.rawValue)
+            // self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.partlyCloudy.rawValue)
         } else {
-            self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.none.rawValue)
+            // self.weather = UInt8(POGOProtos.GameplayWeatherProto.WeatherCondition.none.rawValue)
         }
     }
 
