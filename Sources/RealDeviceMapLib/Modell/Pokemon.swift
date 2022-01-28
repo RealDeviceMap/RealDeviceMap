@@ -855,7 +855,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[POKEMON] Failed to execute query 'save'. (\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[POKEMON] Failed to execute query '\(oldPokemon != nil ? "update" : "insert")'. " +
+                                    "(\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
