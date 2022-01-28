@@ -14,14 +14,14 @@ public class TimedMap<K: Hashable, V> {
     public func setValue(key: K, value: V, time: UInt64) {
         mapLock.lock()
         if map[key] != nil {
-            let lastIndex = map[key]?.lastIndex {value in value.time >= time}
+            let lastIndex = map[key]!.lastIndex {value in value.time >= time}
             if lastIndex != nil {
                 map[key]!.insert((time: time, value: value), at: lastIndex!)
             } else {
                 map[key]!.append((time: time, value: value))
             }
             if map[key]!.count > length {
-                _ = map[key]!.dropFirst()
+                _ = map[key]!.removeFirst()
             }
         } else {
             map[key] = [(time: time, value: value)]
