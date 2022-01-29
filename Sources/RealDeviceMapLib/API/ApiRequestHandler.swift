@@ -2284,6 +2284,7 @@ public class ApiRequestHandler {
                 try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
                 response.respondWithOk()
             } catch {
+                Log.error(message: "[ApiRequestHandler] API request to reQuest was not successful")
                 response.respondWithError(status: .internalServerError)
             }
         } else if assignmentGroupStart && perms.contains(.admin), let name = assignmentGroupName {

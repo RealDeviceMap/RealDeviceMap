@@ -92,6 +92,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "latitude": lat,
                 "longitude": lon,
                 "team": teamId ?? 0,
+                "guard_pokemon_id": guardPokemonId ?? 0,
                 "slots_available": availableSlots ?? 6,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
@@ -241,17 +242,24 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
+        let now = UInt32(Date().timeIntervalSince1970)
+        let powerUpRemaining = UInt32(fortData.powerUpRemainingUntilMs / 1000)
         self.powerUpPoints = UInt32(fortData.locationPoints)
         if fortData.locationPoints < 50 {
             self.powerUpLevel = 0
-        } else if fortData.locationPoints < 100 {
+        } else if fortData.locationPoints < 100 && powerUpRemaining > now {
             self.powerUpLevel = 1
-        } else if fortData.locationPoints < 150 {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if fortData.locationPoints < 150 && powerUpRemaining > now {
             self.powerUpLevel = 2
-        } else {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if powerUpRemaining > now {
             self.powerUpLevel = 3
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else {
+            self.powerUpLevel = 0
         }
-        self.powerUpEndTimestamp = UInt32(fortData.powerUpRemainingUntilMs / 1000)
+
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
@@ -599,10 +607,13 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (available_slots NOT IN ("
-            for _ in excludedAvailableSlots {
-                sqlExcludeCreate += "?, "
+            for index in excludedAvailableSlots.indices {
+                if index == excludedAvailableSlots.count - 1 {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?))"
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
@@ -610,10 +621,13 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePowerUpLevelsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (power_up_level NOT IN ("
-            for _ in excludedPowerUpLevels {
-                sqlExcludeCreate += "?, "
+            for index in excludedPowerUpLevels.indices {
+                if index == excludedPowerUpLevels.count - 1 {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?) AND power_up_end_timestamp >= UNIX_TIMESTAMP())"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 

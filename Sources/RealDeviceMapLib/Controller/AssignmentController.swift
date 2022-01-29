@@ -154,16 +154,26 @@ public class AssignmentController: InstanceControllerDelegate {
     }
 
     func resolveAssignmentChain(assignment: Assignment) -> [String] {
-        var toVisit = [assignment]
+        let assignments = assignments.filter({ $0.enabled == true})
         var result = [Assignment]()
-        let assignments = assignments
+        var toVisit = [assignment]
         while !toVisit.isEmpty {
+            var found = false
             for source in toVisit {
                 for target in assignments.filter({ $0.sourceInstanceName == source.instanceName}) {
-                    toVisit.append(target)
+                    if !toVisit.contains(target) {
+                        toVisit.append(target)
+                    }
                 }
-                result.append(source)
+                if !result.contains(source) {
+                    found = true
+                    result.append(source)
+                }
                 toVisit.remove(at: toVisit.firstIndex(of: source)!)
+            }
+            if !found {
+                // no new source found for result - finished
+                break
             }
         }
         return result.map({ $0.instanceName}) // instances names
