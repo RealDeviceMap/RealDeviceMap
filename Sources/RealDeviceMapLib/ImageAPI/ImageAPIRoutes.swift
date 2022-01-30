@@ -19,6 +19,9 @@ class ImageAPIRoutes {
             }),
             Route(method: .get, uri: "/image-api/gym", handler: { (request, response) in
                 ImageApiRequestHandler.handleGym(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/pokestop", handler: { (request, response) in
+                ImageApiRequestHandler.handlePokestop(request: request, response: response)
             })
         ]
 

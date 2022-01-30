@@ -21,6 +21,8 @@ class ImageApiRequestHandler {
     internal static var gymPathCache = [Gym: File]()
     internal static let raidPathCacheLock = Threading.Lock()
     internal static var raidPathCache = [Raid: File]()
+    internal static let pokestopPathCacheLock = Threading.Lock()
+    internal static var pokestopPathCache = [Pokestop: File]()
 
     // MARK: Pokemon
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
@@ -175,13 +177,98 @@ class ImageApiRequestHandler {
         if raid.hatched { postfixes.append("h") }
         if raid.ex { postfixes.append("ex") }
 
-        let file = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
+        let baseFile = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
 
-        raidPathCacheLock.doWithLock { raidPathCache[raid] = file }
+        raidPathCacheLock.doWithLock { raidPathCache[raid] = baseFile }
+        return baseFile
+    }
+
+    // MARK: Pokestop
+    public static func handlePokestop(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+        let invasionType = request.param(name: "invasion")?.toInt()
+        let questRewardType = request.param(name: "quest_reward_type")?.toInt()
+        let questItemId = request.param(name: "quest_item_id")?.toInt()
+        let questRewardAmount = request.param(name: "quest_reward_amount")?.toInt()
+        let questPokemonId = request.param(name: "quest_pokemon_id")?.toInt()
+        let questFormId = request.param(name: "quest_form_id")?.toInt()
+        let questGenderId = request.param(name: "quest_gender_id")?.toInt()
+        let questCostumeId = request.param(name: "quest_costume_id")?.toInt()
+
+        var pokemon: Pokemon? = nil
+        if questPokemonId != nil {
+            pokemon = Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
+                costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
+        }
+
+        var invasion: Invasion? = nil
+        if invasionType != nil {
+            invasion = Invasion(style: style, id: invasionType!)
+        }
+
+        var reward: Reward? = nil
+        if questRewardType != nil && (questItemId != nil || questPokemonId != nil) {
+            reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
+                type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
+        }
+        let pokestop = Pokestop(style: style, id: id, invasion: invasion, reward: reward, pokemon: pokemon)
+
+        let file = findPokestopImage(pokestop: pokestop)
+        sendFile(response: response, file: file)
+    }
+
+    private static func findPokestopImage(pokestop: Pokestop) -> File? {
+        let existingFile = pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if pokestop.invasionActive { postfixes.append("i") }
+        if pokestop.questActive { postfixes.append("q") }
+        if pokestop.arEligible { postfixes.append("ar") }
+
+        let baseFile = getFirstPath(style: pokestop.style, folder: "pokestop",
+            id: "\(pokestop.id)", postfixes: postfixes)
+        var file: File?
+        if let baseFile = baseFile {
+            file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
+        } else {
+            file = baseFile
+        }
+
+
+        pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
         return file
     }
 
-    // MARK: Utils
+    private static func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File? {
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokestop.style)/generated")
+        if !baseGeneratedPath.exists {
+            try? baseGeneratedPath.create()
+        }
+        let file = File("\(baseGeneratedPath.path)\(pokestop.hash).png")
+        if file.exists { return file }
+
+        let invasionImage = pokestop.invasion != nil ? findInvasionImage(invasion: pokestop.invasion!) : nil
+        let rewardImage = pokestop.reward != nil ? findRewardImage(reward: pokestop.reward!) : nil
+        let pokemonImage = pokestop.pokemon != nil ? findPokemonImage(pokemon: pokestop.pokemon!): nil
+        // TODO images
+        ImageGenerator.buildPokestopImage(baseImage: baseFile.path, invasionImage: invasionImage!.path,
+            rewardImage: rewardImage!.path, pokemonImage: pokemonImage!.path)
+        return file
+    }
+
+    private static func findInvasionImage(invasion: Invasion) -> File? {
+
+    }
+
+    private static func findRewardImage(reward: Reward) -> File? {
+
+    }
+
+        // MARK: Utils
     private static func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
         let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
 
@@ -221,6 +308,7 @@ class ImageApiRequestHandler {
         return possiblePaths.first {$0.exists}
     }
 
+    // MARK: Utils
     private static func sendFile(response: HTTPResponse, file: File?) {
         if let file = file {
             do {
@@ -385,6 +473,8 @@ extension ImageApiRequestHandler {
 
         var uicon: String {
             switch type {
+            case .pokemonEncounter:
+                return "\(id)"
             case .megaResource, .xlCandy, .candy, .item:
                 return "\(id)" + (amount != nil ? "_a\(amount!)" : "")
             case .stardust:

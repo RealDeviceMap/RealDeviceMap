@@ -58,4 +58,8 @@ class ImageGenerator {
         ]).run(environment: magickEnv)
     }
 
+    internal static func buildPokestopImage(baseImage: String, invasionImage: String, rewardImage: String, pokemonImage: String) {
+        // TODO
+    }
+
 }
