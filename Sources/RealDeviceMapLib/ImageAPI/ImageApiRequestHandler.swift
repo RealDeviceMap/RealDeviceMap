@@ -271,8 +271,13 @@ extension ImageApiRequestHandler {
         }
 
         var hash: String {
-            return "\(id)_e\(evolution ?? 0)_f\(form ?? 0)_c\(costume ?? 0)_g\(gender ?? 0)" +
-                   "_st\(spawnType?.rawValue ?? "0")_r\(ranking?.rawValue ?? "0")"
+            return "\(id)" +
+                (evolution != nil ? "_e\(evolution!)" : "") +
+                (form != nil ? "_f\(form!)" : "") +
+                (costume != nil ? "_c\(costume!)" : "") +
+                (gender != nil ? "_g\(gender!)" : "") +
+                (spawnType != nil ? "_st\(spawnType!.rawValue)" : "") +
+                (ranking != nil ? "_r\(ranking!.rawValue)" : "")
         }
     }
 
@@ -294,7 +299,10 @@ extension ImageApiRequestHandler {
         }
 
         var hash: String {
-            return "\(id)_t\(level ?? 0)\(battle ? "_b" : "")\(ex ? "_ex": "")" +
+            return "\(id)" +
+                (level != nil ? "_t\(level!)" : "") +
+                "\(battle ? "_b" : "")" +
+                "\(ex ? "_ex": "")" +
                 "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
                 "\(raidPokemon != nil ? "_p(\(raidPokemon!.hash)" : ""))"
         }
