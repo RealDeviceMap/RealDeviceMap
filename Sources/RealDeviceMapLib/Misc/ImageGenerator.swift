@@ -40,7 +40,7 @@ class ImageGenerator {
         Shell([
             "/usr/local/bin/convert",
             "(", baseImage, "-resize", "96x96", ")",
-            "-gravity", "center",
+            "-gravity", "center"
         ] + markerAgs + [
             image
         ]).run(environment: magickEnv)
