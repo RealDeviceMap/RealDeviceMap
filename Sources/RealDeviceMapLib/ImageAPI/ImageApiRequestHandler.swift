@@ -10,6 +10,7 @@ import Foundation
 import PerfectLib
 import PerfectHTTP
 import PerfectThread
+import POGOProtos
 
 class ImageApiRequestHandler {
 
@@ -347,25 +348,19 @@ extension ImageApiRequestHandler {
 
     struct Pokestop: Hashable {
 
-        enum Reward: Int {
-            case item = 2, stardust = 3, candy = 4, pokemonEncounter = 7, xlCandy = 9, megaResource = 12
-        }
-
         // Standard
         var style: String
         var id: Int // Not lured is ID 0
 
-        var invasionActive: Bool = false
-        var invasion: Int?
-
-        var questActive: Bool = false
-        var rewardType: Reward?
-        var itemId: Int?
-        var pokemon: Pokemon?
-        var amount: Int?
-
         var arEligible: Bool = false
         var sponsor: Bool = false
+        var invasionActive: Bool = false
+        var questActive: Bool = false
+
+        // Generated
+        var invasion: Invasion?
+        var reward: Reward?
+        var pokemon: Pokemon?
 
         var uicon: String {
             "\(id)\(invasionActive ? "_i" : "")\(questActive ? "_q": "")\(arEligible ? "_ar": "")"
@@ -373,10 +368,58 @@ extension ImageApiRequestHandler {
 
         var hash: String { uicon +
             (invasion != nil ? "_in\(invasion!)": "") +
-            (rewardType != nil ? "_r\(rewardType!.rawValue)": "") +
-            (itemId != nil ? "_it\(itemId!)" : "") +
-            (pokemon != nil ? "_p\(pokemon!.uicon)" : "") +
-            (amount != nil ? "_a\(amount!)" : "")
+            (reward != nil ? "_r\(reward!.uicon)": "") +
+            (pokemon != nil ? "_p\(pokemon!.uicon)" : "")
         }
+    }
+
+    struct Reward: Hashable {
+
+        // Standard
+        var style: String
+        var id: Int
+        var amount: Int?
+
+        // Generated
+        var type: POGOProtos.QuestRewardProto.TypeEnum
+
+        var uicon: String {
+            switch type {
+            case .megaResource, .xlCandy, .candy, .item:
+                return "\(id)" + (amount != nil ? "_a\(amount!)" : "")
+            case .stardust:
+                return amount != nil ? "\(amount!)" : "0"
+            default: return ""
+            }
+        }
+
+        var hash: String { uicon }
+    }
+
+    struct Invasion: Hashable {
+
+        // Standard
+        var style: String
+        var id: Int
+
+        var uicon: String { "\(id)" }
+
+        var hash: String { uicon }
+    }
+
+    struct Weather: Hashable {
+
+        // Standard
+        var style: String
+        var id: Int
+        var level: Int?
+        var day: Bool = true
+        var night: Bool = false
+
+        var uicon: String {
+            "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
+        }
+
+        var hash: String { uicon }
     }
 }
