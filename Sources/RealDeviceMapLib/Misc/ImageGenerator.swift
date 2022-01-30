@@ -24,7 +24,7 @@ class ImageGenerator {
         if let spawnTypeImage = spawnTypeImage {
             markerAgs += [
                 "(", spawnTypeImage, "-resize", "48x48", ")",
-                "-gravity", "Center",
+                "-gravity", "center",
                 "-geometry", "-24+24",
                 "-composite"
             ]
@@ -32,7 +32,7 @@ class ImageGenerator {
         if let rankingImage = rankingImage {
             markerAgs += [
                 "(", rankingImage, "-resize", "48x48", ")",
-                "-gravity", "Center",
+                "-gravity", "center",
                 "-geometry", "+24+24",
                 "-composite"
             ]

@@ -76,10 +76,10 @@ class ImageApiRequestHandler {
 
         let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
         let spawnTypeFile = pokemon.spawnType != nil ?
-                File("\(basePath)/misc/spawn_type/\(pokemon.spawnType!.rawValue).png") :
+                File("\(basePath)/misc/\(pokemon.spawnType!.getImageValue()).png") :
                 nil
         let rankingFile = pokemon.ranking != nil ?
-                File("\(basePath)/misc/ranking/\(pokemon.ranking!.rawValue).png") :
+                File("\(basePath)/misc/\(pokemon.ranking!.getImageValue()).png") :
                 nil
 
         ImageGenerator.buildPokemonImage(
@@ -249,9 +249,23 @@ extension ImageApiRequestHandler {
     struct Pokemon: Hashable {
         enum SpawnType: String {
             case cell
+
+            func getImageValue() -> String {
+                switch self {
+                case .cell: return "grass"
+                }
+            }
         }
         enum Ranking: String {
             case first = "1", second = "2", third = "3"
+
+            func getImageValue() -> String {
+                switch self {
+                case .first: return "first"
+                case .second: return "second"
+                case .third: return "third"
+                }
+            }
         }
 
         // Standard
@@ -270,14 +284,16 @@ extension ImageApiRequestHandler {
             return spawnType == nil && ranking == nil
         }
 
-        var hash: String {
-            return "\(id)" +
-                (evolution != nil ? "_e\(evolution!)" : "") +
-                (form != nil ? "_f\(form!)" : "") +
-                (costume != nil ? "_c\(costume!)" : "") +
-                (gender != nil ? "_g\(gender!)" : "") +
-                (spawnType != nil ? "_st\(spawnType!.rawValue)" : "") +
-                (ranking != nil ? "_r\(ranking!.rawValue)" : "")
+        var uicon: String { "\(id)" +
+            (evolution != nil ? "_e\(evolution!)" : "") +
+            (form != nil ? "_f\(form!)" : "") +
+            (costume != nil ? "_c\(costume!)" : "") +
+            (gender != nil ? "_g\(gender!)" : "")
+        }
+
+        var hash: String { uicon +
+            (spawnType != nil ? "_st\(spawnType!.rawValue)" : "") +
+            (ranking != nil ? "_r\(ranking!.rawValue)" : "")
         }
     }
 
@@ -289,6 +305,7 @@ extension ImageApiRequestHandler {
         var level: Int?
         var battle: Bool = false
         var ex: Bool = false
+        var arEligible: Bool = false
 
         // Generated
         var raid: Raid?
@@ -298,13 +315,16 @@ extension ImageApiRequestHandler {
             return raid == nil && raidPokemon == nil
         }
 
-        var hash: String {
-            return "\(id)" +
-                (level != nil ? "_t\(level!)" : "") +
-                "\(battle ? "_b" : "")" +
-                "\(ex ? "_ex": "")" +
-                "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
-                "\(raidPokemon != nil ? "_p(\(raidPokemon!.hash)" : ""))"
+        var uicon: String { "\(id)" +
+            (level != nil ? "_t\(level!)" : "") +
+            "\(battle ? "_b" : "")" +
+            "\(ex ? "_ex": "")" +
+            "\(arEligible ? "_ar": "")"
+        }
+
+        var hash: String { uicon +
+            "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
+            "\(raidPokemon != nil ? "_p(\(raidPokemon!.uicon)" : ""))"
         }
 
     }
@@ -319,10 +339,44 @@ extension ImageApiRequestHandler {
 
         var isStandard: Bool = true
 
-        var hash: String {
-            return "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
+        var uicon: String {
+            "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
         }
-
+        var hash: String { uicon }
     }
 
+    struct Pokestop: Hashable {
+
+        enum Reward: Int {
+            case item = 2, stardust = 3, candy = 4, pokemonEncounter = 7, xlCandy = 9, megaResource = 12
+        }
+
+        // Standard
+        var style: String
+        var id: Int // Not lured is ID 0
+
+        var invasionActive: Bool = false
+        var invasion: Int?
+
+        var questActive: Bool = false
+        var rewardType: Reward?
+        var itemId: Int?
+        var pokemon: Pokemon?
+        var amount: Int?
+
+        var arEligible: Bool = false
+        var sponsor: Bool = false
+
+        var uicon: String {
+            "\(id)\(invasionActive ? "_i" : "")\(questActive ? "_q": "")\(arEligible ? "_ar": "")"
+        }
+
+        var hash: String { uicon +
+            (invasion != nil ? "_in\(invasion!)": "") +
+            (rewardType != nil ? "_r\(rewardType!.rawValue)": "") +
+            (itemId != nil ? "_it\(itemId!)" : "") +
+            (pokemon != nil ? "_p\(pokemon!.uicon)" : "") +
+            (amount != nil ? "_a\(amount!)" : "")
+        }
+    }
 }
