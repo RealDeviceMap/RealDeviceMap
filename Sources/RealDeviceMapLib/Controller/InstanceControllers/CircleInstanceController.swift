@@ -27,6 +27,7 @@ class CircleInstanceController: InstanceControllerProto {
 
     private let type: CircleType
     private let coords: [Coord]
+    private var scanNextCoords: [Coord]
     private var lastIndex: Int = 0
     private var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
@@ -48,6 +49,7 @@ class CircleInstanceController: InstanceControllerProto {
         self.lastCompletedTime = Date()
         self.currentUuidIndexes = [:]
         self.currentUuidSeenTime = [:]
+        self.scanNextCoords = [Coord]()
     }
 
     func routeDistance(xcoord: Int, ycoord: Int) -> Int {
@@ -94,11 +96,18 @@ class CircleInstanceController: InstanceControllerProto {
         return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
     }
 
-    // swiftlint:disable function_body_length
+    // swiftlint:disable function_body_length cyclomatic_complexity
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         var currentIndex = 0
         var currentUuidIndex = 0
         var currentCoord = coords[currentIndex]
+        if !scanNextCoords.isEmpty {
+            lock.lock()
+            currentCoord = scanNextCoords.removeFirst()
+            lock.unlock()
+            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                    "min_level": minLevel, "max_level": maxLevel]
+        }
         if type == .smartPokemon {
             lock.lock()
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
@@ -159,8 +168,8 @@ class CircleInstanceController: InstanceControllerProto {
             }
         }
     }
-    // swiftlint:enable function_body_length
 
+    // swiftlint:enable function_body_length
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))
@@ -226,4 +235,12 @@ class CircleInstanceController: InstanceControllerProto {
         }
     }
 
+    func addToNextCoords(coords: [Coord]) {
+        print("[TMP] add coords to scan next")
+        lock.lock()
+        for coord in coords {
+            scanNextCoords.append(coord)
+        }
+        lock.unlock()
+    }
 }

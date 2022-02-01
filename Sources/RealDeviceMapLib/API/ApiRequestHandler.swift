@@ -2186,7 +2186,7 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.setData) else {
             return
         }
-
+        let jsonDecoder = JSONDecoder()
         let setGymName = request.param(name: "set_gym_name")?.toBool() ?? false
         let gymId = request.param(name: "gym_id")
         let gymName = request.param(name: "gym_name")
@@ -2203,6 +2203,13 @@ public class ApiRequestHandler {
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
+
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let coordsJsonString = request.param(name: "coords")
+        let lat = request.param(name: "lat")?.toDouble()
+        let lon = request.param(name: "lon")?.toDouble()
+        let coords = try? jsonDecoder.decode([Coord].self, from: coordsJsonString?.data(using: .utf8) ?? Data())
+        print("[TMP] coords [Coord]: \(String(describing: coords))")
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2298,6 +2305,25 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if scanNext && perms.contains(.admin), let name = instanceName, let coords = coords {
+            Log.info(message: "[ApiRequestHandler] API request to scan next coordinates at \(name)")
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
+                as? CircleInstanceController else {
+                    return response.respondWithError(status: .notFound)
+            }
+            if !coords.isEmpty {
+                instance.addToNextCoords(coords: coords)
+            }
+            response.respondWithOk()
+        } else if scanNext && perms.contains(.admin), let name = instanceName, let lat = lat, let lon = lon {
+            Log.info(message: "[ApiRequestHandler] API request to scan next coordinate at \(name)")
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
+                as? CircleInstanceController else {
+                return response.respondWithError(status: .notFound)
+            }
+            let coords = [Coord(lat: lat, lon: lon)]
+            instance.addToNextCoords(coords: coords)
+            response.respondWithOk()
         } else {
             response.respondWithError(status: .badRequest)
         }
