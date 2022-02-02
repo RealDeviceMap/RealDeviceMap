@@ -2205,11 +2205,8 @@ public class ApiRequestHandler {
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
-        let coordsJsonString = request.param(name: "coords")
-        let lat = request.param(name: "lat")?.toDouble()
-        let lon = request.param(name: "lon")?.toDouble()
-        let coords = try? jsonDecoder.decode([Coord].self, from: coordsJsonString?.data(using: .utf8) ?? Data())
-        print("[TMP] coords [Coord]: \(String(describing: coords))")
+        let coords = try? jsonDecoder.decode([Coord].self,
+            from: request.param(name: "coords")?.data(using: .utf8) ?? Data())
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2309,20 +2306,14 @@ public class ApiRequestHandler {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates at \(name)")
             guard let instance = InstanceController.global.getInstanceController(instanceName: name)
                 as? CircleInstanceController else {
-                    return response.respondWithError(status: .notFound)
+                    return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            }
+            if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name).isEmpty {
+                return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
             if !coords.isEmpty {
                 instance.addToNextCoords(coords: coords)
             }
-            response.respondWithOk()
-        } else if scanNext && perms.contains(.admin), let name = instanceName, let lat = lat, let lon = lon {
-            Log.info(message: "[ApiRequestHandler] API request to scan next coordinate at \(name)")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
-                as? CircleInstanceController else {
-                return response.respondWithError(status: .notFound)
-            }
-            let coords = [Coord(lat: lat, lon: lon)]
-            instance.addToNextCoords(coords: coords)
             response.respondWithOk()
         } else {
             response.respondWithError(status: .badRequest)
