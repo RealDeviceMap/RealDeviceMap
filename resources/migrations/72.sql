@@ -32,7 +32,7 @@ FROM (
     select distinct n.num as id, json_unquote(
         json_extract(CONCAT('["', REPLACE((SELECT `value` FROM `metadata` WHERE `key` = 'WEBHOOK_URLS'),
             '&semi', '", "'), '"]'), concat('$[', n.num, ']'))) url
-    from metadata m inner join (select 0 num union all select 1 union all select 2) n
+    from metadata m inner join (select 0 num union all select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all select 6 union all select 7 union all select 8 union all select 9) n
         on n.num < json_length(
             CONCAT('["', REPLACE((SELECT `value` FROM `metadata` WHERE `key` = 'WEBHOOK_URLS'),
                 '&semi', '", "'), '"]'))
