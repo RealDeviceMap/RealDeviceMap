@@ -2303,12 +2303,14 @@ public class ApiRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
         } else if scanNext && perms.contains(.admin), let name = instanceName, let coords = coords {
-            Log.info(message: "[ApiRequestHandler] API request to scan next coordinates at \(name)")
+            Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
             guard let instance = InstanceController.global.getInstanceController(instanceName: name)
                 as? CircleInstanceController else {
+                    Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
                     return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
             }
             if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name).isEmpty {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
             if !coords.isEmpty {
