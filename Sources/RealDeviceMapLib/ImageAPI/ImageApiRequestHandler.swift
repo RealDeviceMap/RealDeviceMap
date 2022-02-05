@@ -518,7 +518,7 @@ extension ImageApiRequestHandler {
         }
 
         var hash: String { uicon +
-            (invasion != nil ? "_in\(invasion!)": "") +
+            (invasion != nil ? "_in\(invasion!.uicon)": "") +
             (reward != nil ? "_r\(reward!.uicon)": "") +
             (pokemon != nil ? "_p\(pokemon!.uicon)" : "")
         }
