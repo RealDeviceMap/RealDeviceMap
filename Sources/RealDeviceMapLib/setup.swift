@@ -17,7 +17,8 @@ import Backtrace
 public func setupRealDeviceMap() {
     Backtrace.install()
 
-    let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "info"
+    let environment = ProcessInfo.processInfo.environment
+    let logLevel = environment["LOG_LEVEL"]?.lowercased() ?? "info"
     Log.even = true
     Log.setThreshold(value: logLevel)
     Log.info(message: "[MAIN] Getting Version")
@@ -45,10 +46,9 @@ public func setupRealDeviceMap() {
     _ = DBController.global
 
     // Init MemoryCache
-    if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
-        let memoryCacheClearInterval = ProcessInfo.processInfo
-            .environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
-        let memoryCacheKeepTime = ProcessInfo.processInfo.environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    if environment["NO_MEMORY_CACHE"] == nil {
+        let memoryCacheClearInterval = environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
+        let memoryCacheKeepTime = environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
@@ -193,7 +193,7 @@ public func setupRealDeviceMap() {
 
     // disable image generation, no Frontend is used
     let noGenerateImages =
-        ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
+        environment["NO_GENERATE_IMAGES"] != nil
     // Load Forms
     if !noGenerateImages {
         Log.info(message: "[MAIN] Loading Available Forms")
@@ -226,10 +226,10 @@ public func setupRealDeviceMap() {
     }
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
-    Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
-    Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
-    Pokemon.noCellPokemon = ProcessInfo.processInfo.environment["NO_CELL_POKEMON"] != nil
-    InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
+    Pokemon.noPVP = environment["NO_PVP"] != nil
+    Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
+    Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
+    InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil
 
     if !Pokemon.noPVP {
         Log.info(message: "[MAIN] Getting PVP Stats")
@@ -284,6 +284,8 @@ public func setupRealDeviceMap() {
     startupServerContext = nil
 
     ApiRequestHandler.start = Date()
+    ImageApiRequestHandler.defaultIconSet = environment["DEFAULT_ICON_SET"]
+        ?? "Shuffle" // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
 
     Log.info(message: "[MAIN] Starting Webservers")
     do {

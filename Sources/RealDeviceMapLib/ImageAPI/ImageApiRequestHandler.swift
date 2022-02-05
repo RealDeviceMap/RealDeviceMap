@@ -202,18 +202,18 @@ class ImageApiRequestHandler {
         let questGenderId = request.param(name: "quest_gender_id")?.toInt()
         let questCostumeId = request.param(name: "quest_costume_id")?.toInt()
 
-        var pokemon: Pokemon? = nil
+        var pokemon: Pokemon?
         if questPokemonId != nil {
             pokemon = Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
                 costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
         }
 
-        var invasion: Invasion? = nil
+        var invasion: Invasion?
         if invasionType != nil {
             invasion = Invasion(style: style, id: invasionType!)
         }
 
-        var reward: Reward? = nil
+        var reward: Reward?
         if questRewardType != nil && (questItemId != nil || questPokemonId != nil) {
             reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
                 type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
