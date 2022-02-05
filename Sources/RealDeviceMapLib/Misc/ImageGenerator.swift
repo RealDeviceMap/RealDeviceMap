@@ -46,7 +46,9 @@ class ImageGenerator {
         ]).run(environment: magickEnv)
     }
 
-    internal static func buildRaidImage(baseImage: String, raidImage: String, image: String) {
+    internal static func buildRaidImage(
+        baseImage: String, raidImage: String, image: String
+    ) {
         Shell([
             "/usr/local/bin/convert",
             "(", raidImage, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", ")",
@@ -58,8 +60,32 @@ class ImageGenerator {
         ]).run(environment: magickEnv)
     }
 
-    internal static func buildPokestopImage(baseImage: String, invasionImage: String, rewardImage: String, pokemonImage: String) {
-        // TODO
+    internal static func buildPokestopImage(
+        baseImage: String, image: String, invasionImage: String?, rewardImage: String?
+    ) {
+        var markerAgs = [String]()
+        if let invasionImage = invasionImage {
+            markerAgs += [
+                "(", invasionImage, "-resize", "48x48", ")",
+                "-gravity", "center",
+                "-geometry", "-24+24",
+                "-composite"
+            ]
+        }
+        if let rewardImage = rewardImage {
+            markerAgs += [
+                "(", rewardImage, "-resize", "48x48", ")",
+                "-gravity", "center",
+                "-composite"
+            ]
+        }
+        Shell([
+            "/usr/local/bin/convert",
+            "(", baseImage, "-resize", "96x96", ")",
+            "-gravity", "center"
+        ] + markerAgs + [
+            image
+        ]).run(environment: magickEnv)
     }
 
 }

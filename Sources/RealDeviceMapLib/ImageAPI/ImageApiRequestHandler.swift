@@ -23,6 +23,10 @@ class ImageApiRequestHandler {
     internal static var raidPathCache = [Raid: File]()
     internal static let pokestopPathCacheLock = Threading.Lock()
     internal static var pokestopPathCache = [Pokestop: File]()
+    internal static let invasionPathCacheLock = Threading.Lock()
+    internal static var invasionPathCache = [Invasion: File]()
+    internal static let rewardPathCacheLock = Threading.Lock()
+    internal static var rewardPathCache = [Reward: File]()
 
     // MARK: Pokemon
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
@@ -74,7 +78,7 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)\(pokemon.hash).png")
+        let file = File("\(baseGeneratedPath.path)/pokemon/\(pokemon.hash).png")
         if file.exists { return file }
 
         let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
@@ -154,7 +158,7 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)\(gym.hash).png")
+        let file = File("\(baseGeneratedPath.path)/gym/\(gym.hash).png")
         if file.exists { return file }
 
         let raidImage = gym.raid != nil ? findRaidImage(raid: gym.raid!) : nil
@@ -238,7 +242,6 @@ class ImageApiRequestHandler {
             file = baseFile
         }
 
-
         pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
         return file
     }
@@ -248,24 +251,67 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)\(pokestop.hash).png")
+        let file = File("\(baseGeneratedPath.path)/pokestop/\(pokestop.hash).png")
         if file.exists { return file }
 
         let invasionImage = pokestop.invasion != nil ? findInvasionImage(invasion: pokestop.invasion!) : nil
-        let rewardImage = pokestop.reward != nil ? findRewardImage(reward: pokestop.reward!) : nil
-        let pokemonImage = pokestop.pokemon != nil ? findPokemonImage(pokemon: pokestop.pokemon!): nil
-        // TODO images
-        ImageGenerator.buildPokestopImage(baseImage: baseFile.path, invasionImage: invasionImage!.path,
-            rewardImage: rewardImage!.path, pokemonImage: pokemonImage!.path)
+        let rewardImage = pokestop.reward != nil
+            ? findRewardImage(reward: pokestop.reward!, pokemon: pokestop.pokemon)
+            : nil
+
+        if invasionImage == nil && rewardImage == nil {
+            return baseFile
+        }
+        ImageGenerator.buildPokestopImage(baseImage: baseFile.path,
+            image: file.path,
+            invasionImage: invasionImage != nil && invasionImage!.exists ? invasionImage!.path : nil,
+            rewardImage: rewardImage != nil && rewardImage!.exists ? rewardImage!.path : nil
+        )
         return file
     }
 
     private static func findInvasionImage(invasion: Invasion) -> File? {
+        let existingFile = invasionPathCacheLock.doWithLock { invasionPathCache[invasion] }
+        if existingFile != nil { return existingFile }
 
+        let baseFile = getFirstPath(style: invasion.style, folder: "invasion", id: "\(invasion.id)", postfixes: [])
+
+        invasionPathCacheLock.doWithLock { invasionPathCache[invasion] = baseFile }
+        return baseFile
     }
 
-    private static func findRewardImage(reward: Reward) -> File? {
+    private static func findRewardImage(reward: Reward, pokemon: Pokemon?) -> File? {
+        let existingFile = rewardPathCacheLock.doWithLock { rewardPathCache[reward] }
+        if existingFile != nil { return existingFile }
 
+        var postfixes: [String] = []
+        if reward.amount != nil { postfixes.append("a") }
+
+        let baseFile: File?
+        if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter {
+            baseFile = findPokemonImage(pokemon: pokemon!)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/candy",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.xlCandy {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resources",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/item",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
+                id: "\(reward.id)", postfixes: [])
+        }
+
+        rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
+        return baseFile
     }
 
         // MARK: Utils
