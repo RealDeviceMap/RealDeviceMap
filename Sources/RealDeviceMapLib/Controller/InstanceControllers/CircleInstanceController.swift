@@ -101,15 +101,14 @@ class CircleInstanceController: InstanceControllerProto {
         var currentIndex = 0
         var currentUuidIndex = 0
         var currentCoord = coords[currentIndex]
+        lock.lock()
         if !scanNextCoords.isEmpty {
-            lock.lock()
             currentCoord = scanNextCoords.removeFirst()
             lock.unlock()
             return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
         }
         if type == .smartPokemon {
-            lock.lock()
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
             currentUuidIndexes[uuid] = currentUuidIndex
             currentUuidSeenTime[uuid] = Date()
@@ -148,7 +147,6 @@ class CircleInstanceController: InstanceControllerProto {
             return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
         } else {
-            lock.lock()
             currentIndex = self.lastIndex
             if lastIndex + 1 == coords.count {
                 lastLastCompletedTime = lastCompletedTime
