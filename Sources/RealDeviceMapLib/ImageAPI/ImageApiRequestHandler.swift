@@ -321,7 +321,7 @@ class ImageApiRequestHandler {
                 id: "\(reward.id)", postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
             baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: "\(reward.amount ?? reward.id)", postfixes: postfixes)
         } else {
             baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
                 id: "\(reward.id)", postfixes: [])
