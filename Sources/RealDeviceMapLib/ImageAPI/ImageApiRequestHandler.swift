@@ -314,7 +314,7 @@ class ImageApiRequestHandler {
             baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
                 id: "\(reward.id)", postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resources",
+            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resource",
                 id: "\(reward.id)", postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
             baseFile = getFirstPath(style: reward.style, folder: "reward/item",
