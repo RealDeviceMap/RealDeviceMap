@@ -298,9 +298,9 @@ class ImageApiRequestHandler {
 
         var postfixes: [String] = []
         if reward.amount != nil { postfixes.append("a") }
-
+        print("[TMP] find reward image: \(String(describing: reward)) | pokemon: \(String(describing: pokemon))")
         let baseFile: File?
-        if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter {
+        if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
             baseFile = findPokemonImage(pokemon: pokemon!)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
             baseFile = getFirstPath(style: reward.style, folder: "reward/candy",

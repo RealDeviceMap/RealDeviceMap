@@ -300,4 +300,5 @@ public func setupRealDeviceMap() {
         Log.critical(message: message)
         fatalError(message)
     }
+    Log.info(message: "[MAIN] Running ...")
 }
