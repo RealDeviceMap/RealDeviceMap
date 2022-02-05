@@ -2313,10 +2313,19 @@ public class ApiRequestHandler {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
+            var size = 0
             if !coords.isEmpty {
-                instance.addToNextCoords(coords: coords)
+                size = instance.addToNextCoords(coords: coords)
             }
-            response.respondWithOk()
+            do {
+                try response.respondWithData(data: [
+                    "action": "next_scan",
+                    "queue_size": size
+                ])
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+
         } else {
             response.respondWithError(status: .badRequest)
         }

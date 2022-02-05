@@ -233,13 +233,15 @@ class CircleInstanceController: InstanceControllerProto {
         }
     }
 
-    func addToNextCoords(coords: [Coord]) {
+    func addToNextCoords(coords: [Coord]) -> Int {
         let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
         Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
         lock.lock()
         for coord in coords {
             scanNextCoords.append(coord)
         }
+        let size = scanNextCoords.count
         lock.unlock()
+        return size
     }
 }
