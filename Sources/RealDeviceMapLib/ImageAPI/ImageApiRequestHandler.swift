@@ -168,7 +168,7 @@ class ImageApiRequestHandler {
             return baseFile
         }
 
-        ImageGenerator.buildRaidImage(baseImage: baseFile.path, raidImage: usedRaidImage.path, image: file.path)
+        ImageGenerator.buildRaidImage(baseImage: baseFile.path, image: file.path, raidImage: usedRaidImage.path)
         return file
     }
 

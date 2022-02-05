@@ -47,7 +47,7 @@ class ImageGenerator {
     }
 
     internal static func buildRaidImage(
-        baseImage: String, raidImage: String, image: String
+        baseImage: String, image: String, raidImage: String
     ) {
         Shell([
             "/usr/local/bin/convert",
