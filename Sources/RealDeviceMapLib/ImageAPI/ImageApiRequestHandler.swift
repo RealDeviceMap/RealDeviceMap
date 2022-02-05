@@ -217,16 +217,21 @@ class ImageApiRequestHandler {
         }
 
         var invasion: Invasion?
+        var invasionActive = false
         if invasionType != nil {
             invasion = Invasion(style: style, id: invasionType!)
+            invasionActive = true
         }
 
         var reward: Reward?
+        var questActive = false
         if questRewardType != nil && (questItemId != nil || questPokemonId != nil) {
             reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
                 type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
+            questActive = true
         }
-        let pokestop = Pokestop(style: style, id: id, invasion: invasion, reward: reward, pokemon: pokemon)
+        let pokestop = Pokestop(style: style, id: id, invasionActive: invasionActive, questActive: questActive,
+            invasion: invasion, reward: reward, pokemon: pokemon)
 
         let file = findPokestopImage(pokestop: pokestop)
         sendFile(response: response, file: file)
