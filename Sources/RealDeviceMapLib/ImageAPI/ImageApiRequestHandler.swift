@@ -162,7 +162,7 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let gymPath = Dir("\(baseGeneratedPath.path)pokemon")
+        let gymPath = Dir("\(baseGeneratedPath.path)gym")
         if !gymPath.exists {
             try? gymPath.create()
         }
@@ -259,7 +259,7 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let pokestopPath = Dir("\(baseGeneratedPath.path)pokemon")
+        let pokestopPath = Dir("\(baseGeneratedPath.path)pokestop")
         if !pokestopPath.exists {
             try? pokestopPath.create()
         }
