@@ -68,7 +68,6 @@ class ImageGenerator {
             markerAgs += [
                 "(", invasionImage, "-resize", "48x48", ")",
                 "-gravity", "center",
-                "-geometry", "-24+24",
                 "-composite"
             ]
         }
@@ -76,6 +75,7 @@ class ImageGenerator {
             markerAgs += [
                 "(", rewardImage, "-resize", "48x48", ")",
                 "-gravity", "center",
+                "-geometry", "+24+24",
                 "-composite"
             ]
         }
