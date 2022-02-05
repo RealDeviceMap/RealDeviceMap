@@ -76,7 +76,7 @@ class ImageGenerator {
             markerAgs += [
                 "(", rewardImage, "-resize", "48x48", ")",
                 "-gravity", "center",
-                "-geometry", "+24+24",
+                "-geometry", "+24-24",
                 "-composite"
             ]
         }
