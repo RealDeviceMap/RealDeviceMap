@@ -286,7 +286,7 @@ public func setupRealDeviceMap() {
     ApiRequestHandler.start = Date()
     ImageApiRequestHandler.defaultIconSet = environment["DEFAULT_ICON_SET"]
         ?? "Shuffle" // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
-
+    Log.info(message: "[MAIN] Setup during startup finished ...")
     Log.info(message: "[MAIN] Starting Webservers")
     do {
         try HTTPServer.launch(
@@ -300,5 +300,4 @@ public func setupRealDeviceMap() {
         Log.critical(message: message)
         fatalError(message)
     }
-    Log.info(message: "[MAIN] Running ...")
 }

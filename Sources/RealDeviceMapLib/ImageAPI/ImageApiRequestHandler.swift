@@ -225,7 +225,7 @@ class ImageApiRequestHandler {
 
         var reward: Reward?
         var questActive = false
-        if questRewardType != nil && (questItemId != nil || questPokemonId != nil) {
+        if questRewardType != nil {
             reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
                 type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             questActive = true
