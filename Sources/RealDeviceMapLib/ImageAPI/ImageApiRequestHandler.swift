@@ -74,11 +74,15 @@ class ImageApiRequestHandler {
     }
 
     private static func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
-        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated")
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated/")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)/pokemon/\(pokemon.hash).png")
+        let pokemonPath = Dir("\(baseGeneratedPath.path)pokemon")
+        if !pokemonPath.exists {
+            try? pokemonPath.create()
+        }
+        let file = File("\(pokemonPath.path)\(pokemon.hash).png")
         if file.exists { return file }
 
         let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
@@ -158,7 +162,11 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)/gym/\(gym.hash).png")
+        let gymPath = Dir("\(baseGeneratedPath.path)pokemon")
+        if !gymPath.exists {
+            try? gymPath.create()
+        }
+        let file = File("\(gymPath.path)\(gym.hash).png")
         if file.exists { return file }
 
         let raidImage = gym.raid != nil ? findRaidImage(raid: gym.raid!) : nil
@@ -251,7 +259,11 @@ class ImageApiRequestHandler {
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
         }
-        let file = File("\(baseGeneratedPath.path)/pokestop/\(pokestop.hash).png")
+        let pokestopPath = Dir("\(baseGeneratedPath.path)pokemon")
+        if !pokestopPath.exists {
+            try? pokestopPath.create()
+        }
+        let file = File("\(pokestopPath.path)\(pokestop.hash).png")
         if file.exists { return file }
 
         let invasionImage = pokestop.invasion != nil ? findInvasionImage(invasion: pokestop.invasion!) : nil
