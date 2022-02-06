@@ -2306,7 +2306,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="row">' + // START 2ND ROW
         '<div class="' + (hasIV ? 'col-6 col-md-4' : 'col text-center') + '">' +
             '<div class="row' + (hasIV ? '' : 'text-center') + '" style="margin: auto;">' +
-                '<img src="data:image/png;base64,' + pokemonIcon + '" height="64" width="64">' +
+                '<img src="' + pokemonIcon + '" height="64" width="64">' +
             '</div>' + // END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">'
   var pkmn = pokemonDb[pokemon.pokemon_id]
@@ -2715,7 +2715,7 @@ function getGymPopupContent (gym) {
             '<div class="col-6 col-md-4">' + // START 1ST COL
                 '<div class="row" style="margin:auto;">'
     if (hasRaidBoss && isRaidBattle) {
-      content += '<img src="/static/img/' + pokemonIcon + '" "height="64" width="64">'
+      content += '<img src="' + pokemonIcon + '" "height="64" width="64">'
     } else {
       content += '<img src="/static/img/egg/' + gym.raid_level + '.png" height="64" width="64">'
     }
@@ -4659,7 +4659,7 @@ function getPokemonIcon(pokemonId, pokemonForm, pokemonCostume, pokemonGender, p
     contentType: 'image/png',
     type: 'get',
     success: function(data) {
-      return data
+      return 'data:image/png;base64,' + data
     },
     error: function(xhr) {
       console.error('/image-api/pokemon returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
