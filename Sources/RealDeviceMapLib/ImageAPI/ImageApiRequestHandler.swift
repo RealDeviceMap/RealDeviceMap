@@ -131,7 +131,7 @@ class ImageApiRequestHandler {
         if questRewardType != nil {
             reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
                 type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
-            questActive = true
+            // questActive = true // separate icon with different color
         }
         let pokestop = Pokestop(style: style, id: id, invasionActive: invasionActive, questActive: questActive,
             invasion: invasion, reward: reward, pokemon: pokemon)
@@ -533,8 +533,8 @@ extension ImageApiRequestHandler {
             "\(arEligible ? "_ar": "")"
         }
         var hash: String { uicon +
-            "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
-            "\(raidPokemon != nil ? "_p(\(raidPokemon!.uicon)" : ""))"
+            "\(raid != nil && raidPokemon == nil ? "_r\(raid!.uicon)" : "")" +
+            "\(raidPokemon != nil ? "_p\(raidPokemon!.uicon)" : "")"
         }
 
     }
