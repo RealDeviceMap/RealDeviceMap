@@ -3,6 +3,7 @@
 //  RealDeviceMapLib
 //
 //  Created by Florian Kostenzer on 05.09.21.
+//  Updated by Fabio on 06.02.21.
 //
 //  swiftlint:disable superfluous_disable_command file_length type_body_length
 
@@ -15,94 +16,26 @@ import POGOProtos
 class ImageApiRequestHandler {
 
     internal static var defaultIconSet: String?
-    internal static let pokemonPathCacheLock = Threading.Lock()
-    internal static var pokemonPathCache = [Pokemon: File]()
     internal static let gymPathCacheLock = Threading.Lock()
     internal static var gymPathCache = [Gym: File]()
-    internal static let raidPathCacheLock = Threading.Lock()
-    internal static var raidPathCache = [Raid: File]()
-    internal static let pokestopPathCacheLock = Threading.Lock()
-    internal static var pokestopPathCache = [Pokestop: File]()
     internal static let invasionPathCacheLock = Threading.Lock()
     internal static var invasionPathCache = [Invasion: File]()
+    internal static let miscPathCacheLock = Threading.Lock()
+    internal static var miscPathCache = [Misc: File]()
+    internal static let pokemonPathCacheLock = Threading.Lock()
+    internal static var pokemonPathCache = [Pokemon: File]()
+    internal static let pokestopPathCacheLock = Threading.Lock()
+    internal static var pokestopPathCache = [Pokestop: File]()
+    internal static let raidPathCacheLock = Threading.Lock()
+    internal static var raidPathCache = [Raid: File]()
     internal static let rewardPathCacheLock = Threading.Lock()
     internal static var rewardPathCache = [Reward: File]()
+    internal static let typePathCacheLock = Threading.Lock()
+    internal static var typePathCache = [Type: File]()
+    internal static let weatherPathCacheLock = Threading.Lock()
+    internal static var weatherPathCache = [Weather: File]()
 
-    // MARK: Pokemon
-    public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
-            return response.respondWithError(status: .badRequest)
-        }
-
-        let evolution = request.param(name: "evolution")?.toInt()
-        let form = request.param(name: "form")?.toInt()
-        let costume = request.param(name: "costume")?.toInt()
-        let gender = request.param(name: "gender")?.toInt()
-        let spawnType = Pokemon.SpawnType(rawValue: request.param(name: "spawn_type") ?? "")
-        let ranking = Pokemon.Ranking(rawValue: request.param(name: "ranking") ?? "")
-
-        let pokemon = Pokemon(
-            style: style, id: id, evolution: evolution, form: form, costume: costume, gender: gender,
-                spawnType: spawnType, ranking: ranking
-        )
-        let file = findPokemonImage(pokemon: pokemon)
-        sendFile(response: response, file: file)
-    }
-
-    private static func findPokemonImage(pokemon: Pokemon) -> File? {
-        let existingFile = pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] }
-        if existingFile != nil { return existingFile }
-
-        var postfixes: [String] = []
-        if let evolution = pokemon.evolution { postfixes.append("e\(evolution)") }
-        if let form = pokemon.form { postfixes.append("f\(form)") }
-        if let costume = pokemon.costume { postfixes.append("c\(costume)") }
-        if let gender = pokemon.gender { postfixes.append("g\(gender)") }
-
-        let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
-        let file: File?
-        // TODO: always generate even if only for resizing
-        if let baseFile = baseFile, !pokemon.isStandard {
-            file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
-        } else {
-            file = baseFile
-        }
-
-        pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] = file }
-        return file
-    }
-
-    private static func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
-        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated/")
-        if !baseGeneratedPath.exists {
-            try? baseGeneratedPath.create()
-        }
-        let pokemonPath = Dir("\(baseGeneratedPath.path)pokemon")
-        if !pokemonPath.exists {
-            try? pokemonPath.create()
-        }
-        let file = File("\(pokemonPath.path)\(pokemon.hash).png")
-        if file.exists { return file }
-
-        let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
-        let spawnTypeFile = pokemon.spawnType != nil ?
-                File("\(basePath)/misc/\(pokemon.spawnType!.getImageValue()).png") :
-                nil
-        let rankingFile = pokemon.ranking != nil ?
-                File("\(basePath)/misc/\(pokemon.ranking!.getImageValue()).png") :
-                nil
-
-        ImageGenerator.buildPokemonImage(
-            baseImage: baseFile.path,
-            image: file.path,
-            spawnTypeImage: spawnTypeFile != nil && spawnTypeFile!.exists ? spawnTypeFile!.path : nil,
-            rankingImage: rankingFile != nil && rankingFile!.exists ? rankingFile!.path : nil
-        )
-        return file
-    }
-
-    // MARK: Gym
+    // MARK: handle request
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
               let id = request.param(name: "id")?.toInt() else {
@@ -135,67 +68,37 @@ class ImageApiRequestHandler {
         sendFile(response: response, file: file)
     }
 
-    private static func findGymImage(gym: Gym) -> File? {
-        let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
-        if existingFile != nil { return existingFile }
-
-        var postfixes: [String] = []
-        if let level = gym.level { postfixes.append("t\(level)") }
-        if gym.battle { postfixes.append("b") }
-        if gym.ex { postfixes.append("ex") }
-
-        let baseFile = getFirstPath(style: gym.style, folder: "gym", id: "\(gym.id)", postfixes: postfixes)
-        let file: File?
-        // TODO: always generate even if only for resizing
-        if let baseFile = baseFile, !gym.isStandard {
-            file = buildGymImage(gym: gym, baseFile: baseFile)
-        } else {
-            file = baseFile
+    public static func handleMisc(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id") else {
+            return response.respondWithError(status: .badRequest)
         }
-
-        gymPathCacheLock.doWithLock { gymPathCache[gym] = file }
-        return file
+        let misc = Misc(style: style, id: id)
+        let file = findMiscImage(misc: misc)
+        sendFile(response: response, file: file)
     }
 
-    private static func buildGymImage(gym: Gym, baseFile: File) -> File? {
-        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(gym.style)/generated")
-        if !baseGeneratedPath.exists {
-            try? baseGeneratedPath.create()
-        }
-        let gymPath = Dir("\(baseGeneratedPath.path)gym")
-        if !gymPath.exists {
-            try? gymPath.create()
-        }
-        let file = File("\(gymPath.path)\(gym.hash).png")
-        if file.exists { return file }
-
-        let raidImage = gym.raid != nil ? findRaidImage(raid: gym.raid!) : nil
-        let raidPokemonImage = gym.raidPokemon != nil ? findPokemonImage(pokemon: gym.raidPokemon!) : nil
-
-        guard let usedRaidImage = raidPokemonImage ?? raidImage else {
-            return baseFile
+    public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
         }
 
-        ImageGenerator.buildRaidImage(baseImage: baseFile.path, image: file.path, raidImage: usedRaidImage.path)
-        return file
+        let evolution = request.param(name: "evolution")?.toInt()
+        let form = request.param(name: "form")?.toInt()
+        let costume = request.param(name: "costume")?.toInt()
+        let gender = request.param(name: "gender")?.toInt()
+        let spawnType = Pokemon.SpawnType(rawValue: request.param(name: "spawn_type") ?? "")
+        let ranking = Pokemon.Ranking(rawValue: request.param(name: "ranking") ?? "")
+
+        let pokemon = Pokemon(
+            style: style, id: id, evolution: evolution, form: form, costume: costume, gender: gender,
+                spawnType: spawnType, ranking: ranking
+        )
+        let file = findPokemonImage(pokemon: pokemon)
+        sendFile(response: response, file: file)
     }
 
-    // MARK: Raid
-    private static func findRaidImage(raid: Raid) -> File? {
-        let existingFile = raidPathCacheLock.doWithLock { raidPathCache[raid] }
-        if existingFile != nil { return existingFile }
-
-        var postfixes: [String] = []
-        if raid.hatched { postfixes.append("h") }
-        if raid.ex { postfixes.append("ex") }
-
-        let baseFile = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
-
-        raidPathCacheLock.doWithLock { raidPathCache[raid] = baseFile }
-        return baseFile
-    }
-
-    // MARK: Pokestop
     public static func handlePokestop(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
               let id = request.param(name: "id")?.toInt() else {
@@ -237,6 +140,91 @@ class ImageApiRequestHandler {
         sendFile(response: response, file: file)
     }
 
+    public static func handleType(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+
+        let type = Type(style: style, id: id)
+        let file = findTypeImage(type: type)
+        sendFile(response: response, file: file)
+    }
+
+    public static func handleWeather(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+        let weather = Weather(style: style, id: id)
+        let file = findWeatherImage(weather: weather)
+        sendFile(response: response, file: file)
+    }
+
+    // MARK: find Images
+    private static func findGymImage(gym: Gym) -> File? {
+        let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if let level = gym.level { postfixes.append("t\(level)") }
+        if gym.battle { postfixes.append("b") }
+        if gym.ex { postfixes.append("ex") }
+
+        let baseFile = getFirstPath(style: gym.style, folder: "gym", id: "\(gym.id)", postfixes: postfixes)
+        let file: File?
+        if let baseFile = baseFile {
+            file = buildGymImage(gym: gym, baseFile: baseFile)
+        } else {
+            file = nil
+        }
+
+        gymPathCacheLock.doWithLock { gymPathCache[gym] = file }
+        return file
+    }
+
+    private static func findInvasionImage(invasion: Invasion) -> File? {
+        let existingFile = invasionPathCacheLock.doWithLock { invasionPathCache[invasion] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: invasion.style, folder: "invasion", id: "\(invasion.id)", postfixes: [])
+
+        invasionPathCacheLock.doWithLock { invasionPathCache[invasion] = baseFile }
+        return baseFile
+    }
+
+    private static func findMiscImage(misc: Misc) -> File? {
+        let existingFile = miscPathCacheLock.doWithLock { miscPathCache[misc] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: misc.style, folder: "misc", id: misc.id, postfixes: [])
+
+        miscPathCacheLock.doWithLock { miscPathCache[misc] = baseFile }
+        return baseFile
+    }
+
+    private static func findPokemonImage(pokemon: Pokemon) -> File? {
+        let existingFile = pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if let evolution = pokemon.evolution { postfixes.append("e\(evolution)") }
+        if let form = pokemon.form { postfixes.append("f\(form)") }
+        if let costume = pokemon.costume { postfixes.append("c\(costume)") }
+        if let gender = pokemon.gender { postfixes.append("g\(gender)") }
+
+        let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
+        let file: File?
+        if let baseFile = baseFile {
+            file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
+        } else {
+            file = nil
+        }
+
+        pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] = file }
+        return file
+    }
+
     private static func findPokestopImage(pokestop: Pokestop) -> File? {
         let existingFile = pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] }
         if existingFile != nil { return existingFile }
@@ -252,10 +240,130 @@ class ImageApiRequestHandler {
         if let baseFile = baseFile {
             file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
         } else {
-            file = baseFile
+            file = nil
         }
 
         pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
+        return file
+    }
+
+    private static func findRaidImage(raid: Raid) -> File? {
+        let existingFile = raidPathCacheLock.doWithLock { raidPathCache[raid] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if raid.hatched { postfixes.append("h") }
+        if raid.ex { postfixes.append("ex") }
+
+        let baseFile = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
+
+        raidPathCacheLock.doWithLock { raidPathCache[raid] = baseFile }
+        return baseFile
+    }
+
+    private static func findRewardImage(reward: Reward, pokemon: Pokemon?) -> File? {
+        let existingFile = rewardPathCacheLock.doWithLock { rewardPathCache[reward] }
+        if existingFile != nil { return existingFile }
+
+        var postfixes: [String] = []
+        if reward.amount != nil { postfixes.append("a") }
+        let baseFile: File?
+        if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
+            baseFile = findPokemonImage(pokemon: pokemon!)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/candy",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.xlCandy {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resource",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/item",
+                id: "\(reward.id)", postfixes: postfixes)
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
+                id: "\(reward.amount ?? reward.id)", postfixes: [])
+        } else {
+            baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
+                id: "\(reward.id)", postfixes: postfixes)
+        }
+
+        rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
+        return baseFile
+    }
+
+    private static func findTypeImage(type: Type) -> File? {
+        let existingFile = typePathCacheLock.doWithLock { typePathCache[type] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: type.style, folder: "type", id: "\(type.id)", postfixes: [])
+
+        typePathCacheLock.doWithLock { typePathCache[type] = baseFile }
+        return baseFile
+    }
+
+    private static func findWeatherImage(weather: Weather) -> File? {
+        let existingFile = weatherPathCacheLock.doWithLock { weatherPathCache[weather] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: weather.style, folder: "weather", id: "\(weather.id)", postfixes: [])
+
+        weatherPathCacheLock.doWithLock { weatherPathCache[weather] = baseFile }
+        return baseFile
+    }
+
+    // MARK: Building Images with ImageGenerator
+    private static func buildGymImage(gym: Gym, baseFile: File) -> File? {
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(gym.style)/generated")
+        if !baseGeneratedPath.exists {
+            try? baseGeneratedPath.create()
+        }
+        let gymPath = Dir("\(baseGeneratedPath.path)gym")
+        if !gymPath.exists {
+            try? gymPath.create()
+        }
+        let file = File("\(gymPath.path)\(gym.hash).png")
+        if file.exists { return file }
+
+        let raidImage = gym.raid != nil ? findRaidImage(raid: gym.raid!) : nil
+        let raidPokemonImage = gym.raidPokemon != nil ? findPokemonImage(pokemon: gym.raidPokemon!) : nil
+
+        guard let usedRaidImage = raidPokemonImage ?? raidImage else {
+            return baseFile
+        }
+
+        ImageGenerator.buildRaidImage(baseImage: baseFile.path, image: file.path, raidImage: usedRaidImage.path)
+        return file
+    }
+
+    private static func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
+        let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated/")
+        if !baseGeneratedPath.exists {
+            try? baseGeneratedPath.create()
+        }
+        let pokemonPath = Dir("\(baseGeneratedPath.path)pokemon")
+        if !pokemonPath.exists {
+            try? pokemonPath.create()
+        }
+        let file = File("\(pokemonPath.path)\(pokemon.hash).png")
+        if file.exists { return file }
+
+        let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)"
+        let spawnTypeFile = pokemon.spawnType != nil ?
+            File("\(basePath)/misc/\(pokemon.spawnType!.getImageValue()).png") :
+            nil
+        let rankingFile = pokemon.ranking != nil ?
+            File("\(basePath)/misc/\(pokemon.ranking!.getImageValue()).png") :
+            nil
+
+        ImageGenerator.buildPokemonImage(
+            baseImage: baseFile.path,
+            image: file.path,
+            spawnTypeImage: spawnTypeFile != nil && spawnTypeFile!.exists ? spawnTypeFile!.path : nil,
+            rankingImage: rankingFile != nil && rankingFile!.exists ? rankingFile!.path : nil
+        )
         return file
     }
 
@@ -287,51 +395,7 @@ class ImageApiRequestHandler {
         return file
     }
 
-    private static func findInvasionImage(invasion: Invasion) -> File? {
-        let existingFile = invasionPathCacheLock.doWithLock { invasionPathCache[invasion] }
-        if existingFile != nil { return existingFile }
-
-        let baseFile = getFirstPath(style: invasion.style, folder: "invasion", id: "\(invasion.id)", postfixes: [])
-
-        invasionPathCacheLock.doWithLock { invasionPathCache[invasion] = baseFile }
-        return baseFile
-    }
-
-    private static func findRewardImage(reward: Reward, pokemon: Pokemon?) -> File? {
-        let existingFile = rewardPathCacheLock.doWithLock { rewardPathCache[reward] }
-        if existingFile != nil { return existingFile }
-
-        var postfixes: [String] = []
-        if reward.amount != nil { postfixes.append("a") }
-        print("[TMP] find reward image: \(String(describing: reward)) | pokemon: \(String(describing: pokemon))")
-        let baseFile: File?
-        if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
-            baseFile = findPokemonImage(pokemon: pokemon!)
-        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/candy",
-                id: "\(reward.id)", postfixes: postfixes)
-        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.xlCandy {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
-                id: "\(reward.id)", postfixes: postfixes)
-        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resource",
-                id: "\(reward.id)", postfixes: postfixes)
-        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/item",
-                id: "\(reward.id)", postfixes: postfixes)
-        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
-                id: "\(reward.amount ?? reward.id)", postfixes: postfixes)
-        } else {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
-                id: "\(reward.id)", postfixes: [])
-        }
-
-        rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
-        return baseFile
-    }
-
-        // MARK: Utils
+    // MARK: Utils
     private static func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
         let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
 
@@ -371,7 +435,6 @@ class ImageApiRequestHandler {
         return possiblePaths.first {$0.exists}
     }
 
-    // MARK: Utils
     private static func sendFile(response: HTTPResponse, file: File?) {
         if let file = file {
             do {
@@ -431,9 +494,8 @@ extension ImageApiRequestHandler {
         // Generated
         var spawnType: SpawnType?
         var ranking: Ranking?
-
         var isStandard: Bool {
-            return spawnType == nil && ranking == nil
+            spawnType == nil && ranking == nil
         }
 
         var uicon: String { "\(id)" +
@@ -442,7 +504,6 @@ extension ImageApiRequestHandler {
             (costume != nil ? "_c\(costume!)" : "") +
             (gender != nil ? "_g\(gender!)" : "")
         }
-
         var hash: String { uicon +
             (spawnType != nil ? "_st\(spawnType!.rawValue)" : "") +
             (ranking != nil ? "_r\(ranking!.rawValue)" : "")
@@ -450,7 +511,6 @@ extension ImageApiRequestHandler {
     }
 
     struct Gym: Hashable {
-
         // Standard
         var style: String
         var id: Int
@@ -462,7 +522,6 @@ extension ImageApiRequestHandler {
         // Generated
         var raid: Raid?
         var raidPokemon: Pokemon?
-
         var isStandard: Bool {
             return raid == nil && raidPokemon == nil
         }
@@ -473,7 +532,6 @@ extension ImageApiRequestHandler {
             "\(ex ? "_ex": "")" +
             "\(arEligible ? "_ar": "")"
         }
-
         var hash: String { uicon +
             "\(raid != nil && raidPokemon == nil ? "_r(\(raid!.hash)" : ""))" +
             "\(raidPokemon != nil ? "_p(\(raidPokemon!.uicon)" : ""))"
@@ -482,13 +540,11 @@ extension ImageApiRequestHandler {
     }
 
     struct Raid: Hashable {
-
         // Standard
         var style: String
         var level: Int
         var hatched: Bool = false
         var ex: Bool = false
-
         var isStandard: Bool = true
 
         var uicon: String {
@@ -498,11 +554,9 @@ extension ImageApiRequestHandler {
     }
 
     struct Pokestop: Hashable {
-
         // Standard
         var style: String
         var id: Int // Not lured is ID 0
-
         var arEligible: Bool = false
         var sponsor: Bool = false
         var invasionActive: Bool = false
@@ -512,11 +566,12 @@ extension ImageApiRequestHandler {
         var invasion: Invasion?
         var reward: Reward?
         var pokemon: Pokemon?
-
+        var isStandard: Bool {
+            return invasion == nil && reward == nil && pokemon == nil
+        }
         var uicon: String {
             "\(id)\(invasionActive ? "_i" : "")\(questActive ? "_q": "")\(arEligible ? "_ar": "")"
         }
-
         var hash: String { uicon +
             (invasion != nil ? "_in\(invasion!.uicon)": "") +
             (reward != nil ? "_r\(reward!.type.rawValue)_\(reward!.uicon)" : "")
@@ -524,7 +579,6 @@ extension ImageApiRequestHandler {
     }
 
     struct Reward: Hashable {
-
         // Standard
         var style: String
         var id: Int
@@ -532,6 +586,7 @@ extension ImageApiRequestHandler {
 
         // Generated
         var type: POGOProtos.QuestRewardProto.TypeEnum
+        var isStandard: Bool = true
 
         var uicon: String {
             switch type {
@@ -544,34 +599,51 @@ extension ImageApiRequestHandler {
             default: return ""
             }
         }
-
         var hash: String { uicon }
     }
 
     struct Invasion: Hashable {
-
         // Standard
         var style: String
         var id: Int
+        var isStandard: Bool = true
 
         var uicon: String { "\(id)" }
-
         var hash: String { uicon }
     }
 
     struct Weather: Hashable {
-
         // Standard
         var style: String
         var id: Int
         var level: Int?
         var day: Bool = true
         var night: Bool = false
+        var isStandard: Bool = true
 
         var uicon: String {
             "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
         }
+        var hash: String { uicon }
+    }
 
+    struct `Type`: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
+        var hash: String { uicon }
+    }
+
+    struct Misc: Hashable {
+        // Standard
+        var style: String
+        var id: String // not only numbers
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
         var hash: String { uicon }
     }
 }

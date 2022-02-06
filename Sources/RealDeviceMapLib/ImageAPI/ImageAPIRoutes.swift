@@ -14,14 +14,23 @@ class ImageAPIRoutes {
 
     public static var routes: [Route] {
         let routes = [
-            Route(method: .get, uri: "/image-api/pokemon", handler: { (request, response) in
-                ImageApiRequestHandler.handlePokemon(request: request, response: response)
-            }),
             Route(method: .get, uri: "/image-api/gym", handler: { (request, response) in
                 ImageApiRequestHandler.handleGym(request: request, response: response)
             }),
+            Route(method: .get, uri: "/image-api/misc", handler: { (request, response) in
+                ImageApiRequestHandler.handleMisc(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/pokemon", handler: { (request, response) in
+                ImageApiRequestHandler.handlePokemon(request: request, response: response)
+            }),
             Route(method: .get, uri: "/image-api/pokestop", handler: { (request, response) in
                 ImageApiRequestHandler.handlePokestop(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/type", handler: { (request, response) in
+                ImageApiRequestHandler.handleType(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/weather", handler: { (request, response) in
+                ImageApiRequestHandler.handleWeather(request: request, response: response)
             })
         ]
 
