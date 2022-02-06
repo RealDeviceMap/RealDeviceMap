@@ -3555,11 +3555,10 @@ function getGymMarkerIcon (gym, ts) {
   let iconSize
   if (gym.raid_battle_timestamp <= ts && gym.raid_end_timestamp >= ts && (showRaids || gym.is_start) && parseInt(gym.raid_level) > 0) {
     if (gym.raid_pokemon_id !== 0 && gym.raid_pokemon_id !== null) {
-      const pokemonIdString = getPokemonIdIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, gym.raid_pokemon_evolution)
       // Raid Boss
       iconSize = getRaidSize('p' + gym.raid_pokemon_id)
       icon = L.icon({
-        iconUrl: '/static/img/raid/' + gym.team_id + '_' + size + '_' + pokemonIdString + '.png',
+        iconUrl: getPokemonIcon(gym.raid_pokemon_id, gym.raid_pokemon_form,gym.raid_pokemon_costume,gym.raid_pokemon_gender,gym.raid_pokemon_evolution,null,null,false),
         iconSize: [iconSize, iconSize * 1.667],
         iconAnchor: [iconSize / 2, iconSize * 1.567],
         popupAnchor: [0, iconSize * -1.567]
@@ -4637,7 +4636,7 @@ function getPokemonIcon(pokemonId, pokemonForm, pokemonCostume, pokemonGender, p
     })
   }
   let ranking
-  if (bestRank > 3) { ranking = nil } else { ranking = bestRank }
+  if (bestRank > 3) { ranking = null } else { ranking = bestRank }
   let spawnType
   if (isCellSpawn) {
     spawnType = "cell"
