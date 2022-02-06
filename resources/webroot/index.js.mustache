@@ -3360,9 +3360,9 @@ function getPokestopMarkerIcon (pokestop, ts) {
       info = pokestop.quest_rewards[0].info
     }
 
-    rewardAmount = info?.amount
-    itemId = info?.item_id
-    pokemonId = info?.pokemon_id
+    rewardAmount = info.amount
+    itemId = info.item_id
+    pokemonId = info.pokemon_id
     if (pokemonId) {
       formId = info.form_id
       genderId = info.gender_id
