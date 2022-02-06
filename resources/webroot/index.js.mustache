@@ -4643,7 +4643,7 @@ function getPokemonIcon(pokemonId, pokemonForm, pokemonCostume, pokemonGender, p
   } else {
     spawnType = null
   }
-
+  var response = ''
   $.ajax({
     url: '/image-api/pokemon',
     data: {
@@ -4659,12 +4659,14 @@ function getPokemonIcon(pokemonId, pokemonForm, pokemonCostume, pokemonGender, p
     contentType: 'image/png',
     type: 'get',
     success: function(data) {
-      return 'data:image/png;base64,' + data
+      response = 'data:image/png;base64,' + data
     },
     error: function(xhr) {
       console.error('/image-api/pokemon returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
     }
   })
+  console.log(response)
+  return response
 }
 
 // MARK: - Init Filter
