@@ -74,7 +74,6 @@ let showSubmissionCells
 let showGreatLeague
 let showUltraLeague
 
-let availableForms = []
 let availableItems = []
 let availableTileservers = {}
 let selectedTileserver = 'Default'
@@ -178,7 +177,6 @@ $(function () {
     weatherTypes = data
   })
 
-  availableForms = JSON.parse('{{{available_forms_json}}}')
   availableItems = JSON.parse('{{{available_items_json}}}')
   availableTileservers = JSON.parse('{{{available_tileservers_json}}}')
 
@@ -3368,7 +3366,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
       genderId = info.gender_id
       costumeId = info.costume_id
     }
-    size = getQuestSize(rewardId)
+    size = 30
   }
 
   if (pokestop.lure_expire_timestamp >= ts) {
