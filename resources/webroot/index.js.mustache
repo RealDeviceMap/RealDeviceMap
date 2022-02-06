@@ -2283,8 +2283,8 @@ function getPokemonPopupContent (pokemon) {
     pokemonName += ' (' + getPokemonNameNoId(pokemon.display_pokemon_id) + ')'
   }
 
-  const pokemonIcon = getPokemonIconString(
-    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+  const pokemonIcon = getPokemonIcon(
+    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league,
     pokemon.pokestop_id === null && pokemon.spawn_id === null
   )
 
@@ -2306,7 +2306,7 @@ function getPokemonPopupContent (pokemon) {
     '<div class="row">' + // START 2ND ROW
         '<div class="' + (hasIV ? 'col-6 col-md-4' : 'col text-center') + '">' +
             '<div class="row' + (hasIV ? '' : 'text-center') + '" style="margin: auto;">' +
-                '<img src="/static/img/' + pokemonIcon + '" height="64" width="64">' +
+                '<img src="data:image/png;base64,' + pokemonIcon + '" height="64" width="64">' +
             '</div>' + // END POKEMON ROW
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">'
   var pkmn = pokemonDb[pokemon.pokemon_id]
@@ -2709,7 +2709,7 @@ function getGymPopupContent (gym) {
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
-    const pokemonIcon = getPokemonIconString(gym.raid_pokemon_id, gym.raid_pokemon_form, null, null, gym.raid_pokemon_evolution, false)
+    const pokemonIcon = getPokemonIcon(gym.raid_pokemon_id, gym.raid_pokemon_form, gym.raid_pokemon_costume, gym.raid_pokemon_gender, gym.raid_pokemon_evolution, null, null, false)
     content +=
         '<div class="row" style="margin:auto;">' + // START 1ST ROW
             '<div class="col-6 col-md-4">' + // START 1ST COL
@@ -3304,12 +3304,12 @@ function getWeatherStyle (weather, ts) {
 function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
-  const pokemonIdString = getPokemonIconString(
-    pokemon.pokemon_id, pokemon.form, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league, null,
+  const pokemonIcon = getPokemonIcon(
+    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league,
     pokemon.pokestop_id === null && pokemon.spawn_id === null
   )
   const icon = L.icon({
-    iconUrl: '/static/img/' + pokemonIdString,
+    iconUrl: pokemonIcon,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2)]
@@ -4619,45 +4619,12 @@ function getSize (value, baseValue) {
   }
 }
 
-function getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution) {
-  let pokemonIdString
-  if (pokemonEvolution !== 0 && pokemonEvolution !== null) {
-    const pokemonIdStringTmp = '' + pokemonId + '-' + (pokemonForm || 0) + '-' + pokemonEvolution
-    const pokemonIdStringTmp2 = '' + pokemonId + '-' + 0 + '-' + pokemonEvolution
-    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
-      pokemonIdString = pokemonIdStringTmp
-    } else if ($.inArray(pokemonIdStringTmp2, availableForms) !== -1) {
-      pokemonIdString = pokemonIdStringTmp2
-    } else {
-      pokemonIdString = '' + pokemonId
-    }
-  } else if (pokemonForm !== 0 && pokemonForm !== null) {
-    const pokemonIdStringTmp = '' + pokemonId + '-' + pokemonForm
-    if ($.inArray(pokemonIdStringTmp, availableForms) !== -1) {
-      pokemonIdString = pokemonIdStringTmp
-    } else {
-      pokemonIdString = '' + pokemonId
-    }
-  } else {
-    pokemonIdString = '' + pokemonId
-  }
-  return pokemonIdString
-}
-
-function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague, pokemonEvolution, isCellSpawn) {
-  let pokemonIdString = getPokemonIdIconString(pokemonId, pokemonForm, pokemonEvolution)
-
-  let pre
-  let post
+function getPokemonIcon(pokemonId, pokemonForm, pokemonCostume, pokemonGender, pokemonEvolution, greatLeague, ultraLeague, isCellSpawn) {
+  let bestRank
   if (greatLeague === null || ultraLeague === null) {
-    if (isCellSpawn) {
-      pre = 'wild_pokemon/'
-    } else {
-      pre = 'pokemon/'
-    }
-    post = '.png'
+    bestRank = null
   } else {
-    let bestRank = 4
+    bestRank = 4
     $.each(greatLeague, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
@@ -4668,15 +4635,37 @@ function getPokemonIconString(pokemonId, pokemonForm, greatLeague, ultraLeague, 
         bestRank = ranking.rank
       }
     })
-    if (bestRank <= 3) {
-      pre = 'pokemon_league/'
-      post = '_' + bestRank +'.png'
-    } else {
-      pre = 'pokemon/'
-      post = '.png'
-    }
   }
-  return pre + pokemonIdString + post
+  let ranking
+  if (bestRank > 3) { ranking = nil } else { ranking = bestRank }
+  let spawnType
+  if (isCellSpawn) {
+    spawnType = "cell"
+  } else {
+    spawnType = null
+  }
+
+  $.ajax({
+    url: '/image-api/pokemon',
+    data: {
+      id: pokemonId,
+      form: pokemonForm,
+      costume: pokemonCostume,
+      gender: pokemonGender,
+      evolution: pokemonEvolution,
+      spawn_type: spawnType,
+      ranking: ranking,
+      _csrf: '{{csrf}}'
+    },
+    contentType: 'image/png',
+    type: 'get',
+    success: function(data) {
+      return data
+    },
+    error: function(xhr) {
+      console.error('/image-api/pokemon returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+    }
+  })
 }
 
 // MARK: - Init Filter
