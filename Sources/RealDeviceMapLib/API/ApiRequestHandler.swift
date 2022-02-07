@@ -1073,7 +1073,8 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/gym?id=\(i == 0 ? 0 : team)&level=\(i)\" " +
+                    "image": "<img class=\"lazy_load\" " +
+                        "data-src=\"/image-api/gym?id=\(i == 0 ? 0 : team)&level=\(i)\" " +
                         "style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
