@@ -68,6 +68,16 @@ class ImageApiRequestHandler {
         sendFile(response: response, file: file)
     }
 
+    public static func handleInvasion(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+        let invasion = Invasion(style: style, id: id)
+        let file = findInvasionImage(invasion: invasion)
+        sendFile(response: response, file: file)
+    }
+
     public static func handleMisc(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
               let id = request.param(name: "id") else {
@@ -137,6 +147,33 @@ class ImageApiRequestHandler {
             invasion: invasion, reward: reward, pokemon: pokemon)
 
         let file = findPokestopImage(pokestop: pokestop)
+        sendFile(response: response, file: file)
+    }
+
+    public static func handleRaidEgg(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+
+        let ex = request.param(name: "ex")?.toBool() ?? false
+        let hatched = request.param(name: "hatched")?.toBool() ?? false
+
+        let raid = Raid(style: style, level: id, hatched: hatched, ex: ex)
+        let file = findRaidImage(raid: raid)
+        sendFile(response: response, file: file)
+    }
+
+    public static func handleReward(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+
+        let type = request.param(name: "type")?.toInt()
+        let rewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: type!)!
+        let reward = Reward(style: style, id: id, amount: nil, type: rewardType)
+        let file = findRewardImage(reward: reward)
         sendFile(response: response, file: file)
     }
 
@@ -261,7 +298,7 @@ class ImageApiRequestHandler {
         return baseFile
     }
 
-    private static func findRewardImage(reward: Reward, pokemon: Pokemon?) -> File? {
+    private static func findRewardImage(reward: Reward, pokemon: Pokemon? = nil) -> File? {
         let existingFile = rewardPathCacheLock.doWithLock { rewardPathCache[reward] }
         if existingFile != nil { return existingFile }
 

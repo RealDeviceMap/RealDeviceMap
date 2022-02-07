@@ -321,7 +321,7 @@ public class ApiRequestHandler {
                         "sort": -1
                     ],
                     "name": includeCellString,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=grass" +
                             "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": "",
@@ -431,7 +431,7 @@ public class ApiRequestHandler {
                         "sort": i+1
                     ],
                     "name": Localizer.global.get(value: "poke_\(i)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/pokemon?id=\(i)" +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -478,7 +478,7 @@ public class ApiRequestHandler {
                     "sort": -1
                 ],
                 "name": showArQuestsString,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\"" +
+                "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=ar" +
                         "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": "",
@@ -648,7 +648,7 @@ public class ApiRequestHandler {
                         "sort": i+200
                     ],
                     "name": Localizer.global.get(value: "poke_\(i)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/pokemon?id=\(i)" +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -723,7 +723,7 @@ public class ApiRequestHandler {
                 ])
 
             // Level
-            for i in 1...6 {
+            for i in [1, 3, 5, 6] {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
 
@@ -767,7 +767,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": raidLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/egg/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/raid-egg?id=\(i)" +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -817,7 +817,7 @@ public class ApiRequestHandler {
                         "sort": i+200
                     ],
                     "name": Localizer.global.get(value: "poke_\(i)"),
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/pokemon?id=\(i)" +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -888,7 +888,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": gymTeam,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i)_\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/gym?id=\(i)&level=\(i)" +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -931,7 +931,7 @@ public class ApiRequestHandler {
                     "sort": 5
                 ],
                 "name": Localizer.global.get(value: "filter_raid_ex") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/1403.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/reward?id=1403&type=2" +
                          "style=\"height:50px; width:50px;\">",
                 "filter": exFilter,
                 "size": exSize,
@@ -973,7 +973,7 @@ public class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": Localizer.global.get(value: "filter_gym_ar_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=ar" +
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
@@ -1021,7 +1021,7 @@ public class ApiRequestHandler {
                     "sort": 7
                 ],
                 "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=sponsor" +
                         "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
@@ -1073,7 +1073,7 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 0 ? 0 : team)_\(i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/gym?id=\(i == 0 ? 0 : team)&level=\(i)" +
                         " style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
@@ -1127,7 +1127,7 @@ public class ApiRequestHandler {
                         "sort": i+100
                     ],
                     "name": availableSlots,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(6 - i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/gym?id=\(i == 6 ? 0 : team)&level=\(6 - i)" +
                              " style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -1194,7 +1194,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": grunt,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/grunt/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/invasion?id=\(i)" +
                         "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -1263,7 +1263,7 @@ public class ApiRequestHandler {
                     "sort": 0
                 ],
                 "name": pokestopNormal,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/pokestop?id=0" +
                          "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
@@ -1307,13 +1307,26 @@ public class ApiRequestHandler {
                 </div>
                 """
 
+                let lureId: Int
+                if i == 1 {
+                    lureId = 501
+                } else if i == 2 {
+                    lureId = 502
+                } else if i == 3 {
+                    lureId = 503
+                } else if i == 4 {
+                    lureId = 504
+                } else {
+                    lureId = 505
+                }
+
                 pokestopData.append([
                     "id": [
                         "formatted": String(format: "%03d", i),
                         "sort": i
                     ],
                     "name": pokestopLure,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/pokestop?id=\(lureId).png\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -1364,7 +1377,7 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=image-api/pokestop?id=0" +
                         " style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
@@ -1413,7 +1426,7 @@ public class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": arOnly,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=ar" +
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
@@ -1461,7 +1474,7 @@ public class ApiRequestHandler {
                     "sort": 7
                 ],
                 "name": sponsoredOnly,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=image-api/misc?id=sponsor" +
                     "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,

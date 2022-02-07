@@ -17,6 +17,9 @@ class ImageAPIRoutes {
             Route(method: .get, uri: "/image-api/gym", handler: { (request, response) in
                 ImageApiRequestHandler.handleGym(request: request, response: response)
             }),
+            Route(method: .get, uri: "/image-api/invasion", handler: { (request, response) in
+                ImageApiRequestHandler.handleInvasion(request: request, response: response)
+            }),
             Route(method: .get, uri: "/image-api/misc", handler: { (request, response) in
                 ImageApiRequestHandler.handleMisc(request: request, response: response)
             }),
@@ -25,6 +28,12 @@ class ImageAPIRoutes {
             }),
             Route(method: .get, uri: "/image-api/pokestop", handler: { (request, response) in
                 ImageApiRequestHandler.handlePokestop(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/raid-egg", handler: { (request, response) in
+                ImageApiRequestHandler.handleRaidEgg(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/reward", handler: { (request, response) in
+                ImageApiRequestHandler.handleReward(request: request, response: response)
             }),
             Route(method: .get, uri: "/image-api/type", handler: { (request, response) in
                 ImageApiRequestHandler.handleType(request: request, response: response)
