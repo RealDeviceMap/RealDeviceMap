@@ -30,6 +30,8 @@ class ImageApiRequestHandler {
     internal static var raidPathCache = [Raid: File]()
     internal static let rewardPathCacheLock = Threading.Lock()
     internal static var rewardPathCache = [Reward: File]()
+    internal static let teamPathCacheLock = Threading.Lock()
+    internal static var teamPathCache = [Team: File]()
     internal static let typePathCacheLock = Threading.Lock()
     internal static var typePathCache = [Type: File]()
     internal static let weatherPathCacheLock = Threading.Lock()
