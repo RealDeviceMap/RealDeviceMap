@@ -177,6 +177,17 @@ class ImageApiRequestHandler {
         sendFile(response: response, file: file)
     }
 
+    public static func handleTeam(request: HTTPRequest, response: HTTPResponse) {
+        guard let style = request.param(name: "style") ?? defaultIconSet,
+              let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+
+        let team = Team(style: style, id: id)
+        let file = findTeamImage(team: team)
+        sendFile(response: response, file: file)
+    }
+
     public static func handleType(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
               let id = request.param(name: "id")?.toInt() else {
@@ -328,6 +339,16 @@ class ImageApiRequestHandler {
         }
 
         rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
+        return baseFile
+    }
+
+    private static func findTeamImage(team: Team) -> File? {
+        let existingFile = teamPathCacheLock.doWithLock { teamPathCache[team] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: type.style, folder: "team", id: "\(type.id)", postfixes: [])
+
+        teamPathCacheLock.doWithLock { teamPathCache[team] = baseFile }
         return baseFile
     }
 
@@ -661,6 +682,16 @@ extension ImageApiRequestHandler {
         var uicon: String {
             "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
         }
+        var hash: String { uicon }
+    }
+
+    struct Team: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
         var hash: String { uicon }
     }
 

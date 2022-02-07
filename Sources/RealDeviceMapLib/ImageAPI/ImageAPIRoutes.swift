@@ -35,6 +35,9 @@ class ImageAPIRoutes {
             Route(method: .get, uri: "/image-api/reward", handler: { (request, response) in
                 ImageApiRequestHandler.handleReward(request: request, response: response)
             }),
+            Route(method: .get, uri: "/image-api/team", handler: { (request, response) in
+                ImageApiRequestHandler.handleTeam(request: request, response: response)
+            }),
             Route(method: .get, uri: "/image-api/type", handler: { (request, response) in
                 ImageApiRequestHandler.handleType(request: request, response: response)
             }),
