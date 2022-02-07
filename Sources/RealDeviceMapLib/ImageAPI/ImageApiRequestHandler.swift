@@ -348,7 +348,7 @@ class ImageApiRequestHandler {
         let existingFile = teamPathCacheLock.doWithLock { teamPathCache[team] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: team.style, folder: "team", id: "\(type.id)", postfixes: [])
+        let baseFile = getFirstPath(style: team.style, folder: "team", id: "\(team.id)", postfixes: [])
 
         teamPathCacheLock.doWithLock { teamPathCache[team] = baseFile }
         return baseFile
