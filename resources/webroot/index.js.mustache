@@ -3337,9 +3337,8 @@ function getPokestopMarkerIcon (pokestop, ts) {
       genderId = info.gender_id
       costumeId = info.costume_id
     }
-    size = 30
   }
-
+  size = 30
   if (pokestop.lure_expire_timestamp >= ts) {
     lureId = pokestop.lure_id
   } else {
@@ -3351,8 +3350,8 @@ function getPokestopMarkerIcon (pokestop, ts) {
   }
   let icon = L.icon({
     iconUrl: getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId),
-    iconSize: [size, size * 1.667],
-    iconAnchor: [size / 2, size * 1.567],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
     popupAnchor: [0, size * -1.567]
   })
   return icon
