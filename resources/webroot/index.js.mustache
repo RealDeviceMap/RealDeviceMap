@@ -2319,9 +2319,9 @@ function getPokemonPopupContent (pokemon) {
   }
   if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
     content += '<b>Catch Chances:</b><br>'
-    content += '<img src="/static/img/item/1.png" height="14" width="14"> ' + (pokemon.capture_1 * 100).toFixed(1) + '% '
-    content += '<img src="/static/img/item/2.png" height="14" width="14"> ' + (pokemon.capture_2 * 100).toFixed(1) + '%<br>'
-    content += '<img src="/static/img/item/3.png" height="14" width="14"> ' + (pokemon.capture_3 * 100).toFixed(1) + '%<br>'
+    content += '<img src="/image-api/reward?id=1&type=2" height="14" width="14"> ' + (pokemon.capture_1 * 100).toFixed(1) + '% '
+    content += '<img src="/image-api/reward?id=2&type=2" height="14" width="14"> ' + (pokemon.capture_2 * 100).toFixed(1) + '%<br>'
+    content += '<img src="/image-api/reward?id=3&type=2" height="14" width="14"> ' + (pokemon.capture_3 * 100).toFixed(1) + '%<br>'
   }
   content +=
         '</div>' +
