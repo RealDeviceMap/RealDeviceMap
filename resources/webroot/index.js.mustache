@@ -2284,10 +2284,10 @@ function getPokemonPopupContent (pokemon) {
     if (types !== null && types.length > 0) {
       content += '<div class="col">'
       if (types.length === 2) {
-        content += '<img src="' + getTypeIconURL(types[0].type) + '" height="16" width="16">&nbsp;'
-        content += '<img src="' + getTypeIconURL(types[1].type) + '" height="16" width="16">'
+        content += '<img src="' + getTypeIconURL(types[0]) + '" height="16" width="16">&nbsp;'
+        content += '<img src="' + getTypeIconURL(types[1]) + '" height="16" width="16">'
       } else {
-        content += '<img src="' + getTypeIconURL(types[0].type) + '" height="16" width="16">'
+        content += '<img src="' + getTypeIconURL(types[0]) + '" height="16" width="16">'
       }
       content += '</div>'
     }
@@ -2698,10 +2698,10 @@ function getGymPopupContent (gym) {
         if (types !== null && types.length > 0) {
           content += '<div class="col text-nowrap">'
           if (types.length === 2) {
-            content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">&nbsp;'
-            content += '<img src="/static/img/type/' + types[1].type.toLowerCase() + '.png" height="16" width="16">'
+            content += '<img src="' + getTypeIconURL(types[0]) + '.png" height="16" width="16">&nbsp;'
+            content += '<img src="' + getTypeIconURL(types[1]) + '.png" height="16" width="16">'
           } else {
-            content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">'
+            content += '<img src="' + getTypeIconURL(types[0]) + '.png" height="16" width="16">'
           }
           content += '</div>'
         }
