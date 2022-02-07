@@ -1328,7 +1328,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": pokestopLure,
-                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokestop?id=\(lureId).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokestop?id=\(lureId)\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
