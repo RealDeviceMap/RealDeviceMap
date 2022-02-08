@@ -621,13 +621,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 self.lureId = oldPokestop!.lureId
             }
 
-            if oldPokestop!.lureExpireTimestamp != nil && self.lureExpireTimestamp != nil &&
-                   oldPokestop!.lureExpireTimestamp < self.lureExpireTimestamp {
-                if oldPokestop!.incidentExpireTimestamp == nil && self.incidentExpireTimestamp != nil {
-                    self.lureExpireTimestamp = oldPokestop!.lureExpireTimestamp
-                }
-            }
-
             guard Pokestop.shouldUpdate(old: oldPokestop!, new: self) else {
                 return
             }
