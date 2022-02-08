@@ -930,10 +930,10 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if excludedPowerUpLevels.isEmpty {
             excludePowerUpLevelsSQL = ""
         } else {
-            var sqlExcludeCreate = "AND power_up_level NOT IN ("
+            var sqlExcludeCreate = "AND (power_up_level NOT IN ("
             for index in excludedPowerUpLevels.indices {
                 if index == excludedPowerUpLevels.count - 1 {
-                    sqlExcludeCreate += "?)"
+                    sqlExcludeCreate += "?))"
                 } else {
                     sqlExcludeCreate += "?, "
                 }
