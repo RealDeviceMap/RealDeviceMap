@@ -617,11 +617,11 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         if excludedPowerUpLevels.isEmpty || raidsOnly {
             excludePowerUpLevelsSQL = ""
         } else {
-            var sqlExcludeCreate = "AND (power_up_level NOT IN ("
+            var sqlExcludeCreate = "AND power_up_level NOT IN ("
             for _ in excludedPowerUpLevels {
                 sqlExcludeCreate += "?, "
             }
-            sqlExcludeCreate += "?) AND power_up_end_timestamp >= UNIX_TIMESTAMP())"
+            sqlExcludeCreate += "?)"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 
