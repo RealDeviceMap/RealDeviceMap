@@ -2217,7 +2217,6 @@ public class ApiRequestHandler {
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
-        let queueSize = request.param(name: "queue_size")?.toBool() ?? false
         let coords = try? jsonDecoder.decode([Coord].self,
             from: request.param(name: "coords")?.data(using: .utf8) ?? Data())
 
