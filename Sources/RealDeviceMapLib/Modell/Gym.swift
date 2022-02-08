@@ -242,17 +242,24 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.exRaidEligible = fortData.isExRaidEligible
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
+        let now = UInt32(Date().timeIntervalSince1970)
+        let powerUpRemaining = UInt32(fortData.powerUpRemainingUntilMs / 1000)
         self.powerUpPoints = UInt32(fortData.locationPoints)
         if fortData.locationPoints < 50 {
             self.powerUpLevel = 0
-        } else if fortData.locationPoints < 100 {
+        } else if fortData.locationPoints < 100 && powerUpRemaining > now {
             self.powerUpLevel = 1
-        } else if fortData.locationPoints < 150 {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if fortData.locationPoints < 150 && powerUpRemaining > now {
             self.powerUpLevel = 2
-        } else {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if powerUpRemaining > now {
             self.powerUpLevel = 3
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else {
+            self.powerUpLevel = 0
         }
-        self.powerUpEndTimestamp = UInt32(fortData.powerUpRemainingUntilMs / 1000)
+
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
         if fortData.sponsor != .unset {
             self.sponsorId = UInt16(fortData.sponsor.rawValue)
