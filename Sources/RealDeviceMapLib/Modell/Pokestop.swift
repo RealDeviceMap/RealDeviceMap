@@ -248,17 +248,24 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
+        let now = UInt32(Date().timeIntervalSince1970)
+        let powerUpRemaining = UInt32(fortData.powerUpRemainingUntilMs / 1000)
         self.powerUpPoints = UInt32(fortData.locationPoints)
         if fortData.locationPoints < 50 {
             self.powerUpLevel = 0
-        } else if fortData.locationPoints < 100 {
+        } else if fortData.locationPoints < 100 && powerUpRemaining > now {
             self.powerUpLevel = 1
-        } else if fortData.locationPoints < 150 {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if fortData.locationPoints < 150 && powerUpRemaining > now {
             self.powerUpLevel = 2
-        } else {
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else if powerUpRemaining > now {
             self.powerUpLevel = 3
+            self.powerUpEndTimestamp = powerUpRemaining
+        } else {
+            self.powerUpLevel = 0
         }
-        self.powerUpEndTimestamp = UInt32(fortData.powerUpRemainingUntilMs / 1000)
+
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         if fortData.activeFortModifier.contains(.troyDisk) ||
             fortData.activeFortModifier.contains(.troyDiskGlacial) ||
@@ -924,10 +931,13 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePowerUpLevelsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (power_up_level NOT IN ("
-            for _ in excludedPowerUpLevels {
-                sqlExcludeCreate += "?, "
+            for index in excludedPowerUpLevels.indices {
+                if index == excludedPowerUpLevels.count - 1 {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?) AND power_up_end_timestamp >= UNIX_TIMESTAMP())"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 
