@@ -246,6 +246,6 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     func getNextCoordsSize() -> Int {
-        scanNextCoords.count
+        lock.doWithLock { scanNextCoords.count }
     }
 }
