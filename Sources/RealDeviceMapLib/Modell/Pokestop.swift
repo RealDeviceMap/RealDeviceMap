@@ -934,7 +934,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             for _ in excludedPowerUpLevels {
                 sqlExcludeCreate += "?, "
             }
-            sqlExcludeCreate += "?"
+            sqlExcludeCreate += "?)"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 
