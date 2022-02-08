@@ -2205,6 +2205,7 @@ public class ApiRequestHandler {
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
 
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let queueSize = request.param(name: "queue_size")?.toBool() ?? false
         let coords = try? jsonDecoder.decode([Coord].self,
             from: request.param(name: "coords")?.data(using: .utf8) ?? Data())
 
@@ -2326,6 +2327,22 @@ public class ApiRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
 
+        } else if scanNext && queueSize && perms.contains(.admin), let name = instanceName {
+            Log.info(message: "[ApiRequestHandler] API request for scan next queue size of instance '\(name)'")
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
+                as? CircleInstanceController else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
+                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            }
+            let size = instance.getNextCoordsSize()
+            do {
+                try response.respondWithData(data: [
+                    "action": "next_scan_queue",
+                    "queue_size": size
+                ])
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else {
             response.respondWithError(status: .badRequest)
         }
