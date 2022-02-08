@@ -931,10 +931,13 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePowerUpLevelsSQL = ""
         } else {
             var sqlExcludeCreate = "AND power_up_level NOT IN ("
-            for _ in excludedPowerUpLevels {
-                sqlExcludeCreate += "?, "
+            for index in excludedPowerUpLevels.indices {
+                if index == excludedPowerUpLevels.count - 1 {
+                    sqlExcludeCreate += "?)"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?)"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 

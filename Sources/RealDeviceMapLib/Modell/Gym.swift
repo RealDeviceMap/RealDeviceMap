@@ -607,21 +607,27 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (available_slots NOT IN ("
-            for _ in excludedAvailableSlots {
-                sqlExcludeCreate += "?, "
+            for index in excludedAvailableSlots.indices {
+                if index == excludedAvailableSlots.count - 1 {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?))"
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
         if excludedPowerUpLevels.isEmpty || raidsOnly {
             excludePowerUpLevelsSQL = ""
         } else {
-            var sqlExcludeCreate = "AND power_up_level NOT IN ("
-            for _ in excludedPowerUpLevels {
-                sqlExcludeCreate += "?, "
+            var sqlExcludeCreate = "AND (power_up_level NOT IN ("
+            for index in excludedPowerUpLevels.indices {
+                if index == excludedPowerUpLevels.count - 1 {
+                    sqlExcludeCreate += "?))"
+                } else {
+                    sqlExcludeCreate += "?, "
+                }
             }
-            sqlExcludeCreate += "?)"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 
