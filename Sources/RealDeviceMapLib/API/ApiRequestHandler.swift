@@ -162,6 +162,8 @@ public class ApiRequestHandler {
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
         let start = request.param(name: "start") ?? ""
         let end = request.param(name: "end") ?? ""
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let queueSize = request.param(name: "queue_size")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -2170,6 +2172,16 @@ public class ApiRequestHandler {
             }
         }
 
+        if scanNext && queueSize && perms.contains(.admin), let name = instance {
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
+                as? CircleInstanceController else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found")
+                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            }
+            let size = instance.getNextCoordsSize()
+            data["size"] = size
+        }
+
         data["timestamp"] = Int(Date().timeIntervalSince1970)
 
         do {
@@ -2305,12 +2317,12 @@ public class ApiRequestHandler {
             }
         } else if scanNext && perms.contains(.admin), let name = instanceName, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
                 as? CircleInstanceController else {
                     Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
                     return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
             }
-            if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name).isEmpty {
+            if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
@@ -2327,22 +2339,6 @@ public class ApiRequestHandler {
                 response.respondWithError(status: .internalServerError)
             }
 
-        } else if scanNext && queueSize && perms.contains(.admin), let name = instanceName {
-            Log.info(message: "[ApiRequestHandler] API request for scan next queue size of instance '\(name)'")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name)
-                as? CircleInstanceController else {
-                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
-                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
-            }
-            let size = instance.getNextCoordsSize()
-            do {
-                try response.respondWithData(data: [
-                    "action": "next_scan_queue",
-                    "queue_size": size
-                ])
-            } catch {
-                response.respondWithError(status: .internalServerError)
-            }
         } else {
             response.respondWithError(status: .badRequest)
         }
