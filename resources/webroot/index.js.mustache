@@ -3348,10 +3348,17 @@ function getPokestopMarkerIcon (pokestop, ts) {
   if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
     invasionGruntType = pokestop.grunt_type
   }
+  let multiplierSize = 1
+  let multiplierAnchor = 1
+  if (rewardType) {
+    multiplierSize = 1.667
+    multiplierAnchor = 1.567
+  }
+
   let icon = L.icon({
     iconUrl: getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId),
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size],
+    iconSize: [size, size * multiplierSize],
+    iconAnchor: [size / 2, size * multiplierAnchor],
     popupAnchor: [0, size * -1.567]
   })
   return icon
