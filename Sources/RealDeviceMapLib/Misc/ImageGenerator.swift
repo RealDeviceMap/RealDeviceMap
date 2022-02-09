@@ -72,7 +72,7 @@ class ImageGenerator {
                 "-composite"
             ]
         }
-        //if let rewardImage = rewardImage {
+        // if let rewardImage = rewardImage {
         //    markerAgs += [
         //        "(", rewardImage, "-resize", "48x48", ")",
         //        "-gravity", "center",
@@ -83,9 +83,12 @@ class ImageGenerator {
         if rewardImage != nil {
             Shell([
                 "/usr/local/bin/convert",
-                "(", rewardImage!, "-resize", "96x96", "-gravity", "north", "-extent", "96x160", ")",
-                "(", baseImage, "-resize", "96x96", "-gravity", "south", "-extent", "96x160", ")",
-                "-gravity", "center"
+                "(", rewardImage!, "-background", "none", "-resize", "96x96", "-gravity", "north",
+                "-extent", "96x160", ")",
+                "(", baseImage, "-background", "none", "-resize", "96x96", "-gravity", "south",
+                "-extent", "96x160", ")",
+                "-gravity", "center",
+                "-compose", "over"
             ] + markerAgs + [
                 image
             ]).run(environment: magickEnv)
