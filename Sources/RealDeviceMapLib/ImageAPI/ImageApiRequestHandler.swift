@@ -125,12 +125,6 @@ class ImageApiRequestHandler {
         let questGenderId = request.param(name: "quest_gender_id")?.toInt()
         let questCostumeId = request.param(name: "quest_costume_id")?.toInt()
 
-        var pokemon: Pokemon?
-        if questPokemonId != nil {
-            pokemon = Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
-                costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
-        }
-
         var invasion: Invasion?
         var invasionActive = false
         if invasionType != nil {
@@ -139,12 +133,18 @@ class ImageApiRequestHandler {
         }
 
         var reward: Reward?
+        var pokemon: Pokemon?
         // var questActive = false
         if questRewardType != nil {
             reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
                 type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             // questActive = true // separate icon with different color
+            if questPokemonId != nil {
+                pokemon = Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
+                    costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
+            }
         }
+
         let pokestop = Pokestop(style: style, id: id, invasionActive: invasionActive, questActive: false,
             invasion: invasion, reward: reward, pokemon: pokemon)
 
@@ -471,7 +471,7 @@ class ImageApiRequestHandler {
             }
             combinations.append(combination)
         }
-        if id = 592 {
+        if id == "592" {
             print("[TMP] combinations\(combinations)")
         }
 
