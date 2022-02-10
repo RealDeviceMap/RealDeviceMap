@@ -136,13 +136,17 @@ class ImageApiRequestHandler {
         var pokemon: Pokemon?
         // var questActive = false
         if questRewardType != nil {
-            reward = Reward(style: style, id: questItemId ?? questPokemonId ?? 0, amount: questRewardAmount,
-                type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
-            // questActive = true // separate icon with different color
             if questPokemonId != nil {
                 pokemon = Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
                     costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
+                reward = Reward(style: style, id: pokemon!.uicon, amount: questRewardAmount,
+                    type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
+            } else {
+                reward = Reward(style: style, id: questItemId ?? 0, amount: questRewardAmount,
+                    type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             }
+
+            // questActive = true // separate icon with different color
         }
 
         let pokestop = Pokestop(style: style, id: id, invasionActive: invasionActive, questActive: false,
