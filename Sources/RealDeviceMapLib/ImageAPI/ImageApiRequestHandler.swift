@@ -263,6 +263,7 @@ class ImageApiRequestHandler {
         if let costume = pokemon.costume { postfixes.append("c\(costume)") }
         if let gender = pokemon.gender { postfixes.append("g\(gender)") }
 
+        print("[TMP] findPokemonImage - id: \(pokemon.id) - form: \(String(describing: pokemon.form))")
         let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
         let file: File?
         if let baseFile = baseFile {
@@ -407,6 +408,7 @@ class ImageApiRequestHandler {
         if !pokemonPath.exists {
             try? pokemonPath.create()
         }
+        print("[TMP] buildPokemonImage hash: \(pokemon.hash)")
         let file = File("\(pokemonPath.path)\(pokemon.hash).png")
         if file.exists { return file }
 
@@ -468,6 +470,9 @@ class ImageApiRequestHandler {
                 combination.append(postfix)
             }
             combinations.append(combination)
+        }
+        if id = 592 {
+            print("[TMP] combinations\(combinations)")
         }
 
         combinations.sort { lhs, rhs in
