@@ -64,11 +64,17 @@ class ImageGenerator {
         baseImage: String, image: String, invasionImage: String?, rewardImage: String?
     ) {
         var markerAgs = [String]()
+        let invasionGeometry
+        if rewardImage != nil {
+            invasionGeometry = [ "-geometry", "+0-19" ]
+        } else {
+            invasionGeometry = [ "-geometry", "+0+13" ]
+        }
         if let invasionImage = invasionImage {
             markerAgs += [
                 "(", invasionImage, "-resize", "48x48", ")",
-                "-gravity", "center",
-                "-geometry", "+0-19",
+                "-gravity", "center"
+                ] + invasionGeometry + [
                 "-composite"
             ]
         }
