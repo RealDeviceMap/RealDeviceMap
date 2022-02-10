@@ -143,7 +143,7 @@ class ImageApiRequestHandler {
                     type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             } else {
 
-                reward = Reward(style: style, id: (questItemId =! nil ? questItemId : "0"),
+                reward = Reward(style: style, id: (questItemId != nil ? questItemId! : "0"),
                     amount: questRewardAmount,
                     type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             }
@@ -341,7 +341,7 @@ class ImageApiRequestHandler {
                 id: reward.id, postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
             baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
-                id: "\(reward.amount ?? reward.id)", postfixes: [])
+                id: (reward.amount != nil ? "\(reward.amount!)" : reward.id), postfixes: [])
         } else {
             baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
                 id: reward.id, postfixes: postfixes)
@@ -670,7 +670,7 @@ extension ImageApiRequestHandler {
         var uicon: String {
             switch type {
             case .pokemonEncounter:
-                return id //special case including all postfixes e.g. 592_f2330
+                return id // special case including all postfixes e.g. 592_f2330
             case .megaResource, .xlCandy, .candy, .item:
                 return id + (amount != nil ? "_a\(amount!)" : "")
             case .stardust:
