@@ -83,12 +83,13 @@ class ImageGenerator {
         if rewardImage != nil {
             Shell([
                 "/usr/local/bin/convert",
-                "(", rewardImage!, "-background", "none", "-resize", "96x96", "-gravity", "north",
-                "-extent", "96x160", ")",
-                "(", baseImage, "-background", "none", "-resize", "96x96", "-gravity", "south",
-                "-extent", "96x160", ")",
+                "(", rewardImage!, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160",
+                ")",
+                "(", baseImage, "-background", "none", "-resize", "96x96", "-gravity", "south", "-extent", "96x160",
+                ")",
                 "-gravity", "center",
-                "-compose", "over"
+                "-compose", "over",
+                "-composite"
             ] + markerAgs + [
                 image
             ]).run(environment: magickEnv)
