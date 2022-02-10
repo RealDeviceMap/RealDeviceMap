@@ -60,7 +60,7 @@ class ImageApiRequestHandler {
         let raidPokemonGender = request.param(name: "raid_pokemon_gender")?.toInt()
         let raidPokemon = raidPokemonId != nil ? Pokemon(
             style: style, id: raidPokemonId!, evolution: raidPokemonEvolution,
-            form: raidPokemonForm, costume: raidPokemonCostume, gender: raidPokemonGender
+            form: raidPokemonForm, costume: raidPokemonCostume, gender: raidPokemonGender, spawnType: nil, ranking: nil
         ) : nil
 
         let gym = Gym(
