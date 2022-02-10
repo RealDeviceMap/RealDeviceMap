@@ -118,7 +118,7 @@ class ImageApiRequestHandler {
         }
         let invasionType = request.param(name: "invasion")?.toInt()
         let questRewardType = request.param(name: "quest_reward_type")?.toInt()
-        let questItemId = request.param(name: "quest_item_id")?.toInt()
+        let questItemId = request.param(name: "quest_item_id")
         let questRewardAmount = request.param(name: "quest_reward_amount")?.toInt()
         let questPokemonId = request.param(name: "quest_pokemon_id")?.toInt()
         let questFormId = request.param(name: "quest_form_id")?.toInt()
@@ -142,7 +142,9 @@ class ImageApiRequestHandler {
                 reward = Reward(style: style, id: pokemon!.uicon, amount: questRewardAmount,
                     type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             } else {
-                reward = Reward(style: style, id: questItemId ?? 0, amount: questRewardAmount,
+
+                reward = Reward(style: style, id: (questItemId =! nil ? questItemId : "0"),
+                    amount: questRewardAmount,
                     type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
             }
 
@@ -172,7 +174,7 @@ class ImageApiRequestHandler {
 
     public static func handleReward(request: HTTPRequest, response: HTTPResponse) {
         guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -327,22 +329,22 @@ class ImageApiRequestHandler {
             baseFile = findPokemonImage(pokemon: pokemon!)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
             baseFile = getFirstPath(style: reward.style, folder: "reward/candy",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: reward.id, postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.xlCandy {
             baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: reward.id, postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
             baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resource",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: reward.id, postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
             baseFile = getFirstPath(style: reward.style, folder: "reward/item",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: reward.id, postfixes: postfixes)
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
             baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
                 id: "\(reward.amount ?? reward.id)", postfixes: [])
         } else {
             baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
-                id: "\(reward.id)", postfixes: postfixes)
+                id: reward.id, postfixes: postfixes)
         }
 
         rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
@@ -658,7 +660,7 @@ extension ImageApiRequestHandler {
     struct Reward: Hashable {
         // Standard
         var style: String
-        var id: Int
+        var id: String
         var amount: Int?
 
         // Generated
@@ -668,9 +670,9 @@ extension ImageApiRequestHandler {
         var uicon: String {
             switch type {
             case .pokemonEncounter:
-                return "\(id)"
+                return id //special case including all postfixes e.g. 592_f2330
             case .megaResource, .xlCandy, .candy, .item:
-                return "\(id)" + (amount != nil ? "_a\(amount!)" : "")
+                return id + (amount != nil ? "_a\(amount!)" : "")
             case .stardust:
                 return amount != nil ? "\(amount!)" : "0"
             default: return ""
