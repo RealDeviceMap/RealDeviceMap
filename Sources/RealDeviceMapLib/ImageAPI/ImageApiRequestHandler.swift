@@ -269,7 +269,6 @@ class ImageApiRequestHandler {
         if let costume = pokemon.costume { postfixes.append("c\(costume)") }
         if let gender = pokemon.gender { postfixes.append("g\(gender)") }
 
-        print("[TMP] findPokemonImage - id: \(pokemon.id) - form: \(String(describing: pokemon.form))")
         let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
         let file: File?
         if let baseFile = baseFile {
@@ -414,7 +413,6 @@ class ImageApiRequestHandler {
         if !pokemonPath.exists {
             try? pokemonPath.create()
         }
-        print("[TMP] buildPokemonImage hash: \(pokemon.hash)")
         let file = File("\(pokemonPath.path)\(pokemon.hash).png")
         if file.exists { return file }
 
@@ -477,9 +475,6 @@ class ImageApiRequestHandler {
             }
             combinations.append(combination)
         }
-        if id == "592" {
-            print("[TMP] combinations before sort \(combinations)")
-        }
 
         combinations.sort { lhs, rhs in
             var index = 0
@@ -495,10 +490,6 @@ class ImageApiRequestHandler {
             return false
         }
 
-        if id == "592" {
-            print("[TMP] combinations after sort \(combinations)")
-        }
-
         var possiblePaths: [File] = []
         for combination in combinations {
             if combination.isEmpty {
@@ -507,9 +498,7 @@ class ImageApiRequestHandler {
                 possiblePaths.append(File("\(basePath)_\(combination.joined(separator: "_")).png"))
             }
         }
-        if id == "592" {
-            print("[TMP] possible paths: \(String(describing: possiblePaths.map({ $0.path })))")
-        }
+        //TODO check JSON instead of File structure
         return possiblePaths.first {$0.exists}
     }
 
