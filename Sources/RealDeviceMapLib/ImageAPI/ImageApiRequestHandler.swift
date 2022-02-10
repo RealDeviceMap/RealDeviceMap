@@ -472,7 +472,7 @@ class ImageApiRequestHandler {
             combinations.append(combination)
         }
         if id == "592" {
-            print("[TMP] combinations\(combinations)")
+            print("[TMP] combinations before sort \(combinations)")
         }
 
         combinations.sort { lhs, rhs in
@@ -489,6 +489,10 @@ class ImageApiRequestHandler {
             return false
         }
 
+        if id == "592" {
+            print("[TMP] combinations after sort \(combinations)")
+        }
+
         var possiblePaths: [File] = []
         for combination in combinations {
             if combination.isEmpty {
@@ -496,6 +500,9 @@ class ImageApiRequestHandler {
             } else {
                 possiblePaths.append(File("\(basePath)_\(combination.joined(separator: "_")).png"))
             }
+        }
+        if id == "592" {
+            print("[TMP] possible paths: \(String(describing: possiblePaths.map({ $0.path })))")
         }
         return possiblePaths.first {$0.exists}
     }
