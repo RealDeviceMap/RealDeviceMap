@@ -9,7 +9,7 @@ extension QuestRewardProto.TypeEnum {
 
     public static var allAvailable: [QuestRewardProto.TypeEnum] = [
         // .unset,
-        // .experience,
+        .experience,
         .item,
         .stardust,
         .candy,

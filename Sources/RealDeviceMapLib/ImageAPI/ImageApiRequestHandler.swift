@@ -498,7 +498,7 @@ class ImageApiRequestHandler {
                 possiblePaths.append(File("\(basePath)_\(combination.joined(separator: "_")).png"))
             }
         }
-        //TODO check JSON instead of File structure
+        // TODO check JSON instead of File structure
         return possiblePaths.first {$0.exists}
     }
 

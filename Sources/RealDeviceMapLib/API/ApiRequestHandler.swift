@@ -460,18 +460,18 @@ public class ApiRequestHandler {
 
             var questData = [[String: Any]]()
 
-            let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                    <label class="btn btn-sm btn-off select-button-new" data-id="ar"
-                     data-type="quest-ar" data-info="hide">
-                        <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                    </label>
-                    <label class="btn btn-sm btn-on select-button-new" data-id="ar"
-                     data-type="quest-ar" data-info="show">
-                        <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                    </label>
-                </div>
-            """
+            let filter =    """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+                                 data-type="quest-ar" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                </label>
+                                <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+                                 data-type="quest-ar" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                </label>
+                            </div>
+                            """
             questData.append([
                 "id": [
                     "formatted": "",
@@ -485,175 +485,164 @@ public class ApiRequestHandler {
                 "type": generalString
             ])
 
-            // Misc
-            for i in 1...6 {
+            // reward types:
+            for rewardType in QuestRewardProto.TypeEnum.allAvailable {
+                let rewardTypeName = Localizer.global.get(value: "quest_reward_\(rewardType.rawValue)")
+                if rewardType == .pokemonEncounter {
+                    for i in 1...WebRequestHandler.maxPokemonId {
+                        let filter =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                </label>
+                                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                </label>
+                            </div>
+                            """
+                        let size =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="small">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="normal">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="large">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="huge">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                </label>
+                            </div>
+                            """
 
-                let itemName: String
-                switch i {
-                case 1:
-                    itemName = Localizer.global.get(value: "filter_stardust")
-                case 2:
-                    itemName = Localizer.global.get(value: "filter_xp")
-                case 3:
-                    itemName = Localizer.global.get(value: "filter_candy")
-                case 4:
-                    itemName = Localizer.global.get(value: "filter_pokecoin")
-                case 5:
-                    itemName = Localizer.global.get(value: "filter_sticker")
-                default:
-                    itemName = Localizer.global.get(value: "filter_mega_energy")
-                }
+                        questData.append([
+                            "id": [
+                                "formatted": String(format: "%03d", i),
+                                "sort": 200+i
+                            ],
+                            "name": Localizer.global.get(value: "poke_\(i)") ,
+                            "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokemon?id=\(i)\" " +
+                                "style=\"height:50px; width:50px;\">",
+                            "filter": filter,
+                            "size": size,
+                            "type": pokemonTypeString
+                        ])
+                    }
+                } else if rewardType == .item {
+                    // Items
+                    var itemI = 1
+                    for item in Item.allAvailable {
+                        let filter =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-off select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                </label>
+                                <label class="btn btn-sm btn-on select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                </label>
+                            </div>
+                            """
+                        let size =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="small">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="normal">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="large">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="huge">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                </label>
+                            </div>
+                            """
 
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
+                        questData.append([
+                            "id": [
+                                "formatted": String(format: "%03d", itemI),
+                                "sort": 100+itemI
+                            ],
+                            "name": Localizer.global.get(value: "item_\(item.rawValue)") ,
+                            "image": "<img class=\"lazy_load\" " +
+                                "data-src=\"/image-api/reward?id=\(item.rawValue)&type=\(rewardType.rawValue)\" " +
+                                "style=\"height:50px; width:50px;\">",
+                            "filter": filter,
+                            "size": size,
+                            "type": itemsTypeString
+                        ])
+                        itemI += 1
+                    }
+                } else {
+                    // Misc
+                    let filter =
+                        """
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-sm btn-off select-button-new" data-id="\(rewardType.rawValue)"
+                                  data-type="quest-misc" data-info="hide">
+                                  <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                            </label>
+                            <label class="btn btn-sm btn-on select-button-new" data-id="\(rewardType.rawValue)"
+                                  data-type="quest-misc" data-info="show">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                            </label>
+                        </div>
+                        """
+                    let size =
+                        """
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="small">
+                                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="normal">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="large">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="huge">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                            </label>
+                        </div>
+                        """
 
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", i),
-                        "sort": i
-                    ],
-                    "name": itemName,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(-i).png\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": miscTypeString
-                ])
-            }
-
-            // Items
-            var itemI = 1
-            for item in Item.allAvailable {
-
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
-
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", itemI),
-                        "sort": itemI+100
-                    ],
-                    "name": Localizer.global.get(value: "item_\(item.rawValue)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(item.rawValue).png\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": itemsTypeString
-                ])
-                itemI += 1
-            }
-
-            // Pokemon
-            for i in 1...WebRequestHandler.maxPokemonId {
-
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
-
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", i),
-                        "sort": i+200
-                    ],
-                    "name": Localizer.global.get(value: "poke_\(i)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokemon?id=\(i)\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": pokemonTypeString
+                    questData.append([
+                        "id": [
+                            "formatted": String(format: "%03d", rewardType.rawValue),
+                            "sort": rewardType.rawValue
+                        ],
+                        "name": rewardTypeName,
+                        "image": "<img class=\"lazy_load\" " +
+                            "data-src=\"/image-api/reward?id=\(0)&type=\(rewardType.rawValue)\" " +
+                            "style=\"height:50px; width:50px;\">",
+                        "filter": filter,
+                        "size": size,
+                        "type": miscTypeString
                     ])
+                }
             }
             data["quest_filters"] = questData
         }
