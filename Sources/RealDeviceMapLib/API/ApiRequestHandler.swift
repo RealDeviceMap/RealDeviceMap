@@ -2315,7 +2315,7 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if scanNext && perms.contains(.admin), let name = instanceName, let coords = coords {
+        } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
             guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
                 as? CircleInstanceController else {
