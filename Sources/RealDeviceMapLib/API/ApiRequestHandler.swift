@@ -2332,7 +2332,8 @@ public class ApiRequestHandler {
             do {
                 try response.respondWithData(data: [
                     "action": "next_scan",
-                    "queue_size": size
+                    "size": size,
+                    "timestamp": Int(Date().timeIntervalSince1970)
                 ])
             } catch {
                 response.respondWithError(status: .internalServerError)
