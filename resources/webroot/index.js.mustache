@@ -1856,7 +1856,6 @@ function getGymSize (teamId) {
 }
 
 function getRaidSize (id) {
-  console.log(id, raidFilter);
   const size = raidFilter[id].size
   if (size === 'small') {
     return 30
@@ -4539,7 +4538,6 @@ function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched
   if (raidPokemonGender) {
     response += '&raid_pokemon_gender=' + raidPokemonGender
   }
-  console.log(response)
   return response
 }
 
