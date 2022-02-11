@@ -220,7 +220,12 @@ public func setupRealDeviceMap() {
     }
 
     Log.info(message: "[MAIN] Loading Available Items")
-    var availableItems = [-6, -5, -4, -3, -2, -1]
+    var availableItems: [Int] = []
+    QuestRewardProto.TypeEnum.allAvailable.forEach({
+        if $0 != .pokemonEncounter && $0 != .item {
+            availableItems.append($0.rawValue * -1)
+        }
+    })
     for itemId in Item.allAvailable {
         availableItems.append(itemId.rawValue)
     }

@@ -460,18 +460,19 @@ public class ApiRequestHandler {
 
             var questData = [[String: Any]]()
 
-            let filter =    """
-                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-sm btn-off select-button-new" data-id="ar"
-                                 data-type="quest-ar" data-info="hide">
-                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                                </label>
-                                <label class="btn btn-sm btn-on select-button-new" data-id="ar"
-                                 data-type="quest-ar" data-info="show">
-                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                                </label>
-                            </div>
-                            """
+            let filter =
+                """
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-sm btn-off select-button-new" data-id="ar"
+                        data-type="quest-ar" data-info="hide">
+                        <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                    </label>
+                    <label class="btn btn-sm btn-on select-button-new" data-id="ar"
+                        data-type="quest-ar" data-info="show">
+                        <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                    </label>
+                </div>
+                """
             questData.append([
                 "id": [
                     "formatted": "",
