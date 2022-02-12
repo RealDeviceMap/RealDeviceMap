@@ -2172,6 +2172,8 @@ public class ApiRequestHandler {
             }
         }
 
+        print("[TMP] scanNext call: scan_next=\(scanNext), queue_size=\(queueSize) " +
+            "instance=\(instance != nil ? instance! : "unknown"), perms=\(perms.contains(.admin))")
         if scanNext && queueSize && perms.contains(.admin), let name = instance {
             guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
                 as? CircleInstanceController else {
