@@ -2184,9 +2184,12 @@ public class ApiRequestHandler {
             data["size"] = size
         }
 
-        data["timestamp"] = Int(Date().timeIntervalSince1970)
-
         do {
+            if data.isEmpty {
+                response.respondWithError(status: .badRequest)
+                return
+            }
+            data["timestamp"] = Int(Date().timeIntervalSince1970)
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
