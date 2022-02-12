@@ -189,10 +189,7 @@ public class InstanceController {
             let isEvent = instance.data["is_event"] as? Bool ?? false
 
             if instance.type == .pokemonIV {
-                let pokemonList = instance.data["pokemon_ids"] as? [UInt16] ??
-                                  (instance.data["pokemon_ids"] as? [Int])?.map({ (int) -> UInt16 in
-                    return UInt16(int)
-                }) ?? [UInt16]()
+                let pokemonList = instance.data["pokemon_ids"] as? [String] ?? [String]()
                 let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? 100
                 let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ??
                                   (instance.data["scatter_pokemon_ids"] as? [Int])?.map({ (int) -> UInt16 in

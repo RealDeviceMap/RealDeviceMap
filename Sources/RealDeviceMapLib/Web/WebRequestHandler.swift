@@ -2291,17 +2291,16 @@ public class WebRequestHandler {
                                     .replacingOccurrences(of: "<br>", with: ",")
                                     .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
 
-        var pokemonIDs = [UInt16]()
+        var pokemonIDs = [String]()
         if pokemonIDsText?.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
-            pokemonIDs = Array(1...999)
+            pokemonIDs = Array(1...999).map { "\($0)" }
         } else {
             let pokemonIDsSplit = pokemonIDsText?.components(separatedBy: ",")
             if pokemonIDsSplit != nil {
                 for pokemonIDText in pokemonIDsSplit! {
-                    let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces).toUInt16()
-                    if pokemonID != nil {
-                        pokemonIDs.append(pokemonID!)
-                    }
+                    let pokemonID = pokemonIDText.trimmingCharacters(in: .whitespaces)
+                    pokemonIDs.append(pokemonID)
+
                 }
             }
         }
@@ -2602,7 +2601,7 @@ public class WebRequestHandler {
             data["is_event"] = oldInstance!.data["is_event"] as? Bool ?? false
             data["quest_mode"] = oldInstance!.data["quest_mode"] ?? "normal"
 
-            let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [Int]
+            let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [String]
             if pokemonIDs != nil {
                 var text = ""
                 for id in pokemonIDs! {
