@@ -2601,7 +2601,8 @@ public class WebRequestHandler {
             data["is_event"] = oldInstance!.data["is_event"] as? Bool ?? false
             data["quest_mode"] = oldInstance!.data["quest_mode"] ?? "normal"
 
-            let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [String]
+            let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [String] ??
+                (oldInstance!.data["pokemon_ids"] as? [Int])?.map({ "\($0)" })
             if pokemonIDs != nil {
                 var text = ""
                 for id in pokemonIDs! {
