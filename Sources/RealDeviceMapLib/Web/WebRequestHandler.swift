@@ -31,7 +31,6 @@ public class WebRequestHandler {
     public static var maxZoom: Int = 18
     public static var maxPokemonId: Int = 649
     public static var title: String = "RealDeviceMap"
-    public static var availableFormsJson: String = "[]"
     public static var availableItemJson: String = "[]"
     public static var enableRegister: Bool = true
     public static var tileservers = [String: [String: String]]()
@@ -1813,9 +1812,6 @@ public class WebRequestHandler {
             data["start_pokestop"] = request.param(name: "start_pokestop")
             data["start_gym"] = request.param(name: "start_gym")
             data["perm_admin"] = perms.contains(.admin)
-            data["available_forms_json"] = availableFormsJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
-                                          .replacingOccurrences(of: "'", with: "\\'")
-                                          .replacingOccurrences(of: "\"", with: "\\\"")
             data["available_items_json"] = availableItemJson.replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                           .replacingOccurrences(of: "'", with: "\\'")
                                           .replacingOccurrences(of: "\"", with: "\\\"")

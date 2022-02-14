@@ -191,34 +191,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Webhook Controller")
     WebHookController.global.start()
 
-    // disable image generation, no Frontend is used
-    let noGenerateImages =
-        environment["NO_GENERATE_IMAGES"] != nil
-    // Load Forms
-    if !noGenerateImages {
-        Log.info(message: "[MAIN] Loading Available Forms")
-        var availableForms = [String]()
-        do {
-            try Dir("\(Dir.projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
-                let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
-                if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-                    availableForms.append("\(pokemonID)-\(formID)")
-                } else if split.count == 3, let pokemonID = Int(split[0]),
-                          let formID = Int(split[1]), let evoId = Int(split[2]) {
-                    availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
-                }
-            }
-            WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
-        } catch {
-            Log.error(
-                message: "Failed to load forms. Frontend will only display default forms. " +
-                    "Error: \(error.localizedDescription)"
-            )
-        }
-    } else {
-        Log.info(message: "[MAIN] Loading Available Forms skipped - Image generation disabled")
-    }
-
     Log.info(message: "[MAIN] Loading Available Items")
     var availableItems: [Int] = []
     for rewardType in QuestRewardProto.TypeEnum.allAvailable {
