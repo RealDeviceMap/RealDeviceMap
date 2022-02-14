@@ -2204,7 +2204,8 @@ public class ApiRequestHandler {
         let deviceGroupName = request.param(name: "devicegroup_name")
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
-        let instanceName = request.param(name: "instance_name")
+        let instanceName = request.param(name: "instance_name") // MARK: remove this later, use 'instance' instead
+        let instance = request.param(name: "instance") ?? instanceName
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
@@ -2249,7 +2250,7 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
+        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instance {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
                 guard let deviceGroup = try DeviceGroup.getByName(name: name),
@@ -2266,7 +2267,7 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instanceName {
+        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instance {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
                 guard let device = try Device.getById(id: name),
