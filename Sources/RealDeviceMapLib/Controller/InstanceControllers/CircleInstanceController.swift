@@ -95,7 +95,7 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     // swiftlint:disable function_body_length
-    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?) -> [String: Any] {
+    func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         var currentIndex = 0
         var currentUuidIndex = 0
         var currentCoord = coords[currentIndex]
@@ -133,8 +133,8 @@ class CircleInstanceController: InstanceControllerProto {
                     currentUuidIndex = coords.count - 1
                 }
             }
-            lock.unlock()
             currentUuidIndexes[uuid] = currentUuidIndex
+            lock.unlock()
             currentCoord = coords[currentUuidIndex]
             return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]

@@ -102,7 +102,7 @@ public extension String {
         return self.replacingOccurrences(of: "\\", with: "\\\\")
     }
 
-    func unscaped() -> String {
+    func unescaped() -> String {
         return self.replacingOccurrences(of: "\\\\", with: "\\")
     }
 

@@ -17,4 +17,8 @@ public extension Date {
         return formatter.string(from: self)
     }
 
+    var timestampMs: UInt64 {
+        UInt64(self.timeIntervalSince1970 * 1000)
+    }
+
 }

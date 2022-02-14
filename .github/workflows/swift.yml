@@ -12,12 +12,12 @@ jobs:
       run: export DEBIAN_FRONTEND=noninteractive &&
            sudo apt-get -y update &&
            sudo apt-get install -y libssl-dev libcurl4-openssl-dev uuid-dev imagemagick lsb-release &&
-           wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb &&
+           wget http://repo.mysql.com/mysql-apt-config_0.8.22-1_all.deb &&
            echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | sudo debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | sudo debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | sudo debconf-set-selections &&
            echo mysql-apt-config    mysql-apt-config/select-product select  Ok | sudo debconf-set-selections &&
-           sudo dpkg -i mysql-apt-config_0.8.16-1_all.deb &&
+           sudo dpkg -i mysql-apt-config_0.8.22-1_all.deb &&
            sudo apt-get purge -y mysql-client mysql-common mysql-server &&
            sudo apt-get autoremove -y &&
            sudo apt-get -y update &&
@@ -40,10 +40,16 @@ jobs:
     - name: Set .gitref
       if: github.event_name == 'push'
       run: "echo ${{github.ref}} > .gitref"
-    - name: Publish
+    - name: Publish Version
       uses: 123FLO321/github-docker-temp@0.5.0
       if: github.event_name == 'push'
       with:
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish Commit
+      uses: 123FLO321/github-docker-temp@0.5.0
+      if: github.event_name == 'push'
+      with:
+        imageTag: ${{ github.sha }}
         accessToken: ${{ secrets.GITHUB_TOKEN }}
     - name: Start MR Build System
       if: github.event_name == 'pull_request'
