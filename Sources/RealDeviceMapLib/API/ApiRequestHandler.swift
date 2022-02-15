@@ -162,6 +162,8 @@ public class ApiRequestHandler {
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
         let start = request.param(name: "start") ?? ""
         let end = request.param(name: "end") ?? ""
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let queueSize = request.param(name: "queue_size")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -2170,9 +2172,22 @@ public class ApiRequestHandler {
             }
         }
 
-        data["timestamp"] = Int(Date().timeIntervalSince1970)
+        if scanNext && queueSize && perms.contains(.admin), let name = instance {
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
+                as? CircleInstanceController else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found")
+                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            }
+            let size = instance.getNextCoordsSize()
+            data["size"] = size
+        }
 
         do {
+            if data.isEmpty {
+                response.respondWithError(status: .badRequest)
+                return
+            }
+            data["timestamp"] = Int(Date().timeIntervalSince1970)
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
@@ -2186,7 +2201,7 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.setData) else {
             return
         }
-
+        let jsonDecoder = JSONDecoder()
         let setGymName = request.param(name: "set_gym_name")?.toBool() ?? false
         let gymId = request.param(name: "gym_id")
         let gymName = request.param(name: "gym_name")
@@ -2204,6 +2219,10 @@ public class ApiRequestHandler {
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
+
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let coords = try? jsonDecoder.decode([Coord].self,
+            from: request.param(name: "coords")?.data(using: .utf8) ?? Data())
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
@@ -2299,6 +2318,31 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
+            Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
+                as? CircleInstanceController else {
+                    Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
+                    return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            }
+            if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
+                return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
+            }
+            var size = 0
+            if !coords.isEmpty {
+                size = instance.addToNextCoords(coords: coords)
+            }
+            do {
+                try response.respondWithData(data: [
+                    "action": "next_scan",
+                    "size": size,
+                    "timestamp": Int(Date().timeIntervalSince1970)
+                ])
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+
         } else {
             response.respondWithError(status: .badRequest)
         }
