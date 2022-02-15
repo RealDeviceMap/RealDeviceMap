@@ -11,7 +11,7 @@ import Foundation
 import PerfectLib
 import Turf
 
-public class Coord: JSONConvertibleObject, Hashable {
+public class Coord: JSONConvertibleObject, Hashable, Codable {
 
     var lat: Double
     var lon: Double
