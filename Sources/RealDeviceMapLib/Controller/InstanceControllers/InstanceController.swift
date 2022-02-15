@@ -190,7 +190,7 @@ public class InstanceController {
 
             if instance.type == .pokemonIV {
                 let pokemonList = instance.data["pokemon_ids"] as? [String] ??  // MARK: remove mapping for int later
-                    (instance.data["pokemon_ids"] as? [UInt16])?.map({ "\($0)" }) ??
+                    (instance.data["pokemon_ids"] as? [UInt16])?.map({ "\($0)" }) ?? // backward compatibility PR#301
                     (instance.data["pokemon_ids"] as? [Int])?.map({ "\($0)" }) ?? [String]()
                 let ivQueueLimit = instance.data["iv_queue_limit"] as? Int ?? 100
                 let scatterList = instance.data["scatter_pokemon_ids"] as? [UInt16] ??

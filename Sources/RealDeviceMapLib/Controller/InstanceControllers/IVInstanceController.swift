@@ -48,7 +48,7 @@ class IVInstanceController: InstanceControllerProto {
         self.pokemonList = pokemonList
         self.ivQueueLimit = ivQueueLimit
         self.scatterPokemon = scatterPokemon
-        print("[TMP] pokemonlist: \(pokemonList)")
+
         checkScannedThreadingQueue = Threading.getQueue(name: "\(name)-check-scanned", type: .serial)
         checkScannedThreadingQueue!.dispatch {
 

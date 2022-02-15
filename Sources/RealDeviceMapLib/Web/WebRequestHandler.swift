@@ -2603,6 +2603,7 @@ public class WebRequestHandler {
 
             let pokemonIDs = oldInstance!.data["pokemon_ids"] as? [String] ??
                 (oldInstance!.data["pokemon_ids"] as? [Int])?.map({ "\($0)" })
+                // MARK: remove mapping for int later - backward compatibility PR#301
             if pokemonIDs != nil {
                 var text = ""
                 for id in pokemonIDs! {
