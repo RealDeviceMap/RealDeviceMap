@@ -228,11 +228,14 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     private func containedInList(pokemon: Pokemon) -> Bool {
-        let pokemonHash = pokemon.form != nil ?"\(pokemon.pokemonId)_f\(pokemon.form!)" : "\(pokemon.pokemonId)"
-        if pokemonList.contains(pokemonHash) {
+        if pokemonList.contains("\(pokemon.pokemonId)") {
             return true
         } else {
-            return pokemonList.contains("\(pokemon.pokemonId)")
+            if pokemon.form != nil && pokemon.form! != 0 {
+                let pokemonHash = "\(pokemon.pokemonId)_f\(pokemon.form!)"
+                return pokemonList.contains(pokemonHash)
+            }
+            return false
         }
     }
 
