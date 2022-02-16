@@ -23,7 +23,7 @@ class IVInstanceController: InstanceControllerProto {
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
-    private var pokemonList: [UInt16]
+    private var pokemonList: [String]
     private var pokemonQueue = [Pokemon]()
     private var pokemonLock = Threading.Lock()
     private var scannedPokemon = [(Date, Pokemon)]()
@@ -36,7 +36,7 @@ class IVInstanceController: InstanceControllerProto {
     private var ivQueueLimit = 100
 
     // swiftlint:disable:next function_body_length
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8,
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [String], minLevel: UInt8,
          maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16], accountGroup: String?,
          isEvent: Bool) {
         self.name = name
@@ -169,7 +169,7 @@ class IVInstanceController: InstanceControllerProto {
     func gotPokemon(pokemon: Pokemon) {
         if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
            pokemon.isEvent == isEvent &&
-           pokemonList.contains(pokemon.pokemonId) &&
+           containedInList(pokemon: pokemon) &&
            multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
 
@@ -178,7 +178,7 @@ class IVInstanceController: InstanceControllerProto {
                 return
             }
 
-            let index = lastIndexOf(pokemonId: pokemon.pokemonId)
+            let index = lastIndexOf(pokemonId: pokemon.pokemonId, pokemonForm: pokemon.form ?? 0)
 
             if pokemonQueue.count >= ivQueueLimit && index == nil {
                 Log.debug(message: "[IVInstanceController] [\(name)] Queue is full!")
@@ -227,15 +227,40 @@ class IVInstanceController: InstanceControllerProto {
         }
     }
 
-    private func lastIndexOf(pokemonId: UInt16) -> Int? {
+    private func containedInList(pokemon: Pokemon) -> Bool {
+        if pokemonList.contains("\(pokemon.pokemonId)") {
+            return true
+        } else {
+            if pokemon.form != nil && pokemon.form! != 0 {
+                let pokemonHash = "\(pokemon.pokemonId)_f\(pokemon.form!)"
+                return pokemonList.contains(pokemonHash)
+            }
+            return false
+        }
+    }
 
-        guard let targetPriority = pokemonList.firstIndex(of: pokemonId) else {
+    private func firstIndexInList(pokemonId: UInt16, pokemonForm: UInt16) -> Int? {
+        guard let priority = pokemonList.firstIndex(
+            of: (pokemonForm != 0 ? "\(pokemonId)_f\(pokemonForm)" : "\(pokemonId)")) else {
+           if pokemonForm != 0 {
+               return pokemonList.firstIndex(of: "\(pokemonId)")
+           } else {
+               return nil
+           }
+        }
+        return priority
+    }
+
+    private func lastIndexOf(pokemonId: UInt16, pokemonForm: UInt16) -> Int? {
+
+        guard let targetPriority = firstIndexInList(pokemonId: pokemonId, pokemonForm: pokemonForm) else {
             return nil
         }
 
         var i = 0
         for pokemon in pokemonQueue {
-            if let priority = pokemonList.firstIndex(of: pokemon.pokemonId), targetPriority < priority {
+            if let priority = firstIndexInList(pokemonId: pokemon.pokemonId, pokemonForm: pokemon.form ?? 0),
+               targetPriority < priority {
                 return i
             }
             i += 1
