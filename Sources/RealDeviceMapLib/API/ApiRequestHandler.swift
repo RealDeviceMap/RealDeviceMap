@@ -1873,7 +1873,8 @@ public class ApiRequestHandler {
                 ]
                 if formatted {
                     json["pokemon_image"] =
-                        "<img src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                        "<img src=\"/image-api/pokemon?id=\(pokemon.pokemonId)" +
+                        (pokemon.form != nil ? "&form=\(pokemon.form!)" : "") + "\" style=\"height:50px; width:50px;\">"
                     json["pokemon_spawn_id"] =
                         "<a target=\"_blank\" href=\"/@pokemon/\(pokemon.id)\">\(pokemon.id)</a>"
                     json["location"] =
