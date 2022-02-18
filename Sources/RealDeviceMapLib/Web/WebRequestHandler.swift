@@ -3500,7 +3500,8 @@ public class WebRequestHandler {
         let invasionIDs: [UInt16] = generateRange(ids: invasionIds ?? "")
         let gymIDs: [UInt16] = generateRange(ids: gymIds ?? "")
         let weatherIDs: [UInt16] = generateRange(ids: weatherIds ?? "")
-
+        print("[TMP] invasionIds before converting: \(invasionIds ?? "")")
+        print("[TMP] invasionIDs after converting: \(invasionIDs)")
         var data = data
         var newCoords: [Any]
         var coordArray = [[Coord]]()
