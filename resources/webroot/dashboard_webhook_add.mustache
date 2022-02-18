@@ -54,7 +54,6 @@
 </script>
 
 <body>
-
     <br>
     <div class="alert alert-danger w-75 {{^show_error}}d-none{{/show_error}}" style="float: none; margin: 0 auto;">
         <strong>Error!</strong> {{error}}</a>
@@ -75,7 +74,7 @@
             </div>
             <div class="form-group">
                 Select Type(s)
-                <select class="form-control" style="height: 400px" name="types" multiple required>
+                <select class="form-control types-select" style="height: 400px" name="types" multiple required>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Type(s)</option>
                     {{#types}}
                         <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
