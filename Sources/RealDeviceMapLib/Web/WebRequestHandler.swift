@@ -3492,37 +3492,14 @@ public class WebRequestHandler {
             webhookTypes.append(WebhookType(rawValue: type)!)
         }
 
-        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
-
-        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
-
-        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
-
-        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
-
-        let questIDsText = questIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let questIDs: [UInt16] = generateRange(ids: questIDsText, range: Array(1...50))
-
-        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
-
-        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
-
-        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
+        let pokemonIDs = generateRange(ids: pokemonIds ?? "")
+        let raidIDs = generateRange(ids: raidIds ?? "")
+        let eggIDs = generateRange(ids: eggIds ?? "")
+        let lureIDs = generateRange(ids: lureIds ?? "")
+        let questIDs = generateRange(ids: questIds ?? "")
+        let invasionIDs = generateRange(ids: invasionIds ?? "")
+        let gymIDs = generateRange(ids: gymIds ?? "")
+        let weatherIDs = generateRange(ids: weatherIds ?? "")
 
         var data = data
         var newCoords: [Any]
@@ -3779,33 +3756,13 @@ public class WebRequestHandler {
             webhookTypes.append(WebhookType(rawValue: type)!)
         }
 
-        let pokemonIDsText = pokemonIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIDsText, range: Array(1...999))
-
-        let raidIDsText = raidIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let raidIDs: [UInt16] = generateRange(ids: raidIDsText, range: Array(1...999))
-
-        let eggIDsText = eggIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let eggIDs: [UInt8] = generateRange(ids: eggIDsText, range: Array(1...5))
-
-        let lureIDsText = lureIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let lureIDs: [UInt16] = generateRange(ids: lureIDsText, range: Array(501...504))
-
-        let invasionIDsText = invasionIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let invasionIDs: [UInt16] = generateRange(ids: invasionIDsText, range: Array(1...50))
-
-        let gymIDsText = gymIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let gymIDs: [UInt8] = generateRange(ids: gymIDsText, range: Array(0...3))
-
-        let weatherIDsText = weatherIds?.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression) ?? ""
-        let weatherIDs: [UInt8] = generateRange(ids: weatherIDsText, range: Array(0...7))
+        let pokemonIDs = generateRange(ids: pokemonIds ?? "")
+        let raidIDs = generateRange(ids: raidIds ?? "")
+        let eggIDs = generateRange(ids: eggIds ?? "")
+        let lureIDs = generateRange(ids: lureIds ?? "")
+        let invasionIDs = generateRange(ids: invasionIds ?? "")
+        let gymIDs = generateRange(ids: gymIds ?? "")
+        let weatherIDs = generateRange(ids: weatherIds ?? "")
 
         var newCoords: [Any]
         var coordArray = [[Coord]]()
@@ -4590,20 +4547,20 @@ public class WebRequestHandler {
 
     }
 
-    static func generateRange<T>(ids: String, range: [T]) -> [T] {
+    static func generateRange(ids: String) -> [Int] {
+        var list = [Int]()
         if ids.isEmpty {
-            return [T]()
+            return list
         }
         let text = ids.replacingOccurrences(of: "<br>", with: ",")
-            .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
-        var list = [T]()
-        if text.trimmingCharacters(in: .whitespacesAndNewlines) == "*" {
-            list = range
-        } else {
+                      .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
+                      .replacingOccurrences(of: "\n", with: ",", options: .regularExpression)
+
+        if text != "" {
             let split = text.components(separatedBy: ",")
             if split.count > 0 {
                 for idText in split {
-                    let id = idText.trimmingCharacters(in: .whitespaces) as? T
+                    let id = Int(idText.trimmingCharacters(in: .whitespaces))
                     if id != nil {
                         list.append(id!)
                     }
