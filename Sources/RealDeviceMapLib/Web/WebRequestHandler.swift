@@ -3492,14 +3492,14 @@ public class WebRequestHandler {
             webhookTypes.append(WebhookType(rawValue: type)!)
         }
 
-        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIds ?? "")
-        let raidIDs: [UInt16] = generateRange(ids: raidIds ?? "")
-        let eggIDs: [UInt16] = generateRange(ids: eggIds ?? "")
-        let lureIDs: [UInt16] = generateRange(ids: lureIds ?? "")
-        let questIDs: [UInt16] = generateRange(ids: questIds ?? "")
-        let invasionIDs: [UInt16] = generateRange(ids: invasionIds ?? "")
-        let gymIDs: [UInt16] = generateRange(ids: gymIds ?? "")
-        let weatherIDs: [UInt16] = generateRange(ids: weatherIds ?? "")
+        let pokemonIDs = generateRange(ids: pokemonIds ?? "")
+        let raidIDs = generateRange(ids: raidIds ?? "")
+        let eggIDs = generateRange(ids: eggIds ?? "")
+        let lureIDs = generateRange(ids: lureIds ?? "")
+        let questIDs = generateRange(ids: questIds ?? "")
+        let invasionIDs = generateRange(ids: invasionIds ?? "")
+        let gymIDs = generateRange(ids: gymIds ?? "")
+        let weatherIDs = generateRange(ids: weatherIds ?? "")
         print("[TMP] invasionIds before converting: \(invasionIds ?? "")")
         print("[TMP] invasionIDs after converting: \(invasionIDs)")
         var data = data
@@ -3757,13 +3757,13 @@ public class WebRequestHandler {
             webhookTypes.append(WebhookType(rawValue: type)!)
         }
 
-        let pokemonIDs: [UInt16] = generateRange(ids: pokemonIds ?? "")
-        let raidIDs: [UInt16] = generateRange(ids: raidIds ?? "")
-        let eggIDs: [UInt16] = generateRange(ids: eggIds ?? "")
-        let lureIDs: [UInt16] = generateRange(ids: lureIds ?? "")
-        let invasionIDs: [UInt16] = generateRange(ids: invasionIds ?? "")
-        let gymIDs: [UInt16] = generateRange(ids: gymIds ?? "")
-        let weatherIDs: [UInt16] = generateRange(ids: weatherIds ?? "")
+        let pokemonIDs = generateRange(ids: pokemonIds ?? "")
+        let raidIDs = generateRange(ids: raidIds ?? "")
+        let eggIDs = generateRange(ids: eggIds ?? "")
+        let lureIDs = generateRange(ids: lureIds ?? "")
+        let invasionIDs = generateRange(ids: invasionIds ?? "")
+        let gymIDs = generateRange(ids: gymIds ?? "")
+        let weatherIDs = generateRange(ids: weatherIds ?? "")
         print("[TMP] invasionIds before converting: \(invasionIds ?? "")")
         print("[TMP] invasionIDs after converting: \(invasionIDs)")
         var newCoords: [Any]
@@ -4549,8 +4549,8 @@ public class WebRequestHandler {
 
     }
 
-    static func generateRange<T>(ids: String) -> [T] {
-        var list = [T]()
+    static func generateRange(ids: String) -> [Int] {
+        var list = [Int]()
         if ids.isEmpty {
             return list
         }
@@ -4562,7 +4562,7 @@ public class WebRequestHandler {
             let split = text.components(separatedBy: ",")
             if split.count > 0 {
                 for idText in split {
-                    let id = idText.trimmingCharacters(in: .whitespaces) as? T
+                    let id = Int(idText.trimmingCharacters(in: .whitespaces))
                     if id != nil {
                         list.append(id!)
                     }
