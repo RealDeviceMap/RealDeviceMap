@@ -3500,8 +3500,7 @@ public class WebRequestHandler {
         let invasionIDs = generateRange(ids: invasionIds ?? "")
         let gymIDs = generateRange(ids: gymIds ?? "")
         let weatherIDs = generateRange(ids: weatherIds ?? "")
-        print("[TMP] invasionIds before converting: \(invasionIds ?? "")")
-        print("[TMP] invasionIDs after converting: \(invasionIDs)")
+
         var data = data
         var newCoords: [Any]
         var coordArray = [[Coord]]()
@@ -3764,8 +3763,7 @@ public class WebRequestHandler {
         let invasionIDs = generateRange(ids: invasionIds ?? "")
         let gymIDs = generateRange(ids: gymIds ?? "")
         let weatherIDs = generateRange(ids: weatherIds ?? "")
-        print("[TMP] invasionIds before converting: \(invasionIds ?? "")")
-        print("[TMP] invasionIDs after converting: \(invasionIDs)")
+
         var newCoords: [Any]
         var coordArray = [[Coord]]()
         let areaRows = area?.components(separatedBy: "\n")
