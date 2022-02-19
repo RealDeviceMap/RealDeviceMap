@@ -4591,7 +4591,7 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
 function getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
   var response = '/image-api/pokestop?id=' + lureId
   if (invasionGruntType) {
-    response += '&invasion=' + invasionGruntType
+    response += '&invasion=true&grunt_type=' + invasionGruntType
   }
   if (rewardType) {
     response += '&quest_reward_type=' + rewardType

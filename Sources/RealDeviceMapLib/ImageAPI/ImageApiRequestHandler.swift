@@ -116,7 +116,8 @@ class ImageApiRequestHandler {
               let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-        let invasionType = request.param(name: "invasion")?.toInt()
+        let invasionActive = request.param(name: "invasion")?.toBool() ?? false
+        let gruntType = request.param(name: "grunt_type")?.toInt()
         let questRewardType = request.param(name: "quest_reward_type")?.toInt()
         let questItemId = request.param(name: "quest_item_id")
         let questRewardAmount = request.param(name: "quest_reward_amount")?.toInt()
@@ -126,10 +127,8 @@ class ImageApiRequestHandler {
         let questCostumeId = request.param(name: "quest_costume_id")?.toInt()
 
         var invasion: Invasion?
-        var invasionActive = false
-        if invasionType != nil {
-            invasion = Invasion(style: style, id: invasionType!)
-            invasionActive = true
+        if gruntType != nil {
+            invasion = Invasion(style: style, id: gruntType!)
         }
 
         var reward: Reward?
@@ -178,8 +177,10 @@ class ImageApiRequestHandler {
             return response.respondWithError(status: .badRequest)
         }
 
-        let type = request.param(name: "type")?.toInt()
-        let rewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: type!)!
+        let type = request.param(name: "type")?.toInt() ?? 0
+        let rewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: type)
+            ?? POGOProtos.QuestRewardProto.TypeEnum.unset
+
         let reward = Reward(style: style, id: id, amount: nil, type: rewardType)
         let file = findRewardImage(reward: reward)
         sendFile(response: response, file: file)
@@ -341,6 +342,9 @@ class ImageApiRequestHandler {
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
             baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
                 id: (reward.amount != nil ? "\(reward.amount!)" : reward.id), postfixes: [])
+        } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.unset {
+            baseFile = getFirstPath(style: reward.style, folder: "reward",
+                id: reward.id, postfixes: postfixes)
         } else {
             baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
                 id: reward.id, postfixes: postfixes)
@@ -664,7 +668,7 @@ extension ImageApiRequestHandler {
                 return id + (amount != nil ? "_a\(amount!)" : "")
             case .stardust:
                 return amount != nil ? "\(amount!)" : "0"
-            default: return ""
+            default: return "0"
             }
         }
         var hash: String { uicon }
