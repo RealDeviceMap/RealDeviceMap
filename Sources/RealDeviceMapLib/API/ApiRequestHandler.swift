@@ -707,7 +707,8 @@ public class ApiRequestHandler {
                     "sort": 0
                 ],
                 "name": raidTimers,
-                "image": "<i class=\"fa fa-timer\"></i>",
+                "image": "<img class=\"lazy_load\" data-src=\"/static/misc/timer.png\" " +
+                         "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
                 "type": generalString
