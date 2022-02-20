@@ -780,7 +780,7 @@
                         $("#quest-item-stats-table").html(html);
                         result.data.quest_item_stats.forEach(function(stat) {
                             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                            html +=   "<img src='/image-api/reward?type=2&id=" + (stat.item_id === 0 ? -1 : stat.item_id) + "' width='48' height='48'>";
+                            html +=   "<img src='/image-api/reward?id=" + stat.item_id + "&type=" + stat.reward_type + "' width='48' height='48'>";
                             html +=   "<div class='card-body'>";
                             html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
                             html +=     "<p class='card-text text-nowrap'>";
@@ -1338,7 +1338,7 @@
                 <div id="quest-item-stats-table" class="row justify-content-center">
                     {{#quests_items}}
                         <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/reward?id={{item_id}}&type=2"" width="48" height="48">
+                            <img src="/image-api/reward?id={{item_id}}&type={{reward_type}}" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b></span>
                                 <p class="card-text text-nowrap">
@@ -1357,7 +1357,7 @@
                 <div id="quest-pokemon-stats-table" class="row justify-content-center">
                     {{#quests_pokemon}}
                         <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/pokemon?id={{pokemon_id}}"" width="48" height="48">
+                            <img src="/image-api/pokemon?id={{pokemon_id}}" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
                                 <p class="card-text text-nowrap">
