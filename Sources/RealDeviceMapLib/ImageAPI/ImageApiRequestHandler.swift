@@ -15,7 +15,7 @@ import POGOProtos
 
 class ImageApiRequestHandler {
 
-    internal static var defaultIconSet: String?
+    internal static var defaultIconSet: String = "Shuffle"
     internal static let gymPathCacheLock = Threading.Lock()
     internal static var gymPathCache = [Gym: File]()
     internal static let invasionPathCacheLock = Threading.Lock()
@@ -37,10 +37,58 @@ class ImageApiRequestHandler {
     internal static let weatherPathCacheLock = Threading.Lock()
     internal static var weatherPathCache = [Weather: File]()
 
+    internal static var uiconIndex: [String: Any] = [String: Any]()
+    private var lastModified: Int = 0
+    private let updaterThread: ThreadQueue
+
+    private init() {
+        updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
+        if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
+            return
+        }
+        updaterThread.dispatch {
+            while true {
+                Threading.sleep(seconds: 900)
+                self.loadImageJsonFileIfNeeded()
+            }
+        }
+        loadImageJsonFile()
+    }
+
+    private func loadImageJsonFileIfNeeded() {
+        let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(ImageApiRequestHandler.defaultIconSet)/index.json")
+        if lastModified != file.modificationTime {
+            Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
+            loadImageJsonFile()
+        }
+    }
+
+    private func loadImageJsonFile() {
+        let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(ImageApiRequestHandler.defaultIconSet)/index.json")
+        lastModified = file.modificationTime
+
+        do {
+            try file.open()
+            let contents = try file.readString()
+            file.close()
+            guard let json = try contents.jsonDecode() as? [String: Any] else {
+                Log.error(message: "[Localizer] Failed to read image json file")
+                return
+            }
+            ImageApiRequestHandler.uiconIndex = json
+            print("[TMP] UICON INDEX: \n\(json)")
+        } catch {
+            Log.critical(message: "[Localizer] Failed to read file for locale: \(Localizer.locale)")
+            fatalError()
+        }
+    }
+
     // MARK: handle request
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -71,8 +119,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleInvasion(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasion = Invasion(style: style, id: id)
@@ -81,8 +129,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleMisc(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id") else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
         let misc = Misc(style: style, id: id)
@@ -91,8 +139,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -112,8 +160,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handlePokestop(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasionActive = request.param(name: "invasion")?.toBool() ?? false
@@ -158,8 +206,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleRaidEgg(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -172,8 +220,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleReward(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id") else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -187,8 +235,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleTeam(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -198,8 +246,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleType(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -209,8 +257,8 @@ class ImageApiRequestHandler {
     }
 
     public static func handleWeather(request: HTTPRequest, response: HTTPResponse) {
-        guard let style = request.param(name: "style") ?? defaultIconSet,
-              let id = request.param(name: "id")?.toInt() else {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let weather = Weather(style: style, id: id)
