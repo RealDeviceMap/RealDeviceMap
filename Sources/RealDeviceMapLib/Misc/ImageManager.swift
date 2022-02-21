@@ -16,9 +16,10 @@ class ImageManager {
 
     public static let global = ImageManager()
     public static var noImageGeneration = false
+    public static var styles: [String] = [ImageApiRequestHandler.defaultIconSet]
 
-    internal var uiconIndex: [String: Any] = [String: Any]()
-    private var lastModified: Int = 0
+    internal var uiconIndex: [String : [String: Any]] = [:]
+    private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
     internal let gymPathCacheLock = Threading.Lock()
@@ -53,22 +54,27 @@ class ImageManager {
                 self.loadImageJsonFileIfNeeded()
             }
         }
-        loadImageJsonFile()
-    }
-
-    private func loadImageJsonFileIfNeeded() {
-        let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
-            "\(ImageApiRequestHandler.defaultIconSet)/index.json")
-        if lastModified != file.modificationTime {
-            Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
-            loadImageJsonFile()
+        for style in ImageManager.styles {
+            loadImageJsonFile(style: style)
         }
     }
 
-    private func loadImageJsonFile() {
+    private func loadImageJsonFileIfNeeded() {
+        for style in ImageManager.styles {
+            let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(style)/index.json")
+            let lastModified = lastModified[style]
+            if lastModified != file.modificationTime {
+                Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
+                loadImageJsonFile(style: style)
+            }
+        }
+    }
+
+    private func loadImageJsonFile(style: String) {
         let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
-            "\(ImageApiRequestHandler.defaultIconSet)/index.json")
-        lastModified = file.modificationTime
+            "\(style)/index.json")
+        lastModified[style] = file.modificationTime
 
         do {
             try file.open()
@@ -78,7 +84,7 @@ class ImageManager {
                 Log.error(message: "[ImageApiRequestHandler] Failed to decode image json file")
                 return
             }
-            uiconIndex = json
+            uiconIndex[style] = json
             print("[TMP] UICON INDEX: \n\(json)")
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file")

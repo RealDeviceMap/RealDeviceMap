@@ -14,6 +14,7 @@ import POGOProtos
 
 class ImageApiRequestHandler {
 
+    // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
     internal static var defaultIconSet: String = "Shuffle"
 
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {

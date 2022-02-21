@@ -215,8 +215,14 @@ public func setupRealDeviceMap() {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
 
-    if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] == nil {
+    if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
+        _ = ImageManager.global
+    } else {
+        let defaultIconSet = environment["DEFAULT_ICON_SET"]
+        if defaultIconSet != nil {
+            ImageApiRequestHandler.defaultIconSet = defaultIconSet!
+        }
         _ = ImageManager.global
     }
 
@@ -266,8 +272,6 @@ public func setupRealDeviceMap() {
     startupServerContext = nil
 
     ApiRequestHandler.start = Date()
-    ImageApiRequestHandler.defaultIconSet = environment["DEFAULT_ICON_SET"]
-        ?? "Shuffle" // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
     Log.info(message: "[MAIN] Setup during startup finished ...")
     Log.info(message: "[MAIN] Starting Webservers")
     do {
