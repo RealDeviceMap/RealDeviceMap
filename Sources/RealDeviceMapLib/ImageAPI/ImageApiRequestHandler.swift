@@ -17,6 +17,16 @@ class ImageApiRequestHandler {
     // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
     internal static var defaultIconSet: String = "Shuffle"
 
+    public static func handleDevice(request: HTTPRequest, response: HTTPResponse) {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+        let device = ImageManager.Device(style: style, id: id)
+        let file = ImageManager.global.findDeviceImage(device: device)
+        sendFile(response: response, file: file)
+    }
+
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
         let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
         guard let id = request.param(name: "id")?.toInt() else {
@@ -163,6 +173,16 @@ class ImageApiRequestHandler {
 
         let reward = ImageManager.Reward(style: style, id: id, amount: nil, type: rewardType)
         let file = ImageManager.global.findRewardImage(reward: reward)
+        sendFile(response: response, file: file)
+    }
+
+    public static func handleSpawnpoint(request: HTTPRequest, response: HTTPResponse) {
+        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
+        guard let id = request.param(name: "id")?.toInt() else {
+            return response.respondWithError(status: .badRequest)
+        }
+        let spawnpoint = ImageManager.Spawnpoint(style: style, id: id)
+        let file = ImageManager.global.findSpawnpointImage(spawnpoint: spawnpoint)
         sendFile(response: response, file: file)
     }
 

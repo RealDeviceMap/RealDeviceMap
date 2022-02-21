@@ -18,10 +18,12 @@ class ImageManager {
     public static var noImageGeneration = false
     public static var styles: [String] = [ImageApiRequestHandler.defaultIconSet]
 
-    internal var uiconIndex: [String : [String: Any]] = [:]
+    internal var uiconIndex: [String: [String: Any]] = [:]
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
+    internal let devicePathCacheLock = Threading.Lock()
+    internal var devicePathCache = [Device: File]()
     internal let gymPathCacheLock = Threading.Lock()
     internal var gymPathCache = [Gym: File]()
     internal let invasionPathCacheLock = Threading.Lock()
@@ -36,6 +38,8 @@ class ImageManager {
     internal var raidPathCache = [Raid: File]()
     internal let rewardPathCacheLock = Threading.Lock()
     internal var rewardPathCache = [Reward: File]()
+    internal let spawnpointPathCacheLock = Threading.Lock()
+    internal var spawnpointPathCache = [Spawnpoint: File]()
     internal let teamPathCacheLock = Threading.Lock()
     internal var teamPathCache = [Team: File]()
     internal let typePathCacheLock = Threading.Lock()
@@ -93,6 +97,16 @@ class ImageManager {
     }
 
     // MARK: find Images
+    func findDeviceImage(device: Device) -> File? {
+        let existingFile = devicePathCacheLock.doWithLock { devicePathCache[device] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: device.style, folder: "device", id: "\(device.id)", postfixes: [])
+
+        devicePathCacheLock.doWithLock { devicePathCache[device] = baseFile }
+        return baseFile
+    }
+
     func findGymImage(gym: Gym) -> File? {
         let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
         if existingFile != nil { return existingFile }
@@ -225,6 +239,17 @@ class ImageManager {
         }
 
         rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
+        return baseFile
+    }
+
+    func findSpawnpointImage(spawnpoint: Spawnpoint) -> File? {
+        let existingFile = spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] }
+        if existingFile != nil { return existingFile }
+
+        let baseFile = getFirstPath(style: spawnpoint.style, folder: "spawnpoint",
+            id: "\(spawnpoint.id)", postfixes: [])
+
+        spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] = baseFile }
         return baseFile
     }
 
@@ -383,6 +408,65 @@ class ImageManager {
 }
 
 extension ImageManager {
+    struct Device: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
+        var hash: String { uicon }
+    }
+
+    struct Gym: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var level: Int?
+        var battle: Bool = false
+        var ex: Bool = false
+        var arEligible: Bool = false
+
+        // Generated
+        var raid: Raid?
+        var raidPokemon: Pokemon?
+        var isStandard: Bool {
+            return raid == nil && raidPokemon == nil
+        }
+
+        var uicon: String { "\(id)" +
+            (level != nil ? "_t\(level!)" : "") +
+            "\(battle ? "_b" : "")" +
+            "\(ex ? "_ex": "")" +
+            "\(arEligible ? "_ar": "")"
+        }
+        var hash: String { uicon +
+            "\(raid != nil && raidPokemon == nil ? "_r\(raid!.uicon)" : "")" +
+            "\(raidPokemon != nil ? "_p\(raidPokemon!.uicon)" : "")"
+        }
+
+    }
+
+    struct Invasion: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
+        var hash: String { uicon }
+    }
+
+    struct Misc: Hashable {
+        // Standard
+        var style: String
+        var id: String // not only numbers
+        var isStandard: Bool = true
+
+        var uicon: String { "\(id)" }
+        var hash: String { uicon }
+    }
+
     struct Pokemon: Hashable {
         enum SpawnType: String {
             case cell
@@ -393,6 +477,7 @@ extension ImageManager {
                 }
             }
         }
+
         enum Ranking: String {
             case first = "1", second = "2", third = "3"
 
@@ -432,49 +517,6 @@ extension ImageManager {
         }
     }
 
-    struct Gym: Hashable {
-        // Standard
-        var style: String
-        var id: Int
-        var level: Int?
-        var battle: Bool = false
-        var ex: Bool = false
-        var arEligible: Bool = false
-
-        // Generated
-        var raid: Raid?
-        var raidPokemon: Pokemon?
-        var isStandard: Bool {
-            return raid == nil && raidPokemon == nil
-        }
-
-        var uicon: String { "\(id)" +
-            (level != nil ? "_t\(level!)" : "") +
-            "\(battle ? "_b" : "")" +
-            "\(ex ? "_ex": "")" +
-            "\(arEligible ? "_ar": "")"
-        }
-        var hash: String { uicon +
-            "\(raid != nil && raidPokemon == nil ? "_r\(raid!.uicon)" : "")" +
-            "\(raidPokemon != nil ? "_p\(raidPokemon!.uicon)" : "")"
-        }
-
-    }
-
-    struct Raid: Hashable {
-        // Standard
-        var style: String
-        var level: Int
-        var hatched: Bool = false
-        var ex: Bool = false
-        var isStandard: Bool = true
-
-        var uicon: String {
-            "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
-        }
-        var hash: String { uicon }
-    }
-
     struct Pokestop: Hashable {
         // Standard
         var style: String
@@ -501,6 +543,20 @@ extension ImageManager {
         }
     }
 
+    struct Raid: Hashable {
+        // Standard
+        var style: String
+        var level: Int
+        var hatched: Bool = false
+        var ex: Bool = false
+        var isStandard: Bool = true
+
+        var uicon: String {
+            "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
+        }
+        var hash: String { uicon }
+    }
+
     struct Reward: Hashable {
         // Standard
         var style: String
@@ -525,35 +581,10 @@ extension ImageManager {
         var hash: String { uicon }
     }
 
-    struct Invasion: Hashable {
+    struct Spawnpoint: Hashable {
         // Standard
         var style: String
         var id: Int
-        var isStandard: Bool = true
-
-        var uicon: String { "\(id)" }
-        var hash: String { uicon }
-    }
-
-    struct Weather: Hashable {
-        // Standard
-        var style: String
-        var id: Int
-        var level: Int?
-        var day: Bool = true
-        var night: Bool = false
-        var isStandard: Bool = true
-
-        var uicon: String {
-            "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
-        }
-        var hash: String { uicon }
-    }
-
-    struct Misc: Hashable {
-        // Standard
-        var style: String
-        var id: String // not only numbers
         var isStandard: Bool = true
 
         var uicon: String { "\(id)" }
@@ -577,6 +608,21 @@ extension ImageManager {
         var isStandard: Bool = true
 
         var uicon: String { "\(id)" }
+        var hash: String { uicon }
+    }
+
+    struct Weather: Hashable {
+        // Standard
+        var style: String
+        var id: Int
+        var level: Int?
+        var day: Bool = true
+        var night: Bool = false
+        var isStandard: Bool = true
+
+        var uicon: String {
+            "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
+        }
         var hash: String { uicon }
     }
 }

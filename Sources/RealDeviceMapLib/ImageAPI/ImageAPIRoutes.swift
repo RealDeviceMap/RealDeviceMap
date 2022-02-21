@@ -14,6 +14,9 @@ class ImageAPIRoutes {
 
     public static var routes: [Route] {
         let routes = [
+            Route(method: .get, uri: "/image-api/device", handler: { (request, response) in
+                ImageApiRequestHandler.handleDevice(request: request, response: response)
+            }),
             Route(method: .get, uri: "/image-api/gym", handler: { (request, response) in
                 ImageApiRequestHandler.handleGym(request: request, response: response)
             }),
@@ -34,6 +37,9 @@ class ImageAPIRoutes {
             }),
             Route(method: .get, uri: "/image-api/reward", handler: { (request, response) in
                 ImageApiRequestHandler.handleReward(request: request, response: response)
+            }),
+            Route(method: .get, uri: "/image-api/spawnpoint", handler: { (request, response) in
+                ImageApiRequestHandler.handleSpawnpoint(request: request, response: response)
             }),
             Route(method: .get, uri: "/image-api/team", handler: { (request, response) in
                 ImageApiRequestHandler.handleTeam(request: request, response: response)
