@@ -215,6 +215,11 @@ public func setupRealDeviceMap() {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
 
+    if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] == nil {
+        ImageManager.noImageGeneration = true
+        _ = ImageManager.global
+    }
+
     Log.info(message: "[MAIN] Starting Account Controller")
     AccountController.global.setup()
 
