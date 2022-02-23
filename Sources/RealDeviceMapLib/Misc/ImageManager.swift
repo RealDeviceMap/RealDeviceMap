@@ -634,7 +634,8 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["raid/egg"] as? [String] else {
+            guard let raid = ImageManager.global.uiconIndex[style]?["raid"] as? [String: Any],
+                let index = raid["egg"] as? [String] else {
                 return "\(level)"
             }
             let value = ImageManager.global.getFirstPath(id: "\(level)", index: index, postfixes: postfixes)
