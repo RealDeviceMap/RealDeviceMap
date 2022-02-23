@@ -18,7 +18,7 @@ class ImageManager {
     public static var noImageGeneration = false
     public static var styles: [String] = [ImageApiRequestHandler.defaultIconSet]
 
-    internal var uiconIndex: [String: [String: Any]] = [:]
+    public var uiconIndex: [String: [String: Any]] = [:]
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
@@ -89,7 +89,7 @@ class ImageManager {
                 return
             }
             uiconIndex[style] = json
-            print("[TMP] UICON INDEX: \n\(json)")
+            print("[TMP] UICON INDEX style '\(style)': \n\(json)")
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file")
             fatalError()
@@ -101,7 +101,8 @@ class ImageManager {
         let existingFile = devicePathCacheLock.doWithLock { devicePathCache[device] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: device.style, folder: "device", id: "\(device.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(device.style)/device/\(device.uicon).png")
 
         devicePathCacheLock.doWithLock { devicePathCache[device] = baseFile }
         return baseFile
@@ -111,14 +112,10 @@ class ImageManager {
         let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
         if existingFile != nil { return existingFile }
 
-        var postfixes: [String] = []
-        if let level = gym.level { postfixes.append("t\(level)") }
-        if gym.battle { postfixes.append("b") }
-        if gym.ex { postfixes.append("ex") }
-
-        let baseFile = getFirstPath(style: gym.style, folder: "gym", id: "\(gym.id)", postfixes: postfixes)
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(gym.style)/gym/\(gym.uicon).png")
         let file: File?
-        if let baseFile = baseFile {
+        if baseFile.exists {
             file = buildGymImage(gym: gym, baseFile: baseFile)
         } else {
             file = nil
@@ -132,7 +129,8 @@ class ImageManager {
         let existingFile = invasionPathCacheLock.doWithLock { invasionPathCache[invasion] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: invasion.style, folder: "invasion", id: "\(invasion.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(invasion.style)/invasion/\(invasion.uicon).png")
 
         invasionPathCacheLock.doWithLock { invasionPathCache[invasion] = baseFile }
         return baseFile
@@ -142,7 +140,8 @@ class ImageManager {
         let existingFile = miscPathCacheLock.doWithLock { miscPathCache[misc] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: misc.style, folder: "misc", id: misc.id, postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(misc.style)/misc/\(misc.uicon).png")
 
         miscPathCacheLock.doWithLock { miscPathCache[misc] = baseFile }
         return baseFile
@@ -158,9 +157,10 @@ class ImageManager {
         if let costume = pokemon.costume { postfixes.append("c\(costume)") }
         if let gender = pokemon.gender { postfixes.append("g\(gender)") }
 
-        let baseFile = getFirstPath(style: pokemon.style, folder: "pokemon", id: "\(pokemon.id)", postfixes: postfixes)
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(pokemon.style)/pokemon/\(pokemon.uicon).png")
         let file: File?
-        if let baseFile = baseFile {
+        if baseFile.exists {
             file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
         } else {
             file = nil
@@ -174,15 +174,10 @@ class ImageManager {
         let existingFile = pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] }
         if existingFile != nil { return existingFile }
 
-        var postfixes: [String] = []
-        if pokestop.invasionActive { postfixes.append("i") }
-        if pokestop.questActive { postfixes.append("q") }
-        if pokestop.arEligible { postfixes.append("ar") }
-
-        let baseFile = getFirstPath(style: pokestop.style, folder: "pokestop",
-            id: "\(pokestop.id)", postfixes: postfixes)
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(pokestop.style)/pokestop/\(pokestop.uicon).png")
         var file: File?
-        if let baseFile = baseFile {
+        if baseFile.exists {
             file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
         } else {
             file = nil
@@ -196,11 +191,8 @@ class ImageManager {
         let existingFile = raidPathCacheLock.doWithLock { raidPathCache[raid] }
         if existingFile != nil { return existingFile }
 
-        var postfixes: [String] = []
-        if raid.hatched { postfixes.append("h") }
-        if raid.ex { postfixes.append("ex") }
-
-        let baseFile = getFirstPath(style: raid.style, folder: "raid/egg", id: "\(raid.level)", postfixes: postfixes)
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(raid.style)/raid/egg/\(raid.uicon).png")
 
         raidPathCacheLock.doWithLock { raidPathCache[raid] = baseFile }
         return baseFile
@@ -214,28 +206,29 @@ class ImageManager {
         if reward.amount != nil { postfixes.append("a") }
         let baseFile: File?
         if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
-            baseFile = findPokemonImage(pokemon: pokemon!)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(pokemon!.style)/pokemon/\(pokemon!.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.candy {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/candy",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/candy/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.xlCandy {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/xl_candy",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/xl_candy/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.megaResource {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/mega_resource",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/mega_resource/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.item {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/item",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/item/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.stardust {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/stardust",
-                id: (reward.amount != nil ? "\(reward.amount!)" : reward.id), postfixes: [])
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/stardust/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.unset {
-            baseFile = getFirstPath(style: reward.style, folder: "reward",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/\(reward.uicon).png")
         } else {
-            baseFile = getFirstPath(style: reward.style, folder: "reward/\(reward.type)",
-                id: reward.id, postfixes: postfixes)
+            baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+                "\(reward.style)/reward/\(reward.type)/\(reward.uicon).png")
         }
 
         rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
@@ -246,8 +239,8 @@ class ImageManager {
         let existingFile = spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: spawnpoint.style, folder: "spawnpoint",
-            id: "\(spawnpoint.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(spawnpoint.style)/spawnpoint/\(spawnpoint.uicon).png")
 
         spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] = baseFile }
         return baseFile
@@ -257,7 +250,8 @@ class ImageManager {
         let existingFile = teamPathCacheLock.doWithLock { teamPathCache[team] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: team.style, folder: "team", id: "\(team.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(team.style)/team/\(team.uicon).png")
 
         teamPathCacheLock.doWithLock { teamPathCache[team] = baseFile }
         return baseFile
@@ -267,7 +261,8 @@ class ImageManager {
         let existingFile = typePathCacheLock.doWithLock { typePathCache[type] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: type.style, folder: "type", id: "\(type.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(type.style)/type/\(type.uicon).png")
 
         typePathCacheLock.doWithLock { typePathCache[type] = baseFile }
         return baseFile
@@ -277,7 +272,8 @@ class ImageManager {
         let existingFile = weatherPathCacheLock.doWithLock { weatherPathCache[weather] }
         if existingFile != nil { return existingFile }
 
-        let baseFile = getFirstPath(style: weather.style, folder: "weather", id: "\(weather.id)", postfixes: [])
+        let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
+            "\(weather.style)/weather/\(weather.uicon).png")
 
         weatherPathCacheLock.doWithLock { weatherPathCache[weather] = baseFile }
         return baseFile
@@ -365,11 +361,11 @@ class ImageManager {
     }
 
     // MARK: Utils
-    private func getFirstPath(style: String, folder: String, id: String, postfixes: [String]) -> File? {
-        let basePath = "\(Dir.projectroot)/resources/webroot/static/img/\(style)/\(folder)/\(id)"
-
+    func getFirstPath(id: String, index: [String], postfixes: [String]) -> String {
         var combinations: [[String]] = []
-        let bitValues = (0...postfixes.count).map { i in Int(pow(2, Double(i))) }
+        let bitValues = (0...postfixes.count).map { i in
+            Int(pow(2, Double(i)))
+        }
 
         for i in 0..<bitValues.last! {
             var combination: [String] = []
@@ -393,18 +389,18 @@ class ImageManager {
             return false
         }
 
-        var possiblePaths: [File] = []
+        var possibleNames: [String] = []
         for combination in combinations {
             if combination.isEmpty {
-                possiblePaths.append(File("\(basePath).png"))
+                possibleNames.append("\(id).png")
             } else {
-                possiblePaths.append(File("\(basePath)_\(combination.joined(separator: "_")).png"))
+                possibleNames.append("\(id)_\(combination.joined(separator: "_")).png")
             }
         }
-        // TODO check JSON instead of File structure
-        return possiblePaths.first {$0.exists}
+        return possibleNames.first {
+            index.contains($0)
+        }?.deletingFileExtension ?? "0"
     }
-
 }
 
 extension ImageManager {
@@ -414,8 +410,20 @@ extension ImageManager {
         var id: Int
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["device"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Device uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Gym: Hashable {
@@ -431,20 +439,32 @@ extension ImageManager {
         var raid: Raid?
         var raidPokemon: Pokemon?
         var isStandard: Bool {
-            return raid == nil && raidPokemon == nil
+            raid == nil && raidPokemon == nil
         }
-
-        var uicon: String { "\(id)" +
-            (level != nil ? "_t\(level!)" : "") +
-            "\(battle ? "_b" : "")" +
-            "\(ex ? "_ex": "")" +
-            "\(arEligible ? "_ar": "")"
+        var postfixes: [String] {
+            var build: [String] = []
+            if level != nil { build.append("t\(level!)") }
+            if battle { build.append("b") }
+            if ex { build.append("ex") }
+            if arEligible { build.append("ar")}
+            return build
+        }
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["gym"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Gym uicon: \(value)")
+            return value
         }
         var hash: String { uicon +
             "\(raid != nil && raidPokemon == nil ? "_r\(raid!.uicon)" : "")" +
             "\(raidPokemon != nil ? "_p\(raidPokemon!.uicon)" : "")"
         }
 
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Invasion: Hashable {
@@ -453,8 +473,20 @@ extension ImageManager {
         var id: Int
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["invasion"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Invasion uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Misc: Hashable {
@@ -463,8 +495,20 @@ extension ImageManager {
         var id: String // not only numbers
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["misc"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Misc uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Pokemon: Hashable {
@@ -505,15 +549,30 @@ extension ImageManager {
             spawnType == nil && ranking == nil
         }
 
-        var uicon: String { "\(id)" +
-            (evolution != nil ? "_e\(evolution!)" : "") +
-            (form != nil ? "_f\(form!)" : "") +
-            (costume != nil ? "_c\(costume!)" : "") +
-            (gender != nil ? "_g\(gender!)" : "")
+        var postfixes: [String] {
+            var build: [String] = []
+            if let evolution = evolution { build.append("e\(evolution)") }
+            if let form = form { build.append("f\(form)") }
+            if let costume = costume { build.append("c\(costume)") }
+            if let gender = gender { build.append("g\(gender)") }
+            return build
+        }
+
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["pokemon"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Pokemon uicon: \(value)")
+            return value
         }
         var hash: String { uicon +
             (spawnType != nil ? "_st-\(spawnType!.rawValue)" : "") +
             (ranking != nil ? "_r\(ranking!.rawValue)" : "")
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
         }
     }
 
@@ -531,15 +590,32 @@ extension ImageManager {
         var reward: Reward?
         var pokemon: Pokemon?
         var isStandard: Bool {
-            return invasion == nil && reward == nil && pokemon == nil
+            invasion == nil && reward == nil && pokemon == nil
+        }
+
+        var postfixes: [String] {
+            var build: [String] = []
+            if invasionActive { build.append("i") }
+            if questActive { build.append("q") }
+            if arEligible { build.append("ar") }
+            return build
         }
         var uicon: String {
-            "\(id)\(invasionActive ? "_i" : "")\(questActive ? "_q": "")\(arEligible ? "_ar": "")"
+            guard let index = ImageManager.global.uiconIndex[style]?["pokestop"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Pokestop uicon: \(value)")
+            return value
         }
         var hash: String { uicon +
             (invasion != nil ? "_in\(invasion!.uicon)": "") +
             (reward != nil ? "_r\(reward!.type.rawValue)_\(reward!.uicon)" : "") +
             (pokemon != nil ? "_p\(pokemon!.uicon)" : "")
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
         }
     }
 
@@ -551,10 +627,25 @@ extension ImageManager {
         var ex: Bool = false
         var isStandard: Bool = true
 
+        var postfixes: [String] {
+            var build: [String] = []
+            if hatched { build.append("h") }
+            if ex { build.append("ex") }
+            return build
+        }
         var uicon: String {
-            "\(level)\(hatched ? "_h" : "")\(ex ? "_ex": "")"
+            guard let index = ImageManager.global.uiconIndex[style]?["raid/egg"] as? [String] else {
+                return "\(level)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(level)", index: index, postfixes: postfixes)
+            print("[TMP] Raid uicon: \(value)")
+            return value
         }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Reward: Hashable {
@@ -567,18 +658,52 @@ extension ImageManager {
         var type: POGOProtos.QuestRewardProto.TypeEnum
         var isStandard: Bool = true
 
+        var postfixes: [String] {
+            var build: [String] = []
+            if amount != nil { build.append("a") }
+            return build
+        }
         var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["reward"] as? [String: Any] else {
+                return "\(id)"
+            }
+            let value: String
             switch type {
             case .pokemonEncounter:
-                return id // special case including all postfixes e.g. 592_f2330
-            case .megaResource, .xlCandy, .candy, .item:
-                return id + (amount != nil ? "_a\(amount!)" : "")
+                value = id // special case including all postfixes e.g. 592_f2330
+            case .megaResource:
+                value = ImageManager.global.getFirstPath(id: "\(id)",
+                    index: index["mega_resource"] as? [String] ?? [String](), postfixes: postfixes)
+            case .xlCandy:
+                value = ImageManager.global.getFirstPath(id: "\(id)",
+                    index: index["xl_candy"] as? [String] ?? [String](), postfixes: postfixes)
+            case .candy:
+                value = ImageManager.global.getFirstPath(id: "\(id)",
+                    index: index["candy"] as? [String] ?? [String](), postfixes: postfixes)
+            case .item:
+                value = ImageManager.global.getFirstPath(id: "\(id)",
+                    index: index["item"] as? [String] ?? [String](), postfixes: postfixes)
             case .stardust:
-                return amount != nil ? "\(amount!)" : "0"
-            default: return "0"
+                let id = amount != nil ? "\(amount!)" : "0"
+                value = ImageManager.global.getFirstPath(id: id,
+                    index: index["stardust"] as? [String] ?? [String](), postfixes: postfixes)
+            case .unset:
+                value = ImageManager.global.getFirstPath(id: id,
+                    index: [(index["0"] as? String ?? "0")], postfixes: postfixes)
+
+            default:
+                value = ImageManager.global.getFirstPath(id: id,
+                index: index["\(type)"] as? [String] ?? [String](), postfixes: postfixes)
             }
+            print("[TMP] Reward uicon: \(value)")
+            return value
+
         }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Spawnpoint: Hashable {
@@ -587,8 +712,20 @@ extension ImageManager {
         var id: Int
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["spawnpoint"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Spawnpoint uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Team: Hashable {
@@ -597,8 +734,20 @@ extension ImageManager {
         var id: Int
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["team"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Team uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct PokemonType: Hashable {
@@ -607,8 +756,20 @@ extension ImageManager {
         var id: Int
         var isStandard: Bool = true
 
-        var uicon: String { "\(id)" }
+        var postfixes: [String] = []
+        var uicon: String {
+            guard let index = ImageManager.global.uiconIndex[style]?["type"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Type uicon: \(value)")
+            return value
+        }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 
     struct Weather: Hashable {
@@ -620,9 +781,25 @@ extension ImageManager {
         var night: Bool = false
         var isStandard: Bool = true
 
+        var postfixes: [String] {
+            var build: [String] = []
+            if level != nil { build.append("l\(level!)") }
+            if day { build.append("d") }
+            if night { build.append("n") }
+            return build
+        }
         var uicon: String {
-            "\(id)" + (level != nil ? "_l\(level!)" : "") + "\(day ? "_d" : "")\(night ? "_n" : "")"
+            guard let index = ImageManager.global.uiconIndex[style]?["weather"] as? [String] else {
+                return "\(id)"
+            }
+            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
+            print("[TMP] Weather uicon: \(value)")
+            return value
         }
         var hash: String { uicon }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(hash)
+        }
     }
 }
