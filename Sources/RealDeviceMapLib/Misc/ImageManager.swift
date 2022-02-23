@@ -89,7 +89,6 @@ class ImageManager {
                 return
             }
             uiconIndex[style] = json
-            print("[TMP] UICON INDEX style '\(style)': \n\(json)")
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file")
             fatalError()
@@ -361,7 +360,7 @@ class ImageManager {
     }
 
     // MARK: Utils
-    func getFirstPath(id: String, index: [String], postfixes: [String]) -> String {
+    func getFirstNameWithFallback(id: String, index: [String], postfixes: [String]) -> String {
         var combinations: [[String]] = []
         let bitValues = (0...postfixes.count).map { i in
             Int(pow(2, Double(i)))
@@ -415,9 +414,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["device"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Device uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -453,9 +450,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["gym"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Gym uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon +
             "\(raid != nil && raidPokemon == nil ? "_r\(raid!.uicon)" : "")" +
@@ -478,9 +473,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["invasion"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Invasion uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -500,9 +493,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["misc"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Misc uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -562,9 +553,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["pokemon"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Pokemon uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon +
             (spawnType != nil ? "_st-\(spawnType!.rawValue)" : "") +
@@ -604,9 +593,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["pokestop"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Pokestop uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon +
             (invasion != nil ? "_in\(invasion!.uicon)": "") +
@@ -638,9 +625,7 @@ extension ImageManager {
                 let index = raid["egg"] as? [String] else {
                 return "\(level)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(level)", index: index, postfixes: postfixes)
-            print("[TMP] Raid uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(level)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -668,37 +653,33 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["reward"] as? [String: Any] else {
                 return "\(id)"
             }
-            let value: String
             switch type {
             case .pokemonEncounter:
-                value = id // special case including all postfixes e.g. 592_f2330
+                return id // contains special case including all postfixes e.g. 592_f2330
             case .megaResource:
-                value = ImageManager.global.getFirstPath(id: "\(id)",
+                return ImageManager.global.getFirstNameWithFallback(id: "\(id)",
                     index: index["mega_resource"] as? [String] ?? [String](), postfixes: postfixes)
             case .xlCandy:
-                value = ImageManager.global.getFirstPath(id: "\(id)",
+                return ImageManager.global.getFirstNameWithFallback(id: "\(id)",
                     index: index["xl_candy"] as? [String] ?? [String](), postfixes: postfixes)
             case .candy:
-                value = ImageManager.global.getFirstPath(id: "\(id)",
+                return ImageManager.global.getFirstNameWithFallback(id: "\(id)",
                     index: index["candy"] as? [String] ?? [String](), postfixes: postfixes)
             case .item:
-                value = ImageManager.global.getFirstPath(id: "\(id)",
+                return ImageManager.global.getFirstNameWithFallback(id: "\(id)",
                     index: index["item"] as? [String] ?? [String](), postfixes: postfixes)
             case .stardust:
                 let id = amount != nil ? "\(amount!)" : "0"
-                value = ImageManager.global.getFirstPath(id: id,
+                return ImageManager.global.getFirstNameWithFallback(id: id,
                     index: index["stardust"] as? [String] ?? [String](), postfixes: postfixes)
             case .unset:
-                value = ImageManager.global.getFirstPath(id: id,
+                return ImageManager.global.getFirstNameWithFallback(id: id,
                     index: [(index["0"] as? String ?? "0")], postfixes: postfixes)
 
             default:
-                value = ImageManager.global.getFirstPath(id: id,
+                return ImageManager.global.getFirstNameWithFallback(id: id,
                 index: index["\(type)"] as? [String] ?? [String](), postfixes: postfixes)
             }
-            print("[TMP] Reward uicon: \(value)")
-            return value
-
         }
         var hash: String { uicon }
 
@@ -718,9 +699,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["spawnpoint"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Spawnpoint uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -740,9 +719,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["team"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Team uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -762,9 +739,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["type"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Type uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
@@ -793,9 +768,7 @@ extension ImageManager {
             guard let index = ImageManager.global.uiconIndex[style]?["weather"] as? [String] else {
                 return "\(id)"
             }
-            let value = ImageManager.global.getFirstPath(id: "\(id)", index: index, postfixes: postfixes)
-            print("[TMP] Weather uicon: \(value)")
-            return value
+            return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
         }
         var hash: String { uicon }
 
