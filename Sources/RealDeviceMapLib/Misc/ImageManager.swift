@@ -160,13 +160,8 @@ class ImageManager {
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(pokemon.style)/pokemon/\(pokemon.uicon).png")
-        let file: File?
-        if baseFile.exists {
-            file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
-        } else {
-            file = nil
-        }
 
+        let file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
         pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] = file }
         return file
     }
@@ -177,13 +172,8 @@ class ImageManager {
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(pokestop.style)/pokestop/\(pokestop.uicon).png")
-        var file: File?
-        if baseFile.exists {
-            file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
-        } else {
-            file = nil
-        }
 
+        var file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
         pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
         return file
     }
@@ -282,6 +272,10 @@ class ImageManager {
 
     // MARK: Building Images with ImageGenerator
     private func buildGymImage(gym: Gym, baseFile: File) -> File? {
+        if gym.raid == nil && gym.raidPokemon == nil {
+            return baseFile
+        }
+
         let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(gym.style)/generated")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
@@ -305,6 +299,10 @@ class ImageManager {
     }
 
     private func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
+        if pokemon.spawnType == nil && pokemon.ranking == nil {
+            return baseFile
+        }
+
         let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokemon.style)/generated/")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
@@ -334,6 +332,10 @@ class ImageManager {
     }
 
     private func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File? {
+        if pokestop.invasion == nil && pokestop.reward == nil {
+            return baseFile
+        }
+
         let baseGeneratedPath = Dir("\(Dir.projectroot)/resources/webroot/static/img/\(pokestop.style)/generated")
         if !baseGeneratedPath.exists {
             try? baseGeneratedPath.create()
@@ -350,9 +352,6 @@ class ImageManager {
             ? findRewardImage(reward: pokestop.reward!, pokemon: pokestop.pokemon)
             : nil
 
-        if invasionImage == nil && rewardImage == nil {
-            return baseFile
-        }
         ImageGenerator.buildPokestopImage(baseImage: baseFile.path,
             image: file.path,
             invasionImage: invasionImage != nil && invasionImage!.exists ? invasionImage!.path : nil,

@@ -14,8 +14,7 @@ import POGOProtos
 
 class ImageApiRequestHandler {
 
-    // https://github.com/nileplumb/PkmnShuffleMap/tree/master/UICONS
-    internal static var defaultIconSet: String = "Shuffle"
+    internal static var defaultIconSet: String = "default"
 
     public static func handleDevice(request: HTTPRequest, response: HTTPResponse) {
         let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet

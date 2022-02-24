@@ -20,6 +20,9 @@ class ImageGenerator {
     internal static func buildPokemonImage(
         baseImage: String, image: String, spawnTypeImage: String?, rankingImage: String?
     ) {
+        Log.debug(message: "[ImageGenerator] generating pokemon image: \(baseImage.lastFilePathComponent) " +
+            (spawnTypeImage != nil ? "with spawn: '\(spawnTypeImage!)' " : "") +
+            (rankingImage != nil ? "with ranking: '\(rankingImage!)'" : ""))
         var markerAgs = [String]()
         if let spawnTypeImage = spawnTypeImage {
             markerAgs += [
@@ -49,6 +52,8 @@ class ImageGenerator {
     internal static func buildRaidImage(
         baseImage: String, image: String, raidImage: String
     ) {
+        Log.debug(message: "[ImageGenerator] generating gym image: \(baseImage.lastFilePathComponent)" +
+            "with raid: '\(raidImage.lastFilePathComponent)'")
         Shell([
             "/usr/local/bin/convert",
             "(", raidImage, "-background", "none", "-resize", "96x96", "-gravity", "north", "-extent", "96x160", ")",
@@ -63,6 +68,9 @@ class ImageGenerator {
     internal static func buildPokestopImage(
         baseImage: String, image: String, invasionImage: String?, rewardImage: String?
     ) {
+        Log.debug(message: "[ImageGenerator] generating pokestop image: \(baseImage.lastFilePathComponent) " +
+            (invasionImage != nil ? "with invasion: '\(invasionImage!.lastFilePathComponent)' " : "") +
+            (rewardImage != nil ? "with reward: '\(rewardImage!.lastFilePathComponent)'" : ""))
         var markerAgs = [String]()
         let invasionGeometry: [String]
         if rewardImage != nil {
