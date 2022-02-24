@@ -216,7 +216,8 @@ public func setupRealDeviceMap() {
     }
 
     if let iconStyles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?.components(separatedBy: ";") {
-        ImageManager.styles = iconStyles // TODO format like 'Shuffle, PkmnShuffleMap/UICONS'
+        ImageManager.styles = iconStyles // format like 'Shuffle, PkmnShuffleMap/UICONS'
+        // do frontend, missing part
     }
     if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
