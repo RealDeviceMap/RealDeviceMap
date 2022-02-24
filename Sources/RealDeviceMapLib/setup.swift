@@ -215,18 +215,14 @@ public func setupRealDeviceMap() {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
 
-    if let iconStyles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?.components(separatedBy: ";") {
-        ImageManager.styles = iconStyles // format like 'Shuffle, PkmnShuffleMap/UICONS'
-        // do frontend, missing part
-    }
+
+    ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
+            .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
+    Log.info(message: "[MAIN] Load Icon Styles")
     if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
         _ = ImageManager.global
     } else {
-        let defaultIconSet = environment["DEFAULT_ICON_SET"]
-        if defaultIconSet != nil {
-            ImageApiRequestHandler.defaultIconSet = defaultIconSet!
-        }
         _ = ImageManager.global
     }
 

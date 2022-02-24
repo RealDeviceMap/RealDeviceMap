@@ -77,6 +77,8 @@ let showUltraLeague
 let availableItems = []
 let availableTileservers = {}
 let selectedTileserver = 'Default'
+let availableIconStyles = {}
+let selectedIconStyle = 'Default'
 
 let pokemonFilterLoaded = false
 let questFilterLoaded = false
@@ -145,13 +147,13 @@ $(function () {
   })
 
   deviceOnlineIcon = L.icon({
-    iconUrl: '/image-api/device?id=1',
+    iconUrl: '/image-api/device?id=1&style='+selectedIconStyle,
     iconSize: [30, 30],
     iconAnchor: [30 / 2, 30 / 2],
     popupAnchor: [0, 30 * -1.567]
   })
   deviceOfflineIcon = L.icon({
-    iconUrl: '/image-api/device?id=0',
+    iconUrl: '/image-api/device?id=0&style='+selectedIconStyle,
     iconSize: [30, 30],
     iconAnchor: [30 / 2, 30 / 2],
     popupAnchor: [0, 30 * -1.567]
@@ -179,6 +181,7 @@ $(function () {
 
   availableItems = JSON.parse('{{{available_items_json}}}')
   availableTileservers = JSON.parse('{{{available_tileservers_json}}}')
+  availableIconStyles = JSON.parse('{{{available_icon_styles_json}}}')
 
   loadStorage()
 
@@ -199,6 +202,27 @@ $(function () {
         value: key,
         text: key,
         selected: key === selectedTileserver
+      }))
+    }
+  }
+
+  const availableIconStyleKeys = []
+  for (var availableIconStyleKey in availableIconStyles) {
+    availableIconStyleKeys.push(availableIconStyleKey)
+  }
+  availableIconStyleKeys.sort()
+  $('#select-iconstyle').append($('<option>', {
+    value: 'Default',
+    text: 'Default',
+    selected: selectedIconStyle === 'Default'
+  }))
+  for (var i = 0; i < availableIconStyleKeys.length; i++) {
+    const key = availableIconStyleKeys[i]
+    if (key !== 'Default') {
+      $('#select-iconstyle').append($('<option>', {
+        value: key,
+        text: key,
+        selected: key === selectedIconStyle
       }))
     }
   }
@@ -2321,9 +2345,9 @@ function getPokemonPopupContent (pokemon) {
   }
   if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
     content += '<b>Catch Chances:</b><br>'
-    content += '<img src="/image-api/reward?id=1&type=2" height="14" width="14"> ' + (pokemon.capture_1 * 100).toFixed(1) + '% '
-    content += '<img src="/image-api/reward?id=2&type=2" height="14" width="14"> ' + (pokemon.capture_2 * 100).toFixed(1) + '%<br>'
-    content += '<img src="/image-api/reward?id=3&type=2" height="14" width="14"> ' + (pokemon.capture_3 * 100).toFixed(1) + '%<br>'
+    content += '<img src="/image-api/reward?id=1&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_1 * 100).toFixed(1) + '% '
+    content += '<img src="/image-api/reward?id=2&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_2 * 100).toFixed(1) + '%<br>'
+    content += '<img src="/image-api/reward?id=3&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_3 * 100).toFixed(1) + '%<br>'
   }
   content +=
         '</div>' +
@@ -2583,10 +2607,10 @@ function getPokestopPopupContent (pokestop) {
   }
 
   if (pokestop.ar_scan_eligible) {
-    content += '<img src="/image-api/misc?id=ar" height="26" width="26"><br><br>'
+    content += '<img src="/image-api/misc?id=ar&style=' + selectedIconStyle + '" height="26" width="26"><br><br>'
   }
   if (pokestop.partner_id !== null) {
-    content += '<img src="/image-api/misc?id=sponsor" height="26" width="26"><br><br>'
+    content += '<img src="/image-api/misc?id=sponsor&style=' + selectedIconStyle + '" height="26" width="26"><br><br>'
   }
 
   content += '<div class="text-left">'
@@ -2656,7 +2680,7 @@ function getGymPopupContent (gym) {
         '</div>' +
         '<div class="col-6 col-md-4 center-vertical">' +
             '<div style="float:right; margin: auto;">' +
-                '<img src="/image-api/team?id=' + gym.team_id + '" height="32" width="32">' +
+                '<img src="/image-api/team?id=' + gym.team_id + '&style=' + selectedIconStyle + '" height="32" width="32">' +
             '</div>' +
         '</div>' +
     '</div>' // END 1ST ROW
@@ -2688,7 +2712,7 @@ function getGymPopupContent (gym) {
     if (hasRaidBoss && isRaidBattle) {
       content += '<img src="' + pokemonIcon + '" "height="64" width="64">'
     } else {
-      content += '<img src="/image-api/raid-egg?id=' + gym.raid_level + '" height="64" width="64">'
+      content += '<img src="/image-api/raid-egg?id=' + gym.raid_level + '&style=' + selectedIconStyle + '" height="64" width="64">'
     }
     content +=
                 '</div>' + // END POKEMON ROW
@@ -2746,13 +2770,13 @@ function getGymPopupContent (gym) {
       }
     }
     if (gym.ex_raid_eligible) {
-      content += '<img src="/image-api/misc?id=ex" height="24" width="32">'
+      content += '<img src="/image-api/misc?id=ex&style=' + selectedIconStyle + '" height="24" width="32">'
     }
     if (gym.ar_scan_eligible) {
-      content += '<img src="/image-api/misc?id=ar" height="26" width="26">'
+      content += '<img src="/image-api/misc?id=ar&style=' + selectedIconStyle + '" height="26" width="26">'
     }
     if (gym.partner_id !== null) {
-      content += '<img src="/image-api/misc?id=sponsor" height="26" width="26">'
+      content += '<img src="/image-api/misc?id=sponsor&style=' + selectedIconStyle + '" height="26" width="26">'
     }
     content +=
             '</div>' + // END 2ND COL
@@ -2794,13 +2818,13 @@ function getGymPopupContent (gym) {
     }
     if (gym.ex_raid_eligible) {
       // content += '<b>Gym is EX-Raid eligible</b>';
-      content += '<img src="/image-api/misc?id=ex" height="24" width="32">'
+      content += '<img src="/image-api/misc?id=ex&style=' + selectedIconStyle + '" height="24" width="32">'
     }
     if (gym.ar_scan_eligible) {
-      content += '<img src="/image-api/misc?id=ar" height="26" width="26">'
+      content += '<img src="/image-api/misc?id=ar&style=' + selectedIconStyle + '" height="26" width="26">'
     }
     if (gym.partner_id !== null) {
-      content += '<img src="/image-api/misc?id=sponsor" height="26" width="26">'
+      content += '<img src="/image-api/misc?id=sponsor&style=' + selectedIconStyle + '" height="26" width="26">'
     }
     content +=
             '</div>' + // END 2ND COL
@@ -3429,7 +3453,7 @@ function getPokestopMarker (pokestop, ts) {
 function getSpawnpointMarkerIcon (spawnpoint, ts) {
   var iconId = spawnpoint.despawn_second != null ? 1 : 0
   const icon = L.icon({
-    iconUrl: '/image-api/spawnpoint?id=' + iconId,
+    iconUrl: '/image-api/spawnpoint?id=' + iconId + '&style=' + selectedIconStyle,
     iconSize: [10, 10],
     iconAnchor: [5, 5],
     popupAnchor: [0, -5]
@@ -4507,7 +4531,7 @@ function getSize (value, baseValue) {
 }
 
 function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched, raidPokemonId, raidPokemonEvolution, raidPokemonForm, raidPokemonCostume, raidPokemonGender) {
-  var response = '/image-api/gym?' + 'id=' + teamId
+  var response = '/image-api/gym?style=' + selectedIconStyle + '&id=' + teamId
   if (level) {
     response += '&level=' + level
   }
@@ -4569,7 +4593,7 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
   } else {
     spawnType = null
   }
-  var response = '/image-api/pokemon?id=' + pokemonId
+  var response = '/image-api/pokemon?style=' + selectedIconStyle + '&id=' + pokemonId
   if (pokemonForm) {
     response += '&form=' + pokemonForm
   }
@@ -4592,7 +4616,7 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
 }
 
 function getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
-  var response = '/image-api/pokestop?id=' + lureId
+  var response = '/image-api/pokestop?style=' + selectedIconStyle + '&id=' + lureId
   if (invasionGruntType) {
     response += '&invasion=true&grunt_type=' + invasionGruntType
   }
@@ -4621,11 +4645,11 @@ function getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, 
 }
 
 function getWeatherIconURL(gamePlayCondition) {
-  return '/image-api/weather?id=' + gamePlayCondition
+  return '/image-api/weather?id=' + gamePlayCondition + '&style=' + selectedIconStyle
 }
 
 function getTypeIconURL(pokemonType) {
-  return '/image-api/type?id=' + pokemonType
+  return '/image-api/type?id=' + pokemonType + '&style=' + selectedIconStyle
 }
 
 // MARK: - Init Filter

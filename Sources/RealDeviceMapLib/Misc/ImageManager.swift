@@ -16,9 +16,8 @@ class ImageManager {
 
     public static let global = ImageManager()
     public static var noImageGeneration = false
-    public static var styles: [String] = [ImageApiRequestHandler.defaultIconSet]
 
-    private let uiconLock = Threading.Lock()
+    private let lock = Threading.Lock()
     private var uiconIndex: [String: [String: Any]] = [:]
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
@@ -59,27 +58,29 @@ class ImageManager {
                 self.loadImageJsonFileIfNeeded()
             }
         }
-        for style in ImageManager.styles {
-            loadImageJsonFile(style: style)
+        let styles = ImageApiRequestHandler.styles
+        for (_, folder) in styles {
+            loadImageJsonFile(folder: folder)
         }
     }
 
     private func loadImageJsonFileIfNeeded() {
-        for style in ImageManager.styles {
+        let styles = ImageApiRequestHandler.styles
+        for (_, folder) in styles {
             let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
-                "\(style)/index.json")
-            let lastModified = lastModified[style]
+                "\(folder)/index.json")
+            let lastModified = lastModified[folder]
             if lastModified != file.modificationTime {
                 Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
-                loadImageJsonFile(style: style)
+                loadImageJsonFile(folder: folder)
             }
         }
     }
 
-    private func loadImageJsonFile(style: String) {
+    private func loadImageJsonFile(folder: String) {
         let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
-            "\(style)/index.json")
-        lastModified[style] = file.modificationTime
+            "\(folder)/index.json")
+        lastModified[folder] = file.modificationTime
 
         do {
             try file.open()
@@ -89,10 +90,10 @@ class ImageManager {
                 Log.error(message: "[ImageApiRequestHandler] Failed to decode image json file")
                 return
             }
-            uiconLock.doWithLock { uiconIndex[style] = json }
+            lock.doWithLock { uiconIndex[folder] = json }
 
         } catch {
-            Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file")
+            Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file \(file.path)")
             fatalError()
         }
     }
@@ -115,13 +116,8 @@ class ImageManager {
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(gym.style)/gym/\(gym.uicon).png")
-        let file: File?
-        if baseFile.exists {
-            file = buildGymImage(gym: gym, baseFile: baseFile)
-        } else {
-            file = nil
-        }
 
+        let file = buildGymImage(gym: gym, baseFile: baseFile)
         gymPathCacheLock.doWithLock { gymPathCache[gym] = file }
         return file
     }
@@ -173,7 +169,7 @@ class ImageManager {
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(pokestop.style)/pokestop/\(pokestop.uicon).png")
 
-        var file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
+        let file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
         pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
         return file
     }
@@ -196,6 +192,7 @@ class ImageManager {
         var postfixes: [String] = []
         if reward.amount != nil { postfixes.append("a") }
         let baseFile: File?
+
         if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
             baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
                 "\(pokemon!.style)/pokemon/\(pokemon!.uicon).png")
@@ -403,11 +400,11 @@ class ImageManager {
     }
 
     func accessUiconIndexList(style: String, folder: String) -> [String]? {
-        uiconLock.doWithLock { uiconIndex[style]?[folder] as? [String] }
+        lock.doWithLock { uiconIndex[style]?[folder] as? [String] }
     }
 
     func accessUiconIndexDictionary(style: String, folder: String) -> [String: Any]? {
-        uiconLock.doWithLock { uiconIndex[style]?[folder] as? [String: Any] }
+        lock.doWithLock { uiconIndex[style]?[folder] as? [String: Any] }
     }
 }
 
@@ -655,7 +652,7 @@ extension ImageManager {
 
         var postfixes: [String] {
             var build: [String] = []
-            if amount != nil { build.append("a") }
+            if amount != nil { build.append("a\(amount!)") }
             return build
         }
         var uicon: String {
@@ -680,11 +677,10 @@ extension ImageManager {
             case .stardust:
                 let id = amount != nil ? "\(amount!)" : "0"
                 return ImageManager.global.getFirstNameWithFallback(id: id,
-                    index: index["stardust"] as? [String] ?? [String](), postfixes: postfixes)
+                    index: index["stardust"] as? [String] ?? [String](), postfixes: [])
             case .unset:
                 return ImageManager.global.getFirstNameWithFallback(id: id,
                     index: [(index["0"] as? String ?? "0")], postfixes: postfixes)
-
             default:
                 return ImageManager.global.getFirstNameWithFallback(id: id,
                 index: index["\(type)"] as? [String] ?? [String](), postfixes: postfixes)

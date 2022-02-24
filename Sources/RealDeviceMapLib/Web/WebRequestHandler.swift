@@ -330,7 +330,8 @@ public class WebRequestHandler {
                            "filter_quest_filter", "filter_raid_filter", "filter_gym_filter",
                            "filter_pokestop_filter", "filter_spawnpoint_filter", "filter_cells",
                            "filter_weathers", "filter_devices", "filter_select_mapstyle", "filter_mapstyle",
-                           "filter_export", "filter_import", "filter_submission_cells"]
+                           "filter_select_iconstyle", "filter_iconstyle", "filter_export", "filter_import",
+                           "filter_submission_cells"]
             for loc in homeLoc {
                 data[loc] = localizer.get(value: loc)
             }
@@ -653,16 +654,24 @@ public class WebRequestHandler {
                                       .map({ $0.description }).joined(separator: ",")
 
             var tileserverString = ""
-
             let tileserversSorted = tileservers.sorted { (rhs, lhs) -> Bool in
                 return rhs.key == "Default" || rhs.key < lhs.key
             }
-
             for tileserver in tileserversSorted {
                 tileserverString += "\(tileserver.key);\(tileserver.value["url"] ?? "");" +
                                     "\(tileserver.value["attribution"] ?? "")\n"
             }
             data["tileservers"] = tileserverString
+
+            var iconStylesString = ""
+            let iconStylesSorted = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                return rhs.key == "Default" || rhs.key < lhs.key
+            }
+            for iconStyle in iconStylesSorted {
+                iconStylesString += "\(iconStyle.key);\(iconStyle.value)\n"
+            }
+            data["icon_styles"] = iconStylesString
+
             data["buttons_left_formatted"] = buttonsLeft.map({ (button) -> String in
                 return (button["name"] ?? "?") + ";" + (button["url"] ?? "?")
             }).joined(separator: "\n")
@@ -671,7 +680,8 @@ public class WebRequestHandler {
             }).joined(separator: "\n")
 
             var citiesString = ""
-            for city in self.cities {
+            let citiesSorted = self.cities.sorted { (rhs, lhs) -> Bool in rhs.key < lhs.key }
+            for city in citiesSorted {
                 if let lat = city.value["lat"] as? Double, let lon = city.value["lon"] as? Double {
                     let zoom = city.value["zoom"] as? Int
                     citiesString += "\(city.key);\(lat);\(lon)"
@@ -1819,6 +1829,10 @@ public class WebRequestHandler {
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
+            data["available_icon_styles_json"] = (ImageApiRequestHandler.styles.jsonEncodeForceTry() ?? "")
+                                                .replacingOccurrences(of: "\\\"", with: "\\\\\"")
+                                                .replacingOccurrences(of: "'", with: "\\'")
+                                                .replacingOccurrences(of: "\"", with: "\\\"")
         default:
             break
         }
@@ -2039,12 +2053,14 @@ public class WebRequestHandler {
             let maxPokemonId = request.param(name: "max_pokemon_id")?.toInt(),
             let locale = request.param(name: "locale_new")?.lowercased(),
             let tileserversString = request.param(name: "tileservers")?.replacingOccurrences(of: "<br>", with: "")
-                                    .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
+                    .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
+            let iconStylesString = request.param(name: "icon_styles")?.replacingOccurrences(of: "<br>", with: "")
+                    .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression),
             let exRaidBossId = request.param(name: "ex_raid_boss_id")?.toUInt16(),
             let exRaidBossForm = request.param(name: "ex_raid_boss_form")?.toUInt16(),
             let pokestopLureTime = request.param(name: "pokestop_lure_time")?.toUInt32(),
             let cities = request.param(name: "cities")?.replacingOccurrences(of: "<br>", with: "")
-                         .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
+                    .replacingOccurrences(of: "\r\n", with: "\n", options: .regularExpression)
             else {
             data["show_error"] = true
             return data
@@ -2133,6 +2149,18 @@ public class WebRequestHandler {
             }
         }
 
+        var iconStyles = [String: String]()
+        for iconStyleString in iconStylesString.trimmingCharacters(in: .whitespacesAndNewlines)
+                .components(separatedBy: "\n") {
+            let split = iconStyleString.components(separatedBy: ";")
+            if split.count == 2 {
+                iconStyles[split[0]] = split[1]
+            } else {
+                data["show_error"] = true
+                return data
+            }
+        }
+
         var citySettings = [String: [String: Any]]()
         if cities != "" {
             for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
@@ -2181,6 +2209,7 @@ public class WebRequestHandler {
             try DBController.global.setValueForKey(key: "GYM_EX_BOSS_FORM", value: exRaidBossForm.description)
             try DBController.global.setValueForKey(key: "MAP_MAX_POKEMON_ID", value: maxPokemonId.description)
             try DBController.global.setValueForKey(key: "LOCALE", value: locale)
+            try DBController.global.setValueForKey(key: "ICON_STYLES", value: iconStyles.jsonEncodeForceTry() ?? "")
             try DBController.global.setValueForKey(key: "ENABLE_REGISTER", value: enableRegister.description)
             try DBController.global.setValueForKey(key: "ENABLE_CLEARING", value: enableClearing.description)
             try DBController.global.setValueForKey(key: "TILESERVERS", value: tileservers.jsonEncodeForceTry() ?? "")
@@ -2237,6 +2266,7 @@ public class WebRequestHandler {
         Pokestop.lureTime = pokestopLureTime
         Gym.exRaidBossId = exRaidBossId
         Gym.exRaidBossForm = exRaidBossForm
+        ImageApiRequestHandler.styles = iconStyles
         MailController.baseURI = mailerBaseURI ?? ""
         MailController.footerHtml = mailerFooterHTML ?? ""
         MailController.clientPassword = mailerPassword

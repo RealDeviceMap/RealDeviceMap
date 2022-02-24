@@ -3,6 +3,7 @@
 //  RealDeviceMapLib
 //
 //  Created by Florian Kostenzer on 29.10.18.
+//  Updated by Fabio on 24.2.22
 //
 //  swiftlint:disable:next superfluous_disable_command
 //  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast

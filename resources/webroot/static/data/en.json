@@ -72,6 +72,8 @@
         "filter_weathers": "Weather",
         "filter_export": "Export",
         "filter_import": "Import",
+        "filter_iconstyle": "Icon-Style",
+        "filter_select_iconstyle": "Select Icon-Style",
         "filter_mapstyle": "Map-Style",
         "filter_select_mapstyle": "Select Map-Style",
         "filter_level": "Level",

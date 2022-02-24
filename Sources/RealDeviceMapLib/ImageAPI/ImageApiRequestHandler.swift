@@ -14,11 +14,12 @@ import POGOProtos
 
 class ImageApiRequestHandler {
 
-    internal static var defaultIconSet: String = "default"
+    public static var styles = [String: String]()
 
     public static func handleDevice(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let device = ImageManager.Device(style: style, id: id)
@@ -27,8 +28,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -60,8 +62,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleInvasion(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasion = ImageManager.Invasion(style: style, id: id)
@@ -70,8 +73,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleMisc(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id") else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
         let misc = ImageManager.Misc(style: style, id: id)
@@ -80,8 +84,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -101,8 +106,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handlePokestop(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasionActive = request.param(name: "invasion")?.toBool() ?? false
@@ -147,8 +153,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleRaidEgg(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -161,8 +168,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleReward(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id") else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -176,8 +184,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleSpawnpoint(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let spawnpoint = ImageManager.Spawnpoint(style: style, id: id)
@@ -186,8 +195,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleTeam(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -197,8 +207,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleType(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
 
@@ -208,8 +219,9 @@ class ImageApiRequestHandler {
     }
 
     public static func handleWeather(request: HTTPRequest, response: HTTPResponse) {
-        let style = request.param(name: "style") ?? ImageApiRequestHandler.defaultIconSet
-        guard let id = request.param(name: "id")?.toInt() else {
+        guard let styleName = request.param(name: "style"),
+              let style = styles[styleName],
+            let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let weather = ImageManager.Weather(style: style, id: id)
