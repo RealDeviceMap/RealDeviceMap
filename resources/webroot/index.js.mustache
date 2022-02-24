@@ -697,6 +697,9 @@ function loadStorage () {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
+    for (i = 0; i <= 3; i++) {
+      pokestopFilter['p' + i] = { show: true, size: 'normal' }
+    }
     if (pokestopFilter.ar === undefined || pokestopFilter.ar === null) {
       pokestopFilter.ar = { show: false, size: 'normal' }
     }
@@ -5284,7 +5287,7 @@ function loadFilterSettings (e) {
 
     showQuests = obj.show_quests
     questFilterNew = obj.quest
-    store('show_quests', showRaids)
+    store('show_quests', showQuests)
     store('quest_filter', JSON.stringify(questFilterNew))
 
     showInvasions = obj.show_invasions
