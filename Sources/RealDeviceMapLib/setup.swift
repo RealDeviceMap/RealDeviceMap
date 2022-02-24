@@ -215,7 +215,6 @@ public func setupRealDeviceMap() {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
 
-
     ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
             .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
     Log.info(message: "[MAIN] Load Icon Styles")

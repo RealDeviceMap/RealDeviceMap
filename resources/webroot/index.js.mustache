@@ -184,7 +184,7 @@ $(function () {
   availableIconStyles = JSON.parse('{{{available_icon_styles_json}}}')
 
   loadStorage()
-
+  let i
   const availableTileserverKeys = []
   for (var availableTileserverKey in availableTileservers) {
     availableTileserverKeys.push(availableTileserverKey)
@@ -195,7 +195,7 @@ $(function () {
     text: 'Default',
     selected: selectedTileserver === 'Default'
   }))
-  for (var i = 0; i < availableTileserverKeys.length; i++) {
+  for (i = 0; i < availableTileserverKeys.length; i++) {
     const key = availableTileserverKeys[i]
     if (key !== 'Default') {
       $('#select-mapstyle').append($('<option>', {
@@ -216,7 +216,7 @@ $(function () {
     text: 'Default',
     selected: selectedIconStyle === 'Default'
   }))
-  for (var i = 0; i < availableIconStyleKeys.length; i++) {
+  for (i = 0; i < availableIconStyleKeys.length; i++) {
     const key = availableIconStyleKeys[i]
     if (key !== 'Default') {
       $('#select-iconstyle').append($('<option>', {
