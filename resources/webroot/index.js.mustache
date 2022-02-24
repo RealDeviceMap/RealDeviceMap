@@ -300,6 +300,10 @@ $(function () {
     tileLayer.addTo(map)
   })
 
+  $('#select-iconstyle').on('change', function () {
+    selectedIconStyle = this.value
+  })
+
   $('#exportSettings').on('click', function () {
     var settings = {
       show_gyms: showGyms,
