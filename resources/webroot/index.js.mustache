@@ -302,6 +302,7 @@ $(function () {
 
   $('#select-iconstyle').on('change', function () {
     selectedIconStyle = this.value
+    store('icon_style', this.value)
   })
 
   $('#exportSettings').on('click', function () {
@@ -455,6 +456,16 @@ function loadStorage () {
       selectedTileserver = 'Default'
     } else {
       selectedTileserver = selectedTileserverTmp
+    }
+  }
+  const selectedIconStyleTmp = retrieve('icon_style')
+  if (selectedIconStyleTmp === undefined) {
+    selectedTileserver = 'Default'
+  } else {
+    if (availableIconStyles[selectedIconStyleTmp] === undefined) {
+      selectedIconStyle = 'Default'
+    } else {
+      selectedIconStyle = selectedIconStyleTmp
     }
   }
 
