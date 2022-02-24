@@ -18,7 +18,8 @@ class ImageManager {
     public static var noImageGeneration = false
     public static var styles: [String] = [ImageApiRequestHandler.defaultIconSet]
 
-    public var uiconIndex: [String: [String: Any]] = [:]
+    private let uiconLock = Threading.Lock()
+    private var uiconIndex: [String: [String: Any]] = [:]
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
@@ -88,7 +89,8 @@ class ImageManager {
                 Log.error(message: "[ImageApiRequestHandler] Failed to decode image json file")
                 return
             }
-            uiconIndex[style] = json
+            uiconLock.doWithLock { uiconIndex[style] = json }
+
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file")
             fatalError()
@@ -400,6 +402,14 @@ class ImageManager {
             index.contains($0)
         }?.deletingFileExtension ?? "0"
     }
+
+    func accessUiconIndexList(style: String, folder: String) -> [String]? {
+        uiconLock.doWithLock { uiconIndex[style]?[folder] as? [String] }
+    }
+
+    func accessUiconIndexDictionary(style: String, folder: String) -> [String: Any]? {
+        uiconLock.doWithLock { uiconIndex[style]?[folder] as? [String: Any] }
+    }
 }
 
 extension ImageManager {
@@ -411,7 +421,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["device"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "device") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -447,7 +457,7 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["gym"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "gym") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -470,7 +480,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["invasion"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "invasion") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -490,7 +500,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["misc"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "misc") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -550,7 +560,7 @@ extension ImageManager {
         }
 
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["pokemon"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "pokemon") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -590,7 +600,7 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["pokestop"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "pokestop") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -621,7 +631,7 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let raid = ImageManager.global.uiconIndex[style]?["raid"] as? [String: Any],
+            guard let raid = ImageManager.global.accessUiconIndexDictionary(style: style, folder: "raid"),
                 let index = raid["egg"] as? [String] else {
                 return "\(level)"
             }
@@ -650,7 +660,7 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["reward"] as? [String: Any] else {
+            guard let index = ImageManager.global.accessUiconIndexDictionary(style: style, folder: "reward") else {
                 return "\(id)"
             }
             switch type {
@@ -696,7 +706,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["spawnpoint"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "spawnpoint") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -716,7 +726,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["team"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "team") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -736,7 +746,7 @@ extension ImageManager {
 
         var postfixes: [String] = []
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["type"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "type") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)
@@ -765,7 +775,7 @@ extension ImageManager {
             return build
         }
         var uicon: String {
-            guard let index = ImageManager.global.uiconIndex[style]?["weather"] as? [String] else {
+            guard let index = ImageManager.global.accessUiconIndexList(style: style, folder: "weather") else {
                 return "\(id)"
             }
             return ImageManager.global.getFirstNameWithFallback(id: "\(id)", index: index, postfixes: postfixes)

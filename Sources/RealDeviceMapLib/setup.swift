@@ -215,8 +215,8 @@ public func setupRealDeviceMap() {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
 
-    if let iconStyles = try! DBController.global.getValueForKey(key: "ICON_STYLES") as? [String] {
-        ImageManager.styles = iconStyles
+    if let iconStyles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?.components(separatedBy: ";") {
+        ImageManager.styles = iconStyles // TODO format like 'Shuffle, PkmnShuffleMap/UICONS'
     }
     if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
