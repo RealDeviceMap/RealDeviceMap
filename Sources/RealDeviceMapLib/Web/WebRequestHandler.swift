@@ -370,7 +370,7 @@ public class WebRequestHandler {
                     "stats_spawnpoint_percentage", "stats_community_day", "stats_filter_start_date",
                     "stats_filter_end_date", "stats_filter_select", "stats_scans", "stats_seen", "stats_scanned",
                     "stats_male_spawns", "stats_female_spawns", "stats_sex", "stats_100iv", "stats_90iv", "stats_0iv",
-                    "stats_date", "stats_eggs", "stats_raids", 
+                    "stats_date", "stats_eggs", "stats_raids",
                     "stats_quests", "stats_quests_item_rewards", "stats_quests_pokemon_rewards", "stats_grunt_types",
                     "stats_statistics", "stats_active_100iv", "stats_active_90iv", "stats_active_0iv",
                     "stats_active_shiny", "stats_total_shiny", "stats_active_iv_statistics", "stats_top10_pokemon",
