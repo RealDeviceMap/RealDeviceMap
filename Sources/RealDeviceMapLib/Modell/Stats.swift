@@ -39,8 +39,9 @@ class Stats: JSONConvertibleObject {
             "pokestops_lures_glacial": pokestopStats?[2] ?? 0,
             "pokestops_lures_mossy": pokestopStats?[3] ?? 0,
             "pokestops_lures_magnetic": pokestopStats?[4] ?? 0,
-            "pokestops_invasions": pokestopStats?[5] ?? 0,
-            "pokestops_quests": pokestopStats?[6] ?? 0,
+            "pokestops_lures_rainy": pokestopStats?[5] ?? 0,
+            "pokestops_invasions": pokestopStats?[6] ?? 0,
+            "pokestops_quests": pokestopStats?[7] ?? 0,
             "gyms_total": gymStats?[0] ?? 0,
             "gyms_neutral": gymStats?[1] ?? 0,
             "gyms_mystic": gymStats?[2] ?? 0,
@@ -523,8 +524,9 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
                     SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
-                    SUM(quest_reward_type IS NOT NULL) quests
+                    (SUM(alternative_quest_reward_type is not null) + SUM(quest_reward_type is not null)) quests
                   FROM pokestop
                   """
 
@@ -545,14 +547,16 @@ class Stats: JSONConvertibleObject {
             let glacialLures = Int64(result[2] as! String)!
             let mossyLures = Int64(result[3] as! String)!
             let magneticLures = Int64(result[4] as! String)!
-            let invasions = Int64(result[5] as! String)!
-            let quests = Int64(result[6] as! String)!
+            let rainyLures = Int64(result[5] as! String)!
+            let invasions = Int64(result[6] as! String)!
+            let quests = Int64(result[7] as! String)!
 
             stats.append(total)
             stats.append(normalLures)
             stats.append(glacialLures)
             stats.append(mossyLures)
             stats.append(magneticLures)
+            stats.append(rainyLures)
             stats.append(invasions)
             stats.append(quests)
 

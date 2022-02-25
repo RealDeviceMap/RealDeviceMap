@@ -282,6 +282,7 @@
                     updateCounter(".lured-glacial-pokestop-count", result.data.pokestops_lures_glacial);
                     updateCounter(".lured-mossy-pokestop-count", result.data.pokestops_lures_mossy);
                     updateCounter(".lured-magnetic-pokestop-count", result.data.pokestops_lures_magnetic);
+                    updateCounter(".lured-rainy-pokestop-count", result.data.pokestops_lures_rainy);
                     updateCounter(".invasions-count", result.data.pokestops_invasions);
                     updateCounter(".quest-pokestop-count", result.data.pokestops_quests);
 
@@ -1132,6 +1133,13 @@
                                 <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=504" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-magnetic-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_magnetic_lures}}</p>
+                            </a>
+                        </div>
+                        <div class="col-md-4 p-1">
+                            <a class="list-group-item">
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=505" width="64" height="64"/></h3>
+                                <h4 class="list-group-item-heading lured-rainy-pokestop-count">0</h4>
+                                <p class="list-group-item-text">{{stats_rainy_lures}}</p>
                             </a>
                         </div>
                     </div>
