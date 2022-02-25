@@ -269,7 +269,7 @@ class ImageManager {
 
     // MARK: Building Images with ImageGenerator
     private func buildGymImage(gym: Gym, baseFile: File) -> File? {
-        if gym.raid == nil && gym.raidPokemon == nil {
+        if (gym.raid == nil && gym.raidPokemon == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
 
@@ -296,7 +296,7 @@ class ImageManager {
     }
 
     private func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
-        if pokemon.spawnType == nil && pokemon.ranking == nil {
+        if (pokemon.spawnType == nil && pokemon.ranking == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
 
@@ -329,7 +329,7 @@ class ImageManager {
     }
 
     private func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File? {
-        if pokestop.invasion == nil && pokestop.reward == nil {
+        if (pokestop.invasion == nil && pokestop.reward == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
 

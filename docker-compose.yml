@@ -9,6 +9,7 @@ services:
       - db
     volumes:
       - images:/app/resources/webroot/static/img
+#     - ./icons-repo-folder:/app/resources/webroot/static/img/default
       - backups:/app/backups
 #     - favicons:/app/resources/webroot/static/favicons
 #     - /etc/localtime:/etc/localtime:ro
