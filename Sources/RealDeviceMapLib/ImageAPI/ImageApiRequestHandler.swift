@@ -19,7 +19,7 @@ class ImageApiRequestHandler {
     public static func handleDevice(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let device = ImageManager.Device(style: style, id: id)
@@ -30,20 +30,17 @@ class ImageApiRequestHandler {
     public static func handleGym(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-
         let level = request.param(name: "level")?.toInt()
         let battle = request.param(name: "battle")?.toBool() ?? false
         let ex = request.param(name: "ex")?.toBool() ?? false
-
         let raidLevel = request.param(name: "raid_level")?.toInt()
         let raidEx = request.param(name: "raid_ex")?.toBool() ?? false
         let raidHatched = request.param(name: "raid_hatched")?.toBool() ?? false
         let raid = raidLevel != nil ?
             ImageManager.Raid(style: style, level: raidLevel!, hatched: raidHatched, ex: raidEx) : nil
-
         let raidPokemonId = request.param(name: "raid_pokemon_id")?.toInt()
         let raidPokemonEvolution = request.param(name: "raid_pokemon_evolution")?.toInt()
         let raidPokemonForm = request.param(name: "raid_pokemon_form")?.toInt()
@@ -64,7 +61,7 @@ class ImageApiRequestHandler {
     public static func handleInvasion(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasion = ImageManager.Invasion(style: style, id: id)
@@ -75,7 +72,7 @@ class ImageApiRequestHandler {
     public static func handleMisc(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id") else {
+              let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
         let misc = ImageManager.Misc(style: style, id: id)
@@ -86,10 +83,9 @@ class ImageApiRequestHandler {
     public static func handlePokemon(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-
         let evolution = request.param(name: "evolution")?.toInt()
         let form = request.param(name: "form")?.toInt()
         let costume = request.param(name: "costume")?.toInt()
@@ -108,11 +104,12 @@ class ImageApiRequestHandler {
     public static func handlePokestop(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let invasionActive = request.param(name: "invasion")?.toBool() ?? false
         let gruntType = request.param(name: "grunt_type")?.toInt()
+        let questActive = request.param(name: "quest")?.toBool() ?? false
         let questRewardType = request.param(name: "quest_reward_type")?.toInt()
         let questItemId = request.param(name: "quest_item_id")
         let questRewardAmount = request.param(name: "quest_reward_amount")?.toInt()
@@ -125,29 +122,22 @@ class ImageApiRequestHandler {
         if gruntType != nil {
             invasion = ImageManager.Invasion(style: style, id: gruntType!)
         }
-
         var reward: ImageManager.Reward?
         var pokemon: ImageManager.Pokemon?
-        // var questActive = false
         if questRewardType != nil {
+            let protosQuestRewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!) ?? .unset
             if questPokemonId != nil {
                 pokemon = ImageManager.Pokemon(style: style, id: questPokemonId!, evolution: nil, form: questFormId,
                     costume: questCostumeId, gender: questGenderId, spawnType: nil, ranking: nil)
                 reward = ImageManager.Reward(style: style, id: pokemon!.uicon, amount: questRewardAmount,
-                    type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
+                    type: protosQuestRewardType)
             } else {
-
                 reward = ImageManager.Reward(style: style, id: (questItemId != nil ? questItemId! : "0"),
-                    amount: questRewardAmount,
-                    type: POGOProtos.QuestRewardProto.TypeEnum(rawValue: questRewardType!)!)
+                    amount: questRewardAmount, type: protosQuestRewardType)
             }
-
-            // questActive = true // separate icon with different color
         }
-
-        let pokestop = ImageManager.Pokestop(style: style, id: id, invasionActive: invasionActive, questActive: false,
-            invasion: invasion, reward: reward, pokemon: pokemon)
-
+        let pokestop = ImageManager.Pokestop(style: style, id: id, invasionActive: invasionActive,
+            questActive: questActive, invasion: invasion, reward: reward, pokemon: pokemon)
         let file = ImageManager.global.findPokestopImage(pokestop: pokestop)
         sendFile(response: response, file: file)
     }
@@ -155,13 +145,11 @@ class ImageApiRequestHandler {
     public static func handleRaidEgg(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-
         let ex = request.param(name: "ex")?.toBool() ?? false
         let hatched = request.param(name: "hatched")?.toBool() ?? false
-
         let raid = ImageManager.Raid(style: style, level: id, hatched: hatched, ex: ex)
         let file = ImageManager.global.findRaidImage(raid: raid)
         sendFile(response: response, file: file)
@@ -170,14 +158,11 @@ class ImageApiRequestHandler {
     public static func handleReward(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id") else {
+              let id = request.param(name: "id") else {
             return response.respondWithError(status: .badRequest)
         }
-
         let type = request.param(name: "type")?.toInt() ?? 0
-        let rewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: type)
-            ?? POGOProtos.QuestRewardProto.TypeEnum.unset
-
+        let rewardType = POGOProtos.QuestRewardProto.TypeEnum(rawValue: type) ?? .unset
         let reward = ImageManager.Reward(style: style, id: id, amount: nil, type: rewardType)
         let file = ImageManager.global.findRewardImage(reward: reward)
         sendFile(response: response, file: file)
@@ -186,7 +171,7 @@ class ImageApiRequestHandler {
     public static func handleSpawnpoint(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let spawnpoint = ImageManager.Spawnpoint(style: style, id: id)
@@ -197,10 +182,9 @@ class ImageApiRequestHandler {
     public static func handleTeam(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-
         let team = ImageManager.Team(style: style, id: id)
         let file = ImageManager.global.findTeamImage(team: team)
         sendFile(response: response, file: file)
@@ -209,10 +193,9 @@ class ImageApiRequestHandler {
     public static func handleType(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-
         let type = ImageManager.PokemonType(style: style, id: id)
         let file = ImageManager.global.findTypeImage(type: type)
         sendFile(response: response, file: file)
@@ -221,7 +204,7 @@ class ImageApiRequestHandler {
     public static func handleWeather(request: HTTPRequest, response: HTTPResponse) {
         guard let styleName = request.param(name: "style"),
               let style = styles[styleName],
-            let id = request.param(name: "id")?.toInt() else {
+              let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
         let weather = ImageManager.Weather(style: style, id: id)

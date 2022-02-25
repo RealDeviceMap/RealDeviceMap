@@ -91,7 +91,6 @@ class ImageManager {
                 return
             }
             lock.doWithLock { uiconIndex[folder] = json }
-
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to read image json file \(file.path)")
             fatalError()
