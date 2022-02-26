@@ -526,7 +526,7 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
                     SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
-                    (SUM(alternative_quest_reward_type is not null) + SUM(quest_reward_type is not null)) quests
+                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
                   FROM pokestop
                   """
 
