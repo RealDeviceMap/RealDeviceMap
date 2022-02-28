@@ -225,6 +225,7 @@ public func setupRealDeviceMap() {
     }
     _ = ImageManager.global
     if noMemoryCache == nil {
+        // this will use the same cache values like the pokemon cache
         ImageManager.global.devicePathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         ImageManager.global.gymPathCache =
