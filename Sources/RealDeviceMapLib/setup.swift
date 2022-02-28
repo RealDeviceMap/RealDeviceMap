@@ -46,9 +46,10 @@ public func setupRealDeviceMap() {
     _ = DBController.global
 
     // Init MemoryCache
-    if environment["NO_MEMORY_CACHE"] == nil {
-        let memoryCacheClearInterval = environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
-        let memoryCacheKeepTime = environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    let noMemoryCache = environment["NO_MEMORY_CACHE"]
+    let memoryCacheClearInterval = environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
+    let memoryCacheKeepTime = environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    if noMemoryCache == nil {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
@@ -219,11 +220,35 @@ public func setupRealDeviceMap() {
     ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
             .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
     Log.info(message: "[MAIN] Load Icon Styles")
-    if ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil {
+    if environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
-        _ = ImageManager.global
-    } else {
-        _ = ImageManager.global
+    }
+    _ = ImageManager.global
+    if noMemoryCache == nil {
+        ImageManager.global.devicePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.gymPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.invasionPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.miscPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.pokemonPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.pokestopPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.raidPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.rewardPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.spawnpointPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.teamPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.typePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.global.weatherPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     }
 
     Log.info(message: "[MAIN] Starting Account Controller")

@@ -22,30 +22,18 @@ class ImageManager {
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
-    internal let devicePathCacheLock = Threading.Lock()
-    internal var devicePathCache = [Device: File]()
-    internal let gymPathCacheLock = Threading.Lock()
-    internal var gymPathCache = [Gym: File]()
-    internal let invasionPathCacheLock = Threading.Lock()
-    internal var invasionPathCache = [Invasion: File]()
-    internal let miscPathCacheLock = Threading.Lock()
-    internal var miscPathCache = [Misc: File]()
-    internal let pokemonPathCacheLock = Threading.Lock()
-    internal var pokemonPathCache = [Pokemon: File]()
-    internal let pokestopPathCacheLock = Threading.Lock()
-    internal var pokestopPathCache = [Pokestop: File]()
-    internal let raidPathCacheLock = Threading.Lock()
-    internal var raidPathCache = [Raid: File]()
-    internal let rewardPathCacheLock = Threading.Lock()
-    internal var rewardPathCache = [Reward: File]()
-    internal let spawnpointPathCacheLock = Threading.Lock()
-    internal var spawnpointPathCache = [Spawnpoint: File]()
-    internal let teamPathCacheLock = Threading.Lock()
-    internal var teamPathCache = [Team: File]()
-    internal let typePathCacheLock = Threading.Lock()
-    internal var typePathCache = [PokemonType: File]()
-    internal let weatherPathCacheLock = Threading.Lock()
-    internal var weatherPathCache = [Weather: File]()
+    internal var devicePathCache: MemoryCache<File>?
+    internal var gymPathCache: MemoryCache<File>?
+    internal var invasionPathCache: MemoryCache<File>?
+    internal var miscPathCache: MemoryCache<File>?
+    internal var pokemonPathCache: MemoryCache<File>?
+    internal var pokestopPathCache: MemoryCache<File>?
+    internal var raidPathCache: MemoryCache<File>?
+    internal var rewardPathCache: MemoryCache<File>?
+    internal var spawnpointPathCache: MemoryCache<File>?
+    internal var teamPathCache: MemoryCache<File>?
+    internal var typePathCache: MemoryCache<File>?
+    internal var weatherPathCache: MemoryCache<File>?
 
     private init() {
         updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
@@ -99,52 +87,52 @@ class ImageManager {
 
     // MARK: find Images
     func findDeviceImage(device: Device) -> File? {
-        let existingFile = devicePathCacheLock.doWithLock { devicePathCache[device] }
+        let existingFile = devicePathCache?.get(id: device.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(device.style)/device/\(device.uicon).png")
 
-        devicePathCacheLock.doWithLock { devicePathCache[device] = baseFile }
+        devicePathCache?.set(id: device.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findGymImage(gym: Gym) -> File? {
-        let existingFile = gymPathCacheLock.doWithLock { gymPathCache[gym] }
+        let existingFile = gymPathCache?.get(id: gym.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(gym.style)/gym/\(gym.uicon).png")
 
         let file = buildGymImage(gym: gym, baseFile: baseFile)
-        gymPathCacheLock.doWithLock { gymPathCache[gym] = file }
+        gymPathCache?.set(id: gym.cacheHash, value: file)
         return file
     }
 
     func findInvasionImage(invasion: Invasion) -> File? {
-        let existingFile = invasionPathCacheLock.doWithLock { invasionPathCache[invasion] }
+        let existingFile = invasionPathCache?.get(id: invasion.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(invasion.style)/invasion/\(invasion.uicon).png")
 
-        invasionPathCacheLock.doWithLock { invasionPathCache[invasion] = baseFile }
+        invasionPathCache?.set(id: invasion.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findMiscImage(misc: Misc) -> File? {
-        let existingFile = miscPathCacheLock.doWithLock { miscPathCache[misc] }
+        let existingFile = miscPathCache?.get(id: misc.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(misc.style)/misc/\(misc.uicon).png")
 
-        miscPathCacheLock.doWithLock { miscPathCache[misc] = baseFile }
+        miscPathCache?.set(id: misc.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findPokemonImage(pokemon: Pokemon) -> File? {
-        let existingFile = pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] }
+        let existingFile = pokemonPathCache?.get(id: pokemon.cacheHash)
         if existingFile != nil { return existingFile }
 
         var postfixes: [String] = []
@@ -157,40 +145,40 @@ class ImageManager {
             "\(pokemon.style)/pokemon/\(pokemon.uicon).png")
 
         let file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
-        pokemonPathCacheLock.doWithLock { pokemonPathCache[pokemon] = file }
+        pokemonPathCache?.set(id: pokemon.cacheHash, value: file)
         return file
     }
 
     func findPokestopImage(pokestop: Pokestop) -> File? {
-        let existingFile = pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] }
+        let existingFile = pokestopPathCache?.get(id: pokestop.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(pokestop.style)/pokestop/\(pokestop.uicon).png")
 
         let file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
-        pokestopPathCacheLock.doWithLock { pokestopPathCache[pokestop] = file }
+        pokestopPathCache?.set(id: pokestop.cacheHash, value: file)
         return file
     }
 
     func findRaidImage(raid: Raid) -> File? {
-        let existingFile = raidPathCacheLock.doWithLock { raidPathCache[raid] }
+        let existingFile = raidPathCache?.get(id: raid.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(raid.style)/raid/egg/\(raid.uicon).png")
 
-        raidPathCacheLock.doWithLock { raidPathCache[raid] = baseFile }
+        raidPathCache?.set(id: raid.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findRewardImage(reward: Reward, pokemon: Pokemon? = nil) -> File? {
-        let existingFile = rewardPathCacheLock.doWithLock { rewardPathCache[reward] }
+        let existingFile = rewardPathCache?.get(id: reward.cacheHash)
         if existingFile != nil { return existingFile }
 
         var postfixes: [String] = []
         if reward.amount != nil { postfixes.append("a") }
-        let baseFile: File?
+        let baseFile: File
 
         if reward.type == POGOProtos.QuestRewardProto.TypeEnum.pokemonEncounter && pokemon != nil {
             baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
@@ -218,56 +206,56 @@ class ImageManager {
                 "\(reward.style)/reward/\(reward.type)/\(reward.uicon).png")
         }
 
-        rewardPathCacheLock.doWithLock { rewardPathCache[reward] = baseFile }
+        rewardPathCache?.set(id: reward.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findSpawnpointImage(spawnpoint: Spawnpoint) -> File? {
-        let existingFile = spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] }
+        let existingFile = spawnpointPathCache?.get(id: spawnpoint.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(spawnpoint.style)/spawnpoint/\(spawnpoint.uicon).png")
 
-        spawnpointPathCacheLock.doWithLock { spawnpointPathCache[spawnpoint] = baseFile }
+        spawnpointPathCache?.set(id: spawnpoint.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findTeamImage(team: Team) -> File? {
-        let existingFile = teamPathCacheLock.doWithLock { teamPathCache[team] }
+        let existingFile = teamPathCache?.get(id: team.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(team.style)/team/\(team.uicon).png")
 
-        teamPathCacheLock.doWithLock { teamPathCache[team] = baseFile }
+        teamPathCache?.set(id: team.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findTypeImage(type: PokemonType) -> File? {
-        let existingFile = typePathCacheLock.doWithLock { typePathCache[type] }
+        let existingFile = typePathCache?.get(id: type.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(type.style)/type/\(type.uicon).png")
 
-        typePathCacheLock.doWithLock { typePathCache[type] = baseFile }
+        typePathCache?.set(id: type.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findWeatherImage(weather: Weather) -> File? {
-        let existingFile = weatherPathCacheLock.doWithLock { weatherPathCache[weather] }
+        let existingFile = weatherPathCache?.get(id: weather.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(weather.style)/weather/\(weather.uicon).png")
 
-        weatherPathCacheLock.doWithLock { weatherPathCache[weather] = baseFile }
+        weatherPathCache?.set(id: weather.cacheHash, value: baseFile)
         return baseFile
     }
 
     // MARK: Building Images with ImageGenerator
-    private func buildGymImage(gym: Gym, baseFile: File) -> File? {
+    private func buildGymImage(gym: Gym, baseFile: File) -> File {
         if (gym.raid == nil && gym.raidPokemon == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
@@ -294,7 +282,7 @@ class ImageManager {
         return file
     }
 
-    private func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File? {
+    private func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File {
         if (pokemon.spawnType == nil && pokemon.ranking == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
@@ -327,7 +315,7 @@ class ImageManager {
         return file
     }
 
-    private func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File? {
+    private func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File {
         if (pokestop.invasion == nil && pokestop.reward == nil) || ImageManager.noImageGeneration {
             return baseFile
         }
@@ -408,7 +396,7 @@ class ImageManager {
 }
 
 extension ImageManager {
-    struct Device: Hashable {
+    struct Device {
         // Standard
         var style: String
         var id: Int
@@ -423,12 +411,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Gym: Hashable {
+    struct Gym {
         // Standard
         var style: String
         var id: Int
@@ -462,12 +448,10 @@ extension ImageManager {
             "\(raidPokemon != nil ? "_p\(raidPokemon!.uicon)" : "")"
         }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Invasion: Hashable {
+    struct Invasion {
         // Standard
         var style: String
         var id: Int
@@ -482,12 +466,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Misc: Hashable {
+    struct Misc {
         // Standard
         var style: String
         var id: String // not only numbers
@@ -502,12 +484,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Pokemon: Hashable {
+    struct Pokemon {
         enum SpawnType: String {
             case cell
 
@@ -565,12 +545,10 @@ extension ImageManager {
             (ranking != nil ? "_r\(ranking!.rawValue)" : "")
         }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Pokestop: Hashable {
+    struct Pokestop {
         // Standard
         var style: String
         var id: Int // Not lured is ID 0
@@ -606,12 +584,10 @@ extension ImageManager {
             (pokemon != nil ? "_p\(pokemon!.uicon)" : "")
         }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Raid: Hashable {
+    struct Raid {
         // Standard
         var style: String
         var level: Int
@@ -634,12 +610,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Reward: Hashable {
+    struct Reward {
         // Standard
         var style: String
         var id: String
@@ -687,12 +661,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Spawnpoint: Hashable {
+    struct Spawnpoint {
         // Standard
         var style: String
         var id: Int
@@ -707,12 +679,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Team: Hashable {
+    struct Team {
         // Standard
         var style: String
         var id: Int
@@ -727,12 +697,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct PokemonType: Hashable {
+    struct PokemonType {
         // Standard
         var style: String
         var id: Int
@@ -747,12 +715,10 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 
-    struct Weather: Hashable {
+    struct Weather {
         // Standard
         var style: String
         var id: Int
@@ -776,8 +742,6 @@ extension ImageManager {
         }
         var hash: String { uicon }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(hash)
-        }
+        var cacheHash: String { style + "_" + hash }
     }
 }
