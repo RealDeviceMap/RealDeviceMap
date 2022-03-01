@@ -4676,262 +4676,571 @@
       ]
     },
     "722": {
-      "name": "Rowlet"
+      "name": "Rowlet",
+      "types": [
+        3,
+        12
+      ]
     },
     "723": {
-      "name": "Dartrix"
+      "name": "Dartrix",
+      "types": [
+        3,
+        12
+      ]
     },
     "724": {
-      "name": "Decidueye"
+      "name": "Decidueye",
+      "types": [
+        8,
+        12
+      ]
     },
     "725": {
-      "name": "Litten"
+      "name": "Litten",
+      "types": [
+        10
+      ]
     },
     "726": {
-      "name": "Torracat"
+      "name": "Torracat",
+      "types": [
+        10
+      ]
     },
     "727": {
-      "name": "Incineroar"
+      "name": "Incineroar",
+      "types": [
+        10,
+        17
+      ]
     },
     "728": {
-      "name": "Popplio"
+      "name": "Popplio",
+      "types": [
+        11
+      ]
     },
     "729": {
-      "name": "Brionne"
+      "name": "Brionne",
+      "types": [
+        11
+      ]
     },
     "730": {
-      "name": "Primarina"
+      "name": "Primarina",
+      "types": [
+        11,
+        18
+      ]
     },
     "731": {
-      "name": "Pikipek"
+      "name": "Pikipek",
+      "types": [
+        1,
+        3
+      ]
     },
     "732": {
-      "name": "Trumbeak"
+      "name": "Trumbeak",
+      "types": [
+        1,
+        3
+      ]
     },
     "733": {
-      "name": "Toucannon"
+      "name": "Toucannon",
+      "types": [
+        1,
+        3
+      ]
     },
     "734": {
-      "name": "Yungoos"
+      "name": "Yungoos",
+      "types": [
+        1
+      ]
     },
     "735": {
-      "name": "Gumshoos"
+      "name": "Gumshoos",
+      "types": [
+        1
+      ]
     },
     "736": {
-      "name": "Grubbin"
+      "name": "Grubbin",
+      "types": [
+        7
+      ]
     },
     "737": {
-      "name": "Charjabug"
+      "name": "Charjabug",
+      "types": [
+        7,
+        13
+      ]
     },
     "738": {
-      "name": "Vikavolt"
+      "name": "Vikavolt",
+      "types": [
+        7,
+        13
+      ]
     },
     "739": {
-      "name": "Crabrawler"
+      "name": "Crabrawler",
+      "types": [
+        2
+      ]
     },
     "740": {
-      "name": "Crabominable"
+      "name": "Crabominable",
+      "types": [
+        2,
+        15
+      ]
     },
     "741": {
       "name": "Oricorio"
     },
     "742": {
-      "name": "Cutiefly"
+      "name": "Cutiefly",
+      "types": [
+        7,
+        18
+      ]
     },
     "743": {
-      "name": "Ribombee"
+      "name": "Ribombee",
+      "types": [
+        7,
+        18
+      ]
     },
     "744": {
-      "name": "Rockruff"
+      "name": "Rockruff",
+      "types": [
+        6
+      ]
     },
     "745": {
-      "name": "Lycanroc"
+      "name": "Lycanroc",
+      "types": [
+        6
+      ]
     },
     "746": {
-      "name": "Wishiwashi"
+      "name": "Wishiwashi",
+      "types": [
+        11
+      ]
     },
     "747": {
-      "name": "Mareanie"
+      "name": "Mareanie",
+      "types": [
+        4,
+        11
+      ]
     },
     "748": {
-      "name": "Toxapex"
+      "name": "Toxapex",
+      "types": [
+        4,
+        11
+      ]
     },
     "749": {
-      "name": "Mudbray"
+      "name": "Mudbray",
+      "types": [
+        5
+      ]
     },
     "750": {
-      "name": "Mudsdale"
+      "name": "Mudsdale",
+      "types": [
+        5
+      ]
     },
     "751": {
-      "name": "Dewpider"
+      "name": "Dewpider",
+      "types": [
+        7,
+        11
+      ]
     },
     "752": {
-      "name": "Araquanid"
+      "name": "Araquanid",
+      "types": [
+        7,
+        11
+      ]
     },
     "753": {
-      "name": "Fomantis"
+      "name": "Fomantis",
+      "types": [
+        12
+      ]
     },
     "754": {
-      "name": "Lurantis"
+      "name": "Lurantis",
+      "types": [
+        12
+      ]
     },
     "755": {
-      "name": "Morelull"
+      "name": "Morelull",
+      "types": [
+        12,
+        18
+      ]
     },
     "756": {
-      "name": "Shiinotic"
+      "name": "Shiinotic",
+      "types": [
+        12,
+        18
+      ]
     },
     "757": {
-      "name": "Salandit"
+      "name": "Salandit",
+      "types": [
+        4,
+        10
+      ]
     },
     "758": {
-      "name": "Salazzle"
+      "name": "Salazzle",
+      "types": [
+        4,
+        10
+      ]
     },
     "759": {
-      "name": "Stufful"
+      "name": "Stufful",
+      "types": [
+        1,
+        2
+      ]
     },
     "760": {
-      "name": "Bewear"
+      "name": "Bewear",
+      "types": [
+        1,
+        2
+      ]
     },
     "761": {
-      "name": "Bounsweet"
+      "name": "Bounsweet",
+      "types": [
+        12
+      ]
     },
     "762": {
-      "name": "Steenee"
+      "name": "Steenee",
+      "types": [
+        12
+      ]
     },
     "763": {
-      "name": "Tsareena"
+      "name": "Tsareena",
+      "types": [
+        12
+      ]
     },
     "764": {
-      "name": "Comfey"
+      "name": "Comfey",
+      "types": [
+        18
+      ]
     },
     "765": {
-      "name": "Oranguru"
+      "name": "Oranguru",
+      "types": [
+        1,
+        14
+      ]
     },
     "766": {
-      "name": "Passimian"
+      "name": "Passimian",
+      "types": [
+        2
+      ]
     },
     "767": {
-      "name": "Wimpod"
+      "name": "Wimpod",
+      "types": [
+        7,
+        11
+      ]
     },
     "768": {
-      "name": "Golisopod"
+      "name": "Golisopod",
+      "types": [
+        7,
+        11
+      ]
     },
     "769": {
-      "name": "Sandygast"
+      "name": "Sandygast",
+      "types": [
+        5,
+        8
+      ]
     },
     "770": {
-      "name": "Palossand"
+      "name": "Palossand",
+      "types": [
+        5,
+        8
+      ]
     },
     "771": {
-      "name": "Pyukumuku"
+      "name": "Pyukumuku",
+      "types": [
+        11
+      ]
     },
     "772": {
-      "name": "Type Null"
+      "name": "Type Null",
+      "types": [
+        1
+      ]
     },
     "773": {
-      "name": "Silvally"
+      "name": "Silvally",
+      "types": [
+        1
+      ]
     },
     "774": {
-      "name": "Minior"
+      "name": "Minior",
+      "types": [
+        3,
+        6
+      ]
     },
     "775": {
-      "name": "Komala"
+      "name": "Komala",
+      "types": [
+        1
+      ]
     },
     "776": {
-      "name": "Turtonator"
+      "name": "Turtonator",
+      "types": [
+        10,
+        16
+      ]
     },
     "777": {
-      "name": "Togedemaru"
+      "name": "Togedemaru",
+      "types": [
+        9,
+        13
+      ]
     },
     "778": {
-      "name": "Mimikyu"
+      "name": "Mimikyu",
+      "types": [
+        8,
+        18
+      ]
     },
     "779": {
-      "name": "Bruxish"
+      "name": "Bruxish",
+      "types": [
+        11,
+        14
+      ]
     },
     "780": {
-      "name": "Drampa"
+      "name": "Drampa",
+      "types": [
+        1,
+        16
+      ]
     },
     "781": {
-      "name": "Dhelmise"
+      "name": "Dhelmise",
+      "types": [
+        8,
+        12
+      ]
     },
     "782": {
-      "name": "Jangmo O"
+      "name": "Jangmo O",
+      "types": [
+        16
+      ]
     },
     "783": {
-      "name": "Hakamo O"
+      "name": "Hakamo O",
+      "types": [
+        2,
+        16
+      ]
     },
     "784": {
-      "name": "Kommo O"
+      "name": "Kommo O",
+      "types": [
+        2,
+        16
+      ]
     },
     "785": {
-      "name": "Tapu Koko"
+      "name": "Tapu Koko",
+      "types": [
+        13,
+        18
+      ]
     },
     "786": {
-      "name": "Tapu Lele"
+      "name": "Tapu Lele",
+      "types": [
+        14,
+        18
+      ]
     },
     "787": {
-      "name": "Tapu Bulu"
+      "name": "Tapu Bulu",
+      "types": [
+        12,
+        18
+      ]
     },
     "788": {
-      "name": "Tapu Fini"
+      "name": "Tapu Fini",
+      "types": [
+        11,
+        18
+      ]
     },
     "789": {
-      "name": "Cosmog"
+      "name": "Cosmog",
+      "types": [
+        14
+      ]
     },
     "790": {
-      "name": "Cosmoem"
+      "name": "Cosmoem",
+      "types": [
+        14
+      ]
     },
     "791": {
-      "name": "Solgaleo"
+      "name": "Solgaleo",
+      "types": [
+        9,
+        14
+      ]
     },
     "792": {
-      "name": "Lunala"
+      "name": "Lunala",
+      "types": [
+        8,
+        14
+      ]
     },
     "793": {
-      "name": "Nihilego"
+      "name": "Nihilego",
+      "types": [
+        4,
+        6
+      ]
     },
     "794": {
-      "name": "Buzzwole"
+      "name": "Buzzwole",
+      "types": [
+        2,
+        7
+      ]
     },
     "795": {
-      "name": "Pheromosa"
+      "name": "Pheromosa",
+      "types": [
+        2,
+        7
+      ]
     },
     "796": {
-      "name": "Xurkitree"
+      "name": "Xurkitree",
+      "types": [
+        13
+      ]
     },
     "797": {
-      "name": "Celesteela"
+      "name": "Celesteela",
+      "types": [
+        3,
+        9
+      ]
     },
     "798": {
-      "name": "Kartana"
+      "name": "Kartana",
+      "types": [
+        9,
+        12
+      ]
     },
     "799": {
-      "name": "Guzzlord"
+      "name": "Guzzlord",
+      "types": [
+        8,
+        17
+      ]
     },
     "800": {
-      "name": "Necrozma"
+      "name": "Necrozma",
+      "types": [
+        14
+      ]
     },
     "801": {
-      "name": "Magearna"
+      "name": "Magearna",
+      "types": [
+        9,
+        18
+      ]
     },
     "802": {
-      "name": "Marshadow"
+      "name": "Marshadow",
+      "types": [
+        2,
+        8
+      ]
     },
     "803": {
-      "name": "Poipole"
+      "name": "Poipole",
+      "types": [
+        4
+      ]
     },
     "804": {
-      "name": "Naganadel"
+      "name": "Naganadel",
+      "types": [
+        4,
+        16
+      ]
     },
     "805": {
-      "name": "Stakataka"
+      "name": "Stakataka",
+      "types": [
+        6,
+        9
+      ]
     },
     "806": {
-      "name": "Blacephalon"
+      "name": "Blacephalon",
+      "types": [
+        8,
+        10
+      ]
     },
     "807": {
-      "name": "Zeraora"
+      "name": "Zeraora",
+      "types": [
+        13
+      ]
     },
     "808": {
       "name": "Meltan",
