@@ -659,7 +659,7 @@ extension ImageManager {
                 index: index["\(type)"] as? [String] ?? [String](), postfixes: postfixes)
             }
         }
-        var hash: String { uicon }
+        var hash: String { "\(type.rawValue)_" + uicon }
 
         var cacheHash: String { style + "_" + hash }
     }
