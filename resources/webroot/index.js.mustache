@@ -2312,7 +2312,7 @@ function getPokemonPopupContent (pokemon) {
   var pkmn = pokemonDb[pokemon.pokemon_id]
   if (pkmn !== undefined && pkmn !== null) {
     var types = pkmn.types
-    if (types !== null && types.length > 0) {
+    if (types !== undefined && types !== null && types.length > 0) {
       content += '<div class="col">'
       if (types.length === 2) {
         content += '<img src="/static/img/type/' + types[0].type.toLowerCase() + '.png" height="16" width="16">&nbsp;'
