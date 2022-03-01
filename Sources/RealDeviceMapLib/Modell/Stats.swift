@@ -549,7 +549,7 @@ class Stats: JSONConvertibleObject {
             let magneticLures = Int64(result[4] as! String)!
             let rainyLures = Int64(result[5] as! String)!
             let invasions = Int64(result[6] as! String)!
-            let quests = Int64(result[7] as! String)!
+            let quests = result[7] as! Int64
 
             stats.append(total)
             stats.append(normalLures)
