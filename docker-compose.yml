@@ -10,7 +10,7 @@ services:
     volumes:
       - images:/app/resources/webroot/static/img
 ### enable the next line for UICONS volume usage, change only the first part, second part is docker path
-#     - ./icons-repo-folder:/app/resources/webroot/static/img/default
+#     - ./path-to-your-icons-repo-folder:/app/resources/webroot/static/img/default
       - backups:/app/backups
 #     - favicons:/app/resources/webroot/static/favicons
 #     - /etc/localtime:/etc/localtime:ro
