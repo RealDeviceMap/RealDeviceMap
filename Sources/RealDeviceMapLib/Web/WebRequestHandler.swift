@@ -1641,6 +1641,7 @@ public class WebRequestHandler {
                     Gym.cache?.clear()
                     SpawnPoint.cache?.clear()
                     Weather.cache?.clear()
+                    ImageManager.global.clearCaches()
                     data["show_success"] = true
                     data["success"] = "In-Memory Cache cleared!"
                 case "truncate_pokemon":

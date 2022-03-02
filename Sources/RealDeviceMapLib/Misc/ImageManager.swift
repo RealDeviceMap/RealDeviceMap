@@ -393,6 +393,21 @@ class ImageManager {
     func accessUiconIndexDictionary(style: String, folder: String) -> [String: Any]? {
         lock.doWithLock { uiconIndex[style]?[folder] as? [String: Any] }
     }
+
+    func clearCaches() {
+        devicePathCache?.clear()
+        gymPathCache?.clear()
+        invasionPathCache?.clear()
+        miscPathCache?.clear()
+        pokemonPathCache?.clear()
+        pokestopPathCache?.clear()
+        raidPathCache?.clear()
+        rewardPathCache?.clear()
+        spawnpointPathCache?.clear()
+        teamPathCache?.clear()
+        typePathCache?.clear()
+        weatherPathCache?.clear()
+    }
 }
 
 extension ImageManager {
