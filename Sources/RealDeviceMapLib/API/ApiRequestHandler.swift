@@ -1768,7 +1768,7 @@ public class ApiRequestHandler {
                             "role=\"button\" class=\"btn btn-danger\" onclick=\"return " +
                             "confirm('Are you sure you want to delete this assignment? " +
                             "This action is irreversible and cannot be " +
-                            "undone without backups.')\">Delete</a>>Delete</a></div>"
+                            "undone without backups.')\">Delete</a></div>"
                     } else {
                         assignmentData["time"] = assignment.time as Any
                     }
