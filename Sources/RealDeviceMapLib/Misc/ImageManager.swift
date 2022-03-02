@@ -82,7 +82,6 @@ class ImageManager {
         } catch {
             Log.critical(message: "[ImageApiRequestHandler] Failed to open/read image json file '\(file.path)'" +
                 " - does it exist?")
-            fatalError()
         }
     }
 
