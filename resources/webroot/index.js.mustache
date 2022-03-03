@@ -715,7 +715,7 @@ function loadStorage () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     let i
-    for (i = 1; i < 6; i++) {
+    for (i = 501; i <= 505; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 3; i++) {
@@ -731,7 +731,7 @@ function loadStorage () {
       pokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
-    for (i = 1; i < 6; i++) {
+    for (i = 501; i <= 505; i++) {
       if (pokestopFilter['l' + i] === undefined || pokestopFilter['l' + i] === null) {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -1038,7 +1038,7 @@ function initMap () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     let i
-    for (i = 1; i < 6; i++) {
+    for (i = 501; i <= 505; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 3; i++) {
@@ -1057,7 +1057,7 @@ function initMap () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: false, size: pokestopFilterNew.normal.size }
     let i
-    for (i = 1; i < 6; i++) {
+    for (i = 501; i <= 505; i++) {
       defaultPokestopFilter['l' + i] = { show: false, size: pokestopFilterNew['l' + i].size }
     }
     for (i = 0; i <= 3; i++) {
@@ -1557,7 +1557,7 @@ function loadData () {
       pokestopFilterExclude.push('normal')
     }
     let i
-    for (i = 1; i < 6; i++) {
+    for (i = 501; i <= 505; i++) {
       if (pokestopFilter['l' + i].show === false) {
         pokestopFilterExclude.push('l' + i)
       }
@@ -1865,6 +1865,48 @@ function getPokemonIndex (pokemon) {
     return 4
   } else {
     return 2
+  }
+}
+
+function getPokestopSize (id) {
+  const size = pokestopFilter[id] ? pokestopFilter[id].size : null
+  if (size === 'small') {
+    return 20
+  } else if (size === 'large') {
+    return 45
+  } else if (size === 'huge') {
+    return 65
+  } else {
+    return 30
+  }
+}
+
+function getInvasionSize (id) {
+  const size = invasionFilter[id] ? invasionFilter[id].size : null
+  if (size === 'small') {
+    return 20
+  } else if (size === 'large') {
+    return 45
+  } else if (size === 'huge') {
+    return 65
+  } else {
+    return 30
+  }
+}
+
+function getQuestSize (questId) {
+  if (questFilter[questId] === undefined || questFilter[questId].size === undefined) {
+    return 30
+  }
+  const size = questFilter[questId].size
+  if (size === 'small') {
+    return 20
+  } else if (size === 'large') {
+    return 45
+  } else if (size === 'huge') {
+    return 65
+  } else {
+    return 30
   }
 }
 
@@ -3353,8 +3395,8 @@ function getPokestopMarkerIcon (pokestop, ts) {
   let itemId
   let pokemonId
   let formId, genderId, costumeId
-  let size
   let lureId, invasionGruntType
+  var size = 20
 
   if ((showQuests || pokestop.is_start) && (
     (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
@@ -3378,16 +3420,30 @@ function getPokestopMarkerIcon (pokestop, ts) {
       genderId = info.gender_id
       costumeId = info.costume_id
     }
+    let rewardString = getRewardString(rewardType, info)
+    let questSize = getQuestSize(rewardString)
+    if (questSize > size) {
+      size = questSize
+    }
   }
-  size = 30
+  var sizeId = 'normal'
   if (pokestop.lure_expire_timestamp >= ts) {
     lureId = pokestop.lure_id
+    let lureSize =  getPokestopSize('l' + lureId)
+    if (lureSize > size) {
+      size = lureSize
+    }
   } else {
     lureId = 0
   }
 
   if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
     invasionGruntType = pokestop.grunt_type
+    let invasionSize = getInvasionSize(invasionGruntType)
+    if (invasionSize > size) {
+      size = invasionSize
+    }
+
   }
   let multiplierSize = 1
   let multiplierAnchor = 1
@@ -3411,37 +3467,18 @@ function getPokestopMarker (pokestop, ts) {
       (questFilter.ar.show === false && pokestop.quest_type !== null && pokestop.quest_rewards[0] !== undefined) ||
       (questFilter.ar.show === true && pokestop.alternative_quest_type !== null && pokestop.alternative_quest_rewards[0] !== undefined)
     )) {
-    let id
+    let rewardType
     let info
 
     if (questFilter.ar.show === true) {
-      id = pokestop.alternative_quest_rewards[0].type
+      rewardType = pokestop.alternative_quest_rewards[0].type
       info = pokestop.alternative_quest_rewards[0].info
     } else {
-      id = pokestop.quest_rewards[0].type
+      rewardType = pokestop.quest_rewards[0].type
       info = pokestop.quest_rewards[0].info
     }
     
-    let rewardString
-    if (id === 1 && info !== undefined && info.amount !== undefined) {
-      rewardString = 'i-2'
-    } else if (id === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
-      rewardString = 'i' + info.item_id
-    } else if (id === 3 && info !== undefined && info.amount !== undefined) {
-      rewardString = 'i-1'
-    } else if (id === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-      rewardString = 'i-3'
-    } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
-      rewardString = 'p' + info.pokemon_id
-    } else if (id === 8 && info !== undefined && info.amount !== undefined) {
-      rewardString = 'i-4'
-    } else if (id === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
-      rewardString = 'i-5'
-    } else if (id === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-      rewardString = 'i-6'
-    } else {
-      rewardString = 'i0'
-    }
+    let rewardString = getRewardString(rewardType, info)
     if (pokestop.is_start) {
       zIndex = 1000
     } else {
@@ -3462,6 +3499,30 @@ function getPokestopMarker (pokestop, ts) {
     marker._popup.setContent(getPokestopPopupContent(pokestop))
   })
   return marker
+}
+
+function getRewardString(rewardType, info) {
+  let rewardString
+  if (rewardType === 1 && info !== undefined && info.amount !== undefined) {
+    rewardString = 'i-2'
+  } else if (rewardType === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
+    rewardString = 'i' + info.item_id
+  } else if (rewardType === 3 && info !== undefined && info.amount !== undefined) {
+    rewardString = 'i-1'
+  } else if (rewardType === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+    rewardString = 'i-3'
+  } else if (rewardType === 7 && info !== undefined && info.pokemon_id !== undefined) {
+    rewardString = 'p' + info.pokemon_id
+  } else if (rewardType === 8 && info !== undefined && info.amount !== undefined) {
+    rewardString = 'i-4'
+  } else if (rewardType === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
+    rewardString = 'i-5'
+  } else if (rewardType === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+    rewardString = 'i-6'
+  } else {
+    rewardString = 'i0'
+  }
+  return rewardString
 }
 
 // eslint-disable-next-line no-unused-vars

@@ -803,7 +803,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     excludeNormal = true
                 } else if showLures && filter.contains(string: "l") {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
-                        excludedLures.append(id + 500)
+                        excludedLures.append(id)
                     }
                 } else if filter.contains(string: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
