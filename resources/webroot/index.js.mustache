@@ -3430,12 +3430,13 @@ function getPokestopMarkerIcon (pokestop, ts) {
   var sizeId = 'normal'
   if (pokestop.lure_expire_timestamp >= ts) {
     lureId = pokestop.lure_id
-    let lureSize =  getPokestopSize('l' + lureId)
-    if (lureSize > size) {
-      size = lureSize
-    }
+    sizeId = 'l' + lureId
   } else {
     lureId = 0
+  }
+  let lureSize =  getPokestopSize(sizeId)
+  if (lureSize > size) {
+    size = lureSize
   }
 
   if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
