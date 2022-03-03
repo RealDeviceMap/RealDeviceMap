@@ -226,29 +226,29 @@ public func setupRealDeviceMap() {
     _ = ImageManager.global
     if noMemoryCache == nil {
         // this will use the same cache values like the pokemon cache
-        ImageManager.global.devicePathCache =
+        ImageManager.devicePathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.gymPathCache =
+        ImageManager.gymPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.invasionPathCache =
+        ImageManager.invasionPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.miscPathCache =
+        ImageManager.miscPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.pokemonPathCache =
+        ImageManager.pokemonPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.pokestopPathCache =
+        ImageManager.pokestopPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.raidPathCache =
+        ImageManager.raidPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.rewardPathCache =
+        ImageManager.rewardPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.spawnpointPathCache =
+        ImageManager.spawnpointPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.teamPathCache =
+        ImageManager.teamPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.typePathCache =
+        ImageManager.typePathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        ImageManager.global.weatherPathCache =
+        ImageManager.weatherPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     }
 

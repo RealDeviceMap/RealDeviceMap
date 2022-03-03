@@ -22,18 +22,18 @@ class ImageManager {
     private var lastModified: [String: Int] = [String: Int]()
     private let updaterThread: ThreadQueue
 
-    internal var devicePathCache: MemoryCache<File>?
-    internal var gymPathCache: MemoryCache<File>?
-    internal var invasionPathCache: MemoryCache<File>?
-    internal var miscPathCache: MemoryCache<File>?
-    internal var pokemonPathCache: MemoryCache<File>?
-    internal var pokestopPathCache: MemoryCache<File>?
-    internal var raidPathCache: MemoryCache<File>?
-    internal var rewardPathCache: MemoryCache<File>?
-    internal var spawnpointPathCache: MemoryCache<File>?
-    internal var teamPathCache: MemoryCache<File>?
-    internal var typePathCache: MemoryCache<File>?
-    internal var weatherPathCache: MemoryCache<File>?
+    internal static var devicePathCache: MemoryCache<File>?
+    internal static var gymPathCache: MemoryCache<File>?
+    internal static var invasionPathCache: MemoryCache<File>?
+    internal static var miscPathCache: MemoryCache<File>?
+    internal static var pokemonPathCache: MemoryCache<File>?
+    internal static var pokestopPathCache: MemoryCache<File>?
+    internal static var raidPathCache: MemoryCache<File>?
+    internal static var rewardPathCache: MemoryCache<File>?
+    internal static var spawnpointPathCache: MemoryCache<File>?
+    internal static var teamPathCache: MemoryCache<File>?
+    internal static var typePathCache: MemoryCache<File>?
+    internal static var weatherPathCache: MemoryCache<File>?
 
     private init() {
         updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
@@ -57,8 +57,8 @@ class ImageManager {
         for (_, folder) in styles {
             let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
                 "\(folder)/index.json")
-            let lastModified = lastModified[folder]
-            if lastModified != file.modificationTime {
+            let modificationTime = lock.doWithLock { lastModified[folder] }
+            if modificationTime != file.modificationTime {
                 Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
                 loadImageJsonFile(folder: folder)
             }
@@ -68,7 +68,7 @@ class ImageManager {
     private func loadImageJsonFile(folder: String) {
         let file = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(folder)/index.json")
-        lastModified[folder] = file.modificationTime
+        lock.doWithLock { lastModified[folder] = file.modificationTime }
 
         do {
             try file.open()
@@ -87,52 +87,52 @@ class ImageManager {
 
     // MARK: find Images
     func findDeviceImage(device: Device) -> File? {
-        let existingFile = devicePathCache?.get(id: device.cacheHash)
+        let existingFile = ImageManager.devicePathCache?.get(id: device.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(device.style)/device/\(device.uicon).png")
 
-        devicePathCache?.set(id: device.cacheHash, value: baseFile)
+        ImageManager.devicePathCache?.set(id: device.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findGymImage(gym: Gym) -> File? {
-        let existingFile = gymPathCache?.get(id: gym.cacheHash)
+        let existingFile = ImageManager.gymPathCache?.get(id: gym.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(gym.style)/gym/\(gym.uicon).png")
 
         let file = buildGymImage(gym: gym, baseFile: baseFile)
-        gymPathCache?.set(id: gym.cacheHash, value: file)
+        ImageManager.gymPathCache?.set(id: gym.cacheHash, value: file)
         return file
     }
 
     func findInvasionImage(invasion: Invasion) -> File? {
-        let existingFile = invasionPathCache?.get(id: invasion.cacheHash)
+        let existingFile = ImageManager.invasionPathCache?.get(id: invasion.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(invasion.style)/invasion/\(invasion.uicon).png")
 
-        invasionPathCache?.set(id: invasion.cacheHash, value: baseFile)
+        ImageManager.invasionPathCache?.set(id: invasion.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findMiscImage(misc: Misc) -> File? {
-        let existingFile = miscPathCache?.get(id: misc.cacheHash)
+        let existingFile = ImageManager.miscPathCache?.get(id: misc.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(misc.style)/misc/\(misc.uicon).png")
 
-        miscPathCache?.set(id: misc.cacheHash, value: baseFile)
+        ImageManager.miscPathCache?.set(id: misc.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findPokemonImage(pokemon: Pokemon) -> File? {
-        let existingFile = pokemonPathCache?.get(id: pokemon.cacheHash)
+        let existingFile = ImageManager.pokemonPathCache?.get(id: pokemon.cacheHash)
         if existingFile != nil { return existingFile }
 
         var postfixes: [String] = []
@@ -145,35 +145,35 @@ class ImageManager {
             "\(pokemon.style)/pokemon/\(pokemon.uicon).png")
 
         let file = buildPokemonImage(pokemon: pokemon, baseFile: baseFile)
-        pokemonPathCache?.set(id: pokemon.cacheHash, value: file)
+        ImageManager.pokemonPathCache?.set(id: pokemon.cacheHash, value: file)
         return file
     }
 
     func findPokestopImage(pokestop: Pokestop) -> File? {
-        let existingFile = pokestopPathCache?.get(id: pokestop.cacheHash)
+        let existingFile = ImageManager.pokestopPathCache?.get(id: pokestop.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(pokestop.style)/pokestop/\(pokestop.uicon).png")
 
         let file = buildPokestopImage(pokestop: pokestop, baseFile: baseFile)
-        pokestopPathCache?.set(id: pokestop.cacheHash, value: file)
+        ImageManager.pokestopPathCache?.set(id: pokestop.cacheHash, value: file)
         return file
     }
 
     func findRaidImage(raid: Raid) -> File? {
-        let existingFile = raidPathCache?.get(id: raid.cacheHash)
+        let existingFile = ImageManager.raidPathCache?.get(id: raid.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(raid.style)/raid/egg/\(raid.uicon).png")
 
-        raidPathCache?.set(id: raid.cacheHash, value: baseFile)
+        ImageManager.raidPathCache?.set(id: raid.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findRewardImage(reward: Reward, pokemon: Pokemon? = nil) -> File? {
-        let existingFile = rewardPathCache?.get(id: reward.cacheHash)
+        let existingFile = ImageManager.rewardPathCache?.get(id: reward.cacheHash)
         if existingFile != nil { return existingFile }
 
         var postfixes: [String] = []
@@ -206,51 +206,51 @@ class ImageManager {
                 "\(reward.style)/reward/\(reward.type)/\(reward.uicon).png")
         }
 
-        rewardPathCache?.set(id: reward.cacheHash, value: baseFile)
+        ImageManager.rewardPathCache?.set(id: reward.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findSpawnpointImage(spawnpoint: Spawnpoint) -> File? {
-        let existingFile = spawnpointPathCache?.get(id: spawnpoint.cacheHash)
+        let existingFile = ImageManager.spawnpointPathCache?.get(id: spawnpoint.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(spawnpoint.style)/spawnpoint/\(spawnpoint.uicon).png")
 
-        spawnpointPathCache?.set(id: spawnpoint.cacheHash, value: baseFile)
+        ImageManager.spawnpointPathCache?.set(id: spawnpoint.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findTeamImage(team: Team) -> File? {
-        let existingFile = teamPathCache?.get(id: team.cacheHash)
+        let existingFile = ImageManager.teamPathCache?.get(id: team.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(team.style)/team/\(team.uicon).png")
 
-        teamPathCache?.set(id: team.cacheHash, value: baseFile)
+        ImageManager.teamPathCache?.set(id: team.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findTypeImage(type: PokemonType) -> File? {
-        let existingFile = typePathCache?.get(id: type.cacheHash)
+        let existingFile = ImageManager.typePathCache?.get(id: type.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(type.style)/type/\(type.uicon).png")
 
-        typePathCache?.set(id: type.cacheHash, value: baseFile)
+        ImageManager.typePathCache?.set(id: type.cacheHash, value: baseFile)
         return baseFile
     }
 
     func findWeatherImage(weather: Weather) -> File? {
-        let existingFile = weatherPathCache?.get(id: weather.cacheHash)
+        let existingFile = ImageManager.weatherPathCache?.get(id: weather.cacheHash)
         if existingFile != nil { return existingFile }
 
         let baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
             "\(weather.style)/weather/\(weather.uicon).png")
 
-        weatherPathCache?.set(id: weather.cacheHash, value: baseFile)
+        ImageManager.weatherPathCache?.set(id: weather.cacheHash, value: baseFile)
         return baseFile
     }
 
@@ -395,18 +395,18 @@ class ImageManager {
     }
 
     func clearCaches() {
-        devicePathCache?.clear()
-        gymPathCache?.clear()
-        invasionPathCache?.clear()
-        miscPathCache?.clear()
-        pokemonPathCache?.clear()
-        pokestopPathCache?.clear()
-        raidPathCache?.clear()
-        rewardPathCache?.clear()
-        spawnpointPathCache?.clear()
-        teamPathCache?.clear()
-        typePathCache?.clear()
-        weatherPathCache?.clear()
+        ImageManager.devicePathCache?.clear()
+        ImageManager.gymPathCache?.clear()
+        ImageManager.invasionPathCache?.clear()
+        ImageManager.miscPathCache?.clear()
+        ImageManager.pokemonPathCache?.clear()
+        ImageManager.pokestopPathCache?.clear()
+        ImageManager.raidPathCache?.clear()
+        ImageManager.rewardPathCache?.clear()
+        ImageManager.spawnpointPathCache?.clear()
+        ImageManager.teamPathCache?.clear()
+        ImageManager.typePathCache?.clear()
+        ImageManager.weatherPathCache?.clear()
     }
 }
 
