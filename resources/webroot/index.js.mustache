@@ -1585,6 +1585,7 @@ function loadData () {
     max_lat: bounds._northEast.lat,
     min_lon: bounds._southWest.lng,
     max_lon: bounds._northEast.lng,
+    icon_style: selectedIconStyle,
     show_gyms: showGyms,
     show_raids: showRaids,
     show_pokestops: showPokestops,
@@ -5542,7 +5543,7 @@ function editGymName(id, oldName) {
       updateOpenedPopupLoop()
     },
     error: function(xhr) {
-      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+      console.error('/api/set_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
     }
   })
 }
@@ -5566,7 +5567,7 @@ function editPokestopName(id, oldName) {
       updateOpenedPopupLoop()
     },
     error: function(xhr) {
-      console.error('/api/get_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
+      console.error('/api/set_data returned status code ' + xhr.status + ' (' + xhr.statusText + ')')
     }
   })
 }
