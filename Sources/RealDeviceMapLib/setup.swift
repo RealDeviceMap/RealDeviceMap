@@ -217,9 +217,9 @@ public func setupRealDeviceMap() {
     }
 
     // Load Icon styles
+    Log.info(message: "[MAIN] Load Icon Styles")
     ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
             .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
-    Log.info(message: "[MAIN] Load Icon Styles")
     if environment["NO_GENERATE_IMAGES"] != nil {
         ImageManager.noImageGeneration = true
     }

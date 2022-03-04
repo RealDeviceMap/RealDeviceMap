@@ -15,7 +15,7 @@ RealDeviceMap.xcodeproj/
 .idea
 
 resources/webroot/static/img/
-resources/webroot/static/data/www_de.json
+resources/webroot/static/data/www_*.json
 backups/
 .gitref
 .gitsha
