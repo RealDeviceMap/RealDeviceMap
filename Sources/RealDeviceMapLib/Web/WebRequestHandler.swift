@@ -2163,10 +2163,6 @@ public class WebRequestHandler {
                 return data
             }
         }
-        if !iconStyles.keys.contains("Default") { // force key 'Default' - it's used in IV-Queue and Stats
-            data["show_error"] = true
-            return data
-        }
 
         var citySettings = [String: [String: Any]]()
         if cities != "" {
