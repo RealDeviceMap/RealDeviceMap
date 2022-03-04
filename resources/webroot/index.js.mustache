@@ -3506,21 +3506,21 @@ function getPokestopMarker (pokestop, ts) {
 function getRewardString(rewardType, info) {
   let rewardString
   if (rewardType === 1 && info !== undefined && info.amount !== undefined) {
-    rewardString = 'i-2'
+    rewardString = 'i-1'
   } else if (rewardType === 2 && info !== undefined && info.amount !== undefined && info.item_id !== undefined) {
     rewardString = 'i' + info.item_id
   } else if (rewardType === 3 && info !== undefined && info.amount !== undefined) {
-    rewardString = 'i-1'
-  } else if (rewardType === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
     rewardString = 'i-3'
+  } else if (rewardType === 4 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
+    rewardString = 'i-4'
   } else if (rewardType === 7 && info !== undefined && info.pokemon_id !== undefined) {
     rewardString = 'p' + info.pokemon_id
   } else if (rewardType === 8 && info !== undefined && info.amount !== undefined) {
-    rewardString = 'i-4'
+    rewardString = 'i-8'
   } else if (rewardType === 11 && info !== undefined && info.amount !== undefined && info.sticker_id !== undefined) {
-    rewardString = 'i-5'
+    rewardString = 'i-11'
   } else if (rewardType === 12 && info !== undefined && info.amount !== undefined && info.pokemon_id !== undefined) {
-    rewardString = 'i-6'
+    rewardString = 'i-12'
   } else {
     rewardString = 'i0'
   }

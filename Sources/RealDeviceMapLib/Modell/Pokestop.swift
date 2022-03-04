@@ -980,7 +980,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         for id in excludedPowerUpLevels {
             mysqlStmt.bindParam(id)
         }
-
         for id in excludedTypes {
             mysqlStmt.bindParam(id)
         }
