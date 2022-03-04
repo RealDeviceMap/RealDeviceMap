@@ -343,7 +343,7 @@
                             html += "<div class='row justify-content-center'>";
                         }
                         html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
-                        html +=   "<img src='/image-api/pokemon?style=Default&id=" + value.pokemon_id + "' width='64' height='64'>";
+                        html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + value.pokemon_id + "' width='64' height='64'>";
                         html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                         html +=   "<span class='text-nowrap'>" + value.shinyRate + value.count + "</span>";
                         html += "</div>";
@@ -364,7 +364,7 @@
                             html += "<div class='row justify-content-center'>";
                         }
                         html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
-                        html +=   "<img src='/image-api/pokemon?style=Default&id=" + value.pokemon_id + "' width='64' height='64'>";
+                        html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + value.pokemon_id + "' width='64' height='64'>";
                         html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                         html +=   "<span class='text-nowrap'>" + value.shinyRate + value.count + "</span>";
                         html += "</div>";
@@ -385,7 +385,7 @@
                             html += "<div class='row justify-content-center'>";
                         }
                         html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
-                        html +=   "<img src='/image-api/pokemon?style=Default&id=" + value.pokemon_id + "' width='64' height='64'>";
+                        html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + value.pokemon_id + "' width='64' height='64'>";
                         html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                         html +=   "<span class='text-nowrap'>" + value.shinyRate + value.count + "</span>";
                         html += "</div>";
@@ -406,7 +406,7 @@
                             html += "<div class='row justify-content-center'>";
                         }
                         html += "<div class='col-md-2" + (count === 0 ? " col-md-offset-1" : "") + "'>";
-                        html +=   "<img src='/image-api/pokemon?style=Default&id=" + value.pokemon_id + "' width='64' height='64'>";
+                        html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + value.pokemon_id + "' width='64' height='64'>";
                         html +=   "<span class='text-nowrap'><b>" + value.name + "</b></span><br>";
                         html +=   "<span class='text-nowrap'>" + value.count + "x 100%</span>";
                         html += "</div>";
@@ -449,9 +449,9 @@
                     $("#iv0").text(result.data.stats.iv_0 || 0);
                     $("#total-male").text(numberWithCommas(result.data.stats.male || 0) + " (" + Math.round((result.data.stats.male / result.data.stats.total) * 100, 2) + "%)");
                     $("#total-female").text(numberWithCommas(result.data.stats.female || 0) + " (" + Math.round((result.data.stats.female / result.data.stats.total) * 100, 2) + "%)");
-                    $("#evo1").attr("src", "/image-api/pokemon?style=Default&id="+result.data.pokemon_id);
-                    $("#evo2").attr("src", "/image-api/pokemon?style=Default&id="+(parseInt(result.data.pokemon_id) + 1));
-                    $("#evo3").attr("src", "/image-api/pokemon?style=Default&id="+(parseInt(result.data.pokemon_id) + 2));
+                    $("#evo1").attr("src", "/image-api/pokemon?style={{default_icon_style}}&id="+result.data.pokemon_id);
+                    $("#evo2").attr("src", "/image-api/pokemon?style={{default_icon_style}}&id="+(parseInt(result.data.pokemon_id) + 1));
+                    $("#evo3").attr("src", "/image-api/pokemon?style={{default_icon_style}}&id="+(parseInt(result.data.pokemon_id) + 2));
                     $("#evo1-text").text(result.data.evo1_name);
                     $("#evo2-text").text(result.data.evo2_name);
                     $("#evo3-text").text(result.data.evo3_name);
@@ -690,7 +690,7 @@
                     $("#pokemon-stats-table").html(html);
                     result.data.stats.forEach(function(stat) {
                         html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                        html +=   "<img src='/image-api/pokemon?style=Default&id=" + stat.pokemon_id + "' width='48' height='48'>";
+                        html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + stat.pokemon_id + "' width='48' height='48'>";
                         html +=   "<div class='card-body'>";
                         html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
                         html +=     "<p class='card-text text-nowrap'>";
@@ -728,7 +728,7 @@
                         $("#raid-stats-table").html(html);
                         result.data.raid_stats.forEach(function(stat) {
                             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                            html +=   "<img src='/image-api/pokemon?style=Default&id=" + stat.pokemon_id + "' width='48' height='48'>";
+                            html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + stat.pokemon_id + "' width='48' height='48'>";
                             html +=   "<div class='card-body'>";
                             html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
                             html +=     "<p class='card-text text-nowrap'>";
@@ -745,7 +745,7 @@
                         $("#egg-stats-table").html(html);
                         result.data.egg_stats.forEach(function(stat) {
                             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                            html +=   "<img src='/image-api/raid-egg?style=Default&id=" + stat.level + "' width='48' height='48'>";
+                            html +=   "<img src='/image-api/raid-egg?style={{default_icon_style}}&id=" + stat.level + "' width='48' height='48'>";
                             html +=   "<div class='card-body'>";
                             html +=     "<span class='text-nowrap'><b>Level " + stat.level + "</b></span>";
                             html +=     "<p class='card-text text-nowrap'>";
@@ -781,7 +781,7 @@
                         $("#quest-item-stats-table").html(html);
                         result.data.quest_item_stats.forEach(function(stat) {
                             html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                            html +=   "<img src='/image-api/reward?style=Default&id=" + stat.item_id + "&type=" + stat.reward_type + "' width='48' height='48'>";
+                            html +=   "<img src='/image-api/reward?style={{default_icon_style}}&id=" + stat.item_id + "&type=" + stat.reward_type + "' width='48' height='48'>";
                             html +=   "<div class='card-body'>";
                             html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
                             html +=     "<p class='card-text text-nowrap'>";
@@ -798,7 +798,7 @@
                         result.data.quest_pokemon_stats.forEach(function(stat) {
                             if (stat.pokemon_id > 0) {
                                 html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                                html +=   "<img src='/image-api/pokemon?style=Default&id=" + stat.pokemon_id + "' width='48' height='48'>";
+                                html +=   "<img src='/image-api/pokemon?style={{default_icon_style}}&id=" + stat.pokemon_id + "' width='48' height='48'>";
                                 html +=   "<div class='card-body'>";
                                 html +=     "<span class='text-nowrap'><b>" + stat.name + "</b> #" + stat.pokemon_id + "</span>";
                                 html +=     "<p class='card-text text-nowrap'>";
@@ -834,7 +834,7 @@
                     $("#invasion-stats-table").html(html);
                     result.data.stats.forEach(function(stat) {
                         html += "<div class='col-sm-2 col-sd-offset-1 text-center'>";
-                        html +=   "<img src='/image-api/invasion?style=Default&id=" + stat.grunt_type + "' width='48' height='48'>";
+                        html +=   "<img src='/image-api/invasion?style={{default_icon_style}}&id=" + stat.grunt_type + "' width='48' height='48'>";
                         html +=   "<div class='card-body'>";
                         html +=     "<span class='text-nowrap'><b>" + stat.name + "</b></span>";
                         html +=     "<p class='card-text text-nowrap'>";
@@ -874,7 +874,7 @@
                         <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/reward?style=Default&id=1&type=2" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1&type=2" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading pokemon-count">0</h4>
                                     <p class="list-group-item-text">{{stats_active_pokemon}}</p>
                                 </a>
@@ -883,7 +883,7 @@
                         <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/team?style=Default&id=0" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/team?style={{default_icon_style}}&id=0" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading gyms-count">0</h4>
                                     <p class="list-group-item-text">{{stats_total_gyms}}</p>
                                 </a>
@@ -892,7 +892,7 @@
                         <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/reward?style=Default&id=1402&type=2" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1402&type=2" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading raids-count">0</h4>
                                     <p class="list-group-item-text">{{stats_active_raids}}</p>
                                 </a>
@@ -901,7 +901,7 @@
                         <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=0" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=0" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading pokestop-count">0</h4>
                                     <p class="list-group-item-text">{{stats_total_pokestops}}</p>
                                 </a>
@@ -919,7 +919,7 @@
                         <div class="col-md-4 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/reward?style=Default&id=1&type=2" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1&type=2" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading total-pokemon-count">0</h4>
                                     <p class="list-group-item-text">{{stats_total_pokemon}}</p>
                                 </a>
@@ -928,7 +928,7 @@
                         <div class="col-md-4 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/reward?style=Default&id=1&type=2" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1&type=2" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading total-iv-count">0</h4>
                                     <p class="list-group-item-text">{{stats_total_ivs}}</p>
                                 </a>
@@ -937,7 +937,7 @@
                         <div class="col-md-4 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
-                                    <h3 class="pull-right"><img src="/image-api/misc?style=Default&id=sparkles" width="64" height="64"/></h3>
+                                    <h3 class="pull-right"><img src="/image-api/misc?style={{default_icon_style}}&id=sparkles" width="64" height="64"/></h3>
                                     <h4 class="list-group-item-heading total-shiny-count">0</h4>
                                     <p class="list-group-item-text">{{stats_total_shiny}}</p>
                                 </a>
@@ -1030,7 +1030,7 @@
                                 <div class="col-md-6 p-1 ">
                                     <div class="list-group">
                                         <a class="list-group-item neutral">
-                                            <h3 class="pull-right"><img src="/image-api/team?style=Default&id=0" width="64" height="64"/></h3>
+                                            <h3 class="pull-right"><img src="/image-api/team?style={{default_icon_style}}&id=0" width="64" height="64"/></h3>
                                             <h4 class="list-group-item-heading neutral-gyms-count">0</h4>
                                             <p class="list-group-item-text">{{stats_neutral_gyms}}</p>
                                         </a>
@@ -1039,7 +1039,7 @@
                                 <div class="col-md-6 p-1">
                                     <div class="list-group">
                                         <a class="list-group-item valor">
-                                            <h3 class="pull-right"><img src="/image-api/team?style=Default&id=2" width="64" height="64"/></h3>
+                                            <h3 class="pull-right"><img src="/image-api/team?style={{default_icon_style}}&id=2" width="64" height="64"/></h3>
                                             <h4 class="list-group-item-heading valor-gyms-count">0</h4>
                                             <p class="list-group-item-text">{{stats_valor_gyms}}</p>
                                         </a>
@@ -1050,7 +1050,7 @@
                                 <div class="col-md-6 p-1">
                                     <div class="list-group">
                                         <a class="list-group-item mystic">
-                                            <h3 class="pull-right"><img src="/image-api/team?style=Default&id=1" width="64" height="64"/></h3>
+                                            <h3 class="pull-right"><img src="/image-api/team?style={{default_icon_style}}&id=1" width="64" height="64"/></h3>
                                             <h4 class="list-group-item-heading mystic-gyms-count">0</h4>
                                             <p class="list-group-item-text">{{stats_mystic_gyms}}</p>
                                         </a>
@@ -1059,7 +1059,7 @@
                                 <div class="col-md-6 p-1">
                                     <div class="list-group">
                                         <a class="list-group-item instinct">
-                                            <h3 class="pull-right"><img src="/image-api/team?style=Default&id=3" width="64" height="64"/></h3>
+                                            <h3 class="pull-right"><img src="/image-api/team?style={{default_icon_style}}&id=3" width="64" height="64"/></h3>
                                             <h4 class="list-group-item-heading instinct-gyms-count">0</h4>
                                             <p class="list-group-item-text">{{stats_instinct_gyms}}</p>
                                         </a>
@@ -1095,49 +1095,49 @@
                     <div class="row">
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/reward?style=Default&id=0" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=0" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading quest-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_field_research}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=0&invasion=true" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=0&invasion=true" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading invasions-count">0</h4>
                                 <p class="list-group-item-text">{{stats_invasions}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=501" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=501" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_normal_lures}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=502" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=502" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-glacial-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_glacial_lures}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=503" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=503" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-mossy-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_mossy_lures}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=504" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=504" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-magnetic-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_magnetic_lures}}</p>
                             </a>
                         </div>
                         <div class="col-md-4 p-1">
                             <a class="list-group-item">
-                                <h3 class="pull-right"><img src="/image-api/pokestop?style=Default&id=505" width="64" height="64"/></h3>
+                                <h3 class="pull-right"><img src="/image-api/pokestop?style={{default_icon_style}}&id=505" width="64" height="64"/></h3>
                                 <h4 class="list-group-item-heading lured-rainy-pokestop-count">0</h4>
                                 <p class="list-group-item-text">{{stats_rainy_lures}}</p>
                             </a>
@@ -1239,7 +1239,7 @@
                 <div id="pokemon-stats-table" class="row justify-content-center">
                     {{#pokemon}}
                         <div class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/pokemon?style=Default&id={{pokemon_id}}"" width="48" height="48">
+                            <img src="/image-api/pokemon?style={{default_icon_style}}&id={{pokemon_id}}"" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
                                 <p class="card-text text-nowrap">
@@ -1284,7 +1284,7 @@
                 <div id="egg-stats-table" class="row justify-content-center">
                     {{#eggs}}
                         <div class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/raid-egg?style=Default&id={{level}}"" width="48" height="48">
+                            <img src="/image-api/raid-egg?style={{default_icon_style}}&id={{level}}"" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>Level {{level}}</b></span>
                                 <p class="card-text text-nowrap">
@@ -1303,7 +1303,7 @@
                 <div id="raid-stats-table" class="row justify-content-center">
                     {{#raids}}
                         <div class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/pokemon?style=Default&id={{pokemon_id}}"" width="48" height="48">
+                            <img src="/image-api/pokemon?style={{default_icon_style}}&id={{pokemon_id}}"" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
                                 <p class="card-text text-nowrap">
@@ -1346,7 +1346,7 @@
                 <div id="quest-item-stats-table" class="row justify-content-center">
                     {{#quests_items}}
                         <div id="item-{{item_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/reward?style=Default&id={{item_id}}&type={{reward_type}}" width="48" height="48">
+                            <img src="/image-api/reward?style={{default_icon_style}}&id={{item_id}}&type={{reward_type}}" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b></span>
                                 <p class="card-text text-nowrap">
@@ -1365,7 +1365,7 @@
                 <div id="quest-pokemon-stats-table" class="row justify-content-center">
                     {{#quests_pokemon}}
                         <div id="pkmn-{{pokemon_id}}" class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/pokemon?style=Default&id={{pokemon_id}}" width="48" height="48">
+                            <img src="/image-api/pokemon?style={{default_icon_style}}&id={{pokemon_id}}" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b> #{{pokemon_id}}</span>
                                 <p class="card-text text-nowrap">
@@ -1407,7 +1407,7 @@
                 <div id="invasion-stats-table" class="row justify-content-center">
                     {{#invasions}}
                         <div id="invasion-{{grunt_type}}" class="col-sm-2 col-sd-offset-1 text-center">
-                            <img src="/image-api/invasion?style=Default&id={{grunt_type}}" width="48" height="48">
+                            <img src="/image-api/invasion?style={{default_icon_style}}&id={{grunt_type}}" width="48" height="48">
                             <div class="card-body">
                                 <span class="text-nowrap"><b>{{name}}</b></span>
                                 <p class="card-text text-nowrap">

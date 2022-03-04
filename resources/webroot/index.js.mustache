@@ -78,7 +78,7 @@ let availableItems = []
 let availableTileservers = {}
 let selectedTileserver = 'Default'
 let availableIconStyles = {}
-let selectedIconStyle = 'Default'
+let selectedIconStyle
 
 let pokemonFilterLoaded = false
 let questFilterLoaded = false
@@ -211,20 +211,13 @@ $(function () {
     availableIconStyleKeys.push(availableIconStyleKey)
   }
   availableIconStyleKeys.sort()
-  $('#select-iconstyle').append($('<option>', {
-    value: 'Default',
-    text: 'Default',
-    selected: selectedIconStyle === 'Default'
-  }))
   for (i = 0; i < availableIconStyleKeys.length; i++) {
     const key = availableIconStyleKeys[i]
-    if (key !== 'Default') {
-      $('#select-iconstyle').append($('<option>', {
-        value: key,
-        text: key,
-        selected: key === selectedIconStyle
-      }))
-    }
+    $('#select-iconstyle').append($('<option>', {
+      value: key,
+      text: key,
+      selected: key === selectedIconStyle
+    }))
   }
 
   $('#settingsModal').on('show.bs.modal', function () {
@@ -459,11 +452,12 @@ function loadStorage () {
     }
   }
   const selectedIconStyleTmp = retrieve('icon_style')
+  const defaultIconStyle = Object.keys(availableIconStyles)[0]
   if (selectedIconStyleTmp === undefined) {
-    selectedTileserver = 'Default'
+    selectedTileserver = defaultIconStyle
   } else {
     if (availableIconStyles[selectedIconStyleTmp] === undefined) {
-      selectedIconStyle = 'Default'
+      selectedIconStyle = defaultIconStyle
     } else {
       selectedIconStyle = selectedIconStyleTmp
     }
