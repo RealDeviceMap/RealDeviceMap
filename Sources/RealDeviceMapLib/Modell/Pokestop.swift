@@ -982,21 +982,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
 
         for id in excludedTypes {
-            if id == 1 {
-                mysqlStmt.bindParam(3)
-            } else if id == 2 {
-                mysqlStmt.bindParam(1)
-            } else if id == 3 {
-                mysqlStmt.bindParam(4)
-            } else if id == 4 {
-                mysqlStmt.bindParam(8)
-            } else if id == 5 {
-                mysqlStmt.bindParam(11)
-            } else if id == 6 {
-                mysqlStmt.bindParam(12)
-            } else {
-                mysqlStmt.bindParam(id)
-            }
+            mysqlStmt.bindParam(id)
         }
         for id in excludedPokemon {
             mysqlStmt.bindParam(id)
