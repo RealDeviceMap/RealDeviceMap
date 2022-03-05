@@ -357,8 +357,8 @@ public class WebRequestHandler {
                 }
                 data["pokemon_ids"] = ids
                 data["default_icon_style"] = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
-                    rhs.key == "Default" || rhs.key < lhs.key
-                }.first
+                            rhs.key == "Default" || rhs.key < lhs.key
+                        }.first?.key
 
                 // Localize
                 let statLoc = [
@@ -1842,7 +1842,9 @@ public class WebRequestHandler {
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
-            data["default_icon_style"] = ImageApiRequestHandler.styles.first?.key
+            data["default_icon_style"] = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                        rhs.key == "Default" || rhs.key < lhs.key
+                    }.first?.key
         default:
             break
         }
