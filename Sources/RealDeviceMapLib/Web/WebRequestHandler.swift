@@ -746,9 +746,8 @@ public class WebRequestHandler {
                 data["nothing_selected"] = true
                 data["account_group"] = nil
                 var accountGroupsData = [[String: Any]]()
-                for groupName in try! Account.getAllAccountGroupNames() {
-                    accountGroupsData.append(["name": groupName, "selected": false])
-                }
+                try? Account.getAllAccountGroupNames().forEach({
+                    accountGroupsData.append(["name": $0, "selected": false]) })
                 data["account_groups"] = accountGroupsData
                 data["is_event"] = false
             }
@@ -2633,12 +2632,12 @@ public class WebRequestHandler {
             data["store_data"] = oldInstance!.data["store_data"] as? Bool ?? false
             data["account_group"] = (oldInstance!.data["account_group"] as? String)?.emptyToNil()
             var accountGroupsData = [[String: Any]]()
-            for groupName in try! Account.getAllAccountGroupNames() {
+            try? Account.getAllAccountGroupNames().forEach({
                 accountGroupsData.append([
-                    "name": groupName,
-                    "group_selected": groupName == data["account_group"] as? String
+                    "name": $0,
+                    "group_selected": $0 == data["account_group"] as? String
                 ])
-            }
+            })
             data["account_groups"] = accountGroupsData
             data["is_event"] = oldInstance!.data["is_event"] as? Bool ?? false
             data["quest_mode"] = oldInstance!.data["quest_mode"] ?? "normal"
