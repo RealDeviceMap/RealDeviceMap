@@ -356,7 +356,9 @@ public class WebRequestHandler {
                     ids.append(["id": id, "name": name])
                 }
                 data["pokemon_ids"] = ids
-                data["default_icon_style"] = ImageApiRequestHandler.styles.keys.first
+                data["default_icon_style"] = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                    rhs.key == "Default" || rhs.key < lhs.key
+                }.first
 
                 // Localize
                 let statLoc = [
