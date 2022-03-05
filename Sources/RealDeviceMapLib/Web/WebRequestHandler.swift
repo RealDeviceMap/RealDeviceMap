@@ -1840,6 +1840,7 @@ public class WebRequestHandler {
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
+            data["default_icon_style"] = ImageApiRequestHandler.styles.first?.key
         default:
             break
         }

@@ -77,7 +77,7 @@ let showUltraLeague
 let availableItems = []
 let availableTileservers = {}
 let selectedTileserver = 'Default'
-let availableIconStyles = {}
+let availableIconStyles = '{{default_icon_style}}'
 let selectedIconStyle
 
 let pokemonFilterLoaded = false
@@ -452,7 +452,7 @@ function loadStorage () {
     }
   }
   const selectedIconStyleTmp = retrieve('icon_style')
-  const defaultIconStyle = Object.keys(availableIconStyles)[0]
+  const defaultIconStyle = '{{default_icon_style}}'
   if (selectedIconStyleTmp === undefined) {
     selectedTileserver = defaultIconStyle
   } else {
