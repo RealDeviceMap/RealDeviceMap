@@ -19,7 +19,6 @@ class WebStaticRequestHandler {
             response.setHeader(.cacheControl, value: "max-age=604800, must-revalidate")
         }
         staticFileHandler.handleRequest(request: request, response: response)
-        response.completed()
     }
 
 }
