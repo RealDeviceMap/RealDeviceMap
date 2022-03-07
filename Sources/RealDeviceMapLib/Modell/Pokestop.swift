@@ -519,6 +519,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .quest: break
             case .levelCap: break
             case .incident: break
+            case .playerAttribute: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
