@@ -357,8 +357,7 @@ public class WebRequestHandler {
                 }
                 data["pokemon_ids"] = ids
                 data["default_icon_style"] = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
-                            rhs.key == "Default" || rhs.key < lhs.key
-                        }.first?.key
+                            rhs.key == "Default" || rhs.key < lhs.key }.first?.key
 
                 // Localize
                 let statLoc = [
@@ -669,7 +668,7 @@ public class WebRequestHandler {
 
             var iconStylesString = ""
             let iconStylesSorted = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
-                return rhs.key == "Default" || rhs.key < lhs.key
+                rhs.key == "Default" || rhs.key < lhs.key
             }
             for iconStyle in iconStylesSorted {
                 iconStylesString += "\(iconStyle.key);\(iconStyle.value)\n"

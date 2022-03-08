@@ -1,5 +1,5 @@
 //
-//  ApiRequestHandler.swift
+//  ImageManager.swift
 //  RealDeviceMapLib
 //
 //  Created by Fabio on 21.02.22.
@@ -59,7 +59,7 @@ class ImageManager {
                 "\(folder)/index.json")
             let modificationTime = lock.doWithLock { lastModified[folder] }
             if modificationTime != file.modificationTime {
-                Log.info(message: "[ImageApiRequestHandler] Image Json file changed")
+                Log.info(message: "[ImageManager] Image Json file changed")
                 loadImageJsonFile(folder: folder)
             }
         }
@@ -75,12 +75,12 @@ class ImageManager {
             let contents = try file.readString()
             file.close()
             guard let json = try contents.jsonDecode() as? [String: Any] else {
-                Log.error(message: "[ImageApiRequestHandler] Failed to decode image json file")
+                Log.error(message: "[ImageManager] Failed to decode image json file")
                 return
             }
             lock.doWithLock { uiconIndex[folder] = json }
         } catch {
-            Log.critical(message: "[ImageApiRequestHandler] Failed to open/read image json file '\(file.path)'" +
+            Log.critical(message: "[ImageManager] Failed to open/read image json file '\(file.path)'" +
                 " - does it exist?")
         }
     }
