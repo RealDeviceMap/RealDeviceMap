@@ -1837,13 +1837,15 @@ public class WebRequestHandler {
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
-            data["available_icon_styles_json"] = (ImageApiRequestHandler.styles.jsonEncodeForceTry() ?? "")
+            let stylesSorted = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                rhs.key == "Default" || rhs.key < lhs.key
+            }
+            data["available_icon_styles_json"] = (stylesSorted
+                                                .jsonEncodeForceTry() ?? "")
                                                 .replacingOccurrences(of: "\\\"", with: "\\\\\"")
                                                 .replacingOccurrences(of: "'", with: "\\'")
                                                 .replacingOccurrences(of: "\"", with: "\\\"")
-            data["default_icon_style"] = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
-                        rhs.key == "Default" || rhs.key < lhs.key
-                    }.first?.key
+            data["default_icon_style"] = stylesSorted.first?.key
         default:
             break
         }
