@@ -174,11 +174,11 @@ public class InstanceController {
             }
             let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0
 
-            var areaArrayEmptyInner = [[[CLLocationCoordinate2D]]]()
+            var areaArrayEmptyInner = [[[LocationCoordinate2D]]]()
             for coords in areaArray {
-                var polyCoords = [CLLocationCoordinate2D]()
+                var polyCoords = [LocationCoordinate2D]()
                 for coord in coords {
-                    polyCoords.append(CLLocationCoordinate2D(latitude: coord.lat, longitude: coord.lon))
+                    polyCoords.append(LocationCoordinate2D(latitude: coord.lat, longitude: coord.lon))
                 }
                 areaArrayEmptyInner.append([polyCoords])
             }

@@ -464,11 +464,11 @@ public class WebHookController {
     }
 
     private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon {
-        var geofences = [[[CLLocationCoordinate2D]]]()
+        var geofences = [[[LocationCoordinate2D]]]()
         for coord in areaArray {
-            var geofence = [CLLocationCoordinate2D]()
+            var geofence = [LocationCoordinate2D]()
             for crd in coord {
-                geofence.append(CLLocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
+                geofence.append(LocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
             }
             geofences.append([geofence])
         }
@@ -477,7 +477,7 @@ public class WebHookController {
 
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool {
         for polygon in multiPolygon.polygons {
-            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            let coord = LocationCoordinate2D(latitude: lat, longitude: lon)
             if polygon.contains(coord, ignoreBoundary: false) {
                 return true
             }

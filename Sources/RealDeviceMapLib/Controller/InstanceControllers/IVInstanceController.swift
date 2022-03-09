@@ -170,7 +170,7 @@ class IVInstanceController: InstanceControllerProto {
         if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
            pokemon.isEvent == isEvent &&
            containedInList(pokemon: pokemon) &&
-           multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
+           multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
             pokemonLock.lock()
 
             if pokemonQueue.contains(pokemon) {
@@ -197,7 +197,7 @@ class IVInstanceController: InstanceControllerProto {
 
     func gotIV(pokemon: Pokemon) {
 
-        if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
+        if multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
 
             pokemonLock.lock()
             if let index = pokemonQueue.firstIndex(of: pokemon) {
