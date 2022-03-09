@@ -892,7 +892,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 excludeLureSQL = ""
             } else {
                 var sqlExcludeCreate = "AND (lure_id NOT IN ("
-                for _ in excludedLures {
+                for _ in 1..<excludedLures.count {
                     sqlExcludeCreate += "?, "
                 }
                 sqlExcludeCreate += "?))"

@@ -77,8 +77,8 @@ let showUltraLeague
 let availableItems = []
 let availableTileservers = {}
 let selectedTileserver = 'Default'
-let availableIconStyles = '{{default_icon_style}}'
-let selectedIconStyle
+let availableIconStyles = {}
+let selectedIconStyle = '{{default_icon_style}}'
 
 let pokemonFilterLoaded = false
 let questFilterLoaded = false
@@ -731,7 +731,9 @@ function loadStorage () {
       }
     }
     for (i = 0; i <= 3; i++) {
-      pokestopFilter['p' + i] = { show: true, size: 'normal' }
+      if (pokestopFilter['p' + i] === undefined || pokestopFilter['p' + i] === null) {
+        pokestopFilter['p' + i] = { show: true, size: 'normal' }
+      }
     }
     if (pokestopFilter.ar === undefined || pokestopFilter.ar === null) {
       pokestopFilter.ar = { show: false, size: 'normal' }
@@ -1863,7 +1865,10 @@ function getPokemonIndex (pokemon) {
 }
 
 function getPokestopSize (id) {
-  const size = pokestopFilter[id] ? pokestopFilter[id].size : null
+  if (pokestopFilter[id] === undefined || pokestopFilter[id].size === undefined) {
+    return 30
+  }
+  const size = pokestopFilter[id]
   if (size === 'small') {
     return 20
   } else if (size === 'large') {
@@ -1876,7 +1881,10 @@ function getPokestopSize (id) {
 }
 
 function getInvasionSize (id) {
-  const size = invasionFilter[id] ? invasionFilter[id].size : null
+  if (invasionFilter[id] === undefined || invasionFilter[id].size === undefined) {
+    return 30
+  }
+  const size = invasionFilter[id].size
   if (size === 'small') {
     return 20
   } else if (size === 'large') {
@@ -1921,6 +1929,9 @@ function getQuestIndex (questId) {
 }
 
 function getGymSize (teamId) {
+  if (gymFilter['t' + teamId] === undefined || gymFilter['t' + teamId].size === undefined) {
+    return 40
+  }
   const size = gymFilter['t' + teamId].size
   if (size === 'small') {
     return 30
@@ -1934,6 +1945,9 @@ function getGymSize (teamId) {
 }
 
 function getRaidSize (id) {
+  if (raidFilter[id] === undefined || raidFilter[id].size === undefined) {
+    return 40
+  }
   const size = raidFilter[id].size
   if (size === 'small') {
     return 30
@@ -2227,10 +2241,10 @@ function addGym(gym, ts) {
     oldGym.last_modified_timestamp = gym.last_modified_timestamp
 
     if (oldGym.available_slots !== gym.available_slots ||
-        oldGym.team_id !== gym.team_id ||
-        oldGym.raid_end_timestamp !== gym.raid_end_timestamp ||
-        oldGym.raid_pokemon_id !== gym.raid_pokemon_id ||
-        oldGym.power_up_end_timestamp !== gym.power_up_end_timestamp) {
+      oldGym.team_id !== gym.team_id ||
+      oldGym.raid_end_timestamp !== gym.raid_end_timestamp ||
+      oldGym.raid_pokemon_id !== gym.raid_pokemon_id ||
+      oldGym.power_up_end_timestamp !== gym.power_up_end_timestamp) {
       oldGym.available_slots = gym.available_slots
       oldGym.team_id = gym.team_id
       oldGym.raid_end_timestamp = gym.raid_end_timestamp
