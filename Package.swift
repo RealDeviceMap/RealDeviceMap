@@ -13,7 +13,7 @@ let package = Package(
         .package(name: "PerfectSessionMySQL", url: "https://github.com/123FLO321/Perfect-Session-MySQL.git", .branch("swift5")),
         .package(name: "PerfectMySQL", url: "https://github.com/123FLO321/Perfect-MySQL.git", .branch("swift5")),
         .package(name: "PerfectThread", url: "https://github.com/123FLO321/Perfect-Thread.git", .branch("swift5")),
-        .package(name: "PerfectMustache", url: "https://github.com/123FLO321/Perfect-Mustache.git", .branch("swift5")),
+        .package(name: "PerfectMustache", url: "https://github.com/PerfectlySoft/Perfect-Mustache.git", from: "4.0.0"),
         .package(name: "PerfectCURL", url: "https://github.com/123FLO321/Perfect-CURL.git", .branch("swift5")),
         .package(name: "PerfectSMTP", url: "https://github.com/123FLO321/Perfect-SMTP.git", .branch("swift5")),
         .package(name: "PerfectCrypto", url: "https://github.com/PerfectlySoft/Perfect-Crypto", from: "4.0.0"),
