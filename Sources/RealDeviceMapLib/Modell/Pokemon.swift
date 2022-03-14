@@ -260,7 +260,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
                 if Pokemon.saveSpawnpointLastSeen {
-                    try? SpawnPoint.setLastSeen(mysql: mysql, spawnId: spawnId!)
+                    try? SpawnPoint.setLastSeen(mysql: mysql, spawnId: spawnId!, oldLastSeen: spawnpoint.lastSeen ?? 0)
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
@@ -475,7 +475,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
                 self.expireTimestampVerified = true
                 if Pokemon.saveSpawnpointLastSeen {
-                    try? SpawnPoint.setLastSeen(mysql: mysql, spawnId: spawnId!)
+                    try? SpawnPoint.setLastSeen(mysql: mysql, spawnId: spawnId!, oldLastSeen: spawnpoint.lastSeen ?? 0)
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
