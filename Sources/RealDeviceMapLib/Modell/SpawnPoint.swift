@@ -254,7 +254,14 @@ public class SpawnPoint: JSONConvertibleObject {
         let lastSeen = result[4] as! UInt32
         let despawnSecond = result[5] as? UInt16
 
-        let spawnpoint = SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, lastSeen: lastSeen, despawnSecond: despawnSecond)
+        let spawnpoint = SpawnPoint(
+            id: id,
+            lat: lat,
+            lon: lon,
+            updated: updated,
+            lastSeen: lastSeen,
+            despawnSecond: despawnSecond
+        )
         cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
         return spawnpoint
 
