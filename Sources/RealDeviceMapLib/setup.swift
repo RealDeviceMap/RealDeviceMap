@@ -207,6 +207,7 @@ public func setupRealDeviceMap() {
     Pokemon.noPVP = environment["NO_PVP"] != nil
     Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
     Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
+    Pokemon.updateSpawnpointEverytime = environment["UPDATE_SPAWNPOINT_EVERYTIME"] != nil
     InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil
 
     if !Pokemon.noPVP {
