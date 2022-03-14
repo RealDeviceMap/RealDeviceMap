@@ -109,14 +109,14 @@ public class SpawnPoint: JSONConvertibleObject {
 
     }
 
-    public static func setUpdated(mysql: MySQL?=nil, spawnId: UInt64, last_seen: UInt32=0) throws {
+    public static func setLastSeen(mysql: MySQL?=nil, spawnId: UInt64, lastSeen: UInt32=0) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
 
-        if last_seen == 0 {
-            last_seen = UInt32(Date().timeIntervalSince1970)
+        if lastSeen == 0 {
+            lastSeen = UInt32(Date().timeIntervalSince1970)
         }
 
         let sql = """
@@ -127,11 +127,11 @@ public class SpawnPoint: JSONConvertibleObject {
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        mysqlStmt.bindParam(last_seen)
+        mysqlStmt.bindParam(lastSeen)
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT setUpdated] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT setLastSeen] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         return nil

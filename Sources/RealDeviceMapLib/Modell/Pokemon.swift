@@ -28,7 +28,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     public static var noPVP = false
     public static var noWeatherIVClearing = false
     public static var noCellPokemon = false
-    public static var updateSpawnpointEverytime = false
+    public static var saveSpawnpointLastSeen = false
 
     public static var cache: MemoryCache<Pokemon>?
 
@@ -259,8 +259,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 }
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
-                if Pokemon.updateSpawnpointEverytime {
-                    try? spawnPoint.setUpdated(mysql: mysql, id: spawnId!)
+                if Pokemon.saveSpawnpointLastSeen {
+                    try? spawnPoint.setLastSeen(mysql: mysql, id: spawnId!)
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
@@ -474,8 +474,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
                 self.expireTimestampVerified = true
-                if Pokemon.updateSpawnpointEverytime {
-                    try? spawnPoint.setUpdated(mysql: mysql, id: spawnId!)
+                if Pokemon.saveSpawnpointLastSeen {
+                    try? spawnPoint.setLastSeen(mysql: mysql, id: spawnId!)
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
