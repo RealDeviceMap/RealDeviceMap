@@ -15,12 +15,12 @@ extension Polygon {
         let bbox = BoundingBox(from: coordinates[0])
         let region = S2LatLngRect(
             lo: S2LatLng(
-                lat: S1Angle(degrees: bbox!.southEast.latitude),
-                lng: S1Angle(degrees: bbox!.northWest.longitude)
+                lat: S1Angle(degrees: bbox!.southWest.latitude),
+                lng: S1Angle(degrees: bbox!.southWest.longitude)
             ),
             hi: S2LatLng(
-                lat: S1Angle(degrees: bbox!.northWest.latitude),
-                lng: S1Angle(degrees: bbox!.southEast.longitude)
+                lat: S1Angle(degrees: bbox!.northEast.latitude),
+                lng: S1Angle(degrees: bbox!.northEast.longitude)
             )
         )
         let regionCoverer = S2RegionCoverer()

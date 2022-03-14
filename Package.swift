@@ -16,12 +16,12 @@ let package = Package(
         .package(name: "PerfectMustache", url: "https://github.com/123FLO321/Perfect-Mustache.git", .branch("swift5")),
         .package(name: "PerfectCURL", url: "https://github.com/123FLO321/Perfect-CURL.git", .branch("swift5")),
         .package(name: "PerfectSMTP", url: "https://github.com/123FLO321/Perfect-SMTP.git", .branch("swift5")),
-        .package(name: "PerfectCrypto", url: "https://github.com/123FLO321/Perfect-Crypto.git", .branch("swift5")),
+        .package(name: "PerfectCrypto", url: "https://github.com/PerfectlySoft/Perfect-Crypto", from: "4.0.0"),
         .package(name: "Turnstile", url: "https://github.com/123FLO321/Turnstile.git", from: "1.2.3"),
-        .package(name: "Turf", url: "https://github.com/123FLO321/turf-swift.git", from: "0.5.0"),
+        .package(name: "Turf", url: "https://github.com/mapbox/turf-swift", from: "2.3.0"),
         .package(name: "S2Geometry", url: "https://github.com/123FLO321/S2Geometry.git", from: "0.5.0"),
         .package(name: "Regex", url: "https://github.com/crossroadlabs/Regex.git", from: "1.2.0"),
-        .package(name: "swift-backtrace", url: "https://github.com/swift-server/swift-backtrace.git", from: "1.2.0"),
+        .package(name: "swift-backtrace", url: "https://github.com/swift-server/swift-backtrace.git", from: "1.3.1"),
         .package(name: "POGOProtos", url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "2.11.0"))
     ],
     targets: [
