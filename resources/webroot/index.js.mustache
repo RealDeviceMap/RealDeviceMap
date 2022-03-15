@@ -2797,7 +2797,13 @@ function getGymPopupContent (gym) {
     if (hasRaidBoss && isRaidBattle) {
       var pkmn = pokemonDb[gym.raid_pokemon_id]
       if (pkmn !== undefined && pkmn !== null) {
-        var types = pkmn.types
+        var formInfo = pkmn.forms[gym.raid_pokemon_form]
+        var types
+        if (formInfo && formInfo.types) {
+          types = formInfo.types
+        } else {
+          types = pkmn.types
+        }
         if (types !== null && types.length > 0) {
           content += '<div class="col text-nowrap">'
           if (types.length === 2) {
