@@ -4801,7 +4801,11 @@
     ]
   },
   "741": {
-    "name": "Oricorio"
+    "name": "Oricorio",
+    "types": [
+      3,
+      10
+    ]
   },
   "742": {
     "name": "Cutiefly",
