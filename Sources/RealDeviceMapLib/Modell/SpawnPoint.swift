@@ -121,8 +121,8 @@ public class SpawnPoint: JSONConvertibleObject {
 
         let now = UInt32(Date().timeIntervalSince1970)
 
-        if self.lastSeen + 3600 > now {
-            Log.debug(message: "[SPAWNPOINT setLastSeen] \(oldLastSeen) + 3600 > \(now)")
+        if self.lastSeen ?? 0 + 3600 > now {
+            Log.debug(message: "[SPAWNPOINT setLastSeen] \(self.lastSeen ?? 0) + 3600 > \(now)")
             return
         }
 
@@ -155,7 +155,7 @@ public class SpawnPoint: JSONConvertibleObject {
             lastSeen: now,
             despawnSecond: self.despawnSecond
         )
-        cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
+        SpawnPoint.cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
 
     }
 
