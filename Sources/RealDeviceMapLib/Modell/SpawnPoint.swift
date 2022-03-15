@@ -22,6 +22,7 @@ public class SpawnPoint: JSONConvertibleObject {
             "lat": lat,
             "lon": lon,
             "updated": updated ?? 1,
+            "last_seen": lastSeen ?? 0,
             "despawn_second": despawnSecond as Any
         ]
     }
@@ -180,7 +181,7 @@ public class SpawnPoint: JSONConvertibleObject {
         }
 
         let sql = """
-            SELECT id, lat, lon, updated, despawn_sec
+            SELECT id, lat, lon, updated, last_seen, despawn_sec
             FROM spawnpoint
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? \(excludeTimerSQL)
         """
@@ -206,9 +207,19 @@ public class SpawnPoint: JSONConvertibleObject {
             let lat = result[1] as! Double
             let lon = result[2] as! Double
             let updated = result[3] as! UInt32
-            let despawnSecond = result[4] as? UInt16
+            let lastSeen = result[4] as! UInt32
+            let despawnSecond = result[5] as? UInt16
 
-            spawnpoints.append(SpawnPoint(id: id, lat: lat, lon: lon, updated: updated, despawnSecond: despawnSecond))
+            spawnpoints.append(
+                SpawnPoint(
+                    id: id,
+                    lat: lat,
+                    lon: lon,
+                    updated: updated,
+                    lastSeen: lastSeen,
+                    despawnSecond: despawnSecond
+                )
+            )
 
         }
         return spawnpoints
