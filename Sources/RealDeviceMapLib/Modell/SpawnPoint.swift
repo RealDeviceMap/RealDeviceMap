@@ -40,7 +40,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lat = lat
         self.lon = lon
         self.updated = updated
-        self.lastSeen = lastSeen ?? 0
+        self.lastSeen = lastSeen
         self.despawnSecond = despawnSecond
     }
 

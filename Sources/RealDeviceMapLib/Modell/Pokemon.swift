@@ -234,7 +234,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
             let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
             let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+                                       updated: updated, lastSeen: updated, despawnSecond: UInt16(secondOfHour))
             try? spawnPoint.save(mysql: mysql, update: true)
         } else {
             expireTimestampVerified = false
@@ -264,7 +264,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                            updated: updated, despawnSecond: nil)
+                                            updated: updated, lastSeen: updated, despawnSecond: nil)
                 try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
@@ -448,7 +448,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
             let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
             let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+                                       updated: updated, lastSeen: updated, despawnSecond: UInt16(secondOfHour))
             try? spawnPoint.save(mysql: mysql, update: true)
         } else {
             expireTimestampVerified = false
@@ -479,7 +479,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                            updated: updated, despawnSecond: nil)
+                                            updated: updated, lastSeen: updated, despawnSecond: nil)
                 try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
