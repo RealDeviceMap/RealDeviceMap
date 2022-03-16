@@ -2377,7 +2377,13 @@ function getPokemonPopupContent (pokemon) {
             '<div class="row text-nowrap" style="margin-left:auto; margin-right:auto;">'
   var pkmn = pokemonDb[pokemon.pokemon_id]
   if (pkmn !== undefined && pkmn !== null) {
-    var types = pkmn.types
+    var formInfo = pkmn.forms[pokemon.form]
+    var types
+    if (formInfo && formInfo.types) {
+      types = formInfo.types
+    } else {
+      types = pkmn.types
+    }
     if (types !== undefined && types !== null && types.length > 0) {
       content += '<div class="col">'
       if (types.length === 2) {
@@ -2791,7 +2797,13 @@ function getGymPopupContent (gym) {
     if (hasRaidBoss && isRaidBattle) {
       var pkmn = pokemonDb[gym.raid_pokemon_id]
       if (pkmn !== undefined && pkmn !== null) {
-        var types = pkmn.types
+        var formInfo = pkmn.forms[gym.raid_pokemon_form]
+        var types
+        if (formInfo && formInfo.types) {
+          types = formInfo.types
+        } else {
+          types = pkmn.types
+        }
         if (types !== null && types.length > 0) {
           content += '<div class="col text-nowrap">'
           if (types.length === 2) {
