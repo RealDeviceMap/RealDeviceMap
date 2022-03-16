@@ -15,7 +15,7 @@ import POGOProtos
 import Backtrace
 
 public func setupRealDeviceMap() {
-    Backtrace.install(signals: [SIGILL, SIGSEGV])
+    Backtrace.install(signals: [SIGILL, SIGSEGV, SIGPIPE])
 
     let environment = ProcessInfo.processInfo.environment
     let logLevel = environment["LOG_LEVEL"]?.lowercased() ?? "info"
