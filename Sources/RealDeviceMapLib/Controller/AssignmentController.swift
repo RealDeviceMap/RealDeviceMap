@@ -186,6 +186,8 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
+    // swiftlint:disable:next superfluous_disable_command
+    // swiftlint:disable cyclomatic_complexity
     internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
         let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
         let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
@@ -224,7 +226,6 @@ public class AssignmentController: InstanceControllerDelegate {
                         }
                     }
                 }
-                InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
             }
             let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
                                  Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
@@ -233,7 +234,9 @@ public class AssignmentController: InstanceControllerDelegate {
         } catch {
             Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
-
+        for instance in clearQuests {
+            InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
+        }
         for assignment in assignmentsInGroup {
             try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
         }
