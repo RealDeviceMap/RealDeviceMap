@@ -15,12 +15,16 @@ import POGOProtos
 import Backtrace
 
 public func setupRealDeviceMap() {
-    Backtrace.install()
-
     let environment = ProcessInfo.processInfo.environment
     let logLevel = environment["LOG_LEVEL"]?.lowercased() ?? "info"
     Log.even = true
     Log.setThreshold(value: logLevel)
+
+    if environment["NO_INSTALL_BACKTRACE"] == nil {
+        Log.info(message: "[MAIN] Installing Backtrace")
+        Backtrace.install()
+    }
+
     Log.info(message: "[MAIN] Getting Version")
     _ = VersionManager.global
 
