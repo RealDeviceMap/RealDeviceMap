@@ -267,11 +267,11 @@ public class WebHookController {
                             var events = [[String: Any]]()
 
                             if webhook.types.contains(.pokemon) {
-                                let pokemonIDs = webhook.data["pokemon_ids"] as? [UInt16] ?? [UInt16]()
+                                let pokemonIDs = webhook.data["pokemon_ids"] as? [Int] ?? [Int]()
                                 for (_, pokemon) in pokemonEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: pokemon.lat, lon: pokemon.lon, multiPolygon: polygon) {
-                                        if pokemonIDs.contains(pokemon.pokemonId) {
+                                        if pokemonIDs.contains(Int(pokemon.pokemonId)) {
                                             continue
                                         }
                                         events.append(pokemon.getWebhookValues(type: WebhookType.pokemon.rawValue))
@@ -292,11 +292,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.lure) {
-                                let lureIDs = webhook.data["lure_ids"] as? [UInt16] ?? [UInt16]()
+                                let lureIDs = webhook.data["lure_ids"] as? [Int] ?? [Int]()
                                 for (_, lure) in lureEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: lure.lat, lon: lure.lon, multiPolygon: polygon) {
-                                        if lureIDs.contains(UInt16(lure.lureId ?? 0)) {
+                                        if lureIDs.contains(Int(lure.lureId ?? 0)) {
                                             continue
                                         }
                                         events.append(lure.getWebhookValues(type: WebhookType.lure.rawValue))
@@ -305,12 +305,12 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.invasion) {
-                                let invasionIDs = webhook.data["invasion_ids"] as? [UInt16] ?? [UInt16]()
+                                let invasionIDs = webhook.data["invasion_ids"] as? [Int] ?? [Int]()
                                 for (_, invasion) in invasionEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: invasion.lat, lon: invasion.lon,
                                                multiPolygon: polygon) {
-                                        if invasionIDs.contains(invasion.gruntType ?? 0) {
+                                        if invasionIDs.contains(Int(invasion.gruntType ?? 0)) {
                                             continue
                                         }
                                         events.append(invasion.getWebhookValues(type: WebhookType.invasion.rawValue))
@@ -319,11 +319,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.quest) {
-                                let questIDs = webhook.data["quest_ids"] as? [UInt16] ?? [UInt16]()
+                                let questIDs = webhook.data["quest_ids"] as? [Int] ?? [Int]()
                                 for (_, quest) in questEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon) {
-                                        if questIDs.contains(UInt16(quest.questType ?? 0)) {
+                                        if questIDs.contains(Int(quest.questType ?? 0)) {
                                             continue
                                         }
                                         events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
@@ -332,8 +332,7 @@ public class WebHookController {
                                 for (_, quest) in alternativeQuestEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon) {
-                                        if webhook.data["quest_ids"] != nil && (webhook.data["quest_ids"] as! [UInt16])
-                                            .contains(UInt16(quest.questType ?? 0)) {
+                                        if questIDs.contains(Int(quest.questType ?? 0)) {
                                             continue
                                         }
                                         events.append(quest.getWebhookValues(type: "alternative_quest"))
@@ -342,11 +341,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.gym) {
-                                let gymIDs = webhook.data["gym_ids"] as? [UInt8] ?? [UInt8]()
+                                let gymIDs = webhook.data["gym_ids"] as? [Int] ?? [Int]()
                                 for (_, gym) in gymEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: gym.lat, lon: gym.lon, multiPolygon: polygon) {
-                                        if gym.teamId ?? 0 > 0 && gymIDs.contains(gym.teamId ?? 0) {
+                                        if gym.teamId ?? 0 > 0 && gymIDs.contains(Int(gym.teamId ?? 0)) {
                                             continue
                                         }
                                         events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
@@ -355,7 +354,7 @@ public class WebHookController {
                                 for (_, gymInfo) in gymInfoEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: gymInfo.lat, lon: gymInfo.lon, multiPolygon: polygon) {
-                                        if gymInfo.teamId ?? 0 > 0 && gymIDs.contains(gymInfo.teamId ?? 0) {
+                                        if gymIDs.contains(Int(gymInfo.teamId ?? 0)) {
                                             continue
                                         }
                                         events.append(gymInfo.getWebhookValues(type: "gym-info"))
@@ -364,11 +363,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.raid) {
-                                let raidIDs = webhook.data["raid_ids"] as? [UInt16] ?? [UInt16]()
+                                let raidIDs = webhook.data["raid_ids"] as? [Int] ?? [Int]()
                                 for (_, raid) in raidEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: raid.lat, lon: raid.lon, multiPolygon: polygon) {
-                                        if raid.raidPokemonId ?? 0 > 0 && raidIDs.contains(raid.raidPokemonId!) {
+                                        if raidIDs.contains(Int(raid.raidPokemonId ?? 0)) {
                                             continue
                                         }
                                         events.append(raid.getWebhookValues(type: WebhookType.raid.rawValue))
@@ -377,11 +376,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.egg) {
-                                let eggIDs = webhook.data["egg_ids"] as? [UInt8] ?? [UInt8]()
+                                let eggIDs = webhook.data["egg_ids"] as? [Int] ?? [Int]()
                                 for (_, egg) in eggEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: egg.lat, lon: egg.lon, multiPolygon: polygon) {
-                                        if egg.raidLevel ?? 0 > 0 && eggIDs.contains(egg.raidLevel ?? 0) {
+                                        if eggIDs.contains(Int(egg.raidLevel ?? 0)) {
                                             continue
                                         }
                                         events.append(egg.getWebhookValues(type: WebhookType.egg.rawValue))
@@ -390,13 +389,13 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.weather) {
-                                let weatherIDs = webhook.data["weather_ids"] as? [UInt8] ?? [UInt8]()
+                                let weatherIDs = webhook.data["weather_ids"] as? [Int] ?? [Int]()
                                 for (_, weather) in weatherEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: weather.latitude, lon: weather.longitude,
                                                multiPolygon: polygon) {
                                         if weather.gameplayCondition > 0 && weatherIDs.contains(
-                                                   weather.gameplayCondition) {
+                                                   Int(weather.gameplayCondition)) {
                                             continue
                                         }
                                         events.append(weather.getWebhookValues(type: WebhookType.weather.rawValue))
@@ -465,11 +464,11 @@ public class WebHookController {
     }
 
     private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon {
-        var geofences = [[[CLLocationCoordinate2D]]]()
+        var geofences = [[[LocationCoordinate2D]]]()
         for coord in areaArray {
-            var geofence = [CLLocationCoordinate2D]()
+            var geofence = [LocationCoordinate2D]()
             for crd in coord {
-                geofence.append(CLLocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
+                geofence.append(LocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
             }
             geofences.append([geofence])
         }
@@ -478,7 +477,7 @@ public class WebHookController {
 
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool {
         for polygon in multiPolygon.polygons {
-            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            let coord = LocationCoordinate2D(latitude: lat, longitude: lon)
             if polygon.contains(coord, ignoreBoundary: false) {
                 return true
             }

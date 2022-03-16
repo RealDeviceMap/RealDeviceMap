@@ -11,13 +11,13 @@ import Foundation
 import PerfectLib
 import Turf
 
-public class Coord: JSONConvertibleObject, Hashable {
+public class Coord: JSONConvertibleObject, Hashable, Codable {
 
     var lat: Double
     var lon: Double
 
-    var cLLocationCoordinate2D: CLLocationCoordinate2D {
-        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    var locationCoordinate2D: LocationCoordinate2D {
+        return LocationCoordinate2D(latitude: lat, longitude: lon)
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -31,7 +31,7 @@ public class Coord: JSONConvertibleObject, Hashable {
 
     // swiftlint:disable:next identifier_name
     func distance(to: Coord) -> Double {
-        return self.cLLocationCoordinate2D.distance(to: to.cLLocationCoordinate2D)
+        return self.locationCoordinate2D.distance(to: to.locationCoordinate2D)
     }
 
     public override func getJSONValues() -> [String: Any] {

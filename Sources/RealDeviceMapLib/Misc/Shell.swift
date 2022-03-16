@@ -12,11 +12,20 @@ public class Shell {
 
     private var args: [String]
 
+    public init(_ args: [String]) {
+        self.args = args
+    }
+
     public init(_ args: String...) {
         self.args = args
     }
 
-    public func run(errorPipe: Any? = nil, inputPipe: Any? = nil, environment: [String: String]? = nil) -> String? {
+    @discardableResult
+    public func run(
+        errorPipe: Any? = nil,
+        inputPipe: Any? = nil,
+        environment: [String: String]? = nil
+    ) -> String? {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         if environment != nil {
@@ -41,9 +50,12 @@ public class Shell {
         return String(data: data, encoding: String.Encoding.utf8)
     }
 
-    public func runError(standardPipe: Any? = nil,
-                         inputPipe: Any? = nil,
-                         environment: [String: String]? = nil) -> String? {
+    @discardableResult
+    public func runError(
+        standardPipe: Any? = nil,
+        inputPipe: Any? = nil,
+        environment: [String: String]? = nil
+    ) -> String? {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         if environment != nil {

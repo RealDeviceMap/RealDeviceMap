@@ -128,7 +128,12 @@
             </div>
             <div class="form-group">
                 Account Group
-                <input type="text" class="form-control" name="account_group" value="{{account_group}}" maxlength="50">
+                <select class="form-control account-group-select" name="account_group">
+                    <option value="" {{#group_nothing_selected}}selected{{/group_nothing_selected}}></option>
+                    {{#account_groups}}
+                        <option value="{{name}}" {{#group_selected}}selected{{/group_selected}}>{{name}}</option>
+                    {{/account_groups}}
+                </select>
             </div>
             <div class="checkbox">
                 <label><input type="checkbox" name="is_event" value="true" {{#is_event}}checked{{/is_event}}> Is Unique Event</label>
