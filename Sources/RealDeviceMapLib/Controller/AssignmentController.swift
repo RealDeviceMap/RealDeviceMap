@@ -224,6 +224,7 @@ public class AssignmentController: InstanceControllerDelegate {
                         }
                     }
                 }
+                InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
             }
             let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
                                  Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
