@@ -121,8 +121,7 @@ public class SpawnPoint: JSONConvertibleObject {
 
         let now = UInt32(Date().timeIntervalSince1970)
 
-        if self.lastSeen ?? 0 + 3600 > now {
-            Log.debug(message: "[SPAWNPOINT setLastSeen] \(self.lastSeen ?? 0) + 3600 > \(now)")
+        if self.lastSeen! + 900 > now {
             return
         }
 
