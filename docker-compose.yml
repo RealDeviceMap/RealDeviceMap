@@ -47,12 +47,12 @@ services:
 #     NO_REQUIRE_ACCOUNT: 1
 ### Uncommenting The following lines will start RDM in lldb and store crash reports in the "backups" folder
 ### Running in lldb will use more resources, but RDM will run as usual.
-    entrypoint: ["./Scripts/run-lldb.bash"]
-    cap_add:
-      - SYS_ADMIN
-    security_opt:
-      - seccomp=unconfined
-      - apparmor=unconfined
+#   entrypoint: ["./Scripts/run-lldb.bash"]
+#   cap_add:
+#     - SYS_ADMIN
+#   security_opt:
+#     - seccomp=unconfined
+#     - apparmor=unconfined
   db:
     image: mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password --binlog-expire-logs-seconds=86400
