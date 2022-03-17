@@ -7,6 +7,6 @@ lldb \
   -o "breakpoint set --file main.swift --line 9" \
   -o "run" \
   -o "continue" \
-  -o "thread backtrace all" \
+  -o "thread backtrace" \
   -o "exit"
 
