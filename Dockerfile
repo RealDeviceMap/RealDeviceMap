@@ -73,4 +73,6 @@ COPY Scripts Scripts
 COPY .gitsha .
 COPY .gitref .
 
+RUN chmod +x ./Scripts/*
+
 ENTRYPOINT ["./RealDeviceMapApp"]
