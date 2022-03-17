@@ -45,7 +45,7 @@ services:
 #     NO_MEMORY_CACHE: 1
 #     NO_BACKUP: 1
 #     NO_REQUIRE_ACCOUNT: 1
-### Uncommenting The following lines will start RDM in lldb and store crash reports in the "backups" folder
+### Uncommenting The following lines will start RDM in lldb and show crash reports in logs
 ### Running in lldb will use more resources, but RDM will run as usual.
 #   entrypoint: ["./Scripts/run-lldb.bash"]
 #   cap_add:
