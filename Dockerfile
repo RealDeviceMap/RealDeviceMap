@@ -69,7 +69,10 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 # Copy build artifacts
 COPY --from=build /build/.build/release .
 COPY resources resources
+COPY Scripts Scripts
 COPY .gitsha .
 COPY .gitref .
+
+RUN chmod +x ./Scripts/*
 
 ENTRYPOINT ["./RealDeviceMapApp"]
