@@ -46,9 +46,9 @@ services:
 #     NO_MEMORY_CACHE: 1
 #     NO_BACKUP: 1
 #     NO_REQUIRE_ACCOUNT: 1
-### Uncommenting The following lines will start RDM in lldb and store crash reports in the backups folder
-### Running in lldb will use a bit more resources. (Running RDM works like usual)
-#   entrypoint: ["/bin/sh", "-c", "lldb -b -o \"file ./RealDeviceMapApp\" -o \"breakpoint set --file main.swift --line 9\" -o \"run\" -o \"process handle SIGPIPE -n true -p true -s false\" -o \"continue\" -k \"bugreport unwind --outfile ./backups/crash-$$(date +%s).log\" -k \"exit\""]
+### Uncommenting The following lines will start RDM in lldb and show crash reports in logs
+### Running in lldb will use more resources, but RDM will run as usual.
+#   entrypoint: ["./Scripts/run-lldb.bash"]
 #   cap_add:
 #     - SYS_ADMIN
 #   security_opt:
