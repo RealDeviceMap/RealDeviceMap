@@ -1884,8 +1884,7 @@ public class ApiRequestHandler {
                 ]
                 if formatted {
                     let defaultIconStyle = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
-                                rhs.key == "Default" || rhs.key < lhs.key
-                            }.first?.key
+                                rhs.key == "Default" || rhs.key < lhs.key }.first?.key ?? "Default"
                     json["pokemon_image"] =
                         "<img src=\"/image-api/pokemon?style=\(defaultIconStyle)&id=\(pokemon.pokemonId)" +
                         (pokemon.form != nil ? "&form=\(pokemon.form!)" : "") + "\" style=\"height:50px; width:50px;\">"
