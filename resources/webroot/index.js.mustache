@@ -88,9 +88,6 @@ let invasionFilterLoaded = false
 let pokestopFilterLoaded = false
 let spawnpointFilterLoaded = false
 
-let deviceOnlineIcon
-let deviceOfflineIcon
-
 let tileLayer
 
 let pokemonDb = {}
@@ -144,19 +141,6 @@ $(function () {
         this._updateIconVisibility()
       }, this)
     }
-  })
-
-  deviceOnlineIcon = L.icon({
-    iconUrl: '/image-api/device?id=1&style='+selectedIconStyle,
-    iconSize: [30, 30],
-    iconAnchor: [30 / 2, 30 / 2],
-    popupAnchor: [0, 30 * -1.567]
-  })
-  deviceOfflineIcon = L.icon({
-    iconUrl: '/image-api/device?id=0&style='+selectedIconStyle,
-    iconSize: [30, 30],
-    iconAnchor: [30 / 2, 30 / 2],
-    popupAnchor: [0, 30 * -1.567]
   })
 
   $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
@@ -1678,8 +1662,7 @@ function loadData () {
             deviceMarkers.push(device)
             device.marker.addTo(map)
           } else {
-            var isOffline = isDeviceOffline(device, ts)
-            oldDevice.marker.setIcon(isOffline ? deviceOfflineIcon : deviceOnlineIcon)
+            oldDevice.marker.setIcon(getDeviceMarkerIcon(device, ts))
             oldDevice.last_lat = device.last_lat
             oldDevice.last_lon = device.last_lon
             oldDevice.last_seen = device.last_seen
@@ -3653,7 +3636,13 @@ function getGymMarker (gym, ts) {
 
 function getDeviceMarkerIcon (device, ts) {
   var isOffline = isDeviceOffline(device, ts)
-  return isOffline ? deviceOfflineIcon : deviceOnlineIcon
+  
+  return L.icon({
+    iconUrl: getDeviceIconURL(isOffline),
+    iconSize: [30, 30],
+    iconAnchor: [30 / 2, 30 / 2],
+    popupAnchor: [0, 30 * -1.567]
+  })
 }
 
 function getDeviceMarker (device, ts) {
@@ -4631,6 +4620,10 @@ function getSize (value, baseValue) {
   } else {
     return "m"
   }
+}
+
+function getDeviceIconURL(isOffline) {
+  return '/image-api/device?id=' + (isOffline ? 0 : 1) + '&style=' + selectedIconStyle
 }
 
 function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched, raidPokemonId, raidPokemonEvolution, raidPokemonForm, raidPokemonCostume, raidPokemonGender) {
