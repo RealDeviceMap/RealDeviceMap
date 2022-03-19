@@ -1844,19 +1844,19 @@ function getPokemonIndex (pokemon) {
   if (pokemon.atk_iv === 15 && pokemon.def_iv === 15 && pokemon.sta_iv === 15) {
     return 9
   }
-  if (pokemon.pvp_rankings_little_league !== null && pokemon.pvp_rankings_great_league !== null && pokemon.pvp_rankings_ultra_league !== null) {
+  if (pokemon.pvp && pokemon.pvp.little && pokemon.pvp.great && pokemon.pvp.ultra) {
     let bestRank = 4
-    $.each(pokemon.pvp_rankings_little_league, function (index, ranking) {
+    $.each(pokemon.pvp.little, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
     })
-    $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+    $.each(pokemon.pvp.great, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
     })
-    $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+    $.each(pokemon.pvp.ultra, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
@@ -2364,8 +2364,7 @@ function getPokemonPopupContent (pokemon) {
   }
 
   const pokemonIcon = getPokemonIconURL(
-    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp_rankings_little_league, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league,
-    pokemon.pokestop_id === null && pokemon.spawn_id === null
+    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp, pokemon.pokestop_id === null && pokemon.spawn_id === null
   )
 
   content +=
@@ -2476,13 +2475,13 @@ function getPokemonPopupContent (pokemon) {
   }
   content += '</small><br>'
 
-  if (pokemon.pvp_rankings_little_league !== undefined && pokemon.pvp_rankings_little_league !== null) {
+  if (pokemon.pvp && pokemon.pvp.little) {
     content +=
       '<a href="#" onclick="toggleLittleLeague()">' +
       '<b>Little League:</b>' +
       '</a><br>'
     if (showLittleLeague) {
-      $.each(pokemon.pvp_rankings_little_league, function (index, ranking) {
+      $.each(pokemon.pvp.little, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
           pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
@@ -2503,13 +2502,13 @@ function getPokemonPopupContent (pokemon) {
     }
   }
 
-  if (pokemon.pvp_rankings_great_league !== undefined && pokemon.pvp_rankings_great_league !== null) {
+  if (pokemon.pvp && pokemon.pvp.great) {
     content +=
       '<a href="#" onclick="toggleGreatLeague()">' +
       '<b>Great League:</b>' +
       '</a><br>'
     if (showGreatLeague) {
-      $.each(pokemon.pvp_rankings_great_league, function (index, ranking) {
+      $.each(pokemon.pvp.great, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
           pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
@@ -2530,13 +2529,13 @@ function getPokemonPopupContent (pokemon) {
     }
   }
 
-  if (pokemon.pvp_rankings_ultra_league !== undefined && pokemon.pvp_rankings_ultra_league !== null) {
+  if (pokemon.pvp && pokemon.pvp.ultra) {
     content +=
       '<a href="#" onclick="toggleUltraLeague()">' +
       '<b>Ultra League:</b>' +
       '</a><br>'
     if (showUltraLeague) {
-      $.each(pokemon.pvp_rankings_ultra_league, function (index, ranking) {
+      $.each(pokemon.pvp.ultra, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
           pokemonName = getFormName(ranking.form) + ' ' + getPokemonName(ranking.pokemon)
@@ -3424,8 +3423,7 @@ function getPokemonMarkerIcon (pokemon, ts) {
   const size = getPokemonSize(pokemon.pokemon_id)
 
   const pokemonIcon = getPokemonIconURL(
-    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp_rankings_little_league, pokemon.pvp_rankings_great_league, pokemon.pvp_rankings_ultra_league,
-    pokemon.pokestop_id === null && pokemon.spawn_id === null
+    pokemon.pokemon_id, pokemon.form, pokemon.costume, pokemon.gender, pokemon.evolution, pokemon.pvp, pokemon.pokestop_id === null && pokemon.spawn_id === null
   )
   const icon = L.icon({
     iconUrl: pokemonIcon,
@@ -4712,23 +4710,23 @@ function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched
   return response
 }
 
-function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender, pokemonEvolution, littleLeague, greatLeague, ultraLeague, isCellSpawn) {
+function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender, pokemonEvolution, pvp, isCellSpawn) {
   let bestRank
-  if (littleLeague === null || greatLeague === null || ultraLeague === null) {
+  if (pvp && pvp.little && pvp.great && pvp.ultra) {
     bestRank = null
   } else {
     bestRank = 4
-    $.each(littleLeague, function (index, ranking) {
+    $.each(pvp.little, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
     })
-    $.each(greatLeague, function (index, ranking) {
+    $.each(pvp.great, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
     })
-    $.each(ultraLeague, function (index, ranking) {
+    $.each(pvp.ultra, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
         bestRank = ranking.rank
       }
