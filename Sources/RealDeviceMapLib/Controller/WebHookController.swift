@@ -23,7 +23,10 @@ public class WebHookController {
 
     public private(set) static var global = WebHookController()
 
-    public var webhooks = [Webhook]()
+    private var webhooks = [Webhook]()
+    private var lock = Threading.Lock()
+    private var types = [WebhookType]()
+    private var queue: ThreadQueue?
 
     private let timeout: Int
     private let connectTimeout: Int
@@ -53,109 +56,84 @@ public class WebHookController {
     private var accountEventLock = Threading.Lock()
     private var accountEvents = [String: Account]()
 
-    private var types = [WebhookType]()
-    private var queue: ThreadQueue?
-
     public func addPokemonEvent(pokemon: Pokemon) {
         if !self.webhooks.isEmpty && self.types.contains(.pokemon) {
-            pokemonEventLock.lock()
-            pokemonEvents[pokemon.id] = pokemon
-            pokemonEventLock.unlock()
+            pokemonEventLock.doWithLock { pokemonEvents[pokemon.id] = pokemon }
         }
     }
 
     public func addPokestopEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.pokestop) {
-            pokestopEventLock.lock()
-            pokestopEvents[pokestop.id] = pokestop
-            pokestopEventLock.unlock()
+            pokestopEventLock.doWithLock { pokestopEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addLureEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.lure) {
-            lureEventLock.lock()
-            lureEvents[pokestop.id] = pokestop
-            lureEventLock.unlock()
+            lureEventLock.doWithLock { lureEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addInvasionEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.invasion) {
-            invasionEventLock.lock()
-            invasionEvents[pokestop.id] = pokestop
-            invasionEventLock.unlock()
+            invasionEventLock.doWithLock { invasionEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addQuestEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.quest) {
-            questEventLock.lock()
-            questEvents[pokestop.id] = pokestop
-            questEventLock.unlock()
+            questEventLock.doWithLock { questEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addAlternativeQuestEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.quest) {
-            alternativeQuestEventsLock.lock()
-            alternativeQuestEvents[pokestop.id] = pokestop
-            alternativeQuestEventsLock.unlock()
+            alternativeQuestEventsLock.doWithLock { alternativeQuestEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addGymEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymEventLock.lock()
-            gymEvents[gym.id] = gym
-            gymEventLock.unlock()
+            gymEventLock.doWithLock { gymEvents[gym.id] = gym }
         }
     }
 
     public func addGymInfoEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymInfoEventLock.lock()
-            gymInfoEvents[gym.id] = gym
-            gymInfoEventLock.unlock()
+            gymInfoEventLock.doWithLock { gymInfoEvents[gym.id] = gym }
         }
     }
 
     public func addEggEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.egg) {
-            eggEventLock.lock()
-            eggEvents[gym.id] = gym
-            eggEventLock.unlock()
+            eggEventLock.doWithLock { eggEvents[gym.id] = gym }
         }
     }
 
     public func addRaidEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.raid) {
-            raidEventLock.lock()
-            raidEvents[gym.id] = gym
-            raidEventLock.unlock()
+            raidEventLock.doWithLock { raidEvents[gym.id] = gym }
         }
     }
 
     public func addWeatherEvent(weather: Weather) {
         if !self.webhooks.isEmpty && self.types.contains(.weather) {
-            weatherEventLock.lock()
-            weatherEvents[weather.id] = weather
-            weatherEventLock.unlock()
+            weatherEventLock.doWithLock { weatherEvents[weather.id] = weather }
         }
     }
 
     public func addAccountEvent(account: Account) {
         if !self.webhooks.isEmpty && self.types.contains(.account) {
-            accountEventLock.lock()
-            accountEvents[account.username] = account
-            accountEventLock.unlock()
+            accountEventLock.doWithLock { accountEvents[account.username] = account }
         }
     }
 
     public func reload() {
         do {
-            webhooks = try Webhook.getAll()
-            types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            try lock.doWithLock {
+                webhooks = try Webhook.getAll()
+                types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            }
         } catch {
             Log.error(message: "[WebHookController] Failed to reload webhooks from DB")
         }
@@ -164,21 +142,24 @@ public class WebHookController {
     public func start() {
 
         do {
-            webhooks = try Webhook.getAll()
-            types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            try lock.doWithLock {
+                webhooks = try Webhook.getAll()
+                types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+                Log.debug(message: "[WebHookController] loaded \(webhooks.count) webhooks")
+                Log.debug(message: "[WebHookController] loaded \(types.count) types")
+            }
         } catch {
             Log.error(message: "[WebHookController] Failed to load webhooks from DB")
             return
         }
-        Log.debug(message: "[WebHookController] loaded \(webhooks.count) webhooks")
-        Log.debug(message: "[WebHookController] loaded \(types.count) types")
         if queue == nil {
             queue = Threading.getQueue(name: "WebHookControllerQueue", type: .serial)
             queue!.dispatch {
 
                 while true {
-                    if !self.webhooks.isEmpty {
-                        let countEnabled = self.webhooks.filter({ webhook in webhook.enabled == true }).count
+                    let webhooks = self.lock.doWithLock { self.webhooks }
+                    if !webhooks.isEmpty {
+                        let countEnabled = webhooks.filter({ webhook in webhook.enabled == true }).count
                         if countEnabled == 0 {
                             Threading.sleep(seconds: 30.0)
                             continue
@@ -197,68 +178,68 @@ public class WebHookController {
                         var weatherEvents = [Int64: Weather]()
                         var accountEvents = [String: Account]()
 
-                        self.pokemonEventLock.lock()
-                        pokemonEvents = self.pokemonEvents
-                        self.pokemonEvents = [String: Pokemon]()
-                        self.pokemonEventLock.unlock()
+                        self.pokemonEventLock.doWithLock {
+                            pokemonEvents = self.pokemonEvents
+                            self.pokemonEvents = [String: Pokemon]()
+                        }
 
-                        self.pokestopEventLock.lock()
-                        pokestopEvents = self.pokestopEvents
-                        self.pokestopEvents = [String: Pokestop]()
-                        self.pokestopEventLock.unlock()
+                        self.pokestopEventLock.doWithLock {
+                            pokestopEvents = self.pokestopEvents
+                            self.pokestopEvents = [String: Pokestop]()
+                        }
 
-                        self.lureEventLock.lock()
-                        lureEvents = self.lureEvents
-                        self.lureEvents = [String: Pokestop]()
-                        self.lureEventLock.unlock()
+                        self.lureEventLock.doWithLock {
+                            lureEvents = self.lureEvents
+                            self.lureEvents = [String: Pokestop]()
+                        }
 
-                        self.invasionEventLock.lock()
-                        invasionEvents = self.invasionEvents
-                        self.invasionEvents = [String: Pokestop]()
-                        self.invasionEventLock.unlock()
+                        self.invasionEventLock.doWithLock {
+                            invasionEvents = self.invasionEvents
+                            self.invasionEvents = [String: Pokestop]()
+                        }
 
-                        self.questEventLock.lock()
-                        questEvents = self.questEvents
-                        self.questEvents = [String: Pokestop]()
-                        self.questEventLock.unlock()
+                        self.questEventLock.doWithLock {
+                            questEvents = self.questEvents
+                            self.questEvents = [String: Pokestop]()
+                        }
 
-                        self.alternativeQuestEventsLock.lock()
-                        alternativeQuestEvents = self.alternativeQuestEvents
-                        self.alternativeQuestEvents = [String: Pokestop]()
-                        self.alternativeQuestEventsLock.unlock()
+                        self.alternativeQuestEventsLock.doWithLock {
+                            alternativeQuestEvents = self.alternativeQuestEvents
+                            self.alternativeQuestEvents = [String: Pokestop]()
+                        }
 
-                        self.gymEventLock.lock()
-                        gymEvents = self.gymEvents
-                        self.gymEvents = [String: Gym]()
-                        self.gymEventLock.unlock()
+                        self.gymEventLock.doWithLock {
+                            gymEvents = self.gymEvents
+                            self.gymEvents = [String: Gym]()
+                        }
 
-                        self.gymInfoEventLock.lock()
-                        gymInfoEvents = self.gymInfoEvents
-                        self.gymInfoEvents = [String: Gym]()
-                        self.gymInfoEventLock.unlock()
+                        self.gymInfoEventLock.doWithLock {
+                            gymInfoEvents = self.gymInfoEvents
+                            self.gymInfoEvents = [String: Gym]()
+                        }
 
-                        self.raidEventLock.lock()
-                        raidEvents = self.raidEvents
-                        self.raidEvents = [String: Gym]()
-                        self.raidEventLock.unlock()
+                        self.raidEventLock.doWithLock {
+                            raidEvents = self.raidEvents
+                            self.raidEvents = [String: Gym]()
+                        }
 
-                        self.eggEventLock.lock()
-                        eggEvents = self.eggEvents
-                        self.eggEvents = [String: Gym]()
-                        self.eggEventLock.unlock()
+                        self.eggEventLock.doWithLock {
+                            eggEvents = self.eggEvents
+                            self.eggEvents = [String: Gym]()
+                        }
 
-                        self.weatherEventLock.lock()
-                        weatherEvents = self.weatherEvents
-                        self.weatherEvents = [Int64: Weather]()
-                        self.weatherEventLock.unlock()
+                        self.weatherEventLock.doWithLock {
+                            weatherEvents = self.weatherEvents
+                            self.weatherEvents = [Int64: Weather]()
+                        }
 
-                        self.accountEventLock.lock()
-                        accountEvents = self.accountEvents
-                        self.accountEvents = [String: Account]()
-                        self.accountEventLock.unlock()
+                        self.accountEventLock.doWithLock {
+                            accountEvents = self.accountEvents
+                            self.accountEvents = [String: Account]()
+                        }
 
-                        let minDelay = self.webhooks.map({ $0.delay }).min()
-                        for webhook in self.webhooks {
+                        let minDelay = webhooks.map({ $0.delay }).min()
+                        for webhook in webhooks {
                             if !webhook.enabled {
                                 continue
                             }
@@ -282,8 +263,7 @@ public class WebHookController {
                             if webhook.types.contains(.pokestop) {
                                 for (_, pokestop) in pokestopEvents {
                                     if area.isEmpty ||
-                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon,
-                                               multiPolygon: polygon) {
+                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon, multiPolygon: polygon) {
                                         events.append(pokestop.getWebhookValues(
                                             type: WebhookType.pokestop.rawValue
                                         ))
@@ -308,8 +288,7 @@ public class WebHookController {
                                 let invasionIDs = webhook.data["invasion_ids"] as? [Int] ?? [Int]()
                                 for (_, invasion) in invasionEvents {
                                     if area.isEmpty ||
-                                           self.inPolygon(lat: invasion.lat, lon: invasion.lon,
-                                               multiPolygon: polygon) {
+                                           self.inPolygon(lat: invasion.lat, lon: invasion.lon, multiPolygon: polygon) {
                                         if invasionIDs.contains(Int(invasion.gruntType ?? 0)) {
                                             continue
                                         }
@@ -414,6 +393,9 @@ public class WebHookController {
                             }
                         }
                         Threading.sleep(seconds: minDelay != nil ? minDelay! : 5.0)
+                    } else {
+                        // Sleep if no webhooks are set
+                        Threading.sleep(seconds: 30.0)
                     }
                 }
             }
