@@ -1883,8 +1883,10 @@ public class ApiRequestHandler {
                     "pokemon_name": Localizer.global.get(value: "poke_\(pokemon.pokemonId)")
                 ]
                 if formatted {
+                    let defaultIconStyle = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                                rhs.key == "Default" || rhs.key < lhs.key }.first?.key ?? "Default"
                     json["pokemon_image"] =
-                        "<img src=\"/image-api/pokemon?style=\(iconStyle)&id=\(pokemon.pokemonId)" +
+                        "<img src=\"/image-api/pokemon?style=\(defaultIconStyle)&id=\(pokemon.pokemonId)" +
                         (pokemon.form != nil ? "&form=\(pokemon.form!)" : "") + "\" style=\"height:50px; width:50px;\">"
                     json["pokemon_spawn_id"] =
                         "<a target=\"_blank\" href=\"/@pokemon/\(pokemon.id)\">\(pokemon.id)</a>"
