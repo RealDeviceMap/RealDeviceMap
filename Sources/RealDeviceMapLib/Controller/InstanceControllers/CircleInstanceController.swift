@@ -142,8 +142,8 @@ class CircleInstanceController: InstanceControllerProto {
                 }
             }
             currentUuidIndexes[uuid] = currentUuidIndex
-            lock.unlock()
             currentCoord = coords[currentUuidIndex]
+            lock.unlock()
             return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
         } else {
@@ -155,8 +155,8 @@ class CircleInstanceController: InstanceControllerProto {
             } else {
                 lastIndex += 1
             }
-            lock.unlock()
             currentCoord = coords[currentIndex]
+            lock.unlock()
             if type == .pokemon {
                 return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
