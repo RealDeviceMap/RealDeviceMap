@@ -420,7 +420,7 @@ extension PVPStatsManager {
     enum League: Int, CaseIterable {
         case little = 500
         case great = 1500
-        case ultra = 2500;
+        case ultra = 2500
 
         func toString() -> String {
             switch self {
