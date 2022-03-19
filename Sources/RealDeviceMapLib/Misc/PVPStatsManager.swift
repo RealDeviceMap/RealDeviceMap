@@ -167,6 +167,30 @@ public class PVPStatsManager {
                      ivs: ivs)
     }
 
+    internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
+                                   gender: PokemonDisplayProto.Gender?,
+                                   costume: PokemonDisplayProto.Costume, iv: IV, level: Double) -> [String: Any] {
+        var pvp: [String: Any] = [:]
+        League.allCases.forEach({ (league)  in
+                    pvp[league.toString()] = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
+                        costume: costume, iv: iv, level: level, league: league).map({ (ranking) -> [String: Any] in
+                        [
+                            "pokemon": ranking.pokemon.pokemon.rawValue,
+                            "form": ranking.pokemon.form?.rawValue ?? 0,
+                            "gender": ranking.pokemon.gender?.rawValue ?? 0,
+                            "rank": ranking.response?.denseRank as Any,
+                            "percentage": ranking.response?.percentage as Any,
+                            "cp": ranking.response?.ivs.first?.cp as Any,
+                            "level": ranking.response?.ivs.first?.level as Any,
+                            "competition_rank": ranking.response?.competitionRank as Any,
+                            "dense_rank": ranking.response?.denseRank as Any,
+                            "ordinal_rank": ranking.response?.ordinalRank as Any
+                        ]
+                    })
+                })
+        return pvp
+    }
+
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                                             gender: PokemonDisplayProto.Gender?,
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
@@ -393,10 +417,18 @@ extension PVPStatsManager {
         var ivs: [IVWithCP]
     }
 
-    enum League: Int {
+    enum League: Int, CaseIterable {
         case little = 500
         case great = 1500
-        case ultra = 2500
+        case ultra = 2500;
+
+        func toString() -> String {
+            switch self {
+            case .little: return "little"
+            case .great: return "great"
+            case .ultra: return "ultra"
+            }
+        }
     }
 
     private static let cpMultiplier = [
