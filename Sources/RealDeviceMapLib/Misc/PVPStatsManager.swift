@@ -184,7 +184,8 @@ public class PVPStatsManager {
                             "level": ranking.response?.ivs.first?.level as Any,
                             "competition_rank": ranking.response?.competitionRank as Any,
                             "dense_rank": ranking.response?.denseRank as Any,
-                            "ordinal_rank": ranking.response?.ordinalRank as Any
+                            "ordinal_rank": ranking.response?.ordinalRank as Any,
+                            "cap": 50
                         ]
                     })
                 })
