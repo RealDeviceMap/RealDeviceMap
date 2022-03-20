@@ -209,6 +209,7 @@ public func setupRealDeviceMap() {
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
     Pokemon.noPVP = environment["NO_PVP"] != nil
+    Pokemon.defaultPVPRank = environment["PVP_DEFAULT_RANK"] ?? "dense"
     Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
     Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
     InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil

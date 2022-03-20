@@ -168,17 +168,23 @@ public class PVPStatsManager {
     }
 
     internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                                   gender: PokemonDisplayProto.Gender?,
-                                   costume: PokemonDisplayProto.Costume, iv: IV, level: Double) -> [String: Any] {
+                                   gender: PokemonDisplayProto.Gender?, costume: PokemonDisplayProto.Costume, iv: IV,
+                                   level: Double, defaultRank: RankType) -> [String: Any] {
         var pvp: [String: Any] = [:]
         League.allCases.forEach({ (league)  in
                     pvp[league.toString()] = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
                         costume: costume, iv: iv, level: level, league: league).map({ (ranking) -> [String: Any] in
-                        [
+                        let rank: Any
+                        switch defaultRank {
+                        case .dense: rank = ranking.response?.denseRank as Any
+                        case .competition: rank = ranking.response?.competitionRank as Any
+                        case .ordinal: rank = ranking.response?.ordinalRank as Any
+                        }
+                        return [
                             "pokemon": ranking.pokemon.pokemon.rawValue,
                             "form": ranking.pokemon.form?.rawValue ?? 0,
                             "gender": ranking.pokemon.gender?.rawValue ?? 0,
-                            "rank": ranking.response?.denseRank as Any,
+                            "rank": rank,
                             "percentage": ranking.response?.percentage as Any,
                             "cp": ranking.response?.ivs.first?.cp as Any,
                             "level": ranking.response?.ivs.first?.level as Any,
@@ -430,6 +436,12 @@ extension PVPStatsManager {
             case .ultra: return "ultra"
             }
         }
+    }
+
+    enum RankType: String {
+        case dense
+        case ordinal
+        case competition
     }
 
     private static let cpMultiplier = [

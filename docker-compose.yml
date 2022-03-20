@@ -35,6 +35,7 @@ services:
       LOG_LEVEL: debug #debug, info, warning
 #     LOGINLIMIT_COUNT: 15
 #     LOGINLIMIT_INTERVALL: 300
+#     PVP_DEFAULT_RANK: dense #dense,competition,ordinal
 ### Uncommenting the following lines will set these values to TRUE (regardless of their value)
 #     USE_RW_FOR_QUEST: 1
 #     USE_RW_FOR_RAID: 1
