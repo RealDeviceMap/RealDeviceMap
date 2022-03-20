@@ -4706,8 +4706,6 @@ function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched
 function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender, pokemonEvolution, pvp, isCellSpawn) {
   let bestRank
   if (pvp && pvp.little && pvp.great && pvp.ultra) {
-    bestRank = null
-  } else {
     bestRank = 4
     $.each(pvp.little, function (index, ranking) {
       if (ranking.rank !== null && ranking.rank < bestRank) {
@@ -4724,6 +4722,8 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
         bestRank = ranking.rank
       }
     })
+  } else {
+    bestRank = null
   }
   let ranking
   if (bestRank > 3) { ranking = null } else { ranking = bestRank }
