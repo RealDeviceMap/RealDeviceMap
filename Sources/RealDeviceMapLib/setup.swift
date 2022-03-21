@@ -209,7 +209,13 @@ public func setupRealDeviceMap() {
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
     Pokemon.noPVP = environment["NO_PVP"] != nil
-    Pokemon.defaultPVPRank = environment["PVP_DEFAULT_RANK"] ?? "dense"
+    if Pokemon.noPVP == false {
+        let pvpRank = environment["PVP_DEFAULT_RANK"] ?? "dense"
+        PVPStatsManager.defaultPVPRank = PVPStatsManager.RankType(rawValue: pvpRank) ?? .dense
+        PVPStatsManager.littleLeagueFilter = environment["PVP_LITTLE_FILTER"]?.toInt() ?? 450
+        PVPStatsManager.greatLeagueFilter = environment["PVP_GREAT_FILTER"]?.toInt() ?? 1400
+        PVPStatsManager.ultraLeagueFilter = environment["PVP_ULTRA_FILTER"]?.toInt() ?? 2350
+    }
     Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
     Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
     InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil

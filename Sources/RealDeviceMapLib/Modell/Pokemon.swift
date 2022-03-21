@@ -26,7 +26,6 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     public static var weatherBoostMinLevel: UInt8 = 6
     public static var weatherBoostMinIvStat: UInt8 = 4
     public static var noPVP = false
-    public static var defaultPVPRank = "dense"
     public static var noWeatherIVClearing = false
     public static var noCellPokemon = false
 
@@ -505,8 +504,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             gender: gender == .unset ? nil : gender,
             costume: costume,
             iv: .init(attack: Int(self.atkIv!), defense: Int(self.defIv!), stamina: Int(self.staIv!)),
-            level: Double(self.level!),
-            defaultRank: PVPStatsManager.RankType(rawValue: Pokemon.defaultPVPRank) ?? .dense
+            level: Double(self.level!)
         )
     }
 

@@ -15,6 +15,10 @@ import POGOProtos
 public class PVPStatsManager {
 
     public static let global = PVPStatsManager()
+    internal static var defaultPVPRank: RankType = .dense
+    internal static var littleLeagueFilter = 450
+    internal static var greatLeagueFilter = 1400
+    internal static var ultraLeagueFilter = 2350
 
     private var stats = [PokemonWithFormAndGender: Stats]()
     private let rankingLittleLock = Threading.Lock()
@@ -169,13 +173,13 @@ public class PVPStatsManager {
 
     internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                                    gender: PokemonDisplayProto.Gender?, costume: PokemonDisplayProto.Costume, iv: IV,
-                                   level: Double, defaultRank: RankType) -> [String: Any] {
+                                   level: Double) -> [String: Any] {
         var pvp: [String: Any] = [:]
         League.allCases.forEach({ (league)  in
                     pvp[league.toString()] = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
                         costume: costume, iv: iv, level: level, league: league).map({ (ranking) -> [String: Any] in
                         let rank: Any
-                        switch defaultRank {
+                        switch PVPStatsManager.defaultPVPRank {
                         case .dense: rank = ranking.response?.denseRank as Any
                         case .competition: rank = ranking.response?.competitionRank as Any
                         case .ordinal: rank = ranking.response?.ordinalRank as Any
@@ -296,50 +300,55 @@ public class PVPStatsManager {
     }
 
     private func getPVPValuesOrdered(stats: Stats, cap: Int?) -> [Response] {
+        calculatePvPStat(stats: stats, cpCap: cap)
+                .sorted { (lhs, rhs) -> Bool in
+                    lhs.key >= rhs.key }
+                .map { (value) -> Response in
+                    value.value }
+    }
+
+    private func calculatePvPStat(stats: Stats, cpCap: Int?) -> [Int: Response] {
         var ranking = [Int: Response]()
         for iv in IV.all {
             var maxLevel: Double = 0
             var maxCP: Int = 0
             for level in stride(from: 0.0, through: 50.0, by: 0.5).reversed() {
-                let cp = (cap == nil ? 0 : getCPValue(iv: iv, level: level, stats: stats))
-                if cp <= (cap ?? 0) {
+                let cp = (cpCap == nil ? 0 : calculateCP(stats: stats, iv: iv, level: level))
+                if cp <= (cpCap ?? 0) {
                     maxLevel = level
                     maxCP = cp
                     break
                 }
             }
             if maxLevel != 0 {
-                let value = getPVPValue(iv: iv, level: maxLevel, stats: stats)
+                let value = calculateStatProduct(stats: stats, iv: iv, level: maxLevel)
                 if ranking[value] == nil {
                     ranking[value] = Response(competitionRank: value,
-                                              denseRank: value,
-                                              ordinalRank: value,
-                                              percentage: 0.0,
-                                              ivs: [])
+                        denseRank: value,
+                        ordinalRank: value,
+                        percentage: 0.0,
+                        ivs: [])
                 }
                 ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
             }
         }
-        return ranking.sorted { (lhs, rhs) -> Bool in
-            lhs.key >= rhs.key
-        }.map { (value) -> Response in
-            value.value
-        }
+        return ranking
     }
 
     internal func getStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?) -> Stats? {
         stats[PokemonWithFormAndGender(pokemon: pokemon, form: form)]
     }
 
-    private func getPVPValue(iv: IV, level: Double, stats: Stats) -> Int {
+    private func calculateStatProduct(stats: Stats, iv: IV, level: Double) -> Int {
         let multiplier = (PVPStatsManager.cpMultiplier[level] ?? 0)
+        var hp = floor(Double(iv.stamina + stats.baseStamina) * multiplier)
+        if hp < 10 { hp = 10 }
         let attack = Double(iv.attack + stats.baseAttack) * multiplier
         let defense = Double(iv.defense + stats.baseDefense) * multiplier
-        let stamina = Double(iv.stamina + stats.baseStamina) * multiplier
-        return Int(round(attack * defense * floor(stamina)))
+        return Int(round(attack * defense * hp))
     }
 
-    private func getCPValue(iv: IV, level: Double, stats: Stats) -> Int {
+    private func calculateCP(stats: Stats, iv: IV, level: Double) -> Int {
         let attack = Double(stats.baseAttack + iv.attack)
         let defense = pow(Double(stats.baseDefense + iv.defense), 0.5)
         let stamina =  pow(Double(stats.baseStamina + iv.stamina), 0.5)
