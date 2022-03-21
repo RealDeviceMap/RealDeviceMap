@@ -39,6 +39,7 @@ services:
 #     PVP_LITTLE_FILTER: 450
 #     PVP_GREAT_FILTER: 1400
 #     PVP_ULTRA_FILTER: 2350
+#     PVP_LEVEL_CAPS: 40,50,51
 ### Uncommenting the following lines will set these values to TRUE (regardless of their value)
 #     USE_RW_FOR_QUEST: 1
 #     USE_RW_FOR_RAID: 1

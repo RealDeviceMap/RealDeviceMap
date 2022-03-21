@@ -16,9 +16,8 @@ public class PVPStatsManager {
 
     public static let global = PVPStatsManager()
     internal static var defaultPVPRank: RankType = .dense
-    internal static var littleLeagueFilter = 450
-    internal static var greatLeagueFilter = 1400
-    internal static var ultraLeagueFilter = 2350
+    internal static var lvlCaps: [Int] = [50]
+    internal static var leagueFilter: [Int: Int] = [ 500: 450, 1500: 1400,  2500: 2350 ]
 
     private var stats = [PokemonWithFormAndGender: Stats]()
     private let rankingLittleLock = Threading.Lock()
@@ -168,7 +167,8 @@ public class PVPStatsManager {
                      denseRank: denseIndex + 1,
                      ordinalRank: ordinalIndex + 1,
                      percentage: value/max,
-                     ivs: ivs)
+                     ivs: ivs,
+                     cap: result.cap)
     }
 
     internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
@@ -195,7 +195,7 @@ public class PVPStatsManager {
                             "competition_rank": ranking.response?.competitionRank as Any,
                             "dense_rank": ranking.response?.denseRank as Any,
                             "ordinal_rank": ranking.response?.ordinalRank as Any,
-                            "cap": 50
+                            "cap": ranking.response?.cap as Any
                         ]
                     })
                 })
@@ -274,7 +274,7 @@ public class PVPStatsManager {
                 rankingUltra[info] = .event(event: event)
                 rankingUltraLock.unlock()
             }
-            let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue)
+            let values = getPVPValuesOrdered(stats: stats, cpCap: league.rawValue)
             switch league {
             case .little:
                 rankingLittleLock.doWithLock { rankingLittle[info] = .responses(responses: values) }
@@ -299,37 +299,54 @@ public class PVPStatsManager {
         }
     }
 
-    private func getPVPValuesOrdered(stats: Stats, cap: Int?) -> [Response] {
-        calculatePvPStat(stats: stats, cpCap: cap)
+    private func getPVPValuesOrdered(stats: Stats, cpCap: Int) -> [Response] {
+        calculateAllRanks(stats: stats, cpCap: cpCap)
                 .sorted { (lhs, rhs) -> Bool in
                     lhs.key >= rhs.key }
                 .map { (value) -> Response in
                     value.value }
     }
 
-    private func calculatePvPStat(stats: Stats, cpCap: Int?) -> [Int: Response] {
+    func calculateAllRanks(stats: Stats, cpCap: Int) -> [Int: Response] {
+        var ranking = [Int: Response]()
+        for lvlCap in PVPStatsManager.lvlCaps {
+            if calculateCP(stats: stats, iv: IV.hundo, level: Double(lvlCap)) <= PVPStatsManager.leagueFilter[cpCap]! {
+                continue
+            }
+            ranking.merge(calculatePvPStat(stats: stats, cpCap: cpCap, lvlCap: lvlCap)) { (_, new) in new }
+        }
+        return ranking
+    }
+
+    private func calculatePvPStat(stats: Stats, cpCap: Int, lvlCap: Int) -> [Int: Response] {
         var ranking = [Int: Response]()
         for iv in IV.all {
+            var lowest = 1.0, highest = Double(lvlCap)
             var maxLevel: Double = 0
-            var maxCP: Int = 0
-            for level in stride(from: 0.0, through: 50.0, by: 0.5).reversed() {
-                let cp = (cpCap == nil ? 0 : calculateCP(stats: stats, iv: iv, level: level))
-                if cp <= (cpCap ?? 0) {
-                    maxLevel = level
-                    maxCP = cp
-                    break
+            var bestCP: Int = 0
+            while lowest < highest {
+                let mid = ceil(lowest + highest) / 2
+                let cp = calculateCP(stats: stats, iv: iv, level: mid)
+                if cp <= cpCap {
+                    lowest = mid
+                    bestCP = cp
+                } else {
+                    highest = mid - 0.5
                 }
             }
             if maxLevel != 0 {
                 let value = calculateStatProduct(stats: stats, iv: iv, level: maxLevel)
                 if ranking[value] == nil {
-                    ranking[value] = Response(competitionRank: value,
+                    ranking[value] = Response(
+                        competitionRank: value,
                         denseRank: value,
                         ordinalRank: value,
                         percentage: 0.0,
-                        ivs: [])
+                        ivs: [],
+                        cap: lvlCap
+                    )
                 }
-                ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
+                ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: bestCP))
             }
         }
         return ranking
@@ -357,20 +374,20 @@ public class PVPStatsManager {
     }
 
     private func formFrom(name: String) -> PokemonDisplayProto.Form? {
-        return PokemonDisplayProto.Form.allCases.first { (form) -> Bool in
-            return String(describing: form).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        PokemonDisplayProto.Form.allCases.first { (form) -> Bool in
+            String(describing: form).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
     private func pokemonFrom(name: String) -> HoloPokemonId? {
-        return HoloPokemonId.allCases.first { (pokemon) -> Bool in
-            return String(describing: pokemon).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        HoloPokemonId.allCases.first { (pokemon) -> Bool in
+            String(describing: pokemon).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
     private func genderFrom(name: String) -> PokemonDisplayProto.Gender? {
-        return PokemonDisplayProto.Gender.allCases.first { (gender) -> Bool in
-            return String(describing: gender).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        PokemonDisplayProto.Gender.allCases.first { (gender) -> Bool in
+            String(describing: gender).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
@@ -413,6 +430,10 @@ extension PVPStatsManager {
             }
             return all
         }
+
+        static var hundo: IV {
+            IV(attack: 15, defense: 15, stamina: 15)
+        }
     }
 
     enum ResponsesOrEvent {
@@ -431,6 +452,7 @@ extension PVPStatsManager {
         var ordinalRank: Int
         var percentage: Double
         var ivs: [IVWithCP]
+        var cap: Int
     }
 
     enum League: Int, CaseIterable {

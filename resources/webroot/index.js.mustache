@@ -2478,7 +2478,7 @@ function getPokemonPopupContent (pokemon) {
           infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         }
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
@@ -2505,7 +2505,7 @@ function getPokemonPopupContent (pokemon) {
           infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         }
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
@@ -2532,7 +2532,7 @@ function getPokemonPopupContent (pokemon) {
           infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         }
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + ')'
+          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
