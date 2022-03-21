@@ -322,7 +322,6 @@ public class PVPStatsManager {
         var ranking = [Int: Response]()
         for iv in IV.all {
             var lowest = 1.0, highest = Double(lvlCap)
-            var maxLevel: Double = 0
             var bestCP: Int = 0
             while lowest < highest {
                 let mid = ceil(lowest + highest) / 2
@@ -334,8 +333,8 @@ public class PVPStatsManager {
                     highest = mid - 0.5
                 }
             }
-            if maxLevel != 0 {
-                let value = calculateStatProduct(stats: stats, iv: iv, level: maxLevel)
+            if lowest != 0 {
+                let value = calculateStatProduct(stats: stats, iv: iv, level: lowest)
                 if ranking[value] == nil {
                     ranking[value] = Response(
                         competitionRank: value,
@@ -346,7 +345,7 @@ public class PVPStatsManager {
                         cap: lvlCap
                     )
                 }
-                ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: bestCP))
+                ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
             }
         }
         return ranking
