@@ -17,7 +17,7 @@ public class PVPStatsManager {
     public static let global = PVPStatsManager()
     internal static var defaultPVPRank: RankType = .dense
     internal static var lvlCaps: [Int] = [50]
-    internal static var leagueFilter: [Int: Int] = [ 500: 450, 1500: 1400,  2500: 2350 ]
+    internal static var leagueFilter: [Int: Int] = [ 500: 450, 1500: 1400, 2500: 2350 ]
 
     private var stats = [PokemonWithFormAndGender: Stats]()
     private let rankingLittleLock = Threading.Lock()
