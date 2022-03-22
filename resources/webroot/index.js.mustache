@@ -2471,17 +2471,15 @@ function getPokemonPopupContent (pokemon) {
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
-        let infoString
-        if (ranking.rank === null) {
-          infoString = 'CP too high'
-        } else {
-          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-        }
+        let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
           infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
+      if (pokemon.pvp.ultra.length == 0) {
+        content += '<small>n.A.</small><br>'
+      }
     }
   }
 
@@ -2498,17 +2496,15 @@ function getPokemonPopupContent (pokemon) {
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
-        let infoString
-        if (ranking.rank === null) {
-          infoString = 'CP too high'
-        } else {
-          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-        }
+        let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
           infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
+      if (pokemon.pvp.great.length == 0) {
+        content += '<small>n.A.</small><br>'
+      }
     }
   }
 
@@ -2525,17 +2521,15 @@ function getPokemonPopupContent (pokemon) {
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
-        let infoString
-        if (ranking.rank === null) {
-          infoString = 'CP too high'
-        } else {
-          infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-        }
+        let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
           infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
+      if (pokemon.pvp.ultra.length == 0) {
+        content += '<small>n.A.</small><br>'
+      }
     }
   }
 
