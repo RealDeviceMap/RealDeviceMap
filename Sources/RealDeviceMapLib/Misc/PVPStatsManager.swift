@@ -184,6 +184,9 @@ public class PVPStatsManager {
                         case .competition: rank = ranking.response?.competitionRank as Any
                         case .ordinal: rank = ranking.response?.ordinalRank as Any
                         }
+                        if ranking.response == nil {
+                            return [:]
+                        }
                         return [
                             "pokemon": ranking.pokemon.pokemon.rawValue,
                             "form": ranking.pokemon.form?.rawValue ?? 0,
@@ -197,7 +200,7 @@ public class PVPStatsManager {
                             "ordinal_rank": ranking.response?.ordinalRank as Any,
                             "cap": ranking.response?.cap as Any
                         ]
-                    })
+                    }).filter({ !$0.isEmpty })
                 })
         return pvp
     }
@@ -274,7 +277,7 @@ public class PVPStatsManager {
                 rankingUltra[info] = .event(event: event)
                 rankingUltraLock.unlock()
             }
-            let values = getPVPValuesOrdered(stats: stats, cpCap: league.rawValue)
+            let values = calculateAllRanks(stats: stats, cpCap: league.rawValue)
             switch league {
             case .little:
                 rankingLittleLock.doWithLock { rankingLittle[info] = .responses(responses: values) }
@@ -299,21 +302,17 @@ public class PVPStatsManager {
         }
     }
 
-    private func getPVPValuesOrdered(stats: Stats, cpCap: Int) -> [Response] {
-        calculateAllRanks(stats: stats, cpCap: cpCap)
-                .sorted { (lhs, rhs) -> Bool in
-                    lhs.key >= rhs.key }
-                .map { (value) -> Response in
-                    value.value }
-    }
-
-    func calculateAllRanks(stats: Stats, cpCap: Int) -> [Int: Response] {
-        var ranking = [Int: Response]()
+    func calculateAllRanks(stats: Stats, cpCap: Int) -> [Response] {
+        var ranking = [Response]()
         for lvlCap in PVPStatsManager.lvlCaps {
             if calculateCP(stats: stats, iv: IV.hundo, level: Double(lvlCap)) <= PVPStatsManager.leagueFilter[cpCap]! {
                 continue
             }
-            ranking.merge(calculatePvPStat(stats: stats, cpCap: cpCap, lvlCap: lvlCap)) { (_, new) in new }
+            ranking += calculatePvPStat(stats: stats, cpCap: cpCap, lvlCap: lvlCap)
+                    .sorted { (lhs, rhs) -> Bool in
+                        lhs.key >= rhs.key }
+                    .map { (value) -> Response in
+                        value.value }
         }
         return ranking
     }
