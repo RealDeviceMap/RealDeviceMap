@@ -28,6 +28,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     public static var noPVP = false
     public static var noWeatherIVClearing = false
     public static var noCellPokemon = false
+    public static var saveSpawnpointLastSeen = false
 
     public static var cache: MemoryCache<Pokemon>?
 
@@ -229,7 +230,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
             let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
             let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+                                       updated: updated, lastSeen: updated, despawnSecond: UInt16(secondOfHour))
             try? spawnPoint.save(mysql: mysql, update: true)
         } else {
             expireTimestampVerified = false
@@ -254,9 +255,12 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 }
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + depsawnOffset)
                 self.expireTimestampVerified = true
+                if Pokemon.saveSpawnpointLastSeen {
+                    try? spawnpoint.setLastSeen(mysql: mysql)
+                }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                            updated: updated, despawnSecond: nil)
+                                            updated: updated, lastSeen: updated, despawnSecond: nil)
                 try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
@@ -440,7 +444,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
             let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
             let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                       updated: updated, despawnSecond: UInt16(secondOfHour))
+                                       updated: updated, lastSeen: updated, despawnSecond: UInt16(secondOfHour))
             try? spawnPoint.save(mysql: mysql, update: true)
         } else {
             expireTimestampVerified = false
@@ -466,9 +470,12 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
                 self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
                 self.expireTimestampVerified = true
+                if Pokemon.saveSpawnpointLastSeen {
+                    try? spawnpoint.setLastSeen(mysql: mysql)
+                }
             } else if spawnpoint == nil {
                 let spawnPoint = SpawnPoint(id: spawnId!, lat: lat, lon: lon,
-                                            updated: updated, despawnSecond: nil)
+                                            updated: updated, lastSeen: updated, despawnSecond: nil)
                 try? spawnPoint.save(mysql: mysql, update: true)
             }
         }
