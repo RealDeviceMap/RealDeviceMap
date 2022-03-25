@@ -71,9 +71,7 @@ let showDevices
 let showRaidTimers
 let showSubmissionCells
 
-let showLittleLeague
-let showGreatLeague
-let showUltraLeague
+let showPvp
 
 let availableItems = []
 let availableTileservers = {}
@@ -763,29 +761,13 @@ function loadStorage () {
   }
   store('spawnpoint_filter', JSON.stringify(spawnpointFilter))
 
-  const showLittleLeagueValue = retrieve('show_little_league')
-  if (showLittleLeagueValue === null) {
-    showLittleLeague = false
+  const showPvpValue = retrieve('show_pvp')
+  if (showPvpValue === null) {
+    showPvp = false
   } else {
-    showLittleLeague = (showLittleLeagueValue === 'true')
+    showPvp = (showPvpValue === 'true')
   }
-  store('show_little_league', showLittleLeague)
-
-  const showGreatLeagueValue = retrieve('show_great_league')
-  if (showGreatLeagueValue === null) {
-    showGreatLeague = false
-  } else {
-    showGreatLeague = (showGreatLeagueValue === 'true')
-  }
-  store('show_great_league', showGreatLeague)
-
-  const showUltraLeagueValue = retrieve('show_ultra_league')
-  if (showUltraLeagueValue === null) {
-    showUltraLeague = false
-  } else {
-    showUltraLeague = (showUltraLeagueValue === 'true')
-  }
-  store('show_ultra_league', showUltraLeague)
+  store('show_pvp', showPvp)
 }
 
 function initPreview () {
@@ -2464,12 +2446,10 @@ function getPokemonPopupContent (pokemon) {
   }
   content += '</small><br>'
 
-  if (pokemon.pvp && pokemon.pvp.little) {
+  if (pokemon.pvp) {
     content +=
-      '<a href="#" onclick="toggleLittleLeague()">' +
-      '<b>Little League:</b>' +
-      '</a><br>'
-    if (showLittleLeague) {
+      '<a href="#" onclick="togglePvp()"><b>PVP:</b></a><br>'
+    if (showPvp && pokemon.pvp.little) {
       $.each(pokemon.pvp.little, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -2484,14 +2464,8 @@ function getPokemonPopupContent (pokemon) {
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
     }
-  }
-
-  if (pokemon.pvp && pokemon.pvp.great) {
-    content +=
-      '<a href="#" onclick="toggleGreatLeague()">' +
-      '<b>Great League:</b>' +
-      '</a><br>'
-    if (showGreatLeague) {
+  
+    if (showPvp && pokemon.pvp.great) {
       $.each(pokemon.pvp.great, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -2506,14 +2480,8 @@ function getPokemonPopupContent (pokemon) {
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
     }
-  }
 
-  if (pokemon.pvp && pokemon.pvp.ultra) {
-    content +=
-      '<a href="#" onclick="toggleUltraLeague()">' +
-      '<b>Ultra League:</b>' +
-      '</a><br>'
-    if (showUltraLeague) {
+    if (showPvp && pokemon.pvp.ultra) {
       $.each(pokemon.pvp.ultra, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -5567,27 +5535,9 @@ function loadFilterSettings (e) {
 }
 
 // eslint-disable-next-line no-unused-vars
-function toggleLittleLeague() {
-  showLittleLeague = !showLittleLeague
-  store('show_little_league', showLittleLeague)
-  if (openedPokemon !== undefined) {
-    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
-  }
-}
-
-// eslint-disable-next-line no-unused-vars
-function toggleGreatLeague() {
-  showGreatLeague = !showGreatLeague
-  store('show_great_league', showGreatLeague)
-  if (openedPokemon !== undefined) {
-    openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
-  }
-}
-
-// eslint-disable-next-line no-unused-vars
-function toggleUltraLeague() {
-  showUltraLeague = !showUltraLeague
-  store('show_ultra_league', showUltraLeague)
+function togglePVP() {
+  showPvp = !showPvp
+  store('show_pvp', showPvp)
   if (openedPokemon !== undefined) {
     openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
   }
