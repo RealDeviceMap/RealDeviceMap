@@ -207,10 +207,10 @@ class AutoInstanceController: InstanceControllerProto {
             "[AutoInstanceController] [\(name)] Bootstrap Status: \(allCells.count - missingCellIDs.count)/" +
             "\(allCells.count) after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
         )
-        bootstrappLock.lock()
-        bootstrappCellIDs = missingCellIDs
-        bootstrappTotalCount = allCells.count
-        bootstrappLock.unlock()
+        bootstrappLock.doWithLock {
+            bootstrappCellIDs = missingCellIDs
+            bootstrappTotalCount = allCells.count
+        }
 
     }
 
@@ -430,7 +430,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     var closest: PokestopWithMode?
-                    let mode = lastMode[username ?? uuid]
+                    let mode = stopsLock.doWithLock { lastMode[username ?? uuid] }
                     if mode == nil {
                         closest = closestOverall
                     } else if mode == false {
@@ -628,7 +628,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.unlock()
                 }
-                lastMode[username ?? uuid] = pokestop.alternative
+                stopsLock.doWithLock { lastMode[username ?? uuid] = pokestop.alternative }
                 WebHookRequestHandler.setArQuestTarget(device: uuid, timestamp: timestamp, isAr: pokestop.alternative)
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
