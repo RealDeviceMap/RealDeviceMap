@@ -131,47 +131,64 @@ public class PVPStatsManager {
     }
 
     internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                              iv: IV, level: Double, league: League) -> Response? {
+                              iv: IV, level: Double, league: League) -> [Response] {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
-            return nil
+            return [Response]()
         }
 
-        var competitionIndex: Int = 0
-        var denseIndex: Int = 0
-        var ordinalIndex: Int = 0
-        var foundMatch: Bool = false
-
-        statLoop: for stat in stats {
-            competitionIndex = ordinalIndex
-            for ivlevel in stat.ivs {
-                if ivlevel.iv == iv && ivlevel.level >= level {
-                    foundMatch = true
-                    break statLoop
+        var rankings = [Response]()
+        var lastRank: Response? = nil
+        for lvlCap in PVPStatsManager.lvlCaps {
+            var competitionIndex: Int = 0
+            var denseIndex: Int = 0
+            var ordinalIndex: Int = 0
+            var foundMatch: Bool = false
+            var rank: Response? = nil
+            let filteredStats = stats.filter({ $0.cap == lvlCap })
+            statLoop: for stat in filteredStats {
+                competitionIndex = ordinalIndex
+                for ivlevel in stat.ivs {
+                    if ivlevel.iv == iv && ivlevel.level >= level {
+                        foundMatch = true
+                        rank = stat
+                        break statLoop
+                    }
+                    ordinalIndex += 1
                 }
-                ordinalIndex += 1
+                denseIndex += 1
             }
-            denseIndex += 1
+            if foundMatch == false {
+                continue
+            }
+
+            let max = Double(filteredStats[0].competitionRank)
+            let value = Double(rank!.competitionRank)
+            let ivs: [Response.IVWithCP]
+            if let currentIV = rank!.ivs.first(where: { $0.iv == iv }) {
+                ivs = [currentIV]
+            } else {
+                ivs = []
+            }
+
+            if lastRank != nil, let lastStat = lastRank?.ivs[0], let stat = rank?.ivs[0] {
+                if lastStat.level == stat.level && lastRank!.competitionRank == rank!.competitionRank &&
+                   lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
+                   lastStat.iv.stamina == stat.iv.stamina {
+                    lastRank!.capped = true
+                }
+            } else {
+                lastRank = Response(competitionRank: competitionIndex + 1,
+                    denseRank: denseIndex + 1,
+                    ordinalRank: ordinalIndex + 1,
+                    percentage: value/max,
+                    cap: rank!.cap,
+                    capped: false,
+                    ivs: ivs)
+                rankings.append(lastRank!)
+            }
         }
 
-        if foundMatch == false {
-            return nil
-        }
-
-        let max = Double(stats[0].competitionRank)
-        let result = stats[denseIndex]
-        let value = Double(result.competitionRank)
-        let ivs: [Response.IVWithCP]
-        if let currentIV = result.ivs.first(where: { return $0.iv == iv }) {
-            ivs = [currentIV]
-        } else {
-            ivs = []
-        }
-        return .init(competitionRank: competitionIndex + 1,
-                     denseRank: denseIndex + 1,
-                     ordinalRank: ordinalIndex + 1,
-                     percentage: value/max,
-                     ivs: ivs,
-                     cap: result.cap)
+        return rankings
     }
 
     internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
@@ -183,27 +200,28 @@ public class PVPStatsManager {
                         costume: costume, iv: iv, level: level, league: league).map({ (ranking) -> [String: Any] in
                         let rank: Any
                         switch PVPStatsManager.defaultPVPRank {
-                        case .dense: rank = ranking.response?.denseRank as Any
-                        case .competition: rank = ranking.response?.competitionRank as Any
-                        case .ordinal: rank = ranking.response?.ordinalRank as Any
+                        case .dense: rank = ranking.response.denseRank as Any
+                        case .competition: rank = ranking.response.competitionRank as Any
+                        case .ordinal: rank = ranking.response.ordinalRank as Any
                         }
-                        if ranking.response == nil {
-                            return [:]
-                        }
-                        return [
+                        var json = [
                             "pokemon": ranking.pokemon.pokemon.rawValue,
                             "form": ranking.pokemon.form?.rawValue ?? 0,
                             "gender": ranking.pokemon.gender?.rawValue ?? 0,
                             "rank": rank,
-                            "percentage": ranking.response?.percentage as Any,
-                            "cp": ranking.response?.ivs.first?.cp as Any,
-                            "level": ranking.response?.ivs.first?.level as Any,
-                            "competition_rank": ranking.response?.competitionRank as Any,
-                            "dense_rank": ranking.response?.denseRank as Any,
-                            "ordinal_rank": ranking.response?.ordinalRank as Any,
-                            "cap": ranking.response?.cap as Any
+                            "percentage": ranking.response.percentage as Any,
+                            "cp": ranking.response.ivs.first?.cp as Any,
+                            "level": ranking.response.ivs.first?.level as Any,
+                            "competition_rank": ranking.response.competitionRank as Any,
+                            "dense_rank": ranking.response.denseRank as Any,
+                            "ordinal_rank": ranking.response.ordinalRank as Any,
+                            "cap": ranking.response.cap as Any
                         ]
-                    }).filter({ !$0.isEmpty })
+                        if ranking.response.capped {
+                            json["capped"] = true
+                        }
+                        return json
+                    })
                 })
         return pvp
     }
@@ -211,12 +229,15 @@ public class PVPStatsManager {
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                                             gender: PokemonDisplayProto.Gender?,
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
-                                            -> [(pokemon: PokemonWithFormAndGender, response: Response?)] {
-        let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
-        var result = [(
+                                            -> [(pokemon: PokemonWithFormAndGender, response: Response)] {
+        let rankings = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
+        var result = [(pokemon: PokemonWithFormAndGender, response: Response)]()
+        for current in rankings {
+            result.append((
                 pokemon: PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender),
                 response: current
-        )]
+            ))
+        }
         guard !String(describing: costume).lowercased().contains(string: "noevolve"),
               let stat = stats[.init(pokemon: pokemon, form: form)],
               !stat.evolutions.isEmpty else {
@@ -343,8 +364,9 @@ public class PVPStatsManager {
                         denseRank: value,
                         ordinalRank: value,
                         percentage: 0.0,
-                        ivs: [],
-                        cap: lvlCap
+                        cap: lvlCap,
+                        capped: false,
+                        ivs: []
                     )
                 }
                 ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
@@ -452,8 +474,9 @@ extension PVPStatsManager {
         var denseRank: Int
         var ordinalRank: Int
         var percentage: Double
-        var ivs: [IVWithCP]
         var cap: Int
+        var capped: Bool
+        var ivs: [IVWithCP]
     }
 
     enum League: Int, CaseIterable {
