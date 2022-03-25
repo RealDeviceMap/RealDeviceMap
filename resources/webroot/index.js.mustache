@@ -2450,6 +2450,7 @@ function getPokemonPopupContent (pokemon) {
     content +=
       '<a href="#" onclick="togglePvp()"><b>PVP:</b></a><br>'
     if (showPvp && pokemon.pvp.little) {
+      content += '<img src="/image-api/misc?id=500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
       $.each(pokemon.pvp.little, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -2466,6 +2467,7 @@ function getPokemonPopupContent (pokemon) {
     }
   
     if (showPvp && pokemon.pvp.great) {
+      content += '<img src="/image-api/misc?id=1500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
       $.each(pokemon.pvp.great, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -2482,6 +2484,7 @@ function getPokemonPopupContent (pokemon) {
     }
 
     if (showPvp && pokemon.pvp.ultra) {
+      content += '<img src="/image-api/misc?id=2500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
       $.each(pokemon.pvp.ultra, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
@@ -5535,7 +5538,7 @@ function loadFilterSettings (e) {
 }
 
 // eslint-disable-next-line no-unused-vars
-function togglePVP() {
+function togglePvp() {
   showPvp = !showPvp
   store('show_pvp', showPvp)
   if (openedPokemon !== undefined) {
