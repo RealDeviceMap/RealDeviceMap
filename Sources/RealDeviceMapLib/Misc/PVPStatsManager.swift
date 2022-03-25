@@ -137,13 +137,13 @@ public class PVPStatsManager {
         }
 
         var rankings = [Response]()
-        var lastRank: Response? = nil
+        var lastRank: Response?
         for lvlCap in PVPStatsManager.lvlCaps {
             var competitionIndex: Int = 0
             var denseIndex: Int = 0
             var ordinalIndex: Int = 0
             var foundMatch: Bool = false
-            var rank: Response? = nil
+            var rank: Response?
             let filteredStats = stats.filter({ $0.cap == lvlCap })
             statLoop: for stat in filteredStats {
                 competitionIndex = ordinalIndex
