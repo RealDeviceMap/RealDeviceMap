@@ -117,11 +117,14 @@ public class PVPStatsManager {
                 stats[.init(pokemon: pokemon, form: form)] = stat
             }
         }
+        rankingLittleLock.lock()
         rankingGreatLock.lock()
         rankingUltraLock.lock()
         self.stats = stats
+        self.rankingLittle = [:]
         self.rankingGreat = [:]
         self.rankingUltra = [:]
+        rankingLittleLock.unlock()
         rankingGreatLock.unlock()
         rankingUltraLock.unlock()
         Log.debug(message: "[PVPStatsManager] Done parsing game master file")
@@ -132,6 +135,7 @@ public class PVPStatsManager {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
+        print("getPVPStats: \(stats)")
 
         var competitionIndex: Int = 0
         var denseIndex: Int = 0
