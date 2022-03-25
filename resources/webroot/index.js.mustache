@@ -1827,23 +1827,29 @@ function getPokemonIndex (pokemon) {
   if (pokemon.atk_iv === 15 && pokemon.def_iv === 15 && pokemon.sta_iv === 15) {
     return 9
   }
-  if (pokemon.pvp && pokemon.pvp.little && pokemon.pvp.great && pokemon.pvp.ultra) {
+  if (pokemon.pvp) {
     let bestRank = 4
-    $.each(pokemon.pvp.little, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
-    $.each(pokemon.pvp.great, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
-    $.each(pokemon.pvp.ultra, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
+    if (pokemon.pvp.little) {
+      $.each(pokemon.pvp.little, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
+    if (pokemon.pvp.great) {
+      $.each(pokemon.pvp.great, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
+    if (pokemon.pvp.ultra) {
+      $.each(pokemon.pvp.ultra, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
     if (bestRank === 1) {
       return 7
     } else if (bestRank === 2) {
@@ -4690,23 +4696,29 @@ function getGymIconURL(teamId, level, battle, ex, raidLevel, raidEx, raidHatched
 
 function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender, pokemonEvolution, pvp, isCellSpawn) {
   let bestRank
-  if (pvp && pvp.little && pvp.great && pvp.ultra) {
+  if (pvp) {
     bestRank = 4
-    $.each(pvp.little, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
-    $.each(pvp.great, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
-    $.each(pvp.ultra, function (index, ranking) {
-      if (ranking.rank !== null && ranking.rank < bestRank) {
-        bestRank = ranking.rank
-      }
-    })
+    if (pvp.little) {
+      $.each(pvp.little, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
+    if (pvp.great) {
+      $.each(pvp.great, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
+    if (pvp.ultra) {
+      $.each(pvp.ultra, function (index, ranking) {
+        if (ranking.rank !== null && ranking.rank < bestRank) {
+          bestRank = ranking.rank
+        }
+      })
+    }
   } else {
     bestRank = null
   }
