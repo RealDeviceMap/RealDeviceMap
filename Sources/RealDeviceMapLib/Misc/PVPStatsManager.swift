@@ -175,6 +175,7 @@ public class PVPStatsManager {
                    lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
                    lastStat.iv.stamina == stat.iv.stamina {
                     lastRank!.capped = true
+                    print("[TMP] PVP found a capped pokemon")
                 }
             } else {
                 lastRank = Response(competitionRank: competitionIndex + 1,
@@ -187,7 +188,9 @@ public class PVPStatsManager {
                 rankings.append(lastRank!)
             }
         }
-
+        if rankings.count > 1 {
+            print("[TMP] found \(rankings.count) for a single pokemon")
+        }
         return rankings
     }
 
