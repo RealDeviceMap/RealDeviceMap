@@ -196,11 +196,12 @@ public class PVPStatsManager {
 
     internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                                    gender: PokemonDisplayProto.Gender?, costume: PokemonDisplayProto.Costume, iv: IV,
-                                   level: Double) -> [String: Any] {
+                                   level: Double) -> [String: Any]? {
         var pvp: [String: Any] = [:]
         League.allCases.forEach({ (league)  in
-                    pvp[league.toString()] = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
-                        costume: costume, iv: iv, level: level, league: league).map({ (ranking) -> [String: Any] in
+            let stats = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
+                costume: costume, iv: iv, level: level, league: league)
+                    .map({ (ranking) -> [String: Any] in
                         let rank: Any
                         switch PVPStatsManager.defaultPVPRank {
                         case .dense: rank = ranking.response.denseRank as Any
@@ -225,8 +226,12 @@ public class PVPStatsManager {
                         }
                         return json
                     })
-                })
-        return pvp
+            if !stats.isEmpty {
+                // only add stats if not empty to prevent empty list in JSON result
+                pvp[league.toString()] = stats
+            }
+        })
+        return (pvp.isEmpty ? nil : pvp)
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
