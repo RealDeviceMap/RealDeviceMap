@@ -234,6 +234,7 @@ public class AssignmentController: InstanceControllerDelegate {
         } catch {
             Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
+
         for instance in clearQuests {
             InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
         }
