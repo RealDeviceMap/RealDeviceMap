@@ -135,7 +135,6 @@ public class PVPStatsManager {
         guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
             return nil
         }
-        print("getPVPStats: \(stats)")
 
         var competitionIndex: Int = 0
         var denseIndex: Int = 0
