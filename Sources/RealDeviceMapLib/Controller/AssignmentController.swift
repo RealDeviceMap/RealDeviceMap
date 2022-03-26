@@ -186,6 +186,8 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
+    // swiftlint:disable:next superfluous_disable_command
+    // swiftlint:disable cyclomatic_complexity
     internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
         let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
         let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
@@ -233,6 +235,9 @@ public class AssignmentController: InstanceControllerDelegate {
             Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
 
+        for instance in clearQuests {
+            InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
+        }
         for assignment in assignmentsInGroup {
             try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
         }
