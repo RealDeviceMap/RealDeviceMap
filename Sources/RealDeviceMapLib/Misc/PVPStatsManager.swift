@@ -175,7 +175,6 @@ public class PVPStatsManager {
                lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
                lastStat.iv.stamina == stat.iv.stamina {
                 lastRank!.capped = true
-                Log.info(message: "[TMP] PVP found a capped pokemon")
             } else {
                 lastRank = Response(competitionRank: competitionIndex + 1,
                     denseRank: denseIndex + 1,
