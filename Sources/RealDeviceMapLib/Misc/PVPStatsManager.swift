@@ -145,7 +145,6 @@ public class PVPStatsManager {
             var foundMatch: Bool = false
             var rank: Response?
             let filteredStats = stats.filter({ $0.cap == lvlCap })
-            Log.info(message: "[TMP] \(pokemon) - \(lvlCap) - \(filteredStats.count)")
             statLoop: for stat in filteredStats {
                 competitionIndex = ordinalIndex
                 for ivlevel in stat.ivs {
@@ -171,13 +170,12 @@ public class PVPStatsManager {
                 ivs = []
             }
 
-            if lastRank != nil, let lastStat = lastRank!.ivs.first, let stat = rank!.ivs.first {
-                if lastStat.level == stat.level && lastRank!.competitionRank == rank!.competitionRank &&
-                   lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
-                   lastStat.iv.stamina == stat.iv.stamina {
-                    lastRank!.capped = true
-                    Log.info(message: "[TMP] PVP found a capped pokemon")
-                }
+            if lastRank != nil, let lastStat = lastRank!.ivs.first, let stat = rank!.ivs.first,
+               lastStat.level == stat.level && lastRank!.competitionRank == rank!.competitionRank &&
+               lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
+               lastStat.iv.stamina == stat.iv.stamina {
+                lastRank!.capped = true
+                Log.info(message: "[TMP] PVP found a capped pokemon")
             } else {
                 lastRank = Response(competitionRank: competitionIndex + 1,
                     denseRank: denseIndex + 1,
