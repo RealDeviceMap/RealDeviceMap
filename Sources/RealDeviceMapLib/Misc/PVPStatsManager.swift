@@ -171,7 +171,7 @@ public class PVPStatsManager {
             }
 
             if lastRank != nil, let lastStat = lastRank!.ivs.first, let stat = ivs.first,
-               lastStat.level == stat.level && lastRank!.competitionRank == rank!.competitionRank &&
+               lastStat.level == stat.level && lastRank!.competitionRank == competitionIndex + 1 &&
                lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
                lastStat.iv.stamina == stat.iv.stamina {
                 lastRank!.capped = true
