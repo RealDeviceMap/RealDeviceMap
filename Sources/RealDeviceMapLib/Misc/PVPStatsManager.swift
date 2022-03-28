@@ -174,7 +174,10 @@ public class PVPStatsManager {
                lastStat.level == stat.level && lastRank!.competitionRank == competitionIndex + 1 &&
                lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
                lastStat.iv.stamina == stat.iv.stamina {
-                lastRank!.capped = true
+                if let index = rankings.firstIndex(where: { $0.competitionRank == lastRank!.competitionRank }) {
+                    lastRank!.capped = true
+                    rankings[index] = lastRank!
+                }
             } else {
                 lastRank = Response(competitionRank: competitionIndex + 1,
                     denseRank: denseIndex + 1,
