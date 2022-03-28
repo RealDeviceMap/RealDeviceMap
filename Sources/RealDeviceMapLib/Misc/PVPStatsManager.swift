@@ -187,9 +187,6 @@ public class PVPStatsManager {
                 rankings.append(lastRank!)
             }
         }
-        if rankings.count > 1 {
-            Log.info(message: "[TMP] found \(rankings.count) for a single pokemon")
-        }
         return rankings
     }
 
