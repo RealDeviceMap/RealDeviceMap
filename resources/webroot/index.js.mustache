@@ -2326,7 +2326,7 @@ function getPokemonPopupContent (pokemon) {
 
   let pokemonName
   if (pokemon.form !== 0 && pokemon.form !== null) {
-    pokemonName = getFormName(pokemon.form).concat(" ", getPokemonName(pokemon.pokemon_id))
+    pokemonName = getFormNameNormalized(pokemon.form).concat(" ", getPokemonName(pokemon.pokemon_id))
   } else {
     pokemonName = getPokemonName(pokemon.pokemon_id)
   }
@@ -2454,7 +2454,7 @@ function getPokemonPopupContent (pokemon) {
       $.each(pokemon.pvp.little, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
-          pokemonName = getFormName(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
+          pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
@@ -2471,7 +2471,7 @@ function getPokemonPopupContent (pokemon) {
       $.each(pokemon.pvp.great, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
-          pokemonName = getFormName(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
+          pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
@@ -2488,7 +2488,7 @@ function getPokemonPopupContent (pokemon) {
       $.each(pokemon.pvp.ultra, function (index, ranking) {
         let pokemonName
         if (ranking.form !== 0) {
-          pokemonName = getFormName(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
+          pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
         } else {
           pokemonName = getPokemonName(ranking.pokemon)
         }
@@ -2752,7 +2752,7 @@ function getGymPopupContent (gym) {
     var pokemonName
     if (hasRaidBoss && isRaidBattle) {
       if (gym.raid_pokemon_form !== 0 && gym.raid_pokemon_form !== null) {
-        pokemonName = getFormName(gym.raid_pokemon_form).concat(" ", getPokemonName(gym.raid_pokemon_id))
+        pokemonName = getFormNameNormalized(gym.raid_pokemon_form).concat(" ", getPokemonName(gym.raid_pokemon_id))
       } else {
         pokemonName = getPokemonName(gym.raid_pokemon_id)
       }
@@ -3041,7 +3041,11 @@ function getPokemonType (typeId) {
 }
 
 function getFormName (formId) {
-  let formName = i18n('form_' + formId)
+  return i18n('form_' + formId)
+}
+
+function getFormNameNormalized (formId) {
+  let formName = getFormName(formId)
   if (formName === "Normal") {
     return ""
   } else {
