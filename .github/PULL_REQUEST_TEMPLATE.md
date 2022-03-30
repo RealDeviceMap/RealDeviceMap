@@ -24,7 +24,7 @@
 <!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
 <!--  NOTE: In order to check code style locally and avoid having your build rejected by GitHub Actions, -->
-<!--  run the following commands before you commit: `swiftlint` and `eslint`. Fix anyissues they point out. -->
+<!--  run the following commands before you commit: `swiftlint` and `eslint`. Fix any issues they point out. -->
 - [ ] My code follows the code style of this project.
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
