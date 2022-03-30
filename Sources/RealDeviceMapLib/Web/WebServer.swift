@@ -103,7 +103,7 @@ public class WebServer {
 
         let sessionDriver = SessionMySQLDriver()
 
-        let routes = Routes(WebRoutes.routes + APIRoutes.routes)
+        let routes = Routes(WebRoutes.routes + APIRoutes.routes + ImageAPIRoutes.routes)
 
         return HTTPServer.Server(name: "Web Server", address: address, port: port, routes: routes,
                                  requestFilters: [sessionDriver.requestFilter],

@@ -15,11 +15,16 @@ import POGOProtos
 import Backtrace
 
 public func setupRealDeviceMap() {
-    Backtrace.install()
-
-    let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "info"
+    let environment = ProcessInfo.processInfo.environment
+    let logLevel = environment["LOG_LEVEL"]?.lowercased() ?? "info"
     Log.even = true
     Log.setThreshold(value: logLevel)
+
+    if environment["NO_INSTALL_BACKTRACE"] == nil {
+        Log.info(message: "[MAIN] Installing Backtrace")
+        Backtrace.install()
+    }
+
     Log.info(message: "[MAIN] Getting Version")
     _ = VersionManager.global
 
@@ -45,10 +50,10 @@ public func setupRealDeviceMap() {
     _ = DBController.global
 
     // Init MemoryCache
-    if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
-        let memoryCacheClearInterval = ProcessInfo.processInfo
-            .environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
-        let memoryCacheKeepTime = ProcessInfo.processInfo.environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    let noMemoryCache = environment["NO_MEMORY_CACHE"]
+    let memoryCacheClearInterval = environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
+    let memoryCacheKeepTime = environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    if noMemoryCache == nil {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
@@ -191,51 +196,65 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Webhook Controller")
     WebHookController.global.start()
 
-    // disable image generation, no Frontend is used
-    let noGenerateImages =
-        ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
-    // Load Forms
-    if !noGenerateImages {
-        Log.info(message: "[MAIN] Loading Available Forms")
-        var availableForms = [String]()
-        do {
-            try Dir("\(Dir.projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
-                let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
-                if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-                    availableForms.append("\(pokemonID)-\(formID)")
-                } else if split.count == 3, let pokemonID = Int(split[0]),
-                          let formID = Int(split[1]), let evoId = Int(split[2]) {
-                    availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
-                }
-            }
-            WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
-        } catch {
-            Log.error(
-                message: "Failed to load forms. Frontend will only display default forms. " +
-                    "Error: \(error.localizedDescription)"
-            )
-        }
-    } else {
-        Log.info(message: "[MAIN] Loading Available Forms skipped - Image generation disabled")
-    }
-
     Log.info(message: "[MAIN] Loading Available Items")
-    var availableItems = [-6, -5, -4, -3, -2, -1]
+    var availableItems: [Int] = []
+    for rewardType in QuestRewardProto.TypeEnum.allAvailable {
+        if rewardType != .pokemonEncounter && rewardType != .item {
+            availableItems.append(rewardType.rawValue * -1)
+        }
+    }
     for itemId in Item.allAvailable {
         availableItems.append(itemId.rawValue)
     }
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
-    Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
-    Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
-    Pokemon.noCellPokemon = ProcessInfo.processInfo.environment["NO_CELL_POKEMON"] != nil
-    InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
+    Pokemon.noPVP = environment["NO_PVP"] != nil
+    Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
+    Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
+    Pokemon.saveSpawnpointLastSeen = environment["SAVE_SPAWNPOINT_LASTSEEN"] != nil
+    InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil
 
     if !Pokemon.noPVP {
         Log.info(message: "[MAIN] Getting PVP Stats")
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
+    }
+
+    // Load Icon styles
+    Log.info(message: "[MAIN] Load Icon Styles")
+    ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
+            .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
+    if environment["NO_GENERATE_IMAGES"] != nil {
+        ImageManager.noImageGeneration = true
+    }
+    _ = ImageManager.global
+    if noMemoryCache == nil {
+        // this will use the same cache values like the pokemon cache
+        ImageManager.devicePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.gymPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.invasionPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.miscPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.pokemonPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.pokestopPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.raidPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.rewardPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.spawnpointPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.teamPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.typePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.weatherPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     }
 
     Log.info(message: "[MAIN] Starting Account Controller")
@@ -277,14 +296,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Discord Controller")
     try! DiscordController.global.setup()
 
-    // Create images
-    if !noGenerateImages {
-      Log.info(message: "[MAIN] Starting Images Generator")
-      ImageGenerator.generate()
-    } else {
-      Log.info(message: "[MAIN] Image generation disabled - skipping")
-    }
-
     // Stopping Startup Webserver
     Log.info(message: "[MAIN] Stopping Startup Webserver")
     startupServerContext!.terminate()
@@ -292,7 +303,7 @@ public func setupRealDeviceMap() {
     startupServerContext = nil
 
     ApiRequestHandler.start = Date()
-
+    Log.info(message: "[MAIN] Setup during startup finished ...")
     Log.info(message: "[MAIN] Starting Webservers")
     do {
         try HTTPServer.launch(

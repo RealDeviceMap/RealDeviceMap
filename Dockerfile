@@ -20,17 +20,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 RUN apt-get -y update && apt-get install -y wget
 
 # MySQL Client
-RUN export DEBIAN_FRONTEND=noninteractive && \
-	apt-get -y update && \
-	apt-get install -y lsb-release && \
-	wget http://repo.mysql.com/mysql-apt-config_0.8.22-1_all.deb && \
-	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
-	dpkg -i mysql-apt-config_0.8.22-1_all.deb && \
-	apt-get -y update && \
-	apt-get install -y -f mysql-client=5.7* libmysqlclient-dev=5.7* && \
+RUN apt-get -y update && \
+	apt-get install -y lsb-release mysql-client libmysqlclient-dev && \
 	sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
 
 # Pre-Build
@@ -72,21 +63,16 @@ RUN apt-get -y update && apt-get install -y wget
 # MySQL Client
 RUN export DEBIAN_FRONTEND=noninteractive && \
 	apt-get -y update && \
-	apt-get install -y lsb-release && \
-	wget http://repo.mysql.com/mysql-apt-config_0.8.22-1_all.deb && \
-	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
-	dpkg -i mysql-apt-config_0.8.22-1_all.deb && \
-	apt-get -y update && \
-	apt-get install -y -f mysql-client=5.7* libmysqlclient-dev=5.7* && \
+	apt-get install -y lsb-release mysql-client libmysqlclient-dev && \
 	sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
 
 # Copy build artifacts
 COPY --from=build /build/.build/release .
 COPY resources resources
+COPY Scripts Scripts
 COPY .gitsha .
 COPY .gitref .
+
+RUN chmod +x ./Scripts/*
 
 ENTRYPOINT ["./RealDeviceMapApp"]

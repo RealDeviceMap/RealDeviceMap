@@ -156,6 +156,7 @@
                 <div class="modal-footer">
                     <div class="mr-auto">
                         <button class="btn btn-primary" data-toggle="modal" data-target="#mapstyleModal">{{filter_mapstyle}}</button>
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#iconstyleModal">{{filter_iconstyle}}</button>
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{filter_cancel}}</button>
                     <button type="button" id="saveSettings" class="btn btn-primary">{{filter_save}}</button>
@@ -422,6 +423,28 @@
                     <div class="form-group">
                         {{filter_select_mapstyle}}
                         <select class="form-control" id="select-mapstyle" required></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{{filter_close}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="iconstyleModal" tabindex="-1" role="dialog" aria-labelledby="iconstyleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="iconstyleModalLabel">{{filter_iconstyle}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        {{filter_select_iconstyle}}
+                        <select class="form-control" id="select-iconstyle" required></select>
                     </div>
                 </div>
                 <div class="modal-footer">

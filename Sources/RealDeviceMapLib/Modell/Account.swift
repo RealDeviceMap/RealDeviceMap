@@ -955,4 +955,34 @@ public class Account: WebHookEvent {
         return stats
     }
 
+    public static func getAllAccountGroupNames(mysql: MySQL?=nil) throws -> [String] {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+                  SELECT DISTINCT `group`
+                  FROM account
+                  WHERE `group` IS NOT NULL
+                  """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query 'account group names'. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+
+        var groupNames = [String]()
+        while let result = results.next() {
+            groupNames.append(result[0] as! String)
+        }
+
+        return groupNames
+    }
+
 }

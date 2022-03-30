@@ -112,11 +112,11 @@ class SubmissionPlacementCell: JSONConvertibleObject {
         ).filter({ (gym) -> Bool in
             return gym.sponsorId == nil || gym.sponsorId == 0
         })
-        let allStopCoords = allStops.map { (pokestop) -> CLLocationCoordinate2D in
-            return CLLocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
+        let allStopCoords = allStops.map { (pokestop) -> LocationCoordinate2D in
+            return LocationCoordinate2D(latitude: pokestop.lat, longitude: pokestop.lon)
         }
-        let allGymCoords = allGyms.map { (gym) -> CLLocationCoordinate2D in
-            return CLLocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
+        let allGymCoords = allGyms.map { (gym) -> LocationCoordinate2D in
+            return LocationCoordinate2D(latitude: gym.lat, longitude: gym.lon)
         }
         let allCoords = allStopCoords + allGymCoords
 
@@ -125,8 +125,8 @@ class SubmissionPlacementCell: JSONConvertibleObject {
         regionCoverer.minLevel = 17
         regionCoverer.maxLevel = 17
         let region = S2LatLngRect(
-            lo: S2LatLng(coord: CLLocationCoordinate2D(latitude: minLatReal, longitude: minLonReal)),
-            hi: S2LatLng(coord: CLLocationCoordinate2D(latitude: maxLatReal, longitude: maxLonReal))
+            lo: S2LatLng(coord: LocationCoordinate2D(latitude: minLatReal, longitude: minLonReal)),
+            hi: S2LatLng(coord: LocationCoordinate2D(latitude: maxLatReal, longitude: maxLonReal))
         )
 
         var indexedCells = [UInt64: SubmissionPlacementCell]()
