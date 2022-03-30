@@ -501,6 +501,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         }
         if self.atkIv == nil || self.defIv == nil || self.staIv == nil {
             // e.g. if weather boosted ditto found
+            // weather boosted ditto was removed atm, keep this as reminder
             return
         }
         let costume = PokemonDisplayProto.Costume(rawValue: Int(self.costume ?? 0)) ?? .unset
