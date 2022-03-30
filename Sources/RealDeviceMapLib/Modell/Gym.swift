@@ -593,13 +593,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeTeamSQL = ""
         } else {
             var sqlExcludeCreate = "AND (team_id NOT IN ("
-            for index in excludedTeams.indices {
-                if index == excludedTeams.count - 1 {
-                    sqlExcludeCreate += "?))"
-                } else {
-                    sqlExcludeCreate += "?, "
-                }
+            for _ in 1..<excludedTeams.count {
+                sqlExcludeCreate += "?, "
             }
+            sqlExcludeCreate += "?))"
             excludeTeamSQL = sqlExcludeCreate
         }
 
@@ -607,13 +604,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludeAvailableSlotsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (available_slots NOT IN ("
-            for index in excludedAvailableSlots.indices {
-                if index == excludedAvailableSlots.count - 1 {
-                    sqlExcludeCreate += "?))"
-                } else {
-                    sqlExcludeCreate += "?, "
-                }
+            for _ in 1..<excludedAvailableSlots.count {
+                sqlExcludeCreate += "?, "
             }
+            sqlExcludeCreate += "?))"
             excludeAvailableSlotsSQL = sqlExcludeCreate
         }
 
@@ -621,13 +615,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             excludePowerUpLevelsSQL = ""
         } else {
             var sqlExcludeCreate = "AND (power_up_level NOT IN ("
-            for index in excludedPowerUpLevels.indices {
-                if index == excludedPowerUpLevels.count - 1 {
-                    sqlExcludeCreate += "?))"
-                } else {
-                    sqlExcludeCreate += "?, "
-                }
+            for _ in 1..<excludedPowerUpLevels.count {
+                sqlExcludeCreate += "?, "
             }
+            sqlExcludeCreate += "?))"
             excludePowerUpLevelsSQL = sqlExcludeCreate
         }
 
@@ -685,7 +676,6 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         for id in excludedAvailableSlots {
             mysqlStmt.bindParam(id)
         }
-
         for id in excludedPowerUpLevels {
             mysqlStmt.bindParam(id)
         }

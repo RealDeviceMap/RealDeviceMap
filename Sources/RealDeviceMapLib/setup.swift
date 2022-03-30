@@ -216,6 +216,17 @@ public func setupRealDeviceMap() {
 
     if !Pokemon.noPVP {
         Log.info(message: "[MAIN] Getting PVP Stats")
+        let pvpRank = environment["PVP_DEFAULT_RANK"] ?? "dense"
+        PVPStatsManager.defaultPVPRank = PVPStatsManager.RankType(rawValue: pvpRank) ?? .dense
+        let pvpLittleFilter = environment["PVP_LITTLE_FILTER"]?.toInt()
+        if pvpLittleFilter != nil { PVPStatsManager.leagueFilter[500] = pvpLittleFilter! }
+        let pvpGreatFilter = environment["PVP_GREAT_FILTER"]?.toInt()
+        if pvpGreatFilter != nil { PVPStatsManager.leagueFilter[1500] = pvpGreatFilter! }
+        let pvpUltraFilter = environment["PVP_ULTRA_FILTER"]?.toInt()
+        if pvpUltraFilter != nil { PVPStatsManager.leagueFilter[2500] = pvpUltraFilter! }
+        PVPStatsManager.lvlCaps = environment["PVP_LEVEL_CAPS"]?.components(separatedBy: ",")
+                .map({ Int($0.trimmingCharacters(in: .whitespaces))! }) ?? [50]
+        Log.info(message: "[MAIN] PVP Stats for Level Caps \(String(describing: PVPStatsManager.lvlCaps))")
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
