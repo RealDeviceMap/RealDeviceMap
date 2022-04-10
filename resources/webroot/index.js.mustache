@@ -2097,8 +2097,8 @@ function addPokemon(pokemon, ts) {
       oldPokemon.cp = pokemon.cp
       oldPokemon.weight = pokemon.weight
       oldPokemon.size = pokemon.size
-      oldPokemon.baseHeight = pokemon.baseHeight
-      oldPokemon.baseWeight = pokemon.baseWeight
+      oldPokemon.base_height = pokemon.base_height
+      oldPokemon.base_weight = pokemon.base_weight
       oldPokemon.move_1 = pokemon.move_1
       oldPokemon.move_2 = pokemon.move_2
       oldPokemon.level = pokemon.level
@@ -2398,8 +2398,8 @@ function getPokemonPopupContent (pokemon) {
   }
   if (pokemon.size !== null && pokemon.weight !== null) {
     content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + 'kg'
-    if (pokemon.baseHeight !== null) {
-      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.baseHeight) + '<br>'
+    if (pokemon.base_height !== null) {
+      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.base_height) + '<br>'
     } else {
       content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
     }
