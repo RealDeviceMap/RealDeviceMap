@@ -328,7 +328,7 @@ public class DBController {
 
             // Schema
             //  swiftlint:disable:next line_length
-            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
+            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
             let resultSchema = commandSchema.runError()
             if resultSchema == nil ||
                    resultSchema!.stringByReplacing(
@@ -344,7 +344,7 @@ public class DBController {
 
             // Trigger
             //  swiftlint:disable:next line_length
-            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
+            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
             let resultTrigger = commandTrigger.runError()
             if resultTrigger == nil ||
                    resultTrigger!.stringByReplacing(
@@ -360,7 +360,7 @@ public class DBController {
 
             // Data
             //  swiftlint:disable:next line_length
-            let commandData = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
+            let commandData = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
             let resultData = commandData.runError()
             if resultData == nil ||
                    resultData!.stringByReplacing(
