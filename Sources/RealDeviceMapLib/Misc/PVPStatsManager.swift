@@ -340,7 +340,8 @@ public class PVPStatsManager {
             }
             ranking += calculatePvPStat(stats: stats, cpCap: cpCap, lvlCap: lvlCap)
                     .sorted { (lhs, rhs) -> Bool in
-                        lhs.key >= rhs.key }
+                        // first sort by rank stats product, if equals sort by cp too
+                        (lhs.key, lhs.value.ivs.first!.cp) >= (rhs.key, rhs.value.ivs.first!.cp) }
                     .map { (value) -> Response in
                         value.value }
         }
