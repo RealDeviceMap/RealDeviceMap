@@ -249,14 +249,14 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
         let now = UInt32(Date().timeIntervalSince1970)
-        let powerUpRemaining = UInt32(fortData.powerUpRemainingUntilMs / 1000)
-        self.powerUpPoints = UInt32(fortData.locationPoints)
-        if fortData.locationPoints < 50 {
+        let powerUpRemaining = UInt32(fortData.powerUpLevelExpirationMs / 1000)
+        self.powerUpPoints = UInt32(fortData.powerUpProgressPoints)
+        if fortData.powerUpProgressPoints < 50 {
             self.powerUpLevel = 0
-        } else if fortData.locationPoints < 100 && powerUpRemaining > now {
+        } else if fortData.powerUpProgressPoints < 100 && powerUpRemaining > now {
             self.powerUpLevel = 1
             self.powerUpEndTimestamp = powerUpRemaining
-        } else if fortData.locationPoints < 150 && powerUpRemaining > now {
+        } else if fortData.powerUpProgressPoints < 150 && powerUpRemaining > now {
             self.powerUpLevel = 2
             self.powerUpEndTimestamp = powerUpRemaining
         } else if powerUpRemaining > now {
