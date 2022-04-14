@@ -243,19 +243,19 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
         let now = UInt32(Date().timeIntervalSince1970)
-        let powerUpRemaining = UInt32(fortData.powerUpLevelExpirationMs / 1000)
+        let powerUpLevelExpirationMs = UInt32(fortData.powerUpLevelExpirationMs / 1000)
         self.powerUpPoints = UInt32(fortData.powerUpProgressPoints)
         if fortData.powerUpProgressPoints < 50 {
             self.powerUpLevel = 0
-        } else if fortData.powerUpProgressPoints < 100 && powerUpRemaining > now {
+        } else if fortData.powerUpProgressPoints < 100 && powerUpLevelExpirationMs > now {
             self.powerUpLevel = 1
-            self.powerUpEndTimestamp = powerUpRemaining
-        } else if fortData.powerUpProgressPoints < 150 && powerUpRemaining > now {
+            self.powerUpEndTimestamp = powerUpLevelExpirationMs
+        } else if fortData.powerUpProgressPoints < 150 && powerUpLevelExpirationMs > now {
             self.powerUpLevel = 2
-            self.powerUpEndTimestamp = powerUpRemaining
-        } else if powerUpRemaining > now {
+            self.powerUpEndTimestamp = powerUpLevelExpirationMs
+        } else if powerUpLevelExpirationMs > now {
             self.powerUpLevel = 3
-            self.powerUpEndTimestamp = powerUpRemaining
+            self.powerUpEndTimestamp = powerUpLevelExpirationMs
         } else {
             self.powerUpLevel = 0
         }
