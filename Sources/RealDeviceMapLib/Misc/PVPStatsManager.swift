@@ -161,25 +161,6 @@ public class PVPStatsManager {
                 continue
             }
 
-            // debug print BEGIN
-
-            if pokemon.rawValue == 25 && league == .ultra && iv.attack == 15 && iv.defense == 15 && iv.stamina == 14 {
-                Log.info(message: "[TMP] pikachu stats \(iv): \n\(filteredStats)\n")
-            }
-            if pokemon.rawValue == 133 && (league == .great || league == .ultra) && iv.attack == 0 && iv.defense == 15 &&
-                   (iv.stamina == 15 || iv.stamina == 14) {
-                Log.info(message: "[TMP] umbreon stats \(iv): \n\(filteredStats)\n")
-            }
-            if pokemon.rawValue == 661 && league == .ultra && iv.attack == 15 && iv.defense == 15 && iv.stamina == 15 {
-                Log.info(message: "[TMP] fletchling stats \(iv): \n\(filteredStats)\n")
-            }
-            if pokemon.rawValue == 32 && league == .little && iv.attack == 0 && iv.defense == 15 &&
-                   (iv.stamina == 11 || iv.stamina == 12) {
-                Log.info(message: "[TMP] nidoran male stats \(iv): \n\(filteredStats)\n")
-            }
-
-            // debug print END
-
             let max = Double(filteredStats[0].competitionRank)
             let value = Double(rank!.competitionRank)
             let ivs: [Response.IVWithCP]
