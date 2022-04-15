@@ -147,7 +147,7 @@ public class PVPStatsManager {
             let filteredStats = stats.filter({ $0.cap == lvlCap })
             statLoop: for stat in filteredStats {
                 competitionIndex = ordinalIndex
-                for ivlevel in stat.ivs.sorted(by: { (lhs, rhs) -> Bool in lhs.cp >= rhs.cp }) {
+                for ivlevel in stat.ivs {
                     if ivlevel.iv == iv && ivlevel.level >= level {
                         foundMatch = true
                         rank = stat
@@ -375,7 +375,12 @@ public class PVPStatsManager {
                         ivs: []
                     )
                 }
-                ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
+                let index = ranking[value]!.ivs.firstIndex(where: { bestCP >= $0.cp })
+                if index != nil {
+                    ranking[value]!.ivs.insert(.init(iv: iv, level: lowest, cp: bestCP), at: index!)
+                } else {
+                    ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
+                }
             }
         }
         return ranking
