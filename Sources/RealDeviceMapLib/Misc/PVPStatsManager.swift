@@ -394,9 +394,8 @@ public class PVPStatsManager {
                         ivs: []
                     )
                 }
-                let index = ranking[value]!.ivs.firstIndex(where: { bestCP >= $0.cp })
-                if index != nil {
-                    ranking[value]!.ivs.insert(.init(iv: iv, level: lowest, cp: bestCP), at: index!)
+                if let index = ranking[value]!.ivs.firstIndex(where: { bestCP >= $0.cp }) {
+                    ranking[value]!.ivs.insert(.init(iv: iv, level: lowest, cp: bestCP), at: index)
                 } else {
                     ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
                 }
