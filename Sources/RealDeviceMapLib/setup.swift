@@ -227,6 +227,7 @@ public func setupRealDeviceMap() {
         PVPStatsManager.lvlCaps = environment["PVP_LEVEL_CAPS"]?.components(separatedBy: ",")
                 .map({ Int($0.trimmingCharacters(in: .whitespaces))! }) ?? [50]
         Log.info(message: "[MAIN] PVP Stats for Level Caps \(String(describing: PVPStatsManager.lvlCaps))")
+        Log.info(message: "[MAIN] PVP Stats defaults to rank type \(pvpRank)")
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
