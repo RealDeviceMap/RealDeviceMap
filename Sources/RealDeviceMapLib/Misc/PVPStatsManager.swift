@@ -111,9 +111,13 @@ public class PVPStatsManager {
                         evolutions.append(.init(pokemon: pokemon, form: form, gender: gender))
                     }
                 }
+                let costumeEvolution = (pokemonInfo["obCostumeEvolution"] as? [String])?.compactMap({ costume in
+                    costumeFrom(name: costume)
+                })
                 let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
                                   baseStamina: baseStamina, evolutions: evolutions,
-                                  baseHeight: pokedexHeightM, baseWeight: pokedexWeightKg)
+                                  baseHeight: pokedexHeightM, baseWeight: pokedexWeightKg,
+                                  costumeEvolutionOverride: costumeEvolution)
                 stats[.init(pokemon: pokemon, form: form)] = stat
             }
         }
@@ -244,9 +248,10 @@ public class PVPStatsManager {
                 response: current
             ))
         }
-        guard !String(describing: costume).lowercased().contains(string: "noevolve"),
-              let stat = stats[.init(pokemon: pokemon, form: form)],
-              !stat.evolutions.isEmpty else {
+        guard let stat = stats[.init(pokemon: pokemon, form: form)],
+              !stat.evolutions.isEmpty,
+              (!String(describing: costume).lowercased().contains(string: "noevolve")
+                  || (stat.costumeEvolutionOverride != nil && stat.costumeEvolutionOverride!.contains(costume))) else {
             return result
         }
         for evolution in stat.evolutions {
@@ -424,6 +429,12 @@ public class PVPStatsManager {
         }
     }
 
+    private func costumeFrom(name: String) -> PokemonDisplayProto.Costume? {
+        PokemonDisplayProto.Costume.allCases.first { (costume) -> Bool in
+            String(describing: costume).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        }
+    }
+
 }
 
 extension PVPStatsManager {
@@ -441,6 +452,7 @@ extension PVPStatsManager {
         var evolutions: [PokemonWithFormAndGender]
         var baseHeight: Double
         var baseWeight: Double
+        var costumeEvolutionOverride: [PokemonDisplayProto.Costume]?
     }
 
     struct IV: Equatable {
