@@ -609,7 +609,7 @@ function loadStorage () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 6; i++) {
+    for (i = 1; i <= 7; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -626,7 +626,7 @@ function loadStorage () {
       showRaidTimers = raidFilter.timers.show
     }
     let i
-    for (i = 1; i <= 6; i++) {
+    for (i = 1; i <= 7; i++) {
       if (raidFilter['l' + i] === undefined) {
         raidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -909,7 +909,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 6; i++) {
+    for (i = 1; i <= 7; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -926,7 +926,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
-    for (i = 1; i <= 6; i++) {
+    for (i = 1; i <= 7; i++) {
       defaultRaidFilter['l' + i] = { show: false, size: raidFilterNew['l' + i].size }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -1478,7 +1478,7 @@ function loadData () {
       raidFilterExclude.push('timers')
     }
     let i
-    for (i = 1; i <= 6; i++) {
+    for (i = 1; i <= 7; i++) {
       if (raidFilter['l' + i].show === false) {
         raidFilterExclude.push('l' + i)
       }
@@ -2763,6 +2763,8 @@ function getGymPopupContent (gym) {
       pokemonName = 'EX Egg'
     } else if (gym.raid_level === 6) {
       pokemonName = 'Mega Egg'
+    } else if (gym.raid_level === 7) {
+      pokemonName = 'Mega Legendary Egg'
     } else {
       pokemonName = 'Level ' + gym.raid_level + ' Egg'
     }
@@ -2815,6 +2817,8 @@ function getGymPopupContent (gym) {
           content += '<b>Level:</b> EX<br>'
         } else if (gym.raid_level === 6) {
           content += '<b>Level:</b> Mega<br>'
+        } else if (gym.raid_level === 7) {
+          content += '<b>Level:</b> Mega Legendary<br>'
         } else {
           content += '<b>Level:</b> ' + gym.raid_level + '<br>'
         }
