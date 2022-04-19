@@ -1607,7 +1607,7 @@ function loadData () {
             showPokestops ||
             (showQuests && questFilter.ar.show === false && pokestop.quest_type !== null) ||
             (showQuests && questFilter.ar.show === true && pokestop.alternative_quest_type !== null) ||
-            (showInvasions && pokestop.incident_expire_timestamp && pokestop.incident_expire_timestamp >= ts)) {
+            (showInvasions && pokestop.incidents.length > 0)) {
           addPokestop(pokestop, ts)
         }
       })
@@ -2125,10 +2125,6 @@ function addPokestop(pokestop, ts) {
     pokestop.lure_expire_timestamp = 0
   }
 
-  if (pokestop.incident_expire_timestamp === null) {
-    pokestop.incident_expire_timestamp = 0
-  }
-
   if (oldPokestop === undefined || pokestop.is_start) {
     pokestop.marker = getPokestopMarker(pokestop, ts)
     pokestopMarkers.push(pokestop)
@@ -2139,9 +2135,9 @@ function addPokestop(pokestop, ts) {
     } else {
       pokestop.willUpdate = false
     }
-    if (pokestop.incident_expire_timestamp >= ts) {
+    if (pokestop.incidents.length > 0) {
       pokestop.willUpdateIncident = true
-      startPokestopTimer(pokestop, pokestop.incident_expire_timestamp, ts)
+      startPokestopTimer(pokestop, Math.max.apply(Math, pokestop.incidents.map(function(o) { return o.expiration; })), ts)
     } else {
       pokestop.willUpdateIncident = false
     }
@@ -2154,10 +2150,8 @@ function addPokestop(pokestop, ts) {
       oldPokestop.lure_id = pokestop.lure_id
       oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
     }
-    if (oldPokestop.incident_expire_timestamp !== pokestop.incident_expire_timestamp) {
-      oldPokestop.incident_expire_timestamp = pokestop.incident_expire_timestamp
-      oldPokestop.pokestop_display = pokestop.pokestop_display
-      oldPokestop.grunt_type = pokestop.grunt_type
+    if (oldPokestop.incidents.length !== pokestop.incidents.length) {
+      oldPokestop.incidents = pokestop.incidents
       oldPokestop.marker.setIcon(getPokestopMarkerIcon(pokestop, ts))
     }
     if (oldPokestop.power_up_end_timestamp !== pokestop.power_up_end_timestamp) {
@@ -2191,9 +2185,9 @@ function addPokestop(pokestop, ts) {
       oldPokestop.willUpdate = true
       startPokestopTimer(oldPokestop, oldPokestop.lure_expire_timestamp, ts)
     }
-    if (oldPokestop.willUpdateIncident === false && oldPokestop.incident_expire_timestamp >= ts) {
+    if (oldPokestop.willUpdateIncident === false && oldPokestop.incidents.length !== pokestop.incidents.length) {
       oldPokestop.willUpdateIncident = true
-      startPokestopTimer(oldPokestop, oldPokestop.incident_expire_timestamp, ts)
+      startPokestopTimer(oldPokestop, Math.max.apply(Math, oldPokestop.incidents.map(function(o) { return o.expiration; })), ts)
     }
   }
 }
@@ -2563,7 +2557,7 @@ function addPokemonFilter (pokemonId, show) {
 function getPokestopPopupContent (pokestop) {
   const now = new Date()
   const lureExpireDate = new Date(pokestop.lure_expire_timestamp * 1000)
-  const invasionExpireDate = new Date(pokestop.incident_expire_timestamp * 1000)
+  let incidents = pokestop.incidents
   const powerUpEndDate = new Date(pokestop.power_up_end_timestamp * 1000)
   const isActiveLure = lureExpireDate >= now
   const isPoweredUp = powerUpEndDate >= now && parseInt(pokestop.power_up_level) > 0
@@ -2605,12 +2599,12 @@ function getPokestopPopupContent (pokestop) {
     content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>'
   }
 
-  if (invasionExpireDate >= now) {
-    var gruntType = getGruntName(pokestop.grunt_type)
+  $.each(incidents, function (index, incident) {
+    let invasionExpireDate = new Date(incident.expiration * 1000)
     content += '<b>Team Rocket Invasion</b><br>'
-    content += '<b>Grunt Type:</b> ' + gruntType + '<br>'
+    content += '<b>Grunt Type:</b> ' + getGruntName(incident.character) + '<br>'
     content += '<b>End Time:</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>'
-  }
+  })
 
   if (pokestop.quest_type !== null) {
     const conditions = pokestop.quest_conditions
@@ -3461,13 +3455,12 @@ function getPokestopMarkerIcon (pokestop, ts) {
     size = lureSize
   }
 
-  if ((pokestop.is_start || showInvasions === true) && pokestop.incident_expire_timestamp >= ts) {
-    invasionGruntType = pokestop.grunt_type
+  if ((pokestop.is_start || showInvasions === true) && pokestop.incidents && pokestop.incidents.length > 0) {
+    invasionGruntType = pokestop.incidents[0].character
     let invasionSize = getInvasionSize(invasionGruntType)
     if (invasionSize > size) {
       size = invasionSize
     }
-
   }
   let multiplierSize = 1
   let multiplierAnchor = 1
@@ -4736,7 +4729,7 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
   return response
 }
 
-function getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
+function getPokestopIconURL(lureId, invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
   var response = '/image-api/pokestop?style=' + selectedIconStyle + '&id=' + lureId
   if (invasionGruntType) {
     response += '&invasion=true&grunt_type=' + invasionGruntType
