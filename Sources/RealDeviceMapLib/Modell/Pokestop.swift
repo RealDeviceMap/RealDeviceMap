@@ -253,7 +253,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.cellId = cellId
         var incidents = fortData.pokestopDisplays
         if incidents.isEmpty && fortData.hasPokestopDisplay {
-            print("[TMP] has single pokestop display: \(fortData.fortID)")
             incidents = [fortData.pokestopDisplay]
         }
         self.incidents = incidents.map({ pokestopDisplay in

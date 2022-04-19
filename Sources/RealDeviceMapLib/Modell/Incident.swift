@@ -153,7 +153,6 @@ public class Incident: JSONConvertibleObject, WebHookEvent, Hashable {
                 WebHookController.global.addInvasionEvent(pokestop: pokestop!, incident: self)
             }
         } else {
-            print("[TMP] incident is updated")
             if oldIncident!.expiration < self.expiration || oldIncident!.character != self.character {
                 let pokestop = try? Pokestop.getWithId(id: self.pokestopId)
                 if pokestop != nil {
