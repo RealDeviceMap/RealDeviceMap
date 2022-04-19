@@ -38,7 +38,7 @@ public class WebHookController {
     private var lureEventLock = Threading.Lock()
     private var lureEvents = [String: Pokestop]()
     private var invasionEventLock = Threading.Lock()
-    private var invasionEvents = [String: Pokestop]()
+    private var invasionEvents = [String: (Pokestop, Incident)]()
     private var questEventLock = Threading.Lock()
     private var questEvents = [String: Pokestop]()
     private var alternativeQuestEventsLock = Threading.Lock()
@@ -74,9 +74,9 @@ public class WebHookController {
         }
     }
 
-    public func addInvasionEvent(pokestop: Pokestop) {
+    public func addInvasionEvent(pokestop: Pokestop, incident: Incident) {
         if !self.webhooks.isEmpty && self.types.contains(.invasion) {
-            invasionEventLock.doWithLock { invasionEvents[pokestop.id] = pokestop }
+            invasionEventLock.doWithLock { invasionEvents[incident.id] = (pokestop, incident) }
         }
     }
 
@@ -168,7 +168,7 @@ public class WebHookController {
                         var pokemonEvents = [String: Pokemon]()
                         var pokestopEvents = [String: Pokestop]()
                         var lureEvents = [String: Pokestop]()
-                        var invasionEvents = [String: Pokestop]()
+                        var invasionEvents = [String: (Pokestop, Incident)]()
                         var questEvents = [String: Pokestop]()
                         var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
@@ -195,7 +195,7 @@ public class WebHookController {
 
                         self.invasionEventLock.doWithLock {
                             invasionEvents = self.invasionEvents
-                            self.invasionEvents = [String: Pokestop]()
+                            self.invasionEvents = [String: (Pokestop, Incident)]()
                         }
 
                         self.questEventLock.doWithLock {
@@ -286,13 +286,16 @@ public class WebHookController {
 
                             if webhook.types.contains(.invasion) {
                                 let invasionIDs = webhook.data["invasion_ids"] as? [Int] ?? [Int]()
-                                for (_, invasion) in invasionEvents {
+                                for (_, (pokestop, invasion)) in invasionEvents {
                                     if area.isEmpty ||
-                                           self.inPolygon(lat: invasion.lat, lon: invasion.lon, multiPolygon: polygon) {
-                                        if invasionIDs.contains(Int(invasion.gruntType ?? 0)) {
+                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon, multiPolygon: polygon) {
+                                        if invasionIDs.contains(Int(invasion.character)) {
                                             continue
                                         }
-                                        events.append(invasion.getWebhookValues(type: WebhookType.invasion.rawValue))
+                                        events.append(invasion.getWebhookValues(
+                                            type: WebhookType.invasion.rawValue,
+                                            pokestop: pokestop)
+                                        )
                                     }
                                 }
                             }
