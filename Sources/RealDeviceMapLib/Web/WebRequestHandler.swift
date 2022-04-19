@@ -253,9 +253,7 @@ public class WebRequestHandler {
                                 pokestop.lureExpireTimestamp = nil
                             }
                             if !perms.contains(.viewMapInvasion) {
-                                pokestop.pokestopDisplay = nil
-                                pokestop.incidentExpireTimestamp = nil
-                                pokestop.gruntType = nil
+                                pokestop.incidents = []
                             }
                             if !perms.contains(.viewMapQuest) {
                                 pokestop.questType = nil
