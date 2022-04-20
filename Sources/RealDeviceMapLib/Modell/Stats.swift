@@ -519,14 +519,14 @@ class Stats: JSONConvertibleObject {
 
         let sql = """
                   SELECT
-                      COUNT(DISTINCT id) AS total,
-                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=501) AS normal_lures,
-                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
-                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
-                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
-                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
-                      SUM(invasions) AS invasions,
-                      (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
+                    COUNT(id) AS total,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=501) AS normal_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
+                    SUM(invasions) AS invasions,
+                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
                   FROM (
                       SELECT pokestop.id, lure_expire_timestamp, lure_id,
                         alternative_quest_reward_type, quest_reward_type, count(incident.id) as invasions
