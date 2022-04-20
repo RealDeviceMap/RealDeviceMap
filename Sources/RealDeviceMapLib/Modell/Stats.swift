@@ -525,9 +525,16 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
-                    SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
+                    SUM(invasions) AS invasions,
                     (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
-                  FROM pokestop
+                  FROM (
+                      SELECT pokestop.id, lure_expire_timestamp, lure_id,
+                        alternative_quest_reward_type, quest_reward_type, count(incident.id) as invasions
+                      FROM pokestop
+                      LEFT JOIN incident on pokestop.id = incident.pokestop_id
+                        and incident.expiration >= UNIX_TIMESTAMP()
+                      GROUP BY pokestop.id
+                  ) as calculation;
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
