@@ -519,15 +519,28 @@ class Stats: JSONConvertibleObject {
 
         let sql = """
                   SELECT
-                    COUNT(id) AS total,
-                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=501) AS normal_lures,
-                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
-                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
-                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
-                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
-                    SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
-                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
-                  FROM pokestop
+                        SUM(total),
+                        SUM(normal_lures),
+                        SUM(glacial_lures),
+                        SUM(mossy_lures),
+                        SUM(magnetic_lures),
+                        SUM(rainy_lures),
+                        SUM(invasions),
+                        SUM(quests)
+                  FROM (
+                    SELECT
+                      COUNT(DISTINCT pokestop.id) AS total,
+                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=501) AS normal_lures,
+                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
+                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
+                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
+                      SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
+                      (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests,
+                      count(incident.id) as invasions
+                    FROM pokestop LEFT JOIN incident on pokestop.id = incident.pokestop_id 
+                        and incident.expiration >= UNIX_TIMESTAMP()
+                    GROUP BY pokestop.id
+                  ) as calculation;
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -542,14 +555,14 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
+            let total = Int64(result[0] as! String)!
             let normalLures = Int64(result[1] as! String)!
             let glacialLures = Int64(result[2] as! String)!
             let mossyLures = Int64(result[3] as! String)!
             let magneticLures = Int64(result[4] as! String)!
             let rainyLures = Int64(result[5] as! String)!
             let invasions = Int64(result[6] as! String)!
-            let quests = result[7] as! Int64
+            let quests = Int64(result[7] as! String)!
 
             stats.append(total)
             stats.append(normalLures)
