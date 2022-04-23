@@ -629,7 +629,7 @@ public class WebHookRequestHandler {
                 } else if fort.data.fortType == .checkpoint {
                     let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
-                    pokestop.incidents.map({ incident in try? incident.save() })
+                    pokestop.incidents.map({ incident in try? incident.save(mysql: mysql) })
                     if stopsIdsPerCell[fort.cell] == nil {
                         stopsIdsPerCell[fort.cell] = [String]()
                     }
