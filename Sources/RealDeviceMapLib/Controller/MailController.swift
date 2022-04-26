@@ -51,8 +51,8 @@ public class MailController {
         }
     }
     private static var from: Recipient? = Recipient(
-        name: "0815.Tirol - Map",
-        address: "map@0815.tirol"
+        name: "RealDevice - Map",
+        address: "map@realdevicemap.com"
     )
     public static var baseURI: String = "http://127.0.0.1:9000"
     public static var footerHtml: String = "<h1>HI!</h1>"

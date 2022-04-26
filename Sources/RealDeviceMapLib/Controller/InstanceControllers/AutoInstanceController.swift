@@ -162,7 +162,7 @@ class AutoInstanceController: InstanceControllerProto {
         var allCells = [S2CellId]()
         var allCellIDs = [UInt64]()
         if let cachedCellIDs = cachedCellIDs {
-            Log.debug(message: "[AutoInstanceController] [\(name)] Usign Cached Cells...")
+            Log.debug(message: "[AutoInstanceController] [\(name)] Using Cached Cells...")
             allCellIDs = cachedCellIDs
             allCells = allCellIDs.map({ (uid) -> S2CellId in
                 return S2CellId(uid: uid)
@@ -207,10 +207,10 @@ class AutoInstanceController: InstanceControllerProto {
             "[AutoInstanceController] [\(name)] Bootstrap Status: \(allCells.count - missingCellIDs.count)/" +
             "\(allCells.count) after \(Date().timeIntervalSince(start).rounded(toStringWithDecimals: 2))s"
         )
-        bootstrappLock.lock()
-        bootstrappCellIDs = missingCellIDs
-        bootstrappTotalCount = allCells.count
-        bootstrappLock.unlock()
+        bootstrappLock.doWithLock {
+            bootstrappCellIDs = missingCellIDs
+            bootstrappTotalCount = allCells.count
+        }
 
     }
 
@@ -227,12 +227,12 @@ class AutoInstanceController: InstanceControllerProto {
 
                 if let bounds = BoundingBox(from: polygon.outerRing.coordinates),
                     let stops = try? Pokestop.getAll(
-                        minLat: bounds.southEast.latitude, maxLat: bounds.northWest.latitude,
-                        minLon: bounds.northWest.longitude, maxLon: bounds.southEast.longitude,
+                        minLat: bounds.southWest.latitude, maxLat: bounds.northEast.latitude,
+                        minLon: bounds.southWest.longitude, maxLon: bounds.northEast.longitude,
                         updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: true) {
 
                     for stop in stops {
-                        let coord = CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
+                        let coord = LocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
                         if polygon.contains(coord, ignoreBoundary: false) {
                             if self.questMode == .normal || self.questMode == .both {
                                 self.allStops!.append(PokestopWithMode(pokestop: stop, alternative: false))
@@ -430,7 +430,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     var closest: PokestopWithMode?
-                    let mode = lastMode[username ?? uuid]
+                    let mode = stopsLock.doWithLock { lastMode[username ?? uuid] }
                     if mode == nil {
                         closest = closestOverall
                     } else if mode == false {
@@ -628,7 +628,7 @@ class AutoInstanceController: InstanceControllerProto {
                 } else {
                     stopsLock.unlock()
                 }
-                lastMode[username ?? uuid] = pokestop.alternative
+                stopsLock.doWithLock { lastMode[username ?? uuid] = pokestop.alternative }
                 WebHookRequestHandler.setArQuestTarget(device: uuid, timestamp: timestamp, isAr: pokestop.alternative)
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,

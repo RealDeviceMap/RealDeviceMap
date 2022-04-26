@@ -10,16 +10,16 @@ import Turf
 
 extension S2LatLng {
 
-    init(coord: CLLocationCoordinate2D) {
+    init(coord: LocationCoordinate2D) {
         self.init(lat: S1Angle(degrees: coord.latitude), lng: S1Angle(degrees: coord.longitude))
     }
 
-    var coord: CLLocationCoordinate2D {
-        return CLLocationCoordinate2D(latitude: lat.degrees, longitude: lng.degrees)
+    var coord: LocationCoordinate2D {
+        return LocationCoordinate2D(latitude: lat.degrees, longitude: lng.degrees)
     }
 
     func getLoadedS2CellIds() -> [S2CellId] {
-        let radius: CLLocationDistance
+        let radius: LocationDistance
         if lat.degrees <= 39 {
             radius = 715
         } else if lat.degrees >= 69 {

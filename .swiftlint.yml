@@ -8,9 +8,12 @@ disabled_rules:
 identifier_name:
   excluded:
     - i
+    - j
     - id
     - cp
+    - hp
     - xp
+    - ex
     - iv
 type_name:
   excluded:

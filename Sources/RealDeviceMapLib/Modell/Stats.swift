@@ -26,21 +26,27 @@ class Stats: JSONConvertibleObject {
         let spawnpointStats = try? Stats.getSpawnpointStats()
         return [
             "pokemon_total": pokemonStats?[0] ?? 0,
-            "pokemon_active": pokemonStats?[1] ?? 0,
+            "pokemon_today": pokemonStats?[1] ?? 0,
             "pokemon_iv_total": pokemonStats?[2] ?? 0,
-            "pokemon_iv_active": pokemonStats?[3] ?? 0,
-            "pokemon_active_100iv": pokemonStats?[4] ?? 0,
-            "pokemon_active_90iv": pokemonStats?[5] ?? 0,
-            "pokemon_active_0iv": pokemonStats?[6] ?? 0,
-            "pokemon_total_shiny": pokemonStats?[7] ?? 0,
-            "pokemon_active_shiny": pokemonStats?[8] ?? 0,
+            "pokemon_iv_today": pokemonStats?[3] ?? 0,
+            "pokemon_total_shiny": pokemonStats?[4] ?? 0,
+            "pokemon_today_shiny": pokemonStats?[5] ?? 0,
+            "pokemon_total_hundo": pokemonStats?[6] ?? 0,
+            "pokemon_today_hundo": pokemonStats?[7] ?? 0,
+            "pokemon_active": pokemonStats?[8] ?? 0,
+            "pokemon_iv_active": pokemonStats?[9] ?? 0,
+            "pokemon_active_100iv": pokemonStats?[10] ?? 0,
+            "pokemon_active_90iv": pokemonStats?[11] ?? 0,
+            "pokemon_active_0iv": pokemonStats?[12] ?? 0,
+            "pokemon_active_shiny": pokemonStats?[13] ?? 0,
             "pokestops_total": pokestopStats?[0] ?? 0,
             "pokestops_lures_normal": pokestopStats?[1] ?? 0,
             "pokestops_lures_glacial": pokestopStats?[2] ?? 0,
             "pokestops_lures_mossy": pokestopStats?[3] ?? 0,
             "pokestops_lures_magnetic": pokestopStats?[4] ?? 0,
-            "pokestops_invasions": pokestopStats?[5] ?? 0,
-            "pokestops_quests": pokestopStats?[6] ?? 0,
+            "pokestops_lures_rainy": pokestopStats?[5] ?? 0,
+            "pokestops_invasions": pokestopStats?[6] ?? 0,
+            "pokestops_quests": pokestopStats?[7] ?? 0,
             "gyms_total": gymStats?[0] ?? 0,
             "gyms_neutral": gymStats?[1] ?? 0,
             "gyms_mystic": gymStats?[2] ?? 0,
@@ -358,27 +364,23 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        // Thanks Flo
         let sql = """
-                  SELECT * FROM (
-                      SELECT SUM(count) AS total
-                      FROM pokemon_stats
-                  ) AS A
-                  JOIN (
-                      SELECT SUM(count) AS iv_total
-                      FROM pokemon_iv_stats
-                  ) AS B
-                  JOIN (
-                      SELECT SUM(count) AS total_shiny
-                      FROM pokemon_shiny_stats
-                  ) AS C
-                  JOIN (
+                  SELECT
+                  (SELECT SUM(count) FROM pokemon_stats) AS total,
+                  (SELECT SUM(count) FROM pokemon_stats WHERE date = CURDATE()) AS pokemon_today,
+                  (SELECT SUM(count) FROM pokemon_iv_stats) AS iv_total,
+                  (SELECT SUM(count) FROM pokemon_iv_stats WHERE date = CURDATE()) AS pokemon_iv_today,
+                  (SELECT SUM(count) FROM pokemon_shiny_stats) AS total_shiny,
+                  (SELECT SUM(count) FROM pokemon_shiny_stats WHERE date = CURDATE()) AS pokemon_shiny_today,
+                  (SELECT SUM(count) FROM pokemon_hundo_stats) AS hundo_total,
+                  (SELECT SUM(count) FROM pokemon_hundo_stats WHERE date = CURDATE()) AS pokemon_hundo_today,
+                  A.* FROM (
                       SELECT COUNT(id) AS active, COUNT(iv) AS iv_active, SUM(iv = 100) AS active_100iv,
-                             SUM(iv >= 90 AND iv < 100) AS active_90iv, SUM(iv = 0) AS active_0iv,
-                             SUM(shiny = 1) AS active_shiny
+                           SUM(iv >= 90 AND iv < 100) AS active_90iv, SUM(iv = 0) AS active_0iv,
+                           SUM(shiny = 1) AS active_shiny
                       FROM pokemon
                       WHERE expire_timestamp >= UNIX_TIMESTAMP()
-                  ) AS D
+                  ) AS A
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -393,24 +395,34 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = Int64(result[0] as? String ?? "0") ?? 0
-            let ivTotal = Int64(result[1] as? String ?? "0") ?? 0
-            let totalShiny = Int64(result[2] as? String ?? "0") ?? 0
-            let active = result[3] as? Int64 ?? 0
-            let ivActive = result[4] as? Int64 ?? 0
-            let active100iv = Int64(result[5] as? String ?? "0") ?? 0
-            let active90iv = Int64(result[6] as? String ?? "0") ?? 0
-            let active0iv = Int64(result[7] as? String ?? "0") ?? 0
-            let activeShiny = Int64(result[8] as? String ?? "0") ?? 0
+            let pokemonTotal = Int64(result[0] as? String ?? "0") ?? 0
+            let pokemonToday = Int64(result[1] as? String ?? "0") ?? 0
+            let ivTotal = Int64(result[2] as? String ?? "0") ?? 0
+            let ivToday = Int64(result[3] as? String ?? "0") ?? 0
+            let shinyTotal = Int64(result[4] as? String ?? "0") ?? 0
+            let shinyToday = Int64(result[5] as? String ?? "0") ?? 0
+            let hundoTotal = Int64(result[6] as? String ?? "0") ?? 0
+            let hundoToday = Int64(result[7] as? String ?? "0") ?? 0
+            let active = result[8] as? Int64 ?? 0
+            let ivActive = result[9] as? Int64 ?? 0
+            let active100iv = Int64(result[10] as? String ?? "0") ?? 0
+            let active90iv = Int64(result[11] as? String ?? "0") ?? 0
+            let active0iv = Int64(result[12] as? String ?? "0") ?? 0
+            let activeShiny = Int64(result[13] as? String ?? "0") ?? 0
 
-            stats.append(total)
-            stats.append(active)
+            stats.append(pokemonTotal)
+            stats.append(pokemonToday)
             stats.append(ivTotal)
+            stats.append(ivToday)
+            stats.append(shinyTotal)
+            stats.append(shinyToday)
+            stats.append(hundoTotal)
+            stats.append(hundoToday)
+            stats.append(active)
             stats.append(ivActive)
             stats.append(active100iv)
             stats.append(active90iv)
             stats.append(active0iv)
-            stats.append(totalShiny)
             stats.append(activeShiny)
 
         }
@@ -523,9 +535,17 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
-                    SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
-                    SUM(quest_reward_type IS NOT NULL) quests
-                  FROM pokestop
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
+                    SUM(invasions) AS invasions,
+                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
+                  FROM (
+                      SELECT pokestop.id, lure_expire_timestamp, lure_id,
+                        alternative_quest_reward_type, quest_reward_type, count(incident.id) as invasions
+                      FROM pokestop
+                      LEFT JOIN incident on pokestop.id = incident.pokestop_id
+                        and incident.expiration >= UNIX_TIMESTAMP()
+                      GROUP BY pokestop.id
+                  ) as calculation;
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -545,14 +565,16 @@ class Stats: JSONConvertibleObject {
             let glacialLures = Int64(result[2] as! String)!
             let mossyLures = Int64(result[3] as! String)!
             let magneticLures = Int64(result[4] as! String)!
-            let invasions = Int64(result[5] as! String)!
-            let quests = Int64(result[6] as! String)!
+            let rainyLures = Int64(result[5] as! String)!
+            let invasions = Int64(result[6] as! String)!
+            let quests = result[7] as! Int64
 
             stats.append(total)
             stats.append(normalLures)
             stats.append(glacialLures)
             stats.append(mossyLures)
             stats.append(magneticLures)
+            stats.append(rainyLures)
             stats.append(invasions)
             stats.append(quests)
 
