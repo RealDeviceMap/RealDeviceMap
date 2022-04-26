@@ -2058,7 +2058,7 @@ public class ApiRequestHandler {
             data["pokemon_today"] = stats["pokemon_today"]
             data["pokemon_iv_today"] = stats["pokemon_iv_today"]
             data["pokemon_today_shiny"] = stats["pokemon_today_shiny"]
-            data["pokemon_hundo_today"] = stats["pokemon_hundo_today"]
+            data["pokemon_today_hundo"] = stats["pokemon_today_hundo"]
             data["pokemon_active"] = stats["pokemon_active"]
             data["pokemon_iv_active"] = stats["pokemon_iv_active"]
             data["pokemon_active_100iv"] = stats["pokemon_active_100iv"]
