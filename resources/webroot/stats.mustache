@@ -261,13 +261,18 @@
                         return;
                     }
                     updateCounter(".total-pokemon-count", result.data.pokemon_total);
-                    updateCounter(".pokemon-count", result.data.pokemon_active);
                     updateCounter(".total-iv-count", result.data.pokemon_iv_total);
+                    updateCounter(".total-shiny-count", result.data.pokemon_total_shiny);
+                    updateCounter(".total-hundo-count", result.data.pokemon_total_hundo);
+                    updateCounter(".today-pokemon-count", result.data.pokemon_today);
+                    updateCounter(".today-iv-count", result.data.pokemon_iv_today);
+                    updateCounter(".today-shiny-count", result.data.pokemon_today_shiny);
+                    updateCounter(".today-hundo-count", result.data.pokemon_today_hundo);
+                    updateCounter(".pokemon-count", result.data.pokemon_active);
                     updateCounter(".active-iv-count", result.data.pokemon_iv_active);
                     updateCounter(".active-100iv-count", result.data.pokemon_active_100iv);
                     updateCounter(".active-90iv-count", result.data.pokemon_active_90iv);
                     updateCounter(".active-0iv-count", result.data.pokemon_active_0iv);
-                    updateCounter(".total-shiny-count", result.data.pokemon_total_shiny);
                     updateCounter(".active-shiny-count", result.data.pokemon_active_shiny);
 
                     updateCounter(".gyms-count", result.data.gyms_total);
@@ -916,7 +921,7 @@
             <div class="card-body">
                 <div class="container">
                     <div class="row">
-                        <div class="col-md-4 p-1">
+                        <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
                                     <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1&type=2" width="64" height="64"/></h3>
@@ -925,7 +930,7 @@
                                 </a>
                             </div>
                         </div>
-                        <div class="col-md-4 p-1">
+                        <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
                                     <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=1&type=2" width="64" height="64"/></h3>
@@ -934,7 +939,16 @@
                                 </a>
                             </div>
                         </div>
-                        <div class="col-md-4 p-1">
+                        <div class="col-md-3 p-1">
+                            <div class="list-group">
+                                <a class="list-group-item">
+                                    <h3 class="pull-right"><img src="/image-api/reward?style={{default_icon_style}}&id=3&type=2" width="64" height="64"/></h3>
+                                    <h4 class="list-group-item-heading total-hundo-count">0</h4>
+                                    <p class="list-group-item-text">{{stats_total_hundo}}</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3 p-1">
                             <div class="list-group">
                                 <a class="list-group-item">
                                     <h3 class="pull-right"><img src="/image-api/misc?style={{default_icon_style}}&id=sparkles" width="64" height="64"/></h3>
@@ -945,6 +959,28 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="card-body text-center p-1 m-3">
+                <div class="card-header bg-dark text-light"><b>{{stats_today_statistics}}</b></div>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{stats_total_pokemon}}
+                        <span class="badge badge-primary badge-pill today-pokemon-count">0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{stats_total_ivs}}
+                        <span class="badge badge-primary badge-pill today-iv-count">0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{stats_total_hundo}}
+                        <span class="badge badge-primary badge-pill today-hundo-count">0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{stats_total_shiny}}
+                        <span class="badge badge-primary badge-pill today-shiny-count">0</span>
+                    </li>
+                </ul>
             </div>
 
             <div class="card-body text-center p-1 m-3">
