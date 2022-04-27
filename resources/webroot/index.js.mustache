@@ -2599,7 +2599,7 @@ function getPokestopPopupContent (pokestop) {
     content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>'
   }
 
-  $.each(incidents, function (index, incident) {
+  $.each(incidents.sort((a, b) => a.character - b.character), function (index, incident) {
     let invasionExpireDate = new Date(incident.expiration * 1000)
     content += '<b>Team Rocket Invasion</b><br>'
     content += '<b>Grunt Type:</b> ' + getGruntName(incident.character) + '<br>'
@@ -3456,7 +3456,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
   }
 
   if ((pokestop.is_start || showInvasions === true) && pokestop.incidents && pokestop.incidents.length > 0) {
-    invasionGruntType = pokestop.incidents[0].character
+    invasionGruntType = Math.min.apply(Math, pokestop.incidents.map(function(incident) { return incident.character; }))
     let invasionSize = getInvasionSize(invasionGruntType)
     if (invasionSize > size) {
       size = invasionSize
@@ -3473,7 +3473,8 @@ function getPokestopMarkerIcon (pokestop, ts) {
     iconUrl: getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId),
     iconSize: [size, size * multiplierSize],
     iconAnchor: [size / 2, size * multiplierAnchor],
-    popupAnchor: [0, size * -1.567]
+    popupAnchor: [0, size * -1.567],
+    className: (pokestop.incidents.length > 1 ? 'glow' : undefined)
   })
   return icon
 }
