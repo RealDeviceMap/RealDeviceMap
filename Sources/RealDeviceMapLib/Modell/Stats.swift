@@ -101,7 +101,7 @@ class Stats: JSONConvertibleObject {
                   FROM pokemon_iv_stats iv
                     LEFT JOIN pokemon_shiny_stats shiny
                     ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
-                  WHERE iv.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+                  WHERE iv.date = CURDATE()
                   GROUP BY iv.pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
@@ -110,7 +110,7 @@ class Stats: JSONConvertibleObject {
             sql = """
                   SELECT pokemon_id, SUM(count) as count
                   FROM pokemon_hundo_stats
-                  WHERE date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+                  WHERE date = CURDATE()
                   GROUP BY pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
@@ -311,7 +311,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT x.date, x.pokemon_id, shiny.count as shiny, iv.count
                   FROM pokemon_stats x
@@ -437,7 +437,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT pokemon_id, count, level
                   FROM raid_stats
@@ -484,7 +484,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT level, SUM(count) as count
                   FROM raid_stats
@@ -561,12 +561,12 @@ class Stats: JSONConvertibleObject {
         while let result = results.next() {
 
             let total = result[0] as! Int64
-            let normalLures = Int64(result[1] as! String)!
-            let glacialLures = Int64(result[2] as! String)!
-            let mossyLures = Int64(result[3] as! String)!
-            let magneticLures = Int64(result[4] as! String)!
-            let rainyLures = Int64(result[5] as! String)!
-            let invasions = Int64(result[6] as! String)!
+            let normalLures = Int64(result[1] as? String ?? "0")!
+            let glacialLures = Int64(result[2] as? String ?? "0")!
+            let mossyLures = Int64(result[3] as? String ?? "0")!
+            let magneticLures = Int64(result[4] as? String ?? "0")!
+            let rainyLures = Int64(result[5] as? String ?? "0")!
+            let invasions = Int64(result[6] as? String ?? "0")!
             let quests = result[7] as! Int64
 
             stats.append(total)
@@ -590,7 +590,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT reward_type, item_id, SUM(count) AS count
                   FROM quest_stats
@@ -640,7 +640,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT pokemon_id, SUM(count) AS count
                   FROM quest_stats
@@ -686,7 +686,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT date, grunt_type, count
                   FROM invasion_stats
@@ -756,10 +756,10 @@ class Stats: JSONConvertibleObject {
         while let result = results.next() {
 
             let total = result[0] as! Int64
-            let found = Int64(result[1] as! String) ?? 0
-            let missing = Int64(result[2] as! String) ?? 0
-            let min30 = Int64(result[3] as! String) ?? 0
-            let min60 = Int64(result[4] as! String) ?? 0
+            let found = Int64(result[1] as? String ?? "0") ?? 0
+            let missing = Int64(result[2] as? String ?? "0") ?? 0
+            let min30 = Int64(result[3] as? String ?? "0") ?? 0
+            let min60 = Int64(result[4] as? String ?? "0") ?? 0
 
             stats.append(total)
             stats.append(found)
@@ -803,11 +803,11 @@ class Stats: JSONConvertibleObject {
         while let result = results.next() {
 
             let total = result[0] as! Int64
-            let neutral = Int64(result[1] as! String) ?? 0
-            let mystic = Int64(result[2] as! String) ?? 0
-            let valor = Int64(result[3] as! String) ?? 0
-            let instinct = Int64(result[4] as! String) ?? 0
-            let raids = Int64(result[5] as! String) ?? 0
+            let neutral = Int64(result[1] as? String ?? "0") ?? 0
+            let mystic = Int64(result[2] as? String ?? "0") ?? 0
+            let valor = Int64(result[3] as? String ?? "0") ?? 0
+            let instinct = Int64(result[4] as? String ?? "0") ?? 0
+            let raids = Int64(result[5] as? String ?? "0") ?? 0
 
             stats.append(total)
             stats.append(neutral)
