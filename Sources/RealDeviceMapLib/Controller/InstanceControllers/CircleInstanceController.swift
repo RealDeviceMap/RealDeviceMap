@@ -23,11 +23,11 @@ class CircleInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var scanNextCoords: [Coord] = []
     public weak var delegate: InstanceControllerDelegate?
 
     private let type: CircleType
     private let coords: [Coord]
-    private var scanNextCoords: [Coord]
     private var lastIndex: Int = 0
     private var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
@@ -231,21 +231,5 @@ class CircleInstanceController: InstanceControllerProto {
                 account.level <= maxLevel &&
                 account.isValid(ignoringWarning: useRwForRaid, group: accountGroup)
         }
-    }
-
-    func addToNextCoords(coords: [Coord]) -> Int {
-        let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
-        Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
-        lock.lock()
-        for coord in coords {
-            scanNextCoords.append(coord)
-        }
-        let size = scanNextCoords.count
-        lock.unlock()
-        return size
-    }
-
-    func getNextCoordsSize() -> Int {
-        lock.doWithLock { scanNextCoords.count }
     }
 }

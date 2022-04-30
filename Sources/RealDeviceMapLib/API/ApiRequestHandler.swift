@@ -2344,8 +2344,8 @@ public class ApiRequestHandler {
             }
         } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
+            guard var instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
+               else {
                     Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
                     return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
             }
@@ -2355,7 +2355,7 @@ public class ApiRequestHandler {
             }
             var size = 0
             if !coords.isEmpty {
-                size = instance.addToNextCoords(coords: coords)
+                size = instance.addToScanNextCoords(coords: coords)
             }
             do {
                 try response.respondWithData(data: [

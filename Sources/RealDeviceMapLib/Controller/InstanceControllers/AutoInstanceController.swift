@@ -36,6 +36,7 @@ class AutoInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var scanNextCoords: [Coord] = []
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
