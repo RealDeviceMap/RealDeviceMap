@@ -29,7 +29,7 @@ class CircleInstanceController: InstanceControllerProto {
     private let type: CircleType
     private let coords: [Coord]
     private var lastIndex: Int = 0
-    private var lock = Threading.Lock()
+    internal var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
     private var currentUuidIndexes: [String: Int]
