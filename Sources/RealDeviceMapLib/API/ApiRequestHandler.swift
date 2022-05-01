@@ -2198,7 +2198,7 @@ public class ApiRequestHandler {
 
         if scanNext && queueSize && perms.contains(.admin), let name = instance {
             guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
+            else {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found")
                 return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
             }
@@ -2345,9 +2345,9 @@ public class ApiRequestHandler {
         } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
             guard var instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-               else {
-                    Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
-                    return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
+                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
             }
             if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
