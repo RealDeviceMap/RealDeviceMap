@@ -18,6 +18,8 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var lock = Threading.Lock()
+    internal var scanNextCoords: [Coord] = []
     public private(set) var scatterPokemon: [UInt16]
 
     public weak var delegate: InstanceControllerDelegate?
@@ -106,6 +108,15 @@ class IVInstanceController: InstanceControllerProto {
 
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
 
+        lock.lock()
+        if !scanNextCoords.isEmpty {
+            let currentCoord = scanNextCoords.removeFirst()
+            lock.unlock()
+            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                    "min_level": minLevel, "max_level": maxLevel]
+        } else {
+            lock.unlock()
+        }
         pokemonLock.lock()
         if pokemonQueue.isEmpty {
             pokemonLock.unlock()

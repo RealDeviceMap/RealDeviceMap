@@ -24,7 +24,9 @@ public protocol InstanceControllerProto {
     var maxLevel: UInt8 { get }
     var accountGroup: String? { get }
     var isEvent: Bool { get }
+    var scanNextCoords: [Coord] { get set }
     var delegate: InstanceControllerDelegate? { get set }
+    var lock: Threading.Lock { get }
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any]
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
     func getAccount(mysql: MySQL, uuid: String) throws -> Account?
@@ -50,6 +52,22 @@ extension InstanceControllerProto {
     }
     func accountValid(account: Account) -> Bool {
         return account.level >= minLevel && account.level <= maxLevel && account.isValid(group: accountGroup)
+    }
+
+    mutating func addToScanNextCoords(coords: [Coord]) -> Int {
+        let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
+        Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
+        lock.lock()
+        for coord in coords {
+            scanNextCoords.append(coord)
+        }
+        let size = scanNextCoords.count
+        lock.unlock()
+        return size
+    }
+
+    func getNextCoordsSize() -> Int {
+        lock.doWithLock { scanNextCoords.count }
     }
 }
 
@@ -413,5 +431,4 @@ public class InstanceController {
         instancesLock.unlock()
         return [Pokemon]()
     }
-
 }

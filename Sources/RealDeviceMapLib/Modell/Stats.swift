@@ -490,6 +490,7 @@ class Stats: JSONConvertibleObject {
                   FROM raid_stats
                   WHERE date = \(when)
                   GROUP BY level
+                  ORDER BY level
                   """
 
         let mysqlStmt = MySQLStmt(mysql)

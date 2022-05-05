@@ -2197,10 +2197,13 @@ public class ApiRequestHandler {
         }
 
         if scanNext && queueSize && perms.contains(.admin), let name = instance {
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
-                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found")
-                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
             }
             let size = instance.getNextCoordsSize()
             data["size"] = size
@@ -2344,10 +2347,13 @@ public class ApiRequestHandler {
             }
         } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
-                    Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
-                    return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            guard var instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
             }
             if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
@@ -2355,7 +2361,7 @@ public class ApiRequestHandler {
             }
             var size = 0
             if !coords.isEmpty {
-                size = instance.addToNextCoords(coords: coords)
+                size = instance.addToScanNextCoords(coords: coords)
             }
             do {
                 try response.respondWithData(data: [
