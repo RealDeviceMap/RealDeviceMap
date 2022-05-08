@@ -68,7 +68,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             "capture_3": capture3 as Any,
             "display_pokemon_id": displayPokemonId as Any,
             "pvp": pvp as Any,
-            "is_event": isEvent
+            "is_event": isEvent,
+            "seen_type": seenType.rawValue as Any
         ]
     }
 
@@ -104,7 +105,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             "username": username as Any,
             "display_pokemon_id": displayPokemonId as Any,
             "pvp": pvp as Any,
-            "is_event": isEvent
+            "is_event": isEvent,
+            "seen_type": seenType.rawValue as Any
         ]
         return [
             "type": "pokemon",
@@ -152,9 +154,15 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     var baseHeight: Double?
     var baseWeight: Double?
     var isEvent: Bool
+    var seenType: SeenType
 
     var hasChanges = false
     var hasIvChanges = false
+
+    enum SeenType: String {
+        case encounter = "encounter", wild = "wild", nearbyStop = "nearby_stop", nearbyCell = "nearby_cell",
+             unknown = "unknown"
+    }
 
     init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
          atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
@@ -162,7 +170,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
          capture1: Double?, capture2: Double?, capture3: Double?, displayPokemonId: UInt16?,
          weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32?,
          updated: UInt32?, changed: UInt32?, cellId: UInt64?, expireTimestampVerified: Bool,
-         pvp: [String: Any]?, isEvent: Bool) {
+         pvp: [String: Any]?, isEvent: Bool, seenType: SeenType) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -196,6 +204,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         self.displayPokemonId = displayPokemonId
         self.pvp = pvp
         self.isEvent = isEvent
+        self.seenType = seenType
         let stats = PVPStatsManager.global.getStats(
             pokemon: HoloPokemonId(rawValue: Int(self.pokemonId)) ?? .missingno,
             form: PokemonDisplayProto.Form.init(rawValue: Int(self.form ?? 0)) ?? .unset
@@ -267,6 +276,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
         self.spawnId = spawnId
         self.cellId = cellId
+        self.seenType = SeenType.wild
 
     }
 
@@ -296,6 +306,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let nlon = s2cell.capBound.rectBound.center.lng.degrees
             lat = nlat
             lon = nlon
+            self.seenType = SeenType.nearbyCell
         } else {
             let pokestop = Pokestop.cache?.get(id: pokestopId)
             if pokestop != nil {
@@ -319,7 +330,8 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 mysqlStmt.bindParam(pokestopId)
 
                 guard mysqlStmt.execute() else {
-                    Log.error(message: "[POKEMON] Failed to execute query 'init'. (\(mysqlStmt.errorMessage())")
+                    Log.error(message: "[POKEMON] Failed to execute query 'init nearby pokestop mon'. " +
+                        "(\(mysqlStmt.errorMessage())")
                     throw DBController.DBError()
                 }
 
@@ -333,6 +345,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 lat = result![0] as! Double
                 lon = result![1] as! Double
             }
+            self.seenType = SeenType.nearbyStop
         }
 
         self.id = id
@@ -480,6 +493,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             }
         }
 
+        self.seenType = SeenType.encounter
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
     }
@@ -611,11 +625,11 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
                     level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id,
                     pvp, username, gender, form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed,
-                    cell_id, expire_timestamp_verified, is_event
+                    cell_id, expire_timestamp_verified, is_event, seen_type
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?
+                    ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), ?, ?, ?, ?
                 )
             """
             self.updated = now
@@ -760,7 +774,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, \(ivSQL) username = ?,
                     gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?, updated = UNIX_TIMESTAMP(),
                     first_seen_timestamp = ?, changed = \(changedSQL), cell_id = ?, expire_timestamp_verified = ?,
-                    is_event = ?
+                    is_event = ?, seen_type = ?
                 WHERE id = ? AND is_event = ?
             """
             self.updated = now
@@ -804,6 +818,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         mysqlStmt.bindParam(cellId)
         mysqlStmt.bindParam(expireTimestampVerified)
         mysqlStmt.bindParam(isEvent)
+        mysqlStmt.bindParam(seenType.rawValue)
 
         if oldPokemon != nil {
             mysqlStmt.bindParam(id)
@@ -940,7 +955,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
                    gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                   expire_timestamp_verified, shiny, username, pvp, is_event
+                   expire_timestamp_verified, shiny, username, pvp, is_event, seen_type
             FROM pokemon
             WHERE expire_timestamp >= UNIX_TIMESTAMP() AND lat >= ? AND lat <= ? AND lon >= ? AND
                   lon <= ? AND updated > ? AND is_event = ? \(sqlAdd) \(excludeCellPokemonSql)
@@ -1031,6 +1046,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let username = result[30] as? String
             let pvp = (result[31] as? String)?.jsonDecodeForceTry() as? [String: Any]
             let isEvent = (result[32] as? UInt8)!.toBool()
+            let seenType = SeenType(rawValue: result[33] as? String ?? "unknown")!
 
             pokemons.append(Pokemon(
                 id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
@@ -1039,7 +1055,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
                 weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
                 firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
-                expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent
+                expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
             ))
         }
         return pokemons
@@ -1061,7 +1077,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
                    gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
-                   expire_timestamp_verified, shiny, username, pvp, is_event
+                   expire_timestamp_verified, shiny, username, pvp, is_event, seen_type
             FROM pokemon
             WHERE id = ? AND is_event = ?
         """
@@ -1115,6 +1131,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         let username = result[30] as? String
         let pvp = (result[31] as? String)?.jsonDecodeForceTry() as? [String: Any]
         let isEvent = (result[32] as? UInt8)!.toBool()
+        let seenType = SeenType(rawValue: result[33] as? String ?? "unknown")!
 
         let pokemon = Pokemon(
             id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
@@ -1124,7 +1141,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             displayPokemonId: displayPokemonId, weather: weather,
             shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
             updated: updated, changed: changed, cellId: cellId,
-            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent
+            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
         )
         let uuidNew = pokemon.isEvent ? "\(pokemon.id)-1" : pokemon.id
         cache?.set(id: uuidNew, value: pokemon)
