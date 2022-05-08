@@ -120,6 +120,7 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
                 "cp": raidPokemonCp ?? 0,
                 "gender": raidPokemonGender ?? 0,
                 "form": raidPokemonForm ?? 0,
+                "costume": raidPokemonCostume ?? 0,
                 "evolution": raidPokemonEvolution ?? 0,
                 "move_1": raidPokemonMove1 ?? 0,
                 "move_2": raidPokemonMove2 ?? 0,
