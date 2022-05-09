@@ -330,7 +330,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 mysqlStmt.bindParam(pokestopId)
 
                 guard mysqlStmt.execute() else {
-                    Log.error(message: "[POKEMON] Failed to execute query 'init nearby pokestop mon'. " +
+                    Log.error(message: "[POKEMON] Failed to execute query 'init nearby_stop pokemon'. " +
                         "(\(mysqlStmt.errorMessage())")
                     throw DBController.DBError()
                 }
@@ -829,8 +829,9 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             if mysqlStmt.errorCode() == 1062 {
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
-                Log.error(message: "[POKEMON] Failed to execute query '\(oldPokemon != nil ? "update" : "insert")'. " +
-                                    "(\(mysqlStmt.errorMessage()))")
+                Log.error(message: "[POKEMON] Failed to execute query '\(oldPokemon != nil ? "update" : "insert")' " +
+                    "of \(seenType.rawValue) pokemon. " +
+                    "(\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
         }
