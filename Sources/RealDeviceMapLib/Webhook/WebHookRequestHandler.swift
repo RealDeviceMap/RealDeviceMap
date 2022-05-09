@@ -48,6 +48,8 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
+    private static var debugRawData = ProcessInfo.processInfo.environment["DEBUG_RAW_DATA"] != nil
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
 
@@ -185,7 +187,9 @@ public class WebHookRequestHandler {
         var containsGMO = false
 
         for rawData in contents {
-
+            if debugRawData {
+                Log.debug(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(rawData)")
+            }
             let hasArQuestReq = rawData["have_ar"] as? Bool
             let data: Data
             let method: Int
