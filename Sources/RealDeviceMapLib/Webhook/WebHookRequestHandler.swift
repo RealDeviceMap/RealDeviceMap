@@ -325,7 +325,7 @@ public class WebHookRequestHandler {
                             if count == 3 {
                                 Log.debug(
                                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cell \(cell) was " +
-                                             "empty 3 times in a row. Asuming empty."
+                                             "empty 3 times in a row. Assuming empty."
                                 )
                                 cells.append(cell)
                             }
