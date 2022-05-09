@@ -208,7 +208,7 @@
         "scan_type_nearby_cell": "Zelle",
         "scan_type_spawnpoint": "Spawnpunkt",
         "scan_type_nearby_stop": "Pokestop",
-        "scan_type_unknown": "Unbekannt",
+        "scan_type_unset": "Unbekannt",
         "stats_tab_overview": "Übersicht",
         "stats_tab_pokemon": "Pokemon",
         "stats_tab_raids": "Raids",
