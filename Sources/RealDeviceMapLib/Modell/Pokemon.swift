@@ -161,7 +161,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
     enum SeenType: String {
         case encounter = "encounter", wild = "wild", nearbyStop = "nearby_stop", nearbyCell = "nearby_cell",
-             UNSET = "UNSET" // MARK: only unset short after migration, because it can be null, can be removed later
+             UNSET = "unset" // MARK: only unset short after migration, because it can be null, can be removed later
     }
 
     init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
@@ -1046,7 +1046,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             let username = result[30] as? String
             let pvp = (result[31] as? String)?.jsonDecodeForceTry() as? [String: Any]
             let isEvent = (result[32] as? UInt8)!.toBool()
-            let seenType = SeenType(rawValue: result[33] as? String ?? "UNSET")!
+            let seenType = SeenType(rawValue: result[33] as? String ?? "unset")!
 
             pokemons.append(Pokemon(
                 id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
@@ -1131,7 +1131,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         let username = result[30] as? String
         let pvp = (result[31] as? String)?.jsonDecodeForceTry() as? [String: Any]
         let isEvent = (result[32] as? UInt8)!.toBool()
-        let seenType = SeenType(rawValue: result[33] as? String ?? "UNSET")!
+        let seenType = SeenType(rawValue: result[33] as? String ?? "unset")!
 
         let pokemon = Pokemon(
             id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
