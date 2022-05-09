@@ -2430,15 +2430,7 @@ function getPokemonPopupContent (pokemon) {
     content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
 
-  content += '<small><b>Scan-Type:</b> '
-  if (pokemon.pokestop_id === null && pokemon.spawn_id === null) {
-    content += getScanTypeName('cell')
-  } else if (pokemon.pokestop_id !== null && pokemon.spawn_id === null) {
-    content += getScanTypeName('pokestop')
-  } else {
-    content += getScanTypeName('spawnpoint')
-  }
-  content += '</small><br>'
+  content += '<small><b>Scan-Type:</b> ' + getScanTypeName(pokemon.seen_type) + '</small><br>'
 
   if (pokemon.pvp) {
     content +=
@@ -3108,6 +3100,9 @@ function getCharacterCategoryName (characterCategoryId) {
 }
 
 function getScanTypeName (spawnTypeId) {
+  if (spawnTypeId === 'wild' || spawnTypeId === 'encounter') {
+    return i18n('scan_type_spawnpoint')
+  }
   return i18n('scan_type_' + spawnTypeId)
 }
 
