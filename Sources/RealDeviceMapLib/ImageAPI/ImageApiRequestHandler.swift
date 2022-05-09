@@ -225,7 +225,8 @@ class ImageApiRequestHandler {
                 response.completed()
                 file.close()
             } catch {
-                Log.error(message: "[ImageApiRequestHandler] Failed to send file: \(error.localizedDescription)")
+                Log.error(message: "[ImageApiRequestHandler] Failed to send file \(file.path): " +
+                    "\(error.localizedDescription)")
                 response.respondWithError(status: .internalServerError)
             }
 
