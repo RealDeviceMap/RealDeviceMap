@@ -222,7 +222,7 @@ public class WebHookRequestHandler {
             }
 
             if debugRawData {
-                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(data.description)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(String(describing: data))")
             }
 
             if method == 2 {
