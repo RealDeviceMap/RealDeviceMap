@@ -12,7 +12,7 @@
         "title_confirmmail": "Confirmar correo",
         "title_resetpassword": "Restablecer contraseña",
         "title_unauthorized": "No autorizado",
-        "title_stats": "Estadísticas",
+        "title_stats": "Estadísticas de %{name}",
         "filter_title": "Filtrar",
         "filter_gyms": "Gimnasios",
         "filter_raids": "Incursiones",
