@@ -222,10 +222,10 @@
             options: teamOptions
         });
 
-        pokemonChart.options.title.text = {{stats_historic_pokemon}}
-        raidChart.options.title.text = {{stats_historic_raid}}
-        questChart.options.title.text = {{stats_historic_quests}}
-        invasionChart.options.title.text = {{stats_historic_invasion}}
+        pokemonChart.options.title.text = "{{{stats_historic_pokemon}}}";
+        raidChart.options.title.text = "{{{stats_historic_raid}}}";
+        questChart.options.title.text = "{{{stats_historic_quests}}}";
+        invasionChart.options.title.text = "{{{stats_historic_invasion}}}";
 
         $("#comday-stats").hide();
         $("#filter-pokemon-comday").on('change', function() {
@@ -540,7 +540,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "dodgerblue",
-                            label: "Pokemon",
+                            label: "{{{stats_pokemon}}}",
                             fill: true
                         }]
                     };
@@ -582,7 +582,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "orange",
-                            label: "Raids",
+                            label: "{{{stats_tab_raids}}}",
                             fill: true
                         }]
                     };
@@ -624,7 +624,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "limegreen",
-                            label: "Quests",
+                            label: "{{{stats_tab_quests}}}",
                             fill: true
                         }]
                     };
@@ -666,7 +666,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "red",
-                            label: "Invasions",
+                            label: "{{{stats_tab_invasions}}}",
                             fill: true
                         }]
                     };
