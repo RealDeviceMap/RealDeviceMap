@@ -7,6 +7,7 @@
     $(document).ready(function() {
         var now = Date.now();
         var csrf = "{{csrf}}";
+        flatpickr.localize(flatpickr.l10ns.{{locale}});
         $("[data-toggle='datetimepicker']").flatpickr({
             altInput: true,
             altFormat: "F j, Y",
