@@ -375,7 +375,8 @@ public class WebRequestHandler {
                     "stats_quests", "stats_quests_item_rewards", "stats_quests_pokemon_rewards", "stats_grunt_types",
                     "stats_statistics", "stats_active_100iv", "stats_active_90iv", "stats_active_0iv",
                     "stats_active_shiny", "stats_total_shiny", "stats_active_iv_statistics", "stats_top10_pokemon",
-                    "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms"
+                    "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms",
+                    "stats_historic_pokemon", "stats_historic_raid", "stats_historic_quests", "stats_historic_invasion"
                 ]
                 for loc in statLoc {
                     data[loc] = localizer.get(value: loc)

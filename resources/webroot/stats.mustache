@@ -222,10 +222,10 @@
             options: teamOptions
         });
 
-        pokemonChart.options.title.text = "Historical Pokemon Statistics";
-        raidChart.options.title.text = "Historical Raid Statistics";
-        questChart.options.title.text = "Historical Quest Statistics";
-        invasionChart.options.title.text = "Historical Invasion Statistics";
+        pokemonChart.options.title.text = {{stats_historic_pokemon}}
+        raidChart.options.title.text = {{stats_historic_raid}}
+        questChart.options.title.text = {{stats_historic_quests}}
+        invasionChart.options.title.text = {{stats_historic_invasion}}
 
         $("#comday-stats").hide();
         $("#filter-pokemon-comday").on('change', function() {
