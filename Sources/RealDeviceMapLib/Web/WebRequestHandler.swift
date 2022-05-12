@@ -338,7 +338,7 @@ public class WebRequestHandler {
                 data["page_is_stats"] = true
                 data["show_stats"] = true
                 data["title"] = title
-                data["page"] = localizer.get(value: "title_stats")
+                data["page"] = localizer.get(value: "title_stats", replace: ["name": title])
 
                 data["pokemon"] = try? Stats.getPokemonIVStats()
                 data["raids"] = try? Stats.getRaidStats()

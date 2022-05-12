@@ -12,7 +12,7 @@
         "title_confirmmail": "Email-Adresse bestätigen",
         "title_resetpassword": "Passwort zurücksetzen",
         "title_unauthorized": "Zugriff nicht erlaubt",
-        "title_stats": "Statistik",
+        "title_stats": "%{name}-Statistiken",
         "filter_title": "Filter",
         "filter_gyms": "Arenen",
         "filter_raids": "Raids",
