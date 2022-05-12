@@ -273,6 +273,10 @@
         "stats_top10_pokemon": "Pokémon Top 10",
         "stats_filters": "Filtros",
         "stats_new_pokestops": "Nuevas Poképaradas (Últimas 24 Horas)",
-        "stats_new_gyms": "Nuevos gimnasios  (Últimas 24 Horas)"
+        "stats_new_gyms": "Nuevos gimnasios  (Últimas 24 Horas)",
+        "stats_historic_pokemon": "Estadísticas históricas de Pokémon",
+        "stats_historic_raid": "Estadísticas históricas de incursiones",
+        "stats_historic_quests": "Estadísticas históricas de tareas de investigación",
+        "stats_historic_invasion": "Estadísticas históricas de invasiones"
     }
 }
