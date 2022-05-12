@@ -274,8 +274,8 @@
         "stats_new_pokestops": "Neue Pokestops (Innerhalb 24 Stunden)",
         "stats_new_gyms": "Neue Arenen (Innerhalb 24 Stunden)",
         "stats_historic_pokemon": "Historische Pokemon-Statistiken",
-        "stats_historic_raid": "Historische Überfallstatistiken",
-        "stats_historic_quests": "Historische Quest-Statistik",
-        "stats_historic_invasion": "Historische Invasionsstatistiken"
+        "stats_historic_raid": "Historische Raid-Statistiken",
+        "stats_historic_quests": "Historische Quest-Statistiken",
+        "stats_historic_invasion": "Historische Invasion-Statistiken"
     }
 }
