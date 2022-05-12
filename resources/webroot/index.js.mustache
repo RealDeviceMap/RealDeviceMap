@@ -303,7 +303,7 @@ $(function () {
     }
     var json = JSON.stringify(settings)
     var el = document.createElement('a')
-    el.setAttribute('href', 'data:application/json;chartset=utf-8,' + encodeURIComponent(json))
+    el.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(json))
     el.setAttribute('download', 'settings.json')
     el.style.display = 'none'
     document.body.appendChild(el)
@@ -5219,8 +5219,8 @@ function loadInvasionFilter () {
   const table = $('#table-filter-invasion').DataTable({
     language: {
       search: i18n('filter_table_search'),
-      emptyTable: i18n('filter_pokestop_table_empty'),
-      zeroRecords: i18n('filter_pokestop_table_empty')
+      emptyTable: i18n('filter_invasion_table_empty'),
+      zeroRecords: i18n('filter_invasion_table_empty')
     },
     rowGroup: {
       dataSrc: 'type'
