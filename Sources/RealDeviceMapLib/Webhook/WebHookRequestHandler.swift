@@ -187,9 +187,6 @@ public class WebHookRequestHandler {
         var containsGMO = false
 
         for rawData in contents {
-            if debugRawData {
-                Log.debug(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(rawData)")
-            }
             let hasArQuestReq = rawData["have_ar"] as? Bool
             let data: Data
             let method: Int
@@ -222,6 +219,10 @@ public class WebHookRequestHandler {
                 method = rawData["type"] as? Int ?? 106
             } else {
                 continue
+            }
+
+            if debugRawData {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(data.description)")
             }
 
             if method == 2 {
