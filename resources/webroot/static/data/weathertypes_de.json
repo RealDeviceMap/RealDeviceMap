@@ -1,0 +1,35 @@
+{
+    "0": {
+        "types": [],
+        "name": "Extrem"
+    },
+    "1": {
+        "types": ["Feuer","Pflanze","Boden"],
+        "name": "Klar"
+    },
+    "2": {
+        "types": ["Wasser","Elektro","Käfer"],
+        "name": "Regen"
+    },
+    "3": {
+        "types": ["Normal","Gestein"],
+        "name": "Teilweise bewölkt"
+    },
+    "4": {
+        "types": ["Fee","Kampf","Flug"],
+        "name": "Bedeckt"
+    },
+    "5": {
+        "types": ["Drache","Flug","Psycho"],
+        "name": "Windig"
+    },
+    "6": {
+        "types": ["Eis","Stahl"],
+        "name": "Schnee"
+    },
+    "7" : {
+        "types": ["Unlicht","Geist"],
+        "name": "Nebel"
+    }
+}
+
