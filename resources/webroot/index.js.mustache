@@ -2379,27 +2379,27 @@ function getPokemonPopupContent (pokemon) {
         '<div class="col-12 col-md-8 text-nowrap">'
   if (hasIV) {
     const ivPercent = Math.round((pokemon.atk_iv + pokemon.def_iv + pokemon.sta_iv) / 45 * 1000) / 10
-    content += '<b>IV:</b> ' + ivPercent + '% (A' + pokemon.atk_iv + '|D' + pokemon.def_iv + '|S' + pokemon.sta_iv + ')<br>'
+    content += '<b>'+i18n('map_pokemon_iv')+'</b> ' + ivPercent + '% (A' + pokemon.atk_iv + '|D' + pokemon.def_iv + '|S' + pokemon.sta_iv + ')<br>'
   }
   if (pokemon.cp !== null) {
-    content += '<b>CP:</b> ' + pokemon.cp + ' (Lvl. ' + pokemon.level + ')<br>'
+    content += '<b>'+i18n('map_pokemon_cp')+'</b> ' + pokemon.cp + ' ('+i18n('map_pokemon_level')+' ' + pokemon.level + ')<br>'
   }
   if (pokemon.move_1 !== null) {
-    content += '<b>Fast:</b> ' + getMoveName(pokemon.move_1) + '<br>'
+    content += '<b>'+i18n('map_pokemon_fast_attack')+'</b> ' + getMoveName(pokemon.move_1) + '<br>'
   }
   if (pokemon.move_2 !== null) {
-    content += '<b>Charge:</b> ' + getMoveName(pokemon.move_2) + '<br>'
+    content += '<b>'+i18n('map_pokemon_charge_attack')+'</b> ' + getMoveName(pokemon.move_2) + '<br>'
   }
   if (pokemon.size !== null && pokemon.weight !== null) {
-    content += '<b>Weight:</b> ' + (pokemon.weight).toFixed(2) + 'kg'
+    content += '<b>'+i18n('map_pokemon_weight')+'</b> ' + (pokemon.weight).toFixed(2) + 'kg'
     if (pokemon.base_height !== null) {
-      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.base_height) + '<br>'
+      content += ' | <b>'+i18n('map_pokemon_size')+'</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.base_height) + '<br>'
     } else {
-      content += ' | <b>Size:</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
+      content += ' | <b>'+i18n('map_pokemon_size')+'</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
     }
   }
   if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
-    content += '<b>Catch Chances:</b><br>'
+    content += '<b>'+i18n('map_pokemon_catch_chance')+'</b><br>'
     content += '<img src="/image-api/reward?id=1&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_1 * 100).toFixed(1) + '% '
     content += '<img src="/image-api/reward?id=2&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_2 * 100).toFixed(1) + '%<br>'
     content += '<img src="/image-api/reward?id=3&type=2&style=' + selectedIconStyle + '" height="14" width="14"> ' + (pokemon.capture_3 * 100).toFixed(1) + '%<br>'
@@ -2411,26 +2411,26 @@ function getPokemonPopupContent (pokemon) {
     '<div class="row">' + // START 3RD ROW
         '<div class="col text-nowrap">'
   if (pokemon.expire_timestamp_verified) {
-    content += '<b>Despawn Time:</b> '
+    content += '<b>'+i18n('map_pokemon_despawn_time')+'</b> '
   } else {
-    content += '<b>Despawn Time:</b> ~'
+    content += '<b>'+i18n('map_pokemon_despawn_time')+'</b> ~'
   }
   content += despawnDate.toLocaleTimeString() + ' (' + getTimeUntill(despawnDate) + ')<br>' +
         '</div>' +
         '<div class="col-sm text-nowrap">'
   if (pokemon.first_seen_timestamp !== 0 && pokemon.first_seen_timestamp !== undefined) {
     const firstSeenDate = new Date(pokemon.first_seen_timestamp * 1000)
-    content += '<small><b>First Seen:</b> ' + firstSeenDate.toLocaleTimeString() + ' (' + getTimeSince(firstSeenDate) + ')</small><br>'
+    content += '<small><b>'+i18n('map_pokemon_first_seen')+'</b> ' + firstSeenDate.toLocaleTimeString() + ' (' + getTimeSince(firstSeenDate) + ')</small><br>'
   }
   content +=
         '</div>' +
         '<div class="col-sm text-nowrap">'
   if (pokemon.updated !== 0 && pokemon.updated !== null) {
     const updatedDate = new Date(pokemon.updated * 1000)
-    content += '<small><b>Latest Seen:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
+    content += '<small><b>'+i18n('map_pokemon_last_seen')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')</small><br>'
   }
 
-  content += '<small><b>Scan-Type:</b> ' + getScanTypeName(pokemon.seen_type) + '</small><br>'
+  content += '<small><b>'+i18n('map_pokemon_scan_type')+'</b> ' + getScanTypeName(pokemon.seen_type) + '</small><br>'
 
   if (pokemon.pvp) {
     content +=
@@ -2446,7 +2446,7 @@ function getPokemonPopupContent (pokemon) {
         }
         let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
+          infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_pc')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
@@ -2463,7 +2463,7 @@ function getPokemonPopupContent (pokemon) {
         }
         let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
+          infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_pc')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
@@ -2480,7 +2480,7 @@ function getPokemonPopupContent (pokemon) {
         }
         let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
         if (ranking.cp !== null) {
-          infoString += ' @' + ranking.cp + 'CP (Lvl. ' + (ranking.level) + '/' + (ranking.cap) + ')'
+          infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_pc')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
         }
         content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
       })
@@ -2492,9 +2492,9 @@ function getPokemonPopupContent (pokemon) {
     '</div>' + // END 3RD ROW
     '<br>' +
     '<div class="text-center">' +
-        '<a id="h' + pokemon.id + '" title="Hide Pokemon" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>[Hide]</b></a>&nbsp;' +
-        '<a title="Filter Pokemon" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>[Exclude]</b></a> ' +
-        '<a title="Direct Link" href="/@pokemon/'+pokemon.id+'/'+pokemon.is_event+'"><b>[Direct Link]</b></a>' +
+        '<a id="h' + pokemon.id + '" title="'+i18n('map_pokemon_hide_title')+'" href="#" onclick="setIndividualPokemonHidden(\'' + pokemon.id + '\');return false;"><b>['+i18n('map_pokemon_hide')+']</b></a>&nbsp;' +
+        '<a title="'+i18n('map_pokemon_exclude_title')+'" href="#" onclick="addPokemonFilter(' + pokemon.pokemon_id + ', false);return false;"><b>['+i18n('map_pokemon_exclude')+']</b></a> ' +
+        '<a title="'+i18n('map_pokemon_link_title')+'" href="/@pokemon/'+pokemon.id+'/'+pokemon.is_event+'"><b>['+i18n('map_pokemon_link')+']</b></a>' +
         '<br>' +
         '<br>' +
         '<div class="row">' +
@@ -2942,34 +2942,34 @@ function getGymPopupContent (gym) {
 
 function getCellPopupContent (cell) {
   let content = '<center>'
-  content += '<h6><b>Level ' + cell.level + ' S2 Cell</b></h6>'
-  content += '<b>Id:</b> ' + cell.id + '<br>'
+  content += '<h6><b>'+i18n('map_level_s2_cell', { s2level: cell.level })+'</b></h6>'
+  content += '<b>'+i18n('map_id')+'</b> ' + cell.id + '<br>'
 
   const updatedDate = new Date(cell.updated * 1000)
 
-  content += '<b>Last Updated:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
+  content += '<b>'+i18n('map_last_update')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
   content += '</center>'
   return content
 }
 
 function getSubmissionTypeCellPopupContent (cell) {
   let content = '<center>'
-  content += '<h6><b>Level ' + cell.level + ' S2 Cell</b></h6>'
-  content += '<b>Id:</b> ' + cell.id + '<br>'
-  content += '<b>Total Count:</b> ' + cell.count + '<br>'
-  content += '<b>Pokestop Count:</b> ' + cell.count_pokestops + '<br>'
-  content += '<b>Gym Count:</b> ' + cell.count_gyms + '<br>'
+  content += '<h6><b>'+i18n('map_level_s2_cell', { s2level: cell.level })+'</b></h6>'
+  content += '<b>'+i18n('map_id')+'</b> ' + cell.id + '<br>'
+  content += '<b>'+i18n('map_total_count')+'</b> ' + cell.count + '<br>'
+  content += '<b>'+i18n('map_total_pokestop')+'</b> ' + cell.count_pokestops + '<br>'
+  content += '<b>'+i18n('map_total_gym')+'</b> ' + cell.count_gyms + '<br>'
 
   const gymThreshold = [2, 6, 20]
 
   if (cell.count_gyms < 3) {
-    content += '<b>Submissions untill Gym:</b> ' + (gymThreshold[cell.count_gyms] - cell.count)
+    content += '<b>'+i18n('map_submissions_until_gym')+'</b> ' + (gymThreshold[cell.count_gyms] - cell.count)
   } else {
-    content += '<b>Submissions untill Gym:</b> Never'
+    content += '<b>'+i18n('map_max_submissions_gym')+'</b>'
   }
 
   if ((cell.count === 1 && cell.count_gyms < 1) || (cell.count === 5 && cell.count_gyms < 2) || (cell.count === 19 && cell.count_gyms < 3)) {
-    content += '<br><b>Next submission will cause a Gym!'
+    content += '<br><b>'+i18n('map_next_gym')
   }
 
   content += '</center>'
@@ -2985,29 +2985,29 @@ function degreesToCardinal (d) {
 
 function getWeatherPopupContent (weather) {
   const weatherName = weatherTypes[weather.gameplay_condition].name
-  const weatherType = weatherTypes[weather.gameplay_condition].types
+  const weatherType = weatherTypes[weather.gameplay_condition].types.join(', ')
 
   let content = '<center>'
   content += '<h6><b>' + weatherName + '</b><br></h6>'
-  content += '<b>Boosted Types:</b><br>' + weatherType + '<br>'
-  content += '<b>Cell ID:</b> ' + weather.id + '<br>'
-  content += '<b>Cell Level:</b> ' + weather.level + '<br>'
-  content += '<b>Lat:</b> ' + weather.latitude + '<br>'
-  content += '<b>Lon:</b> ' + weather.longitude + '<br>'
-  content += '<b>Gameplay Condition:</b> ' + weather.gameplay_condition + '<br>'
-  content += '<b>Wind Direction:</b> ' + weather.wind_direction + '° (' + degreesToCardinal(weather.wind_direction) + ')<br>'
-  content += '<b>Cloud Level:</b> ' + weather.cloud_level + '<br>'
-  content += '<b>Rain Level:</b> ' + weather.rain_level + '<br>'
-  content += '<b>Wind Level:</b> ' + weather.wind_level + '<br>'
-  content += '<b>Snow Level:</b> ' + weather.snow_level + '<br>'
-  content += '<b>Fog Level:</b> ' + weather.fog_level + '<br>'
-  content += '<b>Special Effects Level:</b> ' + weather.special_effect_level + '<br>'
-  content += '<b>Severity:</b> ' + weather.severity + '<br>'
-  content += '<b>Weather Warning:</b> ' + weather.warn_weather + '<br><br>'
+  content += '<b>'+i18n('map_boosted_types')+'</b><br>' + weatherType + '<br>'
+  content += '<b>'+i18n('map_cell_id')+'</b> ' + weather.id + '<br>'
+  content += '<b>'+i18n('map_cell_level')+'</b> ' + weather.level + '<br>'
+  content += '<b>'+i18n('map_lat')+'</b> ' + weather.latitude + '<br>'
+  content += '<b>'+i18n('map_lon')+'</b> ' + weather.longitude + '<br>'
+  content += '<b>'+i18n('map_gameplay_condition')+'</b> ' + weather.gameplay_condition + '<br>'
+  content += '<b>'+i18n('map_wind_direction')+'</b> ' + weather.wind_direction + '° (' + degreesToCardinal(weather.wind_direction) + ')<br>'
+  content += '<b>'+i18n('map_cloud_level')+'</b> ' + weather.cloud_level + '<br>'
+  content += '<b>'+i18n('map_rain_level')+'</b> ' + weather.rain_level + '<br>'
+  content += '<b>'+i18n('map_wind_level')+'</b> ' + weather.wind_level + '<br>'
+  content += '<b>'+i18n('map_snow_level')+'</b> ' + weather.snow_level + '<br>'
+  content += '<b>'+i18n('map_fog_level')+'</b> ' + weather.fog_level + '<br>'
+  content += '<b>'+i18n('map_special_effeccts_level')+'</b> ' + weather.special_effect_level + '<br>'
+  content += '<b>'+i18n('map_severity')+'</b> ' + weather.severity + '<br>'
+  content += '<b>'+i18n('map_weather_warning')+'</b> ' + weather.warn_weather + '<br><br>'
 
   const updatedDate = new Date(weather.updated * 1000)
 
-  content += '<b>Last Updated:</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
+  content += '<b>'+i18n('map_last_update')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
   content += '</center>'
   return content
 }
