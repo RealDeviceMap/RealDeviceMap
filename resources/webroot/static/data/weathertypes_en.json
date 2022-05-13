@@ -1,7 +1,7 @@
 {
     "0": {
         "types": [],
-        "name": "None"
+        "name": "Extreme"
     },
     "1": {
         "types": ["Fire","Grass","Ground"],
@@ -32,3 +32,4 @@
         "name": "Fog"
     }
 }
+
