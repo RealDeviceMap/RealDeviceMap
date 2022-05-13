@@ -221,10 +221,6 @@ public class WebHookRequestHandler {
                 continue
             }
 
-            if debugRawData {
-                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] rawData: \(String(describing: data))")
-            }
-
             if method == 2 {
                 if let gpr = try? GetPlayerOutProto(serializedData: data) {
                     playerdatas.append(gpr)
@@ -354,6 +350,17 @@ public class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
             }
+        }
+        if debugRawData {
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
+            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
         }
 
         if username != nil && trainerXP > 0 && trainerLevel > 0 {
