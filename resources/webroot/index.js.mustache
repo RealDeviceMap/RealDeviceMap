@@ -2664,8 +2664,8 @@ function getPokestopPopupContent (pokestop) {
   content += '<div class="text-left">'
   if (isPoweredUp) {
     content += 
-      '<b>'+i18n('map_gym_power_up_level')+'</b> ' + pokestop.power_up_level + '<br>' +
-      '<b>'+i18n('map_gym_power_up_end')+'</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
+      '<b>'+i18n('map_power_up_level')+'</b> ' + pokestop.power_up_level + '<br>' +
+      '<b>'+i18n('map_power_up_end')+'</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
   } 
   content += '</div>'
 
@@ -2899,8 +2899,8 @@ function getGymPopupContent (gym) {
   }
   if (isPoweredUp) {
     content += 
-      '<b>'+i18n('map_gym_power_up_level')+'</b> ' + gym.power_up_level + '<br>' +
-      '<b>'+i18n('map_gym_power_up_end')+'</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
+      '<b>'+i18n('map_power_up_level')+'</b> ' + gym.power_up_level + '<br>' +
+      '<b>'+i18n('map_power_up_end')+'</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
   } 
   content += '</div>'
 
@@ -2947,7 +2947,7 @@ function getCellPopupContent (cell) {
 
   const updatedDate = new Date(cell.updated * 1000)
 
-  content += '<b>'+i18n('map_last_update')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
+  content += '<b>'+i18n('map_last_updated')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
   content += '</center>'
   return content
 }
@@ -3007,7 +3007,7 @@ function getWeatherPopupContent (weather) {
 
   const updatedDate = new Date(weather.updated * 1000)
 
-  content += '<b>'+i18n('map_last_update')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
+  content += '<b>'+i18n('map_last_updated')+'</b> ' + updatedDate.toLocaleTimeString() + ' (' + getTimeSince(updatedDate) + ')'
   content += '</center>'
   return content
 }
@@ -3668,9 +3668,9 @@ function getDevicePopupContent (device) {
   const ts = Math.round((new Date()).getTime() / 1000)
   var isOffline = isDeviceOffline(device, ts)
   var content = '<center><h6><b>' + device.uuid + '</b></h6></center><br>' +
-        '<b>Instance:</b> ' + device.instance_name + '<br>' +
-        '<b>Last Seen:</b> ' + lastSeen + '<br>' +
-        '<b>Status:</b> ' + (isOffline ? 'Offline' : 'Online')
+        '<b>'+i18n('map_device_instance')+'</b> ' + device.instance_name + '<br>' +
+        '<b>'+i18n('map_device_last_seen')+'</b> ' + lastSeen + '<br>' +
+        '<b>'+i18n('map_device_status')+'</b> ' + (isOffline ? 'Offline' : 'Online')
   return content
 }
 
