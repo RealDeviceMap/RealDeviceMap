@@ -368,6 +368,16 @@
         "stats_historic_pokemon": "Historical Pokémon Statistics",
         "stats_historic_raid": "Historical Raid Statistics",
         "stats_historic_quests": "Historical Quest Statistics",
-        "stats_historic_invasion": "Historical Invasion Statistics"
+        "stats_historic_invasion": "Historical Invasion Statistics",
+        "weather_types": {
+            "0": { "name": "Extreme", "types": []},
+            "1": { "name": "Clear", "types": ["Fire","Grass","Ground"]},
+            "2": { "name": "Rain", "types": ["Water","Electric","Bug"]},
+            "3": { "name": "Partly Cloudy", "types": ["Normal","Rock"]},
+            "4": { "name": "Cloudy", "types": ["Fairy","Fighting","Poison"]},
+            "5": { "name": "Windy","types": ["Dragon","Flying","Psychic"]},
+            "6": { "name": "Snow",  "types": ["Ice","Steel"]},
+            "7": { "name": "Fog", "types": ["Dark","Ghost"]}
+        }
     }
 }

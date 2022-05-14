@@ -144,6 +144,7 @@ $(function () {
 
   $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
     i18n.translator.add(data)
+    weatherTypes = data['values']['weather_types']
   })
 
   $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
@@ -156,10 +157,6 @@ $(function () {
 
   $.getJSON('/static/data/pokemon.json', function (data) {
     pokemonDb = data
-  })
-
-  $.getJSON('/static/data/weathertypes_{{{locale}}}.json', { _: '{{{weathertypes_locale_last_modified}}}' }, function (data) {
-    weatherTypes = data
   })
 
   availableItems = JSON.parse('{{{available_items_json}}}')
@@ -2985,11 +2982,11 @@ function degreesToCardinal (d) {
 
 function getWeatherPopupContent (weather) {
   const weatherName = weatherTypes[weather.gameplay_condition].name
-  const weatherType = weatherTypes[weather.gameplay_condition].types.join(', ')
+  const weatherType = weatherTypes[weather.gameplay_condition].types
 
   let content = '<center>'
   content += '<h6><b>' + weatherName + '</b><br></h6>'
-  content += '<b>'+i18n('map_boosted_types')+':</b><br>' + weatherType + '<br>'
+  content += '<b>'+i18n('map_boosted_types')+':</b><br>' + weatherType.join(', ') + '<br>'
   content += '<b>'+i18n('map_cell_id')+':</b> ' + weather.id + '<br>'
   content += '<b>'+i18n('map_cell_level')+':</b> ' + weather.level + '<br>'
   content += '<b>'+i18n('map_lat')+':</b> ' + weather.latitude + '<br>'
