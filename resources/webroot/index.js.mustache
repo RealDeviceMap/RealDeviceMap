@@ -2499,17 +2499,17 @@ function getPokemonPopupContent (pokemon) {
         '<br>' +
         '<div class="row">' +
             '<div class="col">' +
-                '<a href="https://www.google.com/maps/place/' + pokemon.lat + ',' + pokemon.lon + '" title="Open in Google Maps">' +
+                '<a href="https://www.google.com/maps/place/' + pokemon.lat + ',' + pokemon.lon + '" title="'+i18n('map_open_in_gmaps')+'">' +
                     '<img src="/static/misc/maps_google.png" height="32" width="32">' +
                 '</a>' +
             '</div>' +
             '<div class="col">' +
-                '<a href="https://maps.apple.com/maps?daddr=' + pokemon.lat + ',' + pokemon.lon + '" title="Open in Apple Maps">' +
+                '<a href="https://maps.apple.com/maps?daddr=' + pokemon.lat + ',' + pokemon.lon + '" title="'+i18n('map_open_in_amaps')+'">' +
                     '<img src="/static/misc/maps_apple.png" height="32" width="32">' +
                 '</a>' +
             '</div>' +
             '<div class="col">' +
-                '<a href="https://www.waze.com/ul?ll=' + pokemon.lat + ',' + pokemon.lon + '&navigate=yes" title="Open in Waze">' +
+                '<a href="https://www.waze.com/ul?ll=' + pokemon.lat + ',' + pokemon.lon + '&navigate=yes" title="'+i18n('map_open_in_waze')+'">' +
                     '<img src="/static/misc/maps_waze.png" height="32" width="32">' +
                 '</a>' +
             '</div>' +
@@ -2557,7 +2557,7 @@ function getPokestopPopupContent (pokestop) {
   let content = '<div class="text-center">'
   let pokestopName
   if (pokestop.name === null || pokestop.name === '') {
-    pokestopName = 'Unknown Pokestop Name'
+    pokestopName = i18n('map_unknown_pokestop')
   } else {
     pokestopName = pokestop.name
   }
@@ -2587,15 +2587,15 @@ function getPokestopPopupContent (pokestop) {
     '<div class="container">'
 
   if (isActiveLure) {
-    content += '<b>Lure Type:</b> ' + getLureName(pokestop.lure_id) + '<br>'
-    content += '<b>Lure End Time:</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>'
+    content += '<b>'+i18n('map_lure_type')+'</b> ' + getLureName(pokestop.lure_id) + '<br>'
+    content += '<b>'+i18n('map_lure_end_time')+'</b> ' + lureExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(lureExpireDate) + ')<br><br>'
   }
 
   $.each(incidents.sort((a, b) => a.character - b.character), function (index, incident) {
     let invasionExpireDate = new Date(incident.expiration * 1000)
-    content += '<b>Team Rocket Invasion</b><br>'
-    content += '<b>Grunt Type:</b> ' + getGruntName(incident.character) + '<br>'
-    content += '<b>End Time:</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>'
+    content += '<b>'+i18n('map_invasion_team_rocket')+'</b><br>'
+    content += '<b>'+i18n('map_invasion_grunt_type')+'</b> ' + getGruntName(incident.character) + '<br>'
+    content += '<b>'+i18n('map_invasion_end_time')+'</b> ' + invasionExpireDate.toLocaleTimeString() + ' (' + getTimeUntill(invasionExpireDate) + ')<br><br>'
   })
 
   if (pokestop.quest_type !== null) {
@@ -2616,11 +2616,11 @@ function getPokestopPopupContent (pokestop) {
       conditionsString += ')'
     }
 
-    content += '<b>AR-Quest in Inventory:</b><br>'
-    content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>'
+    content += '<b>'+i18n('map_quest_ar_inventory')+'</b><br>'
+    content += '<b>'+i18n('map_quest_condition')+'</b> ' + getQuestName(pokestop.quest_type, pokestop.quest_target) + conditionsString + '<br>'
 
     $.each(pokestop.quest_rewards, function (index, reward) {
-      content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
+      content += '<b>'+i18n('map_quest_reward')+'</b> ' + getQuestReward(reward) + '<br>'
     })
 
     content += '<br>'
@@ -2644,11 +2644,11 @@ function getPokestopPopupContent (pokestop) {
       conditionsString += ')'
     }
 
-    content += '<b>No AR-Quest in Inventory:</b><br>'
-    content += '<b>Quest Condition:</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
+    content += '<b>'+i18n('map_quest_no_ar_inventory')+'</b><br>'
+    content += '<b>'+i18n('map_quest_condition')+'</b> ' + getQuestName(pokestop.alternative_quest_type, pokestop.alternative_quest_target) + conditionsString + '<br>'
 
     $.each(pokestop.alternative_quest_rewards, function (index, reward) {
-      content += '<b>Quest Reward:</b> ' + getQuestReward(reward) + '<br>'
+      content += '<b>'+i18n('map_quest_reward')+'</b> ' + getQuestReward(reward) + '<br>'
     })
 
     content += '<br>'
@@ -2664,8 +2664,8 @@ function getPokestopPopupContent (pokestop) {
   content += '<div class="text-left">'
   if (isPoweredUp) {
     content += 
-      '<b>Power Up Level:</b> ' + pokestop.power_up_level + '<br>' +
-      '<b>Power Up End:</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
+      '<b>'+i18n('map_gym_power_up_level')+'</b> ' + pokestop.power_up_level + '<br>' +
+      '<b>'+i18n('map_gym_power_up_end')+'</b> ' + powerUpEndDate.toLocaleTimeString() + ' (' + getTimeUntill(powerUpEndDate) + ')<br><br>'
   } 
   content += '</div>'
 
@@ -2714,7 +2714,7 @@ function getGymPopupContent (gym) {
 
   var gymName = ''
   if (gym.name === null || gym.name === '') {
-    gymName = 'Unknown Gym Name'
+    gymName = i18n('map_unknown_gym')
   } else {
     gymName = gym.name
   }
@@ -2744,15 +2744,15 @@ function getGymPopupContent (gym) {
       }
       pokemonName += ' ' + getGenderIcon(gym.raid_pokemon_gender)
     } else if (isRaidBattle) {
-      pokemonName = 'Unknown Raid Boss'
+      pokemonName = i18n('map_unknown_raid')
     } else if (gym.raid_is_exclusive) {
-      pokemonName = 'EX Egg'
+      pokemonName = i18n('map_egg_ex')
     } else if (gym.raid_level === 6) {
-      pokemonName = 'Mega Egg'
+      pokemonName = i18n('map_egg_mega')
     } else if (gym.raid_level === 7) {
-      pokemonName = 'Mega Legendary Egg'
+      pokemonName = i18n('map_egg_mega_legendary')
     } else {
-      pokemonName = 'Level ' + gym.raid_level + ' Egg'
+      pokemonName = i18n('map_egg_level', { egglevel: gym.raid_level })
     }
     const pokemonIcon = getPokemonIconURL(gym.raid_pokemon_id, gym.raid_pokemon_form, gym.raid_pokemon_costume, gym.raid_pokemon_gender, gym.raid_pokemon_evolution, null, null, null, false)
     content +=
@@ -2795,18 +2795,18 @@ function getGymPopupContent (gym) {
             '<div class="col-12 col-md-8 text-nowrap">' + // START 2ND COL
                 '<h7><b>' + pokemonName + '</b></h7><br>'
     if (hasRaidBoss && isRaidBattle && gym.raid_pokemon_evolution) {
-      content += '<b>Evolution:</b> ' + getEvolutionName(gym.raid_pokemon_evolution) + '<br>'
+      content += '<b>'+i18n('map_gym_evolution')+'</b> ' + getEvolutionName(gym.raid_pokemon_evolution) + '<br>'
     }
     if (isRaidBattle) {
       if (gym.raid_pokemon_cp !== null) {
         if (gym.raid_is_exclusive) {
-          content += '<b>Level:</b> EX<br>'
+          content += '<b>'+i18n('map_gym_level')+'</b> '+i18n('map_gym_type_ex')+'<br>'
         } else if (gym.raid_level === 6) {
-          content += '<b>Level:</b> Mega<br>'
+          content += '<b>'+i18n('map_gym_level')+'</b> '+i18n('map_gym_type_mega')+'<br>'
         } else if (gym.raid_level === 7) {
-          content += '<b>Level:</b> Mega Legendary<br>'
+          content += '<b>'+i18n('map_gym_level')+'</b> '+i18n('map_gym_type_mega_legendary')+'<br>'
         } else {
-          content += '<b>Level:</b> ' + gym.raid_level + '<br>'
+          content += '<b>'+i18n('map_gym_level')+'</b> ' + gym.raid_level + '<br>'
         }
       }
     }
@@ -2814,17 +2814,17 @@ function getGymPopupContent (gym) {
       if (gym.raid_pokemon_move_1 !== null) {
         var move1 = getMoveName(gym.raid_pokemon_move_1)
         if (move1 !== null) {
-          content += '<b>Fast:</b> ' + move1 + '<br>'
+          content += '<b>'+i18n('map_pokemon_fast_attack')+'</b> ' + move1 + '<br>'
         }
       }
       if (gym.raid_pokemon_move_2 !== null) {
         var move2 = getMoveName(gym.raid_pokemon_move_2)
         if (move2 !== null) {
-          content += '<b>Charge:</b> ' + move2 + '<br>'
+          content += '<b>'+i18n('map_pokemon_charge_attack')+'</b> ' + move2 + '<br>'
         }
       }
       if (gym.raid_pokemon_form !== null && gym.raid_pokemon_form > 0) {
-        content += '<b>Form:</b> ' + getFormName(gym.raid_pokemon_form) + '<br>'
+        content += '<b>'+i18n('map_pokemon_form')+'</b> ' + getFormName(gym.raid_pokemon_form) + '<br>'
       }
     }
     if (gym.ex_raid_eligible) {
@@ -5550,7 +5550,7 @@ function togglePvp() {
 
 // eslint-disable-next-line no-unused-vars
 function editGymName(id, oldName) {
-  const newName = prompt('Edit Name for Gym: ' + id, oldName !== 'null' ? oldName : '')
+  const newName = prompt(i18n('map_edit_gym') + ' ' + id, oldName !== 'null' ? oldName : '')
   if (!newName) return
   $.ajax({
     url: '/api/set_data',
@@ -5574,7 +5574,7 @@ function editGymName(id, oldName) {
 
 // eslint-disable-next-line no-unused-vars
 function editPokestopName(id, oldName) {
-  const newName = prompt('Edit Name for pokestop: ' + id, oldName !== 'null' ? oldName : '')
+  const newName = prompt(i18n('map_edit_pokestop') + ' ' + id, oldName !== 'null' ? oldName : '')
   if (!newName) return
   $.ajax({
     url: '/api/set_data',
