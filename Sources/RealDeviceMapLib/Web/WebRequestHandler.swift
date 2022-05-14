@@ -376,6 +376,7 @@ public class WebRequestHandler {
                     "stats_statistics", "stats_active_100iv", "stats_active_90iv", "stats_active_0iv",
                     "stats_active_shiny", "stats_total_shiny", "stats_active_iv_statistics", "stats_top10_pokemon",
                     "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms",
+                    "stats_lifetime", "stats_30days", "stats_today", "stats_iv_today",
                     "stats_historic_pokemon", "stats_historic_raid", "stats_historic_quests", "stats_historic_invasion"
                 ]
                 for loc in statLoc {

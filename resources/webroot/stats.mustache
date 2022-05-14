@@ -1013,10 +1013,10 @@
             <div class="card-body text-center p-1 m-3">
                 <div class="card-header bg-dark text-light"><b>{{stats_top10_pokemon}}</b></div>
                 <ul class="nav nav-tabs justify-content-center" role="tablist">
-                    <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">Lifetime</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-month-tab" data-toggle="tab" href="#top10-month" role="tab" aria-controls="top10-month" aria-selected="false">30 days</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">Today</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-iv-today-tab" data-toggle="tab" href="#top10-iv-today" role="tab" aria-controls="top10-iv-today" aria-selected="false">IV Today</a></li>
+                    <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">{{{stats_lifetime}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-month-tab" data-toggle="tab" href="#top10-month" role="tab" aria-controls="top10-month" aria-selected="false">{{{stats_30days}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">{{{stats_today}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-iv-today-tab" data-toggle="tab" href="#top10-iv-today" role="tab" aria-controls="top10-iv-today" aria-selected="false">{{{stats_today}}}</a></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="top10-lifetime" role="tabpanel" aria-labelledby="top10-lifetime-tab">
@@ -1509,9 +1509,9 @@
                                     </div>
                                     <div class="row p-2">
                                         <div class="col" style="background: white">
-                                            <span><b>{{stats_100iv}}</b><span id="iv100">0</span></span>
-                                            <span><b>{{stats_90iv}}</b><span id="iv90">0</span></span>
-                                            <span><b>{{stats_0iv}}</b><span id="iv0">0</span></span>
+                                            <span><b>{{stats_100iv}}:</b><span id="iv100">0</span></span>
+                                            <span><b>{{stats_90iv}}:</b><span id="iv90">0</span></span>
+                                            <span><b>{{stats_0iv}}:</b><span id="iv0">0</span></span>
                                         </div>
                                     </div>
                                 </div>
