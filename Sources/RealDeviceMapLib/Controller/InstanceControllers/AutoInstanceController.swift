@@ -231,7 +231,7 @@ class AutoInstanceController: InstanceControllerProto {
                     let stops = try? Pokestop.getAll(
                         minLat: bounds.southWest.latitude, maxLat: bounds.northEast.latitude,
                         minLon: bounds.southWest.longitude, maxLon: bounds.northEast.longitude,
-                        updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: true) {
+                        updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: false) {
 
                     for stop in stops {
                         let coord = LocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
