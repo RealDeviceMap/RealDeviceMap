@@ -48,8 +48,6 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
-    private static var debugRawData = ProcessInfo.processInfo.environment["DEBUG_RAW_DATA"] != nil
-
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
 
@@ -187,6 +185,7 @@ public class WebHookRequestHandler {
         var containsGMO = false
 
         for rawData in contents {
+
             let hasArQuestReq = rawData["have_ar"] as? Bool
             let data: Data
             let method: Int
@@ -350,17 +349,6 @@ public class WebHookRequestHandler {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
             }
-        }
-        if debugRawData {
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
-            Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
         }
 
         if username != nil && trainerXP > 0 && trainerLevel > 0 {

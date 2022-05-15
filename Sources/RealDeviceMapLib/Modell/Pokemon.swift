@@ -830,7 +830,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
                 Log.error(message: "[POKEMON] Failed to execute query '\(oldPokemon != nil ? "update" : "insert")' " +
-                    "of \(seenType.rawValue) pokemon id \(id) - cell \(cellId). " +
+                    "of \(seenType.rawValue) pokemon id '\(id)' - cell id '\(cellId)'. " +
                     "(\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()
