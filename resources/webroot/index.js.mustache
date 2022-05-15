@@ -158,7 +158,7 @@ $(function () {
     pokemonDb = data
   })
 
-  $.getJSON('/static/data/weathertypes_'+'{{locale}}'+'.json', function (data) {
+  $.getJSON('/static/data/weathertypes.json', function (data) {
     weatherTypes = data
   })
 
@@ -1765,7 +1765,7 @@ function loadData () {
             } else {
               weatherIcon = ''
             }
-            const weatherName = weatherTypes[weather.gameplay_condition].name
+            const weatherName = i18n('weather_' + weather.gameplay_condition)
             var options = { permanent: true, className: 'leaflet-tooltip', direction: 'center', offset: [0, 15] }
             /* var tooltip = */ weather.marker.bindTooltip('<center>' + weatherIcon + '</center><center><b>' + weatherName + '</b></center>', options)
             weatherMarkers.push(weather)
@@ -2984,12 +2984,16 @@ function degreesToCardinal (d) {
 }
 
 function getWeatherPopupContent (weather) {
-  const weatherName = weatherTypes[weather.gameplay_condition].name
-  const weatherType = weatherTypes[weather.gameplay_condition].types.join(', ')
+  const weatherName = i18n('weather_' + weather.gameplay_condition)
+  const weatherArray = weatherTypes[weather.gameplay_condition].types
+  let weatherType = []
+  weatherArray.forEach((element) => {
+    weatherType.push(i18n('poke_type_' + element))
+  });
 
   let content = '<center>'
   content += '<h6><b>' + weatherName + '</b><br></h6>'
-  content += '<b>'+i18n('map_boosted_types')+':</b><br>' + weatherType + '<br>'
+  content += '<b>'+i18n('map_boosted_types')+':</b><br>' + weatherType.join(', ') + '<br>'
   content += '<b>'+i18n('map_cell_id')+':</b> ' + weather.id + '<br>'
   content += '<b>'+i18n('map_cell_level')+':</b> ' + weather.level + '<br>'
   content += '<b>'+i18n('map_lat')+':</b> ' + weather.latitude + '<br>'
