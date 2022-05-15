@@ -16,7 +16,6 @@ public class Localizer {
     public static var locale = "en" {
         didSet {
             global.load()
-            global.loadWeatherTypes()
             global.loadTranslationsFromRepo(language: Localizer.locale)
         }
     }
@@ -25,7 +24,6 @@ public class Localizer {
 
     public private(set) var lastModified: Int = 0
     public private(set) var wwwLastModified: Int = 0
-    public private(set) var weathertypesLastModified: Int = 0
 
     private var cachedData = [String: String]()
     private var cachedDataEn = [String: String]()
@@ -76,40 +74,6 @@ public class Localizer {
             } catch {}
         }
     }
-
-        private func loadWeatherTypes() {
-            let file = File("\(Dir.projectroot)/resources/webroot/static/data/weathertypes_\(Localizer.locale).json")
-            weathertypesLastModified = file.modificationTime
-            do {
-                try file.open()
-                let contents = try file.readString()
-                file.close()
-                guard
-                    let json = try contents.jsonDecode() as? [String: Any],
-                    let values = json["values"] as? [String: String]
-                    else {
-                        Log.error(message: "[Localizer] Failed to read file for locale: weathertypes_\(Localizer.locale)")
-                        return
-                }
-                cachedData.merge(values) { (_, new) in new }
-            } catch {
-                Log.error(message: "[Localizer] Failed to read file for locale: weathertypes_\(Localizer.locale)")
-            }
-
-            if Localizer.locale != "en" {
-                do {
-                    let fileEn = File("\(Dir.projectroot)/resources/webroot/static/data/weathertypes_en.json")
-                    try fileEn.open()
-                    let contentsEn = try fileEn.readString()
-                    fileEn.close()
-                    let jsonEn = try contentsEn.jsonDecode() as? [String: Any]
-                    let valuesEn = jsonEn?["values"] as? [String: String]
-                    if valuesEn != nil {
-                        cachedDataEn = valuesEn!
-                    }
-                } catch {}
-            }
-        }
 
     private func loadTranslationFileIfNeeded() {
         let request = CURLRequest(

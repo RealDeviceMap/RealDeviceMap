@@ -66,7 +66,6 @@ public class WebRequestHandler {
         data["locale"] = Localizer.locale
         data["locale_last_modified"] = localizer.lastModified
         data["www_locale_last_modified"] = localizer.wwwLastModified
-        data["weathertypes_locale_last_modified"] = localizer.weathertypesLastModified
         data["enable_register"] = enableRegister
         data["has_mailer"] = MailController.global.isSetup
         data["title"] = title

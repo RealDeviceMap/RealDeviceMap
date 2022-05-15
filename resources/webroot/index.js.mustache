@@ -158,7 +158,7 @@ $(function () {
     pokemonDb = data
   })
 
-  $.getJSON('/static/data/weathertypes_{{{locale}}}.json', { _: '{{{weathertypes_locale_last_modified}}}' }, function (data) {
+  $.getJSON('/static/data/weathertypes_'+'{{locale}}'+'.json', function (data) {
     weatherTypes = data
   })
 
