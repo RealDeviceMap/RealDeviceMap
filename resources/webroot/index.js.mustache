@@ -2558,12 +2558,23 @@ function getPokestopPopupContent (pokestop) {
   const isActiveLure = lureExpireDate >= now
   const isPoweredUp = powerUpEndDate >= now && parseInt(pokestop.power_up_level) > 0
 
+  let regex = /\S[\s\S]{0,23}\S(?=\s|$)/g
   let content = '<div class="text-center">'
-  let pokestopName
+  let pokestopName = ''
   if (pokestop.name === null || pokestop.name === '') {
     pokestopName = i18n('map_unknown_pokestop')
   } else {
-    pokestopName = pokestop.name
+    if (pokestop.name.length <= 26) {
+      pokestopName = pokestop.name
+    } else {
+      let m
+      let choppedName = new Array();
+
+      while ((m = regex.exec(pokestop.name)) !== null) {
+        choppedName.push(m[0]);
+      }
+      pokestopName = choppedName.join('<br>')
+    }
   }
 
   content += '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editPokestopName(\''+pokestop.id+'\',\''+pokestop.name+'\')">{{/perm_admin}}' +
@@ -2717,21 +2728,21 @@ function getGymPopupContent (gym) {
   const isPoweredUp = powerUpEndDate >= now && parseInt(gym.power_up_level) > 0
 
   let gymName = ''
+  let regex = /\S[\s\S]{0,23}\S(?=\s|$)/g
   if (gym.name === null || gym.name === '') {
     gymName = i18n('map_unknown_gym')
   } else {
-    gymName = gym.name
-  }
+    if (gym.name.length <= 26) {
+      gymName = gym.name
+    } else {
+      let m
+      let choppedName = new Array();
 
-  if (gym.name.length >= 27) {
-    let myRe = /\S[\s\S]{0,23}\S(?=\s|$)/g;
-    let m;
-    let choppedGymName = new Array();
-
-    while ((m = myRe.exec(gym.name)) !== null) {
-      choppedGymName.push(m[0]);
+      while ((m = regex.exec(gym.name)) !== null) {
+        choppedName.push(m[0]);
+      }
+      gymName = choppedName.join('<br>')
     }
-    gymName = choppedGymName.join('<br>')
   }
 
   let content =
