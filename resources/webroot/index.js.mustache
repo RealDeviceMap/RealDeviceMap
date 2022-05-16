@@ -58,6 +58,14 @@ let openedSubmissionTypeCell
 let openedWeather
 let openedDevice
 
+let popupPokemon
+let popupPokestop
+let popupGym
+let popupCell
+let popupSubmissionTypeCell
+let popupWeather
+let popupDevice
+
 let showPokestops
 let showInvasions
 let showQuests
@@ -2267,25 +2275,25 @@ function addGym(gym, ts) {
 // MARK: - Popups
 
 function updateOpenedPopupLoop () {
-  if (openedPokemon !== undefined) {
+  if (openedPokemon !== undefined && popupPokemon) {
     openedPokemon.marker._popup.setContent(getPokemonPopupContent(openedPokemon))
   }
-  if (openedPokestop !== undefined) {
+  if (openedPokestop !== undefined && popupPokestop) {
     openedPokestop.marker._popup.setContent(getPokestopPopupContent(openedPokestop))
   }
-  if (openedGym !== undefined) {
+  if (openedGym !== undefined && popupGym) {
     openedGym.marker._popup.setContent(getGymPopupContent(openedGym))
   }
-  if (openedCell !== undefined) {
+  if (openedCell !== undefined && popupCell) {
     openedCell.marker._popup.setContent(getCellPopupContent(openedCell))
   }
-  if (openedSubmissionTypeCell !== undefined) {
+  if (openedSubmissionTypeCell !== undefined && popupSubmissionTypeCell) {
     openedSubmissionTypeCell.marker._popup.setContent(getSubmissionTypeCellPopupContent(openedSubmissionTypeCell))
   }
-  if (openedWeather !== undefined) {
+  if (openedWeather !== undefined && popupWeather) {
     openedWeather.marker._popup.setContent(getWeatherPopupContent(openedWeather))
   }
-  if (openedDevice !== undefined) {
+  if (openedDevice !== undefined && popupDevice) {
     openedDevice.marker._popup.setContent(getDevicePopupContent(openedDevice))
   }
 }
@@ -3299,8 +3307,12 @@ function getCellMarker (cell, ts) {
   polygon.bindPopup(getCellPopupContent(cell))
   polygon.on('popupopen', function () {
     openedCell = cell
+    popupCell = true
     polygon._popup.setContent(getCellPopupContent(cell))
   })
+  polygon.getPopup().on('remove', function() {
+    popupCell = false
+  });
   return polygon
 }
 
@@ -3357,8 +3369,12 @@ function getSubmissionTypeCellMarker (cell, ts) {
   })
   polygon.on('popupopen', function () {
     openedSubmissionTypeCell = cell
+    popupSubmissionTypeCell = true
     polygon._popup.setContent(getSubmissionTypeCellPopupContent(cell))
   })
+  polygon.getPopup().on('remove', function() {
+    popupSubmissionTypeCell = false
+  });
   return polygon
 }
 
@@ -3381,8 +3397,12 @@ function getWeatherMarker (weather, ts) {
   polygon.bindPopup(getWeatherPopupContent(weather))
   polygon.on('popupopen', function () {
     openedWeather = weather
+    popupWeather = true
     polygon._popup.setContent(getWeatherPopupContent(weather))
   })
+  polygon.getPopup().on('remove', function() {
+    popupWeather = false
+  });
   return polygon
 }
 
@@ -3430,8 +3450,12 @@ function getPokemonMarker (pokemon, ts) {
   marker.bindPopup('')
   marker.on('popupopen', function () {
     openedPokemon = pokemon
+    popupPokemon = true
     marker._popup.setContent(getPokemonPopupContent(pokemon))
   })
+  marker.getPopup().on('remove', function() {
+    popupPokemon = false
+  });
   return marker
 }
 
@@ -3543,8 +3567,12 @@ function getPokestopMarker (pokestop, ts) {
   marker.bindPopup(pokestop.name)
   marker.on('popupopen', function () {
     openedPokestop = pokestop
+    popupPokestop = true
     marker._popup.setContent(getPokestopPopupContent(pokestop))
   })
+  marker.getPopup().on('remove', function() {
+    popupPokestop = false
+  });
   return marker
 }
 
@@ -3665,9 +3693,12 @@ function getGymMarker (gym, ts) {
   marker.bindPopup(gym.name)
   marker.on('popupopen', function () {
     openedGym = gym
+    popupGym = true
     marker._popup.setContent(getGymPopupContent(gym))
   })
-
+  marker.getPopup().on('remove', function() {
+    popupGym = false
+  });
   return marker
 }
 
@@ -3691,8 +3722,12 @@ function getDeviceMarker (device, ts) {
   marker.bindPopup('')
   marker.on('popupopen', function () {
     openedDevice = device
+    popupDevice = true
     marker._popup.setContent(getDevicePopupContent(device))
   })
+  marker.getPopup().on('remove', function() {
+    popupDevice = false
+  });
   return marker
 }
 
