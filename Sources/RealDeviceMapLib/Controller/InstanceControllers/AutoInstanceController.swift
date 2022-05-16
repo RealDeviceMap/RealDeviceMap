@@ -551,7 +551,7 @@ class AutoInstanceController: InstanceControllerProto {
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 } else if delay >= delayLogout {
                     Log.warning(
-                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ingoring over Logout Delay, " +
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ignoring over Logout Delay, " +
                                  "because no account is specified."
                     )
                 }
@@ -727,10 +727,10 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?) throws -> Account? {
         accountsLock.lock()
-        if let usernane = accounts[uuid] {
+        if let username = accounts[uuid] {
             accounts[uuid] = nil
             accountsLock.unlock()
-            return try Account.getWithUsername(username: usernane)
+            return try Account.getWithUsername(username: username)
         } else {
             accountsLock.unlock()
             return try Account.getNewAccount(
