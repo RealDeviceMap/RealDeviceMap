@@ -142,23 +142,22 @@ $(function () {
     }
   })
 
-  $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
+  let localePromise = $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
     i18n.translator.add(data)
   })
 
-  $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
+  let remoteLocalePromise = $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
     var translations = {}
     translations.values = data
     i18n.translator.add(translations)
     initPreview()
   })
-  
 
-  $.getJSON('/static/data/pokemon.json', function (data) {
+  let pokemonPromise = $.getJSON('/static/data/pokemon.json', function (data) {
     pokemonDb = data
   })
 
-  $.getJSON('/static/data/weathertypes.json', function (data) {
+  let weatherPromise = $.getJSON('/static/data/weathertypes.json', function (data) {
     weatherTypes = data
   })
 
@@ -255,7 +254,12 @@ $(function () {
     }
   })
 
-  initMap()
+  // getJson is an ajax function that doesn't block execution, so if reading takes 1ms more than it should,
+  // the parts of RDM that depends on any json data, they fail.
+  // Executing initMap only when all the promises have been completed fixes this.
+  $.when(localePromise, remoteLocalePromise, pokemonPromise,weatherPromise).done(function() {
+    initMap()
+  })
 
   $('#select-mapstyle').on('change', function () {
     selectedTileserver = this.value

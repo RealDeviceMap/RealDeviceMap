@@ -5,30 +5,30 @@
     },
     "1": {
         "name": "Clear",
-        "types": [5,10,12] // Ground, Fire, Grass
+        "types": [5,10,12]
     },
     "2": {
         "name": "Rain",
-        "types": [7,11,13] // Bug, Water, Electric
+        "types": [7,11,13]
     },
     "3": {
         "name": "Partly Cloudy",
-        "types": [1,6] // Normal, Rock
+        "types": [1,6]
     },
     "4": {
         "name": "Cloudy",
-        "types": [2,4,18] // Fighting, Poison, Fairy
+        "types": [2,4,18]
     },
     "5": {
         "name": "Windy",
-        "types": [3,14,16] // Flying, Psychic, Dragon
+        "types": [3,14,16]
     },
     "6": {
         "name": "Snow",
-        "types": [9,15] // Steel, Ice
+        "types": [9,15]
     },
     "7": {
         "name": "Fog",
-        "types": [8,17] // Ghost, Dark
+        "types": [8,17]
     }
 }
