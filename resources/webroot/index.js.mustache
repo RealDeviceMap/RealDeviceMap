@@ -2716,14 +2716,25 @@ function getGymPopupContent (gym) {
   const isRaidBattle = (raidBattleDate <= now || (gym.raid_pokemon_id !== null && gym.raid_pokemon_id !== 0)) && isRaid
   const isPoweredUp = powerUpEndDate >= now && parseInt(gym.power_up_level) > 0
 
-  var gymName = ''
+  let gymName = ''
   if (gym.name === null || gym.name === '') {
     gymName = i18n('map_unknown_gym')
   } else {
     gymName = gym.name
   }
 
-  var content =
+  if (gym.name.length >= 27) {
+    let myRe = /\S[\s\S]{0,23}\S(?=\s|$)/g;
+    let m;
+    let choppedGymName = new Array();
+
+    while ((m = myRe.exec(gym.name)) !== null) {
+      choppedGymName.push(m[0]);
+    }
+    gymName = choppedGymName.join('<br>')
+  }
+
+  let content =
     '<div class="row">' + // START 1ST ROW
         '<div class="col-12 col-md-8 center-vertical">' +
             '<span class="text-nowrap"><h6><b>{{#perm_admin}}<a href="#" onclick="editGymName(\''+gym.id+'\',\''+gym.name+'\')">{{/perm_admin}}' +
@@ -2859,7 +2870,7 @@ function getGymPopupContent (gym) {
               : ''
       var url = gym.url.replace('http://', 'https://')
       content +=
-            '<div class="col-6 col-md-5">' + // START 1ST COL
+            '<div class="col-6 col-md-5 p-4">' + // START 1ST COL
                 // '<a href="' + url + '" target="_blank"><img alt="" src="' + url + '" style="border-radius:50%; height:96px; width:96px;"></a>' +
                 '<a href="' + url + '" target="_blank"><img alt="" src="' + url + '" class="circle-image ' + teamClass + '" style="height:96px; width:96px;"></a>' +
             '</div>' // END 1ST COL
@@ -5309,7 +5320,7 @@ function loadInvasionFilter () {
     })
   })
 
-  $('#filterinvasionModal').on('shown.bs.modal', function () {
+  $('#filterInvasionModal').on('shown.bs.modal', function () {
     const dataTable = $('#table-filter-invasion').DataTable()
     dataTable.responsive.recalc()
     dataTable.columns.adjust()
