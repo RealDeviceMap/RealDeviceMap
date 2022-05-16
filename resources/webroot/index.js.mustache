@@ -3304,7 +3304,9 @@ function getCellMarker (cell, ts) {
     forceZIndex: 1
   })
   polygon.setStyle(getCellStyle(cell, ts))
-  polygon.bindPopup(getCellPopupContent(cell))
+  polygon.bindPopup(getCellPopupContent(cell), {
+    minWidth : 260
+  })
   polygon.on('popupopen', function () {
     openedCell = cell
     popupCell = true
@@ -3361,7 +3363,9 @@ function getSubmissionPlacementRingStyle (cell, ts) {
 function getSubmissionTypeCellMarker (cell, ts) {
   const polygon = L.polygon(cell.polygon, { forceZIndex: 3 })
   polygon.setStyle(getSubmissionTypeCellStyle(cell, ts))
-  polygon.bindPopup(getSubmissionTypeCellPopupContent(cell))
+  polygon.bindPopup(getSubmissionTypeCellPopupContent(cell), {
+    minWidth : 260
+  })
   polygon.bindTooltip('' + cell.count + '', {
     permanent: true,
     direction: 'center',
@@ -3447,7 +3451,9 @@ function getPokemonMarker (pokemon, ts) {
     forceZIndex: zIndex,
     virtual: true
   })
-  marker.bindPopup('')
+  marker.bindPopup('', {
+    minWidth : 260
+  })
   marker.on('popupopen', function () {
     openedPokemon = pokemon
     popupPokemon = true
@@ -3564,7 +3570,9 @@ function getPokestopMarker (pokestop, ts) {
     forceZIndex: 20 + zIndex,
     virtual: true
   })
-  marker.bindPopup(pokestop.name)
+  marker.bindPopup(pokestop.name, {
+    minWidth : 260
+  })
   marker.on('popupopen', function () {
     openedPokestop = pokestop
     popupPokestop = true
@@ -3624,7 +3632,9 @@ function getSpawnpointMarker (spawnpoint, ts) {
     var timer = Math.round(spawnpoint.despawn_second / 60)
     content += '<br><b>'+i18n('map_despawn_timer')+':</b> ' + timer + ' minutes'
   }
-  marker.bindPopup(content)
+  marker.bindPopup(content, {
+    minWidth : 260
+  })
   return marker
 }
 
@@ -3690,7 +3700,9 @@ function getGymMarker (gym, ts) {
     forceZIndex: 30 + zIndex,
     virtual: true
   })
-  marker.bindPopup(gym.name)
+  marker.bindPopup(gym.name, {
+    minWidth : 260
+  })
   marker.on('popupopen', function () {
     openedGym = gym
     popupGym = true
