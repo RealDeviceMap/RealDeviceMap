@@ -3295,13 +3295,13 @@ function getQuestCondition (condition) {
 
 function getCellMarker (cell, ts) {
   const polygon = L.polygon(cell.polygon, {
-      zIndexOffset: 1
+    forceZIndex: 1
   })
   polygon.setStyle(getCellStyle(cell, ts))
   polygon.bindPopup(getCellPopupContent(cell), {
-      minWidth: "auto",
-      maxWidth: "auto"
-    });
+    minWidth: "auto",
+    maxWidth: "auto"
+  });
   polygon.on('popupopen', function () {
     openedCell = cell
     popupCell = true
@@ -3326,7 +3326,7 @@ function getCellStyle (cell, ts) {
 
 function getSubmissionPlacementCellMarker (cell, ts) {
   const polygon = L.polygon(cell.polygon, {
-    zIndexOffset: 2,
+    forceZIndex: 2,
     interactive: false
   })
   polygon.setStyle(getSubmissionPlacementCellStyle(cell, ts))
@@ -3345,7 +3345,7 @@ function getSubmissionPlacementCellStyle (cell, ts) {
 function getSubmissionPlacementRingMarker (ring, ts) {
   const circle = L.circle([ring.lat, ring.lon], {
     radius: ring.radius,
-      zIndexOffset: 4,
+    forceZIndex: 4,
     interactive: false
   })
   circle.setStyle(getSubmissionPlacementRingStyle(ring, ts))
@@ -3359,7 +3359,7 @@ function getSubmissionPlacementRingStyle (cell, ts) {
 
 function getSubmissionTypeCellMarker (cell, ts) {
   const polygon = L.polygon(cell.polygon, {
-    zIndexOffset: 3
+    forceZIndex: 3
   })
   polygon.setStyle(getSubmissionTypeCellStyle(cell, ts))
   polygon.bindPopup(getSubmissionTypeCellPopupContent(cell), {
@@ -3449,13 +3449,13 @@ function getPokemonMarker (pokemon, ts) {
   }
   const marker = L.marker([pokemon.lat, pokemon.lon], {
     icon: getPokemonMarkerIcon(pokemon, ts),
-      zIndexOffset: zIndex,
-      virtual: true
+    forceZIndex: zIndex,
+    virtual: true
   })
-    marker.bindPopup(getPokemonPopupContent(pokemon), {
-      minWidth: "auto",
-      maxWidth: "auto"
-    });
+  marker.bindPopup(getPokemonPopupContent(pokemon), {
+    minWidth: "auto",
+    maxWidth: "auto"
+  });
   marker.on('popupopen', function () {
     openedPokemon = pokemon
     popupPokemon = true
@@ -3568,12 +3568,12 @@ function getPokestopMarker (pokestop, ts) {
 
   const marker = L.marker([pokestop.lat, pokestop.lon], {
     icon: getPokestopMarkerIcon(pokestop, ts),
-      zIndexOffset: 20 + zIndex,
-      virtual: true
+    forceZIndex: 20 + zIndex,
+    virtual: true
   })
-    marker.bindPopup(getPokestopPopupContent(pokestop), {
-      minWidth: "260"
-    });
+  marker.bindPopup(getPokestopPopupContent(pokestop), {
+    minWidth: "260"
+  });
   marker.on('popupopen', function () {
     openedPokestop = pokestop
     popupPokestop = true
@@ -3623,8 +3623,8 @@ function getSpawnpointMarkerIcon (spawnpoint, ts) {
 function getSpawnpointMarker (spawnpoint, ts) {
   const marker = L.marker([spawnpoint.lat, spawnpoint.lon], {
     icon: getSpawnpointMarkerIcon(spawnpoint, ts),
-      zIndexOffset: 10,
-      virtual: true
+    forceZIndex: 10,
+    virtual: true
   })
   let content = '<div class="text-center text-nowrap">'
   content += '<h6><b>'+i18n('map_spawnpoint')+'</b></h6>'
@@ -3700,13 +3700,13 @@ function getGymMarker (gym, ts) {
 
   const marker = L.marker([gym.lat, gym.lon], {
     icon: getGymMarkerIcon(gym, ts),
-      zIndexOffset: 30 + zIndex,
-      virtual: true
+    forceZIndex: 30 + zIndex,
+    virtual: true
   })
-    marker.bindPopup(getGymPopupContent(gym), {
-      minWidth: "auto",
-      maxWidth: "auto"
-    });
+  marker.bindPopup(getGymPopupContent(gym), {
+    minWidth: "auto",
+    maxWidth: "auto"
+  });
   marker.on('popupopen', function () {
     openedGym = gym
     popupGym = true
@@ -3731,13 +3731,13 @@ function getDeviceMarkerIcon (device, ts) {
 function getDeviceMarker (device, ts) {
   const marker = L.marker([device.last_lat || 1.0, device.last_lon || 1.0], {
     icon: getDeviceMarkerIcon(device, ts),
-      zIndexOffset: 10,
-      virtual: true
+    forceZIndex: 10,
+    virtual: true
   })
-    marker.bindPopup(getDevicePopupContent(device), {
-      minWidth: "auto",
-      maxWidth: "auto"
-    });
+  marker.bindPopup(getDevicePopupContent(device), {
+    minWidth: "auto",
+    maxWidth: "auto"
+  });
   marker.on('popupopen', function () {
     openedDevice = device
     popupDevice = true
