@@ -98,6 +98,8 @@
         "map_device_status": "Estado",
         "map_spawnpoint": "Punto de spawn",
         "map_despawn_timer": "Tiempo de spawn",
+        "map_show_pvp": "Mostrar datos de PVP",
+        "map_hide_pvp": "Esconder datos de PVP",
         "filter_title": "Filtrar",
         "filter_gyms": "Gimnasios",
         "filter_raids": "Incursiones",

@@ -98,6 +98,8 @@
         "map_device_status": "Status",
         "map_spawnpoint": "Spawnpoint",
         "map_despawn_timer": "Despawn Timer",
+        "map_show_pvp": "Show PVP data",
+        "map_hide_pvp": "Hide PVP data",
         "filter_title": "Filter",
         "filter_gyms": "Gyms",
         "filter_raids": "Raids",
