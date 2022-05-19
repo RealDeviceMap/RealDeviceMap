@@ -732,8 +732,8 @@ public class WebHookRequestHandler {
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
                         if encounter.status != EncounterOutProto.Status.encounterSuccess {
-                            Log.debug(message: 
-                                "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
+                            Log.debug(
+                                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
                                 " encounter: \(encounter)")
                             continue
                         }
