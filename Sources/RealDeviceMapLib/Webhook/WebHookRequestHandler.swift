@@ -731,6 +731,11 @@ public class WebHookRequestHandler {
                         pokemon!.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
+                        if encounter.status != EncounterOutProto.Status.encounterSuccess {
+                            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Status no success:" +
+                            "encounter raw: \(encounter)")
+                            continue
+                        }
                         let centerCoord = LocationCoordinate2D(latitude: encounter.pokemon.latitude,
                                                                  longitude: encounter.pokemon.longitude)
                         let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 15)
