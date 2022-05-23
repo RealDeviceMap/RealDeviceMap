@@ -2859,7 +2859,7 @@ function getGymPopupContent (gym) {
             '<div class="col-12 col-md-8 text-nowrap">' + // START 2ND COL
                   '<span style="white-space: break-spaces;"><b>' + pokemonName.trim() + '</b></span><br>'
     if (hasRaidBoss && isRaidBattle && gym.raid_pokemon_evolution) {
-      content += '<b>'+i18n('map_gym_evolution')+': </b>' + getEvolutionName(gym.raid_pokemon_evolution)
+      content += '<b>'+i18n('map_gym_evolution')+': </b>' + getEvolutionName(gym.raid_pokemon_evolution)+'<br>'
     }
     if (isRaidBattle) {
       if (gym.raid_pokemon_cp !== null) {
