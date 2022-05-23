@@ -49,9 +49,9 @@ public class DBController {
     private let host: String
     private let port: UInt32
     private let username: String
-    private let password: String?
+    private let password: String
     private let rootUsername: String
-    private let rootPassword: String?
+    private let rootPassword: String
 
     private var newestDBVersion: Int {
         let fileManager = FileManager.default
@@ -124,20 +124,19 @@ public class DBController {
     private init() {
 
         Log.info(message: "[DBController] Initializing database")
-
-        let environment = ProcessInfo.processInfo.environment
-        database = environment["DB_DATABASE"] ?? "rdmdb"
-        host = environment["DB_HOST"] ?? "127.0.0.1"
-        port = UInt32(environment["DB_PORT"] ?? "") ?? 3306
-        username = environment["DB_USERNAME"] ?? "rdmuser"
-        password = environment["DB_PASSWORD"]
-        rootUsername = environment["DB_ROOT_USERNAME"] ?? "root"
-        rootPassword = environment["DB_ROOT_PASSWORD"]
+        database = ConfigLoader.global.getConfig(type: .dbDatabase)
+        host = ConfigLoader.global.getConfig(type: .dbHost)
+        let dbPort: Int = ConfigLoader.global.getConfig(type: .dbPort)
+        port = UInt32(exactly: dbPort)!
+        username = ConfigLoader.global.getConfig(type: .dbUser)
+        password = ConfigLoader.global.getConfig(type: .dbPassword)
+        rootUsername = ConfigLoader.global.getConfig(type: .dbRootUser)
+        rootPassword = ConfigLoader.global.getConfig(type: .dbRootPassword)
 
         MySQLSessionConnector.host = host
-        MySQLSessionConnector.port = Int(port)
+        MySQLSessionConnector.port = dbPort
         MySQLSessionConnector.username = username
-        MySQLSessionConnector.password = password ?? ""
+        MySQLSessionConnector.password = password
         MySQLSessionConnector.database = database
         MySQLSessionConnector.table = "web_session"
 
@@ -256,7 +255,7 @@ public class DBController {
     }
 
     private func backup(mysql: MySQL, fromVersion: Int, toVersion: Int) {
-        if fromVersion < toVersion && ProcessInfo.processInfo.environment["NO_BACKUP"] == nil {
+        if fromVersion < toVersion && ConfigLoader.global.getConfig(type: .dbBackup) {
             Log.info(message: "[DBController] Creating Backup of database for version \(fromVersion)")
             let uuidString = Foundation.UUID().uuidString
             let backupsDir = Dir("\(Dir.projectroot)/backups")
@@ -328,7 +327,7 @@ public class DBController {
 
             // Schema
             //  swiftlint:disable:next line_length
-            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
+            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileSchema.path)")
             let resultSchema = commandSchema.runError()
             if resultSchema == nil ||
                    resultSchema!.stringByReplacing(
@@ -344,7 +343,7 @@ public class DBController {
 
             // Trigger
             //  swiftlint:disable:next line_length
-            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
+            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileTrigger.path)")
             let resultTrigger = commandTrigger.runError()
             if resultTrigger == nil ||
                    resultTrigger!.stringByReplacing(
@@ -360,7 +359,7 @@ public class DBController {
 
             // Data
             //  swiftlint:disable:next line_length
-            let commandData = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
+            let commandData = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileData.path)")
             let resultData = commandData.runError()
             if resultData == nil ||
                    resultData!.stringByReplacing(

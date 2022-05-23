@@ -35,6 +35,7 @@ public class WebRequestHandler {
     public static var enableRegister: Bool = true
     public static var tileservers = [String: [String: String]]()
     public static var cities = [String: [String: Any]]()
+    public static var citiesLowerCased = [String: [String: Any]]()
     public static var buttonsLeft = [[String: String]]()
     public static var buttonsRight = [[String: String]]()
     public static var googleAnalyticsId: String?
@@ -195,7 +196,7 @@ public class WebRequestHandler {
             var zoom = request.urlVariables["zoom"]?.toInt()
             var lat = request.urlVariables["lat"]?.toDouble()
             var lon = request.urlVariables["lon"]?.toDouble()
-            var city = request.urlVariables["city"]
+            var city = request.urlVariables["city"]?.lowercased()
             let id = request.urlVariables["id"]
 
             // City but in wrong route
@@ -204,11 +205,10 @@ public class WebRequestHandler {
                 if let tmpZoom = request.urlVariables["lon"]?.toInt() {
                     zoom = tmpZoom
                 }
-
             }
 
             if city != nil {
-                guard let citySetting = cities[city!.lowercased()] else {
+                guard let citySetting = citiesLowerCased[city!] else {
                     response.setBody(string: "The city \"\(city!)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
@@ -315,7 +315,7 @@ public class WebRequestHandler {
             data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
             for area in self.cities.sorted(by: { $0.key < $1.key }) {
-                let name = area.key.prefix(1).uppercased() + area.key.lowercased().dropFirst()
+                let name = area.key
                 areas.append(["area": name])
             }
             data["areas"] = areas
@@ -1628,7 +1628,7 @@ public class WebRequestHandler {
             let stalePokestopsCount = try? Pokestop.getStalePokestopsCount()
             data["convertible_pokestops"] = convertiblePokestopsCount
             data["stale_pokestops"] = stalePokestopsCount
-            data["show_clear_memcache"] = ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil
+            data["show_clear_memcache"] = ConfigLoader.global.getConfig(type: .memoryCacheEnabled) as Bool
 
             if request.method == .post {
                 let action = request.param(name: "action")
@@ -2175,6 +2175,7 @@ public class WebRequestHandler {
         }
 
         var citySettings = [String: [String: Any]]()
+        var citySettingsLowercased = [String: [String: Any]]()
         if cities != "" {
             for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
                 let split = cityString.components(separatedBy: ";")
@@ -2183,12 +2184,12 @@ public class WebRequestHandler {
                 let lon: Double?
                 let zoom: Int?
                 if split.count == 3 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = nil
                 } else if split.count == 4 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = split[3].toInt()
@@ -2201,6 +2202,11 @@ public class WebRequestHandler {
                     return data
                 }
                 citySettings[name] = [
+                    "lat": latReal,
+                    "lon": lonReal,
+                    "zoom": zoom as Any
+                ]
+                citySettingsLowercased[name.lowercased()] = [
                     "lat": latReal,
                     "lon": lonReal,
                     "zoom": zoom as Any
@@ -2269,6 +2275,7 @@ public class WebRequestHandler {
         WebRequestHandler.enableRegister = enableRegister
         WebRequestHandler.tileservers = tileservers
         WebRequestHandler.cities = citySettings
+        WebRequestHandler.citiesLowerCased = citySettingsLowercased
         WebRequestHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebRequestHandler.googleAdSenseId = googleAdSenseId ?? ""
         WebRequestHandler.buttonsRight = buttonsRight

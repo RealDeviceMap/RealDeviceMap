@@ -22,9 +22,8 @@ public class WebHookServer {
 
     public static var server: HTTPServer.Server {
 
-        let environment = ProcessInfo.processInfo.environment
-        let address = environment["WEBHOOK_SERVER_ADDRESS"] ?? "0.0.0.0"
-        let port = Int(environment["WEBHOOK_SERVER_PORT"] ?? "") ?? 9001
+        let address: String = ConfigLoader.global.getConfig(type: .webhookServerHost)
+        let port: Int = ConfigLoader.global.getConfig(type: .webhookServerPort)
 
         let routes = Routes(WebHookRoutes.routes)
 
