@@ -15,12 +15,12 @@ import POGOProtos
 import Backtrace
 
 public func setupRealDeviceMap() {
-    let environment = ProcessInfo.processInfo.environment
-    let logLevel = environment["LOG_LEVEL"]?.lowercased() ?? "info"
+    _ = ConfigLoader.global
+    let logLevel: String = ConfigLoader.global.getConfig(type: .logLevel)
     Log.even = true
     Log.setThreshold(value: logLevel)
 
-    if environment["NO_INSTALL_BACKTRACE"] == nil {
+    if ProcessInfo.processInfo.environment["NO_INSTALL_BACKTRACE"] == nil {
         Log.info(message: "[MAIN] Installing Backtrace")
         Backtrace.install()
     }
@@ -50,10 +50,10 @@ public func setupRealDeviceMap() {
     _ = DBController.global
 
     // Init MemoryCache
-    let noMemoryCache = environment["NO_MEMORY_CACHE"]
-    let memoryCacheClearInterval = environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
-    let memoryCacheKeepTime = environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
-    if noMemoryCache == nil {
+    let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
+    let memoryCacheClearInterval = Double(ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int)
+    let memoryCacheKeepTime = Double(ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int)
+    if memoryCacheEnabled {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
@@ -209,40 +209,42 @@ public func setupRealDeviceMap() {
     }
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
-    Pokemon.noPVP = environment["NO_PVP"] != nil
-    Pokemon.noWeatherIVClearing = environment["NO_IV_WEATHER_CLEARING"] != nil
-    Pokemon.noCellPokemon = environment["NO_CELL_POKEMON"] != nil
-    Pokemon.saveSpawnpointLastSeen = environment["SAVE_SPAWNPOINT_LASTSEEN"] != nil
-    InstanceController.noRequireAccount = environment["NO_REQUIRE_ACCOUNT"] != nil
+    Pokemon.pvpEnabled = ConfigLoader.global.getConfig(type: .pvpEnabled)
+    Pokemon.weatherIVClearingEnabled = ConfigLoader.global.getConfig(type: .ivWeatherClearing)
+    Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
+    Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
+    InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
 
-    if !Pokemon.noPVP {
+    if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
-        let pvpRank = environment["PVP_DEFAULT_RANK"] ?? "dense"
+        let pvpRank: String = ConfigLoader.global.getConfig(type: .pvpDefaultRank)
         PVPStatsManager.defaultPVPRank = PVPStatsManager.RankType(rawValue: pvpRank) ?? .dense
-        let pvpLittleFilter = environment["PVP_LITTLE_FILTER"]?.toInt()
-        if pvpLittleFilter != nil { PVPStatsManager.leagueFilter[500] = pvpLittleFilter! }
-        let pvpGreatFilter = environment["PVP_GREAT_FILTER"]?.toInt()
-        if pvpGreatFilter != nil { PVPStatsManager.leagueFilter[1500] = pvpGreatFilter! }
-        let pvpUltraFilter = environment["PVP_ULTRA_FILTER"]?.toInt()
-        if pvpUltraFilter != nil { PVPStatsManager.leagueFilter[2500] = pvpUltraFilter! }
-        PVPStatsManager.lvlCaps = environment["PVP_LEVEL_CAPS"]?.components(separatedBy: ",")
-                .map({ Int($0.trimmingCharacters(in: .whitespaces))! }) ?? [50]
+        let pvpLittleFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterLittleMinCP)
+        PVPStatsManager.leagueFilter[500] = pvpLittleFilter
+        let pvpGreatFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterGreatMinCP)
+        PVPStatsManager.leagueFilter[1500] = pvpGreatFilter
+        let pvpUltraFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterUltraMinCP)
+        PVPStatsManager.leagueFilter[2500] = pvpUltraFilter
+        PVPStatsManager.lvlCaps = ConfigLoader.global.getConfig(type: .pvpLevelCaps)
         Log.info(message: "[MAIN] PVP Stats for Level Caps \(String(describing: PVPStatsManager.lvlCaps))")
         Log.info(message: "[MAIN] PVP Stats defaults to rank type \(pvpRank)")
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
+    Log.info(message: "[MAIN] Pokemon weather IV clearing enabled: \(Pokemon.weatherIVClearingEnabled)")
+    Log.info(message: "[MAIN] Pokemon cell spawns enabled: \(Pokemon.cellPokemonEnabled)")
+    Log.info(message: "[MAIN] Pokemon update spanwpoint last seen: \(Pokemon.saveSpawnpointLastSeen)")
+    Log.info(message: "[MAIN] InstanceController require account in DB: \(InstanceController.requireAccountEnabled)")
 
     // Load Icon styles
     Log.info(message: "[MAIN] Load Icon Styles")
     ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
             .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
-    if environment["NO_GENERATE_IMAGES"] != nil {
-        ImageManager.noImageGeneration = true
-    }
-    _ = ImageManager.global
-    if noMemoryCache == nil {
+
+    ImageManager.imageGenerationEnabled = ConfigLoader.global.getConfig(type: .generateImages)
+
+    if memoryCacheEnabled {
         // this will use the same cache values like the pokemon cache
         ImageManager.devicePathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
@@ -269,6 +271,7 @@ public func setupRealDeviceMap() {
         ImageManager.weatherPathCache =
             MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     }
+    _ = ImageManager.global
 
     Log.info(message: "[MAIN] Starting Account Controller")
     AccountController.global.setup()

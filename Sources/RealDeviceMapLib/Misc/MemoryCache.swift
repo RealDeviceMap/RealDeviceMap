@@ -29,7 +29,7 @@ public class MemoryCache<T> {
                 }
                 self.lock.unlock()
                 self.hitsLock.unlock()
-                Threading.sleep(seconds: Double(interval))
+                Threading.sleep(seconds: interval)
             }
         }
     }
