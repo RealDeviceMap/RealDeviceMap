@@ -462,17 +462,17 @@ function loadParameters () {
   startZoom = jsScript.attr('data-zoom')
   try {
     startPokemon = JSON.parse(jsScript.attr('data-start_pokemon'))
-  } catch{
+  } catch (e) {
     // Silent try-catch to please ESLint
   }
   try {
     startPokestop = JSON.parse(jsScript.attr('data-start_pokestop'))
-  } catch{
+  } catch (e) {
     // Silent try-catch to please ESLint
   }
   try {
     startGym = JSON.parse(jsScript.attr('data-start_gym'))
-  } catch{
+  } catch (e) {
     // Silent try-catch to please ESLint
   }
 }
