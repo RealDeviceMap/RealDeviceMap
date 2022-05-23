@@ -718,6 +718,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 self.capture2 = oldPokemon!.capture2
                 self.capture3 = oldPokemon!.capture3
                 self.shiny = oldPokemon!.shiny
+                self.seenType = oldPokemon!.seenType
                 self.isDitto = Pokemon.isDittoDisguised(pokemon: oldPokemon!)
                 if self.isDitto {
                     Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
