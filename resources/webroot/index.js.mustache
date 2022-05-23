@@ -3,6 +3,15 @@
 
 let map
 
+//params
+let startTimestamp = ''
+let startLat = ''
+let startLon = ''
+let startZoom = ''
+let startPokemon = {}
+let startPokestop = {}
+let startGym = {}
+
 let lastUpdateServer = 0
 
 let lastUpdate = 0
@@ -152,27 +161,35 @@ $(function () {
 
   let localePromise = $.getJSON('/static/data/{{{locale}}}.json', { _: '{{{locale_last_modified}}}' }, function (data) {
     i18n.translator.add(data)
+  }).fail(function() {
+    console.error("RDM File Error: {{{locale}}}.json not found or not accessible.");
   })
 
   let remoteLocalePromise = $.getJSON('/static/data/www_{{{locale}}}.json', { _: '{{{www_locale_last_modified}}}' }, function (data) {
-    var translations = {}
+    let translations = {}
     translations.values = data
     i18n.translator.add(translations)
-    initPreview()
+  }).fail(function() {
+    console.error("RDM File Error: www_{{{locale}}}.json not found or not accessible.");
   })
 
   let pokemonPromise = $.getJSON('/static/data/pokemon.json', function (data) {
     pokemonDb = data
+  }).fail(function() {
+    console.error("RDM File Error: pokemon.json not found or not accessible.");
   })
 
   let weatherPromise = $.getJSON('/static/data/weathertypes.json', function (data) {
     weatherTypes = data
+  }).fail(function() {
+    console.error("RDM File Error: weathertypes.json not found or not accessible.");
   })
 
   availableItems = JSON.parse('{{{available_items_json}}}')
   availableTileservers = JSON.parse('{{{available_tileservers_json}}}')
   availableIconStyles = JSON.parse('{{{available_icon_styles_json}}}')
 
+  loadParameters()
   loadStorage()
   let i
   const availableTileserverKeys = []
@@ -265,8 +282,10 @@ $(function () {
   // getJson is an ajax function that doesn't block execution, so if reading takes 1ms more than it should,
   // the parts of RDM that depends on any json data, they fail.
   // Executing initMap only when all the promises have been completed fixes this.
-  $.when(localePromise, remoteLocalePromise, pokemonPromise,weatherPromise).done(function() {
+  $.when(localePromise, remoteLocalePromise, pokemonPromise, weatherPromise)
+   .always(function() {
     initMap()
+    initPreview()
   })
 
   $('#select-mapstyle').on('change', function () {
@@ -434,6 +453,25 @@ $(function () {
 })
 
 // MARK: - Setup
+
+// JS params for direct linking
+function loadParameters () {
+  let jsScript = $('script[src*=index]')
+
+  startTimestamp = jsScript.attr('data-timestamp')
+  startLat = jsScript.attr('data-lat')
+  startLon = jsScript.attr('data-lon')
+  startZoom = jsScript.attr('data-zoom')
+  try {
+    startPokemon = JSON.parse(jsScript.attr('data-start_pokemon'))
+  } catch(e) {}
+  try {
+    startPokestop = JSON.parse(jsScript.attr('data-start_pokestop'))
+  } catch(e) {}
+  try {
+    startGym = JSON.parse(jsScript.attr('data-start_gym'))
+  } catch(e) {}
+}
 
 function loadStorage () {
   const selectedTileserverTmp = retrieve('tileserver')
@@ -785,21 +823,18 @@ function loadStorage () {
 function initPreview () {
   const ts = Math.round((new Date()).getTime() / 1000)
   try {
-    let startPokemon = JSON.parse(decodeURIComponent('{{{start_pokemon}}}'))
     startPokemon.is_start = true
     addPokemon(startPokemon, ts)
   } catch(e) {
     // No Start Pokemon
   }
   try {
-    let startPokestop = JSON.parse(decodeURIComponent('{{{start_pokestop}}}'))
     startPokestop.is_start = true
     addPokestop(startPokestop, ts)
   } catch(e) {
     // No Start Pokestop
   }
   try {
-    let startGym = JSON.parse(decodeURIComponent('{{{start_gym}}}'))
     startGym.is_start = true
     addGym(startGym, ts)
   } catch(e) {
@@ -813,7 +848,7 @@ function initMap () {
     worldCopyJump: true,
     updateWhenIdle: true,
     updateWhenZooming: false
-  }).setView(['{{start_lat}}', '{{start_lon}}'], '{{start_zoom}}')
+  }).setView([startLat, startLon], startZoom)
 
   let scale = ''
   if (L.Browser.retina) {
