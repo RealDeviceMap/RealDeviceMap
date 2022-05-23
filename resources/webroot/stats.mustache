@@ -7,6 +7,7 @@
     $(document).ready(function() {
         var now = Date.now();
         var csrf = "{{csrf}}";
+        flatpickr.localize(flatpickr.l10ns.{{locale}});
         $("[data-toggle='datetimepicker']").flatpickr({
             altInput: true,
             altFormat: "F j, Y",
@@ -221,10 +222,10 @@
             options: teamOptions
         });
 
-        pokemonChart.options.title.text = "Historical Pokemon Statistics";
-        raidChart.options.title.text = "Historical Raid Statistics";
-        questChart.options.title.text = "Historical Quest Statistics";
-        invasionChart.options.title.text = "Historical Invasion Statistics";
+        pokemonChart.options.title.text = "{{{stats_historic_pokemon}}}";
+        raidChart.options.title.text = "{{{stats_historic_raid}}}";
+        questChart.options.title.text = "{{{stats_historic_quests}}}";
+        invasionChart.options.title.text = "{{{stats_historic_invasion}}}";
 
         $("#comday-stats").hide();
         $("#filter-pokemon-comday").on('change', function() {
@@ -539,7 +540,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "dodgerblue",
-                            label: "Pokemon",
+                            label: "{{{stats_pokemon}}}",
                             fill: true
                         }]
                     };
@@ -581,7 +582,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "orange",
-                            label: "Raids",
+                            label: "{{{stats_tab_raids}}}",
                             fill: true
                         }]
                     };
@@ -623,7 +624,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "limegreen",
-                            label: "Quests",
+                            label: "{{{stats_tab_quests}}}",
                             fill: true
                         }]
                     };
@@ -665,7 +666,7 @@
                         datasets: [{
                             data: values,
                             backgroundColor: "red",
-                            label: "Invasions",
+                            label: "{{{stats_tab_invasions}}}",
                             fill: true
                         }]
                     };
@@ -852,11 +853,10 @@
                 }
             });
         }
-
     });
 </script>
 
-<h2 class="page-header text-center">{{title}}'s {{title_stats}}</h2>
+<h2 class="page-header text-center">{{page}}</h2>
 <ul class="nav nav-pills mb-3 justify-content-center" role="tablist">
     <li class="nav-item"><a class="nav-link active" id="overview-tab" role="tab" aria-controls="overview" aria-selected="true" data-toggle="pill" href="#overview">{{stats_tab_overview}}</a></li>
     <li class="nav-item"><a class="nav-link" id="pokemon-tab" role="tab" aria-controls="pokemon" aria-selected="false" data-toggle="pill" href="#pokemon">{{stats_tab_pokemon}}</a></li>
@@ -1013,10 +1013,10 @@
             <div class="card-body text-center p-1 m-3">
                 <div class="card-header bg-dark text-light"><b>{{stats_top10_pokemon}}</b></div>
                 <ul class="nav nav-tabs justify-content-center" role="tablist">
-                    <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">Lifetime</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-month-tab" data-toggle="tab" href="#top10-month" role="tab" aria-controls="top10-month" aria-selected="false">30 days</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">Today</a></li>
-                    <li class="nav-item"><a class="nav-link" id="top10-iv-today-tab" data-toggle="tab" href="#top10-iv-today" role="tab" aria-controls="top10-iv-today" aria-selected="false">IV Today</a></li>
+                    <li class="nav-item"><a class="nav-link active" id="top10-lifetime-tab" data-toggle="tab" href="#top10-lifetime" role="tab" aria-controls="top10-lifetime" aria-selected="true">{{{stats_lifetime}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-month-tab" data-toggle="tab" href="#top10-month" role="tab" aria-controls="top10-month" aria-selected="false">{{{stats_30days}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-today-tab" data-toggle="tab" href="#top10-today" role="tab" aria-controls="top10-today" aria-selected="false">{{{stats_today}}}</a></li>
+                    <li class="nav-item"><a class="nav-link" id="top10-iv-today-tab" data-toggle="tab" href="#top10-iv-today" role="tab" aria-controls="top10-iv-today" aria-selected="false">{{{stats_iv_today}}}</a></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="top10-lifetime" role="tabpanel" aria-labelledby="top10-lifetime-tab">
@@ -1509,9 +1509,9 @@
                                     </div>
                                     <div class="row p-2">
                                         <div class="col" style="background: white">
-                                            <span><b>{{stats_100iv}}</b><span id="iv100">0</span></span>
-                                            <span><b>{{stats_90iv}}</b><span id="iv90">0</span></span>
-                                            <span><b>{{stats_0iv}}</b><span id="iv0">0</span></span>
+                                            <span><b>{{stats_100iv}}:</b><span id="iv100">0</span></span>
+                                            <span><b>{{stats_90iv}}:</b><span id="iv90">0</span></span>
+                                            <span><b>{{stats_0iv}}:</b><span id="iv0">0</span></span>
                                         </div>
                                     </div>
                                 </div>
