@@ -2491,9 +2491,9 @@ function getPokemonPopupContent (pokemon) {
       '<div class="col text-center">' +
         '<a href="#" onclick="togglePvp()"><b>'
       if (showPvp) {
-        content += i18n('map_show_pvp')
-      } else {
         content += i18n('map_hide_pvp')
+      } else {
+        content += i18n('map_show_pvp')
       }
       content += '</b></a>' +
       '</div>'
@@ -2509,7 +2509,7 @@ function getPokemonPopupContent (pokemon) {
           }
           let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
           if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
+            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
           }
           content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
         })
@@ -2528,7 +2528,7 @@ function getPokemonPopupContent (pokemon) {
           }
           let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
           if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
+            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
           }
           content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
         })
@@ -2547,7 +2547,7 @@ function getPokemonPopupContent (pokemon) {
           }
           let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
           if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_pvp_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
+            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
           }
           content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
         })
