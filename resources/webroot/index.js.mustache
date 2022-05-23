@@ -4,7 +4,6 @@
 let map
 
 //params
-let startTimestamp = ''
 let startLat = ''
 let startLon = ''
 let startZoom = ''
@@ -458,19 +457,24 @@ $(function () {
 function loadParameters () {
   let jsScript = $('script[src*=index]')
 
-  startTimestamp = jsScript.attr('data-timestamp')
   startLat = jsScript.attr('data-lat')
   startLon = jsScript.attr('data-lon')
   startZoom = jsScript.attr('data-zoom')
   try {
     startPokemon = JSON.parse(jsScript.attr('data-start_pokemon'))
-  } catch(e) {}
+  } catch{
+    // Silent try-catch to please ESLint
+  }
   try {
     startPokestop = JSON.parse(jsScript.attr('data-start_pokestop'))
-  } catch(e) {}
+  } catch{
+    // Silent try-catch to please ESLint
+  }
   try {
     startGym = JSON.parse(jsScript.attr('data-start_gym'))
-  } catch(e) {}
+  } catch{
+    // Silent try-catch to please ESLint
+  }
 }
 
 function loadStorage () {
