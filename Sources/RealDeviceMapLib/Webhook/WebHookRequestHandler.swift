@@ -34,19 +34,22 @@ public class WebHookRequestHandler {
     private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
-    static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
+    static let threadLimitMax = UInt32(exactly: ConfigLoader.global.getConfig(type: .rawThreadLimit) as Int)!
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
     private static var threadLimitTotalCount: UInt64 = 0
     private static var threadLimitIgnoredCount: UInt64 = 0
 
-    private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
-    private static let loginLimitIntervall = UInt32(
-        ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? ""
-    ) ?? 300
+    private static let loginLimitEnabled: Bool = ConfigLoader.global.getConfig(type: .loginLimit)
+    private static let loginLimit = UInt32(exactly: ConfigLoader.global.getConfig(type: .loginLimitCount) as Int)!
+    private static let loginLimitIntervall = UInt32(exactly:
+        ConfigLoader.global.getConfig(type: .loginLimitInterval) as Int)!
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
+
+    private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
+    private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
 
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
@@ -348,6 +351,31 @@ public class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
+            }
+        }
+
+        if rawDebugEnabled {
+            if rawDebugTypes.contains("GetPlayerResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
+            }
+            if rawDebugTypes.contains("GetMapObjects") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
+            }
+            if rawDebugTypes.contains("EncounterResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
+            }
+            if rawDebugTypes.contains("FortDetailsResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
+            }
+            if rawDebugTypes.contains("FortSearchResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
+            }
+            if rawDebugTypes.contains("GymGetInfoResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] gymInfos: \(gymInfos)")
             }
         }
 
@@ -910,7 +938,7 @@ public class WebHookRequestHandler {
                     account = newAccount
                 }
 
-                if username != account!.username, let loginLimit = self.loginLimit {
+                if username != account!.username, loginLimitEnabled {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
                     self.loginLimitLock.lock()

@@ -16,9 +16,8 @@ import Turf
 public class WebHookController {
 
     private init() {
-        let environment = ProcessInfo.processInfo.environment
-        timeout = environment["WEBHOOK_ENDPOINT_TIMEOUT"]?.toInt() ?? 30
-        connectTimeout = environment["WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"]?.toInt() ?? 30
+        timeout = ConfigLoader.global.getConfig(type: .webhookTimeout)
+        connectTimeout = ConfigLoader.global.getConfig(type: .webhookConnectTimeout)
     }
 
     public private(set) static var global = WebHookController()

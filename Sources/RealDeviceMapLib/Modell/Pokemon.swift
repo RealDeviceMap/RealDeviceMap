@@ -25,9 +25,9 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     public static var dittoPokemonId: UInt16 = 132
     public static var weatherBoostMinLevel: UInt8 = 6
     public static var weatherBoostMinIvStat: UInt8 = 4
-    public static var noPVP = false
-    public static var noWeatherIVClearing = false
-    public static var noCellPokemon = false
+    public static var pvpEnabled: Bool = true
+    public static var weatherIVClearingEnabled = true
+    public static var cellPokemonEnabled = true
     public static var saveSpawnpointLastSeen = false
 
     public static var cache: MemoryCache<Pokemon>?
@@ -300,7 +300,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         let lat: Double
         let lon: Double
         if pokestopId.isEmpty {
-            if Pokemon.noCellPokemon { throw ParsingError() }
+            if !Pokemon.cellPokemonEnabled { throw ParsingError() }
             let s2cell = S2Cell(cellId: S2CellId(uid: cellId))
             let nlat = s2cell.capBound.rectBound.center.lat.degrees
             let nlon = s2cell.capBound.rectBound.center.lng.degrees
@@ -510,7 +510,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
             self.baseHeight = stats?.baseHeight
             self.baseWeight = stats?.baseWeight
         }
-        if Pokemon.noPVP {
+        if !Pokemon.pvpEnabled {
             return
         }
         if self.atkIv == nil || self.defIv == nil || self.staIv == nil {
@@ -718,6 +718,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 self.capture2 = oldPokemon!.capture2
                 self.capture3 = oldPokemon!.capture3
                 self.shiny = oldPokemon!.shiny
+                self.seenType = oldPokemon!.seenType
                 self.isDitto = Pokemon.isDittoDisguised(pokemon: oldPokemon!)
                 if self.isDitto {
                     Log.debug(message: "[POKEMON] oldPokemon \(id) Ditto found, disguised as \(self.pokemonId)")
@@ -729,7 +730,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                       hasIvChanges {
                 setIVForWeather = false
                 updateIV = true
-            } else if weatherChanged && oldPokemon!.atkIv != nil && !Pokemon.noWeatherIVClearing {
+            } else if weatherChanged && oldPokemon!.atkIv != nil && Pokemon.weatherIVClearingEnabled {
                 Log.debug(message: "[POKEMON] Pokemon \(id) changed Weatherboosted State. Clearing IVs.")
                 setIVForWeather = true
                 self.atkIv = nil
@@ -830,7 +831,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
                 Log.debug(message: "[POKEMON] Duplicated key. Skipping...")
             } else {
                 Log.error(message: "[POKEMON] Failed to execute query '\(oldPokemon != nil ? "update" : "insert")' " +
-                    "of \(seenType.rawValue) pokemon id '\(id)' - cell id '\(cellId)'. " +
+                    "of \(seenType.rawValue) pokemon id '\(id)' - cell id '\(String(describing: cellId))'. " +
                     "(\(mysqlStmt.errorMessage()))")
             }
             throw DBController.DBError()

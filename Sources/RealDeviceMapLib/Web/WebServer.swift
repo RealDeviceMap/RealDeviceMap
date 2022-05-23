@@ -80,9 +80,8 @@ public class WebServer {
 
     public static var server: HTTPServer.Server {
 
-        let enviroment = ProcessInfo.processInfo.environment
-        let address = enviroment["WEB_SERVER_ADDRESS"] ?? "0.0.0.0"
-        let port = Int(enviroment["WEB_SERVER_PORT"] ?? "") ?? 9000
+        let address: String = ConfigLoader.global.getConfig(type: .serverHost)
+        let port: Int = ConfigLoader.global.getConfig(type: .serverPort)
 
         SessionConfig.name = "SESSION-TOKEN"
         SessionConfig.idle = 604800 // 7 Days
@@ -111,9 +110,9 @@ public class WebServer {
     }
 
     public static var startupServer: HTTPServer.Server {
-        let enviroment = ProcessInfo.processInfo.environment
-        let address = enviroment["WEB_SERVER_ADDRESS"] ?? "0.0.0.0"
-        let port = Int(enviroment["WEB_SERVER_PORT"] ?? "") ?? 9000
+
+        let address: String = ConfigLoader.global.getConfig(type: .serverHost)
+        let port: Int = ConfigLoader.global.getConfig(type: .serverPort)
 
         let route = Route(uri: "**") { (_, response) in
             response.setBody(string: """
