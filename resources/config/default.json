@@ -9,8 +9,7 @@
         "EncounterResponse",
         "FortDetailsResponse",
         "FortSearchResponse",
-        "GymGetInfoResponse",
-        "GetHoloholoInventoryOutProto"
+        "GymGetInfoResponse"
       ]
     }
   },

@@ -48,6 +48,9 @@ public class WebHookRequestHandler {
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
 
+    private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
+    private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
 
@@ -348,6 +351,31 @@ public class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
+            }
+        }
+
+        if rawDebugEnabled {
+            if rawDebugTypes.contains("GetPlayerResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
+            }
+            if rawDebugTypes.contains("GetMapObjects") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
+            }
+            if rawDebugTypes.contains("EncounterResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
+            }
+            if rawDebugTypes.contains("FortDetailsResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
+            }
+            if rawDebugTypes.contains("FortSearchResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
+            }
+            if rawDebugTypes.contains("GymGetInfoResponse") {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] gymInfos: \(gymInfos)")
             }
         }
 
