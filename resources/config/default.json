@@ -1,0 +1,71 @@
+{
+  "logger": {
+    "logLevel": "info",
+    "rawDebug": {
+      "enabled": false,
+      "types": [
+        "GetPlayerResponse",
+        "GetMapObjects",
+        "EncounterResponse",
+        "FortDetailsResponse",
+        "FortSearchResponse",
+        "GymGetInfoResponse",
+        "GetHoloholoInventoryOutProto"
+      ]
+    }
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 9000
+  },
+  "webhookServer": {
+    "host": "0.0.0.0",
+    "port": 9001
+  },
+  "database": {
+    "host": "db",
+    "port": 3306,
+    "database": "rdmdb",
+    "user": "rdmuser",
+    "password": "",
+    "rootUser": "root",
+    "rootPassword": "",
+    "backup": true
+  },
+  "application": {
+    "rawThreadLimit": 100,
+    "account": {
+      "requireInDB": true,
+      "useRwForQuest": false,
+      "useRwForRaid": false
+    },
+    "loginLimit": {
+      "enabled": false,
+      "count": 15,
+      "interval": 300
+    },
+    "map": {
+      "generateImages": true,
+      "ivWeatherClearing": true,
+      "saveCellPokemon": true,
+      "saveSpawnPointLastSeen": false
+    },
+    "memoryCache": {
+      "enabled": true,
+      "clearInterval": 900,
+      "keepTime": 3600
+    },
+    "pvp": {
+      "enabled": true,
+      "levelCaps": [50],
+      "defaultRank": "ordinal",
+      "filterLittleMinCP": 450,
+      "filterGreatMinCP": 1400,
+      "filterUltraMinCP": 2350
+    },
+    "webhook": {
+      "endpointTimeout": 30,
+      "endpointConnectTimeout": 30
+    }
+  }
+}

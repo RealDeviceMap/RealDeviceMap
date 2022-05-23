@@ -305,7 +305,7 @@ public class ApiRequestHandler {
                     "type": miscString
                 ])
             }
-            if !Pokemon.noCellPokemon {
+            if Pokemon.cellPokemonEnabled {
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"

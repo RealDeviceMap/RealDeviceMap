@@ -80,7 +80,7 @@ extension InstanceControllerProto {
 public class InstanceController {
 
     public private(set) static var global = InstanceController()
-    public static var noRequireAccount = false
+    public static var requireAccountEnabled = true
 
     public static func setup() throws {
 

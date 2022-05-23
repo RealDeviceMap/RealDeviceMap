@@ -1628,7 +1628,8 @@ public class WebRequestHandler {
             let stalePokestopsCount = try? Pokestop.getStalePokestopsCount()
             data["convertible_pokestops"] = convertiblePokestopsCount
             data["stale_pokestops"] = stalePokestopsCount
-            data["show_clear_memcache"] = ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil
+            let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
+            data["show_clear_memcache"] = memoryCacheEnabled
 
             if request.method == .post {
                 let action = request.param(name: "action")

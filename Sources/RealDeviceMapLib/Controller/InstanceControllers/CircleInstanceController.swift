@@ -34,8 +34,7 @@ class CircleInstanceController: InstanceControllerProto {
     private var lastCompletedTime: Date?
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
-    public let useRwForRaid =
-        ProcessInfo.processInfo.environment["USE_RW_FOR_RAID"] != nil
+    public let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
 
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {

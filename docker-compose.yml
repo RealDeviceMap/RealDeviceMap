@@ -10,6 +10,7 @@ services:
     volumes:
       - images:/app/resources/webroot/static/img
       - backups:/app/backups
+#     - config.json:/app/resources/config/local.json
 #     - favicons:/app/resources/webroot/static/favicons
 #     - /etc/localtime:/etc/localtime:ro
     ports:
