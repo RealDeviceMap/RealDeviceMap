@@ -112,6 +112,8 @@ public func setupRealDeviceMap() {
     WebRequestHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
     WebRequestHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
         .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
+   WebRequestHandler.citiesLowerCased = try! DBController.global.getValueForKey(key: "CITIES")?.lowercased()
+        .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
     WebRequestHandler.googleAnalyticsId = try! DBController.global.getValueForKey(key: "GOOGLE_ANALYTICS_ID") ?? ""
     WebRequestHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
     WebRequestHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?

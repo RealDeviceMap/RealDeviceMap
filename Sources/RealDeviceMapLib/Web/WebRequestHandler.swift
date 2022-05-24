@@ -35,6 +35,7 @@ public class WebRequestHandler {
     public static var enableRegister: Bool = true
     public static var tileservers = [String: [String: String]]()
     public static var cities = [String: [String: Any]]()
+    public static var citiesLowerCased = [String: [String: Any]]()
     public static var buttonsLeft = [[String: String]]()
     public static var buttonsRight = [[String: String]]()
     public static var googleAnalyticsId: String?
@@ -195,7 +196,7 @@ public class WebRequestHandler {
             var zoom = request.urlVariables["zoom"]?.toInt()
             var lat = request.urlVariables["lat"]?.toDouble()
             var lon = request.urlVariables["lon"]?.toDouble()
-            var city = request.urlVariables["city"]
+            var city = request.urlVariables["city"]?.lowercased()
             let id = request.urlVariables["id"]
 
             // City but in wrong route
@@ -208,7 +209,7 @@ public class WebRequestHandler {
             }
 
             if city != nil {
-                guard let citySetting = cities[city!] else {
+                guard let citySetting = citiesLowerCased[city!] else {
                     response.setBody(string: "The city \"\(city!)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
