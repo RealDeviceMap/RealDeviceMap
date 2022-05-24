@@ -110,10 +110,9 @@ public func setupRealDeviceMap() {
     WebRequestHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
     WebRequestHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
     WebRequestHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
-    WebRequestHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
-        .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
-   WebRequestHandler.citiesLowerCased = try! DBController.global.getValueForKey(key: "CITIES")?.lowercased()
-        .jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
+    let tmpCities = try! DBController.global.getValueForKey(key: "CITIES")
+    WebRequestHandler.cities = tmpCities?.jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
+    WebRequestHandler.citiesLowerCased = tmpCities?.lowercased().jsonDecodeForceTry() as? [String: [String: Any]] ?? [String: [String: Any]]()
     WebRequestHandler.googleAnalyticsId = try! DBController.global.getValueForKey(key: "GOOGLE_ANALYTICS_ID") ?? ""
     WebRequestHandler.googleAdSenseId = try! DBController.global.getValueForKey(key: "GOOGLE_ADSENSE_ID") ?? ""
     WebRequestHandler.oauthDiscordRedirectURL = try! DBController.global.getValueForKey(key: "DISCORD_REDIRECT_URL")?
