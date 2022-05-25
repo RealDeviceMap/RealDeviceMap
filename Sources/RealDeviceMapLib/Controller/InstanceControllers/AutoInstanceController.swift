@@ -298,7 +298,7 @@ class AutoInstanceController: InstanceControllerProto {
                     }
 
                     return ["action": "scan_raid", "lat": coord.latitude, "lon": coord.longitude,
-                            "min_level": minLevel, "max_level": maxLevel]
+                            "min_level": minLevel, "max_level": maxLevel, "gym_encounter": true]
                 } else {
                     bootstrappLock.unlock()
                     return [String: Any]()

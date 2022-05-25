@@ -173,7 +173,8 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
             self.statsLock.unlock()
 
             return ["action": "scan_raid", "lat": coord!.lat,
-                    "lon": coord!.lon, "min_level": minLevel, "max_level": maxLevel]
+                    "lon": coord!.lon, "min_level": minLevel, "max_level": maxLevel,
+                    "gym_encounter": true]
         }
 
     }
