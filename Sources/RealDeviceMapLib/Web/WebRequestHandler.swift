@@ -204,12 +204,13 @@ public class WebRequestHandler {
                 if let tmpZoom = request.urlVariables["lon"]?.toInt() {
                     zoom = tmpZoom
                 }
-
             }
 
             if city != nil {
-                guard let citySetting = cities[city!.lowercased()] else {
-                    response.setBody(string: "The city \"\(city!)\" was not found.")
+                let foundCityName = cities.keys.first {
+                    $0.compare(city!, options: .caseInsensitive) == .orderedSame } ?? city!
+                guard let citySetting = cities[foundCityName] else {
+                    response.setBody(string: "The city \"\(foundCityName)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
                     return
@@ -315,7 +316,7 @@ public class WebRequestHandler {
             data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
             for area in self.cities.sorted(by: { $0.key < $1.key }) {
-                let name = area.key.prefix(1).uppercased() + area.key.lowercased().dropFirst()
+                let name = area.key
                 areas.append(["area": name])
             }
             data["areas"] = areas
@@ -2183,12 +2184,12 @@ public class WebRequestHandler {
                 let lon: Double?
                 let zoom: Int?
                 if split.count == 3 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = nil
                 } else if split.count == 4 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = split[3].toInt()
