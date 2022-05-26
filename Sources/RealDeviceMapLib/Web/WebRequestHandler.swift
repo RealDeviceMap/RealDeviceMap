@@ -35,7 +35,6 @@ public class WebRequestHandler {
     public static var enableRegister: Bool = true
     public static var tileservers = [String: [String: String]]()
     public static var cities = [String: [String: Any]]()
-    public static var citiesLowerCased = [String: [String: Any]]()
     public static var buttonsLeft = [[String: String]]()
     public static var buttonsRight = [[String: String]]()
     public static var googleAnalyticsId: String?
@@ -208,8 +207,10 @@ public class WebRequestHandler {
             }
 
             if city != nil {
-                guard let citySetting = citiesLowerCased[city!.lowercased()] else {
-                    response.setBody(string: "The city \"\(city!)\" was not found.")
+                let foundCityName = cities.keys.first {
+                    $0.compare(city!, options: .caseInsensitive) == .orderedSame } ?? city!
+                guard let citySetting = cities[foundCityName] else {
+                    response.setBody(string: "The city \"\(foundCityName)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
                     return
@@ -2175,7 +2176,6 @@ public class WebRequestHandler {
         }
 
         var citySettings = [String: [String: Any]]()
-        var citySettingsLowercased = [String: [String: Any]]()
         if cities != "" {
             for cityString in cities.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n") {
                 let split = cityString.components(separatedBy: ";")
@@ -2202,11 +2202,6 @@ public class WebRequestHandler {
                     return data
                 }
                 citySettings[name] = [
-                    "lat": latReal,
-                    "lon": lonReal,
-                    "zoom": zoom as Any
-                ]
-                citySettingsLowercased[name.lowercased()] = [
                     "lat": latReal,
                     "lon": lonReal,
                     "zoom": zoom as Any
@@ -2275,7 +2270,6 @@ public class WebRequestHandler {
         WebRequestHandler.enableRegister = enableRegister
         WebRequestHandler.tileservers = tileservers
         WebRequestHandler.cities = citySettings
-        WebRequestHandler.citiesLowerCased = citySettingsLowercased
         WebRequestHandler.googleAnalyticsId = googleAnalyticsId ?? ""
         WebRequestHandler.googleAdSenseId = googleAdSenseId ?? ""
         WebRequestHandler.buttonsRight = buttonsRight
