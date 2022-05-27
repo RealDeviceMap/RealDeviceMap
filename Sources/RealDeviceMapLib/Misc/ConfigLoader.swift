@@ -39,8 +39,8 @@ public class ConfigLoader {
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     func getConfig<T>(type: ConfigType) -> T {
         let value = environmentMap[type.rawValue]
-        if value != nil {
-            return getEnvironmentValue(type: type, value: value!)
+        if value != nil || type == .loginLimit {
+            return getEnvironmentValue(type: type, value: value ?? "")
         }
         switch type {
         case .logLevel: return localConfig.logger.logLevel.value()
