@@ -663,7 +663,7 @@ function loadStorage () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 8; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -680,7 +680,7 @@ function loadStorage () {
       showRaidTimers = raidFilter.timers.show
     }
     let i
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 8; i++) {
       if (raidFilter['l' + i] === undefined) {
         raidFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -960,7 +960,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
     let i
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 8; i++) {
       defaultRaidFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -977,7 +977,7 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 8; i++) {
       defaultRaidFilter['l' + i] = { show: false, size: raidFilterNew['l' + i].size }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -1529,7 +1529,7 @@ function loadData () {
       raidFilterExclude.push('timers')
     }
     let i
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 8; i++) {
       if (raidFilter['l' + i].show === false) {
         raidFilterExclude.push('l' + i)
       }
@@ -2811,10 +2811,14 @@ function getGymPopupContent (gym) {
       pokemonName = i18n('map_unknown_raid')
     } else if (gym.raid_is_exclusive) {
       pokemonName = i18n('map_egg_ex')
+    } else if (gym.raid_level === 5) {
+      pokemonName = i18n('egg_5')
     } else if (gym.raid_level === 6) {
-      pokemonName = i18n('map_egg_mega')
+      pokemonName = i18n('egg_6')
     } else if (gym.raid_level === 7) {
-      pokemonName = i18n('map_egg_mega_legendary')
+      pokemonName = i18n('egg_7')
+    } else if (gym.raid_level === 8) {
+      pokemonName = i18n('egg_8')
     } else {
       pokemonName = i18n('map_egg_level', { egglevel: gym.raid_level })
     }
