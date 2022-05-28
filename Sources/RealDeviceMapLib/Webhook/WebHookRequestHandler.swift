@@ -845,7 +845,6 @@ public class WebHookRequestHandler {
                     let pokemon: Pokemon?
                     do {
                         let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
-                        print("DENR displayId: \(displayId)")
                         pokemon = try Pokemon.getWithId(
                             mysql: mysql,
                             id: displayId.toString(),
@@ -865,24 +864,10 @@ public class WebHookRequestHandler {
                                 "[WebHookRequestHandler] [\(uuid ?? "?")] Found diskEncounter Pokemon without any" +
                                 "information about stop with ID: \(diskEncounter.pokemon.deployedFortID)")
                         }
-                        Log.error(message: """
-                                           [WebHookRequestHandler] Disk Encounter mon:
-                                           \(diskEncounter.pokemon.pokemonDisplay.displayID)
-                                           detected before MapPokemon - WTH :
-                                           \(diskEncounter.pokemon)
-                                           """)
-                        /*
-                        let newPokemon = Pokemon(
-                            mapPokemon: diskEncounter.pokemon,
-                            fortData: (id: pokestop?.id, lat: pokestop?.lat, lon: pokestop?.lon),
-                            cellId: pokestop?.cellId,
-                            timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
-                            username: username,
-                            isEvent: isEvent
-                        )
-                        newPokemon.addDiskEncounter(mysql: mysql, diskEncounterData: diskEncounter, username: username)
-                        try? newPokemon.save(mysql: mysql, updateIV: true)
-                         */
+                        Log.error(message: "[WebHookRequestHandler] Disk Encounter mon: " +
+                            "\(diskEncounter.pokemon.pokemonDisplay.displayID) " +
+                            "detected before MapPokemon - WTH : " +
+                            "\(diskEncounter.pokemon)")
                     }
                 }
                 Log.debug(
