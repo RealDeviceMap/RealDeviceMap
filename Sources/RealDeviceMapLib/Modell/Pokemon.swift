@@ -161,6 +161,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
     enum SeenType: String {
         case encounter = "encounter", wild = "wild", nearbyStop = "nearby_stop", nearbyCell = "nearby_cell",
+             lureWild = "lure_wild", lureEncounter = "lure_encounter",
              UNSET = "unset" // MARK: only unset short after migration, because it can be null, can be removed later
     }
 
@@ -361,6 +362,42 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
     }
 
+    init(mysql: MySQL?=nil, mapPokemon: MapPokemonProto, cellId: UInt64, username: String?, isEvent: Bool) throws {
+        self.isEvent = isEvent
+        var encounterId: UInt64 = mapPokemon.encounterID
+        var displayId: Int64 = mapPokemon.pokemonDisplay.displayID
+        self.id = encounterId.toString()
+        self.pokemonId = mapPokemon.pokedexTypeID.toUInt16()
+
+        let spawnpointId: String = mapPokemon.spawnpointID
+        guard let pokestop: Pokestop? = try? Pokestop.getWithId(mysql: mysql, id: spawnpointId) else {
+            throw ParsingError()
+        }
+        self.pokestopId = pokestop!.id
+        self.lat = pokestop!.lat
+        self.lon = pokestop!.lon
+
+        self.gender = mapPokemon.pokemonDisplay.gender.rawValue.toUInt8()
+        self.form = mapPokemon.pokemonDisplay.form.rawValue.toUInt16()
+        if mapPokemon.hasPokemonDisplay {
+            self.costume = mapPokemon.pokemonDisplay.costume.rawValue.toUInt8()
+            self.weather = mapPokemon.pokemonDisplay.weatherBoostedCondition.rawValue.toUInt8()
+            // The mapPokemon and nearbyPokemon GMOs don't contain actual shininess.
+            // shiny = mapPokemon.pokemonDisplay.shiny
+        }
+        self.username = username
+
+        if mapPokemon.expirationTimeMs > 0 {
+            self.expireTimestamp = UInt32((0 + UInt64(mapPokemon.expirationTimeMs)) / 1000)
+            self.expireTimestampVerified = true
+        } else {
+            self.expireTimestampVerified = false
+        }
+
+        self.seenType = .lureWild
+        self.cellId = cellId
+    }
+
     public func addEncounter(mysql: MySQL, encounterData: EncounterOutProto,
                              username: String?) {
 
@@ -494,6 +531,90 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
         }
 
         self.seenType = SeenType.encounter
+        self.updated = UInt32(Date().timeIntervalSince1970)
+        self.changed = self.updated
+    }
+
+    public func addDiskEncounter(mysql: MySQL, diskEncounterData: DiskEncounterOutProto,
+                                 username: String?) {
+
+        let pokemonId = UInt16(diskEncounterData.pokemon.pokemonID.rawValue)
+        let cp = UInt16(diskEncounterData.pokemon.cp)
+        let move1 = UInt16(diskEncounterData.pokemon.move1.rawValue)
+        let move2 = UInt16(diskEncounterData.pokemon.move2.rawValue)
+        let size = Double(diskEncounterData.pokemon.heightM)
+        let weight = Double(diskEncounterData.pokemon.weightKg)
+        let atkIv = UInt8(diskEncounterData.pokemon.individualAttack)
+        let defIv = UInt8(diskEncounterData.pokemon.individualDefense)
+        let staIv = UInt8(diskEncounterData.pokemon.individualStamina)
+        let costume = UInt8(diskEncounterData.pokemon.pokemonDisplay.costume.rawValue)
+        let form = UInt16(diskEncounterData.pokemon.pokemonDisplay.form.rawValue)
+        let gender = UInt8(diskEncounterData.pokemon.pokemonDisplay.gender.rawValue)
+
+        if pokemonId != self.pokemonId ||
+               cp != self.cp ||
+               move1 != self.move1 ||
+               move2 != self.move2 ||
+               size != self.size ||
+               weight != self.weight ||
+               atkIv != self.atkIv ||
+               defIv != self.defIv ||
+               staIv != self.staIv ||
+               costume != self.costume ||
+               form != self.form ||
+               gender != self.gender {
+            self.hasChanges = true
+            self.hasIvChanges = true
+        }
+
+        self.pokemonId = pokemonId
+        self.cp = cp
+        self.move1 = move1
+        self.move2 = move2
+        self.size = size
+        self.weight = weight
+        self.atkIv = atkIv
+        self.defIv = defIv
+        self.staIv = staIv
+        self.costume = costume
+        self.form = form
+        self.gender = gender
+
+        self.shiny = diskEncounterData.pokemon.pokemonDisplay.shiny
+        self.username = username
+
+        if hasIvChanges {
+            if diskEncounterData.hasCaptureProbability {
+                self.capture1 = Double(diskEncounterData.captureProbability.captureProbability[0])
+                self.capture2 = Double(diskEncounterData.captureProbability.captureProbability[1])
+                self.capture3 = Double(diskEncounterData.captureProbability.captureProbability[2])
+            }
+            let cpMultiplier = diskEncounterData.pokemon.cpMultiplier
+            let level: UInt8
+            if cpMultiplier < 0.734 {
+                level = UInt8(round(58.35178527 * cpMultiplier * cpMultiplier -
+                    2.838007664 * cpMultiplier + 0.8539209906))
+            } else {
+                level = UInt8(round(171.0112688 * cpMultiplier - 95.20425243))
+            }
+            self.level = level
+            self.isDitto = Pokemon.isDittoDisguised(
+                id: self.id,
+                pokemonId: pokemonId,
+                level: level,
+                weather: self.weather ?? 0,
+                atkIv: atkIv,
+                defIv: defIv,
+                staIv: staIv
+            )
+            if self.isDitto {
+                Log.debug(message: "[POKEMON] Pokemon \(id) Ditto found, disguised as \(self.pokemonId)")
+                self.setDittoAttributes(displayPokemonId: pokemonId, weather: self.weather ?? 0, level: level)
+            }
+            setPVP()
+        }
+
+        self.seenType = SeenType.lureEncounter
         self.updated = UInt32(Date().timeIntervalSince1970)
         self.changed = self.updated
     }

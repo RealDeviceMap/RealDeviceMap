@@ -4,6 +4,8 @@
 //
 //  Created by Florian Kostenzer on 06.11.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length
 
 import Foundation
 import PerfectLib
@@ -112,8 +114,10 @@ class IVInstanceController: InstanceControllerProto {
         if !scanNextCoords.isEmpty {
             let currentCoord = scanNextCoords.removeFirst()
             lock.unlock()
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         } else {
             lock.unlock()
         }
@@ -133,8 +137,10 @@ class IVInstanceController: InstanceControllerProto {
         scannedPokemon.append((Date(), pokemon))
         scannedPokemonLock.unlock()
 
-        return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
+        var task: [String: Any] = ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
                 "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
+        if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+        return task
     }
 
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {

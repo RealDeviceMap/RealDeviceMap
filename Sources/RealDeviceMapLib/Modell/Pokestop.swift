@@ -986,11 +986,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         inSQL += "?)"
 
-        let joinIncidentSQL = "LEFT JOIN incident on pokestop.id = incident.pokestop_id and " +
-            "expiration >= UNIX_TIMESTAMP()"
-        let selectIncidentSql = ", incident.id, pokestop_id, start, expiration, display_type, style, `character`, " +
-            "incident.updated"
-
         let sql = """
             SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
                    pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
@@ -998,8 +993,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
-                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp \(selectIncidentSql)
-            FROM pokestop \(joinIncidentSQL)
+                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+            FROM pokestop
             WHERE pokestop.id IN \(inSQL) AND deleted = false
         """
 
@@ -1014,7 +1009,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
-        return extractResults(results: results)
+        return extractResults(results: results, showInvasions: false)
     }
 
     internal static func questCountIn(

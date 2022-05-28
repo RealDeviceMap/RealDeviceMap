@@ -15,7 +15,6 @@ public class Config {
     public init(with fileName: String) {
         let file = File("\(Dir.projectroot)/\(fileName).json")
         guard file.exists else {
-            Log.error(message: "Config file not found \(fileName)")
             return
         }
         self.url = URL(fileURLWithPath: file.path)

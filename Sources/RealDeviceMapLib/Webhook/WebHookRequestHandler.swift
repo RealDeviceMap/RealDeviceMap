@@ -154,6 +154,9 @@ public class WebHookRequestHandler {
             }
         }
 
+        // only process MapPokemon when LureEncounter are enabled
+        let processMapPokemon = InstanceController.sendTaskForLureEncounter
+
         guard let contents = json["contents"] as? [[String: Any]] ??
                              json["protos"] as? [[String: Any]] ??
                              json["gmo"] as? [[String: Any]] else {
@@ -173,6 +176,7 @@ public class WebHookRequestHandler {
 
         var wildPokemons = [(cell: UInt64, data: WildPokemonProto, timestampMs: UInt64)]()
         var nearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+        var mapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
         var clientWeathers =  [(cell: Int64, data: ClientWeatherProto)]()
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
@@ -180,6 +184,7 @@ public class WebHookRequestHandler {
         var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
+        var diskEncounters = [DiskEncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
         var cells = [UInt64]()
 
@@ -201,6 +206,9 @@ public class WebHookRequestHandler {
             } else if let enr = rawData["EncounterResponse"] as? String {
                 data = Data(base64Encoded: enr) ?? Data()
                 method = 102
+            } else if let denr = rawData["DiskEncounterResponse"] as? String {
+                data = Data(base64Encoded: denr) ?? Data()
+                method = 145
             } else if let fdr = rawData["FortDetailsResponse"] as? String {
                 data = Data(base64Encoded: fdr) ?? Data()
                 method = 104
@@ -272,6 +280,12 @@ public class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
+            } else if method == 145 && trainerLevel >= 30 || method == 145 && isMadData == true {
+                if processMapPokemon, let denr = try? DiskEncounterOutProto(serializedData: data) {
+                    diskEncounters.append(denr)
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed DiskEncounterResponse")
+                }
             } else if method == 104 {
                 if let fdr = try? FortDetailsOutProto(serializedData: data) {
                     fortDetails.append(fdr)
@@ -292,6 +306,8 @@ public class WebHookRequestHandler {
                     var newWildPokemons = [(cell: UInt64, data: WildPokemonProto,
                                             timestampMs: UInt64)]()
                     var newNearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+                    var newMapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
+
                     var newClientWeathers = [(cell: Int64, data: ClientWeatherProto)]()
                     var newForts = [(cell: UInt64, data: PokemonFortProto)]()
                     var newCells = [UInt64]()
@@ -307,6 +323,9 @@ public class WebHookRequestHandler {
                         }
                         for fort in mapCell.fort {
                             newForts.append((cell: mapCell.s2CellID, data: fort))
+                            if processMapPokemon && fort.hasActivePokemon {
+                                newMapPokemons.append((cell: mapCell.s2CellID, pokeData: fort.activePokemon))
+                            }
                         }
                         newCells.append(mapCell.s2CellID)
                     }
@@ -344,6 +363,7 @@ public class WebHookRequestHandler {
                         isEmtpyGMO = false
                         wildPokemons += newWildPokemons
                         nearbyPokemons += newNearbyPokemons
+                        mapPokemons += newMapPokemons
                         forts += newForts
                         cells += newCells
                         clientWeathers += newClientWeathers
@@ -355,26 +375,40 @@ public class WebHookRequestHandler {
         }
 
         if rawDebugEnabled {
-            if rawDebugTypes.contains("GetPlayerResponse") {
+            if rawDebugTypes.contains("GetPlayerResponse") && !playerdatas.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
             }
-            if rawDebugTypes.contains("GetMapObjects") {
+            if rawDebugTypes.contains("GetMapObjects_wildMons") && !wildPokemons.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_nearbyMons") && !nearbyPokemons.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_mapMons") && !mapPokemons.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] mapPokemons: \(mapPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_forts") && !forts.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_cells") && !cells.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_clientWeathers") && !clientWeathers.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
             }
-            if rawDebugTypes.contains("EncounterResponse") {
+            if rawDebugTypes.contains("EncounterResponse") && !encounters.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
             }
-            if rawDebugTypes.contains("FortDetailsResponse") {
+            if rawDebugTypes.contains("DiskEncounterResponse") && !diskEncounters.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] diskEncounters: \(diskEncounters)")
+            }
+            if rawDebugTypes.contains("FortDetailsResponse") && !fortDetails.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
             }
-            if rawDebugTypes.contains("FortSearchResponse") {
+            if rawDebugTypes.contains("FortSearchResponse") && !fortSearch.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
             }
-            if rawDebugTypes.contains("GymGetInfoResponse") {
+            if rawDebugTypes.contains("GymGetInfoResponse") && !gymInfos.isEmpty {
                 Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] gymInfos: \(gymInfos)")
             }
         }
@@ -443,8 +477,9 @@ public class WebHookRequestHandler {
             }
         }
 
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count,
-                    "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any,
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "map": mapPokemons.count,
+                    "forts": forts.count, "quests": quests.count, "encounters": encounters.count,
+                    "disk_encounters": diskEncounters.count, "level": trainerLevel as Any,
                     "only_empty_gmos": containsGMO && isEmtpyGMO, "fort_search": fortSearch.count,
                     "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO
         ]
@@ -503,7 +538,7 @@ public class WebHookRequestHandler {
                     .latitude, longitude: pokemon.data.longitude)
                 let distance = pokemonCoords!.distance(to: coords)
 
-                // Only Encounter pokemon within 35m of initial pokemon scann
+                // Only Encounter pokemon within 35m of initial pokemon scan
                 if distance <= 35 && ivController.scatterPokemon.contains(pokemonId) {
                     scatterPokemon.append([
                         "lat": pokemon.data.latitude,
@@ -645,6 +680,19 @@ public class WebHookRequestHandler {
                 )
             }
 
+            let startMapPokemon = Date()
+            for mapPokemon in mapPokemons {
+                let pokemon = try? Pokemon(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
+                    username: username, isEvent: isEvent)
+                try? pokemon?.save(mysql: mysql)
+            }
+            if !mapPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] MapPokemon Count: \(mapPokemons.count) " +
+                        "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startMapPokemon)))s"
+                )
+            }
+
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
@@ -745,6 +793,12 @@ public class WebHookRequestHandler {
             if !encounters.isEmpty {
                 let start = Date()
                 for encounter in encounters {
+                    if encounter.status != EncounterOutProto.Status.encounterSuccess {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
+                                " encounter: \(encounter)")
+                        continue
+                    }
                     let pokemon: Pokemon?
                     do {
                         pokemon = try Pokemon.getWithId(
@@ -759,12 +813,6 @@ public class WebHookRequestHandler {
                         pokemon!.addEncounter(mysql: mysql, encounterData: encounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
-                        if encounter.status != EncounterOutProto.Status.encounterSuccess {
-                            Log.debug(
-                                message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
-                                " encounter: \(encounter)")
-                            continue
-                        }
                         let centerCoord = LocationCoordinate2D(latitude: encounter.pokemon.latitude,
                                                                  longitude: encounter.pokemon.longitude)
                         let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 15)
@@ -782,6 +830,49 @@ public class WebHookRequestHandler {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
+            }
+
+            if !diskEncounters.isEmpty {
+                let start = Date()
+                for diskEncounter in diskEncounters {
+                    if diskEncounter.result != DiskEncounterOutProto.Result.success {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] DiskEncounter no EncounterSuccess." +
+                                " diskEncounter: \(diskEncounter)")
+                        continue
+                    }
+                    let pokemon: Pokemon?
+                    do {
+                        let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
+                        pokemon = try Pokemon.getWithId(
+                            mysql: mysql,
+                            id: displayId.toString(),
+                            isEvent: isEvent
+                        )
+                    } catch {
+                        pokemon = nil
+                    }
+                    if pokemon != nil {
+                        pokemon!.addDiskEncounter(mysql: mysql, diskEncounterData: diskEncounter, username: username)
+                        try? pokemon!.save(mysql: mysql, updateIV: true)
+                    } else {
+                        // MARK: logic for DiskEncounter without MapPokemon
+                        let pokestop = try? Pokestop.getWithId(mysql: mysql, id: diskEncounter.pokemon.deployedFortID)
+                        if pokestop == nil {
+                            Log.error(message:
+                                "[WebHookRequestHandler] [\(uuid ?? "?")] Found diskEncounter Pokemon without any" +
+                                "information about stop with ID: \(diskEncounter.pokemon.deployedFortID)")
+                        }
+                        Log.error(message: "[WebHookRequestHandler] Disk Encounter mon: " +
+                            "\(diskEncounter.pokemon.pokemonDisplay.displayID) " +
+                            "detected before MapPokemon - WTH : " +
+                            "\(diskEncounter.pokemon)")
+                    }
+                }
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Disk Encounter Count: \(diskEncounters.count) " +
+                        "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
 

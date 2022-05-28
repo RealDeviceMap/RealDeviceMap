@@ -21,7 +21,8 @@ public class ConfigLoader {
         "MEMORY_CACHE_KEEP_TIME", "RAW_THREAD_LIMIT", "LOG_LEVEL", "LOGINLIMIT_COUNT", "LOGINLIMIT_INTERVALL",
         "PVP_DEFAULT_RANK", "PVP_LITTLE_FILTER", "PVP_GREAT_FILTER", "PVP_ULTRA_FILTER", "PVP_LEVEL_CAPS",
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
-        "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT"
+        "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
+        "SCAN_LURE_ENCOUNTER"
     ]
 
     private init() {
@@ -33,7 +34,8 @@ public class ConfigLoader {
                 $0[$1] = value!
             }
         }
-        Log.info(message: "[ConfigLoader] Loaded config settings")
+        Log.info(message: "[ConfigLoader] Loaded config settings: " +
+            "\(localConfig.isEmpty() ? "Load from ENV Vars": "Load from local.json config")")
     }
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
@@ -93,6 +95,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.map.ivWeatherClearing.value()!
         case .saveCellPokemon: return localConfig.application.map.saveCellPokemon.value()
             ?? defaultConfig.application.map.saveCellPokemon.value()!
+        case .scanLureEncounter: return localConfig.application.map.scanLureEncounter.value()
+            ?? defaultConfig.application.map.scanLureEncounter.value()!
         case .saveSpawnPointLastSeen: return localConfig.application.map.saveSpawnPointLastSeen.value()
             ?? defaultConfig.application.map.saveSpawnPointLastSeen.value()!
         case .memoryCacheEnabled: return localConfig.application.memoryCache.enabled.value()
@@ -148,6 +152,7 @@ public class ConfigLoader {
         case .generateImages: return false as! T // NO_GENERATE_IMAGES
         case .ivWeatherClearing: return false as! T // NO_IV_WEATHER_CLEARING
         case .saveCellPokemon: return false as! T // NO_CELL_POKEMON
+        case .scanLureEncounter: return true as! T // SCAN_LURE_ENCOUNTER
         case .saveSpawnPointLastSeen: return true as! T // SAVE_SPAWNPOINT_LASTSEEN
         case .memoryCacheEnabled: return false as! T
         case .memoryCacheClearInterval: return castValue(value: value)
@@ -203,6 +208,7 @@ public class ConfigLoader {
         case generateImages = "NO_GENERATE_IMAGES"
         case ivWeatherClearing = "NO_IV_WEATHER_CLEARING"
         case saveCellPokemon = "NO_CELL_POKEMON"
+        case scanLureEncounter = "SCAN_LURE_ENCOUNTER"
         case saveSpawnPointLastSeen = "SAVE_SPAWNPOINT_LASTSEEN"
         case memoryCacheEnabled = "NO_MEMORY_CACHE"
         case memoryCacheClearInterval = "MEMORY_CACHE_CLEAR_INTERVAL"

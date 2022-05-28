@@ -3178,6 +3178,9 @@ function getScanTypeName (spawnTypeId) {
   if (spawnTypeId === 'wild' || spawnTypeId === 'encounter') {
     return i18n('scan_type_spawnpoint')
   }
+  if (spawnTypeId === 'lure_wild' || spawnTypeId === 'lure_encounter') {
+    return i18n('scan_type_lure')
+  }
   return i18n('scan_type_' + spawnTypeId)
 }
 
