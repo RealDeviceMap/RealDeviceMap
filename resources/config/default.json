@@ -5,8 +5,14 @@
       "enabled": false,
       "types": [
         "GetPlayerResponse",
-        "GetMapObjects",
+        "GetMapObjects_wildMons",
+        "GetMapObjects_nearbyMons",
+        "GetMapObjects_mapMons",
+        "GetMapObjects_forts",
+        "GetMapObjects_cells",
+        "GetMapObjects_clientWeathers",
         "EncounterResponse",
+        "DiskEncounterResponse",
         "FortDetailsResponse",
         "FortSearchResponse",
         "GymGetInfoResponse"
@@ -47,6 +53,7 @@
       "generateImages": true,
       "ivWeatherClearing": true,
       "saveCellPokemon": true,
+      "scanLureEncounter": false,
       "saveSpawnPointLastSeen": false
     },
     "memoryCache": {

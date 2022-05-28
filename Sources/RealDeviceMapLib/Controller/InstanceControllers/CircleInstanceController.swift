@@ -104,8 +104,10 @@ class CircleInstanceController: InstanceControllerProto {
         if !scanNextCoords.isEmpty {
             currentCoord = scanNextCoords.removeFirst()
             lock.unlock()
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         }
         if type == .smartPokemon {
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
@@ -143,8 +145,10 @@ class CircleInstanceController: InstanceControllerProto {
             currentUuidIndexes[uuid] = currentUuidIndex
             currentCoord = coords[currentUuidIndex]
             lock.unlock()
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         } else {
             currentIndex = self.lastIndex
             if lastIndex + 1 == coords.count {
@@ -156,13 +160,16 @@ class CircleInstanceController: InstanceControllerProto {
             }
             currentCoord = coords[currentIndex]
             lock.unlock()
+            var task: [String: Any]
             if type == .pokemon {
-                return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             } else {
-                return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             }
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         }
     }
 

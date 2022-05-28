@@ -214,6 +214,7 @@ public func setupRealDeviceMap() {
     Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
     Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
+    InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
 
     if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
@@ -236,6 +237,7 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Pokemon cell spawns enabled: \(Pokemon.cellPokemonEnabled)")
     Log.info(message: "[MAIN] Pokemon update spanwpoint last seen: \(Pokemon.saveSpawnpointLastSeen)")
     Log.info(message: "[MAIN] InstanceController require account in DB: \(InstanceController.requireAccountEnabled)")
+    Log.info(message: "[MAIN] InstanceController Scan Lure Encounter: \(InstanceController.sendTaskForLureEncounter)")
 
     // Load Icon styles
     Log.info(message: "[MAIN] Load Icon Styles")
