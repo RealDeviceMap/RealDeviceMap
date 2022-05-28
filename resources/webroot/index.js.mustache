@@ -600,20 +600,20 @@ function loadStorage () {
     pokemonFilter = JSON.parse(pokemonFilterValue)
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
-      if (pokemonFilter[i] === undefined) {
+      if (pokemonFilter[i] == null) {
         pokemonFilter[i] = { show: true, size: 'normal' }
       }
     }
-    if (pokemonFilter.event_only === undefined) {
+    if (pokemonFilter.event_only == null) {
       pokemonFilter.event_only = { on: false }
     }
-    if (pokemonFilter.show_cell === undefined) {
+    if (pokemonFilter.show_cell == null) {
       pokemonFilter.show_cell = { on: true }
     }
-    if (pokemonFilter.iv_and === undefined) {
+    if (pokemonFilter.iv_and == null) {
       pokemonFilter.iv_and = { on: false, filter: '0-100' }
     }
-    if (pokemonFilter.iv_or === undefined) {
+    if (pokemonFilter.iv_or == null) {
       pokemonFilter.iv_or = { on: false, filter: '0-100' }
     }
   }
@@ -622,9 +622,7 @@ function loadStorage () {
   const questFilterValue = retrieve('quest_filter')
   if (questFilterValue === null) {
     const defaultQuestFilter = {}
-    if (defaultQuestFilter.ar === undefined) {
-      defaultQuestFilter.ar = { show: false, size: 'normal' }
-    }
+    defaultQuestFilter.ar = { show: false, size: 'normal' }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultQuestFilter['p' + i] = { show: true, size: 'normal' }
@@ -636,17 +634,17 @@ function loadStorage () {
     questFilter = defaultQuestFilter
   } else {
     questFilter = JSON.parse(questFilterValue)
-    if (questFilter.ar === undefined) {
+    if (questFilter.ar == null) {
       questFilter.ar = { show: false, size: 'normal' }
     }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
-      if (questFilter['p' + i] === undefined) {
+      if (questFilter['p' + i] == null) {
         questFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
     $.each(availableItems, function (index, itemId) {
-      if (questFilter['i' + itemId] === undefined) {
+      if (questFilter['i' + itemId] == null) {
         questFilter['i' + itemId] = { show: true, size: 'normal' }
       }
     })
@@ -668,7 +666,7 @@ function loadStorage () {
     raidFilter = defaultRaidFilter
   } else {
     raidFilter = JSON.parse(raidFilterValue)
-    if (raidFilter.timers === undefined) {
+    if (raidFilter.timers == null) {
       raidFilter.timers = { show: true, size: 'normal' }
       showRaidTimers = true
     } else {
@@ -676,12 +674,12 @@ function loadStorage () {
     }
     let i
     for (i = 1; i <= 8; i++) {
-      if (raidFilter['l' + i] === undefined) {
+      if (raidFilter['l' + i] == null) {
         raidFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
-      if (raidFilter['p' + i] === undefined) {
+      if (raidFilter['p' + i] == null) {
         raidFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
@@ -710,26 +708,26 @@ function loadStorage () {
     gymFilter = JSON.parse(gymFilterValue)
     let i
     for (i = 0; i <= 3; i++) {
-      if (gymFilter['t' + i] === undefined || gymFilter['t' + i] === null) {
+      if (gymFilter['t' + i] == null) {
         gymFilter['t' + i] = { show: true, size: 'normal' }
       }
     }
-    if (gymFilter.ex === undefined || gymFilter.ex === null) {
+    if (gymFilter.ex == null) {
       gymFilter.ex = { show: false, size: 'normal' }
     }
-    if (gymFilter.ar === undefined || gymFilter.ar === null) {
+    if (gymFilter.ar == null) {
       gymFilter.ar = { show: false, size: 'normal' }
     }
-    if (gymFilter.sponsored === undefined || gymFilter.sponsored === null) {
+    if (gymFilter.sponsored == null) {
       gymFilter.sponsored = { show: false, size: 'normal' }
     }
     for (i = 0; i<= 3; i++) {
-      if (gymFilter['p' + i] === undefined || gymFilter['p' + i] === null) {
+      if (gymFilter['p' + i] == null) {
         gymFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 0; i <= 6; i++) {
-      if (gymFilter['s' + i] === undefined || gymFilter['s' + i] === null) {
+      if (gymFilter['s' + i] == null) {
         gymFilter['s' + i] = { show: true, size: 'normal' }
       }
     }
@@ -753,24 +751,24 @@ function loadStorage () {
     pokestopFilter = defaultPokestopFilter
   } else {
     pokestopFilter = JSON.parse(pokestopFilterValue)
-    if (pokestopFilter.normal === undefined || pokestopFilter.normal === null) {
+    if (pokestopFilter.normal == null) {
       pokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
     for (i = 501; i <= 505; i++) {
-      if (pokestopFilter['l' + i] === undefined || pokestopFilter['l' + i] === null) {
+      if (pokestopFilter['l' + i] == null) {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
     }
     for (i = 0; i <= 3; i++) {
-      if (pokestopFilter['p' + i] === undefined || pokestopFilter['p' + i] === null) {
+      if (pokestopFilter['p' + i] == null) {
         pokestopFilter['p' + i] = { show: true, size: 'normal' }
       }
     }
-    if (pokestopFilter.ar === undefined || pokestopFilter.ar === null) {
+    if (pokestopFilter.ar == null) {
       pokestopFilter.ar = { show: false, size: 'normal' }
     }
-    if (pokestopFilter.sponsored === undefined || pokestopFilter.sponsored === null) {
+    if (pokestopFilter.sponsored == null) {
       pokestopFilter.sponsored = { show: false, size: 'normal' }
     }
   }
@@ -786,7 +784,7 @@ function loadStorage () {
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
     availableGrunts.forEach((gruntId) => {
-      if (invasionFilter[gruntId] === undefined) {
+      if (invasionFilter[gruntId] == null) {
         invasionFilter[gruntId] = { show: true, size: 'normal' }
       }
     })
@@ -801,17 +799,17 @@ function loadStorage () {
     spawnpointFilter = defaultSpawnpointFilter
   } else {
     spawnpointFilter = JSON.parse(spawnpointFilterValue)
-    if (spawnpointFilter['no-timer'] === undefined) {
+    if (spawnpointFilter['no-timer'] == null) {
       spawnpointFilter['no-timer'] = { show: true, size: 'normal' }
     }
-    if (spawnpointFilter['with-timer'] === undefined) {
+    if (spawnpointFilter['with-timer'] == null) {
       spawnpointFilter['with-timer'] = { show: true, size: 'normal' }
     }
   }
   store('spawnpoint_filter', JSON.stringify(spawnpointFilter))
 
   const showPvpValue = retrieve('show_pvp')
-  if (showPvpValue === null) {
+  if (showPvpValue == null) {
     showPvp = false
   } else {
     showPvp = (showPvpValue === 'true')
