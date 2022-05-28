@@ -362,9 +362,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
     }
 
-    init(mysql: MySQL?=nil, mapPokemon: MapPokemonProto, cellId: UInt64, timestampMs: UInt64,
-         username: String?, isEvent: Bool) throws {
-
+    init(mysql: MySQL?=nil, mapPokemon: MapPokemonProto, cellId: UInt64, username: String?, isEvent: Bool) throws {
         self.isEvent = isEvent
         var encounterId: UInt64 = mapPokemon.encounterID
         var displayId: Int64 = mapPokemon.pokemonDisplay.displayID

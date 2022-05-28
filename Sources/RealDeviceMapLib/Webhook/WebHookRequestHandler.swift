@@ -176,7 +176,7 @@ public class WebHookRequestHandler {
 
         var wildPokemons = [(cell: UInt64, data: WildPokemonProto, timestampMs: UInt64)]()
         var nearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
-        var mapPokemons = [(cell: UInt64, pokeData: MapPokemonProto, timestampMs: UInt64)]()
+        var mapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
         var clientWeathers =  [(cell: Int64, data: ClientWeatherProto)]()
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
@@ -306,7 +306,7 @@ public class WebHookRequestHandler {
                     var newWildPokemons = [(cell: UInt64, data: WildPokemonProto,
                                             timestampMs: UInt64)]()
                     var newNearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
-                    var newMapPokemons = [(cell: UInt64, pokeData: MapPokemonProto, timestampMs: UInt64)]()
+                    var newMapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
 
                     var newClientWeathers = [(cell: Int64, data: ClientWeatherProto)]()
                     var newForts = [(cell: UInt64, data: PokemonFortProto)]()
@@ -324,8 +324,7 @@ public class WebHookRequestHandler {
                         for fort in mapCell.fort {
                             newForts.append((cell: mapCell.s2CellID, data: fort))
                             if processMapPokemon && fort.hasActivePokemon {
-                                newMapPokemons.append((cell: mapCell.s2CellID, pokeData: fort.activePokemon,
-                                    timestampMs: timestampMs))
+                                newMapPokemons.append((cell: mapCell.s2CellID, pokeData: fort.activePokemon))
                             }
                         }
                         newCells.append(mapCell.s2CellID)
@@ -684,7 +683,7 @@ public class WebHookRequestHandler {
             let startMapPokemon = Date()
             for mapPokemon in mapPokemons {
                 let pokemon = try? Pokemon(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
-                                      timestampMs: mapPokemon.timestampMs, username: username, isEvent: isEvent)
+                    username: username, isEvent: isEvent)
                 try? pokemon?.save(mysql: mysql)
             }
             if !mapPokemons.isEmpty {
