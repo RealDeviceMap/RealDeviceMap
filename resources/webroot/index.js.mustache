@@ -172,16 +172,11 @@ $(function () {
     console.error("RDM File Error: www_{{{locale}}}.json not found or not accessible.");
   })
 
-  let pokemonPromise = $.getJSON('/static/data/pokemon.json', function (data) {
-    pokemonDb = data
+  let masterPromise = $.getJSON('/static/data/master.json', function (data) {
+    pokemonDb = data.pokemon
+    weatherTypes = data.weather
   }).fail(function() {
-    console.error("RDM File Error: pokemon.json not found or not accessible.");
-  })
-
-  let weatherPromise = $.getJSON('/static/data/weathertypes.json', function (data) {
-    weatherTypes = data
-  }).fail(function() {
-    console.error("RDM File Error: weathertypes.json not found or not accessible.");
+    console.error("RDM File Error: master.json not found or not accessible.");
   })
 
   availableItems = JSON.parse('{{{available_items_json}}}')
@@ -281,10 +276,10 @@ $(function () {
   // getJson is an ajax function that doesn't block execution, so if reading takes 1ms more than it should,
   // the parts of RDM that depends on any json data, they fail.
   // Executing initMap only when all the promises have been completed fixes this.
-  $.when(localePromise, remoteLocalePromise, pokemonPromise, weatherPromise)
-   .always(function() {
-    initMap()
-    initPreview()
+  $.when(localePromise, remoteLocalePromise, masterPromise)
+    .always(function() {
+      initPreview()
+      initMap()
   })
 
   $('#select-mapstyle').on('change', function () {
