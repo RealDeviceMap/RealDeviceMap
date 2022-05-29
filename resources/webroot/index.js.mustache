@@ -780,17 +780,17 @@ function loadStorage () {
   const invasionFilterValue = retrieve('invasion_filter')
   if (invasionFilterValue === null) {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((gruntId) => {
+    for (const gruntId of availableGrunts) {
       defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
-    });
+    }
     invasionFilter = defaultInvasionFilter
   } else {
     invasionFilter = JSON.parse(invasionFilterValue)
-    availableGrunts.forEach((gruntId) => {
+    for (const gruntId of availableGrunts) {
       if (invasionFilter[gruntId] == null) {
         invasionFilter[gruntId] = { show: true, size: 'normal' }
       }
-    })
+    }
   }
   store('invasion_filter', JSON.stringify(invasionFilter))
 
@@ -1032,9 +1032,9 @@ function initMap () {
 
   $('#reset-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((gruntId) => {
+    for (const gruntId of availableGrunts){
       defaultInvasionFilter[gruntId] = { show: true, size: 'normal' }
-    })
+    }
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilterNew = defaultInvasionFilter
 
@@ -1043,9 +1043,9 @@ function initMap () {
 
   $('#disable-all-invasion-filter').on('click', function () {
     const defaultInvasionFilter = {}
-    availableGrunts.forEach((gruntId) => {
+    for (const gruntId of availableGrunts) {
       defaultInvasionFilter[gruntId] = { show: false, size: invasionFilterNew[gruntId].size }
-    })
+    }
     store('invasion_filter', JSON.stringify(defaultInvasionFilter))
     invasionFilterNew = defaultInvasionFilter
 
@@ -1562,11 +1562,11 @@ function loadData () {
 
   const invasionFilterExclude = []
   if (showInvasions) {
-    availableGrunts.forEach((gruntId) => {
+    for (const gruntId of availableGrunts) {
       if (invasionFilter[gruntId].show === false) {
         invasionFilterExclude.push(gruntId)
       }
-    })
+    }
   }
 
   const pokestopFilterExclude = []
