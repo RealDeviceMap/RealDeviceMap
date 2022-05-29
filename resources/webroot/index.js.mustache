@@ -281,8 +281,8 @@ $(function () {
   // Executing initMap only when all the promises have been completed fixes this.
   $.when(localePromise, remoteLocalePromise, masterPromise)
     .always(function() {
-      initPreview()
       initMap()
+      initPreview()
   })
 
   $('#select-mapstyle').on('change', function () {
