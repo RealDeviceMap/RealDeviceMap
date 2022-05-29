@@ -658,8 +658,8 @@ function loadStorage () {
   if (raidFilterValue === null) {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: true, size: 'normal' }
-    for (const element of availableEggs) {
-      defaultRaidFilter['l' + element] = { show: true, size: 'normal' }
+    for (const eggId of availableEggs) {
+      defaultRaidFilter['l' + eggId] = { show: true, size: 'normal' }
     }
     let i
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
@@ -675,9 +675,9 @@ function loadStorage () {
     } else {
       showRaidTimers = raidFilter.timers.show
     }
-    for (const element of availableEggs) {
-      if (raidFilter['l' + element] == null) {
-        raidFilter['l' + element] = { show: true, size: 'normal' }
+    for (const eggId of availableEggs) {
+      if (raidFilter['l' + eggId] == null) {
+        raidFilter['l' + eggId] = { show: true, size: 'normal' }
       }
     }
     let i
@@ -973,8 +973,8 @@ function initMap () {
     const defaultRaidFilter = {}
     defaultRaidFilter.timers = { show: false, size: raidFilterNew.timers.size }
     let i
-    for (const element of availableEggs) {
-      defaultRaidFilter['l' + element] = { show: false, size: raidFilterNew['l' + i].size }
+    for (const eggId of availableEggs) {
+      defaultRaidFilter['l' + eggId] = { show: false, size: raidFilterNew['l' + eggId].size }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
       defaultRaidFilter['p' + i] = { show: false, size: 'normal' }
@@ -1525,9 +1525,9 @@ function loadData () {
       raidFilterExclude.push('timers')
     }
     let i
-    for (const element of availableEggs) {
-      if (raidFilter['l' + element].show === false) {
-        raidFilterExclude.push('l' + element)
+    for (const eggId of availableEggs) {
+      if (raidFilter['l' + eggId].show === false) {
+        raidFilterExclude.push('l' + eggId)
       }
     }
     for (i = 1; i <= '{{max_pokemon_id}}'; i++) {
