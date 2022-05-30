@@ -466,10 +466,12 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 } else {
                     infoData["pokemon_id"] = info.pokemonID.rawValue
                 }
-                infoData["costume_id"] = info.pokemonDisplay.costume.rawValue
-                infoData["form_id"] = info.pokemonDisplay.form.rawValue
-                infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
-                infoData["shiny"] = info.pokemonDisplay.shiny
+                if info.hasPokemonDisplay {
+                    infoData["costume_id"] = info.pokemonDisplay.costume.rawValue
+                    infoData["form_id"] = info.pokemonDisplay.form.rawValue
+                    infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
+                    infoData["shiny"] = info.pokemonDisplay.shiny
+                }
             case .pokecoin:
                 let info = rewardData.pokecoin
                 infoData["amount"] = info
