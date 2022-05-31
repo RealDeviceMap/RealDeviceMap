@@ -126,7 +126,7 @@ class CircleInstanceController: InstanceControllerProto {
                     jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
                 }
             }
-            if currentUuidIndex == 0 {
+            if currentUuidIndex == 0 && coords.count > 1 {
                 shouldAdvance = true
             }
             if shouldAdvance {
