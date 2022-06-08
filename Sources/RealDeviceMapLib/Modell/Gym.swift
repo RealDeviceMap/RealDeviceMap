@@ -524,11 +524,11 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if showRaids && raidFilterExclude != nil {
             for filter in raidFilterExclude! {
-                if filter.contains(string: "l") {
+                if filter.starts(with: "l") {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
                         excludedLevels.append(id)
                     }
-                } else if filter.contains(string: "p"),
+                } else if filter.starts(with: "p"),
                        let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                     excludedPokemon.append(id)
                 }
@@ -537,17 +537,17 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if gymFilterExclude != nil {
             for filter in gymFilterExclude! {
-                if filter.contains(string: "t") {
+                if filter.starts(with: "t") {
                     if let id = filter.stringByReplacing(string: "t", withString: "").toInt() {
                         excludedTeams.append(id)
                     }
-                } else if filter.contains(string: "s") {
+                } else if filter.starts(with: "s") {
                     if let id = filter.stringByReplacing(string: "s", withString: "").toInt() {
                         excludedAvailableSlots.append(id)
                     }
-                } else if filter.contains(string: "ex") {
+                } else if filter == "ex" {
                     excludeAllButEx = true
-                } else if filter.contains(string: "p") {
+                } else if filter.starts(with: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                         excludedPowerUpLevels.append(id)
                     }

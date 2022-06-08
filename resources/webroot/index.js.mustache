@@ -3198,7 +3198,7 @@ function getQuestReward (reward) {
     return i18n('quest_reward_4_formatted', { amount: info.amount, type: getPokemonName(info.pokemon_id) })
   } else if (id === 7 && info !== undefined && info.pokemon_id !== undefined) {
     var string
-    if (info.form_id !== 0 && info.form_id !== null) {
+    if (info.form_id != null && info.form_id !== 0) {
       string = getFormNameNormalized(info.form_id).concat(" ", getPokemonName(info.pokemon_id))
     } else {
       string = getPokemonName(info.pokemon_id)

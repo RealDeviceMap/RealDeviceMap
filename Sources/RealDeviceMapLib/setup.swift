@@ -107,7 +107,8 @@ public func setupRealDeviceMap() {
     WebRequestHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
     WebRequestHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")?.toInt() ?? 10
     WebRequestHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")?.toInt() ?? 18
-    WebRequestHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
+    let maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
+    WebRequestHandler.maxPokemonId = (maxPokemonId <= 649 ? 905 : maxPokemonId) // 649 is default in DB
     WebRequestHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
     WebRequestHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
     WebRequestHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
@@ -130,7 +131,7 @@ public func setupRealDeviceMap() {
     WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?
         .components(separatedBy: ",").map({ (string) -> UInt16 in
         return string.toUInt16() ?? 0
-    }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] // Default ditto disguises
+    }) ?? [23, 92, 177, 283, 456, 506, 557, 684] // Default ditto disguises
     WebRequestHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
         .jsonDecode() as? [[String: String]] ?? []
     WebRequestHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
