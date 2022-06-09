@@ -284,7 +284,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let questType = questData.questType.rawValue.toUInt32()
         let questTarget = UInt16(questData.goal.target)
         let questTemplate = questData.templateID.lowercased()
-        let questTitle = title
+        let questTitle = title.lowercased()
         self.hasChanges = true
 
         var conditions = [[String: Any]]()
