@@ -1647,6 +1647,7 @@ public class WebRequestHandler {
                 case "clear_memcache":
                     Pokemon.cache?.clear()
                     Pokestop.cache?.clear()
+                    Incident.cache?.clear()
                     Gym.cache?.clear()
                     SpawnPoint.cache?.clear()
                     Weather.cache?.clear()

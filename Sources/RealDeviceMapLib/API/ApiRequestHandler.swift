@@ -2246,6 +2246,7 @@ public class ApiRequestHandler {
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
+        let clearMemCache = request.param(name: "clear_memcache")?.toBool() ?? false
 
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
         let coords = try? jsonDecoder.decode([Coord].self,
@@ -2372,7 +2373,15 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-
+        } else if clearMemCache {
+            Pokemon.cache?.clear()
+            Pokestop.cache?.clear()
+            Incident.cache?.clear()
+            Gym.cache?.clear()
+            SpawnPoint.cache?.clear()
+            Weather.cache?.clear()
+            ImageManager.global.clearCaches()
+            response.respondWithOk()
         } else {
             response.respondWithError(status: .badRequest)
         }
