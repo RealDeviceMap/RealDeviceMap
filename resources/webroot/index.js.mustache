@@ -3085,7 +3085,8 @@ function getEvolutionName (evoId) {
 // }
 
 function getQuestName (title, amount) {
-  return i18n('quest_title_' + title, { amount_0: amount })
+  const questTitle = 'quest_title_' + title //TODO: remove lowerCase in future version, it was sometimes uppercase in the past
+  return i18n(questTitle.toLowerCase(), { amount_0: amount })
 }
 
 function getItemName (itemId) {
