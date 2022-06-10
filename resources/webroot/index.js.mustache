@@ -2662,7 +2662,7 @@ function getPokestopPopupContent (pokestop) {
 
   if (pokestop.quest_type !== null) {
     content += '<b>'+i18n('map_quest_ar_inventory')+'</b><br>'
-    content += '<b>'+i18n('map_quest_condition')+': </b><span style="white-space: break-spaces;">' + getQuestName(pokestop.quest_title, pokestop.quest_target) + '</span><br>'
+    content += '<b>'+i18n('map_quest_condition')+': </b><span style="white-space: break-spaces;">' + getQuestConditions(pokestop.quest_type, pokestop.quest_title, pokestop.quest_conditions, pokestop.quest_target) + '</span><br>'
 
     $.each(pokestop.quest_rewards, function (index, reward) {
       content += '<b>'+i18n('map_quest_reward')+': </b><span>' + getQuestReward(reward) + '</span><br>'
@@ -2673,7 +2673,7 @@ function getPokestopPopupContent (pokestop) {
 
   if (pokestop.alternative_quest_type !== null) {
     content += '<b>'+i18n('map_quest_no_ar_inventory')+'</b><br>'
-    content += '<b>'+i18n('map_quest_condition')+': </b><span style="white-space: break-spaces;">' + getQuestName(pokestop.alternative_quest_title, pokestop.alternative_quest_target) + '</span><br>'
+    content += '<b>'+i18n('map_quest_condition')+': </b><span style="white-space: break-spaces;">' + getQuestConditions(pokestop.alternative_quest_type, pokestop.alternative_quest_title, pokestop.alternative_quest_conditions, pokestop.alternative_quest_target) + '</span><br>'
 
     $.each(pokestop.alternative_quest_rewards, function (index, reward) {
       content += '<b>'+i18n('map_quest_reward')+': </b><span>' + getQuestReward(reward) + '</span><br>'
@@ -3059,6 +3059,10 @@ function getPokemonName (pokemonId) {
   return i18n('poke_' + pokemonId) + ' (#' + pokemonId + ')'
 }
 
+function getPokemonType (typeId) {
+  return i18n('poke_type_' + typeId)
+}
+
 function getFormName (formId) {
   return i18n('form_' + formId)
 }
@@ -3080,17 +3084,16 @@ function getEvolutionName (evoId) {
   return i18n('evo_' + evoId)
 }
 
-// function getWeatherName (weatherId) {
-//  return i18n('weather_' + weatherId)
-// }
-
-function getQuestName (title, amount) {
-  const questTitle = 'quest_title_' + title //TODO: remove lowerCase in future version, it was sometimes uppercase in the past
-  return i18n(questTitle.toLowerCase(), { amount_0: amount })
+function getThrowType (typeID) {
+  return i18n('throw_type_' + typeID)
 }
 
 function getItemName (itemId) {
   return i18n('item_' + itemId)
+}
+
+function getItemTypeName (itemTypeId) {
+  return i18n('item_type_' + itemTypeId)
 }
 
 function getLureName (lureId) {
@@ -3117,6 +3120,14 @@ function getSlotsAvailable (amount) {
   }
 }
 
+function getAlignmentName (alignmentId) {
+  return i18n('alignment_' + alignmentId)
+}
+
+function getCharacterCategoryName (characterCategoryId) {
+  return i18n('character_category_' + characterCategoryId)
+}
+
 function getScanTypeName (spawnTypeId) {
   if (spawnTypeId === 'wild' || spawnTypeId === 'encounter') {
     return i18n('scan_type_spawnpoint')
@@ -3125,6 +3136,33 @@ function getScanTypeName (spawnTypeId) {
     return i18n('scan_type_lure')
   }
   return i18n('scan_type_' + spawnTypeId)
+}
+
+function getQuestConditions (type, title, conditions, amount) {
+  if (!title.includes('geotarget')) {
+    const normalized = 'quest_title_' + title.toLowerCase()
+    const translated = i18n(normalized, { amount_0: amount })
+    if (translated != normalized) {
+      return translated
+    }
+  }
+  const primaryCondition = i18n('quest_' + type, { amount: amount })
+  let conditionsString = ''
+  if (conditions != null && conditions.length > 0) {
+    conditionsString += ' ('
+    $.each(conditions, function (index, condition) {
+      let formating
+      if (index === 0) {
+        formating = ''
+      } else {
+        formating = ', '
+      }
+
+      conditionsString += formating + getQuestCondition(condition)
+    })
+    conditionsString += ')'
+  }
+  return primaryCondition + conditionsString
 }
 
 function getQuestReward (reward) {
@@ -3158,6 +3196,120 @@ function getQuestReward (reward) {
     return i18n('quest_reward_12_formatted', { amount: info.amount, pokemon: getPokemonName(info.pokemon_id) })
   } else {
     return i18n('quest_reward_' + id)
+  }
+}
+
+function getQuestCondition (condition) {
+  const id = condition.type
+  const info = condition.info
+  if (id === 1 && info !== undefined && info.pokemon_type_ids !== undefined) {
+    let typesString = ''
+    $.each(info.pokemon_type_ids, function (index, typeId) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.pokemon_type_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      typesString += formatted + getPokemonType(typeId)
+    })
+    return i18n('quest_condition_1_formatted', { types: typesString })
+  } else if (id === 2 && info !== undefined && info.pokemon_ids !== undefined) {
+    let pokemonString = ''
+    $.each(info.pokemon_ids, function (index, pokemonId) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.pokemon_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      pokemonString += formatted + getPokemonNameNoId(pokemonId)
+    })
+    return i18n('quest_condition_2_formatted', { pokemon: pokemonString })
+  } else if (id === 7 && info !== undefined && info.raid_levels !== undefined) {
+    let levelsString = ''
+    $.each(info.raid_levels, function (index, level) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.raid_levels.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      levelsString += formatted + level
+    })
+    return i18n('quest_condition_7_formatted', { levels: levelsString })
+  } else if (id === 8 && info !== undefined && info.throw_type_id !== undefined) {
+    return i18n('quest_condition_8_formatted', { throw_type: getThrowType(info.throw_type_id) })
+  } else if (id === 11 && info !== undefined && info.item_id !== undefined) {
+    return i18n('quest_condition_11_formatted', { item: getItemName(info.item_id) })
+  } else if (id === 14 && info !== undefined && info.throw_type_id !== undefined) {
+    return i18n('quest_condition_14_formatted', { throw_type: getThrowType(info.throw_type_id) })
+  } else if (id === 26 && info !== undefined && info.alignment_ids !== undefined) {
+    let alignmentsString = ''
+    $.each(info.alignment_ids, function (index, alignment) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.alignment_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      alignmentsString += formatted + getAlignmentName(alignment)
+    })
+    return i18n('quest_condition_26_formatted', { alignments: alignmentsString })
+  } else if (id === 27 && info !== undefined && info.character_category_ids !== undefined) {
+    let categoriesString = ''
+    $.each(info.character_category_ids, function (index, characterCategory) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.character_category_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      categoriesString += formatted + getCharacterCategoryName(characterCategory)
+    })
+    return i18n('quest_condition_27_formatted', { categories: categoriesString })
+  } else if (id === 37 && info !== undefined && info.raid_pokemon_evolutions !== undefined) {
+    let evolutionsString = ''
+    $.each(info.raid_pokemon_evolutions, function (index, evolution) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.raid_pokemon_evolutions.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      evolutionsString += formatted + getEvolutionName(evolution)
+    })
+    return i18n('quest_condition_37_formatted', { evolutions: evolutionsString })
+  } else if (id === 43 && info !== undefined && info.item_type_ids !== undefined) {
+    let typesString = ''
+    $.each(info.item_type_ids, function (index, itemTypeId) {
+      let formatted
+      if (index === 0) {
+        formatted = ''
+      } else if (index === info.item_type_ids.length - 1) {
+        formatted = ' or '
+      } else {
+        formatted = ', '
+      }
+      typesString += formatted + getItemTypeName(itemTypeId)
+    })
+    return i18n('quest_condition_43_formatted', { types: typesString })
+  } else if (id === 44 && info !== undefined && info.time !== undefined) {
+      return i18n('quest_condition_44_formatted', { time: info.time })
+  } else {
+    return i18n('quest_condition_' + id)
   }
 }
 
