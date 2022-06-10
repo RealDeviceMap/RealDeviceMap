@@ -284,7 +284,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let questType = questData.questType.rawValue.toUInt32()
         let questTarget = UInt16(questData.goal.target)
         let questTemplate = questData.templateID.lowercased()
-        let questTitle = title
+        let questTitle = title.lowercased()
         self.hasChanges = true
 
         var conditions = [[String: Any]]()
@@ -729,11 +729,11 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if showQuests && questFilterExclude != nil {
             for filter in questFilterExclude! {
-                if filter.contains(string: "p") {
+                if filter.starts(with: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                         excludedPokemon.append(id)
                     }
-                } else if filter.contains(string: "i") {
+                } else if filter.starts(with: "i") {
                     if let id = filter.stringByReplacing(string: "i", withString: "").toInt() {
                         if id > 0 {
                             excludedItems.append(id)
@@ -753,13 +753,13 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if pokestopFilterExclude != nil {
             for filter in pokestopFilterExclude! {
-                if filter.contains(string: "normal") {
+                if filter == "normal" {
                     excludeNormal = true
-                } else if showLures && filter.contains(string: "l") {
+                } else if showLures && filter.starts(with: "l") {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
                         excludedLures.append(id)
                     }
-                } else if filter.contains(string: "p") {
+                } else if filter.starts(with: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                         excludedPowerUpLevels.append(id)
                     }
@@ -815,10 +815,10 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     sqlExcludeCreate += "?, "
                 }
                 sqlExcludeCreate += "?)"
-                if !excludedTypes.contains(3) { // candy reward type = 4
+                if !excludedTypes.contains(4) { // candy reward type = 4
                     sqlExcludeCreate += " OR \(questRewardTypeSql) = 4"
                 }
-                if !excludedTypes.contains(6) { // mega energy reward type = 12
+                if !excludedTypes.contains(12) { // mega energy reward type = 12
                     sqlExcludeCreate += " OR \(questRewardTypeSql) = 12"
                 }
                 excludeQuestPokemonSQL = sqlExcludeCreate+") "
