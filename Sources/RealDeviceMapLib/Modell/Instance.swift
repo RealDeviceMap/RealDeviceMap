@@ -164,7 +164,6 @@ public class Instance: Hashable {
             \(orderSql.isEmpty ? "" : orderSql)
             \(length > 0 ? "LIMIT \(start), \(length)" : "")
         """
-        print(sql)
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
