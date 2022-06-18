@@ -12,7 +12,11 @@
             "stateSave": true,
             "stateDuration": 0,
             "ajax": {
-                "url": "/api/get_data?show_users=true&formatted=true",
+                "data": {
+                    "show_users": true,
+                    "formatted": true
+                },
+                "url": "/api/get_data",
                 "dataSrc": "data.users"
             },
             "paging":   true,

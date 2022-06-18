@@ -12,7 +12,11 @@ $(document).ready(function() {
         "stateSave": true,
         "stateDuration": 0,
         "ajax": {
-            "url": "/api/get_data?show_devicegroups=true&formatted=true",
+            "data": {
+                "show_devicegroups": true,
+                "formatted": true
+            },
+            "url": "/api/get_data",
             "dataSrc": "data.devicegroups"
         },
         "paging":   true,
@@ -26,10 +30,12 @@ $(document).ready(function() {
         "info":     true,
         "order": [[ 0, "asc" ]],
         "search.caseInsensitive": true,
-        "columnDefs": [ {
-            "targets": [3],
-            "orderable": false
-        }],
+        "columnDefs": [ 
+            { "responsivePriority": 1, "targets": 0 },
+            { "responsivePriority": 10001, "targets": 1 },
+            { "responsivePriority": 10002, "targets": 2, "orderable": false, "render": $.fn.dataTable.render.ellipsis( 50, true ) },
+            { "responsivePriority": 2, "targets": 3, "orderable": false}
+        ],
         "responsive": true
     });
     $('#table').on( 'draw.dt', function () {

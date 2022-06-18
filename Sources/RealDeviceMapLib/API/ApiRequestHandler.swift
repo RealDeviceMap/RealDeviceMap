@@ -96,6 +96,17 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
+        // properties to use for pagination and filter in dashboard
+        // https://datatables.net/manual/server-side
+        let start = request.param(name: "start")?.toInt() ?? 0 // Paging first record indicator
+        let length = request.param(name: "length")?.toInt() ?? -1 // Number of records that the table can display.
+        let orderColumn = request.param(name: "order[0][column]")?.toInt() ?? 0
+        let orderDir = request.param(name: "order[0][dir]") ?? "asc"
+        let order: [String: Any] = [ "column": orderColumn, "dir": orderDir ]
+        let search = request.param(name: "search[value]") ?? "" // Global search value
+        let drawCount = request.param(name: "draw")?.toInt() // draw counter
+        var recordsTotal: Int?
+        var recordsFiltered: Int?
 
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
@@ -161,8 +172,8 @@ public class ApiRequestHandler {
         let date = request.param(name: "date") ?? ""
         let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
-        let start = request.param(name: "start") ?? ""
-        let end = request.param(name: "end") ?? ""
+        let startTimestamp = request.param(name: "start_timestamp") ?? ""
+        let endTimestamp = request.param(name: "end_timestamp") ?? ""
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
         let queueSize = request.param(name: "queue_size")?.toBool() ?? false
 
@@ -1632,7 +1643,9 @@ public class ApiRequestHandler {
 
         if showInstances && perms.contains(.admin) {
 
-            let instances = try? Instance.getAll(mysql: mysql, getData: false)
+            let totalInstancesCount = try? Instance.getCount(mysql: mysql)
+            let instances = try? Instance.getAll(mysql: mysql, getData: false,
+                start: start, length: length, search: search, order: order)
             var jsonArray = [[String: Any]]()
 
             if instances != nil {
@@ -1683,6 +1696,8 @@ public class ApiRequestHandler {
                 }
             }
             data["instances"] = jsonArray
+            recordsTotal = totalInstancesCount ?? 0
+            recordsFiltered = search.isEmpty ? recordsTotal : instances?.count ?? 0
         }
 
         if showDeviceGroups && perms.contains(.admin) {
@@ -2138,8 +2153,9 @@ public class ApiRequestHandler {
         }
 
         if permViewStats && permShowPokemon && showCommdayStats {
-            if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
-                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
+            if pokemonId > 0 && !startTimestamp.isEmpty && !endTimestamp.isEmpty {
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId,
+                    start: startTimestamp, end: endTimestamp)
                 let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
                 let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
                 let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
@@ -2147,8 +2163,8 @@ public class ApiRequestHandler {
                 data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
                 data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
                 data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
-                data["start"] = start
-                data["end"] = end
+                data["start"] = startTimestamp
+                data["end"] = endTimestamp
                 data["stats"] = stats
             }
         }
@@ -2215,7 +2231,8 @@ public class ApiRequestHandler {
                 return
             }
             data["timestamp"] = Int(Date().timeIntervalSince1970)
-            try response.respondWithData(data: data)
+            try response.respondWithData(data: data,
+                drawCount: drawCount, recordsTotal: recordsTotal, recordsFiltered: recordsFiltered)
         } catch {
             response.respondWithError(status: .internalServerError)
             return
