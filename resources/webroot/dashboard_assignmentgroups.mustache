@@ -4,14 +4,6 @@
 table.dataTable tbody td {
     vertical-align: middle;
 }
-table.dataTable td:nth-child(2) {
-  max-width: 200px;
-}
-table.dataTable td  {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
 </style>
 
 <script>
@@ -38,9 +30,9 @@ $(document).ready(function() {
         "order": [[ 0, "asc" ]],
         "search.caseInsensitive": true,
         "columnDefs": [ 
-            { "targets": 0, "responsivePriority": 1 },
-            { "targets": 1, "responsivePriority": 10002, "orderable": false },
-            { "targets": 2, "responsivePriority": 2, "orderable": false }
+            { "responsivePriority": 1, "targets": 0 },
+            { "responsivePriority": 10002, "targets": 1, "orderable": false, "render": $.fn.dataTable.render.ellipsis( 30, true ) },
+            { "responsivePriority": 2, "targets": 2, "orderable": false}
         ],
         "responsive": true
     });
