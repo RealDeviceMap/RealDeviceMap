@@ -1643,7 +1643,7 @@ public class ApiRequestHandler {
 
         if showInstances && perms.contains(.admin) {
 
-            let totalInstancesCount = try? Instance.getCount(mysql: mysql)
+            var totalInstancesCount = 0
             let instances = try? Instance.getAll(mysql: mysql, getData: false,
                 start: start, length: length, search: search, order: order)
             var jsonArray = [[String: Any]]()
@@ -1673,6 +1673,7 @@ public class ApiRequestHandler {
                     if skipInstanceStatus {
                         instanceData["status"] = nil
                     } else if formatted {
+                        totalInstancesCount = (try? Instance.getCount(mysql: mysql)) ?? 0
                         let status = InstanceController.global.getInstanceStatus(
                             mysql: mysql,
                             instance: instance,
@@ -1696,7 +1697,7 @@ public class ApiRequestHandler {
                 }
             }
             data["instances"] = jsonArray
-            recordsTotal = totalInstancesCount ?? 0
+            recordsTotal = totalInstancesCount
             recordsFiltered = search.isEmpty ? recordsTotal : instances?.count ?? 0
         }
 
