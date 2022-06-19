@@ -35,7 +35,7 @@ public class ConfigLoader {
             }
         }
         Log.info(message: "[ConfigLoader] Loaded config settings: " +
-            "\(localConfig.isEmpty() ? "Load from ENV Vars": "Load from local.json config")")
+            "\(localConfig.isEmpty() ? "ENV Vars": "local.json")")
     }
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity

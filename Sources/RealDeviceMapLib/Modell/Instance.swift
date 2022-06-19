@@ -131,13 +131,27 @@ public class Instance: Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, getData: Bool=true) throws -> [Instance] {
-
+    public static func getAll(mysql: MySQL?=nil, getData: Bool=true,
+                              start: Int=0, length: Int=(-1), search: String="", order: [String: Any]=[String: Any]()
+    ) throws -> [Instance] {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
 
+        let orderDirection = order["dir"] as? String
+        let orderColumn = order["column"] as? Int
+
+        let orderSql: String
+        if orderColumn == 0 {
+            orderSql = "ORDER BY name \(orderDirection!)"
+        } else if orderColumn == 1 {
+            orderSql = "ORDER BY type \(orderDirection!)"
+        } else if orderColumn == 3 {
+            orderSql = "ORDER BY `count` \(orderDirection!)"
+        } else {
+            orderSql = ""
+        }
         let sql = """
             SELECT name, type, count \(getData ? ", data" : "")
             FROM instance AS inst
@@ -146,10 +160,17 @@ public class Instance: Hashable {
               FROM device
               GROUP BY instance_name
             ) devices ON (inst.name = devices.instance_name)
+            \(search.isEmpty ? "" : "WHERE name like ? or type like ?")
+            \(orderSql.isEmpty ? "" : orderSql)
+            \(length > 0 ? "LIMIT \(start), \(length)" : "")
         """
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        if !search.isEmpty {
+            mysqlStmt.bindParam("%\(search)%")
+            mysqlStmt.bindParam("%\(search)%")
+        }
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -201,10 +222,33 @@ public class Instance: Hashable {
         }
 
         let result = results.next()!
-            let type = InstanceType.fromString(result[0] as! String)!
-            let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
+        let type = InstanceType.fromString(result[0] as! String)!
+        let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
         return Instance(name: name, type: type, data: data, count: 0)
 
+    }
+
+    public static func getCount(mysql: MySQL?=nil) throws -> Int {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = "SELECT COUNT(*) FROM instance"
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows != 1 {
+            return 0
+        }
+        let result = results.next()!
+        return Int(result[0] as? Int64 ?? 0)
     }
 
     public static func == (lhs: Instance, rhs: Instance) -> Bool {

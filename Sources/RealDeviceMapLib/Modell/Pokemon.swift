@@ -364,18 +364,18 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
 
     init(mysql: MySQL?=nil, mapPokemon: MapPokemonProto, cellId: UInt64, username: String?, isEvent: Bool) throws {
         self.isEvent = isEvent
-        var encounterId: UInt64 = mapPokemon.encounterID
-        var displayId: Int64 = mapPokemon.pokemonDisplay.displayID
+        let encounterId: UInt64 = mapPokemon.encounterID
+        // var displayId: Int64 = mapPokemon.pokemonDisplay.displayID
         self.id = encounterId.toString()
         self.pokemonId = mapPokemon.pokedexTypeID.toUInt16()
 
         let spawnpointId: String = mapPokemon.spawnpointID
-        guard let pokestop: Pokestop? = try? Pokestop.getWithId(mysql: mysql, id: spawnpointId) else {
+        guard let pokestop = try? Pokestop.getWithId(mysql: mysql, id: spawnpointId) else {
             throw ParsingError()
         }
-        self.pokestopId = pokestop!.id
-        self.lat = pokestop!.lat
-        self.lon = pokestop!.lon
+        self.pokestopId = pokestop.id
+        self.lat = pokestop.lat
+        self.lon = pokestop.lon
 
         self.gender = mapPokemon.pokemonDisplay.gender.rawValue.toUInt8()
         self.form = mapPokemon.pokemonDisplay.form.rawValue.toUInt16()

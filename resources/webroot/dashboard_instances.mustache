@@ -11,8 +11,13 @@
         const table = $('#table').DataTable( {
             "stateSave": true,
             "stateDuration": 0,
+            "serverSide": true,
             "ajax": {
-                "url": "/api/get_data?show_instances=true&formatted=true",
+                "data": {
+                    "show_instances": true,
+                    "formatted": true
+                },
+                "url": "/api/get_data",
                 "dataSrc": "data.instances"
             },
             "paging":   true,
@@ -27,22 +32,24 @@
             "info":     true,
             "order": [[ 0, "asc" ]],
             "search.caseInsensitive": true,
-            "columnDefs": [ {
-                "targets": [4],
-                "orderable": false
-            }],
+            "columnDefs": [ 
+                { "responsivePriority": 1, "targets": 0 },
+                { "responsivePriority": 10001, "targets": 1 },
+                { "responsivePriority": 10002, "targets": 2, "orderable": false },
+                { "responsivePriority": 10003, "targets": 3 },
+                { "responsivePriority": 2, "targets": 4, "orderable": false}
+            ],
             "responsive": true
         });
         $('#table').on( 'draw.dt', function () {
             setTimeout( function () {
                 table.ajax.reload(null, false);
-            }, 5000);
+            }, 10000);
         } );
     } );
 </script>
 
 <body>
-
     <br>
     <h1 align="center">Configure {{title}}'s Instances!</h1>
     <br>
@@ -60,6 +67,7 @@
             </tr>
             </thead>
             <tbody>
+                <td colspan="5">Loading...</td>
             </tbody>
         </table>
     </div>
