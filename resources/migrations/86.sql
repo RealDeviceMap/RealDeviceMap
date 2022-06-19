@@ -1,4 +1,3 @@
-alter table gym drop column availble_slots;
 DROP TRIGGER IF EXISTS pokestop_updated;
 CREATE TRIGGER pokestop_updated
     BEFORE UPDATE ON pokestop
