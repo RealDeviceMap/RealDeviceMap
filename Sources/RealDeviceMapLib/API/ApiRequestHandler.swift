@@ -100,7 +100,7 @@ public class ApiRequestHandler {
         // https://datatables.net/manual/server-side
         let start = request.param(name: "start")?.toInt() ?? 0 // Paging first record indicator
         let length = request.param(name: "length")?.toInt() ?? -1 // Number of records that the table can display.
-        let orderColumn = request.param(name: "order[0][column]")?.toInt() ?? 0
+        let orderColumn = request.param(name: "order[0][column]")?.toInt() ?? -1
         let orderDir = request.param(name: "order[0][dir]") ?? "asc"
         let order: [String: Any] = [ "column": orderColumn, "dir": orderDir ]
         let search = request.param(name: "search[value]") ?? "" // Global search value
@@ -1698,7 +1698,7 @@ public class ApiRequestHandler {
             }
             data["instances"] = jsonArray
             recordsTotal = totalInstancesCount
-            recordsFiltered = search.isEmpty ? recordsTotal : instances?.count ?? 0
+            recordsFiltered = search.isEmpty ? totalInstancesCount : instances?.count ?? 0
         }
 
         if showDeviceGroups && perms.contains(.admin) {
