@@ -12,7 +12,11 @@
             "stateSave": true,
             "stateDuration": 0,
             "ajax": {
-                "url": "/api/get_data?show_devices=true&formatted=true",
+                "data": {
+                    "show_devices": true,
+                    "formatted": true
+                },
+                "url": "/api/get_data",
                 "dataSrc": "data.devices"
             },
             "paging":   true,
