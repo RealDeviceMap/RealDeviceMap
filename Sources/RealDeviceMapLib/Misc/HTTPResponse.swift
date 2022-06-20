@@ -21,12 +21,24 @@ extension HTTPResponse {
                          drawCount: Int? = nil, recordsTotal: Int? = 0, recordsFiltered: Int? = 0) throws {
         if drawCount != nil {
             // draw is used in datatables
-            try setBody(json: [
-                "status": "ok", "draw": drawCount, "recordsTotal": recordsTotal, "recordsFiltered": recordsFiltered,
-                "data": data
-            ])
+            do {
+                try setBody(json: [
+                    "draw": drawCount!, "recordsTotal": recordsTotal!, "recordsFiltered": recordsFiltered!,
+                    "status": "ok", "data": data
+                ])
+            } catch {
+                print("TMP error on setting body with pagination")
+                print(data)
+            }
+
         } else {
-            try setBody(json: ["status": "ok", "data": data])
+            do {
+                try setBody(json: ["status": "ok", "data": data])
+            } catch {
+                print("TMP error on setting body without pagination")
+                print(data)
+            }
+
         }
         setHeader(.contentType, value: "application/json")
         completed()
