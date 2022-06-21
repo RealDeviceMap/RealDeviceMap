@@ -22,7 +22,7 @@ public func setupRealDeviceMap() {
 
     if ProcessInfo.processInfo.environment["NO_INSTALL_BACKTRACE"] == nil {
         Log.info(message: "[MAIN] Installing Backtrace")
-        Backtrace.install(signals: [SIGILL, SIGSEGV, SIGBUS, SIGFPE, SIGABRT])
+        Backtrace.install(signals: [SIGILL])
     }
 
     Log.info(message: "[MAIN] Getting Version")
