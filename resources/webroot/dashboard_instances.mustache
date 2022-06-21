@@ -13,9 +13,13 @@
             "stateDuration": 0,
             "serverSide": true,
             "ajax": {
-                "data": {
-                    "show_instances": true,
-                    "formatted": true
+                data: function (data) {
+                    delete data.columns;
+                    data.show_instances = true;
+                    data.formatted = true;
+                },
+                error: function (xhr, error, thrown) {
+                    console.log(xhr);
                 },
                 "url": "/api/get_data",
                 "dataSrc": "data.instances"
