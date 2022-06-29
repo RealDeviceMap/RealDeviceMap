@@ -31,6 +31,7 @@ public class Pokemon: JSONConvertibleObject, WebHookEvent, Equatable, CustomStri
     public static var saveSpawnpointLastSeen = false
 
     public static var cache: MemoryCache<Pokemon>?
+    public static var diskEncounterCache: MemoryCache<DiskEncounterOutProto>?
 
     class ParsingError: Error {}
 

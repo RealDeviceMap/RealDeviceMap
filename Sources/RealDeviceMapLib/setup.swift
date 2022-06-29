@@ -22,7 +22,7 @@ public func setupRealDeviceMap() {
 
     if ProcessInfo.processInfo.environment["NO_INSTALL_BACKTRACE"] == nil {
         Log.info(message: "[MAIN] Installing Backtrace")
-        Backtrace.install(signals: [SIGILL, SIGSEGV, SIGBUS, SIGFPE, SIGABRT])
+        Backtrace.install(signals: [SIGILL])
     }
 
     Log.info(message: "[MAIN] Getting Version")
@@ -233,6 +233,9 @@ public func setupRealDeviceMap() {
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
+    }
+    if InstanceController.sendTaskForLureEncounter {
+        Pokemon.diskEncounterCache = MemoryCache(interval: 300, keepTime: 300)
     }
     Log.info(message: "[MAIN] Pokemon weather IV clearing enabled: \(Pokemon.weatherIVClearingEnabled)")
     Log.info(message: "[MAIN] Pokemon cell spawns enabled: \(Pokemon.cellPokemonEnabled)")
