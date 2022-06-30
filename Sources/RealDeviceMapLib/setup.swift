@@ -234,6 +234,9 @@ public func setupRealDeviceMap() {
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
+    if InstanceController.sendTaskForLureEncounter {
+        Pokemon.diskEncounterCache = MemoryCache(interval: 300, keepTime: 300)
+    }
     Log.info(message: "[MAIN] Pokemon weather IV clearing enabled: \(Pokemon.weatherIVClearingEnabled)")
     Log.info(message: "[MAIN] Pokemon cell spawns enabled: \(Pokemon.cellPokemonEnabled)")
     Log.info(message: "[MAIN] Pokemon update spanwpoint last seen: \(Pokemon.saveSpawnpointLastSeen)")

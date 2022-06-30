@@ -685,6 +685,14 @@ public class WebHookRequestHandler {
                 let pokemon = try? Pokemon(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
                     username: username, isEvent: isEvent)
                 try? pokemon?.save(mysql: mysql)
+                // Check if we have a pending disk encounter cache.
+                let displayId = mapPokemon.pokeData.pokemonDisplay.displayID
+                let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
+                if let cachedEncounter = Pokemon.diskEncounterCache?.get(id: displayIdCacheKey) {
+                    pokemon?.addDiskEncounter(mysql: mysql, diskEncounterData: cachedEncounter, username: username)
+                    try? pokemon?.save(mysql: mysql, updateIV: true)
+                    Log.debug(message: "[WebHookRequestHandler] Found DiskEncounter in Cache: \(displayIdCacheKey)")
+                }
             }
             if !mapPokemons.isEmpty {
                 Log.debug(
@@ -842,14 +850,11 @@ public class WebHookRequestHandler {
                                 " diskEncounter: \(diskEncounter)")
                         continue
                     }
+                    let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
+                    let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
                     let pokemon: Pokemon?
                     do {
-                        let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
-                        pokemon = try Pokemon.getWithId(
-                            mysql: mysql,
-                            id: displayId.toString(),
-                            isEvent: isEvent
-                        )
+                        pokemon = try Pokemon.getWithId(mysql: mysql, id: displayIdCacheKey, isEvent: isEvent)
                     } catch {
                         pokemon = nil
                     }
@@ -857,17 +862,9 @@ public class WebHookRequestHandler {
                         pokemon!.addDiskEncounter(mysql: mysql, diskEncounterData: diskEncounter, username: username)
                         try? pokemon!.save(mysql: mysql, updateIV: true)
                     } else {
-                        // MARK: logic for DiskEncounter without MapPokemon
-                        let pokestop = try? Pokestop.getWithId(mysql: mysql, id: diskEncounter.pokemon.deployedFortID)
-                        if pokestop == nil {
-                            Log.error(message:
-                                "[WebHookRequestHandler] [\(uuid ?? "?")] Found diskEncounter Pokemon without any" +
-                                "information about stop with ID: \(diskEncounter.pokemon.deployedFortID)")
-                        }
-                        Log.error(message: "[WebHookRequestHandler] Disk Encounter mon: " +
-                            "\(diskEncounter.pokemon.pokemonDisplay.displayID) " +
-                            "detected before MapPokemon - WTH : " +
-                            "\(diskEncounter.pokemon)")
+                        // MARK: logic for DiskEncounter before MapPokemon
+                        Pokemon.diskEncounterCache?.set(id: displayIdCacheKey, value: diskEncounter)
+                        Log.debug(message: "[WebHookRequestHandler] Write DiskEncounter in cache: \(displayIdCacheKey)")
                     }
                 }
                 Log.debug(
