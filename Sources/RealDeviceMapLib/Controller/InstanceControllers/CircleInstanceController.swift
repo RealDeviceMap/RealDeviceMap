@@ -162,7 +162,7 @@ class CircleInstanceController: InstanceControllerProto {
                         "min_level": minLevel, "max_level": maxLevel]
             } else {
                 return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
-                        "min_level": minLevel, "max_level": maxLevel]
+                        "min_level": minLevel, "max_level": maxLevel, "gym_encounter": true]
             }
         }
     }
