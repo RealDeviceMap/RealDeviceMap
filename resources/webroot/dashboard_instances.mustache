@@ -11,12 +11,11 @@
         const table = $('#table').DataTable( {
             "stateSave": true,
             "stateDuration": 0,
-            "serverSide": true,
             "ajax": {
                 data: function (data) {
-                    delete data.columns;
                     data.show_instances = true;
                     data.formatted = true;
+                    data.search = $('input[type="search"]').val()
                 },
                 error: function (xhr, error, thrown) {
                     console.log(xhr);

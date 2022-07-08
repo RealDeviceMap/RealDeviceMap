@@ -131,27 +131,12 @@ public class Instance: Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, getData: Bool=true,
-                              start: Int=0, length: Int=(-1), search: String="", order: [String: Any]=[String: Any]()
-    ) throws -> [Instance] {
+    public static func getAll(mysql: MySQL?=nil, getData: Bool=true, search: String="") throws -> [Instance] {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
 
-        let orderDirection = order["dir"] as? String
-        let orderColumn = order["column"] as? Int
-
-        let orderSql: String
-        if orderColumn == 0 {
-            orderSql = "ORDER BY name \(orderDirection!)"
-        } else if orderColumn == 1 {
-            orderSql = "ORDER BY type \(orderDirection!)"
-        } else if orderColumn == 3 {
-            orderSql = "ORDER BY `count` \(orderDirection!)"
-        } else {
-            orderSql = ""
-        }
         let sql = """
             SELECT name, type, count \(getData ? ", data" : "")
             FROM instance AS inst
@@ -161,8 +146,6 @@ public class Instance: Hashable {
               GROUP BY instance_name
             ) devices ON (inst.name = devices.instance_name)
             \(search.isEmpty ? "" : "WHERE name like ? or type like ?")
-            \(orderSql.isEmpty ? "" : orderSql)
-            \(length > 0 ? "LIMIT \(start), \(length)" : "")
         """
 
         let mysqlStmt = MySQLStmt(mysql)
