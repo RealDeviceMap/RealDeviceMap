@@ -96,8 +96,6 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
-        let search = request.param(name: "search") ?? "" // Global search value
-
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
         let minLon = request.param(name: "min_lon")?.toDouble()
@@ -1634,7 +1632,7 @@ public class ApiRequestHandler {
         if showInstances && perms.contains(.admin) {
 
             var totalInstancesCount = 0
-            let instances = try? Instance.getAll(mysql: mysql, getData: false, search: search)
+            let instances = try? Instance.getAll(mysql: mysql, getData: false)
             var jsonArray = [[String: Any]]()
 
             if instances != nil {

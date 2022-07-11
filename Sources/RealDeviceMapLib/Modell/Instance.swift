@@ -131,7 +131,7 @@ public class Instance: Hashable {
         }
     }
 
-    public static func getAll(mysql: MySQL?=nil, getData: Bool=true, search: String="") throws -> [Instance] {
+    public static func getAll(mysql: MySQL?=nil, getData: Bool=true) throws -> [Instance] {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -145,15 +145,10 @@ public class Instance: Hashable {
               FROM device
               GROUP BY instance_name
             ) devices ON (inst.name = devices.instance_name)
-            \(search.isEmpty ? "" : "WHERE name like ? or type like ?")
         """
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
-        if !search.isEmpty {
-            mysqlStmt.bindParam("%\(search)%")
-            mysqlStmt.bindParam("%\(search)%")
-        }
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
