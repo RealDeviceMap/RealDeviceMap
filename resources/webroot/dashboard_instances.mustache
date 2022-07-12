@@ -11,10 +11,8 @@
         const table = $('#table').DataTable( {
             "stateSave": true,
             "stateDuration": 0,
-            "serverSide": true,
             "ajax": {
                 data: function (data) {
-                    delete data.columns;
                     data.show_instances = true;
                     data.formatted = true;
                 },

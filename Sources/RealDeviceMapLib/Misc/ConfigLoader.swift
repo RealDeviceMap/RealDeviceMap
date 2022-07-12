@@ -41,8 +41,12 @@ public class ConfigLoader {
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     func getConfig<T>(type: ConfigType) -> T {
         let value = environmentMap[type.rawValue]
-        if value != nil || type == .loginLimit {
+        if value != nil {
             return getEnvironmentValue(type: type, value: value ?? "")
+        } else if type == .loginLimit {
+            if environmentMap[ConfigType.loginLimitCount.rawValue] != nil {
+                return true as! T
+            }
         }
         switch type {
         case .logLevel: return localConfig.logger.logLevel.value()
@@ -146,7 +150,7 @@ public class ConfigLoader {
         case .accRequiredInDB: return false as! T // NO_REQUIRE_ACCOUNT
         case .accUseRwForQuest: return false as! T // USE_RW_FOR_QUEST
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
-        case .loginLimit: return (environmentMap[ConfigType.loginLimitCount.rawValue] != nil ? true : false) as! T
+        case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
         case .generateImages: return false as! T // NO_GENERATE_IMAGES
