@@ -1034,51 +1034,82 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         if ids.count == 0 {
             return 0
         }
-
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[POKESTOP] Failed to connect to database.")
-            throw DBController.DBError()
+        var foundStops = [Pokestop]()
+        let missingIds: [String]
+        if cache != nil {
+            var collectedIds = [String]()
+            for id in ids {
+                if let cached = cache!.get(id: id) {
+                    foundStops.append(cached)
+                } else {
+                    collectedIds.append(id)
+                }
+            }
+            missingIds = collectedIds
+        } else {
+            missingIds = ids
         }
+        print("TMP \(ids.count) - \(foundStops.count) - \(missingIds.count)")
+        var count: Int64 = 0
+        foundStops.forEach({
+            if let rewards = $0.questRewards, let type = rewards.first?["type"], type != nil {
+                count += 1
+            } else {
+                print("\($0.questRewards)")
+            }
+            if let rewards = $0.alternativeQuestRewards, rewards.first?["type"] != nil {
+                count += 1
+            } else {
+                print("\($0.alternativeQuestRewards)")
+            }
+        })
+        print("TMP count: \(count)")
+        if !missingIds.isEmpty {
+            guard let mysql = mysql ?? DBController.global.mysql else {
+                Log.error(message: "[POKESTOP] Failed to connect to database.")
+                throw DBController.DBError()
+            }
 
-        var inSQL = "("
-        for _ in 1..<ids.count {
-            inSQL += "?, "
-        }
-        inSQL += "?)"
+            var inSQL = "("
+            for _ in 1..<missingIds.count {
+                inSQL += "?, "
+            }
+            inSQL += "?)"
 
-        let conditionSQL: String
-        let sumSQL: String
-        switch mode {
-        case .normal:
-            conditionSQL = "quest_reward_type IS NOT NULL"
-            sumSQL = "COUNT(*)"
-        case .alternative:
-            conditionSQL = "alternative_quest_reward_type IS NOT NULL"
-            sumSQL = "COUNT(*)"
-        case .both:
-            conditionSQL = "quest_reward_type IS NOT NULL OR alternative_quest_reward_type IS NOT NULL"
-            sumSQL = "CAST(SUM(IF(quest_reward_type IS NOT NULL AND " +
-                     "alternative_quest_reward_type IS NOT NULL, 2, 1)) AS SIGNED)"
-        }
+            let conditionSQL: String
+            let sumSQL: String
+            switch mode {
+            case .normal:
+                conditionSQL = "quest_reward_type IS NOT NULL"
+                sumSQL = "COUNT(*)"
+            case .alternative:
+                conditionSQL = "alternative_quest_reward_type IS NOT NULL"
+                sumSQL = "COUNT(*)"
+            case .both:
+                conditionSQL = "quest_reward_type IS NOT NULL OR alternative_quest_reward_type IS NOT NULL"
+                sumSQL = "CAST(SUM(IF(quest_reward_type IS NOT NULL AND " +
+                    "alternative_quest_reward_type IS NOT NULL, 2, 1)) AS SIGNED)"
+            }
 
-        let sql = """
-            SELECT \(sumSQL)
-            FROM pokestop
-            WHERE id IN \(inSQL) AND deleted = false AND (\(conditionSQL))
-        """
+            let sql = """
+                          SELECT \(sumSQL)
+                          FROM pokestop
+                          WHERE id IN \(inSQL) AND deleted = false AND (\(conditionSQL))
+                      """
 
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        for id in ids {
-            mysqlStmt.bindParam(id)
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            for id in missingIds {
+                mysqlStmt.bindParam(id)
+            }
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[POKESTOP] Failed to execute query 'questCountIn'. (\(mysqlStmt.errorMessage())")
+                throw DBController.DBError()
+            }
+            let results = mysqlStmt.results()
+            let result = results.next()
+            count += result?[0] as? Int64 ?? 0
         }
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query 'questCountIn'. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
-        }
-        let results = mysqlStmt.results()
-        let result = results.next()
-        let count = result?[0] as? Int64 ?? 0
 
         return count
     }
