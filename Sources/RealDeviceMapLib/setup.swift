@@ -242,6 +242,7 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Pokemon update spanwpoint last seen: \(Pokemon.saveSpawnpointLastSeen)")
     Log.info(message: "[MAIN] InstanceController require account in DB: \(InstanceController.requireAccountEnabled)")
     Log.info(message: "[MAIN] InstanceController Scan Lure Encounter: \(InstanceController.sendTaskForLureEncounter)")
+    Log.info(message: "[MAIN] Login Limit enabled: \(WebHookRequestHandler.getLoginLimitConfig())")
 
     // Load Icon styles
     Log.info(message: "[MAIN] Load Icon Styles")

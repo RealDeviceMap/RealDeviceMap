@@ -96,18 +96,6 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
-        // properties to use for pagination and filter in dashboard
-        // https://datatables.net/manual/server-side
-        let start = request.param(name: "start")?.toInt() ?? 0 // Paging first record indicator
-        let length = request.param(name: "length")?.toInt() ?? -1 // Number of records that the table can display.
-        let orderColumn = request.param(name: "order[0][column]")?.toInt() ?? -1
-        let orderDir = request.param(name: "order[0][dir]") ?? "asc"
-        let order: [String: Any] = [ "column": orderColumn, "dir": orderDir ]
-        let search = request.param(name: "search[value]") ?? "" // Global search value
-        let drawCount = request.param(name: "draw")?.toInt() // draw counter
-        var recordsTotal: Int?
-        var recordsFiltered: Int?
-
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
         let minLon = request.param(name: "min_lon")?.toDouble()
@@ -1644,8 +1632,7 @@ public class ApiRequestHandler {
         if showInstances && perms.contains(.admin) {
 
             var totalInstancesCount = 0
-            let instances = try? Instance.getAll(mysql: mysql, getData: false,
-                start: start, length: length, search: search, order: order)
+            let instances = try? Instance.getAll(mysql: mysql, getData: false)
             var jsonArray = [[String: Any]]()
 
             if instances != nil {
@@ -1673,7 +1660,6 @@ public class ApiRequestHandler {
                     if skipInstanceStatus {
                         instanceData["status"] = nil
                     } else if formatted {
-                        totalInstancesCount = (try? Instance.getCount(mysql: mysql)) ?? 0
                         let status = InstanceController.global.getInstanceStatus(
                             mysql: mysql,
                             instance: instance,
@@ -1697,8 +1683,6 @@ public class ApiRequestHandler {
                 }
             }
             data["instances"] = jsonArray
-            recordsTotal = totalInstancesCount
-            recordsFiltered = search.isEmpty ? totalInstancesCount : instances?.count ?? 0
         }
 
         if showDeviceGroups && perms.contains(.admin) {
@@ -2232,8 +2216,7 @@ public class ApiRequestHandler {
                 return
             }
             data["timestamp"] = Int(Date().timeIntervalSince1970)
-            try response.respondWithData(data: data,
-                drawCount: drawCount, recordsTotal: recordsTotal, recordsFiltered: recordsFiltered)
+            try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
             return

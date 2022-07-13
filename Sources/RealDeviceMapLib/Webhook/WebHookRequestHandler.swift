@@ -1218,4 +1218,7 @@ public class WebHookRequestHandler {
         }
     }
 
+    static func getLoginLimitConfig() -> String {
+        return "\(loginLimitEnabled) - \(loginLimit)/\(loginLimitIntervall)"
+    }
 }

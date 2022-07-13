@@ -17,17 +17,8 @@ extension HTTPResponse {
         completed(status: status)
     }
 
-    func respondWithData(data: JSONConvertible,
-                         drawCount: Int? = nil, recordsTotal: Int? = 0, recordsFiltered: Int? = 0) throws {
-        if drawCount != nil {
-            // draw is used in datatables
-            try setBody(json: [
-                "status": "ok", "draw": drawCount, "recordsTotal": recordsTotal, "recordsFiltered": recordsFiltered,
-                "data": data
-            ])
-        } else {
-            try setBody(json: ["status": "ok", "data": data])
-        }
+    func respondWithData(data: JSONConvertible) throws {
+        try setBody(json: ["status": "ok", "data": data])
         setHeader(.contentType, value: "application/json")
         completed()
     }
