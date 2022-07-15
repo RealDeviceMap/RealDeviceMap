@@ -706,7 +706,7 @@ public class WebHookRequestHandler {
                     Log.debug(
                         message: "[WebHookRequestHandler] " +
                                  "[\(uuid ?? "?")] " +
-                                 "Gyms Detail Count: \(gymInfos.count) ".blue +
+                                 "Gyms Detail Count: \(gymInfos.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                     )
                 }
@@ -714,7 +714,7 @@ public class WebHookRequestHandler {
                     Log.debug(
                         message: "[WebHookRequestHandler] " +
                                  "[\(uuid ?? "?")] " +
-                                 "Gyms Defender Count: \(gymDefInfos.count) ".blue +
+                                 "Gyms Defender Count: \(gymDefInfos.count) " +
                                  "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                     )
                 }
