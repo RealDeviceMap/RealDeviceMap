@@ -24,7 +24,7 @@ public class GymDefender: JSONConvertibleObject {
             "atk_iv": atkIv as Any,
             "def_iv": defIv as Any,
             "sta_iv": staIv as Any,
-            "updated": updated ?? 1,
+            "updated": updated ?? 1
         ]
     }
 
@@ -40,7 +40,7 @@ public class GymDefender: JSONConvertibleObject {
     var hasChanges = false
 
     init(id: UInt64, fortID: String, pokemonID: UInt16, cp: UInt16?,
-            atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, updated: UInt32?) {
+         atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, updated: UInt32?) {
         self.id = id
         self.fortID = fortID
         self.pokemonID = pokemonID
