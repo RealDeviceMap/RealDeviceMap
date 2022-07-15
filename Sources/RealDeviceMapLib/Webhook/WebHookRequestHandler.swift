@@ -174,6 +174,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
+        var gymDefInfos = [GymDefenderProto]()
         var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
@@ -278,6 +279,10 @@ public class WebHookRequestHandler {
             } else if method == 156 {
                 if let ggi = try? GymGetInfoOutProto(serializedData: data) {
                     gymInfos.append(ggi)
+                    for def in ggi.gymStatusAndDefenders.gymDefender {
+                        gymDefInfos.append(def)
+                        //Log.info(message: "[WebHookRequestHandler] \(gymDefInfos)")
+                    }
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
                 }
@@ -687,11 +692,32 @@ public class WebHookRequestHandler {
                         gym!.addDetails(gymInfo: gymInfo)
                         try? gym!.save(mysql: mysql)
                     }
+                    if !gymDefInfos.isEmpty {
+                        for gymDefInfo in gymDefInfos {
+                            //Log.info(message: "[GYM] gymDefInfo. (\(gymDefInfo))")
+                            let gymdefender = GymDefender(fortID: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID,
+                                                          gymDefInfo: gymDefInfo)
+                            try? gymdefender.save(mysql: mysql)
+                        }
+                    }
                 }
-                Log.debug(
-                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
-                             "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
-                )
+
+                if gymInfos.count > 0 {
+                    Log.debug(
+                        message: "[WebHookRequestHandler] " +
+                                 "[\(uuid ?? "?")] " +
+                                 "Gyms Detail Count: \(gymInfos.count) ".blue +
+                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                    )
+                }
+                if gymDefInfos.count > 0 {
+                    Log.debug(
+                        message: "[WebHookRequestHandler] " +
+                                 "[\(uuid ?? "?")] " +
+                                 "Gyms Defender Count: \(gymDefInfos.count) ".blue +
+                                 "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                    )
+                }
             }
 
             if !quests.isEmpty {
