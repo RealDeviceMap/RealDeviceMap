@@ -204,12 +204,13 @@ public class WebRequestHandler {
                 if let tmpZoom = request.urlVariables["lon"]?.toInt() {
                     zoom = tmpZoom
                 }
-
             }
 
             if city != nil {
-                guard let citySetting = cities[city!.lowercased()] else {
-                    response.setBody(string: "The city \"\(city!)\" was not found.")
+                let foundCityName = cities.keys.first {
+                    $0.compare(city!, options: .caseInsensitive) == .orderedSame } ?? city!
+                guard let citySetting = cities[foundCityName] else {
+                    response.setBody(string: "The city \"\(foundCityName)\" was not found.")
                     sessionDriver.save(session: request.session!)
                     response.completed(status: .notFound)
                     return
@@ -315,7 +316,7 @@ public class WebRequestHandler {
             data["page_is_areas"] = perms.contains(.viewMap)
             var areas = [Any]()
             for area in self.cities.sorted(by: { $0.key < $1.key }) {
-                let name = area.key.prefix(1).uppercased() + area.key.lowercased().dropFirst()
+                let name = area.key
                 areas.append(["area": name])
             }
             data["areas"] = areas
@@ -338,7 +339,7 @@ public class WebRequestHandler {
                 data["page_is_stats"] = true
                 data["show_stats"] = true
                 data["title"] = title
-                data["page"] = localizer.get(value: "title_stats")
+                data["page"] = localizer.get(value: "title_stats", replace: ["name": title])
 
                 data["pokemon"] = try? Stats.getPokemonIVStats()
                 data["raids"] = try? Stats.getRaidStats()
@@ -375,7 +376,9 @@ public class WebRequestHandler {
                     "stats_quests", "stats_quests_item_rewards", "stats_quests_pokemon_rewards", "stats_grunt_types",
                     "stats_statistics", "stats_active_100iv", "stats_active_90iv", "stats_active_0iv",
                     "stats_active_shiny", "stats_total_shiny", "stats_active_iv_statistics", "stats_top10_pokemon",
-                    "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms"
+                    "stats_teams", "stats_filters", "stats_new_pokestops", "stats_new_gyms", "stats_gyms",
+                    "stats_lifetime", "stats_30days", "stats_today", "stats_iv_today",
+                    "stats_historic_pokemon", "stats_historic_raid", "stats_historic_quests", "stats_historic_invasion"
                 ]
                 for loc in statLoc {
                     data[loc] = localizer.get(value: loc)
@@ -1626,7 +1629,7 @@ public class WebRequestHandler {
             let stalePokestopsCount = try? Pokestop.getStalePokestopsCount()
             data["convertible_pokestops"] = convertiblePokestopsCount
             data["stale_pokestops"] = stalePokestopsCount
-            data["show_clear_memcache"] = ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil
+            data["show_clear_memcache"] = ConfigLoader.global.getConfig(type: .memoryCacheEnabled) as Bool
 
             if request.method == .post {
                 let action = request.param(name: "action")
@@ -1644,6 +1647,7 @@ public class WebRequestHandler {
                 case "clear_memcache":
                     Pokemon.cache?.clear()
                     Pokestop.cache?.clear()
+                    Incident.cache?.clear()
                     Gym.cache?.clear()
                     SpawnPoint.cache?.clear()
                     Weather.cache?.clear()
@@ -2181,12 +2185,12 @@ public class WebRequestHandler {
                 let lon: Double?
                 let zoom: Int?
                 if split.count == 3 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = nil
                 } else if split.count == 4 {
-                    name = split[0].lowercased()
+                    name = split[0]
                     lat = split[1].toDouble()
                     lon = split[2].toDouble()
                     zoom = split[3].toInt()

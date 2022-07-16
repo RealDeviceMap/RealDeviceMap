@@ -17,7 +17,7 @@ extension HTTPResponse {
         completed(status: status)
     }
 
-    public func respondWithData(data: JSONConvertible) throws {
+    func respondWithData(data: JSONConvertible) throws {
         try setBody(json: ["status": "ok", "data": data])
         setHeader(.contentType, value: "application/json")
         completed()

@@ -23,19 +23,18 @@ class CircleInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var scanNextCoords: [Coord] = []
     public weak var delegate: InstanceControllerDelegate?
 
     private let type: CircleType
     private let coords: [Coord]
-    private var scanNextCoords: [Coord]
     private var lastIndex: Int = 0
-    private var lock = Threading.Lock()
+    internal var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
-    public let useRwForRaid =
-        ProcessInfo.processInfo.environment["USE_RW_FOR_RAID"] != nil
+    public let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
 
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {
@@ -105,8 +104,10 @@ class CircleInstanceController: InstanceControllerProto {
         if !scanNextCoords.isEmpty {
             currentCoord = scanNextCoords.removeFirst()
             lock.unlock()
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         }
         if type == .smartPokemon {
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
@@ -125,7 +126,7 @@ class CircleInstanceController: InstanceControllerProto {
                     jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
                 }
             }
-            if currentUuidIndex == 0 {
+            if currentUuidIndex == 0 && coords.count > 1 {
                 shouldAdvance = true
             }
             if shouldAdvance {
@@ -144,8 +145,10 @@ class CircleInstanceController: InstanceControllerProto {
             currentUuidIndexes[uuid] = currentUuidIndex
             currentCoord = coords[currentUuidIndex]
             lock.unlock()
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         } else {
             currentIndex = self.lastIndex
             if lastIndex + 1 == coords.count {
@@ -157,13 +160,16 @@ class CircleInstanceController: InstanceControllerProto {
             }
             currentCoord = coords[currentIndex]
             lock.unlock()
+            var task: [String: Any]
             if type == .pokemon {
-                return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             } else {
-                return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             }
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         }
     }
 
@@ -231,21 +237,5 @@ class CircleInstanceController: InstanceControllerProto {
                 account.level <= maxLevel &&
                 account.isValid(ignoringWarning: useRwForRaid, group: accountGroup)
         }
-    }
-
-    func addToNextCoords(coords: [Coord]) -> Int {
-        let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
-        Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
-        lock.lock()
-        for coord in coords {
-            scanNextCoords.append(coord)
-        }
-        let size = scanNextCoords.count
-        lock.unlock()
-        return size
-    }
-
-    func getNextCoordsSize() -> Int {
-        lock.doWithLock { scanNextCoords.count }
     }
 }

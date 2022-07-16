@@ -36,6 +36,8 @@ class AutoInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var lock = Threading.Lock() // unused, add functionality in near future
+    internal var scanNextCoords: [Coord] = [] // unused, add functionality in near future
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
@@ -58,8 +60,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var lastMode = [String: Bool]()
     private let questMode: QuestMode
     public var delayLogout: Int
-    public let useRwForQuest =
-      ProcessInfo.processInfo.environment["USE_RW_FOR_QUEST"] != nil
+    public let useRwForQuest: Bool = ConfigLoader.global.getConfig(type: .accUseRwForQuest)
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
          minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
@@ -229,7 +230,7 @@ class AutoInstanceController: InstanceControllerProto {
                     let stops = try? Pokestop.getAll(
                         minLat: bounds.southWest.latitude, maxLat: bounds.northEast.latitude,
                         minLon: bounds.southWest.longitude, maxLon: bounds.northEast.longitude,
-                        updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: true) {
+                        updated: 0, showPokestops: true, showQuests: true, showLures: true, showInvasions: false) {
 
                     for stop in stops {
                         let coord = LocationCoordinate2D(latitude: stop.lat, longitude: stop.lon)
@@ -307,14 +308,14 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 bootstrappLock.unlock()
 
-                guard username != nil || InstanceController.noRequireAccount else {
+                guard username != nil || !InstanceController.requireAccountEnabled else {
                     Log.warning(
                         message: "[AutoInstanceController] [\(name)] [\(uuid)] No username specified. Ignoring..."
                     )
                     return [:]
                 }
 
-                guard account != nil || InstanceController.noRequireAccount else {
+                guard account != nil || !InstanceController.requireAccountEnabled else {
                     Log.warning(
                         message: "[AutoInstanceController] [\(name)] [\(uuid)] No account specified. Ignoring..."
                     )
@@ -549,7 +550,7 @@ class AutoInstanceController: InstanceControllerProto {
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 } else if delay >= delayLogout {
                     Log.warning(
-                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ingoring over Logout Delay, " +
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Ignoring over Logout Delay, " +
                                  "because no account is specified."
                     )
                 }
@@ -725,10 +726,10 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getAccount(mysql: MySQL, uuid: String, encounterTarget: Coord?) throws -> Account? {
         accountsLock.lock()
-        if let usernane = accounts[uuid] {
+        if let username = accounts[uuid] {
             accounts[uuid] = nil
             accountsLock.unlock()
-            return try Account.getWithUsername(username: usernane)
+            return try Account.getWithUsername(username: username)
         } else {
             accountsLock.unlock()
             return try Account.getNewAccount(

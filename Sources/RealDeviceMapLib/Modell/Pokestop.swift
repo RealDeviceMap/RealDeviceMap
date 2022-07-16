@@ -284,7 +284,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         let questType = questData.questType.rawValue.toUInt32()
         let questTarget = UInt16(questData.goal.target)
         let questTemplate = questData.templateID.lowercased()
-        let questTitle = title
+        let questTitle = title.lowercased()
         self.hasChanges = true
 
         var conditions = [[String: Any]]()
@@ -424,6 +424,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             case .withRaidLocation: break
             case .withFriendsRaid: break
             case .withPokemonCostume: break
+            case .withAppliedItem: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -466,10 +467,12 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                 } else {
                     infoData["pokemon_id"] = info.pokemonID.rawValue
                 }
-                infoData["costume_id"] = info.pokemonDisplay.costume.rawValue
-                infoData["form_id"] = info.pokemonDisplay.form.rawValue
-                infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
-                infoData["shiny"] = info.pokemonDisplay.shiny
+                if info.hasPokemonDisplay {
+                    infoData["costume_id"] = info.pokemonDisplay.costume.rawValue
+                    infoData["form_id"] = info.pokemonDisplay.form.rawValue
+                    infoData["gender_id"] = info.pokemonDisplay.gender.rawValue
+                    infoData["shiny"] = info.pokemonDisplay.shiny
+                }
             case .pokecoin:
                 let info = rewardData.pokecoin
                 infoData["amount"] = info
@@ -727,11 +730,11 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if showQuests && questFilterExclude != nil {
             for filter in questFilterExclude! {
-                if filter.contains(string: "p") {
+                if filter.starts(with: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                         excludedPokemon.append(id)
                     }
-                } else if filter.contains(string: "i") {
+                } else if filter.starts(with: "i") {
                     if let id = filter.stringByReplacing(string: "i", withString: "").toInt() {
                         if id > 0 {
                             excludedItems.append(id)
@@ -751,13 +754,13 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         if pokestopFilterExclude != nil {
             for filter in pokestopFilterExclude! {
-                if filter.contains(string: "normal") {
+                if filter == "normal" {
                     excludeNormal = true
-                } else if showLures && filter.contains(string: "l") {
+                } else if showLures && filter.starts(with: "l") {
                     if let id = filter.stringByReplacing(string: "l", withString: "").toInt() {
                         excludedLures.append(id)
                     }
-                } else if filter.contains(string: "p") {
+                } else if filter.starts(with: "p") {
                     if let id = filter.stringByReplacing(string: "p", withString: "").toInt() {
                         excludedPowerUpLevels.append(id)
                     }
@@ -813,10 +816,10 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     sqlExcludeCreate += "?, "
                 }
                 sqlExcludeCreate += "?)"
-                if !excludedTypes.contains(3) { // candy reward type = 4
+                if !excludedTypes.contains(4) { // candy reward type = 4
                     sqlExcludeCreate += " OR \(questRewardTypeSql) = 4"
                 }
-                if !excludedTypes.contains(6) { // mega energy reward type = 12
+                if !excludedTypes.contains(12) { // mega energy reward type = 12
                     sqlExcludeCreate += " OR \(questRewardTypeSql) = 12"
                 }
                 excludeQuestPokemonSQL = sqlExcludeCreate+") "
@@ -986,11 +989,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         }
         inSQL += "?)"
 
-        let joinIncidentSQL = "LEFT JOIN incident on pokestop.id = incident.pokestop_id and " +
-            "expiration >= UNIX_TIMESTAMP()"
-        let selectIncidentSql = ", incident.id, pokestop_id, start, expiration, display_type, style, `character`, " +
-            "incident.updated"
-
         let sql = """
             SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
                    pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
@@ -998,8 +996,8 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
-                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp \(selectIncidentSql)
-            FROM pokestop \(joinIncidentSQL)
+                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+            FROM pokestop
             WHERE pokestop.id IN \(inSQL) AND deleted = false
         """
 
@@ -1014,7 +1012,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
-        return extractResults(results: results)
+        return extractResults(results: results, showInvasions: false)
     }
 
     internal static func questCountIn(

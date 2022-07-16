@@ -96,7 +96,6 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
-
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
         let minLon = request.param(name: "min_lon")?.toDouble()
@@ -161,8 +160,8 @@ public class ApiRequestHandler {
         let date = request.param(name: "date") ?? ""
         let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
-        let start = request.param(name: "start") ?? ""
-        let end = request.param(name: "end") ?? ""
+        let startTimestamp = request.param(name: "start_timestamp") ?? ""
+        let endTimestamp = request.param(name: "end_timestamp") ?? ""
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
         let queueSize = request.param(name: "queue_size")?.toBool() ?? false
 
@@ -305,7 +304,7 @@ public class ApiRequestHandler {
                     "type": miscString
                 ])
             }
-            if !Pokemon.noCellPokemon {
+            if Pokemon.cellPokemonEnabled {
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"
@@ -717,7 +716,7 @@ public class ApiRequestHandler {
                 ])
 
             // Level
-            for i in [1, 3, 5, 6] {
+            for i in [1, 3, 5, 6, 7, 8] {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
 
@@ -1632,6 +1631,7 @@ public class ApiRequestHandler {
 
         if showInstances && perms.contains(.admin) {
 
+            var totalInstancesCount = 0
             let instances = try? Instance.getAll(mysql: mysql, getData: false)
             var jsonArray = [[String: Any]]()
 
@@ -2138,8 +2138,9 @@ public class ApiRequestHandler {
         }
 
         if permViewStats && permShowPokemon && showCommdayStats {
-            if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
-                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
+            if pokemonId > 0 && !startTimestamp.isEmpty && !endTimestamp.isEmpty {
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId,
+                    start: startTimestamp, end: endTimestamp)
                 let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
                 let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
                 let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
@@ -2147,8 +2148,8 @@ public class ApiRequestHandler {
                 data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
                 data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
                 data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
-                data["start"] = start
-                data["end"] = end
+                data["start"] = startTimestamp
+                data["end"] = endTimestamp
                 data["stats"] = stats
             }
         }
@@ -2197,10 +2198,13 @@ public class ApiRequestHandler {
         }
 
         if scanNext && queueSize && perms.contains(.admin), let name = instance {
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
-                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found")
-                return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
             }
             let size = instance.getNextCoordsSize()
             data["size"] = size
@@ -2243,6 +2247,7 @@ public class ApiRequestHandler {
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
+        let clearMemCache = request.param(name: "clear_memcache")?.toBool() ?? false
 
         let scanNext = request.param(name: "scan_next")?.toBool() ?? false
         let coords = try? jsonDecoder.decode([Coord].self,
@@ -2344,10 +2349,13 @@ public class ApiRequestHandler {
             }
         } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
             Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
-            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? "")
-                as? CircleInstanceController else {
-                    Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found")
-                    return response.respondWithError(status: .custom(code: 404, message: "Instance not found"))
+            guard var instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
             }
             if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
@@ -2355,7 +2363,7 @@ public class ApiRequestHandler {
             }
             var size = 0
             if !coords.isEmpty {
-                size = instance.addToNextCoords(coords: coords)
+                size = instance.addToScanNextCoords(coords: coords)
             }
             do {
                 try response.respondWithData(data: [
@@ -2366,7 +2374,15 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-
+        } else if clearMemCache {
+            Pokemon.cache?.clear()
+            Pokestop.cache?.clear()
+            Incident.cache?.clear()
+            Gym.cache?.clear()
+            SpawnPoint.cache?.clear()
+            Weather.cache?.clear()
+            ImageManager.global.clearCaches()
+            response.respondWithOk()
         } else {
             response.respondWithError(status: .badRequest)
         }

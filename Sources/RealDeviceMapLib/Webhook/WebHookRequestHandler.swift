@@ -34,19 +34,22 @@ public class WebHookRequestHandler {
     private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
-    static let threadLimitMax = UInt32(ProcessInfo.processInfo.environment["RAW_THREAD_LIMIT"] ?? "") ?? 100
+    static let threadLimitMax = UInt32(exactly: ConfigLoader.global.getConfig(type: .rawThreadLimit) as Int)!
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
     private static var threadLimitTotalCount: UInt64 = 0
     private static var threadLimitIgnoredCount: UInt64 = 0
 
-    private static let loginLimit = UInt32(ProcessInfo.processInfo.environment["LOGINLIMIT_COUNT"] ?? "")
-    private static let loginLimitIntervall = UInt32(
-        ProcessInfo.processInfo.environment["LOGINLIMIT_INTERVALL"] ?? ""
-    ) ?? 300
+    private static let loginLimitEnabled: Bool = ConfigLoader.global.getConfig(type: .loginLimit)
+    private static let loginLimit = UInt32(exactly: ConfigLoader.global.getConfig(type: .loginLimitCount) as Int)!
+    private static let loginLimitIntervall = UInt32(exactly:
+        ConfigLoader.global.getConfig(type: .loginLimitInterval) as Int)!
     private static let loginLimitLock = Threading.Lock()
     private static var loginLimitTime = [String: UInt32]()
     private static var loginLimitCount = [String: UInt32]()
+
+    private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
+    private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
 
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
@@ -151,6 +154,9 @@ public class WebHookRequestHandler {
             }
         }
 
+        // only process MapPokemon when LureEncounter are enabled
+        let processMapPokemon = InstanceController.sendTaskForLureEncounter
+
         guard let contents = json["contents"] as? [[String: Any]] ??
                              json["protos"] as? [[String: Any]] ??
                              json["gmo"] as? [[String: Any]] else {
@@ -170,6 +176,7 @@ public class WebHookRequestHandler {
 
         var wildPokemons = [(cell: UInt64, data: WildPokemonProto, timestampMs: UInt64)]()
         var nearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+        var mapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
         var clientWeathers =  [(cell: Int64, data: ClientWeatherProto)]()
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
@@ -177,6 +184,7 @@ public class WebHookRequestHandler {
         var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
+        var diskEncounters = [DiskEncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
         var cells = [UInt64]()
 
@@ -198,6 +206,9 @@ public class WebHookRequestHandler {
             } else if let enr = rawData["EncounterResponse"] as? String {
                 data = Data(base64Encoded: enr) ?? Data()
                 method = 102
+            } else if let denr = rawData["DiskEncounterResponse"] as? String {
+                data = Data(base64Encoded: denr) ?? Data()
+                method = 145
             } else if let fdr = rawData["FortDetailsResponse"] as? String {
                 data = Data(base64Encoded: fdr) ?? Data()
                 method = 104
@@ -269,6 +280,12 @@ public class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
+            } else if method == 145 && trainerLevel >= 30 || method == 145 && isMadData == true {
+                if processMapPokemon, let denr = try? DiskEncounterOutProto(serializedData: data) {
+                    diskEncounters.append(denr)
+                } else {
+                    Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed DiskEncounterResponse")
+                }
             } else if method == 104 {
                 if let fdr = try? FortDetailsOutProto(serializedData: data) {
                     fortDetails.append(fdr)
@@ -289,6 +306,8 @@ public class WebHookRequestHandler {
                     var newWildPokemons = [(cell: UInt64, data: WildPokemonProto,
                                             timestampMs: UInt64)]()
                     var newNearbyPokemons = [(cell: UInt64, data: NearbyPokemonProto)]()
+                    var newMapPokemons = [(cell: UInt64, pokeData: MapPokemonProto)]()
+
                     var newClientWeathers = [(cell: Int64, data: ClientWeatherProto)]()
                     var newForts = [(cell: UInt64, data: PokemonFortProto)]()
                     var newCells = [UInt64]()
@@ -304,6 +323,9 @@ public class WebHookRequestHandler {
                         }
                         for fort in mapCell.fort {
                             newForts.append((cell: mapCell.s2CellID, data: fort))
+                            if processMapPokemon && fort.hasActivePokemon {
+                                newMapPokemons.append((cell: mapCell.s2CellID, pokeData: fort.activePokemon))
+                            }
                         }
                         newCells.append(mapCell.s2CellID)
                     }
@@ -325,7 +347,7 @@ public class WebHookRequestHandler {
                             if count == 3 {
                                 Log.debug(
                                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cell \(cell) was " +
-                                             "empty 3 times in a row. Asuming empty."
+                                             "empty 3 times in a row. Assuming empty."
                                 )
                                 cells.append(cell)
                             }
@@ -341,6 +363,7 @@ public class WebHookRequestHandler {
                         isEmtpyGMO = false
                         wildPokemons += newWildPokemons
                         nearbyPokemons += newNearbyPokemons
+                        mapPokemons += newMapPokemons
                         forts += newForts
                         cells += newCells
                         clientWeathers += newClientWeathers
@@ -348,6 +371,45 @@ public class WebHookRequestHandler {
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
+            }
+        }
+
+        if rawDebugEnabled {
+            if rawDebugTypes.contains("GetPlayerResponse") && !playerdatas.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] playerdatas: \(playerdatas)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_wildMons") && !wildPokemons.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] wildPokemons: \(wildPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_nearbyMons") && !nearbyPokemons.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] nearbyPokemons: \(nearbyPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_mapMons") && !mapPokemons.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] mapPokemons: \(mapPokemons)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_forts") && !forts.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] forts: \(forts)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_cells") && !cells.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] cells: \(cells)")
+            }
+            if rawDebugTypes.contains("GetMapObjects_clientWeathers") && !clientWeathers.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
+            }
+            if rawDebugTypes.contains("EncounterResponse") && !encounters.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
+            }
+            if rawDebugTypes.contains("DiskEncounterResponse") && !diskEncounters.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] diskEncounters: \(diskEncounters)")
+            }
+            if rawDebugTypes.contains("FortDetailsResponse") && !fortDetails.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortDetails: \(fortDetails)")
+            }
+            if rawDebugTypes.contains("FortSearchResponse") && !fortSearch.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] fortSearch: \(fortSearch)")
+            }
+            if rawDebugTypes.contains("GymGetInfoResponse") && !gymInfos.isEmpty {
+                Log.info(message: "[WebhookRequestHandler] [\(uuid ?? "?")] gymInfos: \(gymInfos)")
             }
         }
 
@@ -415,8 +477,9 @@ public class WebHookRequestHandler {
             }
         }
 
-        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "forts": forts.count,
-                    "quests": quests.count, "encounters": encounters.count, "level": trainerLevel as Any,
+        var data = ["nearby": nearbyPokemons.count, "wild": wildPokemons.count, "map": mapPokemons.count,
+                    "forts": forts.count, "quests": quests.count, "encounters": encounters.count,
+                    "disk_encounters": diskEncounters.count, "level": trainerLevel as Any,
                     "only_empty_gmos": containsGMO && isEmtpyGMO, "fort_search": fortSearch.count,
                     "only_invalid_gmos": containsGMO && isInvalidGMO, "contains_gmos": containsGMO
         ]
@@ -475,7 +538,7 @@ public class WebHookRequestHandler {
                     .latitude, longitude: pokemon.data.longitude)
                 let distance = pokemonCoords!.distance(to: coords)
 
-                // Only Encounter pokemon within 35m of initial pokemon scann
+                // Only Encounter pokemon within 35m of initial pokemon scan
                 if distance <= 35 && ivController.scatterPokemon.contains(pokemonId) {
                     scatterPokemon.append([
                         "lat": pokemon.data.latitude,
@@ -617,6 +680,27 @@ public class WebHookRequestHandler {
                 )
             }
 
+            let startMapPokemon = Date()
+            for mapPokemon in mapPokemons {
+                let pokemon = try? Pokemon(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
+                    username: username, isEvent: isEvent)
+                try? pokemon?.save(mysql: mysql)
+                // Check if we have a pending disk encounter cache.
+                let displayId = mapPokemon.pokeData.pokemonDisplay.displayID
+                let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
+                if let cachedEncounter = Pokemon.diskEncounterCache?.get(id: displayIdCacheKey) {
+                    pokemon?.addDiskEncounter(mysql: mysql, diskEncounterData: cachedEncounter, username: username)
+                    try? pokemon?.save(mysql: mysql, updateIV: true)
+                    Log.debug(message: "[WebHookRequestHandler] Found DiskEncounter in Cache: \(displayIdCacheKey)")
+                }
+            }
+            if !mapPokemons.isEmpty {
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] MapPokemon Count: \(mapPokemons.count) " +
+                        "parsed in \(String(format: "%.3f", Date().timeIntervalSince(startMapPokemon)))s"
+                )
+            }
+
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
@@ -689,7 +773,7 @@ public class WebHookRequestHandler {
                     }
                 }
                 Log.debug(
-                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Forts Detail Count: \(fortDetails.count) " +
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Gyms Info Count: \(gymInfos.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
@@ -717,6 +801,12 @@ public class WebHookRequestHandler {
             if !encounters.isEmpty {
                 let start = Date()
                 for encounter in encounters {
+                    if encounter.status != EncounterOutProto.Status.encounterSuccess {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
+                                " encounter: \(encounter)")
+                        continue
+                    }
                     let pokemon: Pokemon?
                     do {
                         pokemon = try Pokemon.getWithId(
@@ -748,6 +838,38 @@ public class WebHookRequestHandler {
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
+            }
+
+            if !diskEncounters.isEmpty {
+                let start = Date()
+                for diskEncounter in diskEncounters {
+                    if diskEncounter.result != DiskEncounterOutProto.Result.success {
+                        Log.debug(
+                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] DiskEncounter no EncounterSuccess." +
+                                " diskEncounter: \(diskEncounter)")
+                        continue
+                    }
+                    let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
+                    let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
+                    let pokemon: Pokemon?
+                    do {
+                        pokemon = try Pokemon.getWithId(mysql: mysql, id: displayIdCacheKey, isEvent: isEvent)
+                    } catch {
+                        pokemon = nil
+                    }
+                    if pokemon != nil {
+                        pokemon!.addDiskEncounter(mysql: mysql, diskEncounterData: diskEncounter, username: username)
+                        try? pokemon!.save(mysql: mysql, updateIV: true)
+                    } else {
+                        // MARK: logic for DiskEncounter before MapPokemon
+                        Pokemon.diskEncounterCache?.set(id: displayIdCacheKey, value: diskEncounter)
+                        Log.debug(message: "[WebHookRequestHandler] Write DiskEncounter in cache: \(displayIdCacheKey)")
+                    }
+                }
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Disk Encounter Count: \(diskEncounters.count) " +
+                        "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
 
@@ -904,7 +1026,7 @@ public class WebHookRequestHandler {
                     account = newAccount
                 }
 
-                if username != account!.username, let loginLimit = self.loginLimit {
+                if username != account!.username, loginLimitEnabled {
                     let currentTime = UInt32(Date().timeIntervalSince1970) / loginLimitIntervall
                     let left = loginLimitIntervall - UInt32(Date().timeIntervalSince1970) % loginLimitIntervall
                     self.loginLimitLock.lock()
@@ -1096,4 +1218,7 @@ public class WebHookRequestHandler {
         }
     }
 
+    static func getLoginLimitConfig() -> String {
+        return "\(loginLimitEnabled) - \(loginLimit)/\(loginLimitIntervall)"
+    }
 }

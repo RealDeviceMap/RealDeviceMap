@@ -1,5 +1,12 @@
 {{> header}}
 <body>
+    <script>
+      $(function () {
+        let lines = `{{cities}}`.match(/<br>/g).length;
+        lines = lines < 2 ? 2 : lines+1;
+        $('#cities-textarea').attr('rows', lines);
+      });
+    </script>
     <br>
     <div class="alert alert-success w-75 {{^show_success}}d-none{{/show_success}}" style="float: none; margin: 0 auto;">
         <strong>Success!</strong> The settings have been updated.</a>
@@ -63,7 +70,7 @@
             </div>
             <div class="form-group">
                 Cities (one per line, Name;Lat;Lon;Zoom [Zoom is optional])
-                <textarea class="form-control" rows="2" name="cities">{{{cities}}}</textarea>
+                <textarea id="cities-textarea" class="form-control" rows="2" name="cities">{{{cities}}}</textarea>
             </div>
             <br>
             <h4>Pokemon</h4>
@@ -79,10 +86,12 @@
                 Default time left on re-seen pokemon (in seconds)
                 <input type="number" class="form-control" name="pokemon_time_old" value="{{pokemon_time_old}}" step=1 min="60" max="3600" required>
             </div>
+            <!--
             <div class="form-group">
                 Ditto Disguises (separated by ",")
                 <input type="string" class="form-control" name="ditto_disguises" value="{{ditto_disguises}}">
             </div>
+            -->
             <br>
             <h4>Pokestops</h4>
             <div class="form-group">

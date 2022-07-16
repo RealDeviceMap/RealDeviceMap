@@ -132,7 +132,6 @@ public class Instance: Hashable {
     }
 
     public static func getAll(mysql: MySQL?=nil, getData: Bool=true) throws -> [Instance] {
-
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -201,10 +200,33 @@ public class Instance: Hashable {
         }
 
         let result = results.next()!
-            let type = InstanceType.fromString(result[0] as! String)!
-            let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
+        let type = InstanceType.fromString(result[0] as! String)!
+        let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
         return Instance(name: name, type: type, data: data, count: 0)
 
+    }
+
+    public static func getCount(mysql: MySQL?=nil) throws -> Int {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = "SELECT COUNT(*) FROM instance"
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows != 1 {
+            return 0
+        }
+        let result = results.next()!
+        return Int(result[0] as? Int64 ?? 0)
     }
 
     public static func == (lhs: Instance, rhs: Instance) -> Bool {

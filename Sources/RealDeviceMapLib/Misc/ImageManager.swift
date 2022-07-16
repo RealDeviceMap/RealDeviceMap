@@ -15,7 +15,7 @@ import POGOProtos
 class ImageManager {
 
     public static let global = ImageManager()
-    public static var noImageGeneration = false
+    public static var imageGenerationEnabled: Bool = true
 
     private let lock = Threading.Lock()
     private var uiconIndex: [String: [String: Any]] = [:]
@@ -37,7 +37,7 @@ class ImageManager {
 
     private init() {
         updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
-        if ImageManager.noImageGeneration {
+        if !ImageManager.imageGenerationEnabled {
             return
         }
         updaterThread.dispatch {
@@ -256,7 +256,7 @@ class ImageManager {
 
     // MARK: Building Images with ImageGenerator
     private func buildGymImage(gym: Gym, baseFile: File) -> File {
-        if (gym.raid == nil && gym.raidPokemon == nil) || ImageManager.noImageGeneration {
+        if (gym.raid == nil && gym.raidPokemon == nil) || !ImageManager.imageGenerationEnabled {
             return baseFile
         }
 
@@ -283,7 +283,7 @@ class ImageManager {
     }
 
     private func buildPokemonImage(pokemon: Pokemon, baseFile: File) -> File {
-        if (pokemon.spawnType == nil && pokemon.ranking == nil) || ImageManager.noImageGeneration {
+        if (pokemon.spawnType == nil && pokemon.ranking == nil) || !ImageManager.imageGenerationEnabled {
             return baseFile
         }
 
@@ -316,7 +316,7 @@ class ImageManager {
     }
 
     private func buildPokestopImage(pokestop: Pokestop, baseFile: File) -> File {
-        if (pokestop.invasion == nil && pokestop.reward == nil) || ImageManager.noImageGeneration {
+        if (pokestop.invasion == nil && pokestop.reward == nil) || !ImageManager.imageGenerationEnabled {
             return baseFile
         }
 

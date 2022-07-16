@@ -20,6 +20,8 @@ class LevelingInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var lock = Threading.Lock() // unused
+    internal var scanNextCoords: [Coord] = [] // unused
     public weak var delegate: InstanceControllerDelegate?
 
     private static let levelXP = [
@@ -265,7 +267,7 @@ class LevelingInstanceController: InstanceControllerProto {
                     startTime.timeIntervalSince1970
             )
             let xpPerHour = Int(Double(xpDelta) / timeDelta * 3600)
-            let timeLeft = Double(xpTarget - xpCurrent) / Double(xpPerHour)
+            let timeLeft = xpPerHour == 0 ? 999.0 : Double(xpTarget - xpCurrent) / Double(xpPerHour)
 
             data.append([
                 "xp_target": xpTarget,

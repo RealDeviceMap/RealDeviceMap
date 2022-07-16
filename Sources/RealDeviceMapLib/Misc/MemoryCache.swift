@@ -27,9 +27,13 @@ public class MemoryCache<T> {
                     let hit = self.hits[element.key]
                     return hit != nil && now.timeIntervalSince(hit!) < keepTime
                 }
+                let keys = self.store.keys
                 self.lock.unlock()
+                self.hits = self.hits.filter { element in
+                    keys.contains(element.key)
+                }
                 self.hitsLock.unlock()
-                Threading.sleep(seconds: Double(interval))
+                Threading.sleep(seconds: interval)
             }
         }
     }
