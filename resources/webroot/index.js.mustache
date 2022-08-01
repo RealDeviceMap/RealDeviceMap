@@ -2497,17 +2497,7 @@ function getPokemonPopupContent (pokemon) {
         content += '<div class="col">' +
         '<img alt="" src="/image-api/misc?id=500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
         $.each(pokemon.pvp.little, function (index, ranking) {
-          let pokemonName
-          if (ranking.form !== 0) {
-            pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
-          } else {
-            pokemonName = getPokemonName(ranking.pokemon)
-          }
-          let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-          if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
-          }
-          content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+          content += getPvpRankingContent(ranking)
         })
     content += '</div>'
       }
@@ -2516,17 +2506,7 @@ function getPokemonPopupContent (pokemon) {
         content += '<div class="col">' +
         '<img alt="" src="/image-api/misc?id=1500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
         $.each(pokemon.pvp.great, function (index, ranking) {
-          let pokemonName
-          if (ranking.form !== 0) {
-            pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
-          } else {
-            pokemonName = getPokemonName(ranking.pokemon)
-          }
-          let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-          if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
-          }
-          content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+          content += getPvpRankingContent(ranking)
         })
     content += '</div>'
       }
@@ -2535,17 +2515,7 @@ function getPokemonPopupContent (pokemon) {
         content += '<div class="col">' +
         '<img alt="" src="/image-api/misc?id=2500&style=' + selectedIconStyle + '" height="16" width="16"><br>'
         $.each(pokemon.pvp.ultra, function (index, ranking) {
-          let pokemonName
-          if (ranking.form !== 0) {
-            pokemonName = getFormNameNormalized(ranking.form).concat(" ", getPokemonName(ranking.pokemon))
-          } else {
-            pokemonName = getPokemonName(ranking.pokemon)
-          }
-          let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
-          if (ranking.cp !== null) {
-            infoString += ' @' + ranking.cp + i18n('map_pokemon_cp')+' ('+i18n('map_pokemon_level')+ ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
-          }
-          content += '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
+          content += getPvpRankingContent(ranking)
         })
     content += '</div>'
       }
@@ -3486,6 +3456,22 @@ function getPokemonMarker (pokemon, ts) {
     popupPokemon = false
   });
   return marker
+}
+
+function getPvpRankingContent(ranking) {
+  let pokemonName = ''
+  if (ranking.evolution) {
+    pokemonName += (getEvolutionName(ranking.evolution) + ' ')
+  }
+  if (ranking.form) {
+    pokemonName += (getFormNameNormalized(ranking.form) + ' ')
+  }
+  pokemonName += getPokemonName(ranking.pokemon)
+  let infoString = '#' + ranking.rank + ' (' + Math.round(ranking.percentage * 1000) / 10 + '%)'
+  if (ranking.cp !== null) {
+    infoString += ' @' + ranking.cp + i18n('map_pokemon_cp') + ' (' + i18n('map_pokemon_level') + ' ' + (ranking.level) + '/' + (ranking.cap) + ')'
+  }
+  return '<small><b>' + pokemonName + ':</b> ' + infoString + '</small><br>'
 }
 
 function getPokestopMarkerIcon (pokestop, ts) {
