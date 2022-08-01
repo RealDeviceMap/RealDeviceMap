@@ -290,7 +290,8 @@ public class PVPStatsManager {
             if evolution.gender == nil || evolution.gender == gender {
                 let pvpStats = getPVPStatsWithEvolutions(
                         pokemon: evolution.pokemon, form: evolution.form, gender: gender,
-                        temporaryEvolution: temporaryEvolution, costume: costume, iv: iv, level: level, league: league
+                        temporaryEvolution: evolution.temporaryEvolution, costume: costume, iv: iv, level: level,
+                        league: league
                 )
                 result += pvpStats
             }
