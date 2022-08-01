@@ -123,6 +123,8 @@ public class PVPStatsManager {
                        let avgHeight = temporaryInfo["averageHeightM"] as? Double,
                        let avgWeight = temporaryInfo["averageWeightKg"] as? Double {
                         // add stats for temporary evolution mon
+                        print("TMP add temporary evolution for \(pokemonName): " +
+                            "\(temporaryEvolutionName) - \(temporaryEvolution.rawValue)")
                         let stat = Stats(baseAttack: tempBaseAttack, baseDefense: tempBaseDefense,
                             baseStamina: tempBaseStamina, evolutions: [],
                             baseHeight: avgHeight, baseWeight: avgWeight, costumeEvolutionOverride: nil)
