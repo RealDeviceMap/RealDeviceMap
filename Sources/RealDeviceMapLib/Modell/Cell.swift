@@ -21,7 +21,7 @@ class Cell: JSONConvertibleObject {
     var updated: UInt32?
 
     public static var cache: MemoryCache<UInt32> =
-        MemoryCache(interval: 3600, keepTime: 3600)
+        MemoryCache(interval: 900, keepTime: 3600)
 
     override func getJSONValues() -> [String: Any] {
 
