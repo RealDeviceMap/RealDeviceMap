@@ -59,8 +59,8 @@ class Cell: JSONConvertibleObject {
         }
         let updated = Cell.cache.get(id: id.toString()) ?? 0
         let now = UInt32(Date().timeIntervalSince1970)
-        if updated < now - 3600 {
-            // save only every hour
+        if updated < now - 900 {
+            // save only every 15 minutes
             return
         }
 
