@@ -20,6 +20,9 @@ class Cell: JSONConvertibleObject {
     var centerLon: Double
     var updated: UInt32?
 
+    public static var cache: MemoryCache<UInt32> =
+        MemoryCache(interval: 900, keepTime: 3600)
+
     override func getJSONValues() -> [String: Any] {
 
         let s2cell = S2Cell(cellId: S2CellId(uid: id))
@@ -48,26 +51,28 @@ class Cell: JSONConvertibleObject {
         self.updated = updated
     }
 
-    public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
+    public func save(mysql: MySQL? = nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[CELL] Failed to connect to database.")
             throw DBController.DBError()
         }
+        let updated = Cell.cache.get(id: id.toString()) ?? 0
+        let now = UInt32(Date().timeIntervalSince1970)
+        if updated < now - 900 {
+            // save only every 15 minutes
+            return
+        }
 
         var sql = """
         INSERT INTO `s2cell` (id, level, center_lat, center_lon, updated)
         VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE
+        level=VALUES(level),
+        center_lat=VALUES(center_lat),
+        center_lon=VALUES(center_lon),
+        updated=VALUES(updated)
         """
-        if update {
-            sql += """
-            ON DUPLICATE KEY UPDATE
-            level=VALUES(level),
-            center_lat=VALUES(center_lat),
-            center_lon=VALUES(center_lon),
-            updated=VALUES(updated)
-            """
-        }
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
@@ -80,7 +85,7 @@ class Cell: JSONConvertibleObject {
             Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-
+        Cell.cache.set(id: id.toString(), value: now)
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double,
