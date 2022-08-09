@@ -668,7 +668,7 @@ extension ImageManager {
                     index: index["stardust"] as? [String] ?? [String](), postfixes: [])
             case .unset:
                 return ImageManager.global.getFirstNameWithFallback(id: id,
-                    index: [(index["0"] as? String ?? "0")], postfixes: postfixes)
+                    index: index["unset"] as? [String] ?? [String](), postfixes: postfixes)
             default:
                 return ImageManager.global.getFirstNameWithFallback(id: id,
                 index: index["\(type)"] as? [String] ?? [String](), postfixes: postfixes)
