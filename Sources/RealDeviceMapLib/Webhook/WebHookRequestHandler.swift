@@ -259,6 +259,11 @@ public class WebHookRequestHandler {
                 }
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {
+                    if fsr.result != FortSearchOutProto.Result.success {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "FortSearchResponse: \(fsr.result)")
+                        continue
+                    }
                     if fsr.hasChallengeQuest && fsr.challengeQuest.hasQuest {
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
@@ -276,12 +281,22 @@ public class WebHookRequestHandler {
                 }
             } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
                 if let enr = try? EncounterOutProto(serializedData: data) {
+                    if enr.status != EncounterOutProto.Status.encounterSuccess {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "EncounterOutProto: \(enr.status)")
+                        continue
+                    }
                     encounters.append(enr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
             } else if method == 145 && trainerLevel >= 30 || method == 145 && isMadData == true {
                 if processMapPokemon, let denr = try? DiskEncounterOutProto(serializedData: data) {
+                    if denr.result != DiskEncounterOutProto.Result.success {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "DiskEncounterOutProto: \(denr.result)")
+                        continue
+                    }
                     diskEncounters.append(denr)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed DiskEncounterResponse")
@@ -294,6 +309,11 @@ public class WebHookRequestHandler {
                 }
             } else if method == 156 {
                 if let ggi = try? GymGetInfoOutProto(serializedData: data) {
+                    if ggi.result != GymGetInfoOutProto.Result.success {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "GymGetInfoResponse: \(ggi.result)")
+                        continue
+                    }
                     gymInfos.append(ggi)
                 } else {
                     Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GymGetInfoResponse")
@@ -301,6 +321,11 @@ public class WebHookRequestHandler {
             } else if method == 106 {
                 containsGMO = true
                 if let gmo = try? GetMapObjectsOutProto(serializedData: data) {
+                    if gmo.status != GetMapObjectsOutProto.Status.success {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "GMO: \(gmo.status)")
+                        continue
+                    }
                     isInvalidGMO = false
 
                     var newWildPokemons = [(cell: UInt64, data: WildPokemonProto,
@@ -801,12 +826,6 @@ public class WebHookRequestHandler {
             if !encounters.isEmpty {
                 let start = Date()
                 for encounter in encounters {
-                    if encounter.status != EncounterOutProto.Status.encounterSuccess {
-                        Log.debug(
-                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter no EncounterSuccess." +
-                                " encounter: \(encounter)")
-                        continue
-                    }
                     let pokemon: Pokemon?
                     do {
                         pokemon = try Pokemon.getWithId(
@@ -844,12 +863,6 @@ public class WebHookRequestHandler {
             if !diskEncounters.isEmpty {
                 let start = Date()
                 for diskEncounter in diskEncounters {
-                    if diskEncounter.result != DiskEncounterOutProto.Result.success {
-                        Log.debug(
-                            message: "[WebHookRequestHandler] [\(uuid ?? "?")] DiskEncounter no EncounterSuccess." +
-                                " diskEncounter: \(diskEncounter)")
-                        continue
-                    }
                     let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
                     let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
                     let pokemon: Pokemon?
