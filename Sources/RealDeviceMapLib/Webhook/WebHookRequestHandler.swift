@@ -681,8 +681,10 @@ public class WebHookRequestHandler {
 
             let startWildPokemon = Date()
             for wildPokemon in wildPokemons {
-                let pokemon = Pokemon(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell,
-                                      timestampMs: wildPokemon.timestampMs, username: username, isEvent: isEvent)
+                let id = wildPokemon.data.encounterID.description
+                let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent)) ?? Pokemon()
+                pokemon.updateFromWild(mysql: mysql, wildPokemon: wildPokemon.data, cellId: wildPokemon.cell,
+                    timestampMs: wildPokemon.timestampMs, username: username, isEvent: isEvent)
                 try? pokemon.save(mysql: mysql)
             }
             if !wildPokemons.isEmpty {
@@ -694,9 +696,15 @@ public class WebHookRequestHandler {
 
             let startPokemon = Date()
             for nearbyPokemon in nearbyPokemons {
-                let pokemon = try? Pokemon(mysql: mysql, nearbyPokemon: nearbyPokemon.data,
-                                           cellId: nearbyPokemon.cell, username: username, isEvent: isEvent)
-                try? pokemon?.save(mysql: mysql)
+                let id = nearbyPokemon.data.encounterID.description
+                let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent)) ?? Pokemon()
+                do {
+                    try pokemon.updateFromNearby(mysql: mysql, nearbyPokemon: nearbyPokemon.data,
+                        cellId: nearbyPokemon.cell, username: username, isEvent: isEvent)
+                } catch {
+                    continue
+                }
+                try? pokemon.save(mysql: mysql)
             }
             if !nearbyPokemons.isEmpty {
                 Log.debug(
@@ -707,17 +715,23 @@ public class WebHookRequestHandler {
 
             let startMapPokemon = Date()
             for mapPokemon in mapPokemons {
-                let pokemon = try? Pokemon(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
-                    username: username, isEvent: isEvent)
-                try? pokemon?.save(mysql: mysql)
+                let id = mapPokemon.pokeData.encounterID.description
+                let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent)) ?? Pokemon()
+                do {
+                    try pokemon.updateFromMap(mysql: mysql, mapPokemon: mapPokemon.pokeData, cellId: mapPokemon.cell,
+                        username: username, isEvent: isEvent)
+                } catch {
+                    continue
+                }
                 // Check if we have a pending disk encounter cache.
                 let displayId = mapPokemon.pokeData.pokemonDisplay.displayID
                 let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
                 if let cachedEncounter = Pokemon.diskEncounterCache?.get(id: displayIdCacheKey) {
-                    pokemon?.addDiskEncounter(mysql: mysql, diskEncounterData: cachedEncounter, username: username)
-                    try? pokemon?.save(mysql: mysql, updateIV: true)
+                    pokemon.updateFromDiskEncounterProto(mysql: mysql, diskEncounterData: cachedEncounter,
+                        username: username)
                     Log.debug(message: "[WebHookRequestHandler] Found DiskEncounter in Cache: \(displayIdCacheKey)")
                 }
+                try? pokemon.save(mysql: mysql)
             }
             if !mapPokemons.isEmpty {
                 Log.debug(
@@ -826,33 +840,14 @@ public class WebHookRequestHandler {
             if !encounters.isEmpty {
                 let start = Date()
                 for encounter in encounters {
-                    let pokemon: Pokemon?
-                    do {
-                        pokemon = try Pokemon.getWithId(
-                            mysql: mysql,
-                            id: encounter.pokemon.encounterID.description,
-                            isEvent: isEvent
-                        )
-                    } catch {
-                        pokemon = nil
-                    }
-                    if pokemon != nil {
-                        pokemon!.addEncounter(mysql: mysql, encounterData: encounter, username: username)
-                        try? pokemon!.save(mysql: mysql, updateIV: true)
-                    } else {
-                        let centerCoord = LocationCoordinate2D(latitude: encounter.pokemon.latitude,
-                                                                 longitude: encounter.pokemon.longitude)
-                        let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 15)
-                        let newPokemon = Pokemon(
-                            wildPokemon: encounter.pokemon,
-                            cellId: cellID.uid,
-                            timestampMs: UInt64(Date().timeIntervalSince1970 * 1000),
-                            username: username,
-                            isEvent: isEvent
-                        )
-                        newPokemon.addEncounter(mysql: mysql, encounterData: encounter, username: username)
-                        try? newPokemon.save(mysql: mysql, updateIV: true)
-                    }
+                    let id = encounter.pokemon.encounterID.description
+                    Log.debug(message: "[WebHookRequestHandler] found encounter \(id)")
+                    let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent))
+                        ?? Pokemon()
+                    pokemon.updateFromEncounterProto(mysql: mysql, encounterData: encounter,
+                        username: username, isEvent: isEvent)
+                    try? pokemon.save(mysql: mysql)
+
                 }
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Encounter Count: \(encounters.count) " +
@@ -864,20 +859,21 @@ public class WebHookRequestHandler {
                 let start = Date()
                 for diskEncounter in diskEncounters {
                     let displayId = diskEncounter.pokemon.pokemonDisplay.displayID
-                    let displayIdCacheKey = UInt64(bitPattern: displayId).toString()
+                    let cacheKey = UInt64(bitPattern: displayId).toString()
                     let pokemon: Pokemon?
                     do {
-                        pokemon = try Pokemon.getWithId(mysql: mysql, id: displayIdCacheKey, isEvent: isEvent)
+                        pokemon = try Pokemon.getWithId(mysql: mysql, id: cacheKey, copy: true, isEvent: isEvent)
                     } catch {
                         pokemon = nil
                     }
                     if pokemon != nil {
-                        pokemon!.addDiskEncounter(mysql: mysql, diskEncounterData: diskEncounter, username: username)
-                        try? pokemon!.save(mysql: mysql, updateIV: true)
+                        pokemon!.updateFromDiskEncounterProto(mysql: mysql, diskEncounterData: diskEncounter,
+                            username: username)
+                        try? pokemon!.save(mysql: mysql)
                     } else {
-                        // MARK: logic for DiskEncounter before MapPokemon
-                        Pokemon.diskEncounterCache?.set(id: displayIdCacheKey, value: diskEncounter)
-                        Log.debug(message: "[WebHookRequestHandler] Write DiskEncounter in cache: \(displayIdCacheKey)")
+                        // No pokemon found, write in cache and process later
+                        Pokemon.diskEncounterCache?.set(id: cacheKey, value: diskEncounter)
+                        Log.debug(message: "[WebHookRequestHandler] Write DiskEncounter in cache: \(cacheKey)")
                     }
                 }
                 Log.debug(

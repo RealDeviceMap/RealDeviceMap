@@ -532,7 +532,7 @@ class AutoInstanceController: InstanceControllerProto {
                             accountsLock.lock()
                             if accounts[uuid] == nil {
                                 newUsername = account?.username
-                                accounts[uuid] = account?.username
+                                accounts[uuid] = newUsername
                                 Log.debug(
                                     message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
                                              "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
