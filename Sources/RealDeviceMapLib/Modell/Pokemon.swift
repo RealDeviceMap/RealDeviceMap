@@ -1281,7 +1281,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.weight = nil
 
         if weather == 0 && level ?? 0 > 30 {
-            Log.debug(message: "[POKEMON] Pokemon \(id) is a weather boosted Ditto level \(level ?? 0)- reset IV")
+            Log.debug(message: "[POKEMON] Pokemon \(id) is a weather boosted Ditto level \(level ?? 0) - reset IV")
+            self.level! -= 5
             self.clearEncounterDetails()
         }
     }
