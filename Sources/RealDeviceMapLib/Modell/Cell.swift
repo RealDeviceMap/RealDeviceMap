@@ -64,7 +64,7 @@ class Cell: JSONConvertibleObject {
             return
         }
 
-        var sql = """
+        let sql = """
         INSERT INTO `s2cell` (id, level, center_lat, center_lon, updated)
         VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())
         ON DUPLICATE KEY UPDATE
