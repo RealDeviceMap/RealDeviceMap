@@ -129,7 +129,7 @@ class IVInstanceController: InstanceControllerProto {
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
 
-        if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
+        if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp) >= 600 {
             return getTask(mysql: mysql, uuid: uuid, username: username, account: account, timestamp: timestamp)
         }
 
