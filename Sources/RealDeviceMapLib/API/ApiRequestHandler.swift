@@ -2259,7 +2259,6 @@ public class ApiRequestHandler {
                     return response.respondWithError(status: .custom(code: 404, message: "Gym not found"))
                 }
                 oldGym.name = name
-                oldGym.hasChanges = true
                 try oldGym.save()
                 response.respondWithOk()
             } catch {

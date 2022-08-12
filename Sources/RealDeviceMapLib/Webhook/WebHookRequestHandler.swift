@@ -54,6 +54,11 @@ public class WebHookRequestHandler {
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
 
+    private static let clearingLock = Threading.Lock()
+    private static var clearingTimestamp: UInt64 = 0
+    private static var gymIdsPerCellLookup = [UInt64: [String]]()
+    private static var stopIdsPerCellLookup = [UInt64: [String]]()
+
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
         threadLimitLock.lock()
@@ -743,7 +748,9 @@ public class WebHookRequestHandler {
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
-                    let gym = Gym(fortData: fort.data, cellId: fort.cell)
+                    let id = fort.data.fortID
+                    let gym = (try? Gym.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true)) ?? Gym()
+                    gym.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
                     if gymIdsPerCell[fort.cell] == nil {
                         gymIdsPerCell[fort.cell] = [String]()
@@ -770,12 +777,12 @@ public class WebHookRequestHandler {
                     if fort.fortType == .gym {
                         let gym: Gym?
                         do {
-                            gym = try Gym.getWithId(mysql: mysql, id: fort.id)
+                            gym = try Gym.getWithId(mysql: mysql, id: fort.id, copy: true)
                         } catch {
                             gym = nil
                         }
                         if gym != nil {
-                            gym!.addDetails(fortData: fort)
+                            gym!.updateFromFortDetails(fortData: fort)
                             try? gym!.save(mysql: mysql)
                         }
                     } else if fort.fortType == .checkpoint {
@@ -802,12 +809,13 @@ public class WebHookRequestHandler {
                 for gymInfo in gymInfos {
                     let gym: Gym?
                     do {
-                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID)
+                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID,
+                            copy: true)
                     } catch {
                         gym = nil
                     }
                     if gym != nil {
-                        gym!.addDetails(gymInfo: gymInfo)
+                        gym!.updateFromGymInfo(gymInfo: gymInfo)
                         try? gym!.save(mysql: mysql)
                     }
                 }
@@ -883,21 +891,40 @@ public class WebHookRequestHandler {
             }
 
             if enableClearing {
-                for gymId in gymIdsPerCell {
-                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key),
-                       cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Gyms.")
+                let lastCleared = clearingLock.doWithLock { clearingTimestamp }
+                if lastCleared < timestamp - 900 {
+                    clearingLock.doWithLock {
+                        for (cellId, gymIds) in gymIdsPerCellLookup {
+                            if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymIds, cellId: cellId),
+                               cleared != 0 {
+                                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                    "Cleared \(cleared) old Gyms.")
+                            }
+                        }
+                        gymIdsPerCellLookup = [:]
+                        for (cellId, stopIds) in stopIdsPerCellLookup {
+                            if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopIds, cellId: cellId),
+                               cleared != 0 {
+                                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                    "Cleared \(cleared) old Pokestops.")
+                            }
+                        }
+                        stopIdsPerCellLookup = [:]
+                        clearingTimestamp = timestamp
                     }
                 }
-                for stopId in stopsIdsPerCell {
-                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key),
-                       cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Pokestops.")
+                for (cellId, gymIds) in gymIdsPerCell {
+                    clearingLock.doWithLock {
+                        gymIdsPerCellLookup[cellId] = (gymIdsPerCellLookup[cellId] ?? []) + gymIds
+                    }
+                }
+                for (cellId, stopIds) in stopsIdsPerCell {
+                    clearingLock.doWithLock {
+                        stopIdsPerCellLookup[cellId] = (stopIdsPerCellLookup[cellId] ?? []) + stopIds
                     }
                 }
             }
         }
-
     }
 
     static func controlerHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
