@@ -405,7 +405,7 @@ public class WebHookController {
     }
 
     private func sendEvents(events: [[String: Any]], url: String) {
-        Log.debug(message: "[WebHookController] Sending \(events.count) events to" +
+        Log.debug(message: "[WebHookController] Sending \(events.count) event(s) to " +
             "\(webhooks.count) endpoints")
         guard let body = try? events.jsonEncodedString() else {
             Log.error(message: "[WebHookController] Failed to parse events into json string")
