@@ -893,7 +893,7 @@ public class WebHookRequestHandler {
             if enableClearing {
                 let lastCleared = clearingLock.doWithLock { clearingTimestamp }
                 if lastCleared < timestamp - 900 {
-                    Log.debug("TMP clearing old gyms/stops now, if there are")
+                    Log.debug(message: "TMP clearing old gyms/stops now, if there are")
                     clearingLock.doWithLock {
                         for (cellId, gymIds) in gymIdsPerCellLookup {
                             if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymIds, cellId: cellId),
