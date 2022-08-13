@@ -243,7 +243,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         } else {
             if fortData.hasGymDisplay {
                 let totalCp = UInt32(fortData.gymDisplay.totalGymCp)
-                if (self.totalCp ?? 0) - totalCp > 100 || totalCp - (self.totalCp ?? 0) > 100 ||
+                if (self.totalCp ?? 0) > totalCp + 100 || totalCp > (self.totalCp ?? 0) + 100 ||
                        (self.updated ?? 0) < now - 600 {
                     // update only when total cp changed more than 100 or when last updated was 10 minutes ago
                     self.totalCp = totalCp
