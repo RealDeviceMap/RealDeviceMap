@@ -76,12 +76,17 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 "slots_available": availableSlots ?? 6,
                 "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
+                "in_battle": inBattle ?? false,
+                "total_cp": totalCp ?? 0,
                 "sponsor_id": sponsorId ?? 0,
                 "partner_id": partnerId ?? 0,
                 "power_up_points": powerUpPoints ?? 0,
                 "power_up_level": powerUpLevel ?? 0,
                 "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
-                "ar_scan_eligible": arScanEligible ?? 0
+                "ar_scan_eligible": arScanEligible ?? 0,
+                "power_up_points": powerUpPoints ?? 0,
+                "power_up_level": powerUpLevel ?? 0,
+                "power_up_end_timestamp": powerUpEndTimestamp ?? 0
             ]
         } else if type == "egg" || type == "raid" {
             realType = "raid"
@@ -107,11 +112,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "is_exclusive": raidIsExclusive ?? false,
                 "sponsor_id": sponsorId ?? 0,
-                "partner_id": partnerId ?? 0,
-                "power_up_points": powerUpPoints ?? 0,
-                "power_up_level": powerUpLevel ?? 0,
-                "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
-                "ar_scan_eligible": arScanEligible ?? 0
+                "partner_id": partnerId ?? 0
             ]
         } else {
             realType = "unknown"
