@@ -80,9 +80,6 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 "total_cp": totalCp ?? 0,
                 "sponsor_id": sponsorId ?? 0,
                 "partner_id": partnerId ?? 0,
-                "power_up_points": powerUpPoints ?? 0,
-                "power_up_level": powerUpLevel ?? 0,
-                "power_up_end_timestamp": powerUpEndTimestamp ?? 0,
                 "ar_scan_eligible": arScanEligible ?? 0,
                 "power_up_points": powerUpPoints ?? 0,
                 "power_up_level": powerUpLevel ?? 0,
@@ -1057,8 +1054,8 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     // =================================================================================================================
 
     private static func createGymWebhooks(old: Gym?, new: Gym) {
-        if old == nil ||
-               old!.availableSlots != new.availableSlots || old!.teamId != new.teamId || old!.inBattle != new.inBattle {
+        if old == nil || old!.name != new.name || old!.availableSlots != new.availableSlots ||
+               old!.teamId != new.teamId || old!.inBattle != new.inBattle {
             WebHookController.global.addGymEvent(gym: new)
         }
         if new.raidSpawnTimestamp ?? 0 > 0 && (
