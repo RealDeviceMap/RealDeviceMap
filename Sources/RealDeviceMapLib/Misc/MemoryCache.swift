@@ -15,8 +15,10 @@ public class MemoryCache<T> {
     private var store = [String: T]()
     private let hitsLock = Threading.Lock()
     private var hits = [String: Date]()
+    private var extendTtl: Bool
 
-    public init(interval: Double, keepTime: Double) {
+    public init(interval: Double, keepTime: Double, extendTtlOnAccess: Bool = true) {
+        extendTtl = extendTtlOnAccess
         let clearingQueue = Threading.getQueue(name: "MemoryCache-\(UUID().uuidString)-clearer", type: .serial)
         clearingQueue.dispatch {
             while true {
@@ -42,7 +44,7 @@ public class MemoryCache<T> {
         lock.readLock()
         let value = store[id]
         lock.unlock()
-        if value != nil {
+        if extendTtl && value != nil {
             hitsLock.lock()
             hits[id] = Date()
             hitsLock.unlock()
