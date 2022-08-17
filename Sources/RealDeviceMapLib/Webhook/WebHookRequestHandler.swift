@@ -54,11 +54,6 @@ public class WebHookRequestHandler {
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
 
-    private static let clearingLock = Threading.Lock()
-    private static var clearingTimestamp: UInt64 = 0
-    private static var gymIdsPerCellLookup = [UInt64: [String]]()
-    private static var stopIdsPerCellLookup = [UInt64: [String]]()
-
     // swiftlint:disable:next large_tuple
     internal static func getThreadLimits() -> (current: UInt32, total: UInt64, ignored: UInt64) {
         threadLimitLock.lock()
@@ -891,38 +886,31 @@ public class WebHookRequestHandler {
             }
 
             if enableClearing {
-                let lastCleared = clearingLock.doWithLock { clearingTimestamp }
-                if lastCleared < timestamp - 900 {
-                    Log.debug(message: "TMP clearing old gyms/stops now, if there are")
-                    clearingLock.doWithLock {
-                        for (cellId, gymIds) in gymIdsPerCellLookup {
-                            if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymIds, cellId: cellId),
-                               cleared != 0 {
-                                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
-                                    "Cleared \(cleared) old Gyms.")
-                            }
-                        }
-                        gymIdsPerCellLookup = [:]
-                        for (cellId, stopIds) in stopIdsPerCellLookup {
-                            if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopIds, cellId: cellId),
-                               cleared != 0 {
-                                Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
-                                    "Cleared \(cleared) old Pokestops.")
-                            }
-                        }
-                        stopIdsPerCellLookup = [:]
-                        clearingTimestamp = timestamp
-                    }
-                }
                 for (cellId, gymIds) in gymIdsPerCell {
-                    clearingLock.doWithLock {
-                        gymIdsPerCellLookup[cellId] = (gymIdsPerCellLookup[cellId] ?? []) + gymIds
+                    let cachedCell = Cell.cache.get(id: cellId.toString())
+                    if cachedCell?.gymCount != gymIds.count {
+                        Log.debug(message: "[CLEARING] clear old gyms: " +
+                            "\(cachedCell?.gymCount ?? 0) != \(gymIds.count)")
+                        if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymIds, cellId: cellId),
+                           cleared != 0 {
+                            Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                "Cleared \(cleared) old Gyms.")
+                        }
                     }
+                    cachedCell?.gymCount = gymIds.count
                 }
                 for (cellId, stopIds) in stopsIdsPerCell {
-                    clearingLock.doWithLock {
-                        stopIdsPerCellLookup[cellId] = (stopIdsPerCellLookup[cellId] ?? []) + stopIds
+                    let cachedCell = Cell.cache.get(id: cellId.toString())
+                    if cachedCell?.stopCount != stopIds.count {
+                        Log.debug(message: "[CLEARING] clear old stops: " +
+                            "\(cachedCell?.stopCount ?? 0) != \(stopIds.count)")
+                        if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopIds, cellId: cellId),
+                           cleared != 0 {
+                            Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                "Cleared \(cleared) old Pokestops.")
+                        }
                     }
+                    cachedCell?.stopCount = stopIds.count
                 }
             }
         }
