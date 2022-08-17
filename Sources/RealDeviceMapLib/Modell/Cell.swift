@@ -22,7 +22,7 @@ class Cell: JSONConvertibleObject {
     var gymCount: Int = 0
     var updated: UInt32?
 
-    public static var cache: MemoryCache<Cell> = MemoryCache(interval: 900, keepTime: 3600)
+    public static var cache: MemoryCache<Cell>?
 
     override func getJSONValues() -> [String: Any] {
 
@@ -58,7 +58,7 @@ class Cell: JSONConvertibleObject {
             Log.error(message: "[CELL] Failed to connect to database.")
             throw DBController.DBError()
         }
-        let oldCell = Cell.cache.get(id: id.toString())
+        let oldCell = Cell.cache?.get(id: id.toString())
         let now = UInt32(Date().timeIntervalSince1970)
         if oldCell != nil && oldCell!.updated ?? 0 > now - 900 {
             // save only every 15 minutes
@@ -93,7 +93,7 @@ class Cell: JSONConvertibleObject {
             Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-        Cell.cache.set(id: id.toString(), value: self)
+        Cell.cache?.set(id: id.toString(), value: self)
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double,

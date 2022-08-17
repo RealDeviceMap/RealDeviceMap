@@ -887,7 +887,7 @@ public class WebHookRequestHandler {
 
             if enableClearing {
                 for (cellId, gymIds) in gymIdsPerCell {
-                    let cachedCell = Cell.cache.get(id: cellId.toString())
+                    let cachedCell = Cell.cache?.get(id: cellId.toString())
                     if cachedCell?.gymCount != gymIds.count {
                         Log.debug(message: "[CLEARING] clear old gyms: " +
                             "\(cachedCell?.gymCount ?? 0) != \(gymIds.count)")
@@ -900,7 +900,7 @@ public class WebHookRequestHandler {
                     cachedCell?.gymCount = gymIds.count
                 }
                 for (cellId, stopIds) in stopsIdsPerCell {
-                    let cachedCell = Cell.cache.get(id: cellId.toString())
+                    let cachedCell = Cell.cache?.get(id: cellId.toString())
                     if cachedCell?.stopCount != stopIds.count {
                         Log.debug(message: "[CLEARING] clear old stops: " +
                             "\(cachedCell?.stopCount ?? 0) != \(stopIds.count)")

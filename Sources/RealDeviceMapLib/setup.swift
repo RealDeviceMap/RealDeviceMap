@@ -58,12 +58,14 @@ public func setupRealDeviceMap() {
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
         )
+        Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime,
+            extendTtlOnAccess: false)
         Pokestop.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Gym.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         SpawnPoint.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Weather.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Incident.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        Cell.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     } else {
         Log.info(message: "[MAIN] Memory Cache deactivated")
     }
