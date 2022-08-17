@@ -12,7 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
-public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
+public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
 
     public static var lureTime: UInt32 = 1800
 
@@ -133,8 +133,10 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var lureExpireTimestamp: UInt32?
     var lastModifiedTimestamp: UInt32?
     var name: String?
+    var description: String?
+    var promoDescription: String?
     var url: String?
-    var sponsorId: UInt16?
+    var sponsorId: UInt16? // unused
     var partnerId: String?
     var updated: UInt32?
     var arScanEligible: Bool?
@@ -159,11 +161,14 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     var lureId: Int16?
     var incidents: [Incident]
 
-    var hasChanges = false
-    var hasQuestChanges = false
-    var hasAlternativeQuestChanges = false
-
     public static var cache: MemoryCache<Pokestop>?
+
+    override init() {
+        self.id = ""
+        self.lat = 0.0
+        self.lon = 0.0
+        self.incidents = []
+    }
 
     init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?,
          lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?,
@@ -208,45 +213,34 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         self.incidents = incidents
     }
 
-    init(fortData: PokemonFortProto, cellId: UInt64) {
-
+    func updateFromFort(fortData: PokemonFortProto, cellId: UInt64) {
+        let now = UInt32(Date().timeIntervalSince1970)
         self.id = fortData.fortID
         self.lat = fortData.latitude
         self.lon = fortData.longitude
-        self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
-        if fortData.sponsor != .unset {
-            self.sponsorId = UInt16(fortData.sponsor.rawValue)
-        }
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
-        let now = UInt32(Date().timeIntervalSince1970)
-        let powerUpLevelExpirationMs = UInt32(fortData.powerUpLevelExpirationMs / 1000)
-        self.powerUpPoints = UInt32(fortData.powerUpProgressPoints)
-        if fortData.powerUpProgressPoints < 50 {
-            self.powerUpLevel = 0
-        } else if fortData.powerUpProgressPoints < 100 && powerUpLevelExpirationMs > now {
-            self.powerUpLevel = 1
-            self.powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else if fortData.powerUpProgressPoints < 150 && powerUpLevelExpirationMs > now {
-            self.powerUpLevel = 2
-            self.powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else if powerUpLevelExpirationMs > now {
-            self.powerUpLevel = 3
-            self.powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else {
-            self.powerUpLevel = 0
-        }
+        self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
+
+        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpPoints(now: now)
 
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
-        if fortData.activeFortModifier.contains(.troyDisk) ||
-            fortData.activeFortModifier.contains(.troyDiskGlacial) ||
-            fortData.activeFortModifier.contains(.troyDiskMossy) ||
-            fortData.activeFortModifier.contains(.troyDiskMagnetic) ||
-            fortData.activeFortModifier.contains(.troyDiskRainy) {
-            self.lureExpireTimestamp = lastModifiedTimestamp + Pokestop.lureTime
-            self.lureId = Int16(fortData.activeFortModifier[0].rawValue)
-        }
         self.lastModifiedTimestamp = lastModifiedTimestamp
+        if fortData.activeFortModifier.count > 0 {
+            let lureId = Int16(fortData.activeFortModifier[0].rawValue)
+            if lureId >= 501 && lureId <= 505 {
+                let lureEnd = lastModifiedTimestamp + Pokestop.lureTime
+                if self.lureId != lureId {
+                    self.lureExpireTimestamp = lureEnd
+                    self.lureId = lureId
+                } else {
+                    if now > lureEnd + 30 { // wait some time after lure end before a restart in case of timing issue
+                        // If a lure needs to be restarted
+                        self.lureExpireTimestamp = lureEnd
+                    }
+                }
+            }
+        }
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
         }
@@ -259,38 +253,35 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             Incident(now: now, pokestopId: fortData.fortID, pokestopDisplay: pokestopDisplay) })
     }
 
-    public func addDetails(fortData: FortDetailsOutProto) {
-
+    func updateFromFortDetails(fortData: FortDetailsOutProto) {
         self.id = fortData.id
         self.lat = fortData.latitude
         self.lon = fortData.longitude
         if !fortData.imageURL.isEmpty {
-            let url = fortData.imageURL[0]
-            if self.url != url {
-                hasChanges = true
-            }
-            self.url = url
+            self.url = fortData.imageURL[0]
         }
-        let name = fortData.name
-        if self.name != name {
-            hasChanges = true
-        }
-        self.name = name
+        self.name = fortData.name
+        self.description = fortData.description_p
 
+        if fortData.promoDescription.count != 0 {
+            self.promoDescription = fortData.promoDescription.jsonEncodeForceTry()
+            Log.debug(message: "[POKESTOP] \(id) with promo: \(promoDescription ?? "")")
+        } else {
+            self.promoDescription = nil
+        }
     }
 
-    public func addQuest(title: String, questData: QuestProto, hasARQuest: Bool) {
-
-        let questType = questData.questType.rawValue.toUInt32()
-        let questTarget = UInt16(questData.goal.target)
-        let questTemplate = questData.templateID.lowercased()
-        let questTitle = title.lowercased()
-        self.hasChanges = true
+    public func updatePokestopFromQuestProto(questData: ClientQuestProto, hasARQuest: Bool) {
+        let quest = questData.quest
+        let questType = quest.questType.rawValue.toUInt32()
+        let questTarget = UInt16(quest.goal.target)
+        let questTemplate = quest.templateID.lowercased()
+        let questTitle = questData.questDisplay.title.lowercased()
 
         var conditions = [[String: Any]]()
         var rewards = [[String: Any]]()
 
-        for conditionData in questData.goal.condition {
+        for conditionData in quest.goal.condition {
             var condition = [String: Any]()
             var infoData = [String: Any]()
             condition["type"] = conditionData.type.rawValue
@@ -435,7 +426,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             conditions.append(condition)
         }
 
-        for rewardData in questData.questRewards {
+        for rewardData in quest.questRewards {
             var reward = [String: Any]()
             var infoData = [String: Any]()
             reward["type"] = rewardData.type.rawValue
@@ -509,7 +500,6 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
              self.alternativeQuestConditions = questConditions
              self.alternativeQuestRewards = questRewards
              self.alternativeQuestTimestamp = questTimestamp
-             self.hasAlternativeQuestChanges = true
          } else {
              self.questType = questType
              self.questTarget = questTarget
@@ -518,12 +508,11 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
              self.questConditions = questConditions
              self.questRewards = questRewards
              self.questTimestamp = questTimestamp
-             self.hasQuestChanges = true
          }
 
     }
 
-    public func save(mysql: MySQL?=nil, updateQuest: Bool=false) throws {
+    public func save(mysql: MySQL?=nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[POKESTOP] Failed to connect to database.")
@@ -536,9 +525,19 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         } catch {
             oldPokestop = nil
         }
-        let mysqlStmt = MySQLStmt(mysql)
 
         let now = UInt32(Date().timeIntervalSince1970)
+
+        if oldPokestop != nil && !Pokestop.hasChanges(old: oldPokestop!, new: self) {
+            if self.updated! > now - 600 {
+                // if a pokestop is unchanged but we did see it again after 10 minutes, then save again
+                return
+            }
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+
+        self.updated = now
 
         if oldPokestop == nil {
             let sql = """
@@ -551,110 +550,48 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
                     power_up_points, power_up_level, power_up_end_timestamp, updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                    ?, UNIX_TIMESTAMP())
             """
-            self.updated = now
             _ = mysqlStmt.prepare(statement: sql)
             mysqlStmt.bindParam(id)
         } else {
-            if oldPokestop!.cellId != nil && self.cellId == nil {
-                self.cellId = oldPokestop!.cellId
-            }
-
-            if oldPokestop!.name != nil && self.name == nil {
-                self.name = oldPokestop!.name
-            }
-            if oldPokestop!.url != nil && self.url == nil {
-                self.url = oldPokestop!.url
-            }
-            if updateQuest && oldPokestop!.questType != nil && self.questType == nil {
-                self.questType = oldPokestop!.questType
-                self.questTarget = oldPokestop!.questTarget
-                self.questConditions = oldPokestop!.questConditions
-                self.questRewards = oldPokestop!.questRewards
-                self.questTimestamp = oldPokestop!.questTimestamp
-                self.questTemplate = oldPokestop!.questTemplate
-                self.questTitle = oldPokestop!.questTitle
-            }
-            if updateQuest && oldPokestop!.alternativeQuestType != nil && self.alternativeQuestType == nil {
-                self.alternativeQuestType = oldPokestop!.alternativeQuestType
-                self.alternativeQuestTarget = oldPokestop!.alternativeQuestTarget
-                self.alternativeQuestConditions = oldPokestop!.alternativeQuestConditions
-                self.alternativeQuestRewards = oldPokestop!.alternativeQuestRewards
-                self.alternativeQuestTimestamp = oldPokestop!.alternativeQuestTimestamp
-                self.alternativeQuestTemplate = oldPokestop!.alternativeQuestTemplate
-                self.alternativeQuestTitle = oldPokestop!.alternativeQuestTitle
-            }
-            if oldPokestop!.lureId != nil && self.lureId == nil {
-                self.lureId = oldPokestop!.lureId
-            }
-
-            guard Pokestop.shouldUpdate(old: oldPokestop!, new: self) else {
-                return
-            }
-
-            if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
-                WebHookController.global.addLureEvent(pokestop: self)
-            }
-            if updateQuest && questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0 {
-                WebHookController.global.addQuestEvent(pokestop: self)
-            }
-            if updateQuest && alternativeQuestTimestamp ?? 0 > oldPokestop!.alternativeQuestTimestamp ?? 0 {
-                WebHookController.global.addAlternativeQuestEvent(pokestop: self)
-            }
-
-            var questSQL = ""
-            if updateQuest && questTimestamp ?? 0 > 0 {
-                questSQL += "quest_type = ?, quest_timestamp = ?, quest_target = ?, quest_conditions = ?, " +
-                            "quest_rewards = ?, quest_template = ?, quest_title = ?,"
-            }
-            if updateQuest && alternativeQuestTimestamp ?? 0 > 0 {
-                questSQL += "alternative_quest_type = ?, alternative_quest_timestamp = ?, " +
-                            "alternative_quest_target = ?, alternative_quest_conditions = ?, " +
-                            "alternative_quest_rewards = ?, alternative_quest_template = ?," +
-                            "alternative_quest_title = ?,"
-            }
-
-            let nameSQL = name != nil ? "name = ?, " : ""
             let sql = """
                 UPDATE pokestop
-                SET lat = ?, lon = ?, \(nameSQL) url = ?, enabled = ?, lure_expire_timestamp = ?,
-                    last_modified_timestamp = ?, updated = UNIX_TIMESTAMP(), \(questSQL) cell_id = ?,
-                    lure_id = ?, deleted = false, sponsor_id = ?, partner_id = ?, ar_scan_eligible = ?,
-                    power_up_points = ?, power_up_level = ?, power_up_end_timestamp = ?
+                SET lat = ?, lon = ?, name = ?, url = ?, enabled = ?, lure_expire_timestamp = ?,
+                    last_modified_timestamp = ?, quest_type = ?, quest_timestamp = ?,
+                    quest_target = ?, quest_conditions = ?, quest_rewards = ?, quest_template = ?, quest_title = ?,
+                    alternative_quest_type = ?, alternative_quest_timestamp = ?, alternative_quest_target = ?,
+                    alternative_quest_conditions = ?, alternative_quest_rewards = ?, alternative_quest_template = ?,
+                    alternative_quest_title = ?, cell_id = ?, lure_id = ?, deleted = false, sponsor_id = ?,
+                    partner_id = ?, ar_scan_eligible = ?, power_up_points = ?, power_up_level = ?,
+                    power_up_end_timestamp = ?, updated = ?
                 WHERE id = ?
             """
-            self.updated = now
+
             _ = mysqlStmt.prepare(statement: sql)
         }
 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
-        if oldPokestop == nil || name != nil {
-            mysqlStmt.bindParam(name)
-        }
+        mysqlStmt.bindParam(name)
         mysqlStmt.bindParam(url)
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
         mysqlStmt.bindParam(lastModifiedTimestamp)
-        if (updateQuest && questTimestamp ?? 0 > 0) || oldPokestop == nil {
-            mysqlStmt.bindParam(questType)
-            mysqlStmt.bindParam(questTimestamp)
-            mysqlStmt.bindParam(questTarget)
-            mysqlStmt.bindParam(questConditions.jsonEncodeForceTry())
-            mysqlStmt.bindParam(questRewards.jsonEncodeForceTry())
-            mysqlStmt.bindParam(questTemplate)
-            mysqlStmt.bindParam(questTitle)
-        }
-        if (updateQuest && alternativeQuestTimestamp ?? 0 > 0) || oldPokestop == nil {
-            mysqlStmt.bindParam(alternativeQuestType)
-            mysqlStmt.bindParam(alternativeQuestTimestamp)
-            mysqlStmt.bindParam(alternativeQuestTarget)
-            mysqlStmt.bindParam(alternativeQuestConditions.jsonEncodeForceTry())
-            mysqlStmt.bindParam(alternativeQuestRewards.jsonEncodeForceTry())
-            mysqlStmt.bindParam(alternativeQuestTemplate)
-            mysqlStmt.bindParam(alternativeQuestTitle)
-        }
+        mysqlStmt.bindParam(questType)
+        mysqlStmt.bindParam(questTimestamp)
+        mysqlStmt.bindParam(questTarget)
+        mysqlStmt.bindParam(questConditions.jsonEncodeForceTry())
+        mysqlStmt.bindParam(questRewards.jsonEncodeForceTry())
+        mysqlStmt.bindParam(questTemplate)
+        mysqlStmt.bindParam(questTitle)
+        mysqlStmt.bindParam(alternativeQuestType)
+        mysqlStmt.bindParam(alternativeQuestTimestamp)
+        mysqlStmt.bindParam(alternativeQuestTarget)
+        mysqlStmt.bindParam(alternativeQuestConditions.jsonEncodeForceTry())
+        mysqlStmt.bindParam(alternativeQuestRewards.jsonEncodeForceTry())
+        mysqlStmt.bindParam(alternativeQuestTemplate)
+        mysqlStmt.bindParam(alternativeQuestTitle)
         mysqlStmt.bindParam(cellId)
         mysqlStmt.bindParam(lureId ?? 0)
         mysqlStmt.bindParam(sponsorId)
@@ -663,6 +600,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         mysqlStmt.bindParam(powerUpPoints)
         mysqlStmt.bindParam(powerUpLevel)
         mysqlStmt.bindParam(powerUpEndTimestamp)
+        mysqlStmt.bindParam(updated)
 
         if oldPokestop != nil {
             mysqlStmt.bindParam(id)
@@ -679,32 +617,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
 
         Pokestop.cache?.set(id: self.id, value: self)
 
-        if oldPokestop == nil {
-            WebHookController.global.addPokestopEvent(pokestop: self)
-            if lureExpireTimestamp ?? 0 > 0 {
-                WebHookController.global.addLureEvent(pokestop: self)
-            }
-            if questTimestamp ?? 0 > 0 {
-                WebHookController.global.addQuestEvent(pokestop: self)
-            }
-            if alternativeQuestTimestamp ?? 0 > 0 {
-                WebHookController.global.addAlternativeQuestEvent(pokestop: self)
-            }
-        } else {
-            if oldPokestop!.lureExpireTimestamp ?? 0 < self.lureExpireTimestamp ?? 0 {
-                WebHookController.global.addLureEvent(pokestop: self)
-            }
-            if updateQuest && (hasQuestChanges || questTimestamp ?? 0 > oldPokestop!.questTimestamp ?? 0) {
-                hasQuestChanges = false
-                WebHookController.global.addQuestEvent(pokestop: self)
-            }
-            if updateQuest && (hasAlternativeQuestChanges ||
-                alternativeQuestTimestamp ?? 0 > oldPokestop!.alternativeQuestTimestamp ?? 0
-            ) {
-                hasAlternativeQuestChanges = false
-                WebHookController.global.addAlternativeQuestEvent(pokestop: self)
-            }
-        }
+        Pokestop.createPokestopWebhooks(old: oldPokestop, new: self)
     }
 
     //  swiftlint:disable:next function_parameter_count
@@ -1083,10 +996,16 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         return count
     }
 
-    public static func getWithId(mysql: MySQL?=nil, id: String, withDeleted: Bool=false) throws -> Pokestop? {
+    public static func getWithId(mysql: MySQL?=nil, id: String, copy: Bool = false, withDeleted: Bool=false
+    ) throws -> Pokestop? {
 
         if let cached = cache?.get(id: id) {
-            return cached
+            // it's a reference type instance, without copying it we would modify the instance within cache
+            if copy {
+                return (cached.copy() as! Pokestop)
+            } else {
+                return cached
+            }
         }
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -1568,11 +1487,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         return mysqlStmt.affectedRows()
     }
 
-    public static func shouldUpdate(old: Pokestop, new: Pokestop) -> Bool {
-        if old.hasChanges {
-            old.hasChanges = false
-            return true
-        }
+    private static func hasChanges(old: Pokestop, new: Pokestop) -> Bool {
         return
             new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
             new.lureExpireTimestamp != old.lureExpireTimestamp ||
@@ -1581,6 +1496,7 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             new.name != old.name ||
             new.url != old.url ||
             new.arScanEligible != old.arScanEligible ||
+            new.powerUpLevel != old.powerUpLevel ||
             new.powerUpPoints != old.powerUpPoints ||
             new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
             new.questTemplate != old.questTemplate ||
@@ -1596,4 +1512,35 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
         return lhs.id == rhs.id
     }
 
+    public func copy(with zone: NSZone? = nil) -> Any {
+        Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
+            lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated,
+            questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
+            questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
+            questTitle: questTitle, cellId: cellId, lureId: lureId, sponsorId: sponsorId, partnerId: partnerId,
+            arScanEligible: arScanEligible, powerUpPoints: powerUpPoints, powerUpLevel: powerUpLevel,
+            powerUpEndTimestamp: powerUpEndTimestamp, alternativeQuestType: alternativeQuestType,
+            alternativeQuestTarget: alternativeQuestTarget, alternativeQuestTimestamp: alternativeQuestTimestamp,
+            alternativeQuestConditions: alternativeQuestConditions, alternativeQuestRewards: alternativeQuestRewards,
+            alternativeQuestTemplate: alternativeQuestTemplate, alternativeQuestTitle: alternativeQuestTitle,
+            incidents: incidents)
+    }
+
+    // =================================================================================================================
+    //  HELPER METHODS
+    // =================================================================================================================
+
+    private static func createPokestopWebhooks(old: Pokestop?, new: Pokestop) {
+        if new.alternativeQuestType != nil && (old == nil || old!.alternativeQuestType != new.alternativeQuestType) {
+            WebHookController.global.addAlternativeQuestEvent(pokestop: new)
+        }
+        if new.questType != nil && (old == nil || old!.questType != new.questType) {
+            WebHookController.global.addQuestEvent(pokestop: new)
+        }
+        if (old == nil && new.lureId ?? 0 != 0 || new.powerUpEndTimestamp ?? 0 != 0) ||
+               (old != nil && ((new.lureExpireTimestamp != old!.lureExpireTimestamp && new.lureId ?? 0 != 0) ||
+                   new.powerUpEndTimestamp != old?.powerUpEndTimestamp)) {
+            WebHookController.global.addPokestopEvent(pokestop: new)
+        }
+    }
 }

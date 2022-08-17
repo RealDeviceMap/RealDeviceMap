@@ -181,7 +181,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
-        var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
+        var quests = [(clientQuest: ClientQuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
         var diskEncounters = [DiskEncounterOutProto]()
@@ -268,12 +268,11 @@ public class WebHookRequestHandler {
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
                             getArQuestMode(device: uuid, timestamp: timestamp)
-                        let title = fsr.challengeQuest.questDisplay.title
-                        let quest = fsr.challengeQuest.quest
-                        if quest.questType == .questGeotargetedArScan && uuid != nil {
+                        let challengeQuest = fsr.challengeQuest
+                        if challengeQuest.quest.questType == .questGeotargetedArScan && uuid != nil {
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
                         }
-                        quests.append((name: title, quest: quest, hasAr: hasAr))
+                        quests.append((clientQuest: challengeQuest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
                 } else {
@@ -744,7 +743,8 @@ public class WebHookRequestHandler {
             for fort in forts {
                 if fort.data.fortType == .gym {
                     let id = fort.data.fortID
-                    let gym = (try? Gym.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true)) ?? Gym()
+                    let gym = (try? Gym.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true))
+                        ?? Gym()
                     gym.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
                     if gymIdsPerCell[fort.cell] == nil {
@@ -752,7 +752,10 @@ public class WebHookRequestHandler {
                     }
                     gymIdsPerCell[fort.cell]!.append(fort.data.fortID)
                 } else if fort.data.fortType == .checkpoint {
-                    let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
+                    let id = fort.data.fortID
+                    let pokestop = (try? Pokestop.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true))
+                        ?? Pokestop()
+                    pokestop.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
                     pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
                     if stopsIdsPerCell[fort.cell] == nil {
@@ -783,12 +786,12 @@ public class WebHookRequestHandler {
                     } else if fort.fortType == .checkpoint {
                         let pokestop: Pokestop?
                         do {
-                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.id)
+                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.id, copy: true)
                         } catch {
                             pokestop = nil
                         }
                         if pokestop != nil {
-                            pokestop!.addDetails(fortData: fort)
+                            pokestop!.updateFromFortDetails(fortData: fort)
                             try? pokestop!.save(mysql: mysql)
                         }
                     }
@@ -822,16 +825,16 @@ public class WebHookRequestHandler {
 
             if !quests.isEmpty {
                 let start = Date()
-                for quest in quests {
+                for (clientQuest, hasAr) in quests {
                     let pokestop: Pokestop?
                     do {
-                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.quest.fortID)
+                        pokestop = try Pokestop.getWithId(mysql: mysql, id: clientQuest.quest.fortID, copy: true)
                     } catch {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        pokestop!.addQuest(title: quest.name, questData: quest.quest, hasARQuest: quest.hasAr)
-                        try? pokestop!.save(mysql: mysql, updateQuest: true)
+                        pokestop!.updatePokestopFromQuestProto(questData: clientQuest, hasARQuest: hasAr)
+                        try? pokestop!.save(mysql: mysql)
                     }
                 }
                 Log.debug(

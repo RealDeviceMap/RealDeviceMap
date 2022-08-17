@@ -228,7 +228,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
         self.powerUpPoints = UInt32(fortData.powerUpProgressPoints)
-        (self.powerUpLevel, self.powerUpEndTimestamp) = calculatePowerUpPoints(fortData: fortData, now: now)
+        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpPoints(now: now)
 
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
 
@@ -270,7 +270,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         self.cellId = cellId
     }
 
-    public func updateFromFortDetails(fortData: FortDetailsOutProto) {
+    func updateFromFortDetails(fortData: FortDetailsOutProto) {
         self.id = fortData.id
         self.lat = fortData.latitude
         self.lon = fortData.longitude
@@ -286,10 +286,9 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         } else {
             self.promoDescription = nil
         }
-
     }
 
-    public func updateFromGymInfo(gymInfo: GymGetInfoOutProto) {
+    func updateFromGymInfo(gymInfo: GymGetInfoOutProto) {
         self.name = gymInfo.name
         self.description = gymInfo.description_p
         if !gymInfo.url.isEmpty {
@@ -1088,28 +1087,6 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             }
         }
 
-    }
-
-    private func calculatePowerUpPoints(fortData: PokemonFortProto, now: UInt32) -> (UInt16, UInt32?) {
-        let powerUpLevelExpirationMs = UInt32(fortData.powerUpLevelExpirationMs / 1000)
-        let powerUpPoints = fortData.powerUpProgressPoints
-        var powerUpLevel: UInt16 = 0
-        var powerUpEndTimestamp: UInt32?
-        if powerUpPoints < 50 {
-            powerUpLevel = 0
-        } else if powerUpPoints < 100 && powerUpLevelExpirationMs > now {
-            powerUpLevel = 1
-            powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else if powerUpPoints < 150 && powerUpLevelExpirationMs > now {
-            powerUpLevel = 2
-            powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else if powerUpLevelExpirationMs > now {
-            powerUpLevel = 3
-            powerUpEndTimestamp = powerUpLevelExpirationMs
-        } else {
-            powerUpLevel = 0
-        }
-        return (powerUpLevel, powerUpEndTimestamp)
     }
 
     private static func hasChanges(old: Gym, new: Gym) -> Bool {

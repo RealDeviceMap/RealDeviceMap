@@ -18,9 +18,10 @@ class Cell: JSONConvertibleObject {
     var level: UInt8
     var centerLat: Double
     var centerLon: Double
+    var updated: UInt32?
+
     var stopCount: Int = 0
     var gymCount: Int = 0
-    var updated: UInt32?
 
     public static var cache: MemoryCache<Cell>?
 
@@ -66,8 +67,8 @@ class Cell: JSONConvertibleObject {
         }
         if oldCell != nil {
             // stop and gym count is only stored in cache
-            Log.debug(message: "[CELL] stopCount \(self.stopCount) -> \(oldCell!.stopCount)")
-            Log.debug(message: "[CELL] gymCount \(self.gymCount) -> \(oldCell!.gymCount)")
+            Log.debug(message: "[CELL] stopCount \(self.stopCount) <- \(oldCell!.stopCount)")
+            Log.debug(message: "[CELL] gymCount \(self.gymCount) <- \(oldCell!.gymCount)")
             self.stopCount = oldCell!.stopCount
             self.gymCount = oldCell!.gymCount
         }
