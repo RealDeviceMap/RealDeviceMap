@@ -59,7 +59,7 @@ public func setupRealDeviceMap() {
             "and keep time \(memoryCacheKeepTime)"
         )
         Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime,
-            extendTtlOnAccess: false)
+            extendTtlOnHit: false)
         Pokestop.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Gym.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         SpawnPoint.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
