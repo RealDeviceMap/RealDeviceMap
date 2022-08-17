@@ -18,6 +18,9 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
     public static var exRaidBossForm: UInt16?
 
     class ParsingError: Error {}
+	
+	// Beavis: caches to cut down on sql updates/inserts related to gym data
+	public static var cacheFuncClearOld: MemoryCache<Int8> = MemoryCache(interval: 60, keepTime: 240, extendTtlOnAccess: false)
 
     public override func getJSONValues() -> [String: Any] {
         return [
@@ -1067,6 +1070,13 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             Log.error(message: "[GYM] Failed to connect to database.")
             throw DBController.DBError()
         }
+		
+		// Beavis: check for this id in save cache, exit early if exists
+        let updatedCache = Pokestop.cacheFuncClearOld.get(id: cellId.toString() ) ?? 0
+        if updatedCache > 0
+        { 
+            return 0
+        } 
 
         let notInSQL: String
 
@@ -1099,8 +1109,10 @@ public class Gym: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
 
+		// Beavis: add to my cache for function
+        Pokestop.cacheFuncClearOld.set(id: cellId.toString(), value: 1)
+		
         return mysqlStmt.affectedRows()
-
     }
 
     public static func convertPokestopsToGyms(mysql: MySQL?=nil) throws -> UInt {
