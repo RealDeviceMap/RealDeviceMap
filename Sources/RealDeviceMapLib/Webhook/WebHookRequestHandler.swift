@@ -844,7 +844,6 @@ public class WebHookRequestHandler {
                 let start = Date()
                 for encounter in encounters {
                     let id = encounter.pokemon.encounterID.description
-                    Log.debug(message: "[WebHookRequestHandler] found encounter \(id)")
                     let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent))
                         ?? Pokemon()
                     pokemon.updateFromEncounterProto(mysql: mysql, encounterData: encounter,
