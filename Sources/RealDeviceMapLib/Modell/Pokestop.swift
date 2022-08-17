@@ -17,6 +17,9 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
     public static var lureTime: UInt32 = 1800
 
     class ParsingError: Error {}
+	
+	// Beavis: caches to cut down on sql updates/inserts related to gym data
+	public static var cacheFuncClearOld: MemoryCache<Int8> = MemoryCache(interval: 60, keepTime: 240, extendTtlOnAccess: false)
 
     public override func getJSONValues() -> [String: Any] {
         return [
@@ -1437,6 +1440,15 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             throw DBController.DBError()
         }
 
+		// Beavis: check for this id in save cache, exit early if exists
+        let updatedCache = Pokestop.cacheFuncClearOld.get(id: cellId.toString() ) ?? 0
+        if updatedCache > 0
+        {
+            // Log.debug(message: ("[Pokestop-clearOld] cache hit, exit early, id= " + cellId.toString() ))
+            return 0
+        }
+        // Log.debug(message: ("[Pokestop-clearOld] cache miss, doing sql, id= " + cellId.toString() ) )
+		
         let notInSQL: String
 
         if ids.count != 0 {
@@ -1467,6 +1479,9 @@ public class Pokestop: JSONConvertibleObject, WebHookEvent, Hashable {
             Log.error(message: "[POKESTOP] Failed to execute query 'clearOld'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
+		
+		// Beavis: add to my cache for save function
+        Pokestop.cacheFuncClearOld.set(id: cellId.toString(), value: 1)
 
         return mysqlStmt.affectedRows()
 
