@@ -130,6 +130,8 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     var lon: Double
 
     var name: String?
+    var description: String?
+    var promoDescription: String?
     var url: String?
     var guardPokemonId: UInt16?
     var enabled: Bool?
@@ -154,7 +156,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     var raidIsExclusive: Bool?
     var cellId: UInt64?
     var totalCp: UInt32?
-    var sponsorId: UInt16?
+    var sponsorId: UInt16? // unused
     var partnerId: String?
     var arScanEligible: Bool?
     var powerUpPoints: UInt32?
@@ -230,9 +232,6 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
 
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
 
-        if fortData.sponsor != .unset {
-            self.sponsorId = UInt16(fortData.sponsor.rawValue)
-        }
         if fortData.imageURL != "" {
             self.url = fortData.imageURL
         }
@@ -279,12 +278,28 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             self.url = fortData.imageURL[0]
         }
         self.name = fortData.name
+        self.description = fortData.description_p
+
+        if fortData.promoDescription.count != 0 {
+            self.promoDescription = fortData.promoDescription.jsonEncodeForceTry()
+            Log.debug(message: "[GYM] \(id) with promo: \(promoDescription ?? "")")
+        } else {
+            self.promoDescription = nil
+        }
+
     }
 
     public func updateFromGymInfo(gymInfo: GymGetInfoOutProto) {
         self.name = gymInfo.name
+        self.description = gymInfo.description_p
         if !gymInfo.url.isEmpty {
             self.url = gymInfo.url
+        }
+        if gymInfo.promoDescription.count != 0 {
+            self.promoDescription = gymInfo.promoDescription.jsonEncodeForceTry()
+            Log.debug(message: "[GYM] \(id) with promo: \(promoDescription ?? "")")
+        } else {
+            self.promoDescription = nil
         }
     }
 
