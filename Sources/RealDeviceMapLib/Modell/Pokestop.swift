@@ -222,7 +222,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         self.arScanEligible = fortData.isArScanEligible
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
 
-        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpPoints(now: now)
+        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpLevel(now: now)
 
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         self.lastModifiedTimestamp = lastModifiedTimestamp

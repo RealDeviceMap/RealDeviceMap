@@ -228,7 +228,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         self.inBattle = fortData.isInBattle
         self.arScanEligible = fortData.isArScanEligible
         self.powerUpPoints = UInt32(fortData.powerUpProgressPoints)
-        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpPoints(now: now)
+        (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpLevel(now: now)
 
         self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
 

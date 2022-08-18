@@ -7,7 +7,7 @@ import POGOProtos
 
 extension PokemonFortProto {
 
-    func calculatePowerUpPoints(now: UInt32) -> (level: UInt16, timestamp: UInt32?) {
+    func calculatePowerUpLevel(now: UInt32) -> (level: UInt16, timestamp: UInt32?) {
         let powerUpLevelExpirationMs = UInt32(powerUpLevelExpirationMs / 1000)
         let powerUpPoints = powerUpProgressPoints
         var powerUpLevel: UInt16 = 0
