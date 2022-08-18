@@ -1221,10 +1221,10 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.gender = display.gender.rawValue.toUInt8()
         self.form = display.form.rawValue.toUInt16()
         self.costume = display.costume.rawValue.toUInt8()
+        setWeather(weather: display.weatherBoostedCondition.rawValue.toUInt8())
         if self.pokemonId == 0 || !self.isDitto {
             self.pokemonId = pokemonId
         }
-        setWeather(weather: display.weatherBoostedCondition.rawValue.toUInt8())
     }
 
     private func setWeather(weather: UInt8) {
