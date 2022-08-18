@@ -1055,132 +1055,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         return pokestop
     }
 
-    private static func extractResults(results: MySQLStmt.Results, showLures: Bool = true, showInvasions: Bool = true,
-                                       showQuests: Bool = true) -> [Pokestop] {
-        var pokestops = [String: Pokestop]()
-        while let result = results.next() {
-            let id = result[0] as! String
-            let lat = result[1] as! Double
-            let lon = result[2] as! Double
-            let name = result[3] as? String
-            let url = result[4] as? String
-            let enabledInt = result[5] as? UInt8
-            let enabled = enabledInt?.toBool()
-            let lureExpireTimestamp: UInt32?
-            if showLures {
-                lureExpireTimestamp = result[6] as? UInt32
-            } else {
-                lureExpireTimestamp = nil
-            }
-            let lastModifiedTimestamp = result[7] as? UInt32
-            let updated = result[8] as! UInt32
-
-            let questType: UInt32?
-            let questTimestamp: UInt32?
-            let questTarget: UInt16?
-            let questConditions: [[String: Any]]?
-            let questRewards: [[String: Any]]?
-            let questTemplate: String?
-            let questTitle: String?
-            let alternativeQuestType: UInt32?
-            let alternativeQuestTimestamp: UInt32?
-            let alternativeQuestTarget: UInt16?
-            let alternativeQuestConditions: [[String: Any]]?
-            let alternativeQuestRewards: [[String: Any]]?
-            let alternativeQuestTemplate: String?
-            let alternativeQuestTitle: String?
-
-            if showQuests {
-                questType = result[9] as? UInt32
-                questTimestamp = result[10] as? UInt32
-                questTarget = result[11] as? UInt16
-                questConditions = (result[12] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                questRewards = (result[13] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                questTemplate = result[14] as? String
-                questTitle = result[15] as? String
-                alternativeQuestType = result[16] as? UInt32
-                alternativeQuestTimestamp = result[17] as? UInt32
-                alternativeQuestTarget = result[18] as? UInt16
-                alternativeQuestConditions = (result[19] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                alternativeQuestRewards = (result[20] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                alternativeQuestTemplate = result[21] as? String
-                alternativeQuestTitle = result[22] as? String
-            } else {
-                questType = nil
-                questTimestamp = nil
-                questTarget = nil
-                questConditions = nil
-                questRewards = nil
-                questTemplate = nil
-                questTitle = nil
-                alternativeQuestType = nil
-                alternativeQuestTimestamp = nil
-                alternativeQuestTarget = nil
-                alternativeQuestConditions = nil
-                alternativeQuestRewards = nil
-                alternativeQuestTemplate = nil
-                alternativeQuestTitle = nil
-            }
-            let cellId = result[23] as? UInt64
-            let lureId: Int16?
-            if showLures {
-                lureId = result[24] as? Int16
-            } else {
-                lureId = nil
-            }
-            let sponsorId = result[25] as? UInt16
-            let partnerId = result[26] as? String
-            let arScanEligible = (result[27] as? UInt8)?.toBool()
-            let powerUpPoints = result[28] as? UInt32
-            let powerUpLevel = result[29] as? UInt16
-            let powerUpEndTimestamp = result[30] as? UInt32
-
-            let incident: Incident?
-            if showInvasions {
-                let incidentId = result[31] as? String
-                if incidentId != nil {
-                    let pokestopId = result[32] as! String
-                    let start = result[33] as! UInt32
-                    let expiration = result[34] as! UInt32
-                    let displayType = result[35] as! UInt16
-                    let style = result[36] as! UInt16
-                    let character = result[37] as! UInt16
-                    let incidentUpdated = result[38] as! UInt32
-                    incident = Incident(id: incidentId!, pokestopId: pokestopId, start: start, expiration: expiration,
-                        displayType: displayType, style: style, character: character, updated: incidentUpdated)
-                } else {
-                    incident = nil
-                }
-            } else {
-                incident = nil
-            }
-            // duplicate rows because of JOIN with incident table possible
-            if pokestops[id] != nil {
-                if incident != nil {
-                    pokestops[id]!.incidents.append(incident!)
-                }
-            } else {
-                let incidents = incident != nil ? [incident!] : [Incident]()
-                pokestops.merge([id: Pokestop(
-                    id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
-                    lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp,
-                    updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
-                    questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
-                    questTitle: questTitle, cellId: cellId, lureId: lureId, sponsorId: sponsorId, partnerId: partnerId,
-                    arScanEligible: arScanEligible, powerUpPoints: powerUpPoints, powerUpLevel: powerUpLevel,
-                    powerUpEndTimestamp: powerUpEndTimestamp,
-                    alternativeQuestType: alternativeQuestType, alternativeQuestTarget: alternativeQuestTarget,
-                    alternativeQuestTimestamp: alternativeQuestTimestamp,
-                    alternativeQuestConditions: alternativeQuestConditions,
-                    alternativeQuestRewards: alternativeQuestRewards,
-                    alternativeQuestTemplate: alternativeQuestTemplate,
-                    alternativeQuestTitle: alternativeQuestTitle, incidents: incidents
-                )]) { (current, _) in current }
-            }
-        }
-        return Array(pokestops.values)
-    }
-
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
 
         if ids?.count == 0 {
@@ -1328,27 +1202,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
     }
 
-    public static func flattenCoords(area: String) -> String {
-        var coords = ""
-        var firstCoord = ""
-        let areaRows = area.components(separatedBy: "\n")
-        for (index, areaRow) in areaRows.enumerated() {
-            let rowSplit = areaRow.components(separatedBy: ",")
-            if rowSplit.count == 2 {
-                let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
-                let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
-                if lat != nil && lon != nil {
-                    let coord = "\(lat!) \(lon!)"
-                    if index == 0 {
-                        firstCoord = coord
-                    }
-                    coords += "\(coord),"
-                }
-            }
-        }
-        return coords + firstCoord
-    }
-
     public static func clearOld(mysql: MySQL?=nil, ids: [String], cellId: UInt64) throws -> UInt {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -1487,27 +1340,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         return mysqlStmt.affectedRows()
     }
 
-    private static func hasChanges(old: Pokestop, new: Pokestop) -> Bool {
-        return
-            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
-            new.lureExpireTimestamp != old.lureExpireTimestamp ||
-            new.lureId != old.lureId ||
-            new.incidents.count != old.incidents.count ||
-            new.name != old.name ||
-            new.url != old.url ||
-            new.arScanEligible != old.arScanEligible ||
-            new.powerUpLevel != old.powerUpLevel ||
-            new.powerUpPoints != old.powerUpPoints ||
-            new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
-            new.questTemplate != old.questTemplate ||
-            new.alternativeQuestTemplate != old.alternativeQuestTemplate ||
-            new.enabled != old.enabled ||
-            new.sponsorId != old.sponsorId ||
-            new.partnerId != old.partnerId ||
-            fabs(new.lat - old.lat) >= 0.000001 ||
-            fabs(new.lon - old.lon) >= 0.000001
-    }
-
     public static func == (lhs: Pokestop, rhs: Pokestop) -> Bool {
         return lhs.id == rhs.id
     }
@@ -1542,5 +1374,173 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                    new.powerUpEndTimestamp != old?.powerUpEndTimestamp)) {
             WebHookController.global.addPokestopEvent(pokestop: new)
         }
+    }
+
+    private static func hasChanges(old: Pokestop, new: Pokestop) -> Bool {
+        return
+            new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
+                new.lureExpireTimestamp != old.lureExpireTimestamp ||
+                new.lureId != old.lureId ||
+                new.incidents.count != old.incidents.count ||
+                new.name != old.name ||
+                new.url != old.url ||
+                new.arScanEligible != old.arScanEligible ||
+                new.powerUpLevel != old.powerUpLevel ||
+                new.powerUpPoints != old.powerUpPoints ||
+                new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
+                new.questTemplate != old.questTemplate ||
+                new.alternativeQuestTemplate != old.alternativeQuestTemplate ||
+                new.enabled != old.enabled ||
+                new.sponsorId != old.sponsorId ||
+                new.partnerId != old.partnerId ||
+                fabs(new.lat - old.lat) >= 0.000001 ||
+                fabs(new.lon - old.lon) >= 0.000001
+    }
+
+    private static func flattenCoords(area: String) -> String {
+        var coords = ""
+        var firstCoord = ""
+        let areaRows = area.components(separatedBy: "\n")
+        for (index, areaRow) in areaRows.enumerated() {
+            let rowSplit = areaRow.components(separatedBy: ",")
+            if rowSplit.count == 2 {
+                let lat = rowSplit[0].trimmingCharacters(in: .whitespaces).toDouble()
+                let lon = rowSplit[1].trimmingCharacters(in: .whitespaces).toDouble()
+                if lat != nil && lon != nil {
+                    let coord = "\(lat!) \(lon!)"
+                    if index == 0 {
+                        firstCoord = coord
+                    }
+                    coords += "\(coord),"
+                }
+            }
+        }
+        return coords + firstCoord
+    }
+
+    private static func extractResults(results: MySQLStmt.Results, showLures: Bool = true, showInvasions: Bool = true,
+                                       showQuests: Bool = true) -> [Pokestop] {
+        var pokestops = [String: Pokestop]()
+        while let result = results.next() {
+            let id = result[0] as! String
+            let lat = result[1] as! Double
+            let lon = result[2] as! Double
+            let name = result[3] as? String
+            let url = result[4] as? String
+            let enabledInt = result[5] as? UInt8
+            let enabled = enabledInt?.toBool()
+            let lureExpireTimestamp: UInt32?
+            if showLures {
+                lureExpireTimestamp = result[6] as? UInt32
+            } else {
+                lureExpireTimestamp = nil
+            }
+            let lastModifiedTimestamp = result[7] as? UInt32
+            let updated = result[8] as! UInt32
+
+            let questType: UInt32?
+            let questTimestamp: UInt32?
+            let questTarget: UInt16?
+            let questConditions: [[String: Any]]?
+            let questRewards: [[String: Any]]?
+            let questTemplate: String?
+            let questTitle: String?
+            let alternativeQuestType: UInt32?
+            let alternativeQuestTimestamp: UInt32?
+            let alternativeQuestTarget: UInt16?
+            let alternativeQuestConditions: [[String: Any]]?
+            let alternativeQuestRewards: [[String: Any]]?
+            let alternativeQuestTemplate: String?
+            let alternativeQuestTitle: String?
+
+            if showQuests {
+                questType = result[9] as? UInt32
+                questTimestamp = result[10] as? UInt32
+                questTarget = result[11] as? UInt16
+                questConditions = (result[12] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                questRewards = (result[13] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                questTemplate = result[14] as? String
+                questTitle = result[15] as? String
+                alternativeQuestType = result[16] as? UInt32
+                alternativeQuestTimestamp = result[17] as? UInt32
+                alternativeQuestTarget = result[18] as? UInt16
+                alternativeQuestConditions = (result[19] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                alternativeQuestRewards = (result[20] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                alternativeQuestTemplate = result[21] as? String
+                alternativeQuestTitle = result[22] as? String
+            } else {
+                questType = nil
+                questTimestamp = nil
+                questTarget = nil
+                questConditions = nil
+                questRewards = nil
+                questTemplate = nil
+                questTitle = nil
+                alternativeQuestType = nil
+                alternativeQuestTimestamp = nil
+                alternativeQuestTarget = nil
+                alternativeQuestConditions = nil
+                alternativeQuestRewards = nil
+                alternativeQuestTemplate = nil
+                alternativeQuestTitle = nil
+            }
+            let cellId = result[23] as? UInt64
+            let lureId: Int16?
+            if showLures {
+                lureId = result[24] as? Int16
+            } else {
+                lureId = nil
+            }
+            let sponsorId = result[25] as? UInt16
+            let partnerId = result[26] as? String
+            let arScanEligible = (result[27] as? UInt8)?.toBool()
+            let powerUpPoints = result[28] as? UInt32
+            let powerUpLevel = result[29] as? UInt16
+            let powerUpEndTimestamp = result[30] as? UInt32
+
+            let incident: Incident?
+            if showInvasions {
+                let incidentId = result[31] as? String
+                if incidentId != nil {
+                    let pokestopId = result[32] as! String
+                    let start = result[33] as! UInt32
+                    let expiration = result[34] as! UInt32
+                    let displayType = result[35] as! UInt16
+                    let style = result[36] as! UInt16
+                    let character = result[37] as! UInt16
+                    let incidentUpdated = result[38] as! UInt32
+                    incident = Incident(id: incidentId!, pokestopId: pokestopId, start: start, expiration: expiration,
+                        displayType: displayType, style: style, character: character, updated: incidentUpdated)
+                } else {
+                    incident = nil
+                }
+            } else {
+                incident = nil
+            }
+            // duplicate rows because of JOIN with incident table possible
+            if pokestops[id] != nil {
+                if incident != nil {
+                    pokestops[id]!.incidents.append(incident!)
+                }
+            } else {
+                let incidents = incident != nil ? [incident!] : [Incident]()
+                pokestops.merge([id: Pokestop(
+                    id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
+                    lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp,
+                    updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
+                    questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
+                    questTitle: questTitle, cellId: cellId, lureId: lureId, sponsorId: sponsorId, partnerId: partnerId,
+                    arScanEligible: arScanEligible, powerUpPoints: powerUpPoints, powerUpLevel: powerUpLevel,
+                    powerUpEndTimestamp: powerUpEndTimestamp,
+                    alternativeQuestType: alternativeQuestType, alternativeQuestTarget: alternativeQuestTarget,
+                    alternativeQuestTimestamp: alternativeQuestTimestamp,
+                    alternativeQuestConditions: alternativeQuestConditions,
+                    alternativeQuestRewards: alternativeQuestRewards,
+                    alternativeQuestTemplate: alternativeQuestTemplate,
+                    alternativeQuestTitle: alternativeQuestTitle, incidents: incidents
+                )]) { (current, _) in current }
+            }
+        }
+        return Array(pokestops.values)
     }
 }
