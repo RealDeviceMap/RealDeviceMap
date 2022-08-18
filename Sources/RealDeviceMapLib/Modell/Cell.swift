@@ -67,8 +67,6 @@ class Cell: JSONConvertibleObject {
         }
         if oldCell != nil {
             // stop and gym count is only stored in cache
-            Log.debug(message: "[CELL] stopCount \(self.stopCount) <- \(oldCell!.stopCount)")
-            Log.debug(message: "[CELL] gymCount \(self.gymCount) <- \(oldCell!.gymCount)")
             self.stopCount = oldCell!.stopCount
             self.gymCount = oldCell!.gymCount
         }
