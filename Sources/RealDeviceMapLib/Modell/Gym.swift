@@ -64,8 +64,8 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         if type == "gym" {
             realType = "gym"
             message = [
-                "gym_id": id,
-                "gym_name": name ?? "Unknown",
+                "id": id,
+                "name": name ?? "Unknown",
                 "latitude": lat,
                 "longitude": lon,
                 "url": url ?? "",
@@ -74,7 +74,6 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 "last_modified": lastModifiedTimestamp ?? 0,
                 "guard_pokemon_id": guardPokemonId ?? 0,
                 "slots_available": availableSlots ?? 6,
-                "raid_active_until": raidEndTimestamp ?? 0,
                 "ex_raid_eligible": exRaidEligible ?? 0,
                 "in_battle": inBattle ?? false,
                 "total_cp": totalCp ?? 0,
