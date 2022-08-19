@@ -1091,23 +1091,23 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     private static func hasChanges(old: Gym, new: Gym) -> Bool {
         return
             new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
-                new.name != old.name ||
-                new.url != old.url ||
-                new.enabled != old.enabled ||
-                new.raidEndTimestamp != old.raidEndTimestamp ||
-                new.raidPokemonId != old.raidPokemonId ||
-                new.teamId != old.teamId ||
-                new.guardPokemonId != old.guardPokemonId ||
-                new.availableSlots != old.availableSlots ||
-                new.totalCp != old.totalCp ||
-                new.exRaidEligible != old.exRaidEligible ||
-                new.sponsorId != old.sponsorId ||
-                new.partnerId != old.partnerId ||
-                new.arScanEligible != old.arScanEligible ||
-                new.powerUpLevel != old.powerUpLevel ||
-                new.powerUpPoints != old.powerUpPoints ||
-                new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
-                fabs(new.lat - old.lat) >= 0.000001 ||
-                fabs(new.lon - old.lon) >= 0.000001
+            new.name != old.name ||
+            new.url != old.url ||
+            new.enabled != old.enabled ||
+            new.raidEndTimestamp != old.raidEndTimestamp ||
+            new.raidPokemonId != old.raidPokemonId ||
+            new.teamId != old.teamId ||
+            new.guardPokemonId != old.guardPokemonId ||
+            new.availableSlots != old.availableSlots ||
+            new.totalCp != old.totalCp ||
+            new.exRaidEligible != old.exRaidEligible ||
+            new.sponsorId != old.sponsorId ||
+            new.partnerId != old.partnerId ||
+            new.arScanEligible != old.arScanEligible ||
+            new.powerUpLevel != old.powerUpLevel ||
+            new.powerUpPoints != old.powerUpPoints ||
+            new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 }

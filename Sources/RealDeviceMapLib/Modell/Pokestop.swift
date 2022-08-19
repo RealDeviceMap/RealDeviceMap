@@ -1379,22 +1379,22 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
     private static func hasChanges(old: Pokestop, new: Pokestop) -> Bool {
         return
             new.lastModifiedTimestamp != old.lastModifiedTimestamp ||
-                new.lureExpireTimestamp != old.lureExpireTimestamp ||
-                new.lureId != old.lureId ||
-                new.incidents.count != old.incidents.count ||
-                new.name != old.name ||
-                new.url != old.url ||
-                new.arScanEligible != old.arScanEligible ||
-                new.powerUpLevel != old.powerUpLevel ||
-                new.powerUpPoints != old.powerUpPoints ||
-                new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
-                new.questTemplate != old.questTemplate ||
-                new.alternativeQuestTemplate != old.alternativeQuestTemplate ||
-                new.enabled != old.enabled ||
-                new.sponsorId != old.sponsorId ||
-                new.partnerId != old.partnerId ||
-                fabs(new.lat - old.lat) >= 0.000001 ||
-                fabs(new.lon - old.lon) >= 0.000001
+            new.lureExpireTimestamp != old.lureExpireTimestamp ||
+            new.lureId != old.lureId ||
+            new.incidents.count != old.incidents.count ||
+            new.name != old.name ||
+            new.url != old.url ||
+            new.arScanEligible != old.arScanEligible ||
+            new.powerUpLevel != old.powerUpLevel ||
+            new.powerUpPoints != old.powerUpPoints ||
+            new.powerUpEndTimestamp != old.powerUpEndTimestamp ||
+            new.questTemplate != old.questTemplate ||
+            new.alternativeQuestTemplate != old.alternativeQuestTemplate ||
+            new.enabled != old.enabled ||
+            new.sponsorId != old.sponsorId ||
+            new.partnerId != old.partnerId ||
+            fabs(new.lat - old.lat) >= 0.000001 ||
+            fabs(new.lon - old.lon) >= 0.000001
     }
 
     private static func flattenCoords(area: String) -> String {
