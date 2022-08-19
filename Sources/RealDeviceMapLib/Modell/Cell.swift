@@ -65,15 +65,15 @@ class Cell: JSONConvertibleObject {
             // save only every 15 minutes
             return
         }
-        if oldCell != nil {
-            // stop and gym count is only stored in cache
-            self.stopCount = oldCell!.stopCount
-            self.gymCount = oldCell!.gymCount
-        }
+
+        self.updated = now
+        // stop and gym count is only stored in cache
+        self.stopCount = oldCell?.stopCount ?? 0
+        self.gymCount = oldCell?.gymCount ?? 0
 
         let sql = """
         INSERT INTO `s2cell` (id, level, center_lat, center_lon, updated)
-        VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())
+        VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
         level=VALUES(level),
         center_lat=VALUES(center_lat),
@@ -87,6 +87,7 @@ class Cell: JSONConvertibleObject {
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(centerLat)
         mysqlStmt.bindParam(centerLon)
+        mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
