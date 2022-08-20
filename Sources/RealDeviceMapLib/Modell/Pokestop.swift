@@ -220,7 +220,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         self.lon = fortData.longitude
         self.enabled = fortData.enabled
         self.arScanEligible = fortData.isArScanEligible
-        self.partnerId = fortData.partnerID != "" ? fortData.partnerID : nil
+        self.partnerId = fortData.partnerID.isEmpty ? nil : fortData.partnerID
 
         (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpLevel(now: now)
 
@@ -241,7 +241,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 }
             }
         }
-        if fortData.imageURL != "" {
+        if !fortData.imageURL.isEmpty {
             self.url = fortData.imageURL
         }
         self.cellId = cellId
@@ -261,11 +261,15 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             self.url = fortData.imageURL[0]
         }
         self.name = fortData.name
-        self.description = fortData.description_p
+        if !fortData.description_p.isEmpty {
+            self.description = fortData.description_p
+        } else {
+            self.description = nil
+        }
 
         if fortData.promoDescription.count != 0 {
             self.promoDescription = fortData.promoDescription.jsonEncodeForceTry()
-            Log.debug(message: "[POKESTOP] \(id) with promo: \(promoDescription ?? "")")
+            Log.debug(message: "[POKESTOP] Pokestop \(id) found with promo: \(promoDescription ?? "")")
         } else {
             self.promoDescription = nil
         }
