@@ -129,8 +129,6 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     var lon: Double
 
     var name: String?
-    var description: String?
-    var promoDescription: String?
     var url: String?
     var guardPokemonId: UInt16?
     var enabled: Bool?
@@ -277,28 +275,15 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             self.url = fortData.imageURL[0]
         }
         self.name = fortData.name
-        self.description = fortData.description_p
-
-        if fortData.promoDescription.count != 0 {
-            self.promoDescription = fortData.promoDescription.jsonEncodeForceTry()
-            Log.debug(message: "[GYM] \(id) with promo: \(promoDescription ?? "")")
-        } else {
-            self.promoDescription = nil
-        }
+//        self.description = gymInfo.description_p
     }
 
     func updateFromGymInfo(gymInfo: GymGetInfoOutProto) {
         self.name = gymInfo.name
-        self.description = gymInfo.description_p
         if !gymInfo.url.isEmpty {
             self.url = gymInfo.url
         }
-        if gymInfo.promoDescription.count != 0 {
-            self.promoDescription = gymInfo.promoDescription.jsonEncodeForceTry()
-            Log.debug(message: "[GYM] \(id) with promo: \(promoDescription ?? "")")
-        } else {
-            self.promoDescription = nil
-        }
+//        self.description = gymInfo.description_p
     }
 
     public func save(mysql: MySQL?=nil) throws {

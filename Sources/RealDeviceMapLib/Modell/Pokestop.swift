@@ -133,8 +133,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
     var lureExpireTimestamp: UInt32?
     var lastModifiedTimestamp: UInt32?
     var name: String?
-    var description: String?
-    var promoDescription: String?
     var url: String?
     var sponsorId: UInt16? // unused
     var partnerId: String?
@@ -261,18 +259,16 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             self.url = fortData.imageURL[0]
         }
         self.name = fortData.name
-        if !fortData.description_p.isEmpty {
-            self.description = fortData.description_p
-        } else {
-            self.description = nil
-        }
+//        if !fortData.description_p.isEmpty {
+//            self.description = fortData.description_p
+//        } else {
+//            self.description = nil
+//        }
 
-        if fortData.promoDescription.count != 0 {
-            self.promoDescription = fortData.promoDescription.jsonEncodeForceTry()
-            Log.debug(message: "[POKESTOP] Pokestop \(id) found with promo: \(promoDescription ?? "")")
-        } else {
-            self.promoDescription = nil
-        }
+//        if fortData.promoDescription.count != 0 {
+//            let promoDescription = fortData.promoDescription.jsonEncodeForceTry()
+//            Log.debug(message: "[POKESTOP] Pokestop \(id) found with promo: \(promoDescription ?? "")")
+//        }
     }
 
     public func updatePokestopFromQuestProto(questData: ClientQuestProto, hasARQuest: Bool) {
