@@ -560,7 +560,6 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 self.expireTimestampVerified = oldPokemonNoneEvent.expireTimestampVerified
             }
         }
-
         if oldPokemon == nil {
             var sql = """
                 INSERT INTO pokemon (
@@ -732,7 +731,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let uuid = Pokemon.getUuid(id: id, isEvent: isEvent)
         Pokemon.cache?.set(id: uuid, value: self)
 
-        createPokemonWebhooks(old: oldPokemon, new: self)
+        Pokemon.createPokemonWebhooks(old: oldPokemon, new: self)
         if oldPokemon == nil {
             InstanceController.global.gotPokemon(pokemon: self)
             if self.atkIv != nil {
@@ -955,7 +954,11 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let uuid = Pokemon.getUuid(id: id, isEvent: isEvent)
         if let cached = cache?.get(id: uuid) {
             // it's a reference type instance, without copying it we would modify the instance within cache
-            return (cached.copy() as! Pokemon)
+            if copy {
+                return (cached.copy() as! Pokemon)
+            } else {
+                return cached
+            }
         }
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -1096,21 +1099,20 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     }
 
     public func copy(with zone: NSZone? = nil) -> Any {
-        let copy = Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
+        Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
             expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2,
             gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size,
             capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
             isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
             firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
             expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType)
-        return copy
     }
 
     // =================================================================================================================
     //  HELPER METHODS
     // =================================================================================================================
 
-    private func createPokemonWebhooks(old: Pokemon?, new: Pokemon) {
+    private static func createPokemonWebhooks(old: Pokemon?, new: Pokemon) {
         if old == nil ||
             old!.pokemonId != new.pokemonId ||
             old!.weather != new.weather ||
@@ -1219,10 +1221,10 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.gender = display.gender.rawValue.toUInt8()
         self.form = display.form.rawValue.toUInt16()
         self.costume = display.costume.rawValue.toUInt8()
+        setWeather(weather: display.weatherBoostedCondition.rawValue.toUInt8())
         if self.pokemonId == 0 || !self.isDitto {
             self.pokemonId = pokemonId
         }
-        setWeather(weather: display.weatherBoostedCondition.rawValue.toUInt8())
     }
 
     private func setWeather(weather: UInt8) {
@@ -1425,5 +1427,4 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             fabs(new.lat - old.lat) >= 0.000001 ||
             fabs(new.lon - old.lon) >= 0.000001
     }
-
 }

@@ -181,7 +181,7 @@ public class WebHookRequestHandler {
         var forts = [(cell: UInt64, data: PokemonFortProto)]()
         var fortDetails = [FortDetailsOutProto]()
         var gymInfos = [GymGetInfoOutProto]()
-        var quests = [(name: String, quest: QuestProto, hasAr: Bool)]()
+        var quests = [(clientQuest: ClientQuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
         var encounters = [EncounterOutProto]()
         var diskEncounters = [DiskEncounterOutProto]()
@@ -268,12 +268,11 @@ public class WebHookRequestHandler {
                         let hasAr = hasArQuestReqGlobal ??
                             hasArQuestReq ??
                             getArQuestMode(device: uuid, timestamp: timestamp)
-                        let title = fsr.challengeQuest.questDisplay.title
-                        let quest = fsr.challengeQuest.quest
-                        if quest.questType == .questGeotargetedArScan && uuid != nil {
+                        let challengeQuest = fsr.challengeQuest
+                        if challengeQuest.quest.questType == .questGeotargetedArScan && uuid != nil {
                             questArActualMap.setValue(key: uuid!, value: true, time: timestamp)
                         }
-                        quests.append((name: title, quest: quest, hasAr: hasAr))
+                        quests.append((clientQuest: challengeQuest, hasAr: hasAr))
                     }
                     fortSearch.append(fsr)
                 } else {
@@ -743,14 +742,20 @@ public class WebHookRequestHandler {
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
-                    let gym = Gym(fortData: fort.data, cellId: fort.cell)
+                    let id = fort.data.fortID
+                    let gym = (try? Gym.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true))
+                        ?? Gym()
+                    gym.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? gym.save(mysql: mysql)
                     if gymIdsPerCell[fort.cell] == nil {
                         gymIdsPerCell[fort.cell] = [String]()
                     }
                     gymIdsPerCell[fort.cell]!.append(fort.data.fortID)
                 } else if fort.data.fortType == .checkpoint {
-                    let pokestop = Pokestop(fortData: fort.data, cellId: fort.cell)
+                    let id = fort.data.fortID
+                    let pokestop = (try? Pokestop.getWithId(mysql: mysql, id: id, copy: true, withDeleted: true))
+                        ?? Pokestop()
+                    pokestop.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
                     pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
                     if stopsIdsPerCell[fort.cell] == nil {
@@ -770,23 +775,23 @@ public class WebHookRequestHandler {
                     if fort.fortType == .gym {
                         let gym: Gym?
                         do {
-                            gym = try Gym.getWithId(mysql: mysql, id: fort.id)
+                            gym = try Gym.getWithId(mysql: mysql, id: fort.id, copy: true)
                         } catch {
                             gym = nil
                         }
                         if gym != nil {
-                            gym!.addDetails(fortData: fort)
+                            gym!.updateFromFortDetails(fortData: fort)
                             try? gym!.save(mysql: mysql)
                         }
                     } else if fort.fortType == .checkpoint {
                         let pokestop: Pokestop?
                         do {
-                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.id)
+                            pokestop = try Pokestop.getWithId(mysql: mysql, id: fort.id, copy: true)
                         } catch {
                             pokestop = nil
                         }
                         if pokestop != nil {
-                            pokestop!.addDetails(fortData: fort)
+                            pokestop!.updateFromFortDetails(fortData: fort)
                             try? pokestop!.save(mysql: mysql)
                         }
                     }
@@ -802,12 +807,13 @@ public class WebHookRequestHandler {
                 for gymInfo in gymInfos {
                     let gym: Gym?
                     do {
-                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID)
+                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID,
+                            copy: true)
                     } catch {
                         gym = nil
                     }
                     if gym != nil {
-                        gym!.addDetails(gymInfo: gymInfo)
+                        gym!.updateFromGymInfo(gymInfo: gymInfo)
                         try? gym!.save(mysql: mysql)
                     }
                 }
@@ -819,16 +825,16 @@ public class WebHookRequestHandler {
 
             if !quests.isEmpty {
                 let start = Date()
-                for quest in quests {
+                for (clientQuest, hasAr) in quests {
                     let pokestop: Pokestop?
                     do {
-                        pokestop = try Pokestop.getWithId(mysql: mysql, id: quest.quest.fortID)
+                        pokestop = try Pokestop.getWithId(mysql: mysql, id: clientQuest.quest.fortID, copy: true)
                     } catch {
                         pokestop = nil
                     }
                     if pokestop != nil {
-                        pokestop!.addQuest(title: quest.name, questData: quest.quest, hasARQuest: quest.hasAr)
-                        try? pokestop!.save(mysql: mysql, updateQuest: true)
+                        pokestop!.updatePokestopFromQuestProto(questData: clientQuest, hasARQuest: hasAr)
+                        try? pokestop!.save(mysql: mysql)
                     }
                 }
                 Log.debug(
@@ -841,7 +847,6 @@ public class WebHookRequestHandler {
                 let start = Date()
                 for encounter in encounters {
                     let id = encounter.pokemon.encounterID.description
-                    Log.debug(message: "[WebHookRequestHandler] found encounter \(id)")
                     let pokemon = (try? Pokemon.getWithId(mysql: mysql, id: id, copy: true, isEvent: isEvent))
                         ?? Pokemon()
                     pokemon.updateFromEncounterProto(mysql: mysql, encounterData: encounter,
@@ -883,21 +888,34 @@ public class WebHookRequestHandler {
             }
 
             if enableClearing {
-                for gymId in gymIdsPerCell {
-                    if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymId.value, cellId: gymId.key),
-                       cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Gyms.")
+                for (cellId, gymIds) in gymIdsPerCell {
+                    let cachedCell = Cell.cache?.get(id: cellId.toString())
+                    if cachedCell?.gymCount != gymIds.count {
+                        Log.debug(message: "[WebHookRequestHandler] Clearing old gyms in \(cellId): " +
+                            "\(cachedCell?.gymCount ?? 0) != \(gymIds.count)")
+                        if let cleared = try? Gym.clearOld(mysql: mysql, ids: gymIds, cellId: cellId),
+                           cleared != 0 {
+                            Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                "Cleared \(cleared) old Gyms.")
+                        }
                     }
+                    cachedCell?.gymCount = gymIds.count
                 }
-                for stopId in stopsIdsPerCell {
-                    if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopId.value, cellId: stopId.key),
-                       cleared != 0 {
-                        Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Cleared \(cleared) old Pokestops.")
+                for (cellId, stopIds) in stopsIdsPerCell {
+                    let cachedCell = Cell.cache?.get(id: cellId.toString())
+                    if cachedCell?.stopCount != stopIds.count {
+                        Log.debug(message: "[WebHookRequestHandler] Clearing old stops in \(cellId): " +
+                            "\(cachedCell?.stopCount ?? 0) != \(stopIds.count)")
+                        if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopIds, cellId: cellId),
+                           cleared != 0 {
+                            Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +
+                                "Cleared \(cleared) old Pokestops.")
+                        }
                     }
+                    cachedCell?.stopCount = stopIds.count
                 }
             }
         }
-
     }
 
     static func controlerHandler(request: HTTPRequest, response: HTTPResponse, host: String) {

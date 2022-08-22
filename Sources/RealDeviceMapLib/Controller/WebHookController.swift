@@ -44,8 +44,6 @@ public class WebHookController {
     private var alternativeQuestEvents = [String: Pokestop]()
     private var gymEventLock = Threading.Lock()
     private var gymEvents = [String: Gym]()
-    private var gymInfoEventLock = Threading.Lock()
-    private var gymInfoEvents = [String: Gym]()
     private var eggEventLock = Threading.Lock()
     private var eggEvents = [String: Gym]()
     private var raidEventLock = Threading.Lock()
@@ -94,12 +92,6 @@ public class WebHookController {
     public func addGymEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.gym) {
             gymEventLock.doWithLock { gymEvents[gym.id] = gym }
-        }
-    }
-
-    public func addGymInfoEvent(gym: Gym) {
-        if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymInfoEventLock.doWithLock { gymInfoEvents[gym.id] = gym }
         }
     }
 
@@ -171,7 +163,6 @@ public class WebHookController {
                         var questEvents = [String: Pokestop]()
                         var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
-                        var gymInfoEvents = [String: Gym]()
                         var eggEvents = [String: Gym]()
                         var raidEvents = [String: Gym]()
                         var weatherEvents = [Int64: Weather]()
@@ -210,11 +201,6 @@ public class WebHookController {
                         self.gymEventLock.doWithLock {
                             gymEvents = self.gymEvents
                             self.gymEvents = [String: Gym]()
-                        }
-
-                        self.gymInfoEventLock.doWithLock {
-                            gymInfoEvents = self.gymInfoEvents
-                            self.gymInfoEvents = [String: Gym]()
                         }
 
                         self.raidEventLock.doWithLock {
@@ -330,15 +316,6 @@ public class WebHookController {
                                             continue
                                         }
                                         events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
-                                    }
-                                }
-                                for (_, gymInfo) in gymInfoEvents {
-                                    if area.isEmpty ||
-                                           self.inPolygon(lat: gymInfo.lat, lon: gymInfo.lon, multiPolygon: polygon) {
-                                        if gymIDs.contains(Int(gymInfo.teamId ?? 0)) {
-                                            continue
-                                        }
-                                        events.append(gymInfo.getWebhookValues(type: "gym-info"))
                                     }
                                 }
                             }
