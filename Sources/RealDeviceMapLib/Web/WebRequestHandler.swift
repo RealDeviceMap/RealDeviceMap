@@ -248,7 +248,7 @@ public class WebRequestHandler {
                         }
                     }
                     if request.pathComponents[1] == "@pokestop" {
-                        if let pokestop = try Pokestop.getWithId(id: id) {
+                        if let pokestop = try Pokestop.getWithId(id: id, copy: true) {
                             if !perms.contains(.viewMapLure) {
                                 pokestop.lureId = nil
                                 pokestop.lureExpireTimestamp = nil
@@ -279,7 +279,7 @@ public class WebRequestHandler {
                         }
                     }
                     if request.pathComponents[1] == "@gym" {
-                        if let gym = try Gym.getWithId(id: id) {
+                        if let gym = try Gym.getWithId(id: id, copy: true) {
                             if !perms.contains(.viewMapRaid) {
                                 gym.raidEndTimestamp = nil
                                 gym.raidSpawnTimestamp = nil
