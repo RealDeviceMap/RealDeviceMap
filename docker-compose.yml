@@ -11,7 +11,7 @@ services:
       - images:/app/resources/webroot/static/img
       - backups:/app/backups
       - /etc/localtime:/etc/localtime:ro
-#     - ./config.json:/app/resources/config/local.json # change relative path where config file is located
+#     - ./local.json:/app/resources/config/local.json # local.json usage
 #     - favicons:/app/resources/webroot/static/favicons
     ports:
       - 9000:9000
