@@ -18,6 +18,9 @@ public class Account: WebHookEvent {
     private static let lockoutLock = Threading.Lock()
     private static var lockouts = [(account: String, device: String, untill: Date)]()
 
+    private static let suspendedPeriod: UInt32 = 2592000
+    private static let warnedPeriod: UInt32 = 604800
+
     func getWebhookValues(type: String) -> [String: Any] {
 
         let message: [String: Any] = [
@@ -95,7 +98,8 @@ public class Account: WebHookEvent {
         self.group = group?.emptyToNil()
     }
 
-    public func responseInfo(accountData: GetPlayerOutProto) {
+    public func updateFromResponseInfo(accountData: GetPlayerOutProto) {
+        // extract protos info
         self.creationTimestamp = UInt32(accountData.player.creationTimeMs / 1000)
         self.warn = accountData.warn
         let warnExpireTimestamp = UInt32(accountData.warnExpireMs / 1000)
@@ -106,21 +110,38 @@ public class Account: WebHookEvent {
         self.suspendedMessageAcknowledged = accountData.suspendedMessageAcknowledged
         self.wasSuspended = accountData.wasSuspended
         self.banned = accountData.banned
-
-        if accountData.warn == true && self.failed == nil {
+        // extract specific properties
+        let now = UInt32(Date().timeIntervalSince1970)
+        if (accountData.warn || accountData.warnMessageAcknowledged) && self.failed == nil {
             self.failed = "GPR_RED_WARNING"
-            if self.firstWarningTimestamp == nil {
-                self.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
+            if warnExpireTimestamp > now {
+                if self.firstWarningTimestamp == nil {
+                    self.firstWarningTimestamp = now
+                }
+                self.failedTimestamp = now
+            } else {
+                if self.firstWarningTimestamp == nil {
+                    self.firstWarningTimestamp = warnExpireTimestamp - Account.warnedPeriod
+                }
+                self.failedTimestamp = now - Account.warnedPeriod
             }
-            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Red Warning: \(accountData.warn)")
+                "UserName: \(accountData.player.name) - Red Warning")
+        }
+        if (accountData.wasSuspended || accountData.suspendedMessageAcknowledged) &&
+               (self.failed == nil || self.failed == "GPR_RED_WARNING") {
+            // only occurs if an account was suspended, and RDM was not aware of it
+            // (database manipulation or anything else)
+            self.failed = "suspended"
+            self.failedTimestamp = now - Account.suspendedPeriod
+            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
+                "UserName: \(accountData.player.name) - Was suspended")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
-            self.failedTimestamp = UInt32(Date().timeIntervalSince1970)
+            self.failedTimestamp = now
             Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Banned: \(accountData.banned)")
+                "UserName: \(accountData.player.name) - Banned")
         }
 
     }
@@ -261,7 +282,7 @@ public class Account: WebHookEvent {
                 (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= now)
             ) || (
                 self.failed! == "suspended" &&
-                ((self.failedTimestamp ?? UInt32.max) <= now - 2592000)
+                ((self.failedTimestamp ?? UInt32.max) <= now - Account.suspendedPeriod)
             ))
         )
     }
@@ -414,7 +435,7 @@ public class Account: WebHookEvent {
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
                 (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                  warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
             )
             """
         }
@@ -646,7 +667,7 @@ public class Account: WebHookEvent {
                     (failed IS NULL AND first_warning_timestamp is NULL) OR
                     (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                      warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
                 ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
@@ -848,7 +869,7 @@ public class Account: WebHookEvent {
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - 2592000)
+                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
