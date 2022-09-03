@@ -598,7 +598,7 @@ public class WebHookRequestHandler {
                         account = nil
                     }
                     if account != nil {
-                        account!.responseInfo(accountData: playerdata)
+                        account!.updateFromResponseInfo(accountData: playerdata)
                         try? account!.save(mysql: mysql, update: true)
                     }
                 }

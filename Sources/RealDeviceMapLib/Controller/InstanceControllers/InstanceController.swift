@@ -356,7 +356,7 @@ public class InstanceController {
         if let instanceController = getInstanceController(deviceUUID: deviceUUID) {
             return try instanceController.getAccount(mysql: mysql, uuid: deviceUUID)
         }
-        return try Account.getNewAccount(minLevel: 0, maxLevel: 29, device: deviceUUID)
+        return try Account.getNewAccount(minLevel: 0, maxLevel: 30, device: deviceUUID)
     }
 
     public func accountValid(deviceUUID: String, account: Account) -> Bool {
