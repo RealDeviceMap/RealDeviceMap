@@ -121,7 +121,8 @@ public class Account: WebHookEvent {
                 self.failedTimestamp = now
             } else {
                 if self.firstWarningTimestamp == nil {
-                    self.firstWarningTimestamp = warnExpireTimestamp - Account.warnedPeriod
+                    self.firstWarningTimestamp = warnExpireTimestamp > 0 ?
+                        warnExpireTimestamp - Account.warnedPeriod : now - Account.warnedPeriod
                 }
                 self.failedTimestamp = now - Account.warnedPeriod
             }
