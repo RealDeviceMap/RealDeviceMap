@@ -11,6 +11,7 @@ import Foundation
 import PerfectLib
 import PerfectThread
 import PerfectMySQL
+import S2Geometry
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
@@ -96,11 +97,8 @@ class IVInstanceController: InstanceControllerProto {
                             Log.debug(message: "[IVInstanceController] [\(name)] Checked Pokemon has IV")
                         }
                     }
-
                 }
-
             }
-
         }
     }
 
@@ -184,12 +182,26 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func gotPokemon(pokemon: Pokemon) {
-        if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
+        if (pokemon.seenType != .nearbyCell || scatterPokemon.contains(pokemon.pokemonId)) &&
            pokemon.isEvent == isEvent &&
            containedInList(pokemon: pokemon) &&
            multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
-            pokemonLock.lock()
 
+            if pokemon.seenType == .nearbyCell {
+                let cell = S2Cell(cellId: S2CellId(uid: pokemon.cellId!))
+                let coords = cell.subdivide().map { (cell) -> Coord in
+                    Coord(lat: cell.capBound.rectBound.center.lat.degrees,
+                        lon: cell.capBound.rectBound.center.lng.degrees)
+                }
+                // somehow scan next needs a rework to prevent device clustering on a request with 4 coords
+                lock.lock()
+                for coord in coords {
+                    scanNextCoords.append(coord)
+                }
+                Log.info(message: "[IVInstanceController] [\(name)] Nearby Cell Pokemon added to Scan Next")
+            }
+
+            pokemonLock.lock()
             if pokemonQueue.contains(pokemon) {
                 pokemonLock.unlock()
                 return
