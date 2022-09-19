@@ -222,19 +222,26 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
         (self.powerUpLevel, self.powerUpEndTimestamp) = fortData.calculatePowerUpLevel(now: now)
 
+        // lasModifiedMs is also modified when incident happens
         let lastModifiedTimestamp = UInt32(fortData.lastModifiedMs / 1000)
         self.lastModifiedTimestamp = lastModifiedTimestamp
         if fortData.activeFortModifier.count > 0 {
             let lureId = Int16(fortData.activeFortModifier[0].rawValue)
             if lureId >= 501 && lureId <= 505 {
-                let lureEnd = lastModifiedTimestamp + Pokestop.lureTime
+                var lureEnd = lastModifiedTimestamp + Pokestop.lureTime
+                let oldLureEnd = self.lureExpireTimestamp ?? 0
                 if self.lureId != lureId {
                     self.lureExpireTimestamp = lureEnd
                     self.lureId = lureId
                 } else {
-                    if now > lureEnd + 30 { // wait some time after lure end before a restart in case of timing issue
-                        // If a lure needs to be restarted
+                    // wait some time after lure end before a restart in case of timing issue
+                    if now > oldLureEnd + 30 {
+                        while now > lureEnd {
+                            lureEnd += Pokestop.lureTime
+                        }
+                        // lure needs to be restarted
                         self.lureExpireTimestamp = lureEnd
+
                     }
                 }
             }
