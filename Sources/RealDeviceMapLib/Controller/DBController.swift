@@ -258,12 +258,9 @@ public class DBController {
     }
 
     private func backup(mysql: MySQL, fromVersion: Int, toVersion: Int) {
-        if ConfigLoader.global.getConfig(type: .dbBackup) {
-            Log.info(message: "[DBController] DB backups enabled: true")
-        } else {
-            Log.info(message: "[DBController] DB backups enabled: false")
-        }
-        if fromVersion < toVersion && ConfigLoader.global.getConfig(type: .dbBackup) {
+        let backupEnabled: Bool = ConfigLoader.global.getConfig(type: .dbBackup)
+        Log.info(message: "[DBController] DB backups enabled: \(backupEnabled)")
+        if fromVersion < toVersion && backupEnabled {
             Log.info(message: "[DBController] Creating Backup of database for version \(fromVersion)")
             let uuidString = Foundation.UUID().uuidString
             let backupsDir = Dir("\(Dir.projectroot)/backups")
