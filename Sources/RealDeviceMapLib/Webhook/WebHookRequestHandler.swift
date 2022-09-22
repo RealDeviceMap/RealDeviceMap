@@ -279,8 +279,11 @@ public class WebHookRequestHandler {
                             }
                             quests.append((clientQuest: challengeQuest, hasAr: hasAr))
                         } else {
-                            Log.warning(message: "[WebHookRequestHandler] Quest blocked because it is has the \(String(describing: challengeQuest.quest.questType)) type.")
-                            Log.info(message: "[WebHookRequestHandler] Quest info: \(String(describing: challengeQuest.quest))")
+                            Log.warning(message:
+                            "[WebHookRequestHandler] Quest blocked because it is has the " +
+                            "\(String(describing: challengeQuest.quest.questType)) type.")
+                            Log.info(message:
+                            "[WebHookRequestHandler] Quest info: \(String(describing: challengeQuest.quest))")
                         }
                     }
                     fortSearch.append(fsr)
