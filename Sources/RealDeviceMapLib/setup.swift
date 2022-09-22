@@ -19,6 +19,7 @@ public func setupRealDeviceMap() {
     let logLevel: String = ConfigLoader.global.getConfig(type: .logLevel)
     Log.even = true
     Log.setThreshold(value: logLevel)
+    Log.info(message: "[MAIN] Log level set to: \(logLevel)")
 
     if ProcessInfo.processInfo.environment["NO_INSTALL_BACKTRACE"] == nil {
         Log.info(message: "[MAIN] Installing Backtrace")
@@ -245,6 +246,21 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] InstanceController require account in DB: \(InstanceController.requireAccountEnabled)")
     Log.info(message: "[MAIN] InstanceController Scan Lure Encounter: \(InstanceController.sendTaskForLureEncounter)")
     Log.info(message: "[MAIN] Login Limit enabled: \(WebHookRequestHandler.getLoginLimitConfig())")
+    Log.info(message: "[MAIN] Thread Limit Max: \(WebHookRequestHandler.threadLimitMax)")
+    let useRwForQuest: Bool = ConfigLoader.global.getConfig(type: .accUseRwForQuest)
+    Log.info(message: "[MAIN] Use RW Accounts for Quests: \(useRwForQuest)")
+    let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
+    Log.info(message: "[MAIN] Use RW Accounts for Raids: \(useRwForRaid)")
+    let useRwForPokes: Bool = ConfigLoader.global.getConfig(type: .accUseRwForPokes)
+    Log.info(message: "[MAIN] Use RW Accounts for Pokemon: \(useRwForPokes)")
+    let skipBootstrap: Bool = ConfigLoader.global.getConfig(type: .stopAllBootstrapping)
+    Log.info(message: "[MAIN] Skip all bootstrapping: \(skipBootstrap)")
+    let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
+    Log.info(message: "[MAIN] Quest retry limit: \(limit)")
+    let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
+    Log.info(message: "[MAIN] Spin distance: \(spinDistance)")
+    let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
+    Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
 
     // Load Icon styles
     Log.info(message: "[MAIN] Load Icon Styles")

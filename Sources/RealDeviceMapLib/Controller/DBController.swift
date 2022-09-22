@@ -142,7 +142,10 @@ public class DBController {
 
         setup()
 
-        Log.info(message: "[DBController] Done")
+        Log.info(message: "[DBController] Done initalizing")
+        Log.info(message: "[DBController] DB Name: \(database)")
+        Log.info(message: "[DBController] DB Host: \(host)")
+        Log.info(message: "[DBController] DB Port: \(dbPort)")
     }
 
     private func setup() {
@@ -255,7 +258,9 @@ public class DBController {
     }
 
     private func backup(mysql: MySQL, fromVersion: Int, toVersion: Int) {
-        if fromVersion < toVersion && ConfigLoader.global.getConfig(type: .dbBackup) {
+        let backupEnabled: Bool = ConfigLoader.global.getConfig(type: .dbBackup)
+        Log.info(message: "[DBController] DB backups enabled: \(backupEnabled)")
+        if fromVersion < toVersion && backupEnabled {
             Log.info(message: "[DBController] Creating Backup of database for version \(fromVersion)")
             let uuidString = Foundation.UUID().uuidString
             let backupsDir = Dir("\(Dir.projectroot)/backups")
@@ -274,6 +279,7 @@ public class DBController {
                 "instance": true,
                 "metadata": true,
                 "pokemon": true,
+                "pokemon_iv_stats": false,
                 "pokemon_stats": false,
                 "pokemon_shiny_stats": false,
                 "pokemon_hundo_stats": false,
@@ -286,7 +292,8 @@ public class DBController {
                 "token": true,
                 "user": true,
                 "weather": true,
-                "web_session": true
+                "web_session": true,
+                "webhook": true
             ]
 
             var tablesShema = ""

@@ -37,6 +37,7 @@ class ImageManager {
 
     private init() {
         updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
+        Log.info(message: "[ImageManager] Image generation enabled: \(ImageManager.imageGenerationEnabled)")
         if !ImageManager.imageGenerationEnabled {
             return
         }
