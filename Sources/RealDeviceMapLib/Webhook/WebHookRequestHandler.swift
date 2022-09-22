@@ -256,7 +256,9 @@ public class WebHookRequestHandler {
                         }
                     }
                 } else {
-                    Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto")
+                    Log.warning(message:
+                        "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetHoloholoInventoryOutProto"
+                    )
                 }
             } else if method == 101 {
                 if let fsr = try? FortSearchOutProto(serializedData: data) {

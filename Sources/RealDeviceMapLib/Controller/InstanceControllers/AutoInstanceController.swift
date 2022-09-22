@@ -480,8 +480,8 @@ class AutoInstanceController: InstanceControllerProto {
                     var nearbyStops = [pokestop]
                     let pokestopCoord = Coord(lat: pokestop.pokestop.lat, lon: pokestop.pokestop.lon)
                     for stop in todayStopsC! {
-                        if pokestop.alternative == stop.alternative &&
-                           pokestopCoord.distance(to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= spinDistance {
+                        if pokestop.alternative == stop.alternative && pokestopCoord.distance(
+                                to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= spinDistance {
                             nearbyStops.append(stop)
                         }
                     }
