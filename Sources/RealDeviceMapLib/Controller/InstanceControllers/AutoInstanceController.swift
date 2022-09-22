@@ -83,8 +83,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         if !skipBootstrap {
             try? bootstrap()
-        }
-        else {
+        } else {
             Log.info(message: "[AutoInstanceController] Skipping instance bootstrapping.")
         }
         if type == .quest {
@@ -119,7 +118,8 @@ class AutoInstanceController: InstanceControllerProto {
 
                         self.stopsLock.lock()
                         if self.allStops == nil {
-                            Log.warning(message: "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
+                            Log.warning(message:
+                                "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
                             self.stopsLock.unlock()
                             continue
                         }
