@@ -1,7 +1,7 @@
 //
 // Created by Fabio S. on 21.05.22.
 //
-//  swiftlint:disable superfluous_disable_command file_length force_cast
+//  swiftlint:disable superfluous_disable_command file_length force_cast type_body_length
 
 import Foundation
 import PerfectLib
