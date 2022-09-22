@@ -405,17 +405,17 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withDailySpinBonus: break
             case .withUniquePokemon: break
             case .withBuddyInterestingPoi: break
-            case .withPokemonLevel: 
+            case .withPokemonLevel:
                 let info = conditionData.withPokemonLevel
                 infoData["must_be_max_level"] = info.maxLevel
             case .withSingleDay: break
             case .withUniquePokemonTeam: break
-            case .withMaxCp: 
+            case .withMaxCp:
                 let info = conditionData.withMaxCp
                 infoData["with_max_cp"] = info.maxCp
             case .withLuckyPokemon: break
             case .withLegendaryPokemon: break
-            case .withGblRank: 
+            case .withGblRank:
                 let info = conditionData.withGblRank
                 infoData["with_league_rank"] = info.rank
             case .withCatchesInARow: break
