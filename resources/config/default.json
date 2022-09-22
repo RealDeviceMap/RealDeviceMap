@@ -75,7 +75,7 @@
       "endpointConnectTimeout": 30
     },
     "quest": {
-        "allowARQuests": false,
+        "allowARQuests": true,
         "questRetryLimit": 10,
         "spinDistance": 80
     },
