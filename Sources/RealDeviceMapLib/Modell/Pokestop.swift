@@ -405,16 +405,30 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withDailySpinBonus: break
             case .withUniquePokemon: break
             case .withBuddyInterestingPoi: break
-            case .withPokemonLevel: break
+            case .withPokemonLevel:
+                let info = conditionData.withPokemonLevel
+                infoData["must_be_max_level"] = info.maxLevel
             case .withSingleDay: break
             case .withUniquePokemonTeam: break
-            case .withMaxCp: break
+            case .withMaxCp:
+                let info = conditionData.withMaxCp
+                infoData["with_max_cp"] = info.maxCp
             case .withLuckyPokemon: break
             case .withLegendaryPokemon: break
-            case .withGblRank: break
+            case .withGblRank:
+                let info = conditionData.withGblRank
+                infoData["with_league_rank"] = info.rank
             case .withCatchesInARow: break
-            case .withEncounterType: break
-            case .withCombatType: break
+            case .withEncounterType:
+                let info = conditionData.withEncounterType
+                infoData["encounter_type"] = info.encounterType.map({ (type) -> Int in
+                    return type.rawValue
+                })
+            case .withCombatType:
+                let info = conditionData.withCombatType
+                infoData["combat_type"] = info.combatType.map({ (type) -> Int in
+                    return type.rawValue
+                })
             case .withGeotargetedPoi: break
             case .withFriendLevel: break
             case .withSticker: break
@@ -484,7 +498,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 infoData["pokemon_id"] = info.pokemonID.rawValue
             case .avatarClothing: break
             case .quest: break
-            case .levelCap: break
+            case .levelCap:
+                let info = rewardData.levelCap
+                infoData["level_cap"] = info
             case .incident: break
             case .playerAttribute: break
             case .unset: break
