@@ -1104,7 +1104,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
         let sql = """
             UPDATE pokestop
-            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+            SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
                 quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
@@ -1157,7 +1157,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         let coords = Pokestop.flattenCoords(area: areaString)
         let sql = """
             UPDATE pokestop
-            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+            SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
                 quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
@@ -1198,7 +1198,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         let coords = Pokestop.flattenCoords(area: areaString)
         let sql = """
             UPDATE pokestop
-            SET updated = UNIX_TIMESTAMP(), quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+            SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
                 quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
