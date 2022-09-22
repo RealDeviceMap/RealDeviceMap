@@ -90,7 +90,7 @@ class Cell: JSONConvertibleObject {
         mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         Cell.cache?.set(id: id.toString(), value: self)
@@ -124,7 +124,7 @@ class Cell: JSONConvertibleObject {
         mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -187,7 +187,7 @@ class Cell: JSONConvertibleObject {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in getInIDs(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

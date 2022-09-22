@@ -11,6 +11,7 @@ services:
       - images:/app/resources/webroot/static/img
       - backups:/app/backups
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 #     - ./local.json:/app/resources/config/local.json # local.json usage
 #     - favicons:/app/resources/webroot/static/favicons
     ports:
