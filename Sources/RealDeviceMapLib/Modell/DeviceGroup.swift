@@ -41,7 +41,7 @@ class DeviceGroup: Hashable {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICEGROUP] Failed to execute query in create(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -65,7 +65,7 @@ class DeviceGroup: Hashable {
         }
 
         guard mysqlStmt.execute() else {
-           Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+           Log.error(message: "[DEVICEGROUP] Failed to execute query in createLinkings(). (\(mysqlStmt.errorMessage())")
            throw DBController.DBError()
         }
     }
@@ -87,7 +87,7 @@ class DeviceGroup: Hashable {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICEGROUP] Failed to execute query in delete(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -112,7 +112,7 @@ class DeviceGroup: Hashable {
         mysqlStmt.bindParam(oldName)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICEGROUP] Failed to execute query in update(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -130,7 +130,7 @@ class DeviceGroup: Hashable {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-           Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+           Log.error(message: "[DEVICEGROUP] Failed to execute query in deleteLinkings(). (\(mysqlStmt.errorMessage())")
            throw DBController.DBError()
         }
     }
@@ -153,7 +153,7 @@ class DeviceGroup: Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICEGROUP] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -188,7 +188,7 @@ class DeviceGroup: Hashable {
         mysqlStmt.bindParam(name)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICEGROUP] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICEGROUP] Failed to execute query in getByName(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

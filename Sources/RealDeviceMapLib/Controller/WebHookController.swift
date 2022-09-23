@@ -18,6 +18,8 @@ public class WebHookController {
     private init() {
         timeout = ConfigLoader.global.getConfig(type: .webhookTimeout)
         connectTimeout = ConfigLoader.global.getConfig(type: .webhookConnectTimeout)
+        Log.info(message: "[WebHookController] Webhook Endpoint Timeout: \(timeout)")
+        Log.info(message: "[WebHookController] Webhook Connection Timeout: \(connectTimeout)")
     }
 
     public private(set) static var global = WebHookController()
