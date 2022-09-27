@@ -186,7 +186,7 @@ public class User {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in checkUsernameTaken(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -212,7 +212,7 @@ public class User {
         mysqlStmt.bindParam(email)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in checkEmailTaken(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -301,7 +301,7 @@ public class User {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in get(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -343,7 +343,7 @@ public class User {
         mysqlStmt.bindParam(discordId)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in get(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -392,7 +392,7 @@ public class User {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -434,7 +434,7 @@ public class User {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setGroup(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -467,7 +467,7 @@ public class User {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setPassword(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -499,7 +499,7 @@ public class User {
         mysqlStmt.bindParam(self.username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setUsername(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -549,12 +549,12 @@ public class User {
         mysqlStmtB.bindParam(username)
 
         guard mysqlStmtA.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setEmail(). (\(mysqlStmtA.errorMessage())")
             throw DBController.DBError()
         }
 
         guard mysqlStmtB.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setEmail(). (\(mysqlStmtB.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -591,7 +591,7 @@ public class User {
         mysqlStmtA.bindParam(id)
 
         guard mysqlStmtA.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setDiscordId(). (\(mysqlStmtA.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -627,7 +627,7 @@ public class User {
         mysqlStmtB.bindParam(id)
 
         guard mysqlStmtB.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setDiscordId(). (\(mysqlStmtB.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -643,7 +643,7 @@ public class User {
         mysqlStmtC.bindParam(username)
 
         guard mysqlStmtC.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtC.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in setDiscordId(). (\(mysqlStmtC.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -680,7 +680,7 @@ public class User {
         mysqlStmtA.bindParam(username)
 
         guard mysqlStmtA.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtA.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in verifyEmail(). (\(mysqlStmtA.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -689,7 +689,7 @@ public class User {
         mysqlStmtB.bindParam(username)
 
         guard mysqlStmtB.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmtB.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in verifyEmail(). (\(mysqlStmtB.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -718,7 +718,7 @@ public class User {
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in delete(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -758,7 +758,7 @@ public class User {
         mysqlStmt.bindParam(groupName)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[User] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[User] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -779,7 +779,7 @@ public class User {
                     if code != 250 {
                         Log.error(message: "[User] Failed to sent confirm email. Got code \(code)")
                     } else {
-                        Log.debug(message: "[User] Confirm email send successfully")
+                        Log.info(message: "[User] Confirm email send successfully")
                     }
             }
         }
@@ -799,7 +799,7 @@ public class User {
                     if code != 250 {
                         Log.error(message: "[User] Failed to sent reset password email. Got code \(code)")
                     } else {
-                        Log.debug(message: "[User] Reset password email send successfully")
+                        Log.info(message: "[User] Reset password email send successfully")
                     }
             }
         }

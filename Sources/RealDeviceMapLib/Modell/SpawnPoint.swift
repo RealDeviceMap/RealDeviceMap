@@ -10,7 +10,6 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
-import POGOProtos
 
 public class SpawnPoint: JSONConvertibleObject {
 
@@ -120,7 +119,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(despawnSecond)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -214,7 +213,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -267,7 +266,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in getWithId(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()

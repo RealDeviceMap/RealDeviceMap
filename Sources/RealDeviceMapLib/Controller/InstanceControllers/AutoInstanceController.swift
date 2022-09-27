@@ -61,6 +61,9 @@ class AutoInstanceController: InstanceControllerProto {
     private let questMode: QuestMode
     public var delayLogout: Int
     public let useRwForQuest: Bool = ConfigLoader.global.getConfig(type: .accUseRwForQuest)
+    public let skipBootstrap: Bool = ConfigLoader.global.getConfig(type: .stopAllBootstrapping)
+    public let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
+    public let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
          minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
@@ -78,7 +81,11 @@ class AutoInstanceController: InstanceControllerProto {
         self.questMode = questMode
         update()
 
-        try? bootstrap()
+        if !skipBootstrap {
+            try? bootstrap()
+        } else {
+            Log.info(message: "[AutoInstanceController] Skipping instance bootstrapping.")
+        }
         if type == .quest {
             questClearerQueue = Threading.getQueue(name: "\(name)-quest-clearer", type: .serial)
             questClearerQueue!.dispatch {
@@ -111,7 +118,8 @@ class AutoInstanceController: InstanceControllerProto {
 
                         self.stopsLock.lock()
                         if self.allStops == nil {
-                            Log.debug(message: "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
+                            Log.warning(message:
+                                "[AutoInstanceController] [\(name)] Tried clearing quests but no stops.")
                             self.stopsLock.unlock()
                             continue
                         }
@@ -361,14 +369,14 @@ class AutoInstanceController: InstanceControllerProto {
                         if questMode == .normal || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: false)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
-                            if stop.questType == nil && stop.enabled == true && count <= 5 {
+                            if stop.questType == nil && stop.enabled == true && count <= limit {
                                 todayStops!.append(pokestopWithMode)
                             }
                         }
                         if questMode == .alternative || questMode == .both {
                             let pokestopWithMode = PokestopWithMode(pokestop: stop, alternative: true)
                             let count = todayStopsTries![pokestopWithMode] ?? 0
-                            if stop.alternativeQuestType == nil && stop.enabled == true && count <= 5 {
+                            if stop.alternativeQuestType == nil && stop.enabled == true && count <= limit {
                                 todayStops!.append(pokestopWithMode)
                             }
                         }
@@ -472,9 +480,8 @@ class AutoInstanceController: InstanceControllerProto {
                     var nearbyStops = [pokestop]
                     let pokestopCoord = Coord(lat: pokestop.pokestop.lat, lon: pokestop.pokestop.lon)
                     for stop in todayStopsC! {
-                        // MARK: Revert back to 40m once reverted ingame
-                        if pokestop.alternative == stop.alternative &&
-                           pokestopCoord.distance(to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= 80 {
+                        if pokestop.alternative == stop.alternative && pokestopCoord.distance(
+                                to: Coord(lat: stop.pokestop.lat, lon: stop.pokestop.lon)) <= spinDistance {
                             nearbyStops.append(stop)
                         }
                     }

@@ -42,7 +42,8 @@
     "account": {
       "requireInDB": true,
       "useRwForQuest": false,
-      "useRwForRaid": false
+      "useRwForRaid": false,
+      "useRwForPokes": false
     },
     "loginLimit": {
       "enabled": false,
@@ -72,6 +73,12 @@
     "webhook": {
       "endpointTimeout": 30,
       "endpointConnectTimeout": 30
-    }
+    },
+    "quest": {
+        "allowARQuests": true,
+        "questRetryLimit": 10,
+        "spinDistance": 80
+    },
+    "stopAllBootstrapping": false
   }
 }
