@@ -23,7 +23,7 @@ public class ConfigLoader {
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
         "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
-        "USE_RW_FOR_POKES"
+        "USE_RW_FOR_POKES", "NO_DB_CLEARER"
     ]
 
     private init() {
@@ -110,6 +110,14 @@ public class ConfigLoader {
             ?? defaultConfig.application.memoryCache.clearInterval.value()!
         case .memoryCacheKeepTime: return localConfig.application.memoryCache.keepTime.value()
             ?? defaultConfig.application.memoryCache.keepTime.value()!
+        case .dbClearerEnabled: return localConfig.application.clearer.enabled.value()
+            ?? defaultConfig.application.clearer.enabled.value()!
+        case .dbClearerInterval: return localConfig.application.clearer.interval.value()
+            ?? defaultConfig.application.clearer.interval.value()!
+        case .dbClearerKeepTime: return localConfig.application.clearer.keepTime.value()
+            ?? defaultConfig.application.clearer.keepTime.value()!
+        case .dbClearerBatchSize: return localConfig.application.clearer.batchSize.value()
+            ?? defaultConfig.application.clearer.batchSize.value()!
         case .pvpEnabled: return localConfig.application.pvp.enabled.value()
             ?? defaultConfig.application.pvp.enabled.value()!
         case .pvpLevelCaps: return localConfig.application.pvp.levelCaps.value()
@@ -172,6 +180,10 @@ public class ConfigLoader {
         case .memoryCacheEnabled: return false as! T
         case .memoryCacheClearInterval: return castValue(value: value)
         case .memoryCacheKeepTime: return castValue(value: value)
+        case .dbClearerEnabled: return false as! T // NO_DB_CLEARER
+        case .dbClearerInterval: return castValue(value: value)
+        case .dbClearerKeepTime: return castValue(value: value)
+        case .dbClearerBatchSize: return castValue(value: value)
         case .pvpEnabled: return false as! T // NO_PVP
         case .pvpLevelCaps: return value.components(separatedBy: ",").map({ Int($0)! }) as! T
         case .pvpDefaultRank: return value as! T
@@ -191,6 +203,8 @@ public class ConfigLoader {
     private func castValue<T>(value: String) -> T {
         if T.self == UInt32.self {
             return UInt32(value.trimmingCharacters(in: .whitespaces)) as! T
+        } else if T.self == UInt.self {
+            return UInt(value.trimmingCharacters(in: .whitespaces)) as! T
         } else if T.self == Int.self {
             return Int(value.trimmingCharacters(in: .whitespaces)) as! T
         } else if T.self == Double.self {
@@ -235,6 +249,10 @@ public class ConfigLoader {
         case memoryCacheEnabled = "NO_MEMORY_CACHE"
         case memoryCacheClearInterval = "MEMORY_CACHE_CLEAR_INTERVAL"
         case memoryCacheKeepTime = "MEMORY_CACHE_KEEP_TIME"
+        case dbClearerEnabled = "NO_DB_CLEARER"
+        case dbClearerInterval = "DB_CLEARER_INTERVAL" // not used in env
+        case dbClearerKeepTime = "DB_CLEARER_KEEP_TIME" // not used in env
+        case dbClearerBatchSize = "DB_CLEARER_BATCH_SIZE" // not used in env
         case pvpEnabled = "NO_PVP"
         case pvpLevelCaps = "PVP_LEVEL_CAPS"
         case pvpDefaultRank = "PVP_DEFAULT_RANK"

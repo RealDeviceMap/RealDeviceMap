@@ -52,8 +52,8 @@ public func setupRealDeviceMap() {
 
     // Init MemoryCache
     let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
-    let memoryCacheClearInterval = Double(ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int)
-    let memoryCacheKeepTime = Double(ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int)
+    let memoryCacheClearInterval = (ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int).toDouble()
+    let memoryCacheKeepTime = (ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int).toDouble()
     if memoryCacheEnabled {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
@@ -308,6 +308,15 @@ public func setupRealDeviceMap() {
         let message = "[MAIN] Failed to start Assignment Controller"
         Log.critical(message: message)
         fatalError(message)
+    }
+
+    // Start Clearer
+    if ConfigLoader.global.getConfig(type: .dbClearerEnabled) as Bool {
+        DBClearer.interval = (ConfigLoader.global.getConfig(type: .dbClearerInterval) as Int).toDouble()
+        DBClearer.keepTime = (ConfigLoader.global.getConfig(type: .dbClearerKeepTime) as Int).toDouble()
+        DBClearer.batchSize = (ConfigLoader.global.getConfig(type: .dbClearerBatchSize) as Int).toUInt()
+        _ = DBClearer.global
+        Log.info(message: "[MAIN] Starting DBClearer")
     }
 
     // Check if is setup
