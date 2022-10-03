@@ -2407,20 +2407,21 @@ public class ApiRequestHandler {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
-            var size = 0
             if !coords.isEmpty {
-                size = instance.addToScanNextCoords(coords: coords)
+                for chunk in coords.chunked(into: 7) {
+                    instance.addToScanNextCoords(coords: chunk)
+                }
             }
             do {
                 try response.respondWithData(data: [
                     "action": "next_scan",
-                    "size": size,
+                    "size": instance.getNextCoordsSize(),
                     "timestamp": Int(Date().timeIntervalSince1970)
                 ])
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if clearMemCache {
+        } else if clearMemCache && perms.contains(.admin) {
             Pokemon.cache?.clear()
             Pokestop.cache?.clear()
             Incident.cache?.clear()

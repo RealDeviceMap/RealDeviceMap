@@ -24,7 +24,7 @@ public protocol InstanceControllerProto {
     var maxLevel: UInt8 { get }
     var accountGroup: String? { get }
     var isEvent: Bool { get }
-    var scanNextCoords: [Coord] { get set }
+    var scanNextCoords: [[Coord]] { get set }
     var delegate: InstanceControllerDelegate? { get set }
     var lock: Threading.Lock { get }
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any]
@@ -58,16 +58,16 @@ extension InstanceControllerProto {
         let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
         Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
         lock.lock()
-        for coord in coords {
-            scanNextCoords.append(coord)
-        }
-        let size = scanNextCoords.count
+        scanNextCoords.append(coords)
         lock.unlock()
-        return size
+        return getNextCoordsSize()
     }
 
     func getNextCoordsSize() -> Int {
-        lock.doWithLock { scanNextCoords.count }
+        lock.doWithLock {
+            let result: Int = scanNextCoords.map({$0.count}).reduce(0, +)
+            return result
+        }
     }
 }
 
