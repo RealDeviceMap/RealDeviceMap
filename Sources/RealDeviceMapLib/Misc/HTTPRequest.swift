@@ -15,7 +15,11 @@ internal extension HTTPRequest {
         if forwardedForHeader.isEmpty || !WebHookRequestHandler.hostWhitelistUsesProxy {
             hostString = self.remoteAddress.host
         } else {
-            hostString = forwardedForHeader.components(separatedBy: ",").first!.trimmingCharacters(in: .whitespaces)
+            if forwardedForHeader.contains(",") {
+                hostString = forwardedForHeader.components(separatedBy: ",").first!.trimmingCharacters(in: .whitespaces)
+            } else {
+                hostString = forwardedForHeader
+            }
         }
         let hexParts = hostString.components(separatedBy: ":")
         if hexParts.count == 8 {
