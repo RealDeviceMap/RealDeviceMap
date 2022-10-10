@@ -1045,7 +1045,7 @@ public class WebHookRequestHandler {
                         account: account, timestamp: timestamp
                     )
                     if task.isEmpty {
-                        try response.respondWithError(event: .taskNotFound)
+                        response.respondWithError(event: .taskNotFound)
                     }
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
