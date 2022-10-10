@@ -140,7 +140,7 @@ class LevelingInstanceController: InstanceControllerProto {
             encounterTime = result.encounterTime
         } catch {
             Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
-            return [String: Any]()
+            return [:]
         }
 
         do {
@@ -153,7 +153,7 @@ class LevelingInstanceController: InstanceControllerProto {
           )
         } catch {
             Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
-            return [String: Any]()
+            return [:]
         }
 
         playerLock.lock()
