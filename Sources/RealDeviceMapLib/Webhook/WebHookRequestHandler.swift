@@ -1317,7 +1317,7 @@ public class WebHookRequestHandler {
         return "\(loginLimitEnabled) - \(loginLimit)/\(loginLimitIntervall)"
     }
 
-    enum Event: String {
+    public enum Event: String {
         case accountNotFound
         case deviceNotFound
         case instanceNotFound
