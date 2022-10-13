@@ -18,6 +18,8 @@ public class WebHookController {
     private init() {
         timeout = ConfigLoader.global.getConfig(type: .webhookTimeout)
         connectTimeout = ConfigLoader.global.getConfig(type: .webhookConnectTimeout)
+        Log.info(message: "[WebHookController] Webhook Endpoint Timeout: \(timeout)")
+        Log.info(message: "[WebHookController] Webhook Connection Timeout: \(connectTimeout)")
     }
 
     public private(set) static var global = WebHookController()
@@ -44,8 +46,6 @@ public class WebHookController {
     private var alternativeQuestEvents = [String: Pokestop]()
     private var gymEventLock = Threading.Lock()
     private var gymEvents = [String: Gym]()
-    private var gymInfoEventLock = Threading.Lock()
-    private var gymInfoEvents = [String: Gym]()
     private var eggEventLock = Threading.Lock()
     private var eggEvents = [String: Gym]()
     private var raidEventLock = Threading.Lock()
@@ -94,12 +94,6 @@ public class WebHookController {
     public func addGymEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.gym) {
             gymEventLock.doWithLock { gymEvents[gym.id] = gym }
-        }
-    }
-
-    public func addGymInfoEvent(gym: Gym) {
-        if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymInfoEventLock.doWithLock { gymInfoEvents[gym.id] = gym }
         }
     }
 
@@ -171,7 +165,6 @@ public class WebHookController {
                         var questEvents = [String: Pokestop]()
                         var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
-                        var gymInfoEvents = [String: Gym]()
                         var eggEvents = [String: Gym]()
                         var raidEvents = [String: Gym]()
                         var weatherEvents = [Int64: Weather]()
@@ -210,11 +203,6 @@ public class WebHookController {
                         self.gymEventLock.doWithLock {
                             gymEvents = self.gymEvents
                             self.gymEvents = [String: Gym]()
-                        }
-
-                        self.gymInfoEventLock.doWithLock {
-                            gymInfoEvents = self.gymInfoEvents
-                            self.gymInfoEvents = [String: Gym]()
                         }
 
                         self.raidEventLock.doWithLock {
@@ -332,15 +320,6 @@ public class WebHookController {
                                         events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
                                     }
                                 }
-                                for (_, gymInfo) in gymInfoEvents {
-                                    if area.isEmpty ||
-                                           self.inPolygon(lat: gymInfo.lat, lon: gymInfo.lon, multiPolygon: polygon) {
-                                        if gymIDs.contains(Int(gymInfo.teamId ?? 0)) {
-                                            continue
-                                        }
-                                        events.append(gymInfo.getWebhookValues(type: "gym-info"))
-                                    }
-                                }
                             }
 
                             if webhook.types.contains(.raid) {
@@ -405,7 +384,7 @@ public class WebHookController {
     }
 
     private func sendEvents(events: [[String: Any]], url: String) {
-        Log.debug(message: "[WebHookController] Sending \(events.count) events to" +
+        Log.debug(message: "[WebHookController] Sending \(events.count) event(s) to " +
             "\(webhooks.count) endpoints")
         guard let body = try? events.jsonEncodedString() else {
             Log.error(message: "[WebHookController] Failed to parse events into json string")

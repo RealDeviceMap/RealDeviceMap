@@ -1,7 +1,7 @@
 //
 // Created by Fabio S. on 21.05.22.
 //
-//  swiftlint:disable superfluous_disable_command file_length force_cast
+//  swiftlint:disable superfluous_disable_command file_length force_cast type_body_length
 
 import Foundation
 import PerfectLib
@@ -22,7 +22,8 @@ public class ConfigLoader {
         "PVP_DEFAULT_RANK", "PVP_LITTLE_FILTER", "PVP_GREAT_FILTER", "PVP_ULTRA_FILTER", "PVP_LEVEL_CAPS",
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
-        "SCAN_LURE_ENCOUNTER"
+        "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
+        "USE_RW_FOR_POKES"
     ]
 
     private init() {
@@ -125,6 +126,16 @@ public class ConfigLoader {
             ?? defaultConfig.application.webhook.endpointTimeout.value()!
         case .webhookConnectTimeout: return localConfig.application.webhook.endpointConnectTimeout.value()
             ?? defaultConfig.application.webhook.endpointConnectTimeout.value()!
+        case .allowARQuests: return localConfig.application.quest.allowARQuests.value()
+            ?? defaultConfig.application.quest.allowARQuests.value()!
+        case .stopAllBootstrapping: return localConfig.application.stopAllBootstrapping.value()
+            ?? defaultConfig.application.stopAllBootstrapping.value()!
+        case .accUseRwForPokes: return localConfig.application.account.useRwForPokes.value()
+            ?? defaultConfig.application.account.useRwForPokes.value()!
+        case .questRetryLimit: return localConfig.application.quest.questRetryLimit.value()
+            ?? defaultConfig.application.quest.questRetryLimit.value()!
+        case .spinDistance: return localConfig.application.quest.spinDistance.value()
+            ?? defaultConfig.application.quest.spinDistance.value()!
         }
     }
 
@@ -169,6 +180,11 @@ public class ConfigLoader {
         case .pvpFilterUltraMinCP: return castValue(value: value)
         case .webhookTimeout: return castValue(value: value)
         case .webhookConnectTimeout: return castValue(value: value)
+        case .allowARQuests: return true as! T // ALLOW_AR_QUESTS
+        case .stopAllBootstrapping: return true as! T // STOP_ALL_BOOTSTRAPPING
+        case .accUseRwForPokes: return false as! T // USE_RW_FOR_POKES
+        case .questRetryLimit: return castValue(value: value) // QUEST_RETRY_LIMIT
+        case .spinDistance: return castValue(value: value) // SPIN_DISTANCE
         }
     }
 
@@ -181,6 +197,8 @@ public class ConfigLoader {
             return Double(value.trimmingCharacters(in: .whitespaces)) as! T
         } else if T.self == Bool.self {
             return Bool(value.trimmingCharacters(in: .whitespaces)) as! T
+        } else if T.self == UInt8.self {
+            return UInt8(value.trimmingCharacters(in: .whitespaces)) as! T
         } else {
             fatalError()
         }
@@ -225,6 +243,11 @@ public class ConfigLoader {
         case pvpFilterUltraMinCP = "PVP_ULTRA_FILTER"
         case webhookTimeout = "WEBHOOK_ENDPOINT_TIMEOUT"
         case webhookConnectTimeout = "WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"
+        case allowARQuests = "ALLOW_AR_QUESTS"
+        case stopAllBootstrapping = "STOP_ALL_BOOTSTRAPPING"
+        case accUseRwForPokes = "USE_RW_FOR_POKES"
+        case questRetryLimit = "QUEST_RETRY_LIMIT"
+        case spinDistance = "SPIN_DISTANCE"
     }
 
 }

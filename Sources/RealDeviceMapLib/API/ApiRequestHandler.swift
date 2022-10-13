@@ -2255,11 +2255,10 @@ public class ApiRequestHandler {
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
-                guard let oldGym = try Gym.getWithId(id: id) else {
+                guard let oldGym = try Gym.getWithId(id: id, copy: true) else {
                     return response.respondWithError(status: .custom(code: 404, message: "Gym not found"))
                 }
                 oldGym.name = name
-                oldGym.hasChanges = true
                 try oldGym.save()
                 response.respondWithOk()
             } catch {
@@ -2267,11 +2266,10 @@ public class ApiRequestHandler {
             }
         } else if setPokestopName, perms.contains(.admin), let id = pokestopId, let name = pokestopName {
            do {
-               guard let oldPokestop = try Pokestop.getWithId(id: id) else {
+               guard let oldPokestop = try Pokestop.getWithId(id: id, copy: true) else {
                    return response.respondWithError(status: .custom(code: 404, message: "Pokestop not found"))
                }
                oldPokestop.name = name
-               oldPokestop.hasChanges = true
                try oldPokestop.save()
                response.respondWithOk()
            } catch {

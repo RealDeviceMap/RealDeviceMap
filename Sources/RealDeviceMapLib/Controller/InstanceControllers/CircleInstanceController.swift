@@ -35,6 +35,7 @@ class CircleInstanceController: InstanceControllerProto {
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
     public let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
+    public let useRwForPokes: Bool = ConfigLoader.global.getConfig(type: .accUseRwForPokes)
 
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {
@@ -206,7 +207,7 @@ class CircleInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: false,
+                ignoringWarning: useRwForPokes,
                 spins: nil,
                 noCooldown: false,
                 device: uuid,
@@ -231,7 +232,7 @@ class CircleInstanceController: InstanceControllerProto {
         case .pokemon, .smartPokemon:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid(group: accountGroup)
+                account.isValid(ignoringWarning: useRwForPokes, group: accountGroup)
         case .raid:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&

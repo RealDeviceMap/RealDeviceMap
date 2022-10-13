@@ -37,6 +37,7 @@ class ImageManager {
 
     private init() {
         updaterThread = Threading.getQueue(name: "ImageJsonUpdater", type: .serial)
+        Log.info(message: "[ImageManager] Image generation enabled: \(ImageManager.imageGenerationEnabled)")
         if !ImageManager.imageGenerationEnabled {
             return
         }
@@ -200,7 +201,7 @@ class ImageManager {
                 "\(reward.style)/reward/stardust/\(reward.uicon).png")
         } else if reward.type == POGOProtos.QuestRewardProto.TypeEnum.unset {
             baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
-                "\(reward.style)/reward/\(reward.uicon).png")
+                "\(reward.style)/reward/unset/\(reward.uicon).png")
         } else {
             baseFile = File("\(Dir.projectroot)/resources/webroot/static/img/" +
                 "\(reward.style)/reward/\(reward.type)/\(reward.uicon).png")

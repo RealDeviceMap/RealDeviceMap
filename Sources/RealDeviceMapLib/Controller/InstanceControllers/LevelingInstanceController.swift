@@ -184,8 +184,8 @@ class LevelingInstanceController: InstanceControllerProto {
         unspunLoop: for stop in unspunPokestops {
             let coord = Coord(lat: stop.latitude, lon: stop.longitude)
             for last in exclude {
-                // MARK: Revert back to 40m once reverted ingame
-                if coord.distance(to: last) <= 80 {
+                let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
+                if coord.distance(to: last) <= spinDistance {
                     continue unspunLoop
                 }
             }

@@ -10,7 +10,6 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
-import POGOProtos
 
 public class SpawnPoint: JSONConvertibleObject {
 
@@ -36,6 +35,13 @@ public class SpawnPoint: JSONConvertibleObject {
 
     public static var cache: MemoryCache<SpawnPoint>?
 
+    init(id: UInt64, lat: Double, lon: Double, despawnSecond: UInt16?) {
+        self.id = id
+        self.lat = lat
+        self.lon = lon
+        self.despawnSecond = despawnSecond
+    }
+
     init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?) {
         self.id = id
         self.lat = lat
@@ -45,7 +51,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.despawnSecond = despawnSecond
     }
 
-    public func save(mysql: MySQL?=nil, update: Bool=false) throws {
+    public func save(mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
@@ -60,14 +66,13 @@ public class SpawnPoint: JSONConvertibleObject {
         }
         let mysqlStmt = MySQLStmt(mysql)
 
-        let now = UInt32(Date().timeIntervalSince1970)
-
-        updated = now
-        lastSeen = now
-
         if !update && oldSpawnpoint != nil {
             return
         }
+
+        let now = UInt32(Date().timeIntervalSince1970)
+        updated = now
+        lastSeen = now
 
         if oldSpawnpoint != nil {
 
@@ -75,17 +80,24 @@ public class SpawnPoint: JSONConvertibleObject {
                 self.despawnSecond = oldSpawnpoint!.despawnSecond
             }
 
-            if  self.lat == oldSpawnpoint!.lat &&
-                self.lon == oldSpawnpoint!.lon &&
-                self.despawnSecond == oldSpawnpoint!.despawnSecond {
+            if !SpawnPoint.hasChanges(old: oldSpawnpoint!, new: self) {
                 return
+            }
+
+            // better to have inaccurate timestamp than none -> only update if the time differs more than 30 seconds,
+            // use old despawn seconds if available then, otherwise keep new despawn seconds
+            if !timestampAccurate, let oldDespawnSecond = oldSpawnpoint!.despawnSecond,
+               let newDespawnSecond = self.despawnSecond {
+                if abs(Int(oldDespawnSecond) - Int(newDespawnSecond)) < 30 {
+                    self.despawnSecond = oldDespawnSecond
+                }
             }
 
         }
 
         var sql = """
             INSERT INTO spawnpoint (id, lat, lon, updated, last_seen, despawn_sec)
-            VALUES (?, ?, ?, UNIX_TIMESTAMP(), ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         """
         if update {
             sql += """
@@ -98,23 +110,27 @@ public class SpawnPoint: JSONConvertibleObject {
             """
         }
 
-        self.updated = now
-        self.lastSeen = now
-
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(id)
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
+        mysqlStmt.bindParam(updated)
         mysqlStmt.bindParam(lastSeen)
         mysqlStmt.bindParam(despawnSecond)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
         SpawnPoint.cache?.set(id: id.toString(), value: self)
 
+    }
+
+    private static func hasChanges(old: SpawnPoint, new: SpawnPoint) -> Bool {
+        return old.lat != new.lat ||
+               old.lon != new.lon ||
+               old.despawnSecond != new.despawnSecond
     }
 
     public func setLastSeen(mysql: MySQL?=nil) throws {
@@ -124,9 +140,10 @@ public class SpawnPoint: JSONConvertibleObject {
         if self.lastSeen! + 900 > now {
             return
         }
+        self.lastSeen = now
 
         guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[SPAWNPOINT setLastSeen] Failed to connect to database.")
+            Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()
         }
 
@@ -139,22 +156,13 @@ public class SpawnPoint: JSONConvertibleObject {
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(now)
-        mysqlStmt.bindParam(self.id)
+        mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT setLastSeen] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query 'setLastSeen'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-
-        let spawnpoint = SpawnPoint(
-            id: self.id,
-            lat: self.lat,
-            lon: self.lon,
-            updated: self.updated,
-            lastSeen: now,
-            despawnSecond: self.despawnSecond
-        )
-        SpawnPoint.cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
+        SpawnPoint.cache?.set(id: id.toString(), value: self)
 
     }
 
@@ -205,7 +213,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -258,7 +266,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[SPAWNPOINT] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[SPAWNPOINT] Failed to execute query in getWithId(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
