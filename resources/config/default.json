@@ -62,6 +62,19 @@
       "clearInterval": 900,
       "keepTime": 3600
     },
+    "clearer": {
+      "enabled": true,
+      "pokemon": {
+        "interval": 300,
+        "keepTime": 3600,
+        "batchSize": 250
+      },
+      "incident": {
+        "interval": 900,
+        "keepTime": 3600,
+        "batchSize": 250
+      }
+    },
     "pvp": {
       "enabled": true,
       "levelCaps": [50],
