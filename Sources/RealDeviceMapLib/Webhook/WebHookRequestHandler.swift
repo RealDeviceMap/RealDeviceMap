@@ -916,8 +916,6 @@ public class WebHookRequestHandler {
                 for (cellId, stopIds) in stopsIdsPerCell {
                     let cachedCell = Cell.cache?.get(id: cellId.toString())
                     if cachedCell?.stopCount != stopIds.count {
-                        Log.debug(message: "[WebHookRequestHandler] Clearing old stops in \(cellId): " +
-                            "\(cachedCell?.stopCount ?? 0) != \(stopIds.count)")
                         if let cleared = try? Pokestop.clearOld(mysql: mysql, ids: stopIds, cellId: cellId),
                            cleared != 0 {
                             Log.info(message: "[WebHookRequestHandler] [\(uuid ?? "?")] " +

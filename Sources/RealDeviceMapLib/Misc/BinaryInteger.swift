@@ -21,6 +21,9 @@ public extension BinaryInteger {
     func toUInt8() -> UInt8 {
         return UInt8(self)
     }
+    func toUInt() -> UInt {
+        return UInt(self)
+    }
     func toInt32() -> Int32 {
         return Int32(self)
     }
@@ -29,6 +32,9 @@ public extension BinaryInteger {
     }
     func toInt8() -> Int8 {
         return Int8(self)
+    }
+    func toDouble() -> Double {
+        return Double(self)
     }
     func toString() -> String {
         return self.description
