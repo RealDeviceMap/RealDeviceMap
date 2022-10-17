@@ -312,14 +312,11 @@ public func setupRealDeviceMap() {
 
     // Start Clearer
     if ConfigLoader.global.getConfig(type: .dbClearerEnabled) as Bool {
-        // Stats.interval = (ConfigLoader.global.getConfig(type: .dbClearerInterval) as Int).toDouble()
-        // Stats.keepTime = (ConfigLoader.global.getConfig(type: .dbClearerKeepTime) as Int).toDouble()
-        // Stats.batchSize = (ConfigLoader.global.getConfig(type: .dbClearerBatchSize) as Int).toUInt()
-        Log.info(message: "[TMP] Start Database Archiver")
         DBClearer.startDatabaseArchiver()
-        Log.info(message: "[TMP] Start Incident Expiry")
         DBClearer.startIncidentExpiry()
-        Log.info(message: "[TMP] Successful")
+        Log.info(message: "[MAIN] DBClearer enabled")
+    } else {
+        Log.info(message: "[MAIN] DBClearer disabled")
     }
 
     // Check if is setup
