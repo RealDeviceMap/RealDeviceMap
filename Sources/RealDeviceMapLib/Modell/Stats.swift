@@ -537,16 +537,9 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
-                    SUM(invasions) AS invasions,
-                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) quests
-                  FROM (
-                      SELECT pokestop.id, lure_expire_timestamp, lure_id,
-                        alternative_quest_reward_type, quest_reward_type, count(incident.id) as invasions
-                      FROM pokestop
-                      LEFT JOIN incident on pokestop.id = incident.pokestop_id
-                        and incident.expiration >= UNIX_TIMESTAMP()
-                      GROUP BY pokestop.id
-                  ) as calculation;
+                    (SELECT COUNT(id) FROM incident WHERE expiration > UNIX_TIMESTAMP()) AS invasions,
+                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) AS quests
+                  FROM pokestop;
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -561,14 +554,14 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
+            let total = result[0] as? Int64 ?? 0
             let normalLures = Int64(result[1] as? String ?? "0")!
             let glacialLures = Int64(result[2] as? String ?? "0")!
             let mossyLures = Int64(result[3] as? String ?? "0")!
             let magneticLures = Int64(result[4] as? String ?? "0")!
             let rainyLures = Int64(result[5] as? String ?? "0")!
-            let invasions = Int64(result[6] as? String ?? "0")!
-            let quests = result[7] as! Int64
+            let invasions = result[6] as? Int64 ?? 0
+            let quests = result[7] as? Int64 ?? 0
 
             stats.append(total)
             stats.append(normalLures)
@@ -756,7 +749,7 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
+            let total = result[0] as? Int64 ?? 0
             let found = Int64(result[1] as? String ?? "0") ?? 0
             let missing = Int64(result[2] as? String ?? "0") ?? 0
             let min30 = Int64(result[3] as? String ?? "0") ?? 0
@@ -803,7 +796,7 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
+            let total = result[0] as? Int64 ?? 0
             let neutral = Int64(result[1] as? String ?? "0") ?? 0
             let mystic = Int64(result[2] as? String ?? "0") ?? 0
             let valor = Int64(result[3] as? String ?? "0") ?? 0
