@@ -81,7 +81,7 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.debug(message: "[DBClearer] Cleared \(totalRows) in DB table 'pokemon'")
+        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'pokemon'")
     }
 
     private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) {
@@ -109,6 +109,6 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.debug(message: "[DBClearer] Cleared \(totalRows) in DB table 'incident'")
+        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'incident'")
     }
 }
