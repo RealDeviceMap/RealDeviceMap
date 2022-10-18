@@ -1045,7 +1045,7 @@ public class WebHookRequestHandler {
                         account: account, timestamp: timestamp
                     )
                     if task.isEmpty {
-                        response.respondWithError(event: .taskNotFound)
+                        response.respondWithError(event: .noTaskLeft)
                     }
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
@@ -1083,7 +1083,7 @@ public class WebHookRequestHandler {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
                         Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
-                        response.respondWithError(event: .accountNotFound)
+                        response.respondWithError(event: .noAccountLeft)
                         return
                     }
                     account = newAccount
@@ -1319,8 +1319,9 @@ public class WebHookRequestHandler {
 
     public enum Event: String {
         case accountNotFound
+        case noAccountLeft
         case deviceNotFound
         case instanceNotFound
-        case taskNotFound
+        case noTaskLeft
     }
 }
