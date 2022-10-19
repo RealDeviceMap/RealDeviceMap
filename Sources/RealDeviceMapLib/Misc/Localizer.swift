@@ -82,12 +82,12 @@ public class Localizer {
             .httpMethod(.head)
         )
         guard let result = try? request.perform() else {
-            Log.error(message: "[pogo-translations] Failed to load translation file")
+            Log.error(message: "[Localizer] [pogo-translations] Failed to load translation file")
             return
         }
         let newETag = result.get(.eTag)
         if newETag != eTag {
-            Log.info(message: "[pogo-translations] Translation file changed")
+            Log.info(message: "[Localizer] [pogo-translations] Translation file changed")
             loadTranslationsFromRepo(language: Localizer.locale)
         }
     }
@@ -100,7 +100,6 @@ public class Localizer {
             Log.error(message: "[Localizer] Failed to load pogo-translations file")
             return
         }
-        eTag = result.get(.eTag)
         // save translation file for JS frontend
         let file = File("\(Dir.projectroot)/resources/webroot/static/data/www_\(language).json")
         do {
@@ -118,6 +117,7 @@ public class Localizer {
             return
         }
         cachedData.merge(values) { (_, new) in new }
+        eTag = result.get(.eTag)
     }
 
     func get(value: String) -> String {
@@ -131,5 +131,4 @@ public class Localizer {
         }
         return value
     }
-
 }
