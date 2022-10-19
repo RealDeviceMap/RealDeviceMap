@@ -276,6 +276,7 @@ public class DBController {
                 "discord_rule": true,
                 "group": true,
                 "gym": true,
+                "incident": true,
                 "instance": true,
                 "metadata": true,
                 "pokemon": true,
