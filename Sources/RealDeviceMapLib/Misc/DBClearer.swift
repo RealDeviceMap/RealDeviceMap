@@ -21,7 +21,7 @@ public class DBClearer {
                 Threading.sleep(seconds: interval)
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[DBClearer] [DatabaseArchiver] Failed to connect to database.")
-                    return
+                    continue
                 }
                 let start = Date()
                 if statsEnabled {
@@ -46,7 +46,7 @@ public class DBClearer {
                 Threading.sleep(seconds: interval)
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[DBClearer] [IncidentExpiry] Failed to connect to database.")
-                    return
+                    continue
                 }
                 let start = Date()
                 clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
@@ -81,7 +81,7 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.debug(message: "[DBClearer] Cleared \(totalRows) in DB table 'pokemon'")
+        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'pokemon'")
     }
 
     private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) {
@@ -109,6 +109,6 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.debug(message: "[DBClearer] Cleared \(totalRows) in DB table 'incident'")
+        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'incident'")
     }
 }
