@@ -142,7 +142,7 @@ public class DBController {
 
         setup()
 
-        Log.info(message: "[DBController] Done initalizing")
+        Log.info(message: "[DBController] Done initializing")
         Log.info(message: "[DBController] DB Name: \(database)")
         Log.info(message: "[DBController] DB Host: \(host)")
         Log.info(message: "[DBController] DB Port: \(dbPort)")
