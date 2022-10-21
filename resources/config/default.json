@@ -63,18 +63,20 @@
       "keepTime": 3600
     },
     "clearer": {
-      "enabled": true,
       "pokemon": {
+        "enabled": true,
         "interval": 300,
         "keepTime": 3600,
         "batchSize": 250
       },
       "incident": {
+        "enabled": true,
         "interval": 900,
         "keepTime": 3600,
         "batchSize": 250
       }
     },
+    "stats": false,
     "pvp": {
       "enabled": true,
       "levelCaps": [50],

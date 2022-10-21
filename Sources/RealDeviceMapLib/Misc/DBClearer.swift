@@ -13,9 +13,13 @@ public class DBClearer {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerPokemonInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerPokemonKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerPokemonBatchSize) as Int).toUInt()
-        let statsEnabled = false // MARK: add config type
-        let message = statsEnabled ? "Created Stats and Archive in" : "Cleared in"
-
+        let statsEnabled: Bool = ConfigLoader.global.getConfig(type: .statsEnabled)
+        if statsEnabled {
+            Log.info(message: "[DBClearer] Create pokemon history for stats")
+        } else {
+            Log.info(message: "[DBClearer] Pokemon config: " +
+                "keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
+        }
         Threading.getQueue(name: "DatabaseArchiver", type: .serial).dispatch {
             while true {
                 Threading.sleep(seconds: interval)
@@ -24,14 +28,14 @@ public class DBClearer {
                     continue
                 }
                 let start = Date()
+                let affectedRows: UInt
                 if statsEnabled {
-                    let mysqlStmt = MySQLStmt(mysql)
-                    _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
+                    affectedRows = createStatsAndArchive(mysql: mysql)
                 } else {
-                    clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                    affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 }
-                Log.debug(message: "[DBClearer] [DatabaseArchiver] \(message) " +
-                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                Log.debug(message: "[DBClearer] [DatabaseArchiver] Archive of pokemon table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
         }
     }
@@ -40,7 +44,7 @@ public class DBClearer {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerIncidentInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerIncidentKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerIncidentBatchSize) as Int).toUInt()
-
+        Log.info(message: "[DBClearer] Incident config: keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
         Threading.getQueue(name: "IncidentExpiry", type: .serial).dispatch {
             while true {
                 Threading.sleep(seconds: interval)
@@ -49,14 +53,14 @@ public class DBClearer {
                     continue
                 }
                 let start = Date()
-                clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
-                Log.debug(message: "[DBClearer] [IncidentExpiry] Cleared in " +
-                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s")
+                let affectedRows = clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                Log.debug(message: "[DBClearer] [IncidentExpiry] Cleanup of incident table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
         }
     }
 
-    private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) {
+    private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -81,10 +85,21 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'pokemon'")
+        return totalRows
     }
 
-    private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) {
+    private static func createStatsAndArchive(mysql: MySQL) -> UInt {
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[DBClearer] Failed to execute query 'createStatsAndArchive'. " +
+                mysqlStmt.errorMessage())
+            return 0
+        }
+        return mysqlStmt.affectedRows()
+    }
+
+    private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -109,6 +124,6 @@ public class DBClearer {
             // wait between batches
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
-        Log.info(message: "[DBClearer] Cleared \(totalRows) in DB table 'incident'")
+        return totalRows
     }
 }

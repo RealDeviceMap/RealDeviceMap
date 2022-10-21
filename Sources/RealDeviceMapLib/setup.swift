@@ -217,6 +217,7 @@ public func setupRealDeviceMap() {
     Pokemon.weatherIVClearingEnabled = ConfigLoader.global.getConfig(type: .ivWeatherClearing)
     Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
     Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
+    Pokemon.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
 
@@ -311,12 +312,17 @@ public func setupRealDeviceMap() {
     }
 
     // Start Clearer
-    if ConfigLoader.global.getConfig(type: .dbClearerEnabled) as Bool {
+    if ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled) as Bool {
         DBClearer.startDatabaseArchiver()
-        DBClearer.startIncidentExpiry()
-        Log.info(message: "[MAIN] DBClearer enabled")
+        Log.info(message: "[MAIN] DBClearer Pokemon enabled")
     } else {
-        Log.info(message: "[MAIN] DBClearer disabled")
+        Log.info(message: "[MAIN] DBClearer Pokemon disabled")
+    }
+    if ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled) as Bool {
+        DBClearer.startIncidentExpiry()
+        Log.info(message: "[MAIN] DBClearer Incident enabled")
+    } else {
+        Log.info(message: "[MAIN] DBClearer Incident disabled")
     }
 
     // Check if is setup
