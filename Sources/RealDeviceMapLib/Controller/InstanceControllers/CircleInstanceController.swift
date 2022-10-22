@@ -830,4 +830,19 @@ class CircleInstanceController: InstanceControllerProto {
                 account.isValid(ignoringWarning: useRwForRaid, group: accountGroup)
         }
     }
+    
+    private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool
+    {
+        for polygon in multiPolygon.polygons
+        {
+            let coord = LocationCoordinate2D(latitude: lat, longitude: lon)
+            
+            if polygon.contains(coord, ignoreBoundary: false)
+            {
+                return true
+            }
+        }
+        
+        return false
+    }
 }
