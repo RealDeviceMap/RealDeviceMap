@@ -831,6 +831,18 @@ class CircleInstanceController: InstanceControllerProto {
         }
     }
     
+    private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon {
+        var geofences = [[[LocationCoordinate2D]]]()
+        for coord in areaArray {
+            var geofence = [LocationCoordinate2D]()
+            for crd in coord {
+                geofence.append(LocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
+            }
+            geofences.append([geofence])
+        }
+        return MultiPolygon.init(geofences)
+    }
+    
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool
     {
         for polygon in multiPolygon.polygons
