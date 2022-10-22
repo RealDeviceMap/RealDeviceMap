@@ -789,6 +789,12 @@ class CircleInstanceController: InstanceControllerProto {
         }
     }
 
+    func reload() {
+        lock.lock()
+        lastIndex = 0
+        lock.unlock()
+    }
+
     func stop() {}
 
     func getAccount(mysql: MySQL, uuid: String) throws -> Account? {
