@@ -1649,7 +1649,11 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Circle Pokemon"
                     case .circleSmartPokemon:
                         instanceData["type"] = "Circle Smart Pokemon"
-                    case .autoQuest:
+                    case .circleFindyPokemon:
+                        instanceData["type"] = "Circle Findy Pokemon"
+                    case .circleJumpyPokemon:
+                        instanceData["type"] = "Circle Jumpy Pokemon"		    
+		    case .autoQuest:
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
                         instanceData["type"] = "Pokemon IV"
