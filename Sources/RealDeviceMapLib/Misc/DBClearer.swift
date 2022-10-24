@@ -21,7 +21,7 @@ public class DBClearer {
                 Threading.sleep(seconds: interval)
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[DBClearer] [DatabaseArchiver] Failed to connect to database.")
-                    return
+                    continue
                 }
                 let start = Date()
                 if statsEnabled {
@@ -46,7 +46,7 @@ public class DBClearer {
                 Threading.sleep(seconds: interval)
                 guard let mysql = DBController.global.mysql else {
                     Log.error(message: "[DBClearer] [IncidentExpiry] Failed to connect to database.")
-                    return
+                    continue
                 }
                 let start = Date()
                 clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
