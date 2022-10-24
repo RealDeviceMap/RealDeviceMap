@@ -1161,6 +1161,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[POKEMON] Failed to execute query 'updateStats'. (\(mysqlStmt.errorMessage())")
