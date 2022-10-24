@@ -928,9 +928,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         inSQL += "?)"
 
         let sql = """
-            SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
-                   pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, quest_title,
+            SELECT pokestop.id, lat, lon, name, description, url, enabled, lure_expire_timestamp,
+                   last_modified_timestamp, pokestop.updated, quest_type, quest_timestamp, quest_target,
+                   CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
@@ -1051,9 +1051,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             "incident.updated"
 
         let sql = """
-            SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
-                   pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, quest_title,
+            SELECT pokestop.id, lat, lon, name, description, url, enabled, lure_expire_timestamp,
+                   last_modified_timestamp, pokestop.updated, quest_type, quest_timestamp, quest_target,
+                   CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,

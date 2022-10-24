@@ -1163,7 +1163,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[POKEMON] Failed to execute query 'activeCount'. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[POKEMON] Failed to execute query 'updateStats'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
