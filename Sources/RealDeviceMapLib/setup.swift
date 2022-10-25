@@ -317,18 +317,18 @@ public func setupRealDeviceMap() {
     Stats.cleanupIncident = ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled)
 
     if Stats.cleanupPokemon {
-        Stats.startDatabaseArchiver()
         if Stats.statsEnabled {
             Log.info(message: "[MAIN] [STATS] Enabled pokemon history for stats")
         } else {
             Log.info(message: "[MAIN] [STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
         }
+        Stats.startDatabaseArchiver()
     } else {
         Log.info(message: "[MAIN] [STATS] Cleanup and pokemon history for pokemon disabled")
     }
     if Stats.cleanupIncident {
-        Stats.startIncidentExpiry()
         Log.info(message: "[MAIN] [STATS] Cleanup of incidents enabled")
+        Stats.startIncidentExpiry()
     } else {
         Log.info(message: "[MAIN] [STATS] Cleanup of incidents disabled")
     }
