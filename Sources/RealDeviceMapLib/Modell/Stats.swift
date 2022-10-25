@@ -44,7 +44,7 @@ class Stats: JSONConvertibleObject {
                 } else {
                     affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 }
-                Log.debug(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
+                Log.info(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
         }
@@ -64,7 +64,7 @@ class Stats: JSONConvertibleObject {
                 }
                 let start = Date()
                 let affectedRows = clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
-                Log.debug(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
+                Log.info(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
         }
