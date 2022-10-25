@@ -106,8 +106,8 @@ class Stats: JSONConvertibleObject {
                 mysqlStmt.errorMessage())
             return 0
         }
-        print("TMP createStatsAndArchive() numRows: " + mysqlStmt.numRows())
-        print("TMP createStatsAndArchive() results.numRows: " + mysqlStmt.results().numRows)
+        print("TMP createStatsAndArchive() numRows: \(mysqlStmt.numRows())")
+        print("TMP createStatsAndArchive() results.numRows: \(mysqlStmt.results().numRows)")
         return mysqlStmt.affectedRows()
     }
 
