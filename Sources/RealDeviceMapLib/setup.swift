@@ -311,18 +311,26 @@ public func setupRealDeviceMap() {
         fatalError(message)
     }
 
-    // Start Clearer
-    if ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled) as Bool {
-        DBClearer.startDatabaseArchiver()
-        Log.info(message: "[MAIN] DBClearer Pokemon enabled")
+    // Config for history stats and cleanup
+    Stats.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
+    Stats.cleanupPokemon = ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled)
+    Stats.cleanupIncident = ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled)
+
+    if Stats.cleanupPokemon {
+        Stats.startDatabaseArchiver()
+        if Stats.statsEnabled {
+            Log.info(message: "[MAIN] [STATS] Enabled pokemon history for stats")
+        } else {
+            Log.info(message: "[MAIN] [STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
+        }
     } else {
-        Log.info(message: "[MAIN] DBClearer Pokemon disabled")
+        Log.info(message: "[MAIN] [STATS] Cleanup and pokemon history for pokemon disabled")
     }
-    if ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled) as Bool {
-        DBClearer.startIncidentExpiry()
-        Log.info(message: "[MAIN] DBClearer Incident enabled")
+    if Stats.cleanupIncident {
+        Stats.startIncidentExpiry()
+        Log.info(message: "[MAIN] [STATS] Cleanup of incidents enabled")
     } else {
-        Log.info(message: "[MAIN] DBClearer Incident disabled")
+        Log.info(message: "[MAIN] [STATS] Cleanup of incidents disabled")
     }
 
     // Check if is setup
