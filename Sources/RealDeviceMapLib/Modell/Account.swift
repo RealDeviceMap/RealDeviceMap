@@ -874,10 +874,14 @@ public class Account: WebHookEvent {
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
-              SUM(failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP()) as inwarning,
+              SUM(
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND 
+                   warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
+              ) as inwarning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
               SUM(failed = 'suspended') as suspended,
-              SUM(failed = 'suspended' AND failed_timestamp > UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) as insuspended,
+              SUM(failed = 'suspended' 
+                  AND failed_timestamp > UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) as insuspended,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
@@ -917,10 +921,10 @@ public class Account: WebHookEvent {
                 "good": good.withCommas(),
                 "banned": banned.withCommas(),
                 "warning": warning.withCommas(),
-                "inwarning": inwarning.withCommas(),
+				"inwarning": inwarning.withCommas(),
                 "invalid": invalid.withCommas(),
                 "suspended": suspended.withCommas(),
-                "insuspended": insuspended.withCommas(),
+				"insuspended": insuspended.withCommas(),
                 "cooldown": cooldown.withCommas(),
                 "spin_limit": spinLimit.withCommas()
             ])
