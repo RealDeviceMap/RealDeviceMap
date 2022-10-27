@@ -875,7 +875,7 @@ public class Account: WebHookEvent {
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
-              SUM(failed NOT IN('banned', 'invalid_credentials', 'GPR_RED_WARNING', 'GPR_BANNED')) as other,
+              SUM(failed = 'suspended' AND failed_timestamp > UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) as other,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
