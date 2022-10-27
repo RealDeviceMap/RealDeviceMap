@@ -10,8 +10,142 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import PerfectThread
 
 class Stats: JSONConvertibleObject {
+
+    public static var statsEnabled = false
+    public static var cleanupPokemon = true
+    public static var cleanupIncident = true
+
+    // =================================================================================================================
+    // Database Archiver and Clearer Utilities
+    // ================================================================================================================
+
+    static func startDatabaseArchiver() {
+        let interval = (ConfigLoader.global.getConfig(type: .dbClearerPokemonInterval) as Int).toDouble()
+        let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerPokemonKeepTime) as Int).toDouble()
+        let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerPokemonBatchSize) as Int).toUInt()
+        if !Stats.statsEnabled {
+            Log.info(message: "[STATS] Pokemon config: " +
+                "keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
+        }
+        Threading.getQueue(name: "DatabaseArchiver", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: interval)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [DatabaseArchiver] Failed to connect to database.")
+                    continue
+                }
+                let start = Date()
+                let affectedRows: UInt?
+                if statsEnabled {
+                    affectedRows = createStatsAndArchive(mysql: mysql)
+                } else {
+                    affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                }
+                Log.info(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s " +
+                    "(\(affectedRows != nil ? affectedRows!.toString() : "?") rows)")
+            }
+        }
+    }
+
+    static func startIncidentExpiry() {
+        let interval = (ConfigLoader.global.getConfig(type: .dbClearerIncidentInterval) as Int).toDouble()
+        let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerIncidentKeepTime) as Int).toDouble()
+        let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerIncidentBatchSize) as Int).toUInt()
+        Log.info(message: "[STATS] Incident config: keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
+        Threading.getQueue(name: "IncidentExpiry", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: interval)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [IncidentExpiry] Failed to connect to database.")
+                    continue
+                }
+                let start = Date()
+                let affectedRows = clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                Log.info(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
+            }
+        }
+    }
+
+    private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+        var affectedRows: UInt = 0
+        var totalRows: UInt = 0
+        let sql = """
+                  DELETE FROM pokemon
+                  WHERE expire_timestamp <= UNIX_TIMESTAMP() - ?
+                  LIMIT ?;
+                  """
+
+        repeat {
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            mysqlStmt.bindParam(keepTime)
+            mysqlStmt.bindParam(batchSize)
+
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[STATS] Failed to execute query 'DELETE LIMIT pokemon'. " +
+                    mysqlStmt.errorMessage())
+                break
+            }
+            affectedRows = mysqlStmt.affectedRows()
+            totalRows &+= affectedRows
+            // wait between batches
+            Threading.sleep(seconds: 0.2)
+        } while affectedRows == batchSize
+        return totalRows
+    }
+
+    private static func createStatsAndArchive(mysql: MySQL) -> UInt? {
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query 'createStatsAndArchive'. " +
+                mysqlStmt.errorMessage())
+            return 0
+        }
+        let totalRows = mysqlStmt.affectedRows()
+        if totalRows == 0 {
+            // mysql does not return affectedRows, actually only mariadb
+            return nil
+        }
+        return totalRows
+    }
+
+    private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+        var affectedRows: UInt = 0
+        var totalRows: UInt = 0
+        let sql = """
+                  DELETE FROM incident
+                  WHERE expiration <= UNIX_TIMESTAMP() - ?
+                  LIMIT ?;
+                  """
+
+        repeat {
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            mysqlStmt.bindParam(keepTime)
+            mysqlStmt.bindParam(batchSize)
+
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[STATS] Failed to execute query 'DELETE LIMIT incident'. " +
+                    mysqlStmt.errorMessage())
+                break
+            }
+            affectedRows = mysqlStmt.affectedRows()
+            totalRows &+= affectedRows
+            // wait between batches
+            Threading.sleep(seconds: 0.2)
+        } while affectedRows == batchSize
+        return totalRows
+    }
+
+    // =================================================================================================================
+    // Stats related to triggers, stats page
+    // =================================================================================================================
 
     override func getJSONValues() -> [String: Any] {
         let pokemonStats = try? Stats.getPokemonStats()
@@ -919,6 +1053,15 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
+        let usePokemonHistory = Stats.statsEnabled && Stats.cleanupPokemon
+
+        let gender = usePokemonHistory ? ""
+            : ", SUM(gender = 1) AS male, SUM(gender = 2) AS female, SUM(gender = 3) AS genderless"
+        let firstSeenTimestamp = usePokemonHistory
+            ? "least(ifnull(first_encounter,seen_wild),seen_wild)"
+            : "first_seen_timestamp"
+        let fromTable = usePokemonHistory ? "pokemon_history" : "pokemon"
+
         let sql = """
                   SELECT
                     COUNT(id) AS total,
@@ -936,19 +1079,17 @@ class Stats: JSONConvertibleObject {
                     SUM(iv >= 80 AND iv < 90) AS iv_80_89,
                     SUM(iv >= 90 AND iv < 100) AS iv_90_99,
                     SUM(iv = 100) AS iv_100,
-                    SUM(gender = 1) AS male,
-                    SUM(gender = 2) AS female,
-                    SUM(gender = 3) AS genderless,
                     SUM(level >= 1 AND level <= 9) AS level_1_9,
                     SUM(level >= 10 AND level <= 19) AS level_10_19,
                     SUM(level >= 20 AND level <= 29) AS level_20_29,
                     SUM(level >= 30 AND level <= 35) AS level_30_35
+                    \(gender)
                   FROM
-                    pokemon
+                    \(fromTable)
                   WHERE
                     pokemon_id = ?
-                    AND first_seen_timestamp >= ?
-                    AND first_seen_timestamp <= ?
+                    AND \(firstSeenTimestamp) >= ?
+                    AND \(firstSeenTimestamp) <= ?
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -984,15 +1125,16 @@ class Stats: JSONConvertibleObject {
             stats["iv_90_99"] = Int64(result[13] as? String ?? "0") ?? 0
             stats["iv_100"] = Int64(result[14] as? String ?? "0") ?? 0
 
-            stats["male"] = Int64(result[15] as? String ?? "0") ?? 0
-            stats["female"] = Int64(result[16] as? String ?? "0") ?? 0
-            stats["genderless"] = Int64(result[17] as? String ?? "0") ?? 0
+            stats["level_1_9"] = Int64(result[15] as? String ?? "0") ?? 0
+            stats["level_10_19"] = Int64(result[16] as? String ?? "0") ?? 0
+            stats["level_20_29"] = Int64(result[17] as? String ?? "0") ?? 0
+            stats["level_30_35"] = Int64(result[18] as? String ?? "0") ?? 0
 
-            stats["level_1_9"] = Int64(result[18] as? String ?? "0") ?? 0
-            stats["level_10_19"] = Int64(result[19] as? String ?? "0") ?? 0
-            stats["level_20_29"] = Int64(result[20] as? String ?? "0") ?? 0
-            stats["level_30_35"] = Int64(result[21] as? String ?? "0") ?? 0
-
+            if !Stats.statsEnabled {
+                stats["male"] = Int64(result[19] as? String ?? "0") ?? 0
+                stats["female"] = Int64(result[20] as? String ?? "0") ?? 0
+                stats["genderless"] = Int64(result[21] as? String ?? "0") ?? 0
+            }
         }
         return stats
 

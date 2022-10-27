@@ -34,6 +34,15 @@
       "scanLureEncounter": false,
       "saveSpawnPointLastSeen": false
     },
+    "clearer": {
+      "pokemon": {
+        "enabled": true
+      },
+      "incident": {
+        "enabled": true
+      }
+    },
+    "stats": false,
     "pvp": {
       "enabled": true,
       "levelCaps": [50],
