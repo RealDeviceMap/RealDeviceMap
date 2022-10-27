@@ -875,12 +875,12 @@ public class Account: WebHookEvent {
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
               SUM(
-                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND 
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
               ) as inwarning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
               SUM(failed = 'suspended') as suspended,
-              SUM(failed = 'suspended' 
+              SUM(failed = 'suspended'
                   AND failed_timestamp > UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) as insuspended,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
