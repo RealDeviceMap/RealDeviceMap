@@ -2395,6 +2395,10 @@ public class WebRequestHandler {
                 data["circle_pokemon_selected"] = true
             case .circleSmartPokemon:
                 data["circle_smart_pokemon_selected"] = true
+            case .circleJumpyPokemon:
+                data["circle_jumpy_pokemon_selected"] = true
+            case .circleFindyPokemon:
+                data["circle_findy_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
@@ -2431,6 +2435,7 @@ public class WebRequestHandler {
         var newCoords: Any
 
         if type != nil && type! == .circlePokemon || type! == .circleSmartPokemon ||
+            type! == .circleJumpyPokemon || type! == .circleFindyPokemon ||
             type! == .circleRaid || type! == .circleSmartRaid {
             var coords = [Coord]()
             let areaRows = area.components(separatedBy: "\n")
@@ -2675,6 +2680,10 @@ public class WebRequestHandler {
                 data["circle_pokemon_selected"] = true
             case .circleSmartPokemon:
                 data["circle_smart_pokemon_selected"] = true
+            case .circleJumpyPokemon:
+                data["circle_jumpy_pokemon_selected"] = true
+            case .circleFindyPokemon:
+                data["circle_findy_pokemon_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:

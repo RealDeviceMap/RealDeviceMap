@@ -141,7 +141,7 @@ public class InstanceController {
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
         switch instance.type {
-        case .circleSmartRaid, .circleSmartPokemon, .circlePokemon, .circleRaid:
+        case .circleSmartRaid, .circleSmartPokemon, .circleJumpyPokemon, .circleFindyPokemon, .circlePokemon, .circleRaid:
             var coordsArray = [Coord]()
             if instance.data["area"] as? [Coord] != nil {
                 coordsArray = instance.data["area"] as? [Coord] ?? [Coord]()
@@ -163,6 +163,16 @@ public class InstanceController {
             } else if instance.type == .circleSmartPokemon {
                 instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
                                                               type: .smartPokemon, minLevel: minLevel,
+                                                              maxLevel: maxLevel, accountGroup: accountGroup,
+                                                              isEvent: isEvent)
+            } else if instance.type == .circleJumpyPokemon {
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
+                                                              type: .jumpyPokemon, minLevel: minLevel,
+                                                              maxLevel: maxLevel, accountGroup: accountGroup,
+                                                              isEvent: isEvent)
+            } else if instance.type == .circleFindyPokemon {
+                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
+                                                              type: .findyPokemon, minLevel: minLevel,
                                                               maxLevel: maxLevel, accountGroup: accountGroup,
                                                               isEvent: isEvent)
             } else if instance.type == .circleRaid {
