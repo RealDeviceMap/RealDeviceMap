@@ -30,9 +30,18 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     public static var weatherIVClearingEnabled = true
     public static var cellPokemonEnabled = true
     public static var saveSpawnpointLastSeen = false
+    public static var statsEnabled = false
 
     public static var cache: MemoryCache<Pokemon>?
     public static var diskEncounterCache: MemoryCache<DiskEncounterOutProto>?
+
+    let statsSeenWild = "seen_wild"
+    let statsSeenStop = "seen_stop"
+    let statsSeenCell = "seen_cell"
+    let statsStatsReset = "stats_reset"
+    let statsEncounter = "encounter"
+    let statsSeenLure = "seen_lure"
+    let statsLureEncounter = "lure_encounter"
 
     class ParsingError: Error {}
 
@@ -225,14 +234,19 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.baseWeight = stats?.baseWeight
     }
 
-    func updateFromWild(mysql: MySQL?=nil, wildPokemon: WildPokemonProto, cellId: UInt64,
+    //  swiftlint:disable function_parameter_count
+    func updateFromWild(mysql: MySQL, wildPokemon: WildPokemonProto, cellId: UInt64,
                         timestampMs: UInt64, username: String?, isEvent: Bool) {
 
         let oldWeather = self.weather
         let oldPokemonId = self.pokemonId
         let pokemonId = wildPokemon.pokemon.pokemonID.rawValue.toUInt16()
-
+        let encounterId = wildPokemon.encounterID.description
         setPokemonDisplay(pokemonId: pokemonId, display: wildPokemon.pokemon.pokemonDisplay)
+
+        if id == "" || [SeenType.nearbyCell, SeenType.nearbyStop].contains(seenType) {
+            try? updateStats(mysql: mysql, id: encounterId, event: statsSeenWild)
+        }
 
         if isDitto {
             // MARK: add some more logic regarding event change, actually a Ditto will remain as Ditto
@@ -240,7 +254,6 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         }
 
         self.isEvent = isEvent
-        let encounterId = wildPokemon.encounterID.description
         self.id = encounterId
         self.lat = wildPokemon.latitude
         self.lon = wildPokemon.longitude
@@ -263,28 +276,31 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             }
             self.seenType = SeenType.wild
             clearEncounterDetails()
-            Log.debug(message: "[POKEMON] Pokemon \(id) cleared encounter details because new pokemon id")
+            try? updateStats(mysql: mysql, id: encounterId, event: statsStatsReset)
         } else if self.seenType != .encounter {
             self.seenType = SeenType.wild
         }
     }
 
-    func updateFromNearby(mysql: MySQL?=nil, nearbyPokemon: NearbyPokemonProto, cellId: UInt64,
+    func updateFromNearby(mysql: MySQL, nearbyPokemon: NearbyPokemonProto, cellId: UInt64,
                           username: String?, isEvent: Bool) throws {
 
         let oldWeather = self.weather
         let oldPokemonId = self.pokemonId
         let pokemonId = nearbyPokemon.pokedexNumber.toUInt16()
+        let encounterId = nearbyPokemon.encounterID.description
+        let pokestopId = nearbyPokemon.fortID
 
         setPokemonDisplay(pokemonId: pokemonId, display: nearbyPokemon.pokemonDisplay)
+
+        if id == "" {
+            try? updateStats(mysql: mysql, id: encounterId, event: (pokestopId.isEmpty ? statsSeenCell : statsSeenStop))
+        }
 
         if isDitto {
             // MARK: add some more logic regarding event change, actually a Ditto will remain as Ditto
             return
         }
-
-        let encounterId = nearbyPokemon.encounterID.description
-        let pokestopId = nearbyPokemon.fortID
 
         self.isEvent = isEvent
         self.id = encounterId
@@ -305,6 +321,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 self.seenType = .wild
                 // clear encounter details, lat, lon is preserved - pokemon changed dex number or weather-boost
                 clearEncounterDetails()
+                try? updateStats(mysql: mysql, id: encounterId, event: statsStatsReset)
                 Log.debug(message: "[POKEMON] Pokemon \(id) cleared encounter details")
                 return
             }
@@ -320,7 +337,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             self.seenType = SeenType.nearbyCell
         } else {
             // Stop Pokemon
-            let pokestop = try? Pokestop.getWithId(id: pokestopId)
+            let pokestop = try? Pokestop.getWithId(mysql: mysql, id: pokestopId)
             if pokestop != nil {
                 self.lat = pokestop!.lat
                 self.lon = pokestop!.lon
@@ -339,7 +356,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
     }
 
-    public func updateFromMap(mysql: MySQL?=nil, mapPokemon: MapPokemonProto, cellId: UInt64,
+    public func updateFromMap(mysql: MySQL, mapPokemon: MapPokemonProto, cellId: UInt64,
                               username: String?, isEvent: Bool) throws {
 
         if !self.id.isEmpty {
@@ -351,6 +368,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
         let encounterId = mapPokemon.encounterID.description
         self.id = encounterId
+
+        try? updateStats(mysql: mysql, id: encounterId, event: statsSeenLure)
 
         let spawnpointId: String = mapPokemon.spawnpointID
         guard let pokestop = try? Pokestop.getWithId(mysql: mysql, id: spawnpointId) else {
@@ -446,6 +465,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             timestampMs: timestampMs, timestampAccurate: false)
 
         self.seenType = SeenType.encounter
+        try? updateStats(mysql: mysql, id: encounterId, event: statsEncounter)
     }
 
     public func updateFromDiskEncounterProto(mysql: MySQL, diskEncounterData: DiskEncounterOutProto,
@@ -491,15 +511,10 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         }
 
         self.seenType = SeenType.lureEncounter
+        try? updateStats(mysql: mysql, id: id, event: statsLureEncounter)
     }
 
-    public func save(mysql: MySQL?=nil) throws {
-
-        guard let mysql = mysql ?? DBController.global.mysql else {
-            Log.error(message: "[POKEMON] Failed to connect to database.")
-            throw DBController.DBError()
-        }
-
+    public func save(mysql: MySQL) throws {
         let oldPokemon: Pokemon?
         do {
             oldPokemon = try Pokemon.getWithId(mysql: mysql, id: id, isEvent: isEvent)
@@ -1118,6 +1133,39 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             old!.weather != new.weather ||
             old!.cp != new.cp {
             WebHookController.global.addPokemonEvent(pokemon: new)
+        }
+    }
+
+    private func updateStats(mysql: MySQL, id: String, event: String) throws {
+        if !Pokemon.statsEnabled {
+            return
+        }
+        let sql: String
+        if event == statsEncounter {
+            sql = """
+                  INSERT INTO pokemon_timing (id, first_encounter, last_encounter)
+                  VALUES (?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+                  ON DUPLICATE KEY UPDATE
+                  first_encounter = COALESCE(first_encounter, VALUES(first_encounter)),
+                  last_encounter = VALUES(last_encounter)
+                  """
+        } else {
+            sql = """
+                  INSERT INTO pokemon_timing (id, \(event))
+                  VALUES (?, UNIX_TIMESTAMP())
+                  ON DUPLICATE KEY UPDATE
+                  \(event) = COALESCE(\(event), VALUES(\(event)))
+                  """
+        }
+        Log.debug(message: "[POKEMON] Updating pokemon timing: [\(id)] \(event)")
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        mysqlStmt.bindParam(id)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[POKEMON] Failed to execute query 'updateStats'. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
         }
     }
 
