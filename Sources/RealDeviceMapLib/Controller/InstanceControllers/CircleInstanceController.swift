@@ -5,15 +5,18 @@
 //  Created by Florian Kostenzer on 30.09.18.
 //
 
+// jumpy coords notes:
+// 1. coords must be points of geofence area
 import Foundation
 import PerfectLib
 import PerfectThread
 import PerfectMySQL
 import Turf
 
-class CircleInstanceController: InstanceControllerProto {
-
-    enum CircleType {
+class CircleInstanceController: InstanceControllerProto
+{
+    enum CircleType
+    {
         case pokemon
         case smartPokemon
         case findyPokemon
@@ -38,7 +41,6 @@ class CircleInstanceController: InstanceControllerProto {
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
     public let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
-    public let useRwForPokes: Bool = ConfigLoader.global.getConfig(type: .accUseRwForPokes)
 
     struct jumpyCoord
     {
@@ -55,11 +57,12 @@ class CircleInstanceController: InstanceControllerProto {
     let deviceUuid: String
     var jumpyLock = Threading.Lock()
     var findyLock = Threading.Lock()
+    static var locationLock = Threading.Lock()
     var pauseJumping: Bool = false
     var firstRun: Bool = true
     public static var jumpyCache: MemoryCache<Int> = MemoryCache(interval:240, keepTime:3600, extendTtlOnHit:false)
     public static var findyCache: MemoryCache<Int> = MemoryCache(interval:60, keepTime:900, extendTtlOnHit:false)
-    
+
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {
         self.name = name
@@ -73,12 +76,10 @@ class CircleInstanceController: InstanceControllerProto {
         self.currentUuidIndexes = [:]
         self.currentUuidSeenTime = [:]
         self.scanNextCoords = [Coord]()
-        
         self.jumpyCoords = [jumpyCoord]()
         self.findyCoords = [Coord]()
         self.deviceUuid = UUID().uuidString
     }
-
 
     func initJumpyCoords() throws
     {
@@ -179,11 +180,13 @@ class CircleInstanceController: InstanceControllerProto {
             }
 
             // did the list shrink from last query?
+            CircleInstanceController.locationLock.lock()
             let oldJumpyCoord = CircleInstanceController.currentDevicesMaxLocation[self.name] ?? 0
             if (oldJumpyCoord >= jumpyCoords.count)
             {
                 CircleInstanceController.currentDevicesMaxLocation[self.name] = jumpyCoords.count - 1
             }
+            CircleInstanceController.locationLock.unlock()
 
             jumpyLock.unlock()
         }
@@ -286,12 +289,56 @@ class CircleInstanceController: InstanceControllerProto {
                 CircleInstanceController.currentDevicesMaxLocation[self.name] = jumpyCoords.count - 1
             }
             */
+
+            CircleInstanceController.locationLock.lock()
             CircleInstanceController.currentDevicesMaxLocation[self.name] = 0
+            CircleInstanceController.locationLock.unlock()
 
             findyLock.unlock()
         }
     }
 
+    func routeDistance(xcoord: Int, ycoord: Int) -> Int {
+        if xcoord < ycoord {
+            return ycoord - xcoord
+        }
+        return ycoord + (coords.count - xcoord)
+    }
+
+    func checkSpacingDevices(uuid: String) -> [String: Int] {
+        let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
+        var liveDevices = [String]()
+
+        // Check if all registered devices are still online and clean list
+        for (currentUuid, _) in currentUuidIndexes.sorted(by: { return $0.1 < $1.1 }) {
+            let lastSeen = currentUuidSeenTime[currentUuid]
+            if lastSeen != nil {
+                if lastSeen! < deadDeviceCutoffTime {
+                    currentUuidIndexes[currentUuid] = nil
+                    currentUuidSeenTime[currentUuid] = nil
+                } else {
+                    liveDevices.append(currentUuid)
+                }
+            }
+        }
+
+        let nbliveDevices = liveDevices.count
+        var distanceToNext = coords.count
+
+        for i in 0..<nbliveDevices {
+            if uuid != liveDevices[i] {
+                continue
+            }
+            if i < nbliveDevices - 1 {
+                let nextDevice = liveDevices[i+1]
+                distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!, ycoord: currentUuidIndexes[nextDevice]!)
+            } else {
+                let nextDevice = liveDevices[0]
+                distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!, ycoord: currentUuidIndexes[nextDevice]!)
+            }
+        }
+        return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
+    }
 
     func secondsFromTopOfHour(seconds: UInt64 )-> (UInt64)
     {
@@ -483,68 +530,28 @@ class CircleInstanceController: InstanceControllerProto {
         return loc
     }
 
-    func routeDistance(xcoord: Int, ycoord: Int) -> Int {
-        if xcoord < ycoord {
-            return ycoord - xcoord
-        }
-        return ycoord + (coords.count - xcoord)
-    }
-
-    func checkSpacingDevices(uuid: String) -> [String: Int] {
-        let deadDeviceCutoffTime = Date().addingTimeInterval(-60)
-        var liveDevices = [String]()
-
-        // Check if all registered devices are still online and clean list
-        for (currentUuid, _) in currentUuidIndexes.sorted(by: { return $0.1 < $1.1 }) {
-            let lastSeen = currentUuidSeenTime[currentUuid]
-            if lastSeen != nil {
-                if lastSeen! < deadDeviceCutoffTime {
-                    currentUuidIndexes[currentUuid] = nil
-                    currentUuidSeenTime[currentUuid] = nil
-                } else {
-                    liveDevices.append(currentUuid)
-                }
-            }
-        }
-
-        let nbliveDevices = liveDevices.count
-        var distanceToNext = coords.count
-
-        for i in 0..<nbliveDevices {
-            if uuid != liveDevices[i] {
-                continue
-            }
-            if i < nbliveDevices - 1 {
-                let nextDevice = liveDevices[i+1]
-                distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!,
-                                               ycoord: currentUuidIndexes[nextDevice]!)
-            } else {
-                let nextDevice = liveDevices[0]
-                distanceToNext = routeDistance(xcoord: currentUuidIndexes[uuid]!,
-                                               ycoord: currentUuidIndexes[nextDevice]!)
-            }
-        }
-        return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
-    }
-
     // swiftlint:disable function_body_length cyclomatic_complexity
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         var currentIndex = 0
         var currentUuidIndex = 0
         var currentCoord = coords[currentIndex]
         lock.lock()
-        
-        if type != .jumpyPokemon || type != .findyPokemon {
-            if !scanNextCoords.isEmpty {
+
+        // redo route on a timer perhaps, maybe every hourish or when position=0
+
+        if type != .jumpyPokemon || type != .findyPokemon
+        {
+            if !scanNextCoords.isEmpty
+            {
                 currentCoord = scanNextCoords.removeFirst()
                 lock.unlock()
+
                 var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
                 if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
                 return task
             }
         }
-
 
         if type == .jumpyPokemon
         { 
@@ -567,6 +574,7 @@ class CircleInstanceController: InstanceControllerProto {
             
             // increment location
             var loc:Int = 0
+            CircleInstanceController.locationLock.lock()
             let keyExists = CircleInstanceController.currentDevicesMaxLocation[self.name] != nil
             if keyExists
             {
@@ -580,26 +588,27 @@ class CircleInstanceController: InstanceControllerProto {
             let newLoc = determineNextJumpyLocation(CurTime: curSecInHour, curLocation: loc)
             firstRun = false
 
-            Log.debug(message: "getTask() jumpy - oldLoc=\(loc) & newLoc=\(newLoc)/\(jumpyCoords.count / 2)")
+            Log.debug(message: "getTask() jumpy - Instance: \(self.name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(jumpyCoords.count / 2)")
             
             var currentJumpyCoord:jumpyCoord = jumpyCoord(id:1, coord:Coord(lat: 0.0,lon: 0.0), spawn_sec:0)
             if jumpyCoords.indices.contains(newLoc)
             {
                 CircleInstanceController.currentDevicesMaxLocation[self.name] = newLoc
-                currentJumpyCoord = jumpyCoords[newLoc]
+                currentJumpyCoord = (try? jumpyCoords[newLoc]) ?? jumpyCoord(id:1, coord:Coord(lat: 0.0,lon: 0.0), spawn_sec:0)
             }
             else
             {
                 if jumpyCoords.indices.contains(0)
                 {
                     CircleInstanceController.currentDevicesMaxLocation[self.name] = 0
-                    currentJumpyCoord = jumpyCoords[0]
+                    currentJumpyCoord = (try? jumpyCoords[0]) ?? jumpyCoord(id:1, coord:Coord(lat: 0.0,lon: 0.0), spawn_sec:0)
                 }
                 else
                 {
                     CircleInstanceController.currentDevicesMaxLocation[self.name] = -1
                 }
             }
+            CircleInstanceController.locationLock.unlock()
 
             jumpyLock.unlock()
 
@@ -632,6 +641,7 @@ class CircleInstanceController: InstanceControllerProto {
 
             // increment location
             var loc:Int = 0
+            CircleInstanceController.locationLock.lock()
             let keyExists = CircleInstanceController.currentDevicesMaxLocation[self.name] != nil
             if keyExists
             {
@@ -669,6 +679,8 @@ class CircleInstanceController: InstanceControllerProto {
                     CircleInstanceController.currentDevicesMaxLocation[self.name] = -1
                 }
             }
+
+            CircleInstanceController.locationLock.unlock()
  
             var task: [String: Any] = ["action": "scan_pokemon", "lat": currentFindyCoord.lat, "lon": currentFindyCoord.lon, "min_level": minLevel, "max_level": maxLevel]
             
@@ -681,47 +693,65 @@ class CircleInstanceController: InstanceControllerProto {
             return task
 
         }
-        else if type == .smartPokemon {
+        else if type == .smartPokemon
+        {
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
             currentUuidIndexes[uuid] = currentUuidIndex
             currentUuidSeenTime[uuid] = Date()
             var shouldAdvance = true
             var jumpDistance = 0
 
-            if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15 {
+            if currentUuidIndexes.count > 1 && Int.random(in: 0...100) < 15
+            {
                 let live = checkSpacingDevices(uuid: uuid)
                 let dist = 10 * live["distanceToNext"]! * live["numliveDevices"]! + 5
-                if dist < 10 * coords.count {
+                if dist < 10 * coords.count
+                {
                     shouldAdvance = false
                 }
-                if dist > 12 * coords.count {
+
+                if dist > 12 * coords.count
+                {
                     jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
                 }
             }
-            if currentUuidIndex == 0 && coords.count > 1 {
+
+            if currentUuidIndex == 0 && coords.count > 1
+            {
                 shouldAdvance = true
             }
-            if shouldAdvance {
+
+            if shouldAdvance
+            {
                 currentUuidIndex += jumpDistance + 1
                 if currentUuidIndex >= coords.count - 1 {
                     currentUuidIndex -= coords.count - 1
                     lastLastCompletedTime = lastCompletedTime
                     lastCompletedTime = Date()
                 }
-            } else {
+            }
+            else
+            {
                 currentUuidIndex -= 1
-                if currentUuidIndex < 0 {
+                if currentUuidIndex < 0
+                {
                     currentUuidIndex = coords.count - 1
                 }
             }
+
             currentUuidIndexes[uuid] = currentUuidIndex
             currentCoord = coords[currentUuidIndex]
             lock.unlock()
+
             var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            
             if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+
             return task
-        } else {
+        }
+        else
+        {
             currentIndex = self.lastIndex
             if lastIndex + 1 == coords.count {
                 lastLastCompletedTime = lastCompletedTime
@@ -746,7 +776,8 @@ class CircleInstanceController: InstanceControllerProto {
     }
 
     // swiftlint:enable function_body_length
-    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
+    func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible?
+    {
         if self.type == .jumpyPokemon
         {
             let cnt = self.jumpyCoords.count/2
@@ -804,7 +835,7 @@ class CircleInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: useRwForPokes,
+                ignoringWarning: false,
                 spins: nil,
                 noCooldown: false,
                 device: uuid,
@@ -829,7 +860,7 @@ class CircleInstanceController: InstanceControllerProto {
         case .pokemon, .smartPokemon, .jumpyPokemon, .findyPokemon:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid(ignoringWarning: useRwForPokes, group: accountGroup)
+                account.isValid(group: accountGroup)
         case .raid:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
@@ -837,18 +868,24 @@ class CircleInstanceController: InstanceControllerProto {
         }
     }
     
-    private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon {
+    private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon
+    {
         var geofences = [[[LocationCoordinate2D]]]()
-        for coord in areaArray {
+        for coord in areaArray
+        {
             var geofence = [LocationCoordinate2D]()
-            for crd in coord {
+            
+            for crd in coord
+            {
                 geofence.append(LocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
             }
+            
             geofences.append([geofence])
         }
+        
         return MultiPolygon.init(geofences)
     }
-    
+
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool
     {
         for polygon in multiPolygon.polygons
