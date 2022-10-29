@@ -1289,7 +1289,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                     // both Ditto and disguise were boosted and Ditto is not boosted: boosted -> none
                     Log.debug(message: "[POKEMON] Both Ditto and disguise were boosted and Ditto is not boosted: " +
                         "boosted -> none")
-                    self.level! -= 5
+                    if self.level >= 5 {
+                        self.level! -= 5
+                    }
                     clearEncounterDetails()
                 }
             } else if Pokemon.weatherBoostChanged(oldWeather: self.weather, newWeather: weather) {
