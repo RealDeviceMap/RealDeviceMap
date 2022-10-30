@@ -24,6 +24,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             "lat": lat,
             "lon": lon,
             "name": name as Any,
+            "description": description as Any,
             "url": url as Any,
             "lure_expire_timestamp": lureExpireTimestamp as Any,
             "last_modified_timestamp": lastModifiedTimestamp as Any,
@@ -103,6 +104,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 "latitude": lat,
                 "longitude": lon,
                 "name": name ?? "Unknown",
+                "description": description ?? "",
                 "url": url ?? "",
                 "lure_expiration": lureExpireTimestamp ?? 0,
                 "last_modified": lastModifiedTimestamp ?? 0,
@@ -133,6 +135,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
     var lureExpireTimestamp: UInt32?
     var lastModifiedTimestamp: UInt32?
     var name: String?
+    var description: String?
     var url: String?
     var sponsorId: UInt16? // unused
     var partnerId: String?
@@ -168,7 +171,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         self.incidents = []
     }
 
-    init(id: String, lat: Double, lon: Double, name: String?, url: String?, enabled: Bool?,
+    init(id: String, lat: Double, lon: Double, name: String?, description: String?, url: String?, enabled: Bool?,
          lureExpireTimestamp: UInt32?, lastModifiedTimestamp: UInt32?, updated: UInt32?, questType: UInt32?,
          questTarget: UInt16?, questTimestamp: UInt32?, questConditions: [[String: Any]]?,
          questRewards: [[String: Any]]?, questTemplate: String?, questTitle: String?, cellId: UInt64?, lureId: Int16?,
@@ -181,6 +184,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         self.lat = lat
         self.lon = lon
         self.name = name
+        self.description = description
         self.url = url
         self.enabled = enabled
         self.lureExpireTimestamp = lureExpireTimestamp
@@ -266,11 +270,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             self.url = fortData.imageURL[0]
         }
         self.name = fortData.name
-//        if !fortData.description_p.isEmpty {
-//            self.description = fortData.description_p
-//        } else {
-//            self.description = nil
-//        }
+        self.description = fortData.description_p
 
 //        if fortData.promoDescription.count != 0 {
 //            let promoDescription = fortData.promoDescription.jsonEncodeForceTry()
@@ -437,6 +437,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withFriendsRaid: break
             case .withPokemonCostume: break
             case .withAppliedItem: break
+            case .withPokemonSize: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -565,14 +566,14 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         if oldPokestop == nil {
             let sql = """
                 INSERT INTO pokestop (
-                    id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp, quest_type,
-                    quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template, quest_title,
-                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
+                    id, lat, lon, name, description, url, enabled, lure_expire_timestamp, last_modified_timestamp,
+                    quest_type, quest_timestamp, quest_target, quest_conditions, quest_rewards, quest_template,
+                    quest_title, alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                     alternative_quest_conditions, alternative_quest_rewards, alternative_quest_template,
                     alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id, ar_scan_eligible,
                     power_up_points, power_up_level, power_up_end_timestamp, updated, first_seen_timestamp)
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                     ?, UNIX_TIMESTAMP())
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -580,7 +581,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         } else {
             let sql = """
                 UPDATE pokestop
-                SET lat = ?, lon = ?, name = ?, url = ?, enabled = ?, lure_expire_timestamp = ?,
+                SET lat = ?, lon = ?, name = ?, description = ?, url = ?, enabled = ?, lure_expire_timestamp = ?,
                     last_modified_timestamp = ?, quest_type = ?, quest_timestamp = ?,
                     quest_target = ?, quest_conditions = ?, quest_rewards = ?, quest_template = ?, quest_title = ?,
                     alternative_quest_type = ?, alternative_quest_timestamp = ?, alternative_quest_target = ?,
@@ -597,6 +598,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         mysqlStmt.bindParam(lat)
         mysqlStmt.bindParam(lon)
         mysqlStmt.bindParam(name)
+        mysqlStmt.bindParam(description)
         mysqlStmt.bindParam(url)
         mysqlStmt.bindParam(enabled)
         mysqlStmt.bindParam(lureExpireTimestamp)
@@ -847,9 +849,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             ""
 
         let sql = """
-            SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
-                   pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, quest_title,
+            SELECT pokestop.id, lat, lon, name, description, url, enabled, lure_expire_timestamp,
+                   last_modified_timestamp, pokestop.updated, quest_type, quest_timestamp, quest_target,
+                   CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
@@ -926,9 +928,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         inSQL += "?)"
 
         let sql = """
-            SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
-                   pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, quest_title,
+            SELECT pokestop.id, lat, lon, name, description, url, enabled, lure_expire_timestamp,
+                   last_modified_timestamp, pokestop.updated, quest_type, quest_timestamp, quest_target,
+                   CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
@@ -1049,9 +1051,9 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             "incident.updated"
 
         let sql = """
-            SELECT pokestop.id, lat, lon, name, url, enabled, lure_expire_timestamp, last_modified_timestamp,
-                   pokestop.updated, quest_type, quest_timestamp, quest_target, CAST(quest_conditions AS CHAR),
-                   CAST(quest_rewards AS CHAR), quest_template, quest_title,
+            SELECT pokestop.id, lat, lon, name, description, url, enabled, lure_expire_timestamp,
+                   last_modified_timestamp, pokestop.updated, quest_type, quest_timestamp, quest_target,
+                   CAST(quest_conditions AS CHAR), CAST(quest_rewards AS CHAR), quest_template, quest_title,
                    alternative_quest_type, alternative_quest_timestamp, alternative_quest_target,
                    CAST(alternative_quest_conditions AS CHAR), CAST(alternative_quest_rewards AS CHAR),
                    alternative_quest_template, alternative_quest_title, cell_id, lure_id, sponsor_id, partner_id,
@@ -1368,7 +1370,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
     }
 
     public func copy(with zone: NSZone? = nil) -> Any {
-        Pokestop(id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
+        Pokestop(id: id, lat: lat, lon: lon, name: name, description: description, url: url, enabled: enabled,
             lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp, updated: updated,
             questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
             questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,
@@ -1406,6 +1408,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             new.lureId != old.lureId ||
             new.incidents.count != old.incidents.count ||
             new.name != old.name ||
+            new.description != old.description ||
             new.url != old.url ||
             new.arScanEligible != old.arScanEligible ||
             new.powerUpLevel != old.powerUpLevel ||
@@ -1449,17 +1452,18 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             let lat = result[1] as! Double
             let lon = result[2] as! Double
             let name = result[3] as? String
-            let url = result[4] as? String
-            let enabledInt = result[5] as? UInt8
+            let description = result[4] as? String
+            let url = result[5] as? String
+            let enabledInt = result[6] as? UInt8
             let enabled = enabledInt?.toBool()
             let lureExpireTimestamp: UInt32?
             if showLures {
-                lureExpireTimestamp = result[6] as? UInt32
+                lureExpireTimestamp = result[7] as? UInt32
             } else {
                 lureExpireTimestamp = nil
             }
-            let lastModifiedTimestamp = result[7] as? UInt32
-            let updated = result[8] as! UInt32
+            let lastModifiedTimestamp = result[8] as? UInt32
+            let updated = result[9] as! UInt32
 
             let questType: UInt32?
             let questTimestamp: UInt32?
@@ -1477,20 +1481,20 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             let alternativeQuestTitle: String?
 
             if showQuests {
-                questType = result[9] as? UInt32
-                questTimestamp = result[10] as? UInt32
-                questTarget = result[11] as? UInt16
-                questConditions = (result[12] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                questRewards = (result[13] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                questTemplate = result[14] as? String
-                questTitle = result[15] as? String
-                alternativeQuestType = result[16] as? UInt32
-                alternativeQuestTimestamp = result[17] as? UInt32
-                alternativeQuestTarget = result[18] as? UInt16
-                alternativeQuestConditions = (result[19] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                alternativeQuestRewards = (result[20] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
-                alternativeQuestTemplate = result[21] as? String
-                alternativeQuestTitle = result[22] as? String
+                questType = result[10] as? UInt32
+                questTimestamp = result[11] as? UInt32
+                questTarget = result[12] as? UInt16
+                questConditions = (result[13] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                questRewards = (result[14] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                questTemplate = result[15] as? String
+                questTitle = result[16] as? String
+                alternativeQuestType = result[17] as? UInt32
+                alternativeQuestTimestamp = result[18] as? UInt32
+                alternativeQuestTarget = result[19] as? UInt16
+                alternativeQuestConditions = (result[20] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                alternativeQuestRewards = (result[21] as? String)?.jsonDecodeForceTry() as? [[String: Any]]
+                alternativeQuestTemplate = result[22] as? String
+                alternativeQuestTitle = result[23] as? String
             } else {
                 questType = nil
                 questTimestamp = nil
@@ -1507,31 +1511,31 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 alternativeQuestTemplate = nil
                 alternativeQuestTitle = nil
             }
-            let cellId = result[23] as? UInt64
+            let cellId = result[24] as? UInt64
             let lureId: Int16?
             if showLures {
-                lureId = result[24] as? Int16
+                lureId = result[25] as? Int16
             } else {
                 lureId = nil
             }
-            let sponsorId = result[25] as? UInt16
-            let partnerId = result[26] as? String
-            let arScanEligible = (result[27] as? UInt8)?.toBool()
-            let powerUpPoints = result[28] as? UInt32
-            let powerUpLevel = result[29] as? UInt16
-            let powerUpEndTimestamp = result[30] as? UInt32
+            let sponsorId = result[26] as? UInt16
+            let partnerId = result[27] as? String
+            let arScanEligible = (result[28] as? UInt8)?.toBool()
+            let powerUpPoints = result[29] as? UInt32
+            let powerUpLevel = result[30] as? UInt16
+            let powerUpEndTimestamp = result[31] as? UInt32
 
             let incident: Incident?
             if showInvasions {
-                let incidentId = result[31] as? String
+                let incidentId = result[32] as? String
                 if incidentId != nil {
-                    let pokestopId = result[32] as! String
-                    let start = result[33] as! UInt32
-                    let expiration = result[34] as! UInt32
-                    let displayType = result[35] as! UInt16
-                    let style = result[36] as! UInt16
-                    let character = result[37] as! UInt16
-                    let incidentUpdated = result[38] as! UInt32
+                    let pokestopId = result[33] as! String
+                    let start = result[34] as! UInt32
+                    let expiration = result[35] as! UInt32
+                    let displayType = result[36] as! UInt16
+                    let style = result[37] as! UInt16
+                    let character = result[38] as! UInt16
+                    let incidentUpdated = result[39] as! UInt32
                     incident = Incident(id: incidentId!, pokestopId: pokestopId, start: start, expiration: expiration,
                         displayType: displayType, style: style, character: character, updated: incidentUpdated)
                 } else {
@@ -1548,7 +1552,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             } else {
                 let incidents = incident != nil ? [incident!] : [Incident]()
                 pokestops.merge([id: Pokestop(
-                    id: id, lat: lat, lon: lon, name: name, url: url, enabled: enabled,
+                    id: id, lat: lat, lon: lon, name: name, description: description, url: url, enabled: enabled,
                     lureExpireTimestamp: lureExpireTimestamp, lastModifiedTimestamp: lastModifiedTimestamp,
                     updated: updated, questType: questType, questTarget: questTarget, questTimestamp: questTimestamp,
                     questConditions: questConditions, questRewards: questRewards, questTemplate: questTemplate,

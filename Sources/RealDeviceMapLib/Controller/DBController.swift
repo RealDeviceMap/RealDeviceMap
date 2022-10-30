@@ -142,7 +142,7 @@ public class DBController {
 
         setup()
 
-        Log.info(message: "[DBController] Done initalizing")
+        Log.info(message: "[DBController] Done initializing")
         Log.info(message: "[DBController] DB Name: \(database)")
         Log.info(message: "[DBController] DB Host: \(host)")
         Log.info(message: "[DBController] DB Port: \(dbPort)")
@@ -266,6 +266,7 @@ public class DBController {
             let backupsDir = Dir("\(Dir.projectroot)/backups")
             let backupFileSchema = File(backupsDir.path + uuidString + ".schema.sql")
             let backupFileTrigger = File(backupsDir.path + uuidString + ".trigger.sql")
+            let backupFileRoutine = File(backupsDir.path + uuidString + ".routine.sql")
             let backupFileData = File(backupsDir.path + uuidString + ".data.sql")
 
             let allTables = [
@@ -276,6 +277,7 @@ public class DBController {
                 "discord_rule": true,
                 "group": true,
                 "gym": true,
+                "incident": true,
                 "instance": true,
                 "metadata": true,
                 "pokemon": true,
@@ -296,7 +298,7 @@ public class DBController {
                 "webhook": true
             ]
 
-            var tablesShema = ""
+            var tablesSchema = ""
             var tablesData = ""
 
             let allTablesSQL = """
@@ -317,7 +319,7 @@ public class DBController {
             while let result = results.next() {
                 if let name = result[0] as? String {
                     if let withData = allTables[name] {
-                        tablesShema += " \(name)"
+                        tablesSchema += " \(name)"
                         if withData {
                             tablesData += " \(name)"
                         }
@@ -334,7 +336,7 @@ public class DBController {
 
             // Schema
             //  swiftlint:disable:next line_length
-            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileSchema.path)")
+            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesSchema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileSchema.path)")
             let resultSchema = commandSchema.runError()
             if resultSchema == nil ||
                    resultSchema!.stringByReplacing(
@@ -348,9 +350,25 @@ public class DBController {
                 fatalError(message)
             }
 
+            // Routines
+            //  swiftlint:disable:next line_length
+            let commandRoutine = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --no-create-info --no-data --routines \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileRoutine.path)")
+            let resultRoutine = commandRoutine.runError()
+            if resultRoutine == nil ||
+                   resultRoutine!.stringByReplacing(
+                       string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
+                       withString: ""
+                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                let message = "Failed to create Command Backup \(resultRoutine as Any)"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+
             // Trigger
             //  swiftlint:disable:next line_length
-            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileTrigger.path)")
+            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesSchema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileTrigger.path)")
             let resultTrigger = commandTrigger.runError()
             if resultTrigger == nil ||
                    resultTrigger!.stringByReplacing(

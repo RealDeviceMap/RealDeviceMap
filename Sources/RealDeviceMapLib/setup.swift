@@ -52,8 +52,8 @@ public func setupRealDeviceMap() {
 
     // Init MemoryCache
     let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
-    let memoryCacheClearInterval = Double(ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int)
-    let memoryCacheKeepTime = Double(ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int)
+    let memoryCacheClearInterval = (ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int).toDouble()
+    let memoryCacheKeepTime = (ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int).toDouble()
     if memoryCacheEnabled {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
@@ -217,6 +217,7 @@ public func setupRealDeviceMap() {
     Pokemon.weatherIVClearingEnabled = ConfigLoader.global.getConfig(type: .ivWeatherClearing)
     Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
     Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
+    Pokemon.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
 
@@ -308,6 +309,28 @@ public func setupRealDeviceMap() {
         let message = "[MAIN] Failed to start Assignment Controller"
         Log.critical(message: message)
         fatalError(message)
+    }
+
+    // Config for history stats and cleanup
+    Stats.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
+    Stats.cleanupPokemon = ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled)
+    Stats.cleanupIncident = ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled)
+
+    if Stats.cleanupPokemon {
+        if Stats.statsEnabled {
+            Log.info(message: "[MAIN] [STATS] Enabled pokemon history for stats")
+        } else {
+            Log.info(message: "[MAIN] [STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
+        }
+        Stats.startDatabaseArchiver()
+    } else {
+        Log.info(message: "[MAIN] [STATS] Cleanup and pokemon history for pokemon disabled")
+    }
+    if Stats.cleanupIncident {
+        Log.info(message: "[MAIN] [STATS] Cleanup of incidents enabled")
+        Stats.startIncidentExpiry()
+    } else {
+        Log.info(message: "[MAIN] [STATS] Cleanup of incidents disabled")
     }
 
     // Check if is setup
