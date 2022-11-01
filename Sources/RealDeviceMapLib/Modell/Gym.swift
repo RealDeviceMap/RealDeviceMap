@@ -312,7 +312,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         let now = UInt32(Date().timeIntervalSince1970)
 
         if oldGym != nil && !Gym.hasChanges(old: oldGym!, new: self) {
-            if self.updated! > now - 600 {
+            if self.updated ?? 0 > now - 600 {
                 // if a gym is unchanged but we did see it again after 10 minutes, then save again
                 return
             }

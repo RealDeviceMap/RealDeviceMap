@@ -553,7 +553,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         let now = UInt32(Date().timeIntervalSince1970)
 
         if oldPokestop != nil && !Pokestop.hasChanges(old: oldPokestop!, new: self) {
-            if self.updated! > now - 600 {
+            if self.updated ?? 0 > now - 600 {
                 // if a pokestop is unchanged but we did see it again after 10 minutes, then save again
                 return
             }
