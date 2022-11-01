@@ -874,8 +874,14 @@ public class Account: WebHookEvent {
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
+              SUM(
+                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                   warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
+              ) as inwarning,
               SUM(failed = 'invalid_credentials') as invalid_creds,
-              SUM(failed NOT IN('banned', 'invalid_credentials', 'GPR_RED_WARNING', 'GPR_BANNED')) as other,
+              SUM(failed = 'suspended') as suspended,
+              SUM(failed = 'suspended'
+                  AND failed_timestamp > UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) as insuspended,
               SUM(
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
@@ -902,10 +908,12 @@ public class Account: WebHookEvent {
             let good = Int64(result[2] as? String ?? "0") ?? 0
             let banned = Int64(result[3] as? String ?? "0") ?? 0
             let warning = Int64(result[4] as? String ?? "0") ?? 0
-            let invalid = Int64(result[5] as? String ?? "0") ?? 0
-            let other = Int64(result[6] as? String ?? "0") ?? 0
-            let cooldown = Int64(result[7] as? String ?? "0") ?? 0
-            let spinLimit = Int64(result[8] as? String ?? "0") ?? 0
+            let inwarning = Int64(result[5] as? String ?? "0") ?? 0
+            let invalid = Int64(result[6] as? String ?? "0") ?? 0
+            let suspended = Int64(result[7] as? String ?? "0") ?? 0
+            let insuspended = Int64(result[8] as? String ?? "0") ?? 0
+            let cooldown = Int64(result[9] as? String ?? "0") ?? 0
+            let spinLimit = Int64(result[10] as? String ?? "0") ?? 0
 
             stats.append([
                 "level": level,
@@ -913,8 +921,10 @@ public class Account: WebHookEvent {
                 "good": good.withCommas(),
                 "banned": banned.withCommas(),
                 "warning": warning.withCommas(),
+                "inwarning": inwarning.withCommas(),
                 "invalid": invalid.withCommas(),
-                "other": other.withCommas(),
+                "suspended": suspended.withCommas(),
+                "insuspended": insuspended.withCommas(),
                 "cooldown": cooldown.withCommas(),
                 "spin_limit": spinLimit.withCommas()
             ])

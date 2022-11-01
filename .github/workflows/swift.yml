@@ -6,7 +6,7 @@ jobs:
   Test:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: YOCKOW/Action-setup-swift@main
     - name: Install Requirements
       run: sudo apt-get -y update &&
@@ -22,7 +22,7 @@ jobs:
   Deploy:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set .gitsha
       if: github.event_name == 'push'
       run: "echo ${{github.sha}} > .gitsha"
