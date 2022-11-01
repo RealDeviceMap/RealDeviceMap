@@ -15,7 +15,6 @@
                 data: function (data) {
                     data.show_instances = true;
                     data.formatted = true;
-                    data.skip_instance_status = $('#enabled-status-chk').is(':checked') ? false : true;
                 },
                 error: function (xhr, error, thrown) {
                     console.log(xhr);
@@ -48,27 +47,8 @@
             setTimeout( function () {
                 table.ajax.reload(null, false);
             }, 10000);
-        });
-    });
-    //for storing checkbox
-    function saveChkState() {	
-        var checkbox = document.getElementById("enabled-status-chk");
-        localStorage.setItem("instances-enabled-status-chk", checkbox.checked);
-        if (checkbox.checked) {
-            alert('Wait for next reload to fetch status.');
-        }
-    }
-    
-    window.onload = loadChkState;
-
-    //for loading
-    function loadChkState() {
-        var checked = JSON.parse(localStorage.getItem("instances-enabled-status-chk"));
-        var checkbx = document.getElementById("enabled-status-chk");
-        if (checkbx) {
-            checkbx.checked = checked;
-        }
-    }
+        } );
+    } );
 </script>
 
 <body>
@@ -78,7 +58,6 @@
     <div style="width:90%; margin-left:calc(5%);">
         <a href="/dashboard/instance/add" role="button" style="float: right;" class="btn btn-success">Add New Instance</a>
         <br><br>
-        <input id="enabled-status-chk" type="checkbox" name="enabled-status-chk" onclick="saveChkState()"><label for="enabled-status-chk"> Fetch Status of Instances</label><br> 
         <table id="table" class="table table-striped table-bordered dt-responsive nowrap" style="position: center; width:100%">
             <thead>
             <tr>
