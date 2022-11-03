@@ -1657,27 +1657,21 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Leveling"
                     }
 
-                    if skipInstanceStatus {
-                        instanceData["status"] = nil
-                    } else if formatted {
-                        let status = InstanceController.global.getInstanceStatus(
-                            mysql: mysql,
-                            instance: instance,
-                            formatted: true
-                        )
-                        if let status = status as? String {
-                            instanceData["status"] = status
-                        } else {
-                            instanceData["status"] = "?"
-                        }
-                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
-                                                  " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                    let status = skipInstanceStatus ? nil : InstanceController.global.getInstanceStatus(
+                        mysql: mysql,
+                        instance: instance,
+                        formatted: formatted
+                    )
+
+                    if status == nil {
+                        instanceData["status"] = formatted ? "?" : nil
                     } else {
-                        instanceData["status"] = InstanceController.global.getInstanceStatus(
-                            mysql: mysql,
-                            instance: instance,
-                            formatted: false
-                        ) as Any
+                        instanceData["status"] = status
+                    }
+
+                    if formatted {
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
+                            " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
                     jsonArray.append(instanceData)
                 }
