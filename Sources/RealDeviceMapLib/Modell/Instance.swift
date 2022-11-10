@@ -65,7 +65,7 @@ public class Instance: Hashable {
         self.count = count
     }
 
-    public func create(mysql: MySQL?=nil) throws {        
+    public func create(mysql: MySQL?=nil) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
