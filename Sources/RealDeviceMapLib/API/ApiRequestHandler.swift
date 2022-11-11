@@ -121,6 +121,7 @@ public class ApiRequestHandler {
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let pokestopShowOnlySponsored = request.param(name: "pokestop_show_only_sponsored")?.toBool() ?? false
+        let pokestopShowOnlyEvent = request.param(name: "pokestop_show_only_event")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let gymShowOnlySponsored = request.param(name: "gym_show_only_sponsored")?.toBool() ?? false
@@ -205,7 +206,7 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
-                pokestopShowOnlySponsored: pokestopShowOnlySponsored,
+                pokestopShowOnlySponsored: pokestopShowOnlySponsored, pokestopShowOnlyEvent: pokestopShowOnlyEvent,
                 invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
