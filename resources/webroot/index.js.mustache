@@ -4133,7 +4133,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['p' + id].size === 'huge'
         break
     }
-  } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
+  } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored' || type === 'pokestop-event') {
     switch (info) {
       case 'hide':
         shouldShow = pokestopFilterNew[id].show === false
@@ -4534,7 +4534,7 @@ function manageSelectButton (e, isNew) {
             pokestopFilterNew['p' + id].size = 'huge'
             break
         }
-      } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
+      } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored' || type === 'pokestop-event') {
         switch (info) {
           case 'hide':
             pokestopFilterNew[id].show = false
