@@ -288,6 +288,7 @@
         "filter_pokestop_lure_5": "Regen-Lockmodul",
         "filter_pokestop_ar_only": "Nur AR geeignete Pokestops",
         "filter_pokestop_sponsored_only": "Nur gesponserte Pokestops",
+        "filter_pokestop_event_only": "Nur Event Pokestops",
         "filter_quest_show_ar": "Quests ohne AR anzeigen",
         "filter_spawnpoint_options": "Optionen",
         "filter_spawnpoint_with_timer": "mit Timer",

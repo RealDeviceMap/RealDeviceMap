@@ -1217,6 +1217,7 @@ public class ApiRequestHandler {
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
             let sponsoredOnly = Localizer.global.get(value: "filter_pokestop_sponsored_only")
+            let eventOnly = Localizer.global.get(value: "filter_pokestop_event_only")
             let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
@@ -1474,6 +1475,54 @@ public class ApiRequestHandler {
                     "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
+                "type": pokestopOptionsString
+            ])
+
+            // event pokestop e.g. golden
+            let eventFilter = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-off select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="hide">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                           </label>
+                           <label class="btn btn-sm btn-on select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="show">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                           </label>
+                           </div>
+                           """
+
+            let eventSize = """
+                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="small">
+                         <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="normal">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="large">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="huge">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                         </label>
+                         </div>
+                         """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 8),
+                    "sort": 8
+                ],
+                "name": eventOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=sparkles\" " +
+                    "style=\"height:50px; width:50px;\">",
+                "filter": eventFilter,
+                "size": eventSize,
                 "type": pokestopOptionsString
             ])
 

@@ -288,6 +288,7 @@
         "filter_pokestop_lure_5": "Rainy Lure",
         "filter_pokestop_ar_only": "Only AR eligible Pokestops",
         "filter_pokestop_sponsored_only": "Only sponsored Pokestops",
+        "filter_pokestop_event_only": "Only Event Pokestops",
         "filter_quest_show_ar": "Show Quests without AR",
         "filter_spawnpoint_options": "Options",
         "filter_spawnpoint_with_timer": "With Timer",
