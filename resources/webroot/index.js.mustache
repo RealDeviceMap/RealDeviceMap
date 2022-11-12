@@ -750,6 +750,7 @@ function loadStorage () {
     }
     defaultPokestopFilter.ar = { show: false, size: 'normal' }
     defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
+    defaultPokestopFilter.event = { show: false, size: 'normal' }
 
     pokestopFilter = defaultPokestopFilter
   } else {
@@ -773,6 +774,9 @@ function loadStorage () {
     }
     if (pokestopFilter.sponsored == null) {
       pokestopFilter.sponsored = { show: false, size: 'normal' }
+    }
+    if (pokestopFilter.event == null) {
+      pokestopFilter.event = { show: false, size: 'normal' }
     }
   }
   store('pokestop_filter', JSON.stringify(pokestopFilter))
@@ -1064,6 +1068,7 @@ function initMap () {
     }
     defaultPokestopFilter.ar = { show: false, size: 'normal' }
     defaultPokestopFilter.sponsored = { show: false, size: 'normal' }
+    defaultPokestopFilter.event = { show: false, size: 'normal' }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -1083,6 +1088,7 @@ function initMap () {
     }
     defaultPokestopFilter.ar = { show: false, size: pokestopFilterNew.ar.size }
     defaultPokestopFilter.sponsored = { show: false, size: pokestopFilterNew.sponsored.size }
+    defaultPokestopFilter.event = { show: false, size: pokestopFilterNew.event.size }
 
     store('pokestop_filter', JSON.stringify(defaultPokestopFilter))
     pokestopFilterNew = defaultPokestopFilter
@@ -1620,6 +1626,7 @@ function loadData () {
     pokestop_filter_exclude: JSON.stringify(pokestopFilterExclude),
     pokestop_show_only_ar: pokestopFilter.ar.show === true,
     pokestop_show_only_sponsored: pokestopFilter.sponsored.show === true,
+    pokestop_show_only_event: pokestopFilter.event.show === true,
     quest_show_only_ar: questFilter.ar.show === true,
     gym_show_only_ar: gymFilter.ar.show === true,
     gym_show_only_sponsored: gymFilter.sponsored.show === true,
@@ -4126,7 +4133,7 @@ function manageSelectButton (e, isNew) {
         shouldShow = pokestopFilterNew['p' + id].size === 'huge'
         break
     }
-  } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
+  } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored' || type === 'pokestop-event') {
     switch (info) {
       case 'hide':
         shouldShow = pokestopFilterNew[id].show === false
@@ -4527,7 +4534,7 @@ function manageSelectButton (e, isNew) {
             pokestopFilterNew['p' + id].size = 'huge'
             break
         }
-      } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored') {
+      } else if (type === 'pokestop-ar' || type === 'pokestop-sponsored' || type === 'pokestop-event') {
         switch (info) {
           case 'hide':
             pokestopFilterNew[id].show = false
