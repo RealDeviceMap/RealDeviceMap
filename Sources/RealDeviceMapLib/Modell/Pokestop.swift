@@ -650,7 +650,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         mysql: MySQL?=nil, minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, updated: UInt32,
         showPokestops: Bool, showQuests: Bool, showLures: Bool, showInvasions: Bool, questFilterExclude: [String]?=nil,
         pokestopFilterExclude: [String]?=nil, pokestopShowOnlyAr: Bool=false, pokestopShowOnlySponsored: Bool=false,
-        invasionFilterExclude: [Int]?=nil, showAlternativeQuests: Bool=false
+        pokestopShowOnlyEvent: Bool=false, invasionFilterExclude: [Int]?=nil, showAlternativeQuests: Bool=false
     ) throws -> [Pokestop] {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
@@ -713,6 +713,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         var excludePokestopSQL: String
         var onlyArSQL: String
         var onlySponsoredSQL: String
+        let onlyEventSQL: String
         var excludeInvasionSQL: String
         let excludePowerUpLevelsSQL: String
 
@@ -820,6 +821,12 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             onlySponsoredSQL = ""
         }
 
+        if pokestopShowOnlyEvent && showPokestops {
+            onlyEventSQL = "AND display_type = 7 "
+        } else {
+            onlyEventSQL = ""
+        }
+
         if excludedPowerUpLevels.isEmpty {
             excludePowerUpLevelsSQL = ""
         } else {
@@ -832,19 +839,19 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
 
         let onlyQuestsSQL = showQuests ? "AND \(questRewardTypeSql) IS NOT NULL " : ""
-        let joinIncidentSQL = showInvasions ?
+        let joinIncidentSQL = showInvasions || pokestopShowOnlyEvent ?
                 "LEFT JOIN incident on pokestop.id = incident.pokestop_id and expiration >= UNIX_TIMESTAMP()" :
                 ""
 
         let sqlOrParts: [String] = [
-            "\(excludePokestopSQL) \(excludePowerUpLevelsSQL) \(onlyArSQL) \(onlySponsoredSQL)",
+            "\(excludePokestopSQL) \(excludePowerUpLevelsSQL) \(onlyArSQL) \(onlySponsoredSQL) \(onlyEventSQL)",
             "\(onlyQuestsSQL) \(excludeQuestTypeSQL) \(excludeQuestPokemonSQL) \(excludeQuestItemSQL)",
             "\(excludeInvasionSQL)"
         ]
             .filter({ $0.trimmingCharacters(in: .whitespacesAndNewlines) != "" })
             .map({ "(TRUE \($0))" })
 
-        let selectIncidentProps = showInvasions ?
+        let selectIncidentProps = showInvasions || pokestopShowOnlyEvent ?
             ", incident.id, pokestop_id, start, expiration, display_type, style, `character`, incident.updated" :
             ""
 
