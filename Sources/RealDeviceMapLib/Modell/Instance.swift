@@ -66,6 +66,7 @@ public class Instance: Hashable {
     }
 
     public func create(mysql: MySQL?=nil) throws {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -89,6 +90,7 @@ public class Instance: Hashable {
     }
 
     public static func delete(mysql: MySQL?=nil, name: String) throws {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -110,6 +112,7 @@ public class Instance: Hashable {
     }
 
     public func update(mysql: MySQL?=nil, oldName: String) throws {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -177,6 +180,7 @@ public class Instance: Hashable {
     }
 
     public static func getByName(mysql: MySQL?=nil, name: String) throws -> Instance? {
+
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()

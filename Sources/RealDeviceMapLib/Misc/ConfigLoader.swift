@@ -287,4 +287,5 @@ public class ConfigLoader {
         case questRetryLimit = "QUEST_RETRY_LIMIT"
         case spinDistance = "SPIN_DISTANCE"
     }
+
 }
