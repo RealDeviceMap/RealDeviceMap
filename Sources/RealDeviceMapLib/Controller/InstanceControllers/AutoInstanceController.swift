@@ -17,8 +17,8 @@ import S2Geometry
 class AutoInstanceController: InstanceControllerProto {
     enum AutoType {
         case quest
-        case jumpyPokemon
-        case findyPokemon
+        case pokemon
+        case tth
     }
 
     enum QuestMode: String {
@@ -108,7 +108,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.findyCoords = [Coord]()
         self.deviceUuid = UUID().uuidString
 
-        if type == .jumpyPokemon || type == .findyPokemon {
+        if type == .pokemon || type == .tth {
             return
         }
 
@@ -261,10 +261,10 @@ class AutoInstanceController: InstanceControllerProto {
 
     private func update() {
         switch type {
-        case .jumpyPokemon:
+        case .pokemon:
             try? initJumpyCoords()
             jumpyCache.set(id: self.name, value: 1)
-        case .findyPokemon:
+        case .tth:
             try? initFindyCoords()
             findyCache.set(id: self.name, value: 1)
         case .quest:
@@ -310,7 +310,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         switch type {
-        case .jumpyPokemon:
+        case .pokemon:
             let hit = jumpyCache.get(id: self.name) ?? 0
             if hit == 0 {
                 try? initJumpyCoords()
@@ -356,7 +356,7 @@ class AutoInstanceController: InstanceControllerProto {
             if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
 
             return task
-        case .findyPokemon:
+        case .tth:
             // get route like for findy, specify fence and use tth = null
             // with each gettask, just increment to next point in list
             // requery the route every ???? min, set with cache above
@@ -845,7 +845,7 @@ class AutoInstanceController: InstanceControllerProto {
                     ]
                 }
             }
-        case .jumpyPokemon:
+        case .pokemon:
             let cnt = self.jumpyCoords.count/2
 
             if formatted {
@@ -853,7 +853,7 @@ class AutoInstanceController: InstanceControllerProto {
             } else {
                 return ["coord_count": cnt]
             }
-        case .findyPokemon:
+        case .tth:
             var change = findyCoords.count - lastCountUnknown
             if change == findyCoords.count {
                 change = 0

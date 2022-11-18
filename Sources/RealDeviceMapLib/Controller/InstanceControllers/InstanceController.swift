@@ -217,11 +217,11 @@ public class InstanceController {
                     accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .autoPokemon {
                 instanceController = AutoInstanceController(
-                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .jumpyPokemon,
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .pokemon,
                     minLevel: minLevel, maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .autoTth {
                 instanceController = AutoInstanceController(
-                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .findyPokemon,
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .tth,
                     minLevel: minLevel, maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
