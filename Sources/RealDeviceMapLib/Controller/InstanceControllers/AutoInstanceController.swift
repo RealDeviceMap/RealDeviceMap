@@ -66,27 +66,27 @@ class AutoInstanceController: InstanceControllerProto {
     public let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
     public let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
 
-    struct JumpyCoord {
+    struct AutoPokemonCoord {
         var id: UInt64
         var coord: Coord
         var spawnSeconds: UInt16
     }
     private var lastCompletedTime: Date?
     private var lastLastCompletedTime: Date?
-    var jumpyCoords: [JumpyCoord]
-    var findyCoords: [Coord]
+    var pokemonCoords: [AutoPokemonCoord]
+    var tthCoords: [Coord]
     var currentDevicesMaxLocation: Int = 0
     let deviceUuid: String
-    var jumpyLock = Threading.Lock()
-    var findyLock = Threading.Lock()
+    var pokemonLock = Threading.Lock()
+    var tthLock = Threading.Lock()
     var lastCountUnknown: Int = 0
-    var pauseJumping: Bool = false
+    var pauseAutoPokemon: Bool = false
     var firstRun: Bool = true
-    var jumpyCache: MemoryCache<Int> = MemoryCache(interval: 240, keepTime: 3600, extendTtlOnHit: false)
-    var findyCache: MemoryCache<Int> = MemoryCache(interval: 30, keepTime: 300, extendTtlOnHit: false)
+    var pokemonCache: MemoryCache<Int> = MemoryCache(interval: 240, keepTime: 3600, extendTtlOnHit: false)
+    var tthCache: MemoryCache<Int> = MemoryCache(interval: 30, keepTime: 300, extendTtlOnHit: false)
     let timeAfterSpawn: UInt16 = 20
     let minTimer: UInt16 = 1500
-    let sleepTimeJumpy: UInt16 = 10
+    let sleepTimeAutoPokemon: UInt16 = 10
     let bufferTimeDistance: UInt16 = 20
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType,  minLevel: UInt8, maxLevel: UInt8,
@@ -104,8 +104,8 @@ class AutoInstanceController: InstanceControllerProto {
         self.isEvent = isEvent
         self.questMode = questMode
 
-        self.jumpyCoords = [JumpyCoord]()
-        self.findyCoords = [Coord]()
+        self.pokemonCoords = [AutoPokemonCoord]()
+        self.tthCoords = [Coord]()
         self.deviceUuid = UUID().uuidString
 
         if type == .pokemon || type == .tth {
@@ -262,11 +262,11 @@ class AutoInstanceController: InstanceControllerProto {
     private func update() {
         switch type {
         case .pokemon:
-            try? initJumpyCoords()
-            jumpyCache.set(id: self.name, value: 1)
+            try? initAutoPokemonCoords()
+            pokemonCache.set(id: self.name, value: 1)
         case .tth:
-            try? initFindyCoords()
-            findyCache.set(id: self.name, value: 1)
+            try? initTthCoords()
+            tthCache.set(id: self.name, value: 1)
         case .quest:
             stopsLock.lock()
             self.allStops = []
@@ -311,45 +311,42 @@ class AutoInstanceController: InstanceControllerProto {
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         switch type {
         case .pokemon:
-            let hit = jumpyCache.get(id: self.name) ?? 0
+            let hit = pokemonCache.get(id: self.name) ?? 0
             if hit == 0 {
-                try? initJumpyCoords()
-                jumpyCache.set(id: self.name, value: 1)
+                try? initAutoPokemonCoords()
+                pokemonCache.set(id: self.name, value: 1)
             }
-
-            Log.debug(message: "getTask() - jumpy started for \(self.name)")
 
             let (_, min, sec) = secondsToHoursMinutesSeconds()
             let curSecInHour = min*60 + sec
-            jumpyLock.lock()
+            pokemonLock.lock()
 
             // increment location
             let loc: Int = currentDevicesMaxLocation
 
-            let newLoc = determineNextJumpyLocation(curTime: curSecInHour, curLocation: loc)
+            let newLoc = determineNextPokemonLocation(curTime: curSecInHour, curLocation: loc)
             firstRun = false
 
             Log.debug(message:
-                "getTask() jumpy - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(jumpyCoords.count / 2)")
+                "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
 
-            var currentJumpyCoord: JumpyCoord = JumpyCoord(id: 1, coord: Coord(lat: 0.0, lon: 0.0), spawnSeconds: 0)
-            if jumpyCoords.indices.contains(newLoc) {
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: 0.0, lon: 0.0), spawnSeconds: 0)
+            if pokemonCoords.indices.contains(newLoc) {
                 currentDevicesMaxLocation = newLoc
-                currentJumpyCoord = jumpyCoords[newLoc]
+                currentCoord = pokemonCoords[newLoc]
             } else {
-                if jumpyCoords.indices.contains(0) {
+                if pokemonCoords.indices.contains(0) {
                     currentDevicesMaxLocation = 0
-                    currentJumpyCoord = jumpyCoords[0]
+                    currentCoord = pokemonCoords[0]
                 } else {
                     currentDevicesMaxLocation = -1
                 }
             }
-            // locationLock.unlock()
 
-            jumpyLock.unlock()
+            pokemonLock.unlock()
 
             var task: [String: Any] = [
-                "action": "scan_pokemon", "lat": currentJumpyCoord.coord.lat, "lon": currentJumpyCoord.coord.lon,
+                "action": "scan_pokemon", "lat": currentCoord.coord.lat, "lon": currentCoord.coord.lon,
                 "min_level": minLevel, "max_level": maxLevel
             ]
 
@@ -357,56 +354,51 @@ class AutoInstanceController: InstanceControllerProto {
 
             return task
         case .tth:
-            // get route like for findy, specify fence and use tth = null
+            // get route like for tth finding, specify fence and use tth = null
             // with each gettask, just increment to next point in list
             // requery the route every ???? min, set with cache above
             // run until data length == 0, then output a message to tell user done
             // since we actually care about laptime, use that variable
-            findyLock.lock()
+            tthLock.lock()
 
-            let hit = findyCache.get(id: self.name) ?? 0
+            let hit = tthCache.get(id: self.name) ?? 0
             if hit == 0 {
-                try? initFindyCoords()
-                findyCache.set(id: self.name, value: 1)
+                try? initTthCoords()
+                tthCache.set(id: self.name, value: 1)
             }
 
             // increment location
             let loc: Int = currentDevicesMaxLocation
 
             var newLoc = loc + 1
-            if newLoc >= findyCoords.count {
+            if newLoc >= tthCoords.count {
                 newLoc = 0
             }
 
-            Log.debug(message: "getTask() findy - oldLoc=\(loc) & newLoc=\(newLoc)/\(findyCoords.count)")
+            Log.debug(message: "getTask() tth - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count)")
 
             currentDevicesMaxLocation = newLoc
 
-            var currentFindyCoord: Coord = Coord(lat: 0.0, lon: 0.0)
-            if findyCoords.indices.contains(newLoc) {
-                currentFindyCoord = findyCoords[newLoc]
+            var currentCoord = Coord(lat: 0.0, lon: 0.0)
+            if tthCoords.indices.contains(newLoc) {
+                currentCoord = tthCoords[newLoc]
             } else {
-                if findyCoords.indices.contains(0) {
+                if tthCoords.indices.contains(0) {
                     currentDevicesMaxLocation = 0
-                    currentFindyCoord = findyCoords[newLoc]
+                    currentCoord = tthCoords[newLoc]
                 } else {
                     currentDevicesMaxLocation = -1
                 }
             }
 
-            // locationLock.unlock()
+            tthLock.unlock()
 
             var task: [String: Any] = [
-                "action": "scan_pokemon", "lat": currentFindyCoord.lat, "lon": currentFindyCoord.lon,
+                "action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                 "min_level": minLevel, "max_level": maxLevel
             ]
 
-            findyLock.unlock()
-
             if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
-
-            Log.debug(message: "getTask() findy- ended")
-
             return task
         case .quest:
             bootstrappLock.lock()
@@ -846,7 +838,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         case .pokemon:
-            let cnt = self.jumpyCoords.count/2
+            let cnt = self.pokemonCoords.count/2
 
             if formatted {
                 return "Coord Count: \(cnt)"
@@ -854,8 +846,8 @@ class AutoInstanceController: InstanceControllerProto {
                 return ["coord_count": cnt]
             }
         case .tth:
-            var change = findyCoords.count - lastCountUnknown
-            if change == findyCoords.count {
+            var change = tthCoords.count - lastCountUnknown
+            if change == tthCoords.count {
                 change = 0
             }
 
@@ -863,16 +855,16 @@ class AutoInstanceController: InstanceControllerProto {
                 if change > 0 {
                     return """
                     <span title=\"Current count and change in count from last query\">
-                    Coord Count: \(self.findyCoords.count), Delta: +\(change)</span>
+                    Coord Count: \(self.tthCoords.count), Delta: +\(change)</span>
                     """
                 } else {
                     return """
                     <span title=\"Current count and change in count from last query\">
-                    Coord Count: \(self.findyCoords.count), Delta: \(change)</span>
+                    Coord Count: \(self.tthCoords.count), Delta: \(change)</span>
                     """
                 }
             } else {
-                return ["coord_count": self.findyCoords.count, "Delta": change]
+                return ["coord_count": self.tthCoords.count, "Delta": change]
             }
         }
     }
@@ -922,17 +914,17 @@ class AutoInstanceController: InstanceControllerProto {
             account.hasSpinsLeft(spins: spinLimit)
     }
 
-    func initJumpyCoords() throws {
-        Log.debug(message: "initJumpyCoords() - Starting")
+    func initAutoPokemonCoords() throws {
+        Log.debug(message: "initAutoPokemonCoords() - Starting")
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[AutoInstanceController] initJumpyCoords() Failed to connect to database.")
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to connect to database.")
             return
         }
 
-        jumpyLock.lock()
-        jumpyCoords.removeAll(keepingCapacity: true)
+        pokemonLock.lock()
+        pokemonCoords.removeAll(keepingCapacity: true)
 
-        var tmpCoords: [JumpyCoord] = [JumpyCoord]()
+        var tmpCoords: [AutoPokemonCoord] = [AutoPokemonCoord]()
 
         // get min and max coords from polygon(s)
         var minLat: Double = 90
@@ -962,7 +954,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         guard mysqlStmt.execute() else {
             Log.error(message:
-                "[AutoInstanceController] initJumpyCoords() Failed to execute query. (\(mysqlStmt.errorMessage())")
+                "[AutoInstanceController] initAutoPokemonCoords() Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -984,7 +976,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             if inPolygon(lat: lat, lon: lon, multiPolygon: multiPolygon) {
                 tmpCoords.append(
-                    JumpyCoord( id: id, coord: Coord(lat: lat, lon: lon),
+                    AutoPokemonCoord( id: id, coord: Coord(lat: lat, lon: lon),
                         spawnSeconds: UInt16(spawnSeconds))
                 )
             }
@@ -992,39 +984,42 @@ class AutoInstanceController: InstanceControllerProto {
             count += 1
         }
 
-        Log.debug(message: "[AutoInstanceController] initJumpyCoords - got \(count) spawnpoints in min/max rectangle")
-        Log.debug(message: "[AutoInstanceController] initJumpyCoords - got \(tmpCoords.count) spawnpoints in geofence")
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+            "got \(count) spawnpoints in min/max rectangle")
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+            "got \(tmpCoords.count) spawnpoints in geofence")
 
         // sort the array, so 0-3600 sec in order
-        jumpyCoords = tmpCoords
+        pokemonCoords = tmpCoords
 
         // take lazy man's approach, probably not ideal
         // add elements to end, so 3600-7199 sec
         for coord in tmpCoords {
-            jumpyCoords.append(JumpyCoord( id: coord.id, coord: coord.coord, spawnSeconds: coord.spawnSeconds + 3600 ))
+            pokemonCoords.append(
+                AutoPokemonCoord(id: coord.id, coord: coord.coord, spawnSeconds: coord.spawnSeconds + 3600 ))
         }
 
         // did the list shrink from last query?
 
-        let oldJumpyCoord = currentDevicesMaxLocation
-        if oldJumpyCoord >= jumpyCoords.count {
+        let oldCoord = currentDevicesMaxLocation
+        if oldCoord >= pokemonCoords.count {
             currentDevicesMaxLocation = 0
         }
 
-        jumpyLock.unlock()
+        pokemonLock.unlock()
     }
 
-    func initFindyCoords() throws {
-        Log.debug(message: "initJumpyCoords() - Starting")
+    func initTthCoords() throws {
+        Log.debug(message: "initTthCoords() - Starting")
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[AutoInstanceController] initFindyCoords() - Failed to connect to database.")
+            Log.error(message: "[AutoInstanceController] initTthCoords() - Failed to connect to database.")
             return
         }
 
-        lastCountUnknown = findyCoords.count
+        lastCountUnknown = tthCoords.count
 
-        findyLock.lock()
-        findyCoords.removeAll(keepingCapacity: true)
+        tthLock.lock()
+        tthCoords.removeAll(keepingCapacity: true)
 
         var tmpCoords = [Coord]()
 
@@ -1042,7 +1037,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         // assemble the sql
-        var sql = "select lat, lon from spawnpoint where "
+        var sql = "SELECT lat, lon FROM spawnpoint WHERE "
         sql.append("(lat>" + String(minLat) + " AND lon >" + String(minLon) + ")")
         sql.append(" AND ")
         sql.append("(lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ")")
@@ -1053,7 +1048,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         guard mysqlStmt.execute() else {
             Log.error(message:
-                "[AutoInstanceController] initFindyCoords - Failed to execute query. (\(mysqlStmt.errorMessage())")
+                "[AutoInstanceController] initTthCoords - Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1070,28 +1065,28 @@ class AutoInstanceController: InstanceControllerProto {
             count += 1
         }
         Log.debug(message:
-            "[AutoInstanceController] initFindyCoords - got \(count) points in min/max rectangle with null tth")
+            "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
         Log.debug(message:
-            "[AutoInstanceController] initFindyCoords - got \(tmpCoords.count) points in geofence with null tth")
+            "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
 
         if count == 0 {
             Log.debug(message:
-                "[AutoInstanceController] initFindyCoords - got \(count) points in min/max rectangle with null tth")
+                "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
         }
 
         if tmpCoords.count == 0 {
             Log.debug(message:
-                "[AutoInstanceController] initFindyCoords - got \(tmpCoords.count) points in geofence with null tth")
+                "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
         }
 
         // sort the array, so 0-3600 sec in order
-        findyCoords = tmpCoords
+        tthCoords = tmpCoords
 
         // locationLock.lock()
         currentDevicesMaxLocation = 0
         // locationLock.unlock()
 
-        findyLock.unlock()
+        tthLock.unlock()
     }
 
     func secondsFromTopOfHour(seconds: UInt64 ) -> UInt64 {
@@ -1112,13 +1107,13 @@ class AutoInstanceController: InstanceControllerProto {
         return (minTime, maxTime)
     }
 
-    func determineNextJumpyLocation(curTime: UInt64, curLocation: Int) -> Int {
-        let cntArray = jumpyCoords.count
-        let cntCoords = jumpyCoords.count / 2
+    func determineNextPokemonLocation(curTime: UInt64, curLocation: Int) -> Int {
+        let cntArray = pokemonCoords.count
+        let cntCoords = pokemonCoords.count / 2
 
         if cntArray <= 0 {
-            try? initJumpyCoords()
-            jumpyCache.set(id: self.name, value: 1)
+            try? initAutoPokemonCoords()
+            pokemonCache.set(id: self.name, value: 1)
             return 0
         }
 
@@ -1129,7 +1124,7 @@ class AutoInstanceController: InstanceControllerProto {
         loc = curLocation + 1
         if loc > cntCoords {
             Log.debug(message:
-                "[AutoInstanceController] determineNextJumpyLocation() - reached end of data, going back to zero")
+                "[AutoInstanceController] determineNextLocation() - reached end of data, going back to zero")
 
             lastLastCompletedTime = lastCompletedTime
             lastCompletedTime = Date()
@@ -1139,23 +1134,23 @@ class AutoInstanceController: InstanceControllerProto {
             loc = 0
         }
 
-        jumpyLock.lock()
-        if !jumpyCoords.indices.contains(loc) {
-            if jumpyCoords.indices.contains(0) {
+        pokemonLock.lock()
+        if !pokemonCoords.indices.contains(loc) {
+            if pokemonCoords.indices.contains(0) {
                 loc = 0
             } else {
                 // wtf
-                Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation - no zero location, wtf...")
+                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation - no zero location, wtf...")
             }
         }
-        var nextCoord = jumpyCoords[loc]
-        jumpyLock.unlock()
+        var nextCoord = pokemonCoords[loc]
+        pokemonLock.unlock()
 
         var spawnSeconds: UInt16 = nextCoord.spawnSeconds
 
         var (minTime, maxTime) = offsetsForSpawnTimer(time: spawnSeconds)
         Log.debug(message:
-            "[AutoInstanceController] determineNextJumpyLocation - minTime=\(minTime) & " +
+            "[AutoInstanceController] determineNextPokemonLocation - minTime=\(minTime) & " +
                 "curTime=\(curTime) & maxTime=\(maxTime)")
 
         let topOfHour = (minTime < 0)
@@ -1169,35 +1164,35 @@ class AutoInstanceController: InstanceControllerProto {
         if (curTime >= minTime) && (curTime <= maxTime) {
             // good to jump as between to key points for current time
             Log.debug(message:
-                "[AutoInstanceController] determineNextJumpyLocation a1 - curtime between min and max, " +
+                "[AutoInstanceController] determineNextPokemonLocation a1 - curtime between min and max, " +
                 "moving standard 1 forward")
 
             // test if we are getting too close to the mintime
             if  Double(curTime) - Double(minTime) < Double(bufferTimeDistance) {
                 Log.debug(message:
-                    "[AutoInstanceController] determineNextJumpyLocation() a2 - " +
+                    "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
                     "sleeping 10sec as too close to minTime, in normal time")
-                Threading.sleep(seconds: Double(sleepTimeJumpy))
+                Threading.sleep(seconds: Double(sleepTimeAutoPokemon))
             }
         } else if curTime < minTime {
             // spawn is past time to visit, need to find a good one to jump to
-            Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() b1 - " +
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
                 "curTime \(curTime) > maxTime, iterate")
 
             var found: Bool = false
             let start = loc
             for idx in start..<cntArray {
-                if !jumpyCoords.indices.contains(loc) {
+                if !pokemonCoords.indices.contains(loc) {
                     return 0
                 }
 
-                nextCoord = jumpyCoords[idx]
+                nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
                 let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                 if  (curTime >= mnTime) && (curTime <= mnTime + 120) {
-                    Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() b2 - " +
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b2 - " +
                         "mnTime=\(mnTime) & curTime=\(curTime) & & mxTime=\(mxTime)")
                     found = true
                     loc = idx
@@ -1207,19 +1202,19 @@ class AutoInstanceController: InstanceControllerProto {
 
             if !found {
                 for idx in (0..<start).reversed() {
-                    if !jumpyCoords.indices.contains(loc) {
+                    if !pokemonCoords.indices.contains(loc) {
                         return 0
                     }
 
-                    nextCoord = jumpyCoords[idx]
+                    nextCoord = pokemonCoords[idx]
                     spawnSeconds = nextCoord.spawnSeconds
 
                     let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                     if  (curTime >= mnTime + 30) && (curTime < mnTime + 120) {
-                        Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() b3 - " +
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b3 - " +
                             "iterate backwards solution=\(found)")
-                        Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() b4 -  " +
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b4 -  " +
                             "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
                         found = true
                         loc = idx
@@ -1228,32 +1223,32 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         } else if curTime < minTime && !firstRun {
-            Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() c1 - sleeping 20sec")
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() c1 - sleeping 20sec")
             Threading.sleep(seconds: 20)
 
-            pauseJumping = true
+            pauseAutoPokemon = true
             loc -= 1
         } else if curTime > maxTime {
             // spawn is past time to visit, need to find a good one to jump to
-            Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() d1 - " +
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d1 - " +
                 "curTime=\(curTime) > maxTime=\(maxTime), iterate")
 
             var found: Bool = false
             let start = loc
             for idx in start..<cntArray {
-                if !jumpyCoords.indices.contains(loc) {
+                if !pokemonCoords.indices.contains(loc) {
                     return 0
                 }
 
-                nextCoord = jumpyCoords[idx]
+                nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
                 let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                 if  (curTime >= mnTime+30) && (curTime <= mnTime + 120) {
-                    Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() d2 - " +
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 - " +
                         "iterate forward solution=\(found)")
-                    Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() d3 - " +
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d3 - " +
                         "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
                     found = true
                     loc = idx
@@ -1263,19 +1258,19 @@ class AutoInstanceController: InstanceControllerProto {
 
             if !found {
                 for idx in (0..<start).reversed() {
-                    if !jumpyCoords.indices.contains(loc) {
+                    if !pokemonCoords.indices.contains(loc) {
                         return 0
                     }
 
-                    nextCoord = jumpyCoords[idx]
+                    nextCoord = pokemonCoords[idx]
                     spawnSeconds = nextCoord.spawnSeconds
 
                     let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                     if curTime >= mnTime + 30 && curTime <= mnTime + 120 {
-                        Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() d4 - " +
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d4 - " +
                             "iterate backwards solution=\(found)")
-                        Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() d5 -  " +
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d5 -  " +
                             "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
                         found = true
                         loc = idx
@@ -1284,7 +1279,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
         } else {
-            Log.debug(message: "[AutoInstanceController] determineNextJumpyLocation() e1 - " +
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() e1 - " +
                 "criteria fail with curTime=\(curTime) & curLocation=\(curLocation)" +
                       "& despawn=\(spawnSeconds)")
             // go back to zero and iterate somewhere useful
