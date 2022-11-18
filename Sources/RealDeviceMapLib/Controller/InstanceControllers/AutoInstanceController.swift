@@ -89,7 +89,7 @@ class AutoInstanceController: InstanceControllerProto {
     let sleepTimeAutoPokemon: UInt16 = 10
     let bufferTimeDistance: UInt16 = 20
 
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType,  minLevel: UInt8, maxLevel: UInt8,
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
          spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
          accountGroup: String?, isEvent: Bool) {
         self.name = name
@@ -953,8 +953,8 @@ class AutoInstanceController: InstanceControllerProto {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message:
-                "[AutoInstanceController] initAutoPokemonCoords() Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to execute query. " +
+                "(\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
