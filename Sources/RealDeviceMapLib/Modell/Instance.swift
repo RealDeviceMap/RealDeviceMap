@@ -20,8 +20,8 @@ public class Instance: Hashable {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleSmartPokemon = "circle_smart_pokemon"
-        case jumpyPokemon = "jumpy_pokemon"
-        case findyPokemon = "findy_pokemon"
+        case autoPokemon = "auto_pokemon" // sort jumps
+        case autoTth = "auto_tth" // to find tth of every spawnpoint
         case circleRaid = "circle_raid"
         case circleSmartRaid = "circle_smart_raid"
         case autoQuest = "auto_quest"
@@ -33,16 +33,16 @@ public class Instance: Hashable {
                 return .circlePokemon
             } else if value.lowercased() == "circle_smart_pokemon" || value.lowercased() == "circlesmartpokemon" {
                 return .circleSmartPokemon
-            } else if value.lowercased() == "jumpy_pokemon" || value.lowercased() == "jumpypokemon" {
-                return .jumpyPokemon
-            } else if value.lowercased() == "findy_pokemon" || value.lowercased() == "findypokemon" {
-                return .findyPokemon
             } else if value.lowercased() == "circle_raid" || value.lowercased() == "circleraid" {
                 return .circleRaid
             } else if value.lowercased() == "circle_smart_raid" || value.lowercased() == "circlesmartraid" {
                 return .circleSmartRaid
             } else if value.lowercased() == "auto_quest" || value.lowercased() == "autoquest" {
                 return .autoQuest
+            } else if value.lowercased() == "auto_pokemon" || value.lowercased() == "autopokemon" {
+                return .autoPokemon
+            } else if value.lowercased() == "auto_tth" || value.lowercased() == "autotth" {
+                return .autoTth
             } else if value.lowercased() == "pokemon_iv" || value.lowercased() == "pokemoniv" {
                 return .pokemonIV
             } else if value.lowercased() == "leveling" {

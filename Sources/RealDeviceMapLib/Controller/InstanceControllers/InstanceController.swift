@@ -174,7 +174,7 @@ public class InstanceController {
                                                                        minLevel: minLevel, maxLevel: maxLevel,
                                                                        accountGroup: accountGroup, isEvent: isEvent)
             }
-        case .pokemonIV, .autoQuest, .jumpyPokemon, .findyPokemon:
+        case .pokemonIV, .autoQuest, .autoPokemon, .autoTth:
             var areaArray = [[Coord]]()
             if instance.data["area"] as? [[Coord]] != nil {
                 areaArray = instance.data["area"] as? [[Coord]] ?? [[Coord]]()
@@ -221,7 +221,7 @@ public class InstanceController {
                     minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList,
                     accountGroup: accountGroup, isEvent: isEvent
                 )
-            } else if instance.type == .jumpyPokemon {
+            } else if instance.type == .autoPokemon {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
                 let questModeString = instance.data["quest_mode"] as? String
@@ -234,7 +234,7 @@ public class InstanceController {
                     spinLimit: spinLimit, delayLogout: delayLogout,
                     accountGroup: accountGroup, isEvent: isEvent, questMode: questMode
                 )
-            } else if instance.type == .findyPokemon {
+            } else if instance.type == .autoTth {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
                 let questModeString = instance.data["quest_mode"] as? String

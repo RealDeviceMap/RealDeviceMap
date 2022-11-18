@@ -2395,10 +2395,10 @@ public class WebRequestHandler {
                 data["circle_pokemon_selected"] = true
             case .circleSmartPokemon:
                 data["circle_smart_pokemon_selected"] = true
-            case .jumpyPokemon:
-                data["jumpy_pokemon_selected"] = true
-            case .findyPokemon:
-                data["findy_pokemon_selected"] = true
+            case .autoPokemon:
+                data["auto_pokemon_selected"] = true
+            case .autoTth:
+                data["auto_tth_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
@@ -2456,7 +2456,7 @@ public class WebRequestHandler {
             }
             newCoords = coords
         } else if type != nil && type! == .autoQuest || type! == .pokemonIV || type! == .leveling ||
-                  type! == .jumpyPokemon || type! == .findyPokemon {
+                  type! == .autoPokemon || type! == .autoTth {
             var coordArray = [[Coord]]()
             let areaRows = area.components(separatedBy: "\n")
             var currentIndex = 0
@@ -2680,10 +2680,10 @@ public class WebRequestHandler {
                 data["circle_pokemon_selected"] = true
             case .circleSmartPokemon:
                 data["circle_smart_pokemon_selected"] = true
-            case .jumpyPokemon:
-                data["jumpy_pokemon_selected"] = true
-            case .findyPokemon:
-                data["findy_pokemon_selected"] = true
+            case .autoPokemon:
+                data["auto_pokemon_selected"] = true
+            case .autoTth:
+                data["auto_tth_selected"] = true
             case .circleRaid:
                 data["circle_raid_selected"] = true
             case .circleSmartRaid:
