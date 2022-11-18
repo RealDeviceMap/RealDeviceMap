@@ -89,9 +89,9 @@ class AutoInstanceController: InstanceControllerProto {
     let sleepTimeJumpy: UInt16 = 10
     let bufferTimeDistance: UInt16 = 20
 
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
-         accountGroup: String?, isEvent: Bool, questMode: QuestMode = .normal) {
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType,  minLevel: UInt8, maxLevel: UInt8,
+         spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
+         accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
