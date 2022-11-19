@@ -29,7 +29,7 @@ public class WebRequestHandler {
     public static var startZoom: Int = 14
     public static var minZoom: Int = 10
     public static var maxZoom: Int = 18
-    public static var maxPokemonId: Int = 649
+    public static var maxPokemonId: Int = 905
     public static var title: String = "RealDeviceMap"
     public static var availableItemJson: String = "[]"
     public static var enableRegister: Bool = true
