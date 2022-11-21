@@ -20,7 +20,7 @@ public class Instance: Hashable {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleSmartPokemon = "circle_smart_pokemon"
-        case autoPokemon = "auto_pokemon" // sort jumps
+        case autoPokemon = "auto_pokemon" // jumps with respecting tth of spawnpoin
         case autoTth = "auto_tth" // to find tth of every spawnpoint
         case circleRaid = "circle_raid"
         case circleSmartRaid = "circle_smart_raid"
