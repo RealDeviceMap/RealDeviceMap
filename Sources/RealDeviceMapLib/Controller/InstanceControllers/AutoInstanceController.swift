@@ -5,7 +5,7 @@
 //  Created by Florian Kostenzer on 23.10.18.
 //
 //  swiftlint:disable:next superfluous_disable_command
-//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast large_tuple
 
 import Foundation
 import PerfectLib
@@ -15,9 +15,10 @@ import Turf
 import S2Geometry
 
 class AutoInstanceController: InstanceControllerProto {
-
     enum AutoType {
         case quest
+        case pokemon
+        case tth
     }
 
     enum QuestMode: String {
@@ -65,9 +66,32 @@ class AutoInstanceController: InstanceControllerProto {
     public let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
     public let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
 
-    init(name: String, multiPolygon: MultiPolygon, type: AutoType, timezoneOffset: Int,
-         minLevel: UInt8, maxLevel: UInt8, spinLimit: Int, delayLogout: Int,
-         accountGroup: String?, isEvent: Bool, questMode: QuestMode = .normal) {
+    struct AutoPokemonCoord {
+        var id: UInt64
+        var coord: Coord
+        var spawnSeconds: UInt16
+    }
+    private var lastCompletedTime: Date?
+    private var lastLastCompletedTime: Date?
+    var pokemonCoords: [AutoPokemonCoord]
+    var tthCoords: [Coord]
+    var currentDevicesMaxLocation: Int = 0
+    let deviceUuid: String
+    var pokemonLock = Threading.Lock()
+    var tthLock = Threading.Lock()
+    var lastCountUnknown: Int = 0
+    var pauseAutoPokemon: Bool = false
+    var firstRun: Bool = true
+    var pokemonCache: MemoryCache<Int> = MemoryCache(interval: 240, keepTime: 3600, extendTtlOnHit: false)
+    var tthCache: MemoryCache<Int> = MemoryCache(interval: 30, keepTime: 300, extendTtlOnHit: false)
+    let timeAfterSpawn: UInt16 = 20
+    let minTimer: UInt16 = 1500
+    let sleepTimeAutoPokemon: UInt16 = 10
+    let bufferTimeDistance: UInt16 = 20
+
+    init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
+         spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
+         accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
@@ -79,6 +103,15 @@ class AutoInstanceController: InstanceControllerProto {
         self.delayLogout = delayLogout
         self.isEvent = isEvent
         self.questMode = questMode
+
+        self.pokemonCoords = [AutoPokemonCoord]()
+        self.tthCoords = [Coord]()
+        self.deviceUuid = UUID().uuidString
+
+        if type == .pokemon || type == .tth {
+            return
+        }
+
         update()
 
         if !skipBootstrap {
@@ -220,7 +253,6 @@ class AutoInstanceController: InstanceControllerProto {
             bootstrappCellIDs = missingCellIDs
             bootstrappTotalCount = allCells.count
         }
-
     }
 
     deinit {
@@ -229,6 +261,12 @@ class AutoInstanceController: InstanceControllerProto {
 
     private func update() {
         switch type {
+        case .pokemon:
+            try? initAutoPokemonCoords()
+            pokemonCache.set(id: self.name, value: 1)
+        case .tth:
+            try? initTthCoords()
+            tthCache.set(id: self.name, value: 1)
         case .quest:
             stopsLock.lock()
             self.allStops = []
@@ -271,13 +309,100 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
-
         switch type {
-        case .quest:
+        case .pokemon:
+            let hit = pokemonCache.get(id: self.name) ?? 0
+            if hit == 0 {
+                try? initAutoPokemonCoords()
+                pokemonCache.set(id: self.name, value: 1)
+            }
 
+            let (_, min, sec) = secondsToHoursMinutesSeconds()
+            let curSecInHour = min*60 + sec
+            pokemonLock.lock()
+
+            // increment location
+            let loc: Int = currentDevicesMaxLocation
+
+            let newLoc = determineNextPokemonLocation(curTime: curSecInHour, curLocation: loc)
+            firstRun = false
+
+            Log.debug(message:
+                "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
+
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: 0.0, lon: 0.0), spawnSeconds: 0)
+            if pokemonCoords.indices.contains(newLoc) {
+                currentDevicesMaxLocation = newLoc
+                currentCoord = pokemonCoords[newLoc]
+            } else {
+                if pokemonCoords.indices.contains(0) {
+                    currentDevicesMaxLocation = 0
+                    currentCoord = pokemonCoords[0]
+                } else {
+                    currentDevicesMaxLocation = -1
+                }
+            }
+
+            pokemonLock.unlock()
+
+            var task: [String: Any] = [
+                "action": "scan_pokemon", "lat": currentCoord.coord.lat, "lon": currentCoord.coord.lon,
+                "min_level": minLevel, "max_level": maxLevel
+            ]
+
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+
+            return task
+        case .tth:
+            // get route like for tth finding, specify fence and use tth = null
+            // with each gettask, just increment to next point in list
+            // requery the route every ???? min, set with cache above
+            // run until data length == 0, then output a message to tell user done
+            // since we actually care about laptime, use that variable
+            tthLock.lock()
+
+            let hit = tthCache.get(id: self.name) ?? 0
+            if hit == 0 {
+                try? initTthCoords()
+                tthCache.set(id: self.name, value: 1)
+            }
+
+            // increment location
+            let loc: Int = currentDevicesMaxLocation
+
+            var newLoc = loc + 1
+            if newLoc >= tthCoords.count {
+                newLoc = 0
+            }
+
+            Log.debug(message: "getTask() tth - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count)")
+
+            currentDevicesMaxLocation = newLoc
+
+            var currentCoord = Coord(lat: 0.0, lon: 0.0)
+            if tthCoords.indices.contains(newLoc) {
+                currentCoord = tthCoords[newLoc]
+            } else {
+                if tthCoords.indices.contains(0) {
+                    currentDevicesMaxLocation = 0
+                    currentCoord = tthCoords[newLoc]
+                } else {
+                    currentDevicesMaxLocation = -1
+                }
+            }
+
+            tthLock.unlock()
+
+            var task: [String: Any] = [
+                "action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                "min_level": minLevel, "max_level": maxLevel
+            ]
+
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
+        case .quest:
             bootstrappLock.lock()
             if !bootstrappCellIDs.isEmpty {
-
                 if let target = bootstrappCellIDs.popLast() {
                     bootstrappLock.unlock()
 
@@ -360,7 +485,7 @@ class AutoInstanceController: InstanceControllerProto {
                         newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
                     } catch {
                         Log.error(
-                           message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
                         )
                         return [:]
                     }
@@ -404,7 +529,6 @@ class AutoInstanceController: InstanceControllerProto {
                 }
 
                 if lastCoord != nil {
-
                     var closestOverall: PokestopWithMode?
                     var closestOverallDistance: Double = 10000000000000000
 
@@ -452,7 +576,8 @@ class AutoInstanceController: InstanceControllerProto {
                         return [:]
                     }
                     if (mode == nil || mode == true) && closest!.alternative == false {
-                        Log.debug(message: "[AutoInstanceController] [\(username ?? "?")] switching quest mode from " +
+                        Log.debug(message:
+                            "[AutoInstanceController] [\(username ?? "?")] switching quest mode from " +
                             "\(mode == true ? "alternative" : "none") to normal")
                         var closestAR: PokestopWithMode?
                         var closestARDistance: Double = 10000000000000000
@@ -542,7 +667,7 @@ class AutoInstanceController: InstanceControllerProto {
                                 accounts[uuid] = newUsername
                                 Log.debug(
                                     message: "[AutoInstanceController] [\(name)] [\(uuid)] Over Logout Delay. " +
-                                             "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
+                                            "Switching Account from \(username ?? "?") to \(newUsername ?? "?")"
                                 )
                             }
                         } else {
@@ -550,15 +675,14 @@ class AutoInstanceController: InstanceControllerProto {
                         }
                         accountsLock.unlock()
                     } catch {
-                        Log.error(
-                            message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance."
-                        )
+                        Log.error(message:
+                            "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get account in advance.")
                     }
                     return ["action": "switch_account", "min_level": minLevel, "max_level": maxLevel]
                 } else if delay >= delayLogout {
                     Log.warning(
                         message: "[AutoInstanceController] [\(name)] [\(uuid)] Ignoring over Logout Delay, " +
-                                 "because no account is specified."
+                                "because no account is specified."
                     )
                 }
 
@@ -572,7 +696,7 @@ class AutoInstanceController: InstanceControllerProto {
                         deviceUUID: uuid,
                         location: Coord(lat: pokestop.pokestop.lat, lon: pokestop.pokestop.lon),
                         encounterTime: encounterTime
-                  )
+                )
                 } catch {
                     Log.error(message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
                     stopsLock.lock()
@@ -601,7 +725,7 @@ class AutoInstanceController: InstanceControllerProto {
                         newStops = try Pokestop.getIn(mysql: mysql, ids: ids)
                     } catch {
                         Log.error(
-                           message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
+                        message: "[AutoInstanceController] [\(name)] [\(uuid)] Failed to get today stops."
                         )
                         return [:]
                     }
@@ -637,14 +761,14 @@ class AutoInstanceController: InstanceControllerProto {
                     stopsLock.unlock()
                 }
                 stopsLock.doWithLock { lastMode[username ?? uuid] = pokestop.alternative }
-                WebHookRequestHandler.setArQuestTarget(device: uuid, timestamp: timestamp, isAr: pokestop.alternative)
+                WebHookRequestHandler.setArQuestTarget(device: uuid, timestamp: timestamp,
+                    isAr: pokestop.alternative)
                 return ["action": "scan_quest", "deploy_egg": false,
                         "lat": pokestop.pokestop.lat, "lon": pokestop.pokestop.lon,
                         "delay": delay, "min_level": minLevel, "max_level": maxLevel,
                         "quest_type": pokestop.alternative ? "ar" : "normal"]
             }
         }
-
     }
 
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
@@ -713,6 +837,35 @@ class AutoInstanceController: InstanceControllerProto {
                     ]
                 }
             }
+        case .pokemon:
+            let cnt = self.pokemonCoords.count/2
+
+            if formatted {
+                return "Coord Count: \(cnt)"
+            } else {
+                return ["coord_count": cnt]
+            }
+        case .tth:
+            var change = tthCoords.count - lastCountUnknown
+            if change == tthCoords.count {
+                change = 0
+            }
+
+            if formatted {
+                if change > 0 {
+                    return """
+                    <span title=\"Current count and change in count from last query\">
+                    Coord Count: \(self.tthCoords.count), Delta: +\(change)</span>
+                    """
+                } else {
+                    return """
+                    <span title=\"Current count and change in count from last query\">
+                    Coord Count: \(self.tthCoords.count), Delta: \(change)</span>
+                    """
+                }
+            } else {
+                return ["coord_count": self.tthCoords.count, "Delta": change]
+            }
         }
     }
 
@@ -759,5 +912,402 @@ class AutoInstanceController: InstanceControllerProto {
             account.level <= maxLevel &&
             account.isValid(ignoringWarning: useRwForQuest, group: accountGroup) &&
             account.hasSpinsLeft(spins: spinLimit)
+    }
+
+    func initAutoPokemonCoords() throws {
+        Log.debug(message: "initAutoPokemonCoords() - Starting")
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to connect to database.")
+            return
+        }
+
+        pokemonLock.lock()
+        pokemonCoords.removeAll(keepingCapacity: true)
+
+        var tmpCoords: [AutoPokemonCoord] = [AutoPokemonCoord]()
+
+        // get min and max coords from polygon(s)
+        var minLat: Double = 90
+        var maxLat: Double = -90
+        var minLon: Double = 180
+        var maxLon: Double = -180
+        for polygon in multiPolygon.polygons {
+            let bounds = BoundingBox(from: polygon.outerRing.coordinates)
+            minLat = min(minLat, bounds!.southWest.latitude)
+            maxLat = max(maxLat, bounds!.northEast.latitude)
+            minLon = min(minLon, bounds!.southWest.longitude)
+            maxLon = max(maxLon, bounds!.northEast.longitude)
+        }
+
+        // assemble the sql
+        var sql = "select id, despawn_sec, lat, lon from spawnpoint where "
+        sql.append("(lat>" + String(minLat) + " AND lon >" + String(minLon) + ")")
+        sql.append(" AND ")
+        sql.append("(lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ")")
+        sql.append(" AND despawn_sec is not null")
+        sql.append(" order by despawn_sec")
+
+        Log.debug(message: "\(sql)")
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to execute query. " +
+                "(\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        var count: Int = 0
+        let results = mysqlStmt.results()
+        while let result = results.next() {
+            let id = result[0] as! UInt64
+            let despawnSeconds = result[1] as! UInt16
+            let lat = result[2] as! Double
+            let lon = result[3] as! Double
+
+            var spawnSeconds: Int = Int(despawnSeconds)
+
+            spawnSeconds -= 1800 // add 30min so when spawn should show, rdm not track 60min spawns
+
+            if spawnSeconds < 0 {
+                spawnSeconds += 3600
+            }
+
+            if inPolygon(lat: lat, lon: lon, multiPolygon: multiPolygon) {
+                tmpCoords.append(
+                    AutoPokemonCoord( id: id, coord: Coord(lat: lat, lon: lon),
+                        spawnSeconds: UInt16(spawnSeconds))
+                )
+            }
+
+            count += 1
+        }
+
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+            "got \(count) spawnpoints in min/max rectangle")
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+            "got \(tmpCoords.count) spawnpoints in geofence")
+
+        // sort the array, so 0-3600 sec in order
+        pokemonCoords = tmpCoords
+
+        // take lazy man's approach, probably not ideal
+        // add elements to end, so 3600-7199 sec
+        for coord in tmpCoords {
+            pokemonCoords.append(
+                AutoPokemonCoord(id: coord.id, coord: coord.coord, spawnSeconds: coord.spawnSeconds + 3600 ))
+        }
+
+        // did the list shrink from last query?
+
+        let oldCoord = currentDevicesMaxLocation
+        if oldCoord >= pokemonCoords.count {
+            currentDevicesMaxLocation = 0
+        }
+
+        pokemonLock.unlock()
+    }
+
+    func initTthCoords() throws {
+        Log.debug(message: "initTthCoords() - Starting")
+        guard let mysql = DBController.global.mysql else {
+            Log.error(message: "[AutoInstanceController] initTthCoords() - Failed to connect to database.")
+            return
+        }
+
+        lastCountUnknown = tthCoords.count
+
+        tthLock.lock()
+        tthCoords.removeAll(keepingCapacity: true)
+
+        var tmpCoords = [Coord]()
+
+        // get min and max coords from polygon(s)
+        var minLat: Double = 90
+        var maxLat: Double = -90
+        var minLon: Double = 180
+        var maxLon: Double = -180
+        for polygon in multiPolygon.polygons {
+            let bounds = BoundingBox(from: polygon.outerRing.coordinates)
+            minLat = min(minLat, bounds!.southWest.latitude)
+            maxLat = max(maxLat, bounds!.northEast.latitude)
+            minLon = min(minLon, bounds!.southWest.longitude)
+            maxLon = max(maxLon, bounds!.northEast.longitude)
+        }
+
+        // assemble the sql
+        var sql = "SELECT lat, lon FROM spawnpoint WHERE "
+        sql.append("(lat>" + String(minLat) + " AND lon >" + String(minLon) + ")")
+        sql.append(" AND ")
+        sql.append("(lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ")")
+        sql.append(" AND despawn_sec is null limit 5000")
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message:
+                "[AutoInstanceController] initTthCoords - Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+
+        var count: Int = 0
+        let results = mysqlStmt.results()
+        while let result = results.next() {
+            let lat = result[0] as! Double
+            let lon = result[1] as! Double
+
+            if inPolygon(lat: lat, lon: lon, multiPolygon: multiPolygon) {
+                tmpCoords.append( Coord(lat: lat, lon: lon) )
+            }
+
+            count += 1
+        }
+        Log.debug(message:
+            "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
+        Log.debug(message:
+            "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
+
+        if count == 0 {
+            Log.debug(message:
+                "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
+        }
+
+        if tmpCoords.count == 0 {
+            Log.debug(message:
+                "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
+        }
+
+        // sort the array, so 0-3600 sec in order
+        tthCoords = tmpCoords
+
+        // locationLock.lock()
+        currentDevicesMaxLocation = 0
+        // locationLock.unlock()
+
+        tthLock.unlock()
+    }
+
+    func secondsFromTopOfHour(seconds: UInt64 ) -> UInt64 {
+        var ret: UInt64 = (seconds % 3600)
+        ret += (seconds % 3600) % 60
+        return ret
+    }
+
+    func secondsToHoursMinutesSeconds() -> (hours: UInt64, minutes: UInt64, seconds: UInt64) {
+        let now = UInt64(Date().timeIntervalSince1970)
+        return (UInt64(now / 3600), UInt64((now % 3600) / 60), UInt64((now % 3600) % 60))
+    }
+
+    func offsetsForSpawnTimer(time: UInt16) -> (UInt16, UInt16) {
+        let maxTime: UInt16 = time + 1800 - minTimer
+        let minTime: UInt16 = time + timeAfterSpawn
+
+        return (minTime, maxTime)
+    }
+
+    func determineNextPokemonLocation(curTime: UInt64, curLocation: Int) -> Int {
+        let cntArray = pokemonCoords.count
+        let cntCoords = pokemonCoords.count / 2
+
+        if cntArray <= 0 {
+            try? initAutoPokemonCoords()
+            pokemonCache.set(id: self.name, value: 1)
+            return 0
+        }
+
+        var curTime = curTime
+        var loc = curLocation
+
+        // increment position
+        loc = curLocation + 1
+        if loc > cntCoords {
+            Log.debug(message:
+                "[AutoInstanceController] determineNextLocation() - reached end of data, going back to zero")
+
+            lastLastCompletedTime = lastCompletedTime
+            lastCompletedTime = Date()
+
+            return 0
+        } else if loc < 0 {
+            loc = 0
+        }
+
+        pokemonLock.lock()
+        if !pokemonCoords.indices.contains(loc) {
+            if pokemonCoords.indices.contains(0) {
+                loc = 0
+            } else {
+                // wtf
+                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation - no zero location, wtf...")
+            }
+        }
+        var nextCoord = pokemonCoords[loc]
+        pokemonLock.unlock()
+
+        var spawnSeconds: UInt16 = nextCoord.spawnSeconds
+
+        var (minTime, maxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+        Log.debug(message:
+            "[AutoInstanceController] determineNextPokemonLocation - minTime=\(minTime) & " +
+                "curTime=\(curTime) & maxTime=\(maxTime)")
+
+        let topOfHour = (minTime < 0)
+        if topOfHour {
+            curTime += 3600
+            minTime += 3600
+            maxTime += 3600
+        }
+
+        // do the shit
+        if (curTime >= minTime) && (curTime <= maxTime) {
+            // good to jump as between to key points for current time
+            Log.debug(message:
+                "[AutoInstanceController] determineNextPokemonLocation a1 - curtime between min and max, " +
+                "moving standard 1 forward")
+
+            // test if we are getting too close to the mintime
+            if  Double(curTime) - Double(minTime) < Double(bufferTimeDistance) {
+                Log.debug(message:
+                    "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
+                    "sleeping 10sec as too close to minTime, in normal time")
+                Threading.sleep(seconds: Double(sleepTimeAutoPokemon))
+            }
+        } else if curTime < minTime {
+            // spawn is past time to visit, need to find a good one to jump to
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
+                "curTime \(curTime) > maxTime, iterate")
+
+            var found: Bool = false
+            let start = loc
+            for idx in start..<cntArray {
+                if !pokemonCoords.indices.contains(loc) {
+                    return 0
+                }
+
+                nextCoord = pokemonCoords[idx]
+                spawnSeconds = nextCoord.spawnSeconds
+
+                let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+
+                if  (curTime >= mnTime) && (curTime <= mnTime + 120) {
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b2 - " +
+                        "mnTime=\(mnTime) & curTime=\(curTime) & & mxTime=\(mxTime)")
+                    found = true
+                    loc = idx
+                    break
+                }
+            }
+
+            if !found {
+                for idx in (0..<start).reversed() {
+                    if !pokemonCoords.indices.contains(loc) {
+                        return 0
+                    }
+
+                    nextCoord = pokemonCoords[idx]
+                    spawnSeconds = nextCoord.spawnSeconds
+
+                    let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+
+                    if  (curTime >= mnTime + 30) && (curTime < mnTime + 120) {
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b3 - " +
+                            "iterate backwards solution=\(found)")
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b4 -  " +
+                            "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
+                        found = true
+                        loc = idx
+                        break
+                    }
+                }
+            }
+        } else if curTime < minTime && !firstRun {
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() c1 - sleeping 20sec")
+            Threading.sleep(seconds: 20)
+
+            pauseAutoPokemon = true
+            loc -= 1
+        } else if curTime > maxTime {
+            // spawn is past time to visit, need to find a good one to jump to
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d1 - " +
+                "curTime=\(curTime) > maxTime=\(maxTime), iterate")
+
+            var found: Bool = false
+            let start = loc
+            for idx in start..<cntArray {
+                if !pokemonCoords.indices.contains(loc) {
+                    return 0
+                }
+
+                nextCoord = pokemonCoords[idx]
+                spawnSeconds = nextCoord.spawnSeconds
+
+                let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+
+                if  (curTime >= mnTime+30) && (curTime <= mnTime + 120) {
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 - " +
+                        "iterate forward solution=\(found)")
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d3 - " +
+                        "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
+                    found = true
+                    loc = idx
+                    break
+                }
+            }
+
+            if !found {
+                for idx in (0..<start).reversed() {
+                    if !pokemonCoords.indices.contains(loc) {
+                        return 0
+                    }
+
+                    nextCoord = pokemonCoords[idx]
+                    spawnSeconds = nextCoord.spawnSeconds
+
+                    let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+
+                    if curTime >= mnTime + 30 && curTime <= mnTime + 120 {
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d4 - " +
+                            "iterate backwards solution=\(found)")
+                        Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d5 -  " +
+                            "mnTime=\(mnTime) & curTime=\(curTime) &mxTime=\(mxTime)")
+                        found = true
+                        loc = idx
+                        break
+                    }
+                }
+            }
+        } else {
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() e1 - " +
+                "criteria fail with curTime=\(curTime) & curLocation=\(curLocation)" +
+                      "& despawn=\(spawnSeconds)")
+            // go back to zero and iterate somewhere useful
+            loc=0
+        }
+
+        if loc == cntCoords-1 {
+            lastLastCompletedTime = lastCompletedTime
+            lastCompletedTime = Date()
+        }
+
+        // check if we went past half
+        if loc > cntCoords {
+            loc -= cntCoords
+        }
+
+        return loc
+    }
+
+    private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool {
+        for polygon in multiPolygon.polygons {
+            let coord = LocationCoordinate2D(latitude: lat, longitude: lon)
+
+            if polygon.contains(coord, ignoreBoundary: false) {
+                return true
+            }
+        }
+
+        return false
     }
 }
