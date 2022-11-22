@@ -2408,7 +2408,8 @@ public class ApiRequestHandler {
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
             if !coords.isEmpty {
-                for chunk in coords.chunked(into: 7) {
+                let chunkSize = coords.count > 7 ? 5 : 1
+                for chunk in coords.chunked(into: chunkSize) {
                     instance.addToScanNextCoords(coords: chunk)
                 }
             }
