@@ -38,7 +38,7 @@ class AutoInstanceController: InstanceControllerProto {
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
     internal var lock = Threading.Lock() // unused, add functionality in near future
-    internal var scanNextCoords: [Coord] = [] // unused, add functionality in near future
+    internal var scanNextCoords: [[Coord]] = [] // unused, add functionality in near future
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
