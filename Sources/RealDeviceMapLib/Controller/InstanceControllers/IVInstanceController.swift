@@ -217,7 +217,7 @@ class IVInstanceController: InstanceControllerProto {
                 lock.lock()
                 scanNextCoords.append(coords)
                 lock.unlock()
-                Log.info(message: "[IVInstanceController] [\(name)] Nearby Cell Pokemon added to Scan Next")
+                Log.info(message: "[IVInstanceController] [\(name)] Scan Next nearby cell Pokemon \(pokemon.pokemonId)")
             }
 
             pokemonLock.lock()
