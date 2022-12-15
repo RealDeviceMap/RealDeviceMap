@@ -67,6 +67,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             "base_weight": baseWeight as Any,
             "base_height": baseHeight as Any,
             "weight": weight as Any,
+            "height": height as Any,
             "size": size as Any,
             "weather": weather as Any,
             "shiny": shiny as Any,
@@ -107,7 +108,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             "move_1": move1 as Any,
             "move_2": move2 as Any,
             "weight": weight as Any,
-            "height": size as Any,
+            "height": height as Any,
+            "size": size as Any,
             "weather": weather as Any,
             "capture_1": capture1 ?? 0,
             "capture_2": capture2 ?? 0,
@@ -146,7 +148,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     var cp: UInt16?
     var level: UInt8?
     var weight: Double?
-    var size: Double?
+    var height: Double?
+    var size: UInt8?
     var weather: UInt8?
     var shiny: Bool?
     var username: String?
@@ -184,13 +187,15 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.seenType = .UNSET
     }
 
-    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
-         atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
-         cp: UInt16?, level: UInt8?, weight: Double?, costume: UInt8?, size: Double?,
-         capture1: Double?, capture2: Double?, capture3: Double?, displayPokemonId: UInt16?, isDitto: Bool,
-         weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32,
-         updated: UInt32, changed: UInt32, cellId: UInt64?, expireTimestampVerified: Bool,
-         pvp: [String: Any]?, isEvent: Bool, seenType: SeenType) {
+    init(
+        id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
+        atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
+        cp: UInt16?, level: UInt8?, weight: Double?, height: Double?, size: UInt8?, costume: UInt8?,
+        capture1: Double?, capture2: Double?, capture3: Double?, displayPokemonId: UInt16?, isDitto: Bool,
+        weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32,
+        updated: UInt32, changed: UInt32, cellId: UInt64?, expireTimestampVerified: Bool, pvp: [String: Any]?,
+        isEvent: Bool, seenType: SeenType
+    ) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -208,6 +213,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.level = level
         self.weight = weight
         self.costume = costume
+        self.height = height
         self.size = size
         self.weather = weather
         self.shiny = shiny
@@ -413,8 +419,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.cp = UInt16(encounterData.pokemon.pokemon.cp)
         self.move1 = UInt16(encounterData.pokemon.pokemon.move1.rawValue)
         self.move2 = UInt16(encounterData.pokemon.pokemon.move2.rawValue)
-        self.size = Double(encounterData.pokemon.pokemon.heightM)
+        self.height = Double(encounterData.pokemon.pokemon.heightM)
         self.weight = Double(encounterData.pokemon.pokemon.weightKg)
+        self.size = UInt8(encounterData.pokemon.pokemon.size.rawValue)
         self.atkIv = UInt8(encounterData.pokemon.pokemon.individualAttack)
         self.defIv = UInt8(encounterData.pokemon.pokemon.individualDefense)
         self.staIv = UInt8(encounterData.pokemon.pokemon.individualStamina)
@@ -478,8 +485,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.cp = UInt16(diskEncounterData.pokemon.cp)
         self.move1 = UInt16(diskEncounterData.pokemon.move1.rawValue)
         self.move2 = UInt16(diskEncounterData.pokemon.move2.rawValue)
-        self.size = Double(diskEncounterData.pokemon.heightM)
+        self.height = Double(diskEncounterData.pokemon.heightM)
         self.weight = Double(diskEncounterData.pokemon.weightKg)
+        self.size = UInt8(diskEncounterData.pokemon.size.rawValue)
         self.atkIv = UInt8(diskEncounterData.pokemon.individualAttack)
         self.defIv = UInt8(diskEncounterData.pokemon.individualDefense)
         self.staIv = UInt8(diskEncounterData.pokemon.individualStamina)
@@ -558,6 +566,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                     self.level = oldPokemonNoneEvent.level
                     self.cp = nil
                     self.weight = nil
+                    self.height = nil
                     self.size = nil
                     self.move1 = nil
                     self.move2 = nil
@@ -669,6 +678,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 self.level = oldPokemon!.level
                 self.cp = nil
                 self.weight = nil
+                self.height = nil
                 self.size = nil
                 self.move1 = nil
                 self.move2 = nil
@@ -682,7 +692,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             let sql = """
                 UPDATE pokemon
                 SET pokemon_id = ?, lat = ?, lon = ?, spawn_id = ?, expire_timestamp = ?, atk_iv = ?, def_iv = ?,
-                    sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, weight = ?, size = ?,
+                    sta_iv = ?, move_1 = ?, move_2 = ?, cp = ?, level = ?, weight = ?, height = ?, size = ?,
                     capture_1 = ?, capture_2 = ?, capture_3 = ?, shiny = ?, display_pokemon_id = ?, is_ditto = ?,
                     pvp = ?, username = ?, gender = ?, form = ?, weather = ?, costume = ?, pokestop_id = ?,
                     updated = ?, first_seen_timestamp = ?, changed = ?, cell_id = ?,
@@ -705,6 +715,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         mysqlStmt.bindParam(cp)
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(weight)
+        mysqlStmt.bindParam(height)
         mysqlStmt.bindParam(size)
         mysqlStmt.bindParam(capture1)
         mysqlStmt.bindParam(capture2)
@@ -951,15 +962,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             let isEvent = (result[33] as? UInt8)!.toBool()
             let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
 
-            pokemons.append(Pokemon(
-                id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
-                atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form,
-                cp: cp, level: level, weight: weight, costume: costume, size: size, capture1: capture1,
-                capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto,
-                weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
-                firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
-                expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
-            ))
+            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume, capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType))
         }
         return pokemons
 
@@ -1042,16 +1045,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let isEvent = (result[33] as? UInt8)!.toBool()
         let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
 
-        let pokemon = Pokemon(
-            id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
-            expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1,
-            move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight,
-            costume: costume, size: size, capture1: capture1, capture2: capture2, capture3: capture3,
-            displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather,
-            shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp,
-            updated: updated, changed: changed, cellId: cellId,
-            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
-        )
+        let pokemon = Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume, capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType)
         let uuidNew = Pokemon.getUuid(id: pokemon.id, isEvent: pokemon.isEvent)
         cache?.set(id: uuidNew, value: pokemon)
         return pokemon
@@ -1114,13 +1108,15 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     }
 
     public func copy(with zone: NSZone? = nil) -> Any {
-        Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
-            expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2,
-            gender: gender, form: form, cp: cp, level: level, weight: weight, costume: costume, size: size,
+        Pokemon(
+            id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
+            atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp,
+            level: level, weight: weight, height: height, size: size, costume: costume,
             capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
             isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
             firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
-            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType)
+            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
+        )
     }
 
     // =================================================================================================================
@@ -1306,8 +1302,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.cp = nil
         self.move1 = nil
         self.move2 = nil
-        self.size = nil
+        self.height = nil
         self.weight = nil
+        self.size = nil
         self.atkIv = nil
         self.defIv = nil
         self.staIv = nil
@@ -1329,8 +1326,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.move2 = moveStruggle
         self.gender = 3
         self.costume = 0
-        self.size = nil
+        self.height = nil
         self.weight = nil
+        // self.size = nil //MARK: not sure if size is affected for ditto disguise
 
         if weather == 0 && level ?? 0 > 30 {
             Log.debug(message: "[POKEMON] Pokemon \(id) is a weather boosted Ditto level \(level ?? 0) - reset IV")
