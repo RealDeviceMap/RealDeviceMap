@@ -586,13 +586,13 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             var sql = """
                 INSERT INTO pokemon (
                     id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2, cp,
-                    level, weight, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id, is_ditto,
+                    level, weight, height, size, capture_1, capture_2, capture_3, shiny, display_pokemon_id, is_ditto,
                     pvp, username, gender, form, weather, costume, pokestop_id, updated, first_seen_timestamp, changed,
                     cell_id, expire_timestamp_verified, is_event, seen_type
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?
+                    ?, ?, ?, ?
                 )
             """
             if self.seenType == .encounter {
@@ -612,6 +612,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                        cp=VALUES(cp),
                        level=VALUES(level),
                        weight=VALUES(weight),
+                       height=VALUES(height),
                        size=VALUES(size),
                        capture_1=VALUES(capture_1),
                        capture_2=VALUES(capture_2),
