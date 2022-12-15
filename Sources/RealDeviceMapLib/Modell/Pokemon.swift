@@ -187,15 +187,13 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.seenType = .UNSET
     }
 
-    init(
-        id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
+    init(id: String, pokemonId: UInt16, lat: Double, lon: Double, spawnId: UInt64?, expireTimestamp: UInt32?,
         atkIv: UInt8?, defIv: UInt8?, staIv: UInt8?, move1: UInt16?, move2: UInt16?, gender: UInt8?, form: UInt16?,
         cp: UInt16?, level: UInt8?, weight: Double?, height: Double?, size: UInt8?, costume: UInt8?,
         capture1: Double?, capture2: Double?, capture3: Double?, displayPokemonId: UInt16?, isDitto: Bool,
         weather: UInt8?, shiny: Bool?, username: String?, pokestopId: String?, firstSeenTimestamp: UInt32,
         updated: UInt32, changed: UInt32, cellId: UInt64?, expireTimestampVerified: Bool, pvp: [String: Any]?,
-        isEvent: Bool, seenType: SeenType
-    ) {
+        isEvent: Bool, seenType: SeenType) {
         self.id = id
         self.pokemonId = pokemonId
         self.lat = lat
@@ -868,7 +866,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
-                   gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
+                   gender, form, cp, level, weather, costume, weight, height, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, is_ditto, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
                    expire_timestamp_verified, shiny, username, pvp, is_event, seen_type
             FROM pokemon
@@ -912,7 +910,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             let cp: UInt16?
             let level: UInt8?
             let weight: Double?
-            let size: Double?
+            let height: Double?
+            let size: UInt8?
             let capture1: Double?
             let capture2: Double?
             let capture3: Double?
@@ -925,10 +924,11 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 cp = result[13] as? UInt16
                 level = result[14] as? UInt8
                 weight = result[17] as? Double
-                size = result[18] as? Double
-                capture1 = result[19] as? Double
-                capture2 = result[20] as? Double
-                capture3 = result[21] as? Double
+                height = result[18] as? Double
+                size = result[19] as? UInt8
+                capture1 = result[20] as? Double
+                capture2 = result[21] as? Double
+                capture3 = result[22] as? Double
             } else {
                 atkIv = nil
                 defIv = nil
@@ -938,6 +938,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 cp = nil
                 level = nil
                 weight = nil
+                height = nil
                 size = nil
                 capture1 = nil
                 capture2 = nil
@@ -948,28 +949,29 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             let form = result[12] as? UInt16
             let weather = result[15] as? UInt8
             let costume = result[16] as? UInt8
-            let displayPokemonId = result[22] as? UInt16
-            let isDitto = (result[23] as? UInt8)!.toBool()
-            let pokestopId = result[24] as? String
-            let updated = result[25] as! UInt32
-            let firstSeenTimestamp = result[26] as! UInt32
-            let changed = result[27] as! UInt32
-            let cellId = result[28] as? UInt64
-            let expireTimestampVerified = (result[29] as? UInt8)!.toBool()
-            let shiny = (result[30] as? UInt8)?.toBool()
-            let username = result[31] as? String
-            let pvp = (result[32] as? String)?.jsonDecodeForceTry() as? [String: Any]
-            let isEvent = (result[33] as? UInt8)!.toBool()
-            let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
+            let displayPokemonId = result[23] as? UInt16
+            let isDitto = (result[24] as? UInt8)!.toBool()
+            let pokestopId = result[25] as? String
+            let updated = result[26] as! UInt32
+            let firstSeenTimestamp = result[27] as! UInt32
+            let changed = result[28] as! UInt32
+            let cellId = result[29] as? UInt64
+            let expireTimestampVerified = (result[30] as? UInt8)!.toBool()
+            let shiny = (result[31] as? UInt8)?.toBool()
+            let username = result[32] as? String
+            let pvp = (result[33] as? String)?.jsonDecodeForceTry() as? [String: Any]
+            let isEvent = (result[34] as? UInt8)!.toBool()
+            let seenType = SeenType(rawValue: result[35] as? String ?? "unset")!
 
-            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
-                expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2,
-                gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: size,
-                costume: costume, capture1: capture1, capture2: capture2, capture3: capture3,
-                displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny,
-                username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated,
-                changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp,
-                isEvent: isEvent, seenType: seenType))
+            pokemons.append(Pokemon(
+                id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
+                atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form,
+                cp: cp, level: level, weight: weight, height: height, size: size, costume: costume, capture1: capture1,
+                capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto,
+                weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
+                firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
+                expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType
+            ))
         }
         return pokemons
 
@@ -993,7 +995,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
         let sql = """
             SELECT id, pokemon_id, lat, lon, spawn_id, expire_timestamp, atk_iv, def_iv, sta_iv, move_1, move_2,
-                   gender, form, cp, level, weather, costume, weight, size, capture_1, capture_2, capture_3,
+                   gender, form, cp, level, weather, costume, weight, height, size, capture_1, capture_2, capture_3,
                    display_pokemon_id, is_ditto, pokestop_id, updated, first_seen_timestamp, changed, cell_id,
                    expire_timestamp_verified, shiny, username, pvp, is_event, seen_type
             FROM pokemon
@@ -1034,28 +1036,29 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let weather = result[15] as? UInt8
         let costume = result[16] as? UInt8
         let weight = result[17] as? Double
-        let size = result[18] as? Double
-        let capture1 = result[19] as? Double
-        let capture2 = result[20] as? Double
-        let capture3 = result[21] as? Double
-        let displayPokemonId = result[22] as? UInt16
-        let isDitto = (result[23] as? UInt8)!.toBool()
-        let pokestopId = result[24] as? String
-        let updated = result[25] as! UInt32
-        let firstSeenTimestamp = result[26] as! UInt32
-        let changed = result[27] as! UInt32
-        let cellId = result[28] as? UInt64
-        let expireTimestampVerified = (result[29] as? UInt8)!.toBool()
-        let shiny = (result[30] as? UInt8)?.toBool()
-        let username = result[31] as? String
-        let pvp = (result[32] as? String)?.jsonDecodeForceTry() as? [String: Any]
-        let isEvent = (result[33] as? UInt8)!.toBool()
-        let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
+        let height = result[18] as? Double
+        let size = result[19] as? UInt8
+        let capture1 = result[20] as? Double
+        let capture2 = result[21] as? Double
+        let capture3 = result[22] as? Double
+        let displayPokemonId = result[23] as? UInt16
+        let isDitto = (result[24] as? UInt8)!.toBool()
+        let pokestopId = result[25] as? String
+        let updated = result[26] as! UInt32
+        let firstSeenTimestamp = result[27] as! UInt32
+        let changed = result[28] as! UInt32
+        let cellId = result[29] as? UInt64
+        let expireTimestampVerified = (result[30] as? UInt8)!.toBool()
+        let shiny = (result[31] as? UInt8)?.toBool()
+        let username = result[32] as? String
+        let pvp = (result[33] as? String)?.jsonDecodeForceTry() as? [String: Any]
+        let isEvent = (result[34] as? UInt8)!.toBool()
+        let seenType = SeenType(rawValue: result[35] as? String ?? "unset")!
 
         let pokemon = Pokemon(
             id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
             atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp,
-            level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume,
+            level: level, weight: weight, height: height, size: size, costume: costume,
             capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
             isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
             firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
