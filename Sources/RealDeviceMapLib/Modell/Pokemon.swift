@@ -962,7 +962,14 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             let isEvent = (result[33] as? UInt8)!.toBool()
             let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
 
-            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume, capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType))
+            pokemons.append(Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId,
+                expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2,
+                gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: size,
+                costume: costume, capture1: capture1, capture2: capture2, capture3: capture3,
+                displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny,
+                username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated,
+                changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp,
+                isEvent: isEvent, seenType: seenType))
         }
         return pokemons
 
@@ -1045,7 +1052,14 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let isEvent = (result[33] as? UInt8)!.toBool()
         let seenType = SeenType(rawValue: result[34] as? String ?? "unset")!
 
-        let pokemon = Pokemon(id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp, atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp, level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume, capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId, isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId, firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId, expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType)
+        let pokemon = Pokemon(
+            id: id, pokemonId: pokemonId, lat: lat, lon: lon, spawnId: spawnId, expireTimestamp: expireTimestamp,
+            atkIv: atkIv, defIv: defIv, staIv: staIv, move1: move1, move2: move2, gender: gender, form: form, cp: cp,
+            level: level, weight: weight, height: size, size: <#T##UInt8?##Swift.UInt8?#>, costume: costume,
+            capture1: capture1, capture2: capture2, capture3: capture3, displayPokemonId: displayPokemonId,
+            isDitto: isDitto, weather: weather, shiny: shiny, username: username, pokestopId: pokestopId,
+            firstSeenTimestamp: firstSeenTimestamp, updated: updated, changed: changed, cellId: cellId,
+            expireTimestampVerified: expireTimestampVerified, pvp: pvp, isEvent: isEvent, seenType: seenType)
         let uuidNew = Pokemon.getUuid(id: pokemon.id, isEvent: pokemon.isEvent)
         cache?.set(id: uuidNew, value: pokemon)
         return pokemon
@@ -1328,7 +1342,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         self.costume = 0
         self.height = nil
         self.weight = nil
-        // self.size = nil //MARK: not sure if size is affected for ditto disguise
+        // self.size = nil // MARK: not sure if size is affected for ditto disguise
 
         if weather == 0 && level ?? 0 > 30 {
             Log.debug(message: "[POKEMON] Pokemon \(id) is a weather boosted Ditto level \(level ?? 0) - reset IV")
