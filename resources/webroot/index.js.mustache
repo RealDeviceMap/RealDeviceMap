@@ -2150,7 +2150,7 @@ function addPokemon(pokemon, ts) {
       oldPokemon.sta_iv = pokemon.sta_iv
       oldPokemon.cp = pokemon.cp
       oldPokemon.weight = pokemon.weight
-      oldPokemon.size = pokemon.size
+      oldPokemon.height = pokemon.height
       oldPokemon.base_height = pokemon.base_height
       oldPokemon.base_weight = pokemon.base_weight
       oldPokemon.move_1 = pokemon.move_1
@@ -2444,12 +2444,12 @@ function getPokemonPopupContent (pokemon) {
       if (pokemon.move_2 !== null) {
         content += '<b>'+i18n('map_pokemon_charge_attack')+':</b> ' + getMoveName(pokemon.move_2) + '<br>'
       }
-      if (pokemon.size !== null && pokemon.weight !== null) {
+      if (pokemon.height !== null && pokemon.weight !== null) {
         content += '<b>'+i18n('map_pokemon_weight')+':</b> ' + (pokemon.weight).toFixed(2) + 'kg'
         if (pokemon.base_height !== null) {
-          content += ' | <b>'+i18n('map_pokemon_size')+':</b> ' + (pokemon.size).toFixed(2) + getSize(pokemon.size, pokemon.base_height) + '<br>'
+          content += ' | <b>'+i18n('map_pokemon_height')+':</b> ' + (pokemon.height).toFixed(2) + getSize(pokemon.height, pokemon.base_height) + '<br>'
         } else {
-          content += ' | <b>'+i18n('map_pokemon_size')+':</b> ' + (pokemon.size).toFixed(2) + 'm<br>'
+          content += ' | <b>'+i18n('map_pokemon_height')+':</b> ' + (pokemon.height).toFixed(2) + 'm<br>'
         }
       }
       if (pokemon.capture_1 !== null && pokemon.capture_2 !== null && pokemon.capture_3 !== null) {
