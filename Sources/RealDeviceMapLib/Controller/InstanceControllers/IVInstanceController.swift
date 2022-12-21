@@ -11,6 +11,7 @@ import Foundation
 import PerfectLib
 import PerfectThread
 import PerfectMySQL
+import S2Geometry
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
@@ -21,7 +22,8 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
     internal var lock = Threading.Lock()
-    internal var scanNextCoords: [Coord] = []
+    internal var scanNextCoords: [[Coord]] = []
+    private var scanNextLookup: [String: Int] = [:]
     public private(set) var scatterPokemon: [UInt16]
 
     public weak var delegate: InstanceControllerDelegate?
@@ -96,11 +98,8 @@ class IVInstanceController: InstanceControllerProto {
                             Log.debug(message: "[IVInstanceController] [\(name)] Checked Pokemon has IV")
                         }
                     }
-
                 }
-
             }
-
         }
     }
 
@@ -112,12 +111,31 @@ class IVInstanceController: InstanceControllerProto {
 
         lock.lock()
         if !scanNextCoords.isEmpty {
-            let currentCoord = scanNextCoords.removeFirst()
+            var scanNextCoord: Coord?
+            if let index = scanNextLookup[uuid] {
+                scanNextCoord = scanNextCoords[index].removeFirst()
+                if scanNextCoords[index].isEmpty {
+                    scanNextCoords.remove(at: index)
+                    scanNextLookup.removeValue(forKey: uuid)
+                }
+            } else {
+                if scanNextCoords.count > scanNextLookup.count {
+                    let lookup = scanNextLookup.values.max() ?? 0
+                    scanNextLookup[uuid] = lookup
+                    scanNextCoord = scanNextCoords[lookup].removeFirst()
+                    if scanNextCoords[lookup].isEmpty {
+                        scanNextCoords.remove(at: lookup)
+                        scanNextLookup.removeValue(forKey: uuid)
+                    }
+                }
+            }
             lock.unlock()
-            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
-                    "min_level": minLevel, "max_level": maxLevel]
-            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
-            return task
+            if scanNextCoord != nil {
+                var task: [String: Any] = ["action": "scan_pokemon", "lat": scanNextCoord!.lat,
+                                           "lon": scanNextCoord!.lon, "min_level": minLevel, "max_level": maxLevel]
+                if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+                return task
+            }
         } else {
             lock.unlock()
         }
@@ -184,12 +202,25 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func gotPokemon(pokemon: Pokemon) {
-        if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
+        if (pokemon.seenType != .nearbyCell || scatterPokemon.contains(pokemon.pokemonId)) &&
            pokemon.isEvent == isEvent &&
            containedInList(pokemon: pokemon) &&
            multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
-            pokemonLock.lock()
 
+            if pokemon.seenType == .nearbyCell {
+                let cell = S2Cell(cellId: S2CellId(uid: pokemon.cellId!))
+                let coords = cell.subdivide().map { (cell) -> Coord in
+                    Coord(lat: cell.capBound.rectBound.center.lat.degrees,
+                        lon: cell.capBound.rectBound.center.lng.degrees)
+                }
+                // somehow scan next needs a rework to prevent device clustering on a request with 4 coords
+                lock.lock()
+                scanNextCoords.append(coords)
+                lock.unlock()
+                Log.info(message: "[IVInstanceController] [\(name)] Scan Next nearby cell Pokemon \(pokemon.pokemonId)")
+            }
+
+            pokemonLock.lock()
             if pokemonQueue.contains(pokemon) {
                 pokemonLock.unlock()
                 return

@@ -24,7 +24,7 @@ public protocol InstanceControllerProto {
     var maxLevel: UInt8 { get }
     var accountGroup: String? { get }
     var isEvent: Bool { get }
-    var scanNextCoords: [Coord] { get set }
+    var scanNextCoords: [[Coord]] { get set }
     var delegate: InstanceControllerDelegate? { get set }
     var lock: Threading.Lock { get }
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any]
@@ -58,16 +58,16 @@ extension InstanceControllerProto {
         let message = coords.map { "\($0.lat),\($0.lon)"}.jsonEncodeForceTry() ?? ""
         Log.info(message: "[CircleInstanceController] Added next coordinates to scan: \(message)")
         lock.lock()
-        for coord in coords {
-            scanNextCoords.append(coord)
-        }
-        let size = scanNextCoords.count
+        scanNextCoords.append(coords)
         lock.unlock()
-        return size
+        return getNextCoordsSize()
     }
 
     func getNextCoordsSize() -> Int {
-        lock.doWithLock { scanNextCoords.count }
+        lock.doWithLock {
+            let result: Int = scanNextCoords.map({$0.count}).reduce(0, +)
+            return result
+        }
     }
 }
 
@@ -140,6 +140,12 @@ public class InstanceController {
 
     public func addInstance(instance: Instance) {
         var instanceController: InstanceControllerProto
+
+        let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
+        let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
+        let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
+        let isEvent = instance.data["is_event"] as? Bool ?? false
+
         switch instance.type {
         case .circleSmartRaid, .circleSmartPokemon, .circlePokemon, .circleRaid:
             var coordsArray = [Coord]()
@@ -151,30 +157,24 @@ public class InstanceController {
                     coordsArray.append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
                 }
             }
-            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
-            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
-            let isEvent = instance.data["is_event"] as? Bool ?? false
-
             if instance.type == .circlePokemon {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                                                              type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
-                                                              accountGroup: accountGroup, isEvent: isEvent)
+                instanceController = CircleInstanceController(
+                    name: instance.name, coords: coordsArray, type: .pokemon, minLevel: minLevel, maxLevel: maxLevel,
+                    accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .circleSmartPokemon {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                                                              type: .smartPokemon, minLevel: minLevel,
-                                                              maxLevel: maxLevel, accountGroup: accountGroup,
-                                                              isEvent: isEvent)
+                instanceController = CircleInstanceController(
+                    name: instance.name, coords: coordsArray, type: .smartPokemon, minLevel: minLevel,
+                    maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
             } else if instance.type == .circleRaid {
-                instanceController = CircleInstanceController(name: instance.name, coords: coordsArray,
-                                                              type: .raid, minLevel: minLevel, maxLevel: maxLevel,
-                                                              accountGroup: accountGroup, isEvent: isEvent)
+                instanceController = CircleInstanceController(
+                    name: instance.name, coords: coordsArray, type: .raid, minLevel: minLevel, maxLevel: maxLevel,
+                    accountGroup: accountGroup, isEvent: isEvent)
             } else {
-                instanceController = CircleSmartRaidInstanceController(name: instance.name, coords: coordsArray,
-                                                                       minLevel: minLevel, maxLevel: maxLevel,
-                                                                       accountGroup: accountGroup, isEvent: isEvent)
+                instanceController = CircleSmartRaidInstanceController(
+                    name: instance.name, coords: coordsArray, minLevel: minLevel, maxLevel: maxLevel,
+                    accountGroup: accountGroup, isEvent: isEvent)
             }
-        case .pokemonIV, .autoQuest:
+        case .pokemonIV, .autoQuest, .autoPokemon, .autoTth:
             var areaArray = [[Coord]]()
             if instance.data["area"] as? [[Coord]] != nil {
                 areaArray = instance.data["area"] as? [[Coord]] ?? [[Coord]]()
@@ -202,11 +202,6 @@ public class InstanceController {
                 areaArrayEmptyInner.append([polyCoords])
             }
 
-            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
-            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
-            let isEvent = instance.data["is_event"] as? Bool ?? false
-
             if instance.type == .pokemonIV {
                 let pokemonList = instance.data["pokemon_ids"] as? [String] ??  // MARK: remove mapping for int later
                     (instance.data["pokemon_ids"] as? [UInt16])?.map({ "\($0)" }) ?? // backward compatibility PR#301
@@ -219,21 +214,26 @@ public class InstanceController {
                 instanceController = IVInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), pokemonList: pokemonList,
                     minLevel: minLevel, maxLevel: maxLevel, ivQueueLimit: ivQueueLimit, scatterPokemon: scatterList,
-                    accountGroup: accountGroup, isEvent: isEvent
-                )
+                    accountGroup: accountGroup, isEvent: isEvent)
+            } else if instance.type == .autoPokemon {
+                instanceController = AutoInstanceController(
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .pokemon,
+                    minLevel: minLevel, maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
+            } else if instance.type == .autoTth {
+                instanceController = AutoInstanceController(
+                    name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .tth,
+                    minLevel: minLevel, maxLevel: maxLevel, accountGroup: accountGroup, isEvent: isEvent)
             } else {
                 let spinLimit = instance.data["spin_limit"] as? Int ?? 1000
                 let delayLogout = instance.data["delay_logout"] as? Int ?? 900
                 let questModeString = instance.data["quest_mode"] as? String
                 let questMode = questModeString != nil ?
                         AutoInstanceController.QuestMode(rawValue: questModeString!) ?? .normal :
-                        .normal
+                        AutoInstanceController.QuestMode.normal
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
-                    timezoneOffset: timezoneOffset, minLevel: minLevel, maxLevel: maxLevel,
-                    spinLimit: spinLimit, delayLogout: delayLogout,
-                    accountGroup: accountGroup, isEvent: isEvent, questMode: questMode
-                )
+                    minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit, delayLogout: delayLogout,
+                    timezoneOffset: timezoneOffset, questMode: questMode, accountGroup: accountGroup, isEvent: isEvent)
             }
         case .leveling:
             let coord: Coord
@@ -247,10 +247,6 @@ public class InstanceController {
                     coord = Coord(lat: 0, lon: 0)
                 }
             }
-            let minLevel = instance.data["min_level"] as? UInt8 ?? (instance.data["min_level"] as? Int)?.toUInt8() ?? 0
-            let maxLevel = instance.data["max_level"] as? UInt8 ?? (instance.data["max_level"] as? Int)?.toUInt8() ?? 29
-            let accountGroup = (instance.data["account_group"] as? String)?.emptyToNil()
-            let isEvent = instance.data["is_event"] as? Bool ?? false
             let radius = instance.data["radius"] as? UInt64 ?? (instance.data["radius"] as? Int)?.toUInt64() ?? 100000
             let storeData = instance.data["store_data"] as? Bool ?? false
             instanceController = LevelingInstanceController(

@@ -121,6 +121,7 @@ public class ApiRequestHandler {
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let pokestopShowOnlySponsored = request.param(name: "pokestop_show_only_sponsored")?.toBool() ?? false
+        let pokestopShowOnlyEvent = request.param(name: "pokestop_show_only_event")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let gymShowOnlySponsored = request.param(name: "gym_show_only_sponsored")?.toBool() ?? false
@@ -205,7 +206,7 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
-                pokestopShowOnlySponsored: pokestopShowOnlySponsored,
+                pokestopShowOnlySponsored: pokestopShowOnlySponsored, pokestopShowOnlyEvent: pokestopShowOnlyEvent,
                 invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
@@ -1216,6 +1217,7 @@ public class ApiRequestHandler {
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
             let sponsoredOnly = Localizer.global.get(value: "filter_pokestop_sponsored_only")
+            let eventOnly = Localizer.global.get(value: "filter_pokestop_event_only")
             let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
@@ -1476,6 +1478,54 @@ public class ApiRequestHandler {
                 "type": pokestopOptionsString
             ])
 
+            // event pokestop e.g. golden
+            let eventFilter = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-off select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="hide">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                           </label>
+                           <label class="btn btn-sm btn-on select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="show">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                           </label>
+                           </div>
+                           """
+
+            let eventSize = """
+                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="small">
+                         <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="normal">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="large">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="huge">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                         </label>
+                         </div>
+                         """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 8),
+                    "sort": 8
+                ],
+                "name": eventOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=sparkles\" " +
+                    "style=\"height:50px; width:50px;\">",
+                "filter": eventFilter,
+                "size": eventSize,
+                "type": pokestopOptionsString
+            ])
+
             data["pokestop_filters"] = pokestopData
         }
 
@@ -1649,6 +1699,10 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Circle Pokemon"
                     case .circleSmartPokemon:
                         instanceData["type"] = "Circle Smart Pokemon"
+                    case .autoPokemon:
+                        instanceData["type"] = "Auto Pokemon"
+                    case .autoTth:
+                        instanceData["type"] = "Auto TTH"
                     case .autoQuest:
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
@@ -2353,20 +2407,22 @@ public class ApiRequestHandler {
                 Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
                 return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
             }
-            var size = 0
             if !coords.isEmpty {
-                size = instance.addToScanNextCoords(coords: coords)
+                let chunkSize = coords.count > 7 ? 5 : 1
+                for chunk in coords.chunked(into: chunkSize) {
+                    instance.addToScanNextCoords(coords: chunk)
+                }
             }
             do {
                 try response.respondWithData(data: [
                     "action": "next_scan",
-                    "size": size,
+                    "size": instance.getNextCoordsSize(),
                     "timestamp": Int(Date().timeIntervalSince1970)
                 ])
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if clearMemCache {
+        } else if clearMemCache && perms.contains(.admin) {
             Pokemon.cache?.clear()
             Pokestop.cache?.clear()
             Incident.cache?.clear()

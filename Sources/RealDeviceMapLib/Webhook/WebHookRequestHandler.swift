@@ -543,50 +543,6 @@ public class WebHookRequestHandler {
             data["pokemon_encounter_id"] = pokemonEncounterId!
         }
 
-        let listScatterPokemon = json["list_scatter_pokemon"] as? Bool ?? false
-        if listScatterPokemon,
-           pokemonCoords != nil,
-           pokemonEncounterId != nil,
-           let ivController = controller as? IVInstanceController {
-
-            var scatterPokemon = [[String: Any]]()
-
-            for pokemon in wildPokemons {
-                // Don't return the main query in the scattershot list
-                if pokemon.data.encounterID.description == pokemonEncounterId {
-                    continue
-                }
-
-                let pokemonId = UInt16(pokemon.data.pokemon.pokemonID.rawValue)
-                do {
-                    let oldPokemon = try Pokemon.getWithId(
-                        mysql: mysql,
-                        id: pokemon.data.encounterID.description,
-                        isEvent: isEvent
-                    )
-                    if oldPokemon != nil && oldPokemon!.atkIv != nil {
-                        // Skip going to mons already with IVs.
-                        continue
-                    }
-                } catch {}
-
-                let coords = LocationCoordinate2D(latitude: pokemon.data
-                    .latitude, longitude: pokemon.data.longitude)
-                let distance = pokemonCoords!.distance(to: coords)
-
-                // Only Encounter pokemon within 35m of initial pokemon scan
-                if distance <= 35 && ivController.scatterPokemon.contains(pokemonId) {
-                    scatterPokemon.append([
-                        "lat": pokemon.data.latitude,
-                        "lon": pokemon.data.longitude,
-                        "id": pokemon.data.encounterID.description
-                    ])
-                }
-            }
-
-            data["scatter_pokemon"] = scatterPokemon
-        }
-
         do {
             try response.respondWithData(data: data)
         } catch {

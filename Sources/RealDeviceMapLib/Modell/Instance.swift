@@ -20,6 +20,8 @@ public class Instance: Hashable {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleSmartPokemon = "circle_smart_pokemon"
+        case autoPokemon = "auto_pokemon" // jumps with respecting tth of spawnpoin
+        case autoTth = "auto_tth" // to find tth of every spawnpoint
         case circleRaid = "circle_raid"
         case circleSmartRaid = "circle_smart_raid"
         case autoQuest = "auto_quest"
@@ -37,6 +39,10 @@ public class Instance: Hashable {
                 return .circleSmartRaid
             } else if value.lowercased() == "auto_quest" || value.lowercased() == "autoquest" {
                 return .autoQuest
+            } else if value.lowercased() == "auto_pokemon" || value.lowercased() == "autopokemon" {
+                return .autoPokemon
+            } else if value.lowercased() == "auto_tth" || value.lowercased() == "autotth" {
+                return .autoTth
             } else if value.lowercased() == "pokemon_iv" || value.lowercased() == "pokemoniv" {
                 return .pokemonIV
             } else if value.lowercased() == "leveling" {

@@ -23,7 +23,8 @@ class CircleInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
-    internal var scanNextCoords: [Coord] = []
+    internal var scanNextCoords: [[Coord]] = []
+    private var scanNextLookup: [String: Int] = [:]
     public weak var delegate: InstanceControllerDelegate?
 
     private let type: CircleType
@@ -49,7 +50,6 @@ class CircleInstanceController: InstanceControllerProto {
         self.lastCompletedTime = Date()
         self.currentUuidIndexes = [:]
         self.currentUuidSeenTime = [:]
-        self.scanNextCoords = [Coord]()
     }
 
     func routeDistance(xcoord: Int, ycoord: Int) -> Int {
@@ -100,16 +100,35 @@ class CircleInstanceController: InstanceControllerProto {
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         var currentIndex = 0
         var currentUuidIndex = 0
-        var currentCoord = coords[currentIndex]
         lock.lock()
         if !scanNextCoords.isEmpty {
-            currentCoord = scanNextCoords.removeFirst()
+            var scanNextCoord: Coord?
+            if let index = scanNextLookup[uuid] {
+                scanNextCoord = scanNextCoords[index].removeFirst()
+                if scanNextCoords[index].isEmpty {
+                    scanNextCoords.remove(at: index)
+                    scanNextLookup.removeValue(forKey: uuid)
+                }
+            } else {
+                if scanNextCoords.count > scanNextLookup.count {
+                    let lookup = scanNextLookup.values.max() ?? 0
+                    scanNextLookup[uuid] = lookup
+                    scanNextCoord = scanNextCoords[lookup].removeFirst()
+                    if scanNextCoords[lookup].isEmpty {
+                        scanNextCoords.remove(at: lookup)
+                        scanNextLookup.removeValue(forKey: uuid)
+                    }
+                }
+            }
             lock.unlock()
-            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
-                    "min_level": minLevel, "max_level": maxLevel]
-            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
-            return task
+            if scanNextCoord != nil {
+                var task: [String: Any] = ["action": "scan_pokemon", "lat": scanNextCoord!.lat,
+                                           "lon": scanNextCoord!.lon, "min_level": minLevel, "max_level": maxLevel]
+                if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+                return task
+            }
         }
+        var currentCoord = coords[currentIndex]
         if type == .smartPokemon {
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
             currentUuidIndexes[uuid] = currentUuidIndex

@@ -68,12 +68,12 @@ extension Item {
         .freeRaidTicket,
         // .paidRaidTicket,
         // .legendaryRaidTicket,
-        .starPiece
+        .starPiece,
         // .friendGiftBox,
         // .teamChange,
         // .routeMaker,
         // .remoteRaidTicket,
-        // .leaderMapFragment,
+        .leaderMapFragment
         // .leaderMap,
         // .giovanniMap,
         // .globalEventTicket,
