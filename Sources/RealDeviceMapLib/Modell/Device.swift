@@ -178,7 +178,7 @@ public class Device: JSONConvertibleObject, Hashable {
             SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon
             FROM device
             JOIN device_group_device dgd on uuid = dgd.device_uuid
-            WHERe dgd.device_group_name = ?
+            WHERE dgd.device_group_name = ?
         """
 
         let mysqlStmt = MySQLStmt(mysql)
