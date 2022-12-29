@@ -81,12 +81,12 @@ public class Device: JSONConvertibleObject, Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET instance_name = ?, last_host = ?, last_seen = ?, account_username = ?,
+                SET uuid = ?, instance_name = ?, last_host = ?, last_seen = ?, account_username = ?,
                     last_lat = ?, last_lon = ?
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
-        // mysqlStmt.bindParam(uuid)
+        mysqlStmt.bindParam(uuid)
         mysqlStmt.bindParam(instanceName)
         mysqlStmt.bindParam(lastHost)
         mysqlStmt.bindParam(lastSeen)

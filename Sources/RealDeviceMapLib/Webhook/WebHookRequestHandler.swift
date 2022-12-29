@@ -1121,10 +1121,13 @@ public class WebHookRequestHandler {
                         response.respondWithError(status: .notFound)
                         return
                 }
+                let now = UInt32(Date().timeIntervalSince1970)
                 if account.firstWarningTimestamp == nil {
-                    account.firstWarningTimestamp = UInt32(Date().timeIntervalSince1970)
-                    try account.save(mysql: mysql, update: true)
+                    account.firstWarningTimestamp = now
                 }
+                account.failedTimestamp = now
+                account.failed = "GPR_RED_WARNING"
+                try account.save(mysql: mysql, update: true)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
@@ -1143,6 +1146,9 @@ public class WebHookRequestHandler {
                     account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
                     account.failed = "invalid_credentials"
                     try account.save(mysql: mysql, update: true)
+                } else {
+                    Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account \(account.username) already " +
+                        "failed: \(account.failed ?? "?"). No need to set invalid_credentials.")
                 }
                 response.respondWithOk()
             } catch {
