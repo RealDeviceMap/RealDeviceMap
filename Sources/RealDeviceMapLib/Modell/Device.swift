@@ -58,7 +58,7 @@ public class Device: JSONConvertibleObject, Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                 UPDATE device
-                SET last_host = ?
+                SET last_host = ?, last_seen = UNIX_TIMESTAMP()
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
