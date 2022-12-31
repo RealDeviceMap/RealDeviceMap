@@ -17,6 +17,11 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100MB"
+        max-file: "10"
     environment:
       DB_DATABASE: rdmdb
       DB_HOST: db

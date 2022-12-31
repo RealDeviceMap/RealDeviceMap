@@ -1127,6 +1127,7 @@ public class WebHookRequestHandler {
                 }
                 account.failedTimestamp = now
                 account.failed = "GPR_RED_WARNING"
+                Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account warning: \(username)")
                 try account.save(mysql: mysql, update: true)
                 response.respondWithOk()
             } catch {
