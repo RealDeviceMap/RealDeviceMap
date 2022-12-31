@@ -120,15 +120,17 @@ public class Account: WebHookEvent {
             if self.failedTimestamp == nil {
                 self.failedTimestamp = now
             }
-            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Red Warning from GetPlayerOutProto")
+            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.player.name) - " +
+                "\(accountData.warnMessageAcknowledged ? "Acknowledged" : "Not Acknowledged") " +
+                "Red Warning from GetPlayerOutProto")
         }
         if (accountData.wasSuspended || accountData.suspendedMessageAcknowledged) &&
                (self.failed == nil || self.failed == "GPR_RED_WARNING" || self.failed == "warned") {
             self.failed = "suspended"
             self.failedTimestamp = now - Account.suspendedPeriod
-            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Was suspended from GetPlayerOutProto")
+            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.player.name) - " +
+                "\(accountData.suspendedMessageAcknowledged ? "Acknowledged" : "Not Acknowledged") " +
+                "Suspended from GetPlayerOutProto")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
