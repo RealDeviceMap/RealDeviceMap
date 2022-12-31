@@ -1125,6 +1125,9 @@ public class WebHookRequestHandler {
                 if account.firstWarningTimestamp == nil {
                     account.firstWarningTimestamp = now
                 }
+                if account.warnExpireTimestamp == nil {
+                    account.warnExpireTimestamp = now + Account.warnedPeriod
+                }
                 account.failedTimestamp = now
                 account.failed = "GPR_RED_WARNING"
                 Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account warning: \(username)")

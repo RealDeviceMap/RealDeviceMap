@@ -18,8 +18,8 @@ public class Account: WebHookEvent {
     private static let lockoutLock = Threading.Lock()
     private static var lockouts = [(account: String, device: String, untill: Date)]()
 
-    private static let suspendedPeriod: UInt32 = 2592000
-    private static let warnedPeriod: UInt32 = 604800
+    static let suspendedPeriod: UInt32 = 2592000
+    static let warnedPeriod: UInt32 = 604800
 
     func getWebhookValues(type: String) -> [String: Any] {
 
