@@ -18,7 +18,7 @@
             </div>
             <div class="form-group">
                 Select Device(s)
-                <select class="form-control" style="height: 400px" name="devices" multiple required>
+                <select class="form-control" style="height: 400px" name="devices" multiple>
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Device(s)</option>
                     {{#devices}}
                         <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>

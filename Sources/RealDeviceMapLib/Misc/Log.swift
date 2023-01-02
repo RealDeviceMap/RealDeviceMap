@@ -19,6 +19,11 @@ public extension Log {
             Log.logger.debug(message: message(), even)
         }
     }
+    static func warning(message: @autoclosure() -> String) {
+        if threshold <= .warning {
+            Log.logger.warning(message: message(), even)
+        }
+    }
     static func setThreshold(value: String) {
         if value == "debug" {
             Log.threshold = .debug
