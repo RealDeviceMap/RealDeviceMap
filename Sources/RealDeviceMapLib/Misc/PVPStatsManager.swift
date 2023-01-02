@@ -131,13 +131,13 @@ public class PVPStatsManager {
                             .init(pokemon: pokemon, form: nil, gender: nil, temporaryEvolution: temporaryEvolution))
                     }
                 }
-
-                let costumeEvolution = (pokemonInfo["obCostumeEvolution"] as? [String])?.compactMap({ costumeName in
+                let costumeEvolutionRaw = pokemonInfo["obCostumeEvolution"] as? [String]
+                let costumeEvolution = costumeEvolutionRaw?.compactMap({ costumeName -> PokemonDisplayProto.Costume in
                     let costume = costumeFrom(name: costumeName)
                     if costume == nil {
                         Log.warning(message: "[PVPStatsManager] Failed to get costume for: \(costumeName)")
                     }
-                    return costume
+                    return costume!
                 })
 
                 let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
