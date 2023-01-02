@@ -1152,7 +1152,7 @@ public class WebHookRequestHandler {
                     try account.save(mysql: mysql, update: true)
                 } else {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account \(account.username) already " +
-                        "failed: \(account.failed ?? "?"). No need to set invalid_credentials.")
+                        "failed: \(account.failed ?? "?"). Won't set invalid_credentials.")
                 }
                 response.respondWithOk()
             } catch {

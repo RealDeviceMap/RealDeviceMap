@@ -125,7 +125,7 @@ public class Account: WebHookEvent {
                 "Red Warning from GetPlayerOutProto")
         }
         if (accountData.wasSuspended || accountData.suspendedMessageAcknowledged) &&
-               (self.failed == nil || self.failed == "GPR_RED_WARNING" || self.failed == "warned") {
+               (self.failed == nil || self.failed == "GPR_RED_WARNING") {
             self.failed = "suspended"
             self.failedTimestamp = now - Account.suspendedPeriod
             Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.player.name) - " +
