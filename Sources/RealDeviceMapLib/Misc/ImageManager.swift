@@ -570,8 +570,9 @@ extension ImageManager {
         var id: Int // Not lured is ID 0
         var arEligible: Bool = false
         var sponsor: Bool = false
-        var invasionActive: Bool = false
+        var incidentDisplayType: Int?
         var questActive: Bool = false
+        var powerUpLevel: Int?
 
         // Generated
         var invasion: Invasion?
@@ -583,9 +584,18 @@ extension ImageManager {
 
         var postfixes: [String] {
             var build: [String] = []
-            if invasionActive { build.append("i") }
+            if incidentDisplayType != nil {
+                if incidentDisplayType! < 7 {
+                    build.append("i")
+                } else {
+                    build.append("i\(incidentDisplayType!)")
+                }
+            }
             if questActive { build.append("q") }
             if arEligible { build.append("ar") }
+            if powerUpLevel != nil {
+                build.append("p\(powerUpLevel!)")
+            }
             return build
         }
         var uicon: String {

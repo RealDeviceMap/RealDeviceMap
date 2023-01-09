@@ -107,9 +107,10 @@ class ImageApiRequestHandler {
               let id = request.param(name: "id")?.toInt() else {
             return response.respondWithError(status: .badRequest)
         }
-        let invasionActive = request.param(name: "invasion")?.toBool() ?? false
-        let gruntType = request.param(name: "grunt_type")?.toInt()
+        let incidentCharacter = request.param(name: "incident_character")?.toInt()
+        let incidentDisplayType = request.param(name: "incident_display_type")?.toInt()
         let questActive = request.param(name: "quest")?.toBool() ?? false
+        let arEligible = request.param(name: "ar")?.toBool() ?? false
         let questRewardType = request.param(name: "quest_reward_type")?.toInt()
         let questItemId = request.param(name: "quest_item_id")
         let questRewardAmount = request.param(name: "quest_reward_amount")?.toInt()
@@ -117,10 +118,12 @@ class ImageApiRequestHandler {
         let questFormId = request.param(name: "quest_form_id")?.toInt()
         let questGenderId = request.param(name: "quest_gender_id")?.toInt()
         let questCostumeId = request.param(name: "quest_costume_id")?.toInt()
+        let powerUpLevel = request.param(name: "power_up_level")?.toInt()
 
         var invasion: ImageManager.Invasion?
-        if gruntType != nil {
-            invasion = ImageManager.Invasion(style: style, id: gruntType!)
+        if incidentCharacter != nil && (incidentDisplayType ?? Int.max) < 7 {
+            // only create rocket invasion and npc
+            invasion = ImageManager.Invasion(style: style, id: incidentCharacter!)
         }
         var reward: ImageManager.Reward?
         var pokemon: ImageManager.Pokemon?
@@ -136,8 +139,9 @@ class ImageApiRequestHandler {
                     amount: questRewardAmount, type: protosQuestRewardType)
             }
         }
-        let pokestop = ImageManager.Pokestop(style: style, id: id, invasionActive: invasionActive,
-            questActive: questActive, invasion: invasion, reward: reward, pokemon: pokemon)
+        let pokestop = ImageManager.Pokestop(style: style, id: id, arEligible: arEligible,
+            incidentDisplayType: incidentDisplayType, questActive: questActive, powerUpLevel: powerUpLevel,
+            invasion: invasion, reward: reward, pokemon: pokemon)
         let file = ImageManager.global.findPokestopImage(pokestop: pokestop)
         sendFile(response: response, file: file)
     }
