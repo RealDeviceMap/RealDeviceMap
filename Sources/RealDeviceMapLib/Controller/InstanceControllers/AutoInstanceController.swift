@@ -90,8 +90,8 @@ class AutoInstanceController: InstanceControllerProto {
     let bufferTimeDistance: UInt16 = 20
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
-         spinLimit: Int = 1000, delayLogout: Int = 900, timezone: TimeZone = TimeZone.current, questMode: QuestMode = .normal,
-         accountGroup: String?, isEvent: Bool) {
+         spinLimit: Int = 1000, delayLogout: Int = 900, timezone: TimeZone = TimeZone.current,
+         questMode: QuestMode = .normal, accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
         self.maxLevel = maxLevel
