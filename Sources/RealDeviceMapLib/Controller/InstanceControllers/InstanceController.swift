@@ -192,7 +192,9 @@ public class InstanceController {
                 }
             }
             let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0
-
+            let timezoneIdentifier = instance.data["timezone"] as? String ?? "Europe/Berlin"
+            let timezone = TimeZone(identifier: timezoneIdentifier) ??
+                TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone
             var areaArrayEmptyInner = [[[LocationCoordinate2D]]]()
             for coords in areaArray {
                 var polyCoords = [LocationCoordinate2D]()
@@ -233,7 +235,7 @@ public class InstanceController {
                 instanceController = AutoInstanceController(
                     name: instance.name, multiPolygon: MultiPolygon(areaArrayEmptyInner), type: .quest,
                     minLevel: minLevel, maxLevel: maxLevel, spinLimit: spinLimit, delayLogout: delayLogout,
-                    timezoneOffset: timezoneOffset, questMode: questMode, accountGroup: accountGroup, isEvent: isEvent)
+                    timezone: timezone, questMode: questMode, accountGroup: accountGroup, isEvent: isEvent)
             }
         case .leveling:
             let coord: Coord

@@ -50,7 +50,7 @@ class AutoInstanceController: InstanceControllerProto {
     private var todayStops: [PokestopWithMode]?
     private var todayStopsTries: [PokestopWithMode: UInt8]?
     private var questClearerQueue: ThreadQueue?
-    private var timezoneOffset: Int
+    private var timezone: TimeZone
     private var shouldExit = false
     private let bootstrappLock = Threading.Lock()
     private var bootstrappCellIDs = [S2CellId]()
@@ -90,7 +90,7 @@ class AutoInstanceController: InstanceControllerProto {
     let bufferTimeDistance: UInt16 = 20
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
-         spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
+         spinLimit: Int = 1000, delayLogout: Int = 900, timezone: TimeZone = TimeZone.current, questMode: QuestMode = .normal,
          accountGroup: String?, isEvent: Bool) {
         self.name = name
         self.minLevel = minLevel
@@ -98,7 +98,7 @@ class AutoInstanceController: InstanceControllerProto {
         self.accountGroup = accountGroup
         self.type = type
         self.multiPolygon = multiPolygon
-        self.timezoneOffset = timezoneOffset
+        self.timezone = timezone
         self.spinLimit = spinLimit
         self.delayLogout = delayLogout
         self.isEvent = isEvent
@@ -128,7 +128,7 @@ class AutoInstanceController: InstanceControllerProto {
                     let date = Date()
                     let formatter = DateFormatter()
                     formatter.dateFormat = "HH:mm:ss"
-                    formatter.timeZone = TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone
+                    formatter.timeZone = timezone ?? Localizer.global.timeZone
                     let formattedDate = formatter.string(from: date)
 
                     let split = formattedDate.components(separatedBy: ":")
