@@ -193,7 +193,7 @@ public class InstanceController {
             }
             let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0 // MARK: remove in future
             let timezoneIdentifier = instance.data["timezone"] as? String
-            let timezone = (timezoneIdentifier != nil ? TimeZone(identifier: timezoneIdentifier) :
+            let timezone = (timezoneIdentifier != nil ? TimeZone(identifier: timezoneIdentifier!) :
                 TimeZone(secondsFromGMT: timezoneOffset)) ?? Localizer.global.timeZone // MARK: remove offset in future
             var areaArrayEmptyInner = [[[LocationCoordinate2D]]]()
             for coords in areaArray {
