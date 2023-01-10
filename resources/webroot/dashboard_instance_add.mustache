@@ -80,8 +80,8 @@
                 </select>
             </div>
             <div class="form-group">
-                Timezone Offset (in seconds) from UTC
-                <input type="number" class="form-control" name="timezone_offset" value="{{timezone_offset}}" step=1 min="-43200" max="43200" required>
+                Timezone (e.g. 'Europe/Berlin')
+                <input type="text" class="form-control" name="timezone" value="{{timezone}}" minlength="3" max="50" required>
             </div>
             <div class="form-group">
                 Min Level

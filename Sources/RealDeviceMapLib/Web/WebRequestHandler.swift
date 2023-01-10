@@ -740,7 +740,7 @@ public class WebRequestHandler {
             } else {
                 data["min_level"] = 30
                 data["max_level"] = 40
-                data["timezone_offset"] = 0
+                data["timezone_offset"] = "Europe/Berlin"
                 data["iv_queue_limit"] = 30
                 data["spin_limit"] = 1000
                 data["delay_logout"] = 900
@@ -2323,7 +2323,7 @@ public class WebRequestHandler {
             return data
         }
 
-        let timezoneOffset = Int(request.param(name: "timezone_offset") ?? "0" ) ?? 0
+        let timezoneOffset = request.param(name: "timezone_offset") ?? "Europe/Berlin"
         let pokemonIDsText = request.param(name: "pokemon_ids")?.replacingOccurrences(of: "<br>", with: ",")
                              .replacingOccurrences(of: "\r\n", with: ",", options: .regularExpression)
         let scatterPokemonIDsText = request.param(name: "scatter_pokemon_ids")?
@@ -2635,7 +2635,7 @@ public class WebRequestHandler {
             data["area"] = areaString
             data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 30
             data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 40
-            data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
+            data["timezone_offset"] = oldInstance!.data["timezone_offset"] ?? "Europe/Berlin"
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
             data["delay_logout"] = oldInstance!.data["delay_logout"] as? Int ?? 900

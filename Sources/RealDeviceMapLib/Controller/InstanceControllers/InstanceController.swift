@@ -191,10 +191,10 @@ public class InstanceController {
                     i += 1
                 }
             }
-            let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0
+            let timezoneOffset = instance.data["timezone_offset"] as? Int ?? 0 // MARK: remove in future
             let timezoneIdentifier = instance.data["timezone"] as? String ?? "Europe/Berlin"
             let timezone = TimeZone(identifier: timezoneIdentifier) ??
-                TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone
+                TimeZone(secondsFromGMT: timezoneOffset) ?? Localizer.global.timeZone // MARK: remove offset in future
             var areaArrayEmptyInner = [[[LocationCoordinate2D]]]()
             for coords in areaArray {
                 var polyCoords = [LocationCoordinate2D]()
