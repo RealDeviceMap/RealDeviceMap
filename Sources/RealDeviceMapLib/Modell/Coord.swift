@@ -41,6 +41,16 @@ public class Coord: JSONConvertibleObject, Hashable, Codable {
         ]
     }
 
+    public static func fromString<T>(decoder: JSONDecoder, value: String) -> T {
+        do {
+            return try decoder.decode(T.self, from: value.data(using: .utf8) ?? Data())
+        } catch {
+            Log.error(message: "[Coord] can not convert from string: \(error.localizedDescription)")
+            return [:]
+        }
+
+    }
+
     public static func == (lhs: Coord, rhs: Coord) -> Bool {
         return lhs.lat == rhs.lat && lhs.lon == rhs.lon
     }

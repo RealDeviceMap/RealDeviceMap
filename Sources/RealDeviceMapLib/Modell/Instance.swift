@@ -52,16 +52,18 @@ public class Instance: Hashable {
             }
         }
     }
-
+    var id: UInt32?
     var name: String
     var type: InstanceType
     var data: [String: Any]
+    var area: [[Coord]]
     var count: Int64
 
-    init(name: String, type: InstanceType, data: [String: Any], count: Int64) {
+    init(name: String, type: InstanceType, data: [String: Any], area: [[Coord]], count: Int64) {
         self.name = name
         self.type = type
         self.data = data
+        self.area = area
         self.count = count
     }
 
@@ -74,14 +76,15 @@ public class Instance: Hashable {
 
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
-            INSERT INTO instance (name, type, data)
-            VALUES (?, ?, ?)
+            INSERT INTO instance (name, type, data, area)
+            VALUES (?, ?, ?, ?)
         """
 
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(name)
         mysqlStmt.bindParam(type.rawValue)
         mysqlStmt.bindParam(try data.jsonEncodedString())
+        mysqlStmt.bindParam(try area.jsonEncodedString())
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -121,12 +124,13 @@ public class Instance: Hashable {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
             UPDATE instance
-            SET data = ?, name = ?, type = ?
+            SET data = ?, area = ?, name = ?, type = ?
             WHERE name = ?
         """
 
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(try data.jsonEncodedString())
+        mysqlStmt.bindParam(try area.jsonEncodedString())
         mysqlStmt.bindParam(name)
         mysqlStmt.bindParam(type.rawValue)
         mysqlStmt.bindParam(oldName)
@@ -144,7 +148,7 @@ public class Instance: Hashable {
         }
 
         let sql = """
-            SELECT name, type, count \(getData ? ", data" : "")
+            SELECT name, type, count \(getData ? ", data, area" : "")
             FROM instance AS inst
             LEFT JOIN (
               SELECT COUNT(instance_name) AS count, instance_name
@@ -163,17 +167,35 @@ public class Instance: Hashable {
         let results = mysqlStmt.results()
 
         var instances = [Instance]()
+        let decoder = JSONDecoder()
         while let result = results.next() {
             let name = result[0] as! String
             let type = InstanceType.fromString(result[1] as! String)!
             let count = result[2] as! Int64? ?? 0
             let data: [String: Any]
+            let area: [[Coord]]
             if getData {
                 data = (result[3] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
+                let areaString = (result[4] as! String)
+                switch type {
+                case .circleSmartRaid, .circleRaid, .circlePokemon, .circleSmartPokemon:
+                    let coordsArray: [Coord] = Coord.fromString(decoder: decoder, value: areaString)
+                    area = [coordsArray]
+                    break
+                case .pokemonIV, .autoQuest, .autoPokemon, .autoTth:
+                    var areaArray: [[Coord]] = Coord.fromString(decoder: decoder, value: areaString)
+                    area = areaArry
+                    break
+                case .leveling:
+                    let coord: Coord = Coord.fromString(decoder: decoder, value: areaString)
+                    area = [[coord]]
+                    break
+                }
             } else {
                 data = [:]
+                area = [:]
             }
-            instances.append(Instance(name: name, type: type, data: data, count: count))
+            instances.append(Instance(name: name, type: type, data: data, area: area, count: count))
         }
         return instances
 
@@ -187,7 +209,7 @@ public class Instance: Hashable {
         }
 
         let sql = """
-            SELECT type, data
+            SELECT type, data, area
             FROM instance
             WHERE name = ?
         """
@@ -208,7 +230,23 @@ public class Instance: Hashable {
         let result = results.next()!
         let type = InstanceType.fromString(result[0] as! String)!
         let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
-        return Instance(name: name, type: type, data: data, count: 0)
+        let areaString = (result[2] as! String)
+        let area: [[Coord]]
+        switch type {
+        case .circleSmartRaid, .circleRaid, .circlePokemon, .circleSmartPokemon:
+            let coordsArray: [Coord] = Coord.fromString(decoder: decoder, value: areaString)
+            area = [coordsArray]
+            break
+        case .pokemonIV, .autoQuest, .autoPokemon, .autoTth:
+            var areaArray: [[Coord]] = Coord.fromString(decoder: decoder, value: areaString)
+            area = areaArry
+            break
+        case .leveling:
+            let coord: Coord = Coord.fromString(decoder: decoder, value: areaString)
+            area = [[coord]]
+            break
+        }
+        return Instance(name: name, type: type, data: data, area: area, count: 0)
 
     }
 

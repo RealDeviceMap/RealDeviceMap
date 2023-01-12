@@ -1164,8 +1164,8 @@ public class WebRequestHandler {
                 var maxLon: Double = -180.0
                 do {
                     for instance in clearQuests {
-                        let areaType1 = instance.data["area"] as? [[String: Double]]
-                        let areaType2 = instance.data["area"] as? [[[String: Double]]]
+                        let areaType1 = instance.area as? [[String: Double]]
+                        let areaType2 = instance.area as? [[[String: Double]]]
                         if areaType1 != nil {
                             for coordLine in areaType1! {
                                 minLat = coordLine["lat"]! < minLat ? coordLine["lat"]! : minLat
@@ -2372,7 +2372,6 @@ public class WebRequestHandler {
         let questMode = request.param(name: "quest_mode") ?? "normal"
 
         data["name"] = name
-        data["area"] = area
         data["pokemon_ids"] = pokemonIDsText
         data["scatter_pokemon_ids"] = scatterPokemonIDs
         data["min_level"] = minLevel
@@ -2515,7 +2514,7 @@ public class WebRequestHandler {
             } else {
                 oldInstance!.name = name
                 oldInstance!.type = type!
-                oldInstance!.data["area"] = newCoords
+                oldInstance!.area = newCoords
                 oldInstance!.data["timezone_offset"] = timezoneOffset
                 oldInstance!.data["min_level"] = minLevel
                 oldInstance!.data["max_level"] = maxLevel
@@ -2549,7 +2548,6 @@ public class WebRequestHandler {
             }
         } else {
             var instanceData: [String: Any] = [
-                "area": newCoords,
                 "timezone_offset": timezoneOffset,
                 "min_level": minLevel,
                 "max_level": maxLevel,
@@ -2569,7 +2567,7 @@ public class WebRequestHandler {
                 instanceData["radius"] = radius
                 instanceData["store_data"] = storeData
             }
-            let instance = Instance(name: name, type: type!, data: instanceData, count: 0)
+            let instance = Instance(name: name, type: type!, data: instanceData, area: newCoords, count: 0)
             do {
                 try instance.create()
                 InstanceController.global.addInstance(instance: instance)
@@ -2607,9 +2605,9 @@ public class WebRequestHandler {
             throw CompletedEarly()
         } else {
             var areaString = ""
-            let areaType1 = oldInstance!.data["area"] as? [[String: Double]]
-            let areaType2 = oldInstance!.data["area"] as? [[[String: Double]]]
-            let areaType3 = oldInstance!.data["area"] as? [String: Double]
+            let areaType1 = oldInstance!.area as? [[String: Double]]
+            let areaType2 = oldInstance!.area as? [[[String: Double]]]
+            let areaType3 = oldInstance!.area as? [String: Double]
             if areaType1 != nil {
                 for coordLine in areaType1! {
                     let lat = coordLine["lat"]

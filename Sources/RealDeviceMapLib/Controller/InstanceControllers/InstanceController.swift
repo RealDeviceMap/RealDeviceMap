@@ -149,10 +149,10 @@ public class InstanceController {
         switch instance.type {
         case .circleSmartRaid, .circleSmartPokemon, .circlePokemon, .circleRaid:
             var coordsArray = [Coord]()
-            if instance.data["area"] as? [Coord] != nil {
-                coordsArray = instance.data["area"] as? [Coord] ?? [Coord]()
+            if instance.area as? [Coord] != nil {
+                coordsArray = instance.area as? [Coord] ?? [Coord]()
             } else {
-                let coords = instance.data["area"] as? [[String: Double]] ?? [[String: Double]]()
+                let coords = instance.area as? [[String: Double]] ?? [[String: Double]]()
                 for coord in coords {
                     coordsArray.append(Coord(lat: coord["lat"]!, lon: coord["lon"]!))
                 }
@@ -176,10 +176,10 @@ public class InstanceController {
             }
         case .pokemonIV, .autoQuest, .autoPokemon, .autoTth:
             var areaArray = [[Coord]]()
-            if instance.data["area"] as? [[Coord]] != nil {
-                areaArray = instance.data["area"] as? [[Coord]] ?? [[Coord]]()
+            if instance.area as? [[Coord]] != nil {
+                areaArray = instance.area as? [[Coord]] ?? [[Coord]]()
             } else {
-                let areas = instance.data["area"] as? [[[String: Double]]] ?? [[[String: Double]]]()
+                let areas = instance.area as? [[[String: Double]]] ?? [[[String: Double]]]()
                 var i = 0
                 for coords in areas {
                     for coord in coords {
@@ -237,10 +237,10 @@ public class InstanceController {
             }
         case .leveling:
             let coord: Coord
-            if let coordX = instance.data["area"] as? Coord {
+            if let coordX = instance.area as? Coord {
                 coord = coordX
             } else {
-                let coordDict = instance.data["area"] as? [String: Double] ?? [:]
+                let coordDict = instance.area as? [String: Double] ?? [:]
                 if let lat = coordDict["lat"], let lon = coordDict["lon"] {
                     coord = Coord(lat: lat, lon: lon)
                 } else {
