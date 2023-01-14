@@ -91,20 +91,12 @@ public class SpawnPoint: JSONConvertibleObject {
                    // depending on the other is great than the other
                    // we have to subtract from smaller value to get valid result
                 if oldDespawnSecond < newDespawnSecond {
-                    if Int(oldDespawnSecond - newDespawnSecond) % 3600 < 180 {
+                    if (Int(oldDespawnSecond) - Int(newDespawnSecond)) % 3600 < 180 {
                         self.despawnSecond = oldDespawnSecond
-                    } else {
-                        Log.info(message: "[SPAWNPOINT] Found new DespawnSecond with inaccurate timestamp but offset " +
-                            "more than 3 minutes - old: '\(oldDespawnSecond)' - new: '\(newDespawnSecond)'")
                     }
                 } else {
-                    if Int(newDespawnSecond - oldDespawnSecond) % 3600 < 180 {
-                        Log.info(message: "[SPAWNPOINT] Found new DespawnSecond with inaccurate timestamp but offset " +
-                        "more than 3 minutes - old: '\(oldDespawnSecond)' - new: '\(newDespawnSecond)'")
+                    if (Int(newDespawnSecond) - Int(oldDespawnSecond)) % 3600 < 180 {
                         self.despawnSecond = oldDespawnSecond
-                    } else {
-                        Log.info(message: "[SPAWNPOINT] Found new DespawnSecond with inaccurate timestamp but offset " +
-                            "more than 3 minutes - old: '\(oldDespawnSecond)' - new: '\(newDespawnSecond)'")
                     }
                 }
             }

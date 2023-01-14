@@ -1198,15 +1198,15 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     private func updateSpawnpointInfo(
         mysql: MySQL?, wildPokemon: WildPokemonProto, spawnId: UInt64, timestampMs: UInt64, timestampAccurate: Bool) {
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
-            expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
-            expireTimestampVerified = true
+            self.expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
+            self.expireTimestampVerified = true
             let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
             let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
             let spawnPoint = SpawnPoint(id: spawnId, lat: lat, lon: lon, despawnSecond: UInt16(secondOfHour))
             try? spawnPoint.save(mysql: mysql, update: true, timestampAccurate: timestampAccurate)
         } else {
-            expireTimestampVerified = false
+            self.expireTimestampVerified = false
             let spawnpoint: SpawnPoint?
             do {
                 spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId)
@@ -1223,7 +1223,10 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 } else {
                     despawnOffset = Int(despawnSecond) - secondOfHour
                 }
-                self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
+                if timestampAccurate || self.expireTimestamp == nil {
+                    // only update expireTimestamp when timestamp is accurate or expire timestamp is unset
+                    self.expireTimestamp = UInt32(Int(date.timeIntervalSince1970) + despawnOffset)
+                }
                 self.expireTimestampVerified = true
                 if Pokemon.saveSpawnpointLastSeen {
                     try? spawnpoint.setLastSeen(mysql: mysql)
