@@ -1202,19 +1202,16 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 self.expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
             }
             self.expireTimestampVerified = true
-            let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
-            let components = Calendar.current.dateComponents([.second, .minute], from: date)
-            let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
-            let spawnPoint = SpawnPoint(id: spawnId, lat: lat, lon: lon, despawnSecond: UInt16(secondOfHour))
-            try? spawnPoint.save(mysql: mysql, update: true, timestampAccurate: timestampAccurate)
+            if timestampAccurate {
+                let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
+                let components = Calendar.current.dateComponents([.second, .minute], from: date)
+                let secondOfHour = (components.second ?? 0) + (components.minute ?? 0) * 60
+                let spawnPoint = SpawnPoint(id: spawnId, lat: lat, lon: lon, despawnSecond: UInt16(secondOfHour))
+                try? spawnPoint.save(mysql: mysql, update: true, timestampAccurate: timestampAccurate)
+            }
         } else {
             self.expireTimestampVerified = false
-            let spawnpoint: SpawnPoint?
-            do {
-                spawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: spawnId)
-            } catch {
-                spawnpoint = nil
-            }
+            let spawnpoint = try? SpawnPoint.getWithId(mysql: mysql, id: spawnId)
             if let spawnpoint = spawnpoint, let despawnSecond = spawnpoint.despawnSecond {
                 let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
                 let components = Calendar.current.dateComponents([.second, .minute], from: date)
