@@ -1198,7 +1198,9 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     private func updateSpawnpointInfo(
         mysql: MySQL?, wildPokemon: WildPokemonProto, spawnId: UInt64, timestampMs: UInt64, timestampAccurate: Bool) {
         if wildPokemon.timeTillHiddenMs <= 90000 && wildPokemon.timeTillHiddenMs > 0 {
-            self.expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
+            if timestampAccurate || self.expireTimestamp == nil {
+                self.expireTimestamp = UInt32((timestampMs + UInt64(wildPokemon.timeTillHiddenMs)) / 1000)
+            }
             self.expireTimestampVerified = true
             let date = Date(timeIntervalSince1970: Double(self.expireTimestamp!))
             let components = Calendar.current.dateComponents([.second, .minute], from: date)
