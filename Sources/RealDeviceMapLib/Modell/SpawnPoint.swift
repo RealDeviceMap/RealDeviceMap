@@ -88,16 +88,15 @@ public class SpawnPoint: JSONConvertibleObject {
             // use old despawn seconds if available then, otherwise keep new despawn seconds
             if !timestampAccurate, let oldDespawnSecond = oldSpawnpoint!.despawnSecond,
                let newDespawnSecond = self.despawnSecond {
-                   // depending on the other is great than the other
-                   // we have to subtract from smaller value to get valid result
-                if oldDespawnSecond < newDespawnSecond {
-                    if (Int(oldDespawnSecond) - Int(newDespawnSecond)) % 3600 < 180 {
-                        self.despawnSecond = oldDespawnSecond
-                    }
-                } else {
-                    if (Int(newDespawnSecond) - Int(oldDespawnSecond)) % 3600 < 180 {
-                        self.despawnSecond = oldDespawnSecond
-                    }
+                // depending on the other is great than the other
+                // we have to subtract from smaller value to get valid result
+                let absDifference = abs(Int(oldDespawnSecond) - Int(newDespawnSecond))
+                let secondAbsDifference = 3600 - absDifference
+                // difference can be either 900 or 2700 - e.g. if you compare despawnSec 800 with 3500
+                if absDifference < secondAbsDifference && absDifference < 180 {
+                    self.despawnSecond = oldDespawnSecond
+                } else if absDifference > secondAbsDifference && secondAbsDifference < 180 {
+                    self.despawnSecond = oldDespawnSecond
                 }
             }
         }
