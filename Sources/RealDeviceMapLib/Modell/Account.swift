@@ -993,6 +993,7 @@ public class Account: WebHookEvent {
                   SELECT DISTINCT `group`
                   FROM account
                   WHERE `group` IS NOT NULL
+                  ORDER BY `group`
                   """
 
         let mysqlStmt = MySQLStmt(mysql)

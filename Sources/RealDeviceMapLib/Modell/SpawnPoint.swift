@@ -84,15 +84,21 @@ public class SpawnPoint: JSONConvertibleObject {
                 return
             }
 
-            // better to have inaccurate timestamp than none -> only update if the time differs more than 30 seconds,
+            // better to have inaccurate timestamp than none -> only update if the time differs more than 3 minutes,
             // use old despawn seconds if available then, otherwise keep new despawn seconds
             if !timestampAccurate, let oldDespawnSecond = oldSpawnpoint!.despawnSecond,
                let newDespawnSecond = self.despawnSecond {
-                if abs(Int(oldDespawnSecond) - Int(newDespawnSecond)) < 30 {
+                // depending on the other is great than the other
+                // we have to subtract from smaller value to get valid result
+                let absDifference = abs(Int(oldDespawnSecond) - Int(newDespawnSecond))
+                let secondAbsDifference = 3600 - absDifference
+                // difference can be either 900 or 2700 - e.g. if you compare despawnSec 800 with 3500
+                if absDifference < secondAbsDifference && absDifference < 180 {
+                    self.despawnSecond = oldDespawnSecond
+                } else if absDifference > secondAbsDifference && secondAbsDifference < 180 {
                     self.despawnSecond = oldDespawnSecond
                 }
             }
-
         }
 
         var sql = """
