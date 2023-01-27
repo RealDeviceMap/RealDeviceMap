@@ -10,7 +10,7 @@ CREATE PROCEDURE clear_pokemon_history()
 BEGIN
     REPEAT
         DO SLEEP(1); ## Optional, to minimise contention
-        DELETE FROM pokemon
+        DELETE FROM pokemon_history
         WHERE expire_timestamp <= UNIX_TIMESTAMP() - 604800 # older than 7 days
         ORDER BY id
         LIMIT 10000; ## 1000 - would be more conservative
