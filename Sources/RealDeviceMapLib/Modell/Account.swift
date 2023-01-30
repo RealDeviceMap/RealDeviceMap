@@ -18,8 +18,8 @@ public class Account: WebHookEvent {
     private static let lockoutLock = Threading.Lock()
     private static var lockouts = [(account: String, device: String, untill: Date)]()
 
-    private static let suspendedPeriod: UInt32 = 2592000
-    private static let warnedPeriod: UInt32 = 604800
+    static let suspendedPeriod: UInt32 = 2592000
+    static let warnedPeriod: UInt32 = 604800
 
     func getWebhookValues(type: String) -> [String: Any] {
 
@@ -114,35 +114,29 @@ public class Account: WebHookEvent {
         let now = UInt32(Date().timeIntervalSince1970)
         if (accountData.warn || accountData.warnMessageAcknowledged) && self.failed == nil {
             self.failed = "GPR_RED_WARNING"
-            if warnExpireTimestamp > now {
-                if self.firstWarningTimestamp == nil {
-                    self.firstWarningTimestamp = now
-                }
-                self.failedTimestamp = now
-            } else {
-                if self.firstWarningTimestamp == nil {
-                    self.firstWarningTimestamp = warnExpireTimestamp > 0 ?
-                        warnExpireTimestamp - Account.warnedPeriod : now - Account.warnedPeriod
-                }
-                self.failedTimestamp = now - Account.warnedPeriod
+            if self.firstWarningTimestamp == nil {
+                self.firstWarningTimestamp = now
             }
-            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Red Warning")
+            if self.failedTimestamp == nil {
+                self.failedTimestamp = now
+            }
+            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.player.name) - " +
+                "\(accountData.warnMessageAcknowledged ? "Acknowledged" : "Not Acknowledged") " +
+                "Red Warning from GetPlayerOutProto")
         }
         if (accountData.wasSuspended || accountData.suspendedMessageAcknowledged) &&
                (self.failed == nil || self.failed == "GPR_RED_WARNING") {
-            // only occurs if an account was suspended, and RDM was not aware of it
-            // (database manipulation or anything else)
             self.failed = "suspended"
             self.failedTimestamp = now - Account.suspendedPeriod
-            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Was suspended")
+            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - UserName: \(accountData.player.name) - " +
+                "\(accountData.suspendedMessageAcknowledged ? "Acknowledged" : "Not Acknowledged") " +
+                "Suspended from GetPlayerOutProto")
         }
         if accountData.banned == true {
             self.failed = "GPR_BANNED"
             self.failedTimestamp = now
-            Log.debug(message: "[ACCOUNT] AccountName: \(self.username) - " +
-                "UserName: \(accountData.player.name) - Banned")
+            Log.warning(message: "[ACCOUNT] AccountName: \(self.username) - " +
+                "UserName: \(accountData.player.name) - Banned from GetPlayerOutProto")
         }
 
     }
@@ -483,11 +477,11 @@ public class Account: WebHookEvent {
 
         Account.lockoutLock.lock()
         let now = Date()
-        var newAccounts = [(account: String, device: String, untill: Date)]()
+        var keepLockedOut = [(account: String, device: String, untill: Date)]()
         for lockout in Account.lockouts where (lockout.untill) >= now {
-            newAccounts.append(lockout)
+            keepLockedOut.append(lockout)
         }
-        Account.lockouts = newAccounts
+        Account.lockouts = keepLockedOut
         let locked = Account.lockouts.filter { (lockout) -> Bool in
             return lockout.device != device
         }.map { (lockout) -> String in
@@ -574,8 +568,9 @@ public class Account: WebHookEvent {
         let lastUsedTimestamp = result[17] as? UInt32
         let group = (result[18] as? String)?.emptyToNil()
 
-        Account.lockoutLock.lock()
-        Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
+        Account.lockoutLock.doWithLock {
+            Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
+        }
         Account.lockoutLock.unlock()
 
         try? Account.setLastUsed(mysql: mysql, username: username)
@@ -998,6 +993,7 @@ public class Account: WebHookEvent {
                   SELECT DISTINCT `group`
                   FROM account
                   WHERE `group` IS NOT NULL
+                  ORDER BY `group`
                   """
 
         let mysqlStmt = MySQLStmt(mysql)

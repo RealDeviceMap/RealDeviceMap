@@ -822,7 +822,11 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
 
         if pokestopShowOnlyEvent && showPokestops {
-            onlyEventSQL = "AND display_type = 7 "
+            if showInvasions {
+                onlyEventSQL = "AND display_type IS NOT NULL "
+            } else {
+                onlyEventSQL = "AND display_type >= 7 "
+            }
         } else {
             onlyEventSQL = ""
         }
@@ -900,7 +904,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
         let results = mysqlStmt.results()
         return extractResults(results: results, showLures: showLures, showInvasions: showInvasions,
-            showQuests: showQuests)
+            showOnlyEvent: pokestopShowOnlyEvent, showQuests: showQuests)
 
     }
 
@@ -1452,7 +1456,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
     }
 
     private static func extractResults(results: MySQLStmt.Results, showLures: Bool = true, showInvasions: Bool = true,
-                                       showQuests: Bool = true) -> [Pokestop] {
+                                       showOnlyEvent: Bool = false, showQuests: Bool = true) -> [Pokestop] {
         var pokestops = [String: Pokestop]()
         while let result = results.next() {
             let id = result[0] as! String
@@ -1533,7 +1537,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             let powerUpEndTimestamp = result[31] as? UInt32
 
             let incident: Incident?
-            if showInvasions {
+            if showInvasions || showOnlyEvent {
                 let incidentId = result[32] as? String
                 if incidentId != nil {
                     let pokestopId = result[33] as! String

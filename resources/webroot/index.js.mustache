@@ -3487,7 +3487,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
   let itemId
   let pokemonId
   let formId, genderId, costumeId
-  let lureId, invasionGruntType
+  let lureId, invasionGruntType, incidentDisplayType
   var size = 20
 
   if ((showQuests || pokestop.is_start) && (
@@ -3530,12 +3530,15 @@ function getPokestopMarkerIcon (pokestop, ts) {
     size = lureSize
   }
 
-  if ((pokestop.is_start || showInvasions === true) && pokestop.incidents && pokestop.incidents.length > 0) {
-    invasionGruntType = Math.min.apply(Math, pokestop.incidents.map(function(incident) { return incident.character; }))
-    let invasionSize = getInvasionSize(invasionGruntType)
-    if (invasionSize > size) {
-      size = invasionSize
+  if (pokestop.incidents && pokestop.incidents.length > 0) {
+    if (pokestop.is_start || showInvasions === true) {
+      invasionGruntType = Math.min.apply(Math, pokestop.incidents.map(function(incident) { return incident.character; }))
+      let invasionSize = getInvasionSize(invasionGruntType)
+      if (invasionSize > size) {
+        size = invasionSize
+      }
     }
+    incidentDisplayType = Math.min.apply(Math, pokestop.incidents.map(function(incident) { return incident.display_type; }))
   }
   let multiplierSize = 1
   let multiplierAnchor = 1
@@ -3545,7 +3548,7 @@ function getPokestopMarkerIcon (pokestop, ts) {
   }
 
   let icon = L.icon({
-    iconUrl: getPokestopIconURL(lureId,invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId),
+    iconUrl: getPokestopIconURL(lureId, incidentDisplayType, invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId),
     iconSize: [size, size * multiplierSize],
     iconAnchor: [size / 2, size * multiplierAnchor],
     popupAnchor: [0, size * -1.567],
@@ -4828,10 +4831,13 @@ function getPokemonIconURL(pokemonId, pokemonForm, pokemonCostume, pokemonGender
   return response
 }
 
-function getPokestopIconURL(lureId, invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
+function getPokestopIconURL(lureId, incidentDisplayType, invasionGruntType, rewardType, rewardAmount, itemId, pokemonId, formId, costumeId, genderId) {
   var response = '/image-api/pokestop?style=' + selectedIconStyle + '&id=' + lureId
+  if (incidentDisplayType) {
+    response += '&incident_display_type=' + incidentDisplayType
+  }
   if (invasionGruntType) {
-    response += '&invasion=true&grunt_type=' + invasionGruntType
+    response += '&incident_character=' + invasionGruntType
   }
   if (rewardType) {
     response += '&quest_reward_type=' + rewardType
