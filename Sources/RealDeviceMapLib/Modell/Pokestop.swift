@@ -1149,8 +1149,8 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
 
         var areaString = ""
-        let areaType1 = instance.area as? [[String: Double]]
-        let areaType2 = instance.area as? [[[String: Double]]]
+        let areaType1 = instance.data["area"] as? [[String: Double]]
+        let areaType2 = instance.data["area"] as? [[[String: Double]]]
         if areaType1 != nil {
             for coordLine in areaType1! {
                 let lat = coordLine["lat"]
