@@ -18,8 +18,12 @@ class Stats: JSONConvertibleObject {
     public static var cleanupPokemon = true
     public static var cleanupIncident = true
 
+    private static var maxPokemon = 1000
+    private static var pokemonStatsLock = Threading.Lock()
+    private static var pokemonCount = PokemonCountDetail()
+
     // =================================================================================================================
-    // Database Archiver and Clearer Utilities
+    // Database Archiver, Stats Logger and Clearer Utilities
     // ================================================================================================================
 
     static func startDatabaseArchiver() {
@@ -70,6 +74,23 @@ class Stats: JSONConvertibleObject {
             }
         }
     }
+
+    static func startStatsLogger() {
+        Threading.getQueue(name: "StatsLogger", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: 600)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [StatsLogger] Failed to connect to database.")
+                    continue
+                }
+                logPokemonCount(mysql: mysql)
+            }
+        }
+    }
+
+    // =================================================================================================================
+    // HELPER METHODS
+    // =================================================================================================================
 
     private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
@@ -141,6 +162,80 @@ class Stats: JSONConvertibleObject {
             Threading.sleep(seconds: 0.2)
         } while affectedRows == batchSize
         return totalRows
+    }
+
+    private static func logPokemonCount(mysql: MySQL) {
+        pokemonStatsLock.lock()
+        let currentStats = pokemonCount
+        pokemonCount = PokemonCountDetail()
+        pokemonStatsLock.unlock()
+
+        var hundoRows = [PokemonCountDbRow]()
+        var shinyRows = [PokemonCountDbRow]()
+        var ivRows = [PokemonCountDbRow]()
+        var allRows = [PokemonCountDbRow]()
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let midnight = formatter.string(from: Date())
+
+        for (pokemonId, count) in currentStats.count.enumerated() {
+            if count > 0 {
+                let row = PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count)
+                allRows.append(row)
+            }
+        }
+
+        for (pokemonId, count) in currentStats.ivCount.enumerated() {
+            if count > 0 {
+                ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+            }
+        }
+
+        for (pokemonId, count) in currentStats.hundos.enumerated() {
+            if count > 0 {
+                hundoRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+            }
+        }
+
+        for (pokemonId, count) in currentStats.shiny.enumerated() {
+            if count > 0 {
+                shinyRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+            }
+        }
+
+        updateStatsCount(mysql: mysql, table: "pokemon_stats", rows: allRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_iv_stats", rows: ivRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_hundo_stats", rows: hundoRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_shiny_stats", rows: shinyRows)
+    }
+
+    private static func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
+        //TODO: join rows to a mult insert statement
+    }
+
+    struct PokemonCountDetail {
+        var hundos: [Int]
+        var shiny: [Int]
+        var count: [Int]
+        var ivCount: [Int]
+
+        init() {
+            hundos = [Int](repeating: 0, count: maxPokemon)
+            shiny = [Int](repeating: 0, count: maxPokemon)
+            count = [Int](repeating: 0, count: maxPokemon)
+            ivCount = [Int](repeating: 0, count: maxPokemon)
+        }
+    }
+
+    struct PokemonCountDbRow {
+        var date: String
+        var pokemonId: Int
+        var count: Int
+
+        func toString() -> String {
+            "(\(date), \(pokemonId), \(count))"
+        }
     }
 
     // =================================================================================================================
