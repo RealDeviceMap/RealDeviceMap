@@ -194,10 +194,11 @@ class Stats: JSONConvertibleObject {
     }
 
     private func logPokemonCount(mysql: MySQL) {
-        pokemonStatsLock.lock()
-        let currentStats = pokemonCount
-        pokemonCount = PokemonCountDetail()
-        pokemonStatsLock.unlock()
+        var currentStats = PokemonCountDetail()
+        pokemonStatsLock.doWithLock {
+            currentStats = self.pokemonCount
+            pokemonCount = PokemonCountDetail()
+        }
 
         var hundoRows = [PokemonCountDbRow]()
         var shinyRows = [PokemonCountDbRow]()
@@ -206,7 +207,10 @@ class Stats: JSONConvertibleObject {
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = Localizer.global.timeZone
         let midnight = formatter.string(from: Date())
+
+        print("[TMP] \(midnight)")
 
         for (pokemonId, count) in currentStats.count.enumerated() where count > 0 {
             allRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
@@ -231,7 +235,7 @@ class Stats: JSONConvertibleObject {
     }
 
     private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
-        //MARK: join rows to a mult insert statement
+        // MARK: join rows to a mult insert statement
     }
 
     struct PokemonCountDetail {
