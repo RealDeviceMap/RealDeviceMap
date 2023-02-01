@@ -30,7 +30,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     public static var weatherIVClearingEnabled = true
     public static var cellPokemonEnabled = true
     public static var saveSpawnpointLastSeen = false
-    public static var statsEnabled = false
+    public static var timingStatsEnabled = false
 
     public static var cache: MemoryCache<Pokemon>?
     public static var diskEncounterCache: MemoryCache<DiskEncounterOutProto>?
@@ -1151,7 +1151,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
     }
 
     private func updateStats(mysql: MySQL, id: String, event: String) throws {
-        if !Pokemon.statsEnabled {
+        if !Pokemon.timingStatsEnabled {
             return
         }
         let sql: String

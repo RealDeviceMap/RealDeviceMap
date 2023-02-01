@@ -14,7 +14,9 @@ import PerfectThread
 
 class Stats: JSONConvertibleObject {
 
-    public static var statsEnabled = false
+    public static let global = Stats()
+
+    public static var pokemonArchiveEnabled = false
     public static var cleanupPokemon = true
     public static var cleanupIncident = true
 
@@ -22,15 +24,34 @@ class Stats: JSONConvertibleObject {
     private static var pokemonStatsLock = Threading.Lock()
     private static var pokemonCount = PokemonCountDetail()
 
+    private init() {
+        if Stats.cleanupPokemon {
+            if Stats.pokemonArchiveEnabled {
+                Log.info(message: "[STATS] Enabled pokemon history for stats")
+            } else {
+                Log.info(message: "[STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
+            }
+            Stats.startDatabaseArchiver()
+        } else {
+            Log.info(message: "[STATS] Cleanup and pokemon history for pokemon disabled")
+        }
+        if Stats.cleanupIncident {
+            Log.info(message: "[STATS] Cleanup of incidents enabled")
+            Stats.startIncidentExpiry()
+        } else {
+            Log.info(message: "[STATS] Cleanup of incidents disabled")
+        }
+    }
+
     // =================================================================================================================
     // Database Archiver, Stats Logger and Clearer Utilities
     // ================================================================================================================
 
-    static func startDatabaseArchiver() {
+    private func startDatabaseArchiver() {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerPokemonInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerPokemonKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerPokemonBatchSize) as Int).toUInt()
-        if !Stats.statsEnabled {
+        if !Stats.pokemonArchiveEnabled {
             Log.info(message: "[STATS] Pokemon config: " +
                 "keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
         }
@@ -43,7 +64,7 @@ class Stats: JSONConvertibleObject {
                 }
                 let start = Date()
                 let affectedRows: UInt?
-                if statsEnabled {
+                if pokemonArchiveEnabled {
                     affectedRows = createStatsAndArchive(mysql: mysql)
                 } else {
                     affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
@@ -55,7 +76,7 @@ class Stats: JSONConvertibleObject {
         }
     }
 
-    static func startIncidentExpiry() {
+    private func startIncidentExpiry() {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerIncidentInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerIncidentKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerIncidentBatchSize) as Int).toUInt()
@@ -75,7 +96,7 @@ class Stats: JSONConvertibleObject {
         }
     }
 
-    static func startStatsLogger() {
+    private func startStatsLogger() {
         Threading.getQueue(name: "StatsLogger", type: .serial).dispatch {
             while true {
                 Threading.sleep(seconds: 600)
@@ -92,7 +113,7 @@ class Stats: JSONConvertibleObject {
     // HELPER METHODS
     // =================================================================================================================
 
-    private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+    private func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -120,7 +141,7 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
-    private static func createStatsAndArchive(mysql: MySQL) -> UInt? {
+    private func createStatsAndArchive(mysql: MySQL) -> UInt? {
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
         guard mysqlStmt.execute() else {
@@ -136,7 +157,7 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
-    private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+    private func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -164,7 +185,7 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
-    private static func logPokemonCount(mysql: MySQL) {
+    private func logPokemonCount(mysql: MySQL) {
         pokemonStatsLock.lock()
         let currentStats = pokemonCount
         pokemonCount = PokemonCountDetail()
@@ -185,7 +206,6 @@ class Stats: JSONConvertibleObject {
 
         for (pokemonId, count) in currentStats.ivCount.enumerated() where count > 0 {
             ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
-
         }
 
         for (pokemonId, count) in currentStats.hundos.enumerated() where count > 0 {
@@ -202,7 +222,7 @@ class Stats: JSONConvertibleObject {
         updateStatsCount(mysql: mysql, table: "pokemon_shiny_stats", rows: shinyRows)
     }
 
-    private static func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
+    private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
         //TODO: join rows to a mult insert statement
     }
 
@@ -1140,7 +1160,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let usePokemonHistory = Stats.statsEnabled && Stats.cleanupPokemon
+        let usePokemonHistory = Stats.pokemonArchiveEnabled && Stats.cleanupPokemon
 
         let gender = usePokemonHistory ? ""
             : ", SUM(gender = 1) AS male, SUM(gender = 2) AS female, SUM(gender = 3) AS genderless"
@@ -1217,7 +1237,7 @@ class Stats: JSONConvertibleObject {
             stats["level_20_29"] = Int64(result[17] as? String ?? "0") ?? 0
             stats["level_30_35"] = Int64(result[18] as? String ?? "0") ?? 0
 
-            if !Stats.statsEnabled {
+            if !Stats.pokemonArchiveEnabled {
                 stats["male"] = Int64(result[19] as? String ?? "0") ?? 0
                 stats["female"] = Int64(result[20] as? String ?? "0") ?? 0
                 stats["genderless"] = Int64(result[21] as? String ?? "0") ?? 0
