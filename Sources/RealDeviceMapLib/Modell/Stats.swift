@@ -123,15 +123,15 @@ class Stats {
             pokemonStatsLock.lock()
 
             if old == nil || old!.pokemonId != new.pokemonId { // pokemon is new or type has changed
-                pokemonCount.count[new.pokemonId] =+ 1
+                pokemonCount.count[new.pokemonId] += 1
             }
             if new.cp != nil {
-                pokemonCount.ivCount[new.pokemonId] =+ 1
+                pokemonCount.ivCount[new.pokemonId] += 1
                 if let shiny = new.shiny, shiny == true {
-                    pokemonCount.shiny[new.pokemonId] =+ 1
+                    pokemonCount.shiny[new.pokemonId] += 1
                 }
                 if let atk = new.atkIv, atk == 15, let def = new.defIv, def == 15, let sta = new.staIv, sta == 15 {
-                    pokemonCount.hundos[new.pokemonId] =+ 1
+                    pokemonCount.hundos[new.pokemonId] += 1
                 }
             }
             pokemonStatsLock.unlock()
