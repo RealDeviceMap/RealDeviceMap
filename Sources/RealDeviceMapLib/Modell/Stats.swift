@@ -179,29 +179,21 @@ class Stats: JSONConvertibleObject {
         formatter.dateFormat = "yyyy-MM-dd"
         let midnight = formatter.string(from: Date())
 
-        for (pokemonId, count) in currentStats.count.enumerated() {
-            if count > 0 {
-                let row = PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count)
-                allRows.append(row)
-            }
+        for (pokemonId, count) in currentStats.count.enumerated() where count > 0 {
+            allRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
         }
 
-        for (pokemonId, count) in currentStats.ivCount.enumerated() {
-            if count > 0 {
-                ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
-            }
+        for (pokemonId, count) in currentStats.ivCount.enumerated() where count > 0 {
+            ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+
         }
 
-        for (pokemonId, count) in currentStats.hundos.enumerated() {
-            if count > 0 {
-                hundoRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
-            }
+        for (pokemonId, count) in currentStats.hundos.enumerated() where count > 0 {
+            hundoRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
         }
 
-        for (pokemonId, count) in currentStats.shiny.enumerated() {
-            if count > 0 {
-                shinyRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
-            }
+        for (pokemonId, count) in currentStats.shiny.enumerated() where count > 0 {
+            shinyRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
         }
 
         updateStatsCount(mysql: mysql, table: "pokemon_stats", rows: allRows)
