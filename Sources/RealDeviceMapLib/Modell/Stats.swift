@@ -16,13 +16,14 @@ class Stats: JSONConvertibleObject {
 
     public static let global = Stats()
 
+    public static var pokemonCountStats = true
     public static var pokemonArchiveEnabled = false
     public static var cleanupPokemon = true
     public static var cleanupIncident = true
 
     private static var maxPokemon = 1000
-    private static var pokemonStatsLock = Threading.Lock()
-    private static var pokemonCount = PokemonCountDetail()
+    private var pokemonStatsLock = Threading.Lock()
+    private var pokemonCount = PokemonCountDetail()
 
     private init() {
         if Stats.cleanupPokemon {
@@ -31,15 +32,22 @@ class Stats: JSONConvertibleObject {
             } else {
                 Log.info(message: "[STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
             }
-            Stats.startDatabaseArchiver()
+            startDatabaseArchiver()
         } else {
             Log.info(message: "[STATS] Cleanup and pokemon history for pokemon disabled")
         }
         if Stats.cleanupIncident {
             Log.info(message: "[STATS] Cleanup of incidents enabled")
-            Stats.startIncidentExpiry()
+            startIncidentExpiry()
         } else {
             Log.info(message: "[STATS] Cleanup of incidents disabled")
+        }
+
+        if Stats.pokemonCountStats {
+            Log.info(message: "[STATS] Enabled pokemon count for stats")
+            startStatsLogger()
+        } else {
+            Log.info(message: "[STATS] Disabled pokemon count for stats")
         }
     }
 
