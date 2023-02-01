@@ -249,7 +249,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         setPokemonDisplay(pokemonId: pokemonId, display: wildPokemon.pokemon.pokemonDisplay)
 
         if id == "" || [SeenType.nearbyCell, SeenType.nearbyStop].contains(seenType) {
-            try? updateStats(mysql: mysql, id: encounterId, event: statsSeenWild)
+            try? updateTimingStats(mysql: mysql, id: encounterId, event: statsSeenWild)
         }
 
         if isDitto {
@@ -280,7 +280,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             }
             self.seenType = SeenType.wild
             clearEncounterDetails()
-            try? updateStats(mysql: mysql, id: encounterId, event: statsStatsReset)
+            try? updateTimingStats(mysql: mysql, id: encounterId, event: statsStatsReset)
         } else if self.seenType != .encounter {
             self.seenType = SeenType.wild
         }
@@ -298,7 +298,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         setPokemonDisplay(pokemonId: pokemonId, display: nearbyPokemon.pokemonDisplay)
 
         if id == "" {
-            try? updateStats(mysql: mysql, id: encounterId, event: (pokestopId.isEmpty ? statsSeenCell : statsSeenStop))
+            try? updateTimingStats(mysql: mysql, id: encounterId, event: (pokestopId.isEmpty ? statsSeenCell : statsSeenStop))
         }
 
         if isDitto {
@@ -325,7 +325,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
                 self.seenType = .wild
                 // clear encounter details, lat, lon is preserved - pokemon changed dex number or weather-boost
                 clearEncounterDetails()
-                try? updateStats(mysql: mysql, id: encounterId, event: statsStatsReset)
+                try? updateTimingStats(mysql: mysql, id: encounterId, event: statsStatsReset)
                 Log.debug(message: "[POKEMON] Pokemon \(id) cleared encounter details")
                 return
             }
@@ -373,7 +373,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         let encounterId = mapPokemon.encounterID.description
         self.id = encounterId
 
-        try? updateStats(mysql: mysql, id: encounterId, event: statsSeenLure)
+        try? updateTimingStats(mysql: mysql, id: encounterId, event: statsSeenLure)
 
         let spawnpointId: String = mapPokemon.spawnpointID
         guard let pokestop = try? Pokestop.getWithId(mysql: mysql, id: spawnpointId) else {
@@ -470,7 +470,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
             timestampMs: timestampMs, timestampAccurate: false)
 
         self.seenType = SeenType.encounter
-        try? updateStats(mysql: mysql, id: encounterId, event: statsEncounter)
+        try? updateTimingStats(mysql: mysql, id: encounterId, event: statsEncounter)
     }
 
     public func updateFromDiskEncounterProto(mysql: MySQL, diskEncounterData: DiskEncounterOutProto,
@@ -517,7 +517,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         }
 
         self.seenType = SeenType.lureEncounter
-        try? updateStats(mysql: mysql, id: id, event: statsLureEncounter)
+        try? updateTimingStats(mysql: mysql, id: id, event: statsLureEncounter)
     }
 
     public func save(mysql: MySQL) throws {
@@ -757,6 +757,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         Pokemon.cache?.set(id: uuid, value: self)
 
         Pokemon.createPokemonWebhooks(old: oldPokemon, new: self)
+        Stats.global.updatePokemonCountStats(old: oldPokemon, new: self)
         if oldPokemon == nil {
             InstanceController.global.gotPokemon(pokemon: self)
             if self.atkIv != nil {
@@ -1150,7 +1151,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         }
     }
 
-    private func updateStats(mysql: MySQL, id: String, event: String) throws {
+    private func updateTimingStats(mysql: MySQL, id: String, event: String) throws {
         if !Pokemon.timingStatsEnabled {
             return
         }

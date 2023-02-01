@@ -45,7 +45,7 @@ class Stats {
 
         if Stats.pokemonCountStats {
             Log.info(message: "[STATS] Enabled pokemon count for stats")
-            startStatsLogger()
+            startPokemonCountStatsLogger()
         } else {
             Log.info(message: "[STATS] Disabled pokemon count for stats")
         }
@@ -104,7 +104,7 @@ class Stats {
         }
     }
 
-    private func startStatsLogger() {
+    private func startPokemonCountStatsLogger() {
         Threading.getQueue(name: "StatsLogger", type: .serial).dispatch {
             while true {
                 Threading.sleep(seconds: 600)
@@ -115,6 +115,10 @@ class Stats {
                 self.logPokemonCount(mysql: mysql)
             }
         }
+    }
+
+    public func updatePokemonCountStats(old: Pokemon?, new: Pokemon) {
+
     }
 
     // =================================================================================================================
