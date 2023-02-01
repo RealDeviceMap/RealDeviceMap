@@ -12,7 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import PerfectThread
 
-class Stats: JSONConvertibleObject {
+class Stats {
 
     public static let global = Stats()
 
@@ -246,7 +246,7 @@ class Stats: JSONConvertibleObject {
         }
         values += "(?,?,?) "
 
-        var sql = """
+        let sql = """
                   INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values)
                   ON DUPLICATE KEY UPDATE `count` = `count` + VALUES(`count`)
                   """
@@ -290,7 +290,7 @@ class Stats: JSONConvertibleObject {
     // Stats related to triggers, stats page
     // =================================================================================================================
 
-    override func getJSONValues() -> [String: Any] {
+    func getJSONValues() -> [String: Any] {
         let pokemonStats = try? Stats.getPokemonStats()
         let pokemonIVStats = try? Stats.getPokemonIVStats()
         let raidStats = try? Stats.getRaidStats()
