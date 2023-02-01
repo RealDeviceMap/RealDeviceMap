@@ -231,7 +231,7 @@ class Stats: JSONConvertibleObject {
     }
 
     private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
-        //TODO: join rows to a mult insert statement
+        //MARK: join rows to a mult insert statement
     }
 
     struct PokemonCountDetail {
