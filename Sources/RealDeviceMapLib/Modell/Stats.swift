@@ -200,6 +200,8 @@ class Stats: JSONConvertibleObject {
             pokemonCount = PokemonCountDetail()
         }
 
+        Log.info(message: "[STATS] Update pokemon count tables")
+
         var hundoRows = [PokemonCountDbRow]()
         var shinyRows = [PokemonCountDbRow]()
         var ivRows = [PokemonCountDbRow]()
@@ -235,7 +237,33 @@ class Stats: JSONConvertibleObject {
     }
 
     private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
-        // MARK: join rows to a mult insert statement
+        if rows.count == 0 {
+            return
+        }
+        var values = ""
+        for _ in 1..<rows.count {
+            values += "(?,?,?), "
+        }
+        values += "(?,?,?)"
+
+        var sql = """
+                  INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values) 
+                  ON DUPLICATE KEY UPDATE `count` = `count` + VALUES(`count`)
+                  """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for row in rows {
+            mysqlStmt.bindParam(row.date)
+            mysqlStmt.bindParam(row.pokemonId)
+            mysqlStmt.bindParam(row.count)
+        }
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query 'INSERT INTO \(table)'. " +
+                mysqlStmt.errorMessage())
+            return
+        }
     }
 
     struct PokemonCountDetail {
@@ -256,10 +284,6 @@ class Stats: JSONConvertibleObject {
         var date: String
         var pokemonId: Int
         var count: Int
-
-        func toString() -> String {
-            "(\(date), \(pokemonId), \(count))"
-        }
     }
 
     // =================================================================================================================
