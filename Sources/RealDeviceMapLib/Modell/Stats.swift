@@ -73,9 +73,9 @@ class Stats: JSONConvertibleObject {
                 let start = Date()
                 let affectedRows: UInt?
                 if pokemonArchiveEnabled {
-                    affectedRows = createStatsAndArchive(mysql: mysql)
+                    affectedRows = self.createStatsAndArchive(mysql: mysql)
                 } else {
-                    affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                    affectedRows = self.clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 }
                 Log.info(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s " +
@@ -97,7 +97,7 @@ class Stats: JSONConvertibleObject {
                     continue
                 }
                 let start = Date()
-                let affectedRows = clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                let affectedRows = self.clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 Log.info(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
@@ -112,7 +112,7 @@ class Stats: JSONConvertibleObject {
                     Log.error(message: "[STATS] [StatsLogger] Failed to connect to database.")
                     continue
                 }
-                logPokemonCount(mysql: mysql)
+                self.logPokemonCount(mysql: mysql)
             }
         }
     }
