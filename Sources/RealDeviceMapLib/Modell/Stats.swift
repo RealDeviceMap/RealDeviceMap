@@ -118,7 +118,23 @@ class Stats {
     }
 
     public func updatePokemonCountStats(old: Pokemon?, new: Pokemon) {
+        if old == nil || old!.cp != new.cp { // pokemon is new or cp has changed (eg encountered, or re-encountered)
+            pokemonStatsLock.lock()
 
+            if old == nil || old!.pokemonId != new.pokemonId { // pokemon is new or type has changed
+                pokemonCount.count[new.pokemonId]++
+            }
+            if new.cp != nil {
+                pokemonCount.ivCount[new.pokemonId]++
+                if new.shiny {
+                    pokemonCount.shiny[new.pokemonId]++
+                }
+                if let atk = new.atkIv, atk == 15, let def = new.defIv, def == 15, let sta = new.staIv, sta == 15 {
+                    pokemonCount.hundos[new.pokemonId]++
+                }
+            }
+            pokemonStatsLock.unlock()
+        }
     }
 
     // =================================================================================================================

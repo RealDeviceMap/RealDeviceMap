@@ -758,6 +758,7 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
 
         Pokemon.createPokemonWebhooks(old: oldPokemon, new: self)
         Stats.global.updatePokemonCountStats(old: oldPokemon, new: self)
+
         if oldPokemon == nil {
             InstanceController.global.gotPokemon(pokemon: self)
             if self.atkIv != nil {
