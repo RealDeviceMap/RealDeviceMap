@@ -244,10 +244,10 @@ class Stats: JSONConvertibleObject {
         for _ in 1..<rows.count {
             values += "(?,?,?), "
         }
-        values += "(?,?,?)"
+        values += "(?,?,?) "
 
         var sql = """
-                  INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values) 
+                  INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values)
                   ON DUPLICATE KEY UPDATE `count` = `count` + VALUES(`count`)
                   """
 
