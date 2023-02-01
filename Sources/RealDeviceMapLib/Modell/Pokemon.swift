@@ -298,7 +298,8 @@ public class Pokemon: JSONConvertibleObject, NSCopying, WebHookEvent, Equatable,
         setPokemonDisplay(pokemonId: pokemonId, display: nearbyPokemon.pokemonDisplay)
 
         if id == "" {
-            try? updateTimingStats(mysql: mysql, id: encounterId, event: (pokestopId.isEmpty ? statsSeenCell : statsSeenStop))
+            let event = (pokestopId.isEmpty ? statsSeenCell : statsSeenStop)
+            try? updateTimingStats(mysql: mysql, id: encounterId, event: event)
         }
 
         if isDitto {
