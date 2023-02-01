@@ -72,7 +72,7 @@ class Stats: JSONConvertibleObject {
                 }
                 let start = Date()
                 let affectedRows: UInt?
-                if pokemonArchiveEnabled {
+                if Stats.pokemonArchiveEnabled {
                     affectedRows = self.createStatsAndArchive(mysql: mysql)
                 } else {
                     affectedRows = self.clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
@@ -273,10 +273,10 @@ class Stats: JSONConvertibleObject {
         var ivCount: [Int]
 
         init() {
-            hundos = [Int](repeating: 0, count: maxPokemon)
-            shiny = [Int](repeating: 0, count: maxPokemon)
-            count = [Int](repeating: 0, count: maxPokemon)
-            ivCount = [Int](repeating: 0, count: maxPokemon)
+            hundos = [Int](repeating: 0, count: Stats.maxPokemon)
+            shiny = [Int](repeating: 0, count: Stats.maxPokemon)
+            count = [Int](repeating: 0, count: Stats.maxPokemon)
+            ivCount = [Int](repeating: 0, count: Stats.maxPokemon)
         }
     }
 
