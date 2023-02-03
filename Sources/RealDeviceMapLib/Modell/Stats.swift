@@ -233,8 +233,6 @@ class Stats {
         formatter.timeZone = Localizer.global.timeZone
         let midnight = formatter.string(from: Date())
 
-        print("[TMP] \(midnight)")
-
         for (pokemonId, count) in currentStats.count.enumerated() where count > 0 {
             allRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
         }
