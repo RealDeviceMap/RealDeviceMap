@@ -126,8 +126,12 @@ public class ConfigLoader {
             ?? defaultConfig.application.clearer.incident.keepTime.value()!
         case .dbClearerIncidentBatchSize: return localConfig.application.clearer.incident.batchSize.value()
             ?? defaultConfig.application.clearer.incident.batchSize.value()!
-        case .statsEnabled: return localConfig.application.stats.value()
-            ?? defaultConfig.application.stats.value()!
+        case .statsPokemonArchiveEnabled: return localConfig.application.stats.pokemon.archive.value()
+            ?? defaultConfig.application.stats.pokemon.archive.value()!
+        case .statsPokemonTimingEnabled: return localConfig.application.stats.pokemon.timing.value()
+            ?? defaultConfig.application.stats.pokemon.timing.value()!
+        case .statsPokemonCountEnabled: return localConfig.application.stats.pokemon.count.value()
+            ?? defaultConfig.application.stats.pokemon.count.value()!
         case .pvpEnabled: return localConfig.application.pvp.enabled.value()
             ?? defaultConfig.application.pvp.enabled.value()!
         case .pvpLevelCaps: return localConfig.application.pvp.levelCaps.value()
@@ -198,7 +202,9 @@ public class ConfigLoader {
         case .dbClearerIncidentInterval: return castValue(value: value)
         case .dbClearerIncidentKeepTime: return castValue(value: value)
         case .dbClearerIncidentBatchSize: return castValue(value: value)
-        case .statsEnabled: return castValue(value: value)
+        case .statsPokemonArchiveEnabled: return castValue(value: value)
+        case .statsPokemonTimingEnabled: return castValue(value: value)
+        case .statsPokemonCountEnabled: return castValue(value: value)
         case .pvpEnabled: return false as! T // NO_PVP
         case .pvpLevelCaps: return value.components(separatedBy: ",").map({ Int($0)! }) as! T
         case .pvpDefaultRank: return value as! T
@@ -272,7 +278,9 @@ public class ConfigLoader {
         case dbClearerIncidentInterval = "DB_CLEARER_IN_INTERVAL" // not used in env
         case dbClearerIncidentKeepTime = "DB_CLEARER_IN_KEEP_TIME" // not used in env
         case dbClearerIncidentBatchSize = "DB_CLEARER_IN_BATCH_SIZE" // not used in env
-        case statsEnabled = "STATS" // not used in env
+        case statsPokemonArchiveEnabled = "STATS_ARCHIVE_POKEMON" // not used in env
+        case statsPokemonTimingEnabled = "STATS_TIMING_POKEMON" // not used in env
+        case statsPokemonCountEnabled = "STATS_COUNT_POKEMON" // not used in env
         case pvpEnabled = "NO_PVP"
         case pvpLevelCaps = "PVP_LEVEL_CAPS"
         case pvpDefaultRank = "PVP_DEFAULT_RANK"

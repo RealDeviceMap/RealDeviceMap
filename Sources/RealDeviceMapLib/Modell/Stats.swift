@@ -12,21 +12,54 @@ import PerfectLib
 import PerfectMySQL
 import PerfectThread
 
-class Stats: JSONConvertibleObject {
+class Stats {
 
-    public static var statsEnabled = false
+    public static let global = Stats()
+
+    public static var pokemonCountStats = true
+    public static var pokemonArchiveEnabled = false
     public static var cleanupPokemon = true
     public static var cleanupIncident = true
 
+    private static var maxPokemon = 1000
+    private var pokemonStatsLock = Threading.Lock()
+    private var pokemonCount = PokemonCountDetail()
+
+    private init() {
+        if Stats.cleanupPokemon {
+            if Stats.pokemonArchiveEnabled {
+                Log.info(message: "[STATS] Enabled pokemon history for stats")
+            } else {
+                Log.info(message: "[STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
+            }
+            startDatabaseArchiver()
+        } else {
+            Log.info(message: "[STATS] Cleanup and pokemon history for pokemon disabled")
+        }
+        if Stats.cleanupIncident {
+            Log.info(message: "[STATS] Cleanup of incidents enabled")
+            startIncidentExpiry()
+        } else {
+            Log.info(message: "[STATS] Cleanup of incidents disabled")
+        }
+
+        if Stats.pokemonCountStats {
+            Log.info(message: "[STATS] Enabled pokemon count for stats")
+            startPokemonCountStatsLogger()
+        } else {
+            Log.info(message: "[STATS] Disabled pokemon count for stats")
+        }
+    }
+
     // =================================================================================================================
-    // Database Archiver and Clearer Utilities
+    // Database Archiver, Stats Logger and Clearer Utilities
     // ================================================================================================================
 
-    static func startDatabaseArchiver() {
+    private func startDatabaseArchiver() {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerPokemonInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerPokemonKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerPokemonBatchSize) as Int).toUInt()
-        if !Stats.statsEnabled {
+        if !Stats.pokemonArchiveEnabled {
             Log.info(message: "[STATS] Pokemon config: " +
                 "keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
         }
@@ -39,10 +72,10 @@ class Stats: JSONConvertibleObject {
                 }
                 let start = Date()
                 let affectedRows: UInt?
-                if statsEnabled {
-                    affectedRows = createStatsAndArchive(mysql: mysql)
+                if Stats.pokemonArchiveEnabled {
+                    affectedRows = self.createStatsAndArchive(mysql: mysql)
                 } else {
-                    affectedRows = clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                    affectedRows = self.clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 }
                 Log.info(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s " +
@@ -51,7 +84,7 @@ class Stats: JSONConvertibleObject {
         }
     }
 
-    static func startIncidentExpiry() {
+    private func startIncidentExpiry() {
         let interval = (ConfigLoader.global.getConfig(type: .dbClearerIncidentInterval) as Int).toDouble()
         let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerIncidentKeepTime) as Int).toDouble()
         let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerIncidentBatchSize) as Int).toUInt()
@@ -64,14 +97,52 @@ class Stats: JSONConvertibleObject {
                     continue
                 }
                 let start = Date()
-                let affectedRows = clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                let affectedRows = self.clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
                 Log.info(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
                     "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
             }
         }
     }
 
-    private static func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+    private func startPokemonCountStatsLogger() {
+        Threading.getQueue(name: "StatsLogger", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: 600)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [StatsLogger] Failed to connect to database.")
+                    continue
+                }
+                self.logPokemonCount(mysql: mysql)
+            }
+        }
+    }
+
+    public func updatePokemonCountStats(old: Pokemon?, new: Pokemon) {
+        if Stats.pokemonCountStats && old == nil || old!.cp != new.cp {
+            // pokemon is new or cp has changed (eg encountered, or re-encountered)
+            pokemonStatsLock.lock()
+            let pokemonId = new.pokemonId.toInt()
+            if old == nil || old!.pokemonId != new.pokemonId { // pokemon is new or type has changed
+                pokemonCount.count[pokemonId] += 1
+            }
+            if new.cp != nil {
+                pokemonCount.ivCount[pokemonId] += 1
+                if let shiny = new.shiny, shiny == true {
+                    pokemonCount.shiny[pokemonId] += 1
+                }
+                if let atk = new.atkIv, atk == 15, let def = new.defIv, def == 15, let sta = new.staIv, sta == 15 {
+                    pokemonCount.hundos[pokemonId] += 1
+                }
+            }
+            pokemonStatsLock.unlock()
+        }
+    }
+
+    // =================================================================================================================
+    // HELPER METHODS
+    // =================================================================================================================
+
+    private func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -99,7 +170,7 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
-    private static func createStatsAndArchive(mysql: MySQL) -> UInt? {
+    private func createStatsAndArchive(mysql: MySQL) -> UInt? {
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
         guard mysqlStmt.execute() else {
@@ -115,7 +186,7 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
-    private static func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+    private func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
         var affectedRows: UInt = 0
         var totalRows: UInt = 0
         let sql = """
@@ -143,11 +214,102 @@ class Stats: JSONConvertibleObject {
         return totalRows
     }
 
+    private func logPokemonCount(mysql: MySQL) {
+        var currentStats = PokemonCountDetail()
+        pokemonStatsLock.doWithLock {
+            currentStats = self.pokemonCount
+            pokemonCount = PokemonCountDetail()
+        }
+
+        Log.info(message: "[STATS] Update pokemon count tables")
+
+        var hundoRows = [PokemonCountDbRow]()
+        var shinyRows = [PokemonCountDbRow]()
+        var ivRows = [PokemonCountDbRow]()
+        var allRows = [PokemonCountDbRow]()
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = Localizer.global.timeZone
+        let midnight = formatter.string(from: Date())
+
+        for (pokemonId, count) in currentStats.count.enumerated() where count > 0 {
+            allRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.ivCount.enumerated() where count > 0 {
+            ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.hundos.enumerated() where count > 0 {
+            hundoRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.shiny.enumerated() where count > 0 {
+            shinyRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        updateStatsCount(mysql: mysql, table: "pokemon_stats", rows: allRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_iv_stats", rows: ivRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_hundo_stats", rows: hundoRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_shiny_stats", rows: shinyRows)
+    }
+
+    private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
+        if rows.count == 0 {
+            return
+        }
+        var values = ""
+        for _ in 1..<rows.count {
+            values += "(?,?,?), "
+        }
+        values += "(?,?,?) "
+
+        let sql = """
+                  INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values)
+                  ON DUPLICATE KEY UPDATE `count` = `count` + VALUES(`count`)
+                  """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for row in rows {
+            mysqlStmt.bindParam(row.date)
+            mysqlStmt.bindParam(row.pokemonId)
+            mysqlStmt.bindParam(row.count)
+        }
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query 'INSERT INTO \(table)'. " +
+                mysqlStmt.errorMessage())
+            return
+        }
+    }
+
+    struct PokemonCountDetail {
+        var hundos: [Int]
+        var shiny: [Int]
+        var count: [Int]
+        var ivCount: [Int]
+
+        init() {
+            hundos = [Int](repeating: 0, count: Stats.maxPokemon)
+            shiny = [Int](repeating: 0, count: Stats.maxPokemon)
+            count = [Int](repeating: 0, count: Stats.maxPokemon)
+            ivCount = [Int](repeating: 0, count: Stats.maxPokemon)
+        }
+    }
+
+    struct PokemonCountDbRow {
+        var date: String
+        var pokemonId: Int
+        var count: Int
+    }
+
     // =================================================================================================================
     // Stats related to triggers, stats page
     // =================================================================================================================
 
-    override func getJSONValues() -> [String: Any] {
+    func getJSONValues() -> [String: Any] {
         let pokemonStats = try? Stats.getPokemonStats()
         let pokemonIVStats = try? Stats.getPokemonIVStats()
         let raidStats = try? Stats.getRaidStats()
@@ -1053,7 +1215,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let usePokemonHistory = Stats.statsEnabled && Stats.cleanupPokemon
+        let usePokemonHistory = Stats.pokemonArchiveEnabled && Stats.cleanupPokemon
 
         let gender = usePokemonHistory ? ""
             : ", SUM(gender = 1) AS male, SUM(gender = 2) AS female, SUM(gender = 3) AS genderless"
@@ -1130,7 +1292,7 @@ class Stats: JSONConvertibleObject {
             stats["level_20_29"] = Int64(result[17] as? String ?? "0") ?? 0
             stats["level_30_35"] = Int64(result[18] as? String ?? "0") ?? 0
 
-            if !Stats.statsEnabled {
+            if !Stats.pokemonArchiveEnabled {
                 stats["male"] = Int64(result[19] as? String ?? "0") ?? 0
                 stats["female"] = Int64(result[20] as? String ?? "0") ?? 0
                 stats["genderless"] = Int64(result[21] as? String ?? "0") ?? 0

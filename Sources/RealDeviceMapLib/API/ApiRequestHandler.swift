@@ -2099,7 +2099,7 @@ public class ApiRequestHandler {
 
         let permViewStats = perms.contains(.viewStats)
         if permViewStats && showDashboardStats {
-            let stats = Stats().getJSONValues()
+            let stats = Stats.global.getJSONValues()
             data["pokemon_total"] = stats["pokemon_total"]
             data["pokemon_iv_total"] = stats["pokemon_iv_total"]
             data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
