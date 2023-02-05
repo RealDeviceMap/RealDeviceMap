@@ -118,7 +118,7 @@ class Stats {
     }
 
     public func updatePokemonCountStats(old: Pokemon?, new: Pokemon) {
-        if Stats.pokemonCountStats && old == nil || old!.cp != new.cp {
+        if Stats.pokemonCountStats && (old == nil || old!.cp != new.cp) {
             // pokemon is new or cp has changed (eg encountered, or re-encountered)
             pokemonStatsLock.lock()
             let pokemonId = new.pokemonId.toInt()
