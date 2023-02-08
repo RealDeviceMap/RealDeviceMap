@@ -1180,8 +1180,8 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
 
         let bboxCheck = """
-                        AND WHERE (lat BETWEEN \(minLat) AND \(maxLat))
-                        AND WHERE (lon BETWEEN \(minLon) AND \(maxLon))
+                        AND (lat BETWEEN \(minLat) AND \(maxLat))
+                        AND (lon BETWEEN \(minLon) AND \(maxLon))
                         """
 
         let coords = Pokestop.flattenCoords(area: areaString)
