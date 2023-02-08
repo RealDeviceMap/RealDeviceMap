@@ -1147,25 +1147,39 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
         }
-
+        var minLat: Double = 90.0
+        var maxLat: Double = -90.0
+        var minLon: Double = 180.0
+        var maxLon: Double = -180.0
         var areaString = ""
+
         let areaType1 = instance.data["area"] as? [[String: Double]]
         let areaType2 = instance.data["area"] as? [[[String: Double]]]
         if areaType1 != nil {
             for coordLine in areaType1! {
-                let lat = coordLine["lat"]
-                let lon = coordLine["lon"]
-                areaString += "\(lat!),\(lon!)\n"
+                let lat = coordLine["lat"] ?? 0.0
+                let lon = coordLine["lon"] ?? 0.0
+                areaString += "\(lat),\(lon)\n"
+                minLat = lat < minLat ? lat : minLat
+                maxLat = lat > maxLat ? lat : maxLat
+                minLon = lon < minLon ? lon : minLon
+                maxLon = lon > maxLon ? lon : maxLon
             }
         } else if areaType2 != nil {
             for geofence in areaType2! {
                 for coordLine in geofence {
-                    let lat = coordLine["lat"]
-                    let lon = coordLine["lon"]
-                    areaString += "\(lat!),\(lon!)\n"
+                    let lat = coordLine["lat"] ?? 0.0
+                    let lon = coordLine["lon"] ?? 0.0
+                    areaString += "\(lat),\(lon)\n"
+                    minLat = lat < minLat ? lat : minLat
+                    maxLat = lat > maxLat ? lat : maxLat
+                    minLon = lon < minLon ? lon : minLon
+                    maxLon = lon > maxLon ? lon : maxLon
                 }
             }
         }
+
+        let bboxCheck = "AND WHERE (lat BETWEEN \(minLat) AND \(maxLat) AND WHERE (lon BETWEEN \(minLon) AND \(maxLon)"
 
         let coords = Pokestop.flattenCoords(area: areaString)
         let sql = """
@@ -1175,10 +1189,8 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
                 alternative_quest_template = NULL, alternative_quest_title = NULL
-            WHERE (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL) AND ST_CONTAINS(
-                ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
-                POINT(pokestop.lat, pokestop.lon)
-            )
+            WHERE (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL) \(bboxCheck)
+                AND ST_CONTAINS(ST_GEOMFROMTEXT('POLYGON((\(coords)))'), POINT(pokestop.lat, pokestop.lon))
         """
 
         let mysqlStmt = MySQLStmt(mysql)

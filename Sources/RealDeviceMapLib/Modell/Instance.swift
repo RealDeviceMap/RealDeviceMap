@@ -151,6 +151,7 @@ public class Instance: Hashable {
               FROM device
               GROUP BY instance_name
             ) devices ON (inst.name = devices.instance_name)
+            ORDER BY name
         """
 
         let mysqlStmt = MySQLStmt(mysql)
