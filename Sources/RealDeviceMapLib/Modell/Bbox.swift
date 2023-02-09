@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import Turf
 
 public class Bbox {
     var minLat: Double

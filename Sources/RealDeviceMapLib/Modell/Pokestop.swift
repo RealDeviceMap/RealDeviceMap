@@ -12,7 +12,6 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
-
 public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
 
     public static var lureTime: UInt32 = 1800
