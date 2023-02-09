@@ -12,6 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 
+
 public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
 
     public static var lureTime: UInt32 = 1800
@@ -1212,7 +1213,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
     }
 
-    internal static func clearQuests(mysql: MySQL?=nil, area: [Coord]) throws {
+    internal static func clearQuests(mysql: MySQL?=nil, area: Bbox) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -1231,14 +1232,17 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
                 alternative_quest_template = NULL, alternative_quest_title = NULL
-            WHERE ST_CONTAINS(
-                ST_GEOMFROMTEXT('POLYGON((\(coords)))'),
-                POINT(pokestop.lat, pokestop.lon)
+            WHERE (lat between ? AND ?) AND (lon between ? AND ?)
             ) AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
+
+        mysqlStmt.bindParam(area.minLat)
+        mysqlStmt.bindParam(area.maxLat)
+        mysqlStmt.bindParam(area.minLon)
+        mysqlStmt.bindParam(area.maxLon)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[INSTANCE] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage()))")
