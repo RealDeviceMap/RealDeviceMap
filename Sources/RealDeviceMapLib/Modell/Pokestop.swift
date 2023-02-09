@@ -1226,7 +1226,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
                 alternative_quest_template = NULL, alternative_quest_title = NULL
             WHERE (lat between ? AND ?) AND (lon between ? AND ?)
-            ) AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
+            AND (quest_type IS NOT NULL OR alternative_quest_type IS NOT NULL)
         """
 
         let mysqlStmt = MySQLStmt(mysql)
