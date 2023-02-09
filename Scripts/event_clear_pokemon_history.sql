@@ -18,5 +18,5 @@ DELIMITER ;
 
 CALL clear_pokemon_history();
 
-CREATE EVENT IF NOT EXISTS `clear_pokemon_history` ON SCHEDULE EVERY 1 DAY
+CREATE EVENT IF NOT EXISTS `clear_pokemon_history` ON SCHEDULE EVERY 5 MINUTE
 DO CALL clear_pokemon_history();
