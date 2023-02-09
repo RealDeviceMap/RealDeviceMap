@@ -1218,12 +1218,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             throw DBController.DBError()
         }
 
-        var areaString = ""
-        for coordLine in area {
-            areaString += "\(coordLine.lat),\(coordLine.lon)\n"
-        }
-
-        let coords = Pokestop.flattenCoords(area: areaString)
         let sql = """
             UPDATE pokestop
             SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
