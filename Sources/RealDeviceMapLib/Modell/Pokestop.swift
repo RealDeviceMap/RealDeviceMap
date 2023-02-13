@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import PerfectThread
 import POGOProtos
 
 public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
@@ -1093,7 +1094,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
 
-        if ids?.count == 0 {
+        if ids == nil || ids!.count == 0 {
             return
         }
 
@@ -1102,40 +1103,37 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             throw DBController.DBError()
         }
 
-        let whereSQL: String
-
-        if ids != nil {
+        for chunks in ids!.chunked(into: 1000) {
+            Threading.sleep(seconds: 0.2)
             var inSQL = "("
-            for _ in 1..<ids!.count {
+            for _ in 1..<chunks.count {
                 inSQL += "?, "
             }
             inSQL += "?)"
-            whereSQL = "WHERE id IN \(inSQL)"
-        } else {
-            whereSQL = ""
-        }
+            let whereSQL = "WHERE id IN \(inSQL)"
 
-        let sql = """
-            UPDATE pokestop
-            SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
-                alternative_quest_type = NULL, alternative_quest_timestamp = NULL, alternative_quest_target = NULL,
-                alternative_quest_conditions = NULL, alternative_quest_rewards = NULL,
-                alternative_quest_template = NULL, alternative_quest_title = NULL
-            \(whereSQL)
-        """
+            let sql = """
+                          UPDATE pokestop
+                          SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+                              quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
+                              alternative_quest_type = NULL, alternative_quest_timestamp = NULL,
+                              alternative_quest_target = NULL, alternative_quest_conditions = NULL,
+                              alternative_quest_rewards = NULL, alternative_quest_template = NULL,
+                              alternative_quest_title = NULL
+                          \(whereSQL)
+                      """
 
-        let mysqlStmt = MySQLStmt(mysql)
-        _ = mysqlStmt.prepare(statement: sql)
-        if ids != nil {
-            for id in ids! {
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+
+            for id in chunks {
                 mysqlStmt.bindParam(id)
             }
-        }
 
-        guard mysqlStmt.execute() else {
-            Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage())")
-            throw DBController.DBError()
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage())")
+                throw DBController.DBError()
+            }
         }
 
         Pokestop.cache?.clear()
