@@ -1093,7 +1093,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
 
-        if ids?.count == 0 {
+        if ids == nil || ids!.count == 0 {
             return
         }
 
