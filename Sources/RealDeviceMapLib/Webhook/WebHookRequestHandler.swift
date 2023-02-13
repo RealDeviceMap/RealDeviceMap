@@ -1158,6 +1158,27 @@ public class WebHookRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if type == "account_unknown_error" {
+            // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
+            do {
+                guard
+                    let device = try Device.getById(mysql: mysql, id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
+                else {
+                    response.respondWithError(status: .notFound)
+                    return
+                }
+                let now = UInt32(Date().timeIntervalSince1970)
+                account.failedTimestamp = now
+                account.failed = "GPR_RED_WARNING"
+                account.warnExpireTimestamp = now + 86400
+                Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
+                try account.save(mysql: mysql, update: true)
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
         } else if type == "error_26" {
             do {
                 guard
