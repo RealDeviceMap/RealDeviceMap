@@ -10,6 +10,7 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import PerfectThread
 import POGOProtos
 
 public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
@@ -1103,6 +1104,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         }
 
         for chunks in ids!.chunked(into: 1000) {
+            Threading.sleep(seconds: 0.2)
             var inSQL = "("
             for _ in 1..<chunks.count {
                 inSQL += "?, "
