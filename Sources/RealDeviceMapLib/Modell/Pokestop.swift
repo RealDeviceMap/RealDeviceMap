@@ -1101,7 +1101,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
-        var errorOccurredOnSomeChunks = false
+
         for chunks in ids!.chunked(into: 1000) {
             var inSQL = "("
             for _ in 1..<chunks.count {
@@ -1109,7 +1109,6 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             }
             inSQL += "?)"
             let whereSQL = "WHERE id IN \(inSQL)"
-
 
             let sql = """
                           UPDATE pokestop
@@ -1131,11 +1130,8 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
             guard mysqlStmt.execute() else {
                 Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage())")
-                errorOccurredOnSomeChunks = true
+                throw DBController.DBError()
             }
-        }
-        if errorOccurredOnSomeChunks {
-            throw DBController.DBError()
         }
 
         Pokestop.cache?.clear()
