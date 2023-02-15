@@ -1171,29 +1171,9 @@ public class WebHookRequestHandler {
                 }
                 let now = UInt32(Date().timeIntervalSince1970)
                 account.failedTimestamp = now
-                account.failed = "GPR_RED_WARNING"
-                account.warnExpireTimestamp = now + 86400
+                account.failed = "unknown"
                 Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
                 try account.save(mysql: mysql, update: true)
-                response.respondWithOk()
-            } catch {
-                response.respondWithError(status: .internalServerError)
-            }
-        } else if type == "error_26" {
-            do {
-                guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let username = device.accountUsername,
-                    let account = try Account.getWithUsername(mysql: mysql, username: username)
-                    else {
-                        response.respondWithError(status: .notFound)
-                        return
-                }
-                if account.failedTimestamp == nil || account.failed == nil {
-                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-                    account.failed = "error_26"
-                    try account.save(mysql: mysql, update: true)
-                }
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
