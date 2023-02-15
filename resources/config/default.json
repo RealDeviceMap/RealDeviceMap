@@ -76,7 +76,13 @@
         "batchSize": 250
       }
     },
-    "stats": false,
+    "stats": {
+      "pokemon": {
+        "archive": false,
+        "timing": false,
+        "count": true
+      }
+    },
     "pvp": {
       "enabled": true,
       "levelCaps": [50],

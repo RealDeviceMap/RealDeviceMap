@@ -217,7 +217,7 @@ public func setupRealDeviceMap() {
     Pokemon.weatherIVClearingEnabled = ConfigLoader.global.getConfig(type: .ivWeatherClearing)
     Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
     Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
-    Pokemon.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
+    Pokemon.timingStatsEnabled = ConfigLoader.global.getConfig(type: .statsPokemonTimingEnabled)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
 
@@ -312,26 +312,11 @@ public func setupRealDeviceMap() {
     }
 
     // Config for history stats and cleanup
-    Stats.statsEnabled = ConfigLoader.global.getConfig(type: .statsEnabled)
+    Stats.pokemonArchiveEnabled = ConfigLoader.global.getConfig(type: .statsPokemonArchiveEnabled)
+    Stats.pokemonCountStats = ConfigLoader.global.getConfig(type: .statsPokemonCountEnabled)
     Stats.cleanupPokemon = ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled)
     Stats.cleanupIncident = ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled)
-
-    if Stats.cleanupPokemon {
-        if Stats.statsEnabled {
-            Log.info(message: "[MAIN] [STATS] Enabled pokemon history for stats")
-        } else {
-            Log.info(message: "[MAIN] [STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
-        }
-        Stats.startDatabaseArchiver()
-    } else {
-        Log.info(message: "[MAIN] [STATS] Cleanup and pokemon history for pokemon disabled")
-    }
-    if Stats.cleanupIncident {
-        Log.info(message: "[MAIN] [STATS] Cleanup of incidents enabled")
-        Stats.startIncidentExpiry()
-    } else {
-        Log.info(message: "[MAIN] [STATS] Cleanup of incidents disabled")
-    }
+    _ = Stats.global
 
     // Check if is setup
     Log.info(message: "[MAIN] Checking if setup is completed")

@@ -1184,9 +1184,7 @@ public class WebRequestHandler {
                             }
                         }
                     }
-                    let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
-                                         Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
-                                         Coord(lat: minLat, lon: minLon)]
+                    let bbox: Bbox = Bbox(minLat: minLat, maxLat: maxLat, minLon: minLon, maxLon: maxLon)
                     try Pokestop.clearQuests(area: bbox)
                 } catch {
                     response.setBody(string: "Failed to clear quests")
