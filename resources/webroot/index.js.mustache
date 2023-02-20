@@ -51,7 +51,7 @@ let spawnpointFilterNew = {}
 const hiddenPokemonIds = []
 
 const availableEggs = [
-  1,3,4,5,6,7,8,9
+  1,3,4,5,6,7,8,9,10
 ]
 const availableGrunts = [
   1,2,3,4,5,6,7,10,11,12,13,14,15,16,17,18,
@@ -2758,6 +2758,10 @@ function getGymPopupContent (gym) {
       pokemonName = i18n('egg_7')
     } else if (gym.raid_level === 8) {
       pokemonName = i18n('egg_8')
+    } else if (gym.raid_level === 9) {
+      pokemonName = i18n('egg_9')
+    } else if (gym.raid_level === 10) {
+      pokemonName = i18n('egg_10')
     } else {
       pokemonName = i18n('map_egg_level', { egglevel: gym.raid_level })
     }
@@ -2812,6 +2816,12 @@ function getGymPopupContent (gym) {
           content += '<b>'+i18n('map_gym_level')+': </b>'+i18n('map_gym_type_mega')+'<br>'
         } else if (gym.raid_level === 7) {
           content += '<b>'+i18n('map_gym_level')+': </b>'+i18n('map_gym_type_mega_legendary')+'<br>'
+        } else if (gym.raid_level === 8) {
+          content += '<b>'+i18n('map_gym_level')+': </b>'+i18n('map_gym_type_ultra_beast')+'<br>'
+        } else if (gym.raid_level === 9) {
+          content += '<b>'+i18n('map_gym_level')+': </b>'+i18n('map_gym_type_elite')+'<br>'
+        } else if (gym.raid_level === 10) {
+          content += '<b>'+i18n('map_gym_level')+': </b>'+i18n('map_gym_type_primal')+'<br>'
         } else {
           content += '<b>'+i18n('map_gym_level')+': </b>' + gym.raid_level + '<br>'
         }
