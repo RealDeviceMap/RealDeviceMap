@@ -1094,7 +1094,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
     public static func clearQuests(mysql: MySQL?=nil, ids: [String]?=nil) throws {
 
-        if ids == nil || ids!.count == 0 {
+        if ids?.count == 0 {
             return
         }
 
@@ -1102,36 +1102,49 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             Log.error(message: "[POKESTOP] Failed to connect to database.")
             throw DBController.DBError()
         }
+        let sql = """
+                  UPDATE pokestop
+                  SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
+                    quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL,
+                    quest_title = NULL, alternative_quest_type = NULL, alternative_quest_timestamp = NULL,
+                    alternative_quest_target = NULL, alternative_quest_conditions = NULL,
+                    alternative_quest_rewards = NULL, alternative_quest_template = NULL,
+                    alternative_quest_title = NULL
+                  """
+        if ids != nil {
+            for chunks in ids!.chunked(into: 1000) {
+                Threading.sleep(seconds: 0.2)
+                var inSQL = "("
+                for _ in 1..<chunks.count {
+                    inSQL += "?, "
+                }
+                inSQL += "?)"
+                let whereSQL = "WHERE id IN \(inSQL)"
 
-        for chunks in ids!.chunked(into: 1000) {
-            Threading.sleep(seconds: 0.2)
-            var inSQL = "("
-            for _ in 1..<chunks.count {
-                inSQL += "?, "
+                let sqlWhereIdIn = """
+                              \(sql)
+                              \(whereSQL)
+                          """
+
+                let mysqlStmt = MySQLStmt(mysql)
+                _ = mysqlStmt.prepare(statement: sqlWhereIdIn)
+
+                for id in chunks {
+                    mysqlStmt.bindParam(id)
+                }
+
+                guard mysqlStmt.execute() else {
+                    Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests' with IDs: " +
+                        mysqlStmt.errorMessage())
+                    throw DBController.DBError()
+                }
             }
-            inSQL += "?)"
-            let whereSQL = "WHERE id IN \(inSQL)"
-
-            let sql = """
-                          UPDATE pokestop
-                          SET quest_type = NULL, quest_timestamp = NULL, quest_target = NULL,
-                              quest_conditions = NULL, quest_rewards = NULL, quest_template = NULL, quest_title = NULL,
-                              alternative_quest_type = NULL, alternative_quest_timestamp = NULL,
-                              alternative_quest_target = NULL, alternative_quest_conditions = NULL,
-                              alternative_quest_rewards = NULL, alternative_quest_template = NULL,
-                              alternative_quest_title = NULL
-                          \(whereSQL)
-                      """
-
+        } else {
             let mysqlStmt = MySQLStmt(mysql)
             _ = mysqlStmt.prepare(statement: sql)
-
-            for id in chunks {
-                mysqlStmt.bindParam(id)
-            }
-
             guard mysqlStmt.execute() else {
-                Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests'. (\(mysqlStmt.errorMessage())")
+                Log.error(message: "[POKESTOP] Failed to execute query 'clearQuests' full table: " +
+                    mysqlStmt.errorMessage())
                 throw DBController.DBError()
             }
         }
