@@ -290,6 +290,7 @@
         "filter_pokestop_lure_3": "Moos-Lockmodul",
         "filter_pokestop_lure_4": "Magnet-Lockmodul",
         "filter_pokestop_lure_5": "Regen-Lockmodul",
+        "filter_pokestop_lure_6": "Gold-Lockmodul",
         "filter_pokestop_ar_only": "Nur AR geeignete Pokestops",
         "filter_pokestop_sponsored_only": "Nur gesponserte Pokestops",
         "filter_pokestop_event_only": "Nur Event Pokestops",
