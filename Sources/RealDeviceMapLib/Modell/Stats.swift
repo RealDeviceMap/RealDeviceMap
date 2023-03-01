@@ -343,8 +343,9 @@ class Stats {
             "pokestops_lures_mossy": pokestopStats?[3] ?? 0,
             "pokestops_lures_magnetic": pokestopStats?[4] ?? 0,
             "pokestops_lures_rainy": pokestopStats?[5] ?? 0,
-            "pokestops_invasions": pokestopStats?[6] ?? 0,
-            "pokestops_quests": pokestopStats?[7] ?? 0,
+            "pokestops_lures_sparkly": pokestopStats?[6] ?? 0,
+            "pokestops_invasions": pokestopStats?[7] ?? 0,
+            "pokestops_quests": pokestopStats?[8] ?? 0,
             "gyms_total": gymStats?[0] ?? 0,
             "gyms_neutral": gymStats?[1] ?? 0,
             "gyms_mystic": gymStats?[2] ?? 0,
@@ -835,6 +836,7 @@ class Stats {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=506) AS sparkly_lures,
                     (SELECT COUNT(id) FROM incident WHERE expiration > UNIX_TIMESTAMP()) AS invasions,
                     (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) AS quests
                   FROM pokestop;
@@ -858,8 +860,9 @@ class Stats {
             let mossyLures = Int64(result[3] as? String ?? "0")!
             let magneticLures = Int64(result[4] as? String ?? "0")!
             let rainyLures = Int64(result[5] as? String ?? "0")!
-            let invasions = result[6] as? Int64 ?? 0
-            let quests = result[7] as? Int64 ?? 0
+            let sparklyLures = Int64(result[6] as? String ?? "0")!
+            let invasions = result[7] as? Int64 ?? 0
+            let quests = result[8] as? Int64 ?? 0
 
             stats.append(total)
             stats.append(normalLures)
@@ -867,6 +870,7 @@ class Stats {
             stats.append(mossyLures)
             stats.append(magneticLures)
             stats.append(rainyLures)
+            stats.append(sparklyLures)
             stats.append(invasions)
             stats.append(quests)
 
