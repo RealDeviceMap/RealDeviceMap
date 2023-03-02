@@ -435,7 +435,7 @@ public class Account: WebHookEvent {
                 (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                  warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                 (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                (failed = 'unkown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
+                (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
             )
             """
         }
@@ -669,7 +669,7 @@ public class Account: WebHookEvent {
                     (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                      warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                     (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                    (failed = 'unkown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
+                    (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
                 ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
@@ -872,7 +872,7 @@ public class Account: WebHookEvent {
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                  (failed = 'unkown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
+                  (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
