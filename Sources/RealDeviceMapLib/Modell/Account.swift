@@ -20,6 +20,7 @@ public class Account: WebHookEvent {
 
     static let suspendedPeriod: UInt32 = 2592000
     static let warnedPeriod: UInt32 = 604800
+    static let unknownPeriod: UInt32 = 86400 // mostly blue maintenance mode screen
 
     func getWebhookValues(type: String) -> [String: Any] {
 
@@ -278,6 +279,9 @@ public class Account: WebHookEvent {
             ) || (
                 self.failed! == "suspended" &&
                 ((self.failedTimestamp ?? UInt32.max) <= now - Account.suspendedPeriod)
+            ) || (
+                self.failed! == "unknown" &&
+                    ((self.failedTimestamp ?? UInt32.max) <= now - Account.unknownPeriod)
             ))
         )
     }
@@ -430,7 +434,8 @@ public class Account: WebHookEvent {
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
                 (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                  warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
+                (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
             )
             """
         }
@@ -663,7 +668,8 @@ public class Account: WebHookEvent {
                     (failed IS NULL AND first_warning_timestamp is NULL) OR
                     (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                      warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
+                    (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
                 ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
@@ -865,7 +871,8 @@ public class Account: WebHookEvent {
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
+                  (failed = 'unknown' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,

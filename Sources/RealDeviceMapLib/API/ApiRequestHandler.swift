@@ -1267,21 +1267,10 @@ public class ApiRequestHandler {
                 "type": pokestopOptionsString
             ])
 
-            for i in 1...5 {
+            for i in 1...6 {
                 let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
 
-                let lureId: Int
-                if i == 1 {
-                    lureId = 501
-                } else if i == 2 {
-                    lureId = 502
-                } else if i == 3 {
-                    lureId = 503
-                } else if i == 4 {
-                    lureId = 504
-                } else {
-                    lureId = 505
-                }
+                let lureId = 500 + i
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
