@@ -742,7 +742,7 @@ function loadStorage () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     let i
-    for (i = 501; i <= 505; i++) {
+    for (i = 501; i <= 506; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 3; i++) {
@@ -759,7 +759,7 @@ function loadStorage () {
       pokestopFilter.normal = { show: true, size: 'normal' }
     }
     let i
-    for (i = 501; i <= 505; i++) {
+    for (i = 501; i <= 506; i++) {
       if (pokestopFilter['l' + i] == null) {
         pokestopFilter['l' + i] = { show: true, size: 'normal' }
       }
@@ -1060,7 +1060,7 @@ function initMap () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: true, size: 'normal' }
     let i
-    for (i = 501; i <= 505; i++) {
+    for (i = 501; i <= 506; i++) {
       defaultPokestopFilter['l' + i] = { show: true, size: 'normal' }
     }
     for (i = 0; i <= 3; i++) {
@@ -1080,7 +1080,7 @@ function initMap () {
     const defaultPokestopFilter = {}
     defaultPokestopFilter.normal = { show: false, size: pokestopFilterNew.normal.size }
     let i
-    for (i = 501; i <= 505; i++) {
+    for (i = 501; i <= 506; i++) {
       defaultPokestopFilter['l' + i] = { show: false, size: pokestopFilterNew['l' + i].size }
     }
     for (i = 0; i <= 3; i++) {
@@ -1581,7 +1581,7 @@ function loadData () {
       pokestopFilterExclude.push('normal')
     }
     let i
-    for (i = 501; i <= 505; i++) {
+    for (i = 501; i <= 506; i++) {
       if (pokestopFilter['l' + i].show === false) {
         pokestopFilterExclude.push('l' + i)
       }
@@ -2606,19 +2606,18 @@ function getPokestopPopupContent (pokestop) {
   '{{#perm_admin}}</a>{{/perm_admin}}</b></h6></div>'
 
   if (pokestop.url !== null) {
-    var lureClass = isActiveLure && pokestop.lure_id !== 0
-      ? (pokestop.lure_id === 501
-        ? 'lure-normal'
-        : pokestop.lure_id === 502
-          ? 'lure-glacial'
-          : pokestop.lure_id === 503
-            ? 'lure-mossy'
-            : pokestop.lure_id === 504
-              ? 'lure-magnetic'
-              : pokestop.lure_id === 505
-                ? 'lure-rainy'
-                : 'lure-normal')
-      : ''
+    let lureClass = ''
+    if (isActiveLure && pokestop.lure_id !== 0) {
+      switch (pokestop.lure_id) {
+        case 501: lureClass += 'lure-normal'; break;
+        case 502: lureClass += 'lure-glacial'; break;
+        case 503: lureClass += 'lure-mossy'; break;
+        case 504: lureClass += 'lure-magnetic'; break;
+        case 505: lureClass += 'lure-rainy'; break;
+        case 506: lureClass += 'lure-sparkly'; break;
+        default: console.log("New Lure found, pls report in Discord Server")
+      }
+    }
     content += '<div><img alt="" src="' + pokestop.url.replace('http://', 'https://') + '" class="circle-image ' + lureClass + '"/></div><br>'
   }
 
