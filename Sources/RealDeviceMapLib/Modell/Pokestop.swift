@@ -232,7 +232,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
         self.lastModifiedTimestamp = lastModifiedTimestamp
         if fortData.activeFortModifier.count > 0 {
             let lureId = Int16(fortData.activeFortModifier[0].rawValue)
-            if lureId >= 501 && lureId <= 505 {
+            if lureId >= 501 && lureId <= 510 {
                 var lureEnd = lastModifiedTimestamp + Pokestop.lureTime
                 let oldLureEnd = self.lureExpireTimestamp ?? 0
                 if self.lureId != lureId {
