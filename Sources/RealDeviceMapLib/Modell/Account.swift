@@ -286,14 +286,13 @@ public class Account: WebHookEvent {
         let now = UInt32(Date().timeIntervalSince1970)
         return (
             self.group == group &&
+                (!self.disabled || (self.disabled && (self.lastDisabled ?? 0) <= now - Account.disablePeriod)) &&
             (self.failed == nil || (
                 self.failed! == "GPR_RED_WARNING" &&
                 (ignoringWarning || (self.warnExpireTimestamp ?? UInt32.max) <= now)
             ) || (
                 self.failed! == "suspended" &&
                 ((self.failedTimestamp ?? UInt32.max) <= now - Account.suspendedPeriod)
-            ) || (
-                self.disabled && (self.lastDisabled ?? 0) <= now - Account.disablePeriod
             ))
         )
     }
@@ -433,14 +432,11 @@ public class Account: WebHookEvent {
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
                       UPDATE account
-                      SET disabled = ? \(disabled ? ", last_disabled = ?" : "")
+                      SET disabled = ? \(disabled ? ", last_disabled = UNIX_TIMESTAMP()" : "")
                       WHERE username = ?
                   """
         _ = mysqlStmt.prepare(statement: sql)
         mysqlStmt.bindParam(disabled)
-        if disabled {
-            mysqlStmt.bindParam(UInt32(Date().timeIntervalSince1970))
-        }
         mysqlStmt.bindParam(username)
 
         guard mysqlStmt.execute() else {
@@ -472,8 +468,7 @@ public class Account: WebHookEvent {
                 (failed IS NULL AND first_warning_timestamp IS NULL) OR
                 (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                  warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
             )
             """
         }
@@ -552,6 +547,7 @@ public class Account: WebHookEvent {
                 `group` \(group != nil ? "= ?" : "IS NULL") AND
                 level >= ? AND
                 level <= ?
+                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
                 \(failedSQL)
                 \(spinSQL)
                 \(cooldownSQL)
@@ -709,12 +705,12 @@ public class Account: WebHookEvent {
             WHERE
                 first_warning_timestamp is NULL AND
                 failed_timestamp is NULL and device.uuid IS NULL AND
+                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))) AND
                 (
                     (failed IS NULL AND first_warning_timestamp is NULL) OR
                     (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                      warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                    (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
                 ) AND (
                     last_encounter_time IS NULL OR
                     UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
@@ -884,9 +880,7 @@ public class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE
-                failed IS NOT NULL AND
-                (disabled = 1 AND last_disabled >= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+            WHERE failed IS NOT NULL
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -919,7 +913,7 @@ public class Account: WebHookEvent {
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                  (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                  (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
