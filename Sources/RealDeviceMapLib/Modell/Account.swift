@@ -171,9 +171,9 @@ public class Account: WebHookEvent {
                     username, password, level, first_warning_timestamp, failed_timestamp, failed, last_encounter_lat,
                     last_encounter_lon, last_encounter_time, spins, creation_timestamp, warn, warn_expire_timestamp,
                     warn_message_acknowledged, suspended_message_acknowledged, was_suspended, banned,
-                    last_used_timestamp, `group`
+                    last_used_timestamp, disabled, last_disabled, `group`
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             _ = mysqlStmt.prepare(statement: sql)
 
@@ -235,7 +235,7 @@ public class Account: WebHookEvent {
                     last_encounter_lat = ?, last_encounter_lon = ?, last_encounter_time = ?, spins = ?,
                     creation_timestamp = ?, warn = ?, warn_expire_timestamp = ?, warn_message_acknowledged = ?,
                     suspended_message_acknowledged = ?, was_suspended = ?, banned = ?, last_used_timestamp = ?,
-                    `group` = ?, disabled = ?, last_disabled = ?
+                    disabled = ?, last_disabled = ?, `group` = ?
                 WHERE username = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -260,9 +260,9 @@ public class Account: WebHookEvent {
         mysqlStmt.bindParam(wasSuspended)
         mysqlStmt.bindParam(banned)
         mysqlStmt.bindParam(lastUsedTimestamp)
-        mysqlStmt.bindParam(group)
         mysqlStmt.bindParam(disabled)
         mysqlStmt.bindParam(lastDisabled)
+        mysqlStmt.bindParam(group)
 
         if oldAccount != nil {
             mysqlStmt.bindParam(username)
