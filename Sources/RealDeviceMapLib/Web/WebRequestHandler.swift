@@ -368,7 +368,7 @@ public class WebRequestHandler {
                     "stats_today_hundo", "stats_gyms", "stats_neutral_gyms", "stats_valor_gyms", "stats_mystic_gyms",
                     "stats_instinct_gyms", "stats_pokestops", "stats_invasions", "stats_normal_lures",
                     "stats_glacial_lures", "stats_mossy_lures", "stats_magnetic_lures", "stats_rainy_lures",
-                    "stats_field_research", "stats_spawnpoint_timers", "stats_spawnpoint_total",
+                    "stats_sparkly_lures", "stats_field_research", "stats_spawnpoint_timers", "stats_spawnpoint_total",
                     "stats_spawnpoint_found", "stats_spawnpoint_missing", "stats_spawnpoint_percentage",
                     "stats_community_day", "stats_filter_start_date", "stats_filter_end_date", "stats_filter_select",
                     "stats_scans", "stats_seen", "stats_scanned", "stats_male_spawns", "stats_female_spawns",
