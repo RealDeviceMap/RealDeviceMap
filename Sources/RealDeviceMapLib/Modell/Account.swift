@@ -546,7 +546,7 @@ public class Account: WebHookEvent {
                 device.uuid IS NULL AND
                 `group` \(group != nil ? "= ?" : "IS NULL") AND
                 level >= ? AND
-                level <= ?
+                level <= ? AND
                 (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
                 \(failedSQL)
                 \(spinSQL)
