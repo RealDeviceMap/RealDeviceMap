@@ -51,6 +51,10 @@ public class WebHookRequestHandler {
     private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
     private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
 
+    private static let encounterLock = Threading.Lock()
+    private static var encounterCount = [String: Int]()
+    private static let maxEncounter: Int = 8000 // ConfigLoader.global.getConfig(type: .maxEncounter)
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
     private static let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
@@ -547,6 +551,19 @@ public class WebHookRequestHandler {
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
+        }
+
+        if username != nil && maxEncounter > 0 {
+            encounterLock.doWithLock {
+                var countValue: Int = (encounterCount[username!] ?? 0) + encounters.count
+                if countValue < maxEncounter {
+                    encounterCount[username!] = countValue
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #Encounter: \(countValue)")
+                } else {
+                    try? Account.setDisabled(username: username!)
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] Account disabled.")
+                }
+            }
         }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
