@@ -560,7 +560,7 @@ public class WebHookRequestHandler {
                     encounterCount[username!] = countValue
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #Encounter: \(countValue)")
                 } else {
-                    try? Account.setDisabled(username: username!)
+                    try? Account.setDisabled(mysql: mysql, username: username!)
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] Account disabled.")
                 }
             }
@@ -1186,11 +1186,9 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                let now = UInt32(Date().timeIntervalSince1970)
-                account.failedTimestamp = now
-                account.failed = "unknown"
+
                 Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
-                try account.save(mysql: mysql, update: true)
+                try Account.setDisabled(mysql: mysql, username: username)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)

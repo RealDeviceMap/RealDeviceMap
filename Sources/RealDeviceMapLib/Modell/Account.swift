@@ -620,7 +620,7 @@ public class Account: WebHookEvent {
 
         try? Account.setLastUsed(mysql: mysql, username: username)
         if disabled {
-            try? Account.setDisabled(username: username, disabled: false)
+            try? Account.setDisabled(mysql: mysql, username: username, disabled: false)
         }
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,
