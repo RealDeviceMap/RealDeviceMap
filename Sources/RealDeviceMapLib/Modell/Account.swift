@@ -20,7 +20,7 @@ public class Account: WebHookEvent {
 
     static let suspendedPeriod: UInt32 = 2592000
     static let warnedPeriod: UInt32 = 604800
-    static var disablePeriod: UInt32 = 86400 // ConfigLoader.global.getConfig(type: .disablePeriod)
+    static var disablePeriod: UInt32 = (ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int).toUInt32()
 
     func getWebhookValues(type: String) -> [String: Any] {
 
