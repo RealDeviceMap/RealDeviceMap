@@ -3919,7 +3919,7 @@ public class WebRequestHandler {
                                     lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
                                     warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
                                     suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
-                                    lastUsedTimestamp: nil, group: group))
+                                    lastUsedTimestamp: nil, disabled: false, last_disabled: nil, group: group))
             }
         }
 
