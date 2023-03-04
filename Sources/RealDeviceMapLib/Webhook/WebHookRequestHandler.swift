@@ -561,6 +561,7 @@ public class WebHookRequestHandler {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #Encounter: \(countValue)")
                 } else {
                     try? Account.setDisabled(mysql: mysql, username: username!)
+                    encounterCount[username!] = 0
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] Account disabled.")
                 }
             }
