@@ -839,7 +839,9 @@ public class Account: WebHookEvent {
         let sql = """
             SELECT COUNT(*)
             FROM account
-            WHERE failed IS NOT NULL
+            WHERE
+                failed IS NOT NULL AND
+                (failed <> 'unknown' OR failed_timestamp >= UNIX_TIMESTAMP() - \(Account.unknownPeriod))
         """
 
         let mysqlStmt = MySQLStmt(mysql)
