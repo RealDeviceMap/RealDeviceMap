@@ -40,7 +40,7 @@ public class Account: WebHookEvent {
             "was_suspended": wasSuspended ?? 0,
             "banned": banned ?? 0,
             "disabled": disabled,
-            "last_disabled": lastDisabled ?? 0
+            "last_disabled": lastDisabled ?? 0,
             "group": group as Any
         ]
         return [
@@ -609,7 +609,7 @@ public class Account: WebHookEvent {
         let wasSuspended = result[15] as? Bool
         let banned = result[16] as? Bool
         let lastUsedTimestamp = result[17] as? UInt32
-        let disabled = result[18] as Bool
+        let disabled = result[18] as! Bool
         let lastDisabled = result[19] as? UInt32
         let group = (result[20] as? String)?.emptyToNil()
 
@@ -681,7 +681,7 @@ public class Account: WebHookEvent {
         let wasSuspended = result[15] as? Bool
         let banned = result[16] as? Bool
         let lastUsedTimestamp = result[17] as? UInt32
-        let disabled = result[18] as Bool
+        let disabled = result[18] as! Bool
         let lastDisabled = result[19] as? UInt32
         let group = (result[20] as? String)?.emptyToNil()
 
