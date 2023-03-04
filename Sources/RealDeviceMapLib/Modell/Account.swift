@@ -683,7 +683,7 @@ public class Account: WebHookEvent {
         let lastUsedTimestamp = result[17] as? UInt32
         let disabled = result[18] as Bool
         let lastDisabled = result[19] as? UInt32
-        let group = (result[18] as? String)?.emptyToNil()
+        let group = (result[20] as? String)?.emptyToNil()
 
         return Account(
             username: username, password: password, level: level, firstWarningTimestamp: firstWarningTimestamp,
