@@ -71,6 +71,15 @@ public class Account: WebHookEvent {
     var lastDisabled: UInt32?
     var group: String?
 
+    init(username: String, password: String, level: UInt8, spins: UInt16, disabled: Bool, group: String?) {
+        self.username = username
+        self.password = password
+        self.level = level
+        self.spins = spins
+        self.disabled = disabled
+        self.group = group?.emptyToNil()
+    }
+
     init(username: String, password: String, level: UInt8, firstWarningTimestamp: UInt32?,
          failedTimestamp: UInt32?, failed: String?, lastEncounterLat: Double?, lastEncounterLon: Double?,
          lastEncounterTime: UInt32?, spins: UInt16, creationTimestamp: UInt32?, warn: Bool?,
@@ -280,6 +289,37 @@ public class Account: WebHookEvent {
                   self.disabled != oldAccount!.disabled {
             WebHookController.global.addAccountEvent(account: self)
         }
+    }
+
+    public static func insertAccountBatch(mysql: MySQL?=nil, accounts: [Account]) throws {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+        for chunks in accounts.chunked(into: 200) {
+            let placeholders = [String].init(repeating: "(?,?,?,?,?,?)", count: chunks.count).joined(separator: ", ")
+            let sql =
+                """
+                  INSERT IGNORE INTO account (username, password, level, spins, disabled, `group`)
+                  VALUES \(placeholders)
+                """
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            for account in chunks {
+                mysqlStmt.bindParam(account.username)
+                mysqlStmt.bindParam(account.password)
+                mysqlStmt.bindParam(account.level)
+                mysqlStmt.bindParam(account.spins)
+                mysqlStmt.bindParam(account.disabled)
+                mysqlStmt.bindParam(account.group)
+            }
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[ACCOUNT] Failed to execute query 'insertAccountBatch'. " +
+                    mysqlStmt.errorMessage())
+                throw DBController.DBError()
+            }
+        }
+        Log.info(message: "[ACCOUNT] Added \(accounts.count) new accounts into database.")
     }
 
     public func isValid(ignoringWarning: Bool=false, group: String?=nil) -> Bool {
