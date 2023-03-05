@@ -49,8 +49,9 @@ public func setupRealDeviceMap() {
     // Init DBController
     Log.info(message: "[MAIN] Starting Database Controller")
     _ = DBController.global
-
-    if let accMaxEncounters: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters), accMaxEncounters > 0 {
+    
+    let accMaxEncounters: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+    if accMaxEncounters > 0 {
         Log.info(message: "[MAIN] Account switching after \(accMaxEncounters) encounters enabled.")
         do {
             // to keep track of the right count all previously used accounts has to be disabled on startup
