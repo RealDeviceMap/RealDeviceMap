@@ -43,7 +43,9 @@
       "requireInDB": true,
       "useRwForQuest": false,
       "useRwForRaid": false,
-      "useRwForPokes": false
+      "useRwForPokes": false,
+      "maxEncounters": 7000,
+      "disablePeriod": 86400
     },
     "loginLimit": {
       "enabled": false,
