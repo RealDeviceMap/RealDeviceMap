@@ -49,7 +49,7 @@ public func setupRealDeviceMap() {
     // Init DBController
     Log.info(message: "[MAIN] Starting Database Controller")
     _ = DBController.global
-    
+
     let accMaxEncounters: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
     if accMaxEncounters > 0 {
         Log.info(message: "[MAIN] Account switching after \(accMaxEncounters) encounters enabled.")
