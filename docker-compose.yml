@@ -49,7 +49,7 @@ services:
 #     PVP_LEVEL_CAPS: 40,50,51 #default only 50
 #     QUEST_RETRY_LIMIT: 10
 #     SPIN_DISTANCE: 80
-#     ACC_MAX_ENCOUNTERS: 7000
+#     ACC_MAX_ENCOUNTERS: 0
 #     ACC_DISABLE_PERIOD: 86400
 ### Uncommenting the following lines will set these values to TRUE (regardless of their value)
 #     USE_RW_FOR_QUEST: 1
