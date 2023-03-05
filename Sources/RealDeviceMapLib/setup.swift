@@ -50,6 +50,14 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Database Controller")
     _ = DBController.global
 
+    if ConfigLoader.global.getConfig(type: .accMaxEncounters) > 0 {
+        do {
+            try Account.setDisabledOnUsed()
+        } catch {
+            Log.warning(message: "[MAIN] Failed to disable used accounts on startup.")
+        }
+    }
+
     // Init MemoryCache
     let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
     let memoryCacheClearInterval = (ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int).toDouble()
