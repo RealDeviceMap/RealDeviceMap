@@ -475,7 +475,7 @@ public class Account: WebHookEvent {
                       SET disabled = 1, last_disabled = UNIX_TIMESTAMP()
                       WHERE username IN (
                         SELECT DISTINCT account_username FROM device WHERE account_username IS NOT NULL
-                      )
+                      ) AND disabled = 0
                   """
         _ = mysqlStmt.prepare(statement: sql)
 
