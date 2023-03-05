@@ -462,6 +462,29 @@ public class Account: WebHookEvent {
         }
     }
 
+    public static func setDisabledOnUsed(mysql: MySQL?=nil) throws {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let mysqlStmt = MySQLStmt(mysql)
+        let sql = """
+                      UPDATE account
+                      SET disabled = 1, last_disabled = UNIX_TIMESTAMP()
+                      WHERE username IN (
+                        SELECT DISTINCT account_username FROM device WHERE account_username IS NOT NULL
+                      ) AND disabled = 0
+                  """
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query 'setDisabledOnUsed'. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+    }
+
     public static func setDisabled(mysql: MySQL?=nil, username: String, disabled: Bool = true) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {

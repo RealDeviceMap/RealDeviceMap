@@ -3,5 +3,5 @@ ALTER TABLE account
     ADD COLUMN `last_disabled` int unsigned DEFAULT NULL AFTER `disabled`;
 
 UPDATE account
-    SET failed = NULL, failed_timestamp = NULL
+    SET failed = NULL, failed_timestamp = NULL, disabled = 1, last_disabled = UNIX_TIMESTAMP()
     WHERE failed = 'unknown';
