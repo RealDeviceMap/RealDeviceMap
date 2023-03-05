@@ -555,14 +555,14 @@ public class WebHookRequestHandler {
 
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
-                var countValue: Int = (encounterCount[username!] ?? 0) + encounters.count
-                if countValue < maxEncounter {
-                    encounterCount[username!] = countValue
-                    Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #Encounter: \(countValue)")
+                var value: Int = (encounterCount[username!] ?? 0) + encounters.count
+                if value < maxEncounter {
+                    encounterCount[username!] = value
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
                 } else {
                     try? Account.setDisabled(mysql: mysql, username: username!)
                     encounterCount.removeValue(forKey: username!)
-                    Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] Account disabled.")
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
                 }
             }
         }
