@@ -1277,6 +1277,7 @@ public class WebRequestHandler {
             data["failed_accounts_count"] = (try? Account.getFailedCount().withCommas()) ?? "?"
             data["cooldown_accounts_count"] = (try? Account.getCooldownCount().withCommas()) ?? "?"
             data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount().withCommas()) ?? "?"
+            data["disabled_accounts_count"] = (try? Account.getDisabledCount().withCommas()) ?? "?"
             data["iv_accounts_count"] = (try? Account.getLevelCount(level: 30).withCommas()) ?? "?"
             data["iv_40_accounts_count"] = (try? Account.getLevelCount(level: 40).withCommas()) ?? "?"
             data["stats"] = (try? Account.getStats()) ?? ""
