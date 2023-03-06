@@ -51,6 +51,10 @@ public class WebHookRequestHandler {
     private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
     private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
 
+    private static let encounterLock = Threading.Lock()
+    private static var encounterCount = [String: Int]()
+    private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
     private static let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
@@ -547,6 +551,20 @@ public class WebHookRequestHandler {
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
+        }
+
+        if username != nil && maxEncounter > 0 {
+            encounterLock.doWithLock {
+                var value: Int = (encounterCount[username!] ?? 0) + encounters.count
+                if value < maxEncounter {
+                    encounterCount[username!] = value
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
+                } else {
+                    try? Account.setDisabled(mysql: mysql, username: username!)
+                    encounterCount.removeValue(forKey: username!)
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
+                }
+            }
         }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
@@ -1169,11 +1187,9 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                let now = UInt32(Date().timeIntervalSince1970)
-                account.failedTimestamp = now
-                account.failed = "unknown"
+
                 Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
-                try account.save(mysql: mysql, update: true)
+                try Account.setDisabled(mysql: mysql, username: username)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
