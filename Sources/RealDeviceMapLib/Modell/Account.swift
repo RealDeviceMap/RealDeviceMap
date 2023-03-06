@@ -850,6 +850,33 @@ public class Account: WebHookEvent {
         return count
     }
 
+    public static func getDisabledCount(mysql: MySQL?=nil) throws -> Int64 {
+
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[ACCOUNT] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = """
+                      SELECT COUNT(*)
+                      FROM account
+                      WHERE disabled = 1 AND last_disabled > UNIX_TIMESTAMP() - \(Account.disablePeriod)
+                  """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[ACCOUNT] Failed to execute query 'getDisabledCount'. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        let result = results.next()!
+        let count = result[0] as! Int64
+
+        return count
+    }
+
     public static func getLevelCount(mysql: MySQL?=nil, level: Int) throws -> Int64 {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
