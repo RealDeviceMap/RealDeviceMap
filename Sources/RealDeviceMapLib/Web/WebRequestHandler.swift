@@ -1279,7 +1279,6 @@ public class WebRequestHandler {
             data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount().withCommas()) ?? "?"
             data["disabled_accounts_count"] = (try? Account.getDisabledCount().withCommas()) ?? "?"
             data["iv_accounts_count"] = (try? Account.getLevelCount(level: 30).withCommas()) ?? "?"
-            data["iv_40_accounts_count"] = (try? Account.getLevelCount(level: 40).withCommas()) ?? "?"
             data["stats"] = (try? Account.getStats()) ?? ""
             data["ban_stats"] = (try? Account.getWarningBannedStats()) ?? ""
         case .dashboardAccountsAdd:
