@@ -1002,8 +1002,7 @@ public class Account: WebHookEvent {
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                  (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
+                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
@@ -1019,7 +1018,8 @@ public class Account: WebHookEvent {
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
               ) as cooldown,
-              SUM(spins >= 1000) as spin_limit
+              SUM(spins >= 1000) as spin_limit,
+              SUM(disabled = 1 AND last_disabled > UNIX_TIMESTAMP() - \(Account.disablePeriod)) as disabled_count
             FROM account
             GROUP BY level
             ORDER BY level DESC
@@ -1047,6 +1047,7 @@ public class Account: WebHookEvent {
             let insuspended = Int64(result[8] as? String ?? "0") ?? 0
             let cooldown = Int64(result[9] as? String ?? "0") ?? 0
             let spinLimit = Int64(result[10] as? String ?? "0") ?? 0
+            let disabledCount = Int64(result[11] as? String ?? "0") ?? 0
 
             stats.append([
                 "level": level,
@@ -1059,7 +1060,8 @@ public class Account: WebHookEvent {
                 "suspended": suspended.withCommas(),
                 "insuspended": insuspended.withCommas(),
                 "cooldown": cooldown.withCommas(),
-                "spin_limit": spinLimit.withCommas()
+                "spin_limit": spinLimit.withCommas(),
+                "disabled_count": disabledCount.withCommas()
             ])
 
         }
