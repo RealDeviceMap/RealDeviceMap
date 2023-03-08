@@ -54,6 +54,7 @@ public class WebHookRequestHandler {
     private static let encounterLock = Threading.Lock()
     private static var encounterCount = [String: Int]()
     private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+    private static let accDisableOnUnkError: Bool = ConfigLoader.global.getConfig(type: .accDisableOnUnkError)
 
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
@@ -1176,7 +1177,7 @@ public class WebHookRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if type == "account_unknown_error" {
+        } else if type == "account_unknown_error" && accDisableOnUnkError {
             // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
             do {
                 guard

@@ -23,7 +23,8 @@ public class ConfigLoader {
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
         "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
-        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD"
+        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD",
+        "ACC_DISABLE_ON_UNK_ERROR"
     ]
 
     private init() {
@@ -92,6 +93,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
+        case .accDisableOnUnkError: return localConfig.application.account.disableOnUnkError.value()
+            ?? defaultConfig.application.account.disableOnUnkError.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -189,6 +192,7 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
+        case .accDisableOnUnkError: return true as! T // ACC_DISABLE_ON_UNK_ERROR
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -267,6 +271,7 @@ public class ConfigLoader {
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
+        case accDisableOnUnkError = "ACC_DISABLE_ON_UNK_ERROR"
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"
