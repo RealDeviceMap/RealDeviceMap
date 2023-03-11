@@ -77,7 +77,22 @@ public class SpawnPoint: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
+        let oldSpawnpoint: SpawnPoint?
+        do {
+            oldSpawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: id)
+        } catch {
+            oldSpawnpoint = nil
+        }
+        let mysqlStmt = MySQLStmt(mysql)
+
+        if !update && oldSpawnpoint != nil {
+            return
+        }
+        
         // determine spawn information in what quarter of hour
+        // 1. if the spawn has been seen in all quarter hours, it is a 60min spawn
+        // 2. if the spawn has been seen in 3 or less quarter hours, it is considered a 30min spawn
+        // 3. one will want to run the area on laps, as by definition, findy will not likely visit the spawnpoint in enough quarter hours to determine if the spawn is a 60min one.  it will likely be considered a 30min spawn forever if just running jumpy.
         var curMinute:UInt64 = minute
         var quarterHourValue:UInt32 = 0
         if minute == UInt64.max { // if got a default value, just grab the current minute
@@ -92,18 +107,6 @@ public class SpawnPoint: JSONConvertibleObject {
             quarterHourValue = 4
         } else if (curMinute >= 45) && (curMinute <= 59) {
             quarterHourValue = 8
-        }
-
-        let oldSpawnpoint: SpawnPoint?
-        do {
-            oldSpawnpoint = try SpawnPoint.getWithId(mysql: mysql, id: id)
-        } catch {
-            oldSpawnpoint = nil
-        }
-        let mysqlStmt = MySQLStmt(mysql)
-
-        if !update && oldSpawnpoint != nil {
-            return
         }
 
         let now = UInt32(Date().timeIntervalSince1970)

@@ -78,8 +78,8 @@ class AutoInstanceController: InstanceControllerProto {
     var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
     var autoBufferTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonBufferTime)
     var autoSleepInterval: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonSleepInterval)
-    let autoDefaultLongitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLongitude)
-    let autoDefaultLatitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLatitude) 
+    var autoDefaultLongitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLongitude)
+    var autoDefaultLatitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLatitude)
 
     struct AutoPokemonCoord {
         var id: UInt64
@@ -1043,7 +1043,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         // assemble the sql
-        var sql = "select id, despawn_sec, lat, lon from spawnpoint where "
+        var sql = "select id, despawn_sec, lat, lon, spawn_info from spawnpoint where "
         sql.append(" (lat>" + String(minLat) + " AND lon >" + String(minLon) + ") ")
         sql.append(" AND ")
         sql.append(" (lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ") ")
@@ -1076,10 +1076,22 @@ class AutoInstanceController: InstanceControllerProto {
             let despawnSeconds = result[1] as! UInt16
             let lat = result[2] as! Double
             let lon = result[3] as! Double
+            let spawnInfo = result[4] as! UInt32
 
             var spawnSeconds: Int = Int(despawnSeconds)
+            
+            // determine if 60 or 30min spawns, will default to 30g! civitas dj
+            let testValue: UInt32 = 15
+            if (spawnInfo & testValue == testValue)
+            {
+                spawnSeconds -= 3600
+            }
+            else
+            {
+                spawnSeconds -= 1800
+            }
 
-            spawnSeconds -= 1800 // add 30min so when spawn should show, rdm not track 60min spawns
+             // add 30min so when spawn should show, rdm not track 60min spawns
 
             if spawnSeconds < 0 {
                 spawnSeconds += 3600
