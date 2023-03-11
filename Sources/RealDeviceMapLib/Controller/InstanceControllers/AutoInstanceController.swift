@@ -15,6 +15,7 @@ import Turf
 import S2Geometry
 
 class AutoInstanceController: InstanceControllerProto {
+    
     enum AutoType {
         case quest
         case pokemon
@@ -72,7 +73,7 @@ class AutoInstanceController: InstanceControllerProto {
     let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = ConfigLoader.global.getConfig(type: .tthClusteringRadius)
     var tthHopTime: Double = ConfigLoader.global.getConfig(type: .tthHopTime)
-    let autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
+    var autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
     var autoRequeryFrequency: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
     var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
     var autoBufferTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonBufferTime)
@@ -194,6 +195,10 @@ class AutoInstanceController: InstanceControllerProto {
 
             return
         }
+        
+        // nned to initialize to something so that compiles
+        pokemonCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
+        tthCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
 
         update()
 
@@ -342,7 +347,7 @@ class AutoInstanceController: InstanceControllerProto {
         stop()
     }
 
-    private func update() {
+    private func update()  {
         switch type {
         case .pokemon:
             try? initAutoPokemonCoords()
@@ -451,18 +456,16 @@ class AutoInstanceController: InstanceControllerProto {
             if hit == 0 && firstRun
             {
                 // not run before, so must get some coords to start
+                // don't run as async as we will just grab unclustered coords on first run to get thing moving
                 try? initTthCoords()
-                tthCache.set(id: self.name, value: 1)
             }
             else if hit == 0
             {
-                // subsequent runs, get new data async so that we don't block the workers doing work while querying and clustering
-                tthCache.set(id: self.name, value: 1)
-                
-                DispatchQueue.main.async(qos: .utility).async
-                {
-                    try? initTthCoords()
+                // run async.  intent is to fire off the clustering, but keep running on old coords until we get data back from koji
+                DispatchQueue.global(qos: .background).async {
+                    try? self.initTthCoords()
                 }
+                
             }
 
             // increment location
@@ -477,7 +480,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             currentDevicesMaxLocation = newLoc
 
-            var currentCoord = Coord(lat: 0.0, lon: 0.0)
+            var currentCoord = Coord(lat: autoDefaultLatitude, lon: autoDefaultLongitude)
             if tthCoords.indices.contains(newLoc) {
                 currentCoord = tthCoords[newLoc]
             } else {
@@ -1149,7 +1152,7 @@ class AutoInstanceController: InstanceControllerProto {
         sql.append("(lat>" + String(minLat) + " AND lon >" + String(minLon) + ")")
         sql.append(" AND ")
         sql.append("(lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ")")
-        sql.append(" AND despawn_sec")
+        sql.append(" AND despawn_sec is null")
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
@@ -1188,7 +1191,8 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         // determine if end user is utilizing koji, if so cluster some shit
-        if tthClusteringUsesKoji && kojiUrl.length > 10 && kojiSecret.length > 1
+        // for the first run, we will just do all data without any clusters to get things moving
+        if tthClusteringUsesKoji && kojiUrl.length > 10 && kojiSecret.length > 1 && !firstRun
         {
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
@@ -1200,7 +1204,11 @@ class AutoInstanceController: InstanceControllerProto {
 
         currentDevicesMaxLocation = 0
 
+        firstRun = false
+        
         tthLock.unlock()
+        
+        tthCache.set(id: self.name, value: 1)
     }
 
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
@@ -1272,7 +1280,8 @@ class AutoInstanceController: InstanceControllerProto {
 
     func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> ([Coord], Int, Int)
     {
-        let returnedData = Koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)
+        let koji = Koji()
+        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)
 
         return (returnedData.data, returnedData.stats.total_clusters, returnedData.stats.best_cluster_point_count)
     }
