@@ -14,14 +14,14 @@ public class Koji
         var data_points: [Coord]
     }
 
-    public enum sorting
+    public enum sorting: String, Printable
     {
         Random = "Random"
         GeoHash = "GeoHash"
         ClusterCount = "ClusterCount"
     }
 
-    public enum returnType
+    public enum returnType: String, Printable
     {
         SingleArray = "Array"
         MultiArray = "MultiArray"
@@ -30,24 +30,59 @@ public class Koji
         AltText = "Text"
     }
 
-    public struct returnData : Decodable
+    public struct returnData: Decodable
     {
-        message: String
-        status: String
-        status_code: Int
-        data: [Coord]
-        stats: kojiReturnStats
+        var message: String
+        var status: String
+        var status_code: Int
+        var data: [Coord]
+        var stats: returnedStats
     }
     
-    public struct returnStats: Decodable
+    public struct returnedStats: Decodable
     {
-        best_clusters: [Coord]
-        best_cluster_point_count : Int
-        cluster_time: Double
-        total_points: Int
-        points_covered: Int
-        total_clusters: Int
-        total_distance: Double
-        longest_distance: Double
+        var best_clusters: [Coord]
+        var best_cluster_point_count : Int
+        var cluster_time: Double
+        var total_points: Int
+        var points_covered: Int
+        var total_clusters: Int
+        var total_distance: Double
+        var longest_distance: Double
     }
-}
+
+    public func getDataFromKoji(kojiUrl:string, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+        minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = kojiSorting.ClusterCount,
+        returnType: String = kojiReturnType.SingleArray, fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData
+    {
+        var inputData = Koji.jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, 
+                        sort_by = sortBy, return_type = returnType, fast = fast, only_unique = onlyUnique,
+                        data_points = dataPoints)
+
+        let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
+
+        let url = URL(string: kojiUrl)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = jsonData
+
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.timeoutIntervalForRequest = 30.0
+        sessionConfig.timeoutIntervalForResource = 60.0
+
+        let task = URLSession(configuration: sessionConfig).shared.dataTask(with: request)
+        { data, response, error in
+            guard let data = data, error == nil else
+            {
+                Log.error(message: "[AutoInstanceController.getClustersFromKoji] Unable to get cluster data from Koji.")
+                return nil
+            }
+    
+            if let returnedFromKoji: Koji.returnData = try? JSONDecoder().decode(returnedFromKoji.self, from: jsonData)
+            {
+                return returnedFromKoji
+            }
+        }
+        task.resume()
+    }
+} 

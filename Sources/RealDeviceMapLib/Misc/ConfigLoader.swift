@@ -23,7 +23,12 @@ public class ConfigLoader {
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
         "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
-        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT"
+        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT",
+
+        "AUTO_POKEMON_USE_LASTSEEN", "AUTO_POKEMON_REQUERY_FREQUENCY", "AUTO_POKEMON_MIN_SPAWN_TIME",
+        "AUTO_POKEMON_BUFFER_TIME", "AUTO_POKEMON_SLEEP_INTERVAL", "AUTO_POKEMON_DEFAULT_LONGITUDE",
+        "AUTO_POKEMON_DEFAULT_LATITUDE", "TTH_REQUERY_FREQUENCY", "TTH_CLUSTER_USING_KOJI",
+        "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "KOJI_URL", "KOJI_SECRET"
     ]
 
     private init() {
@@ -158,6 +163,35 @@ public class ConfigLoader {
             ?? defaultConfig.application.quest.questRetryLimit.value()!
         case .spinDistance: return localConfig.application.quest.spinDistance.value()
             ?? defaultConfig.application.quest.spinDistance.value()!
+
+        case .autoPokemonUseLastSeenTime: return localConfig.application.scanModes.auto.useLastSeenTime.value()
+            ?? defaultConfig.application.scanModes.auto.useLastSeenTime.value()!
+        case .autoPokemonRequeryFrequency: return localConfig.application.scanModes.auto.requeryFrequency.value()
+            ?? defaultConfig.application.scanModes.auto.requeryFrequency.value()!
+        case .autoPokemonMinSpawnTime: return localConfig.application.scanModes.auto.minSpawnTime.value()
+            ?? defaultConfig.application.scanModes.auto.minSpawnTime.value()!
+        case .autoPokemonBufferTime: return localConfig.application.scanModes.auto.bufferTime.value()
+            ?? defaultConfig.application.scanModes.auto.bufferTime.value()!
+        case .autoPokemonSleepInterval: return localConfig.application.scanModes.auto.sleepInterval.value()
+            ?? defaultConfig.application.scanModes.auto.sleepInterval.value()!
+        case .autoPokemonDefaultLongitude: return localConfig.application.scanModes.auto.defaultLongitude.value()
+            ?? defaultConfig.application.scanModes.auto.defaultLongitude.value()!
+        case .autoPokemonDefaultLatitude: return localConfig.application.scanModes.auto.defaultLatitude.value()
+            ?? defaultConfig.application.scanModes.auto.defaultLatitude.value()!
+        
+        case .tthRequeryFrequency: return localConfig.application.scanModes.tth.requeryFrequency.value()
+            ?? defaultConfig.application.scanModes.tth.requeryFrequency.value()!
+        case .tthClusterUsingKoji: return localConfig.application.scanModes.tth.clusterUsingKoji.value()
+            ?? defaultConfig.application.scanModes.tth.clusterUsingKoji.value()!
+        case .tthClusteringRadius: return localConfig.application.scanModes.tth.clusterUsingRadius.value()
+            ?? defaultConfig.application.scanModes.tth.clusterUsingRadius.value()!
+        case .tthHopTime: return localConfig.application.scanModes.tth.hopTime.value()
+            ?? defaultConfig.application.scanModes.tth.hopTime.value()!
+        
+        case .kojiUrl: return localConfig.application.koji.url.value()
+            ?? defaultConfig.application.koji.url.value()!
+        case .kojiSecret: return localConfig.application.koji.secret.value()
+            ?? defaultConfig.application.koji.secret.value()! 
         }
     }
 
@@ -218,6 +252,22 @@ public class ConfigLoader {
         case .accUseRwForPokes: return false as! T // USE_RW_FOR_POKES
         case .questRetryLimit: return castValue(value: value) // QUEST_RETRY_LIMIT
         case .spinDistance: return castValue(value: value) // SPIN_DISTANCE
+
+        case .autoPokemonUseLastSeenTime: return castValue(value: value) // AUTO_POKEMON_USE_LASTSEEN
+        case .autoPokemonRequeryFrequency: return castValue(value: value) // AUTO_POKEMON_REQUERY_FREQUENCY
+        case .autoPokemonMinSpawnTime: return castValue(value: value) // AUTO_POKEMON_MIN_SPAWN_TIME
+        case .autoPokemonBufferTime: return castValue(value: value)  // AUTO_POKEMON_BUFFER_TIME
+        case .autoPokemonSleepInterval: return castValue(value: value) // AUTO_POKEMON_SLEEP_INTERVAL
+        case .autoPokemonDefaultLongitude: return value as! T // AUTO_POKEMON_DEFAULT_LONGITUDE
+        case .autoPokemonDefaultLatitude: return value as! T // AUTO_POKEMON_DEFAULT_LATITUDE 
+        
+        case .tthRequeryFrequency: return castValue(value: value) // TTH_REQUERY_FREQUENCY
+        case .tthClusterUsingKoji: return true as! T // TTH_CLUSTER_USING_KOJI
+        case .tthClusteringRadius: return value as! T // TTH_CLUSTERING_RADIUS
+        case .tthHopTime: return value as! T // TTH_HOP_TIME
+        
+        case .kojiUrl: return value as! T // KOJI_URL
+        case .kojiSecret: return value as! T // KOJI_SECRET
         }
     }
 
@@ -294,6 +344,21 @@ public class ConfigLoader {
         case accUseRwForPokes = "USE_RW_FOR_POKES"
         case questRetryLimit = "QUEST_RETRY_LIMIT"
         case spinDistance = "SPIN_DISTANCE"
-    }
 
+        case autoPokemonUseLastSeenTime = "AUTO_POKEMON_USE_LASTSEEN"
+        case autoPokemonRequeryFrequency = "AUTO_POKEMON_REQUERY_FREQUENCY"
+        case autoPokemonMinSpawnTime = "AUTO_POKEMON_MIN_SPAWN_TIME"
+        case autoPokemonBufferTime = "AUTO_POKEMON_BUFFER_TIME"
+        case autoPokemonSleepInterval = "AUTO_POKEMON_SLEEP_INTERVAL"
+        case autoPokemonDefaultLongitude = "AUTO_POKEMON_DEFAULT_LONGITUDE"
+        case autoPokemonDefaultLatitude = "AUTO_POKEMON_DEFAULT_LATITUDE"    
+        
+        case tthRequeryFrequency = "TTH_POKEMON_REQUERY_FREQUENCY"
+        case tthClusterUsingKoji = "TTH_CLUSTER_USING_KOJI"
+        case tthClusteringRadius = "TTH_CLUSTERING_RADIUS"
+        case tthHopTime = "TTH_HOP_TIME"
+        
+        case kojiUrl = "KOJI_URL"
+        case kojiSecret = "KOJI_SECRET"
+    }
 }
