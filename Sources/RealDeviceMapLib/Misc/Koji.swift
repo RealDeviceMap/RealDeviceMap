@@ -1,4 +1,5 @@
 import Foundation
+import PerfectLib
 
 public class Koji
 {
@@ -7,30 +8,41 @@ public class Koji
         var radius: Int
         var min_points: Int
         var benchmark_mode: Bool
-        var sort_by: kojiSorting
+        var sort_by: String
         var return_type: String
         var fast: Bool
         var only_unique: Bool
         var data_points: [Coord]
+        
+        /*
+        init(radius: Int, min_points: Int, becnchmark_mode: sorting, return_type: String, fast: Bool, only_unique: Bool, data_points: [Coord])
+        {
+            self.radius = radius
+        }
+         */
     }
 
-    public enum sorting: String, Printable
+    public enum sorting: String, Codable
     {
-        Random = "Random"
-        GeoHash = "GeoHash"
-        ClusterCount = "ClusterCount"
+        case Random, GeoHash, ClusterCount
+        
+        public func asText() -> String
+        {
+            return String(self.rawValue)
+        }
     }
 
-    public enum returnType: String, Printable
+    public enum returnType: String, Codable
     {
-        SingleArray = "Array"
-        MultiArray = "MultiArray"
-        Struct = "Struct"
-        Text = "Text"
-        AltText = "Text"
+        case SingleArray, MultiArray, Struct, Text, AltText
+        
+        public func asText() -> String
+        {
+            return String(self.rawValue)
+        }
     }
 
-    public struct returnData: Decodable
+    public struct returnData: Codable
     {
         var message: String
         var status: String
@@ -39,7 +51,7 @@ public class Koji
         var stats: returnedStats
     }
     
-    public struct returnedStats: Decodable
+    public struct returnedStats: Codable
     {
         var best_clusters: [Coord]
         var best_cluster_point_count : Int
@@ -50,18 +62,26 @@ public class Koji
         var total_distance: Double
         var longest_distance: Double
     }
-
-    public func getDataFromKoji(kojiUrl:string, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
-        minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = kojiSorting.ClusterCount,
-        returnType: String = kojiReturnType.SingleArray, fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData
+    
+    func emptyReturnData() -> returnData
     {
-        var inputData = Koji.jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, 
-                        sort_by = sortBy, return_type = returnType, fast = fast, only_unique = onlyUnique,
-                        data_points = dataPoints)
+        return returnData(message: "", status: "error", status_code: -1, data: [], stats: emptyReturnStats())
+    }
+    func emptyReturnStats() -> returnedStats
+    {
+        return returnedStats(best_clusters: [], best_cluster_point_count: 0, cluster_time: 0.0, total_points: 0, points_covered: 0, total_clusters: 0, total_distance: 0.0, longest_distance: 0.0)
+    }
+
+    /*
+    public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+                                minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
+                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData
+    {
+        let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
 
         let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
 
-        let url = URL(string: kojiUrl)
+        let url = URL(string: kojiUrl)!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = jsonData
@@ -70,19 +90,48 @@ public class Koji
         sessionConfig.timeoutIntervalForRequest = 30.0
         sessionConfig.timeoutIntervalForResource = 60.0
 
-        let task = URLSession(configuration: sessionConfig).shared.dataTask(with: request)
+        let task = URLSession.shared.dataTask(with: request)
         { data, response, error in
-            guard let data = data, error == nil else
-            {
-                Log.error(message: "[AutoInstanceController.getClustersFromKoji] Unable to get cluster data from Koji.")
-                return nil
-            }
+            guard let data = data, error == nil else {return}
+                do
+                {
+                    if let returnedFromKoji = try? JSONDecoder().decode(returnData.self, from: data)
+                    {
+                        completion(returnedFromKoji, nil)
+                    }
+                }
+                catch let jsonError
+                {
+                    Log.error(message: "[AutoInstanceController.getClustersFromKoji] Unable to get cluster data from Koji.")
+                    completion(nil, jsonError)
+                }
     
-            if let returnedFromKoji: Koji.returnData = try? JSONDecoder().decode(returnedFromKoji.self, from: jsonData)
-            {
-                return returnedFromKoji
-            }
+            
         }
         task.resume()
+    }
+    */
+    
+    public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+                                   minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
+                                   returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData
+    {
+        let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
+
+        let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
+        
+        guard let url = NSURL(string: kojiUrl) else { return emptyReturnData() }
+        let request = NSMutableURLRequest(url:url as URL)
+        
+        request.httpMethod = "POST"
+        request.httpBody = jsonData
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("Authorization", forHTTPHeaderField: "Bearer " + kojiSecret)
+        
+        let retData = URLSession.requestSynchronousJSON(request: request)
+        let jsonData = retData?.data!
+        
+        let returnedFromKoji = try? JSONDecoder().decode(returnData.self, from: jsonData)
     }
 } 

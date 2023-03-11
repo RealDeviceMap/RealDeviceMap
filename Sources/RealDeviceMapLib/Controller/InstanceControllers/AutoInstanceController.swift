@@ -68,7 +68,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
     let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
-    var tthRequeryFrequency: UInt32 = UInt32(ConfigLoader.global.getConfig(type: .tthPokemonRequeryFrequency) as Int)
+    var tthRequeryFrequency: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthRequeryFrequency) as Int)
     let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = ConfigLoader.global.getConfig(type: .tthClusteringRadius)
     var tthHopTime: Double = ConfigLoader.global.getConfig(type: .tthHopTime)
@@ -94,6 +94,7 @@ class AutoInstanceController: InstanceControllerProto {
     var pokemonLock = Threading.Lock()
     var tthLock = Threading.Lock()
     var lastCountUnknown: Int = 0
+    var lastTthClusterSize: Int = -1
     var pauseAutoPokemon: Bool = false
     var firstRun: Bool = true
     var pokemonCache: MemoryCache<Int>
@@ -153,7 +154,7 @@ class AutoInstanceController: InstanceControllerProto {
                 autoUseLastSeenTime = 86400
             }
 
-            pokemonCache = MemoryCache(interval: autoRequeryFrequency / 4, keepTime: autoRequeryFrequency, extendTtlOnHit: false)
+            pokemonCache = MemoryCache(interval: Double(autoRequeryFrequency) / 4, keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
             tthCache = MemoryCache(interval: 3600, keepTime: 3600, extendTtlOnHit: false)
 
             return
@@ -189,7 +190,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
 
             pokemonCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
-            tthCache = MemoryCache(interval: tthRequeryFrequency / 4, keepTime: tthRequeryFrequency, extendTtlOnHit: false)
+            tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
             return
         }
@@ -415,7 +416,7 @@ class AutoInstanceController: InstanceControllerProto {
             let lon = Double(autoDefaultLongitude)
             let lat = Double(autoDefaultLatitude)
 
-            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: lat!, lon: lon!), spawnSeconds: 0)
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: lat, lon: lon), spawnSeconds: 0)
             if pokemonCoords.indices.contains(newLoc) {
                 currentDevicesMaxLocation = newLoc
                 currentCoord = pokemonCoords[newLoc]
@@ -1047,7 +1048,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         if autoUseLastSeenTime > 0
         {
-            let time = UInt64(Date().timeIntervalSince1970) - autoUseLastSeenTime
+            let time = UInt64(Date().timeIntervalSince1970) - UInt64(autoUseLastSeenTime)
 
             sql.append(" AND last_seen > \(time) ")
         }
@@ -1187,7 +1188,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         // determine if end user is utilizing koji, if so cluster some shit
-        if tthClusteringUsesKoji && kojiUrl <> "" && kojiSecret <> ""
+        if tthClusteringUsesKoji && kojiUrl.length > 10 && kojiSecret.length > 1
         {
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
@@ -1206,8 +1207,8 @@ class AutoInstanceController: InstanceControllerProto {
     {
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries
-        let deviceCountThisInstance = AssignmentController.global.getDeviceUUIDsForInstance(instanceName: name).count
-        let minHopsToCalc = deviceCountThisInstance * tthRequeryFrequency / ceil(tthHopTime)
+        let deviceCountThisInstance: UInt16 =  1 //AssignmentController.global.getDeviceUUIDsForInstance(instanceName: name).count
+        let minHopsToCalc = deviceCountThisInstance * tthRequeryFrequency / UInt16(ceil(tthHopTime))
 
         // short circuit if less coords that possible for device count, no points running clustering
         if minHopsToCalc <= dataPoints.count
@@ -1223,7 +1224,7 @@ class AutoInstanceController: InstanceControllerProto {
         {
             // handle first run of this
             // send data to koji and see what max clusters are given the data
-            let (_, cnt, maxClusterPointCount) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+            var (_, cnt, maxClusterPointCount) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                 minPoints: 1, benchmarkMode: true)
 
             if cnt == 0 
@@ -1234,8 +1235,8 @@ class AutoInstanceController: InstanceControllerProto {
                 // since starting high, we will need to iterate down and find where we can get enough data
                 while cnt == 0 && countDown > 0 
                 {
-                    (_, cnt _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                minPoints: countDown, benchmarkMode: true)
+                    (_, cnt, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                                  minPoints: UInt16(countDown), benchmarkMode: true)
 
                     countDown -= 1
                 }
@@ -1250,10 +1251,10 @@ class AutoInstanceController: InstanceControllerProto {
             
             repeat 
             {
-                _, cnt, _ = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                            clusterSizeToUse: countDown, benchmarkMode: true)
+                (_, cnt, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                              minPoints: UInt16(countDown), benchmarkMode: true)
 
-                countDown -= 1
+                countDown = countDown - 1
             }
             while (countDown > 0 && cnt <= minHopsToCalc)
 
@@ -1261,20 +1262,17 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         // get the actual data from koji
-        let coords, _, _ = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                            minPoints: clusterSizeToUse, benchmarkMode: false)
+        let (coords, _, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                             minPoints: UInt16(clusterSizeToUse), benchmarkMode: false)
 
         lastTthClusterSize = clusterSizeToUse
 
         return coords
     }
 
-    func clusteredCoords(dataPoints: dataPoints, radius: Int, minPoints: Int, benchmarkMode: Bool) -> ([Coord], Int, Int)
+    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> ([Coord], Int, Int)
     {
-        let returnedData: Koji.returnData = Koji.getDataFromKoji(dataPoints: [Coord], radius: tthClusteringRadius, minPoints: minPoints,
-                                                benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount,
-                                                returnType: Koji.returnType.SingleArray, fast: true,
-                                                onlyUnique: true)
+        let returnedData = Koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)
 
         return (returnedData.data, returnedData.stats.total_clusters, returnedData.stats.best_cluster_point_count)
     }
