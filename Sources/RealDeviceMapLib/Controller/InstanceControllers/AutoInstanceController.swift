@@ -94,7 +94,9 @@ class AutoInstanceController: InstanceControllerProto {
     let deviceUuid: String
     var pokemonLock = Threading.Lock()
     var tthLock = Threading.Lock()
-    var lastCountUnknown: Int = 0
+    var lastTthCountUnknown: Int = 0
+    var lastTthRawPointsCount: Int = 0
+    var currentTthRawPointsCount: Int = 0
     var lastTthClusterSize: Int = -1
     var pauseAutoPokemon: Bool = false
     var firstRun: Bool = true
@@ -418,10 +420,7 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message:
                 "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
 
-            let lon = Double(autoDefaultLongitude)
-            let lat = Double(autoDefaultLatitude)
-
-            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: lat, lon: lon), spawnSeconds: 0)
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: autoDefaultLatitude, lon: autoDefaultLongitude), spawnSeconds: 0)
             if pokemonCoords.indices.contains(newLoc) {
                 currentDevicesMaxLocation = newLoc
                 currentCoord = pokemonCoords[newLoc]
@@ -499,9 +498,8 @@ class AutoInstanceController: InstanceControllerProto {
                 "min_level": minLevel, "max_level": maxLevel
             ]
 
-            firstRun = false
-
             if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            
             return task
         case .quest:
             bootstrappLock.lock()
@@ -949,7 +947,7 @@ class AutoInstanceController: InstanceControllerProto {
                 return ["coord_count": cnt]
             }
         case .tth:
-            var change = tthCoords.count - lastCountUnknown
+            var change = tthCoords.count - lastTthCountUnknown
             if change == tthCoords.count {
                 change = 0
             }
@@ -1080,7 +1078,8 @@ class AutoInstanceController: InstanceControllerProto {
 
             var spawnSeconds: Int = Int(despawnSeconds)
             
-            // determine if 60 or 30min spawns, will default to 30g! civitas dj
+            // determine if 60 or 30min spawns, will default to 30min spawns
+            // first 4 bits of spawnInfo are quarter hours of if mon seen there, all 4, it is 60.  less than 4, it is 30.
             let testValue: UInt32 = 15
             if (spawnInfo & testValue == testValue)
             {
@@ -1090,8 +1089,6 @@ class AutoInstanceController: InstanceControllerProto {
             {
                 spawnSeconds -= 1800
             }
-
-             // add 30min so when spawn should show, rdm not track 60min spawns
 
             if spawnSeconds < 0 {
                 spawnSeconds += 3600
@@ -1139,7 +1136,8 @@ class AutoInstanceController: InstanceControllerProto {
             return
         }
 
-        lastCountUnknown = tthCoords.count
+        lastTthCountUnknown = tthCoords.count
+        lastTthRawPointsCount = currentTthRawPointsCount
 
         tthLock.lock()
         tthCoords.removeAll(keepingCapacity: true)
@@ -1177,7 +1175,8 @@ class AutoInstanceController: InstanceControllerProto {
 
         var count: Int = 0
         let results = mysqlStmt.results()
-        while let result = results.next() {
+        while let result = results.next()
+        {
             let lat = result[0] as! Double
             let lon = result[1] as! Double
 
@@ -1187,24 +1186,21 @@ class AutoInstanceController: InstanceControllerProto {
 
             count += 1
         }
+        currentTthRawPointsCount = tmpCoords.count
+        
         Log.debug(message:
             "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
         Log.debug(message:
             "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
 
-        if count == 0 {
-            Log.debug(message:
-                "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
-        }
-
         if tmpCoords.count == 0 {
             Log.debug(message:
-                "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
+                "[AutoInstanceController] initTthCoords - got ZERO points in min/max rectangle with null tth, you should switch to another mode")
         }
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
-        if tthClusteringUsesKoji && kojiUrl.length > 10 && kojiSecret.length > 1 && !firstRun
+        if tthClusteringUsesKoji && kojiUrl.length > 5 && kojiSecret.length > 1 && !firstRun
         {
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
@@ -1225,8 +1221,14 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
     {
+        // cache for data
+        var dataCache = Dictionary<Int, Koji.returnData>()
+        var kojiData: Koji.returnData
+        
+        var cnt = -1
+        
         // get device count from controller, then determine how many coords we can cover in requery period
-        // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries
+        // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
         let deviceCountThisInstance: UInt16 =  1 //AssignmentController.global.getDeviceUUIDsForInstance(instanceName: name).count
         let minHopsToCalc = deviceCountThisInstance * tthRequeryFrequency / UInt16(ceil(tthHopTime))
 
@@ -1236,28 +1238,44 @@ class AutoInstanceController: InstanceControllerProto {
             return dataPoints
         }
         
-        // increase size of cluster used last time, in case more points have been found during this process
-        var clusterSizeToUse = lastTthClusterSize + 1
+        var clusterSizeToUse: Int
+        
+        // do some educated guess on raw point count
+        if (currentTthRawPointsCount > lastTthRawPointsCount)
+        {
+            // found more raw points than last run, so increase size to start
+            clusterSizeToUse = lastTthClusterSize + 1
+        }
+        else
+        {
+            // same or less raw points count, so start with last
+            clusterSizeToUse = lastTthClusterSize
+        }
 
         // find the proper cluster size so that we have more points than will visit
         if lastTthClusterSize < 0
         {
             // handle first run of this
             // send data to koji and see what max clusters are given the data
-            var (_, cnt, maxClusterPointCount) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+            kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                 minPoints: 1, benchmarkMode: true)
+            
+            dataCache[1] = kojiData
+            
+            // set where we start iterating based on max cluster size
+            var countDown = kojiData.stats.best_cluster_point_count
 
             if cnt == 0 
             {
-                // set where we start iterating based on max cluster size
-                var countDown = maxClusterPointCount
-
                 // since starting high, we will need to iterate down and find where we can get enough data
                 while cnt == 0 && countDown > 0 
                 {
-                    (_, cnt, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                    kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                                                   minPoints: UInt16(countDown), benchmarkMode: true)
 
+                    dataCache[countDown] = kojiData
+                    
+                    cnt = kojiData.stats.total_clusters
                     countDown -= 1
                 }
 
@@ -1271,9 +1289,12 @@ class AutoInstanceController: InstanceControllerProto {
             
             repeat 
             {
-                (_, cnt, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                                               minPoints: UInt16(countDown), benchmarkMode: true)
 
+                dataCache[countDown] = kojiData
+                
+                cnt = kojiData.stats.best_cluster_point_count
                 countDown = countDown - 1
             }
             while (countDown > 0 && cnt <= minHopsToCalc)
@@ -1281,21 +1302,21 @@ class AutoInstanceController: InstanceControllerProto {
             clusterSizeToUse = min(1, countDown + 1)
         }
 
-        // get the actual data from koji
-        let (coords, _, _) = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+        // get the actual data from koji now that have settled on appropriate cluster size
+        kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                                              minPoints: UInt16(clusterSizeToUse), benchmarkMode: false)
 
         lastTthClusterSize = clusterSizeToUse
 
-        return coords
+        return kojiData.data
     }
 
-    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> ([Coord], Int, Int)
+    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData
     {
         let koji = Koji()
         let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)
 
-        return (returnedData.data, returnedData.stats.total_clusters, returnedData.stats.best_cluster_point_count)
+        return returnedData
     }
 
     func secondsFromTopOfHour(seconds: UInt64 ) -> UInt64 {

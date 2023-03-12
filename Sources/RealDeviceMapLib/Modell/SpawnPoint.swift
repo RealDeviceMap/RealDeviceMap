@@ -34,7 +34,7 @@ public class SpawnPoint: JSONConvertibleObject {
     var updated: UInt32?
     var lastSeen: UInt32?
     var despawnSecond: UInt16?
-    var spawnInfo: UInt32?
+    var spawnInfo: UInt32? //only first 4 bits used to track if spawn 30 or 60min.
     var created: UInt32?
 
     public static var cache: MemoryCache<SpawnPoint>?
@@ -45,7 +45,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lon = lon
         self.despawnSecond = despawnSecond
         self.spawnInfo = 0
-        self.created = 0
+        self.created = UInt32(Date().timeIntervalSince1970)
     }
 
     init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?) {
@@ -56,10 +56,10 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lastSeen = lastSeen
         self.despawnSecond = despawnSecond
         self.spawnInfo = 0
-        self.created = 0
+        self.created = UInt32(Date().timeIntervalSince1970)
     }
 
-    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?, spawnInfo: UInt32? = 0) {
+    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?, spawnInfo: UInt32?, created: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -67,7 +67,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lastSeen = lastSeen
         self.despawnSecond = despawnSecond
         self.spawnInfo = spawnInfo
-        self.created = 0
+        self.created = created
     }
 
     public func save(mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true, minute: UInt64 = UInt64.max) throws {
@@ -300,6 +300,7 @@ public class SpawnPoint: JSONConvertibleObject {
             let lastSeen = result[4] as! UInt32
             let despawnSecond = result[5] as? UInt16
             let spawnInfo = result[6] as! UInt32
+            let created = result[7] as! UInt32
 
             spawnpoints.append(
                 SpawnPoint(
@@ -309,7 +310,8 @@ public class SpawnPoint: JSONConvertibleObject {
                     updated: updated,
                     lastSeen: lastSeen,
                     despawnSecond: despawnSecond,
-                    spawnInfo: spawnInfo
+                    spawnInfo: spawnInfo,
+                    created: created
                 )
             )
 
@@ -330,7 +332,7 @@ public class SpawnPoint: JSONConvertibleObject {
         }
 
         let sql = """
-            SELECT id, lat, lon, updated, last_seen, despawn_sec, spawn_info
+            SELECT id, lat, lon, updated, last_seen, despawn_sec, spawn_info, created
             FROM spawnpoint
             WHERE id = ?
         """
@@ -357,6 +359,7 @@ public class SpawnPoint: JSONConvertibleObject {
         let lastSeen = result[4] as! UInt32
         let despawnSecond = result[5] as? UInt16
         let spawnInfo = result[6] as! UInt32
+        let created = result[7] as! UInt32
 
         let spawnpoint = SpawnPoint(
             id: id,
@@ -365,11 +368,12 @@ public class SpawnPoint: JSONConvertibleObject {
             updated: updated,
             lastSeen: lastSeen,
             despawnSecond: despawnSecond,
-            spawnInfo: spawnInfo
+            spawnInfo: spawnInfo,
+            created: created
         )
         cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
+        
         return spawnpoint
-
     }
 
     func secondsToHoursMinutesSeconds() -> (hours: UInt64, minutes: UInt64, seconds: UInt64) {
