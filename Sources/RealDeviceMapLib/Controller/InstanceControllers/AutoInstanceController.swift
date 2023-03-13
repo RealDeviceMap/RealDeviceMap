@@ -87,6 +87,7 @@ class AutoInstanceController: InstanceControllerProto {
         var coord: Coord
         var spawnSeconds: UInt16
     }
+    
     private var lastCompletedTime: Date?
     private var lastLastCompletedTime: Date?
     var pokemonCoords: [AutoPokemonCoord]
@@ -347,10 +348,8 @@ class AutoInstanceController: InstanceControllerProto {
         switch type {
         case .pokemon:
             try? initAutoPokemonCoords()
-            pokemonCache!.set(id: self.name, value: 1)
         case .tth:
             try? initTthCoords()
-            tthCache!.set(id: self.name, value: 1)
         case .quest:
             stopsLock.lock()
             self.allStops = []
@@ -398,7 +397,6 @@ class AutoInstanceController: InstanceControllerProto {
             let hit = pokemonCache!.get(id: self.name) ?? 0
             if hit == 0 {
                 try? initAutoPokemonCoords()
-                pokemonCache!.set(id: self.name, value: 1)
             }
 
             let (_, min, sec) = secondsToHoursMinutesSeconds()
@@ -1122,6 +1120,8 @@ class AutoInstanceController: InstanceControllerProto {
         if oldCoord >= pokemonCoords.count {
             currentDevicesMaxLocation = 0
         }
+        
+        pokemonCache!.set(id: self.name, value: 1)
 
         autoPokemonLock.unlock()
     }
@@ -1211,9 +1211,10 @@ class AutoInstanceController: InstanceControllerProto {
 
         firstRun = false
         
-        tthLock.unlock()
         
         tthCache!.set(id: self.name, value: 1)
+        
+        tthLock.unlock()
     }
     
     func devicesOnInstance() -> UInt16
@@ -1347,7 +1348,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         if cntArray <= 0 {
             try? initAutoPokemonCoords()
-            pokemonCache!.set(id: self.name, value: 1)
+            
             return 0
         }
 
