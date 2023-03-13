@@ -28,7 +28,7 @@ public class ConfigLoader {
         "AUTO_POKEMON_USE_LASTSEEN", "AUTO_POKEMON_REQUERY_FREQUENCY", "AUTO_POKEMON_MIN_SPAWN_TIME",
         "AUTO_POKEMON_BUFFER_TIME", "AUTO_POKEMON_SLEEP_INTERVAL", "AUTO_POKEMON_DEFAULT_LONGITUDE",
         "AUTO_POKEMON_DEFAULT_LATITUDE", "TTH_REQUERY_FREQUENCY", "TTH_CLUSTER_USING_KOJI",
-        "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "KOJI_URL", "KOJI_SECRET"
+        "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "TTH_DEVICE_TIMEOUT", "KOJI_URL", "KOJI_SECRET"
     ]
 
     private init() {
@@ -187,6 +187,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.scanModes.tth.clusterUsingRadius.value()!
         case .tthHopTime: return localConfig.application.scanModes.tth.hopTime.value()
             ?? defaultConfig.application.scanModes.tth.hopTime.value()!
+        case .tthDeviceTimeout: return localConfig.application.scanModes.tth.deviceTimeout.value()
+            ?? defaultConfig.application.scanModes.tth.deviceTimeout.value()!
         
         case .kojiUrl: return localConfig.application.koji.url.value()
             ?? defaultConfig.application.koji.url.value()!
@@ -265,6 +267,7 @@ public class ConfigLoader {
         case .tthClusterUsingKoji: return true as! T // TTH_CLUSTER_USING_KOJI
         case .tthClusteringRadius: return value as! T // TTH_CLUSTERING_RADIUS
         case .tthHopTime: return value as! T // TTH_HOP_TIME
+        case .tthDeviceTimeout: return castValue(value: value) // TTH_DEVICES_FOR_INSTANCE
         
         case .kojiUrl: return value as! T // KOJI_URL
         case .kojiSecret: return value as! T // KOJI_SECRET
@@ -357,6 +360,7 @@ public class ConfigLoader {
         case tthClusterUsingKoji = "TTH_CLUSTER_USING_KOJI"
         case tthClusteringRadius = "TTH_CLUSTERING_RADIUS"
         case tthHopTime = "TTH_HOP_TIME"
+        case tthDeviceTimeout = "TTH_DEVICE_TIMEOUT"
         
         case kojiUrl = "KOJI_URL"
         case kojiSecret = "KOJI_SECRET"

@@ -73,6 +73,7 @@ class AutoInstanceController: InstanceControllerProto {
     let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = ConfigLoader.global.getConfig(type: .tthClusteringRadius)
     var tthHopTime: Double = ConfigLoader.global.getConfig(type: .tthHopTime)
+    var tthDeviceTimeout: UInt16 = ConfigLoader.global.getConfig(type: .tthDeviceTimeout)
     var autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
     var autoRequeryFrequency: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
     var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
@@ -92,16 +93,16 @@ class AutoInstanceController: InstanceControllerProto {
     var tthCoords: [Coord]
     var currentDevicesMaxLocation: Int = 0
     let deviceUuid: String
-    var pokemonLock = Threading.Lock()
+    var autoPokemonLock = Threading.Lock()
     var tthLock = Threading.Lock()
     var lastTthCountUnknown: Int = 0
     var lastTthRawPointsCount: Int = 0
     var currentTthRawPointsCount: Int = 0
     var lastTthClusterSize: Int = -1
-    var pauseAutoPokemon: Bool = false
     var firstRun: Bool = true
-    var pokemonCache: MemoryCache<Int>
-    var tthCache: MemoryCache<Int> 
+    var pokemonCache: MemoryCache<Int>? = nil
+    var tthCache: MemoryCache<Int>? = nil
+    var tthDevices: MemoryCache<Int>? = nil
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
          spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
@@ -131,11 +132,13 @@ class AutoInstanceController: InstanceControllerProto {
             }
             if autoMinSpawnTime < 600
             {
+                // zero point to use this if going to specify less than 10min timers as acceptable
                 autoMinSpawnTime = 600
             }
 
             if autoBufferTime < 10
             {
+                // need to have min value so that we don't get to close to actual spawn times and allow a little slop in system
                 autoBufferTime = 10
             }
             else if autoBufferTime > 120
@@ -158,7 +161,6 @@ class AutoInstanceController: InstanceControllerProto {
             }
 
             pokemonCache = MemoryCache(interval: Double(autoRequeryFrequency) / 4, keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
-            tthCache = MemoryCache(interval: 3600, keepTime: 3600, extendTtlOnHit: false)
 
             return
         }
@@ -178,10 +180,6 @@ class AutoInstanceController: InstanceControllerProto {
             {
                 tthHopTime = 1.0
             }
-            else if tthHopTime > 10
-            {
-                tthHopTime = 10
-            }
 
             if tthRequeryFrequency < 90
             {
@@ -192,16 +190,12 @@ class AutoInstanceController: InstanceControllerProto {
                 tthRequeryFrequency = 3600
             }
 
-            pokemonCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
+            tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4, keepTime: Double(tthDeviceTimeout), extendTtlOnHit: true)
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
             return
         }
         
-        // nned to initialize to something so that compiles
-        pokemonCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
-        tthCache = MemoryCache(interval: 3600, keepTime: 7200, extendTtlOnHit: false)
-
         update()
 
         if !skipBootstrap {
@@ -353,10 +347,10 @@ class AutoInstanceController: InstanceControllerProto {
         switch type {
         case .pokemon:
             try? initAutoPokemonCoords()
-            pokemonCache.set(id: self.name, value: 1)
+            pokemonCache!.set(id: self.name, value: 1)
         case .tth:
             try? initTthCoords()
-            tthCache.set(id: self.name, value: 1)
+            tthCache!.set(id: self.name, value: 1)
         case .quest:
             stopsLock.lock()
             self.allStops = []
@@ -401,15 +395,15 @@ class AutoInstanceController: InstanceControllerProto {
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         switch type {
         case .pokemon:
-            let hit = pokemonCache.get(id: self.name) ?? 0
+            let hit = pokemonCache!.get(id: self.name) ?? 0
             if hit == 0 {
                 try? initAutoPokemonCoords()
-                pokemonCache.set(id: self.name, value: 1)
+                pokemonCache!.set(id: self.name, value: 1)
             }
 
             let (_, min, sec) = secondsToHoursMinutesSeconds()
             let curSecInHour = min*60 + sec
-            pokemonLock.lock()
+            autoPokemonLock.lock()
 
             // increment location
             let loc: Int = currentDevicesMaxLocation
@@ -433,7 +427,7 @@ class AutoInstanceController: InstanceControllerProto {
                 }
             }
 
-            pokemonLock.unlock()
+            autoPokemonLock.unlock()
 
             var task: [String: Any] = [
                 "action": "scan_pokemon", "lat": currentCoord.coord.lat, "lon": currentCoord.coord.lon,
@@ -450,8 +444,11 @@ class AutoInstanceController: InstanceControllerProto {
             // run until data length == 0, then output a message to tell user done
             // since we actually care about laptime, use that variable
             tthLock.lock()
+            
+            // update cache for active devices
+            tthDevices?.set(id: uuid, value: 1)
 
-            let hit = tthCache.get(id: self.name) ?? 0
+            let hit = tthCache!.get(id: self.name) ?? 0
             if hit == 0 && firstRun
             {
                 // not run before, so must get some coords to start
@@ -1022,7 +1019,7 @@ class AutoInstanceController: InstanceControllerProto {
             return
         }
 
-        pokemonLock.lock()
+        autoPokemonLock.lock()
         pokemonCoords.removeAll(keepingCapacity: true)
 
         var tmpCoords: [AutoPokemonCoord] = [AutoPokemonCoord]()
@@ -1126,7 +1123,7 @@ class AutoInstanceController: InstanceControllerProto {
             currentDevicesMaxLocation = 0
         }
 
-        pokemonLock.unlock()
+        autoPokemonLock.unlock()
     }
 
     func initTthCoords() throws {
@@ -1216,7 +1213,15 @@ class AutoInstanceController: InstanceControllerProto {
         
         tthLock.unlock()
         
-        tthCache.set(id: self.name, value: 1)
+        tthCache!.set(id: self.name, value: 1)
+    }
+    
+    func devicesOnInstance() -> UInt16
+    {
+        var cnt = tthDevices?.activeKeys().count ?? 1
+        cnt  = min(1,cnt)
+        
+        return UInt16(cnt)
     }
 
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
@@ -1229,8 +1234,7 @@ class AutoInstanceController: InstanceControllerProto {
         
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
-        let deviceCountThisInstance: UInt16 =  1 //AssignmentController.global.getDeviceUUIDsForInstance(instanceName: name).count
-        let minHopsToCalc = deviceCountThisInstance * tthRequeryFrequency / UInt16(ceil(tthHopTime))
+        let minHopsToCalc = devicesOnInstance() * tthRequeryFrequency / UInt16(ceil(tthHopTime))
 
         // short circuit if less coords that possible for device count, no points running clustering
         if minHopsToCalc <= dataPoints.count
@@ -1343,7 +1347,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         if cntArray <= 0 {
             try? initAutoPokemonCoords()
-            pokemonCache.set(id: self.name, value: 1)
+            pokemonCache!.set(id: self.name, value: 1)
             return 0
         }
 
@@ -1364,7 +1368,7 @@ class AutoInstanceController: InstanceControllerProto {
             loc = 0
         }
 
-        pokemonLock.lock()
+        autoPokemonLock.lock()
         if !pokemonCoords.indices.contains(loc) {
             if pokemonCoords.indices.contains(0) {
                 loc = 0
@@ -1374,7 +1378,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
         }
         var nextCoord = pokemonCoords[loc]
-        pokemonLock.unlock()
+        autoPokemonLock.unlock()
 
         var spawnSeconds: UInt16 = nextCoord.spawnSeconds
 
@@ -1456,7 +1460,6 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() c1 - sleeping 20sec")
             Threading.sleep(seconds: 20)
 
-            pauseAutoPokemon = true
             loc -= 1
         } else if curTime > maxTime {
             // spawn is past time to visit, need to find a good one to jump to

@@ -70,4 +70,21 @@ public class MemoryCache<T> {
         hitsLock.unlock()
     }
 
+    func activeKeys() -> Set<String>
+    {
+        var keys:Set<String> = []
+        
+        self.lock.writeLock()
+        self.hitsLock.lock()
+        
+        for item in store
+        {
+            keys.insert(item.key)
+        }
+        
+        self.lock.unlock()
+        self.hitsLock.unlock()
+        
+        return keys
+    }
 }

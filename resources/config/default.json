@@ -117,6 +117,7 @@
             "requeryFrequency": 90,
             "clusterUsingKoji": true,
             "clusteringRadius": 70,
+            "deviceTimeout": 300,
             "hopTime": 3.10
         }
     },
