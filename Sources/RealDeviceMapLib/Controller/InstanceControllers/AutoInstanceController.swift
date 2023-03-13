@@ -99,6 +99,7 @@ class AutoInstanceController: InstanceControllerProto {
     var lastTthCountUnknown: Int = 0
     var lastTthRawPointsCount: Int = 0
     var currentTthRawPointsCount: Int = 0
+    var lastMaxClusterSize: Int = 0
     var lastTthClusterSize: Int = -1
     var firstRun: Bool = true
     var pokemonCache: MemoryCache<Int>? = nil
@@ -942,25 +943,54 @@ class AutoInstanceController: InstanceControllerProto {
                 return ["coord_count": cnt]
             }
         case .tth:
-            var change = tthCoords.count - lastTthCountUnknown
-            if change == tthCoords.count {
-                change = 0
+            var changeCluster = tthCoords.count - lastTthCountUnknown
+            if changeCluster == tthCoords.count {
+                changeCluster = 0
+            }
+            
+            var changeRaw = lastTthRawPointsCount - currentTthRawPointsCount
+            if changeRaw == currentTthRawPointsCount {
+                changeRaw = 0
             }
 
             if formatted {
-                if change > 0 {
-                    return """
-                    <span title=\"Current count and change in count from last query\">
-                    Coord Count: \(self.tthCoords.count), Delta: +\(change)</span>
-                    """
-                } else {
-                    return """
-                    <span title=\"Current count and change in count from last query\">
-                    Coord Count: \(self.tthCoords.count), Delta: \(change)</span>
-                    """
+                if changeCluster > 0
+                {
+                    if changeRaw > 0
+                    {
+                        return """
+                        <span title=\"Current count and change in count from last query\">
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / +\(changeRaw)</span>
+                        """
+                    }
+                    else
+                    {
+                        return """
+                        <span title=\"Current count and change in count from last query\">
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / \(changeRaw)</span>
+                        """
+                    }
+                    
+                }
+                else
+                {
+                    if changeRaw > 0
+                    {
+                        return """
+                        <span title=\"Current count and change in count from last query\">
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / +\(changeRaw)</span>
+                        """
+                    }
+                    else
+                    {
+                        return """
+                        <span title=\"Current count and change in count from last query\">
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / \(changeRaw)</span>
+                        """
+                    }
                 }
             } else {
-                return ["coord_count": self.tthCoords.count, "Delta": change]
+                return ["coord_count": self.tthCoords.count, "Delta": changeCluster]
             }
         }
     }
@@ -1219,8 +1249,8 @@ class AutoInstanceController: InstanceControllerProto {
     
     func devicesOnInstance() -> UInt16
     {
-        var cnt = tthDevices?.activeKeys().count ?? 1
-        cnt  = min(1,cnt)
+        var cnt = tthDevices?.keyCount() ?? 1
+        cnt  = min(1,cnt)  // really shouldn't be capable of happening
         
         return UInt16(cnt)
     }
@@ -1312,6 +1342,7 @@ class AutoInstanceController: InstanceControllerProto {
                                              minPoints: UInt16(clusterSizeToUse), benchmarkMode: false)
 
         lastTthClusterSize = clusterSizeToUse
+        lastMaxClusterSize = kojiData.stats.best_cluster_point_count
 
         return kojiData.data
     }

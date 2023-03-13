@@ -69,22 +69,17 @@ public class MemoryCache<T> {
         hits = [:]
         hitsLock.unlock()
     }
-
-    func activeKeys() -> Set<String>
+    
+    func keyCount() -> Int
     {
-        var keys:Set<String> = []
-        
-        self.lock.writeLock()
+        self.lock.readLock()
         self.hitsLock.lock()
         
-        for item in store
-        {
-            keys.insert(item.key)
-        }
+        let cnt = store.count
         
         self.lock.unlock()
         self.hitsLock.unlock()
         
-        return keys
+        return cnt
     }
 }
