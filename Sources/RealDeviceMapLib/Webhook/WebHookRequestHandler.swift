@@ -55,6 +55,10 @@ public class WebHookRequestHandler {
     private static var encounterCount = [String: Int]()
     private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
 
+    private static let rpc12Lock = Threading.Lock()
+    private static var rpc12Count = [String: Int]()
+    private static let maxRpc12: Int = ConfigLoader.global.getConfig(type: .accMaxRpc12)
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
     private static let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
@@ -1206,22 +1210,33 @@ public class WebHookRequestHandler {
             }
         } else if type == "account_unknown_error" {
             // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
-            do {
-                guard
-                    let device = try Device.getById(mysql: mysql, id: uuid),
-                    let username = device.accountUsername,
-                    let account = try Account.getWithUsername(mysql: mysql, username: username)
-                else {
-                    response.respondWithError(status: .notFound)
-                    return
-                }
+            
+            if username != nil && maxRpc12 > 0 {
+                rpc12Lock.doWithLock {
+                    var value: Int = (rpc12Count[username!] ?? 0) + 1
+                    if value < maxRpc12 {
+                        rpc12Count[username!] = value
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid0 ?? "?")] [\(username!)] #RPC 12 Count: \(value)")
+                    } else {
+                        do {
+                            guard
+                                let device = try Device.getById(mysql: mysql, id: uuid),
+                                let username = device.accountUsername,
+                                let account = try Account.getWithUsername(mysql: mysql, username: username)
+                            else {
+                                response.respondWithError(status: .notFound)
+                                return
+                            }
 
-                Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
-                try Account.setDisabled(mysql: mysql, username: username)
-                response.respondWithOk()
-            } catch {
-                response.respondWithError(status: .internalServerError)
-            }
+                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
+                            try Account.setDisabled(mysql: mysql, username: username)
+                            response.respondWithOk()
+                        } catch {
+                            response.respondWithError(status: .internalServerError)
+                        }
+                    }
+                }
+            }           
         } else if type == "logged_out" {
             do {
                 guard
