@@ -89,7 +89,7 @@ public class SpawnPoint: JSONConvertibleObject {
             return
         }
         
-        // determine spawn information in what quarter of hour
+        // determine spawn information by what quarter of hours the monster has been seen in
         // 1. if the spawn has been seen in all quarter hours, it is a 60min spawn
         // 2. if the spawn has been seen in 3 or less quarter hours, it is considered a 30min spawn
         // 3. one will want to run the area on laps, as by definition, findy will not likely visit the spawnpoint in enough quarter hours to determine if the spawn is a 60min one.  it will likely be considered a 30min spawn forever if just running jumpy.

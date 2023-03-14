@@ -960,14 +960,14 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / +\(changeRaw)</span>
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / +\(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / \(changeRaw)</span>
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / \(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
                         """
                     }
                     
@@ -978,14 +978,14 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / +\(changeRaw)</span>
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / +\(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / \(changeRaw)</span>
+                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / \(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
                         """
                     }
                 }
@@ -1240,7 +1240,6 @@ class AutoInstanceController: InstanceControllerProto {
         currentDevicesMaxLocation = 0
 
         firstRun = false
-        
         
         tthCache!.set(id: self.name, value: 1)
         
