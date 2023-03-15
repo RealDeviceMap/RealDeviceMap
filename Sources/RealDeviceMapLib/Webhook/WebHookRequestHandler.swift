@@ -841,10 +841,10 @@ public class WebHookRequestHandler {
                 let start = Date()
                 for fort in mapForts {
                     if let pokestop = try? Pokestop.getWithId(id: fort.id, copy: true) {
-                        pokestop.updateFromMapFort(fort)
+                        pokestop.updateFromMapFort(fort: fort)
                         try? pokestop.save()
                     } else if let gym = try? Gym.getWithId(id: fort.id, copy: true) {
-                        gym.updateFromMapFort(fort)
+                        gym.updateFromMapFort(fort: fort)
                         try? gym.save()
                     } else {
                         Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Unknown Map Fort " +
