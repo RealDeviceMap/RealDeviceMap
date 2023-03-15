@@ -842,10 +842,10 @@ public class WebHookRequestHandler {
                 for fort in mapForts {
                     if let pokestop = try? Pokestop.getWithId(id: fort.id, copy: true) {
                         pokestop.updateFromMapFort(fort)
-                        try pokestop.save()
+                        try? pokestop.save()
                     } else if let gym = try? Gym.getWithId(id: fort.id, copy: true) {
                         gym.updateFromMapFort(fort)
-                        try gym.save()
+                        try? gym.save()
                     } else {
                         Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Unknown Map Fort " +
                             "'\(fort.name)' with id \(fort.id) at \(fort.latitude),\(fort.longitude)")
