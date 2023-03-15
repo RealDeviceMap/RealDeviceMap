@@ -588,7 +588,6 @@ public class Account: WebHookEvent {
         }.map { (lockout) -> String in
             return lockout.account
         }
-        Account.lockoutLock.unlock()
 
         let lockoutSQL: String
         if !locked.isEmpty {
@@ -640,11 +639,13 @@ public class Account: WebHookEvent {
         }
 
         guard mysqlStmt.execute() else {
+            Account.lockoutLock.unlock()
             Log.error(message: "[ACCOUNT] Failed to execute query 'getNewAccount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
         if results.numRows == 0 {
+            Account.lockoutLock.unlock()
             return nil
         }
 
@@ -672,13 +673,13 @@ public class Account: WebHookEvent {
         let lastDisabled = result[19] as? UInt32
         let group = (result[20] as? String)?.emptyToNil()
 
-        Account.lockoutLock.doWithLock {
-            Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
-        }
+
+        Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
         Account.lockoutLock.unlock()
 
         try? Account.setLastUsed(mysql: mysql, username: username)
         if disabled {
+            // if the account is stored as disabled in DB but we can again use it we should reset that column
             try? Account.setDisabled(mysql: mysql, username: username, disabled: false)
         }
         return Account(
