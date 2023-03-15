@@ -673,7 +673,6 @@ public class Account: WebHookEvent {
         let lastDisabled = result[19] as? UInt32
         let group = (result[20] as? String)?.emptyToNil()
 
-
         Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
         Account.lockoutLock.unlock()
 
