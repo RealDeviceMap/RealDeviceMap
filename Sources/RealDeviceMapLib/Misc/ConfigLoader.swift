@@ -260,13 +260,13 @@ public class ConfigLoader {
         case .autoPokemonMinSpawnTime: return castValue(value: value) // AUTO_POKEMON_MIN_SPAWN_TIME
         case .autoPokemonBufferTime: return castValue(value: value)  // AUTO_POKEMON_BUFFER_TIME
         case .autoPokemonSleepInterval: return castValue(value: value) // AUTO_POKEMON_SLEEP_INTERVAL
-        case .autoPokemonDefaultLongitude: return castValue(value: value) // AUTO_POKEMON_DEFAULT_LONGITUDE
-        case .autoPokemonDefaultLatitude: return castValue(value: value) // AUTO_POKEMON_DEFAULT_LATITUDE
+        case .autoPokemonDefaultLongitude: return value as! T // AUTO_POKEMON_DEFAULT_LONGITUDE
+        case .autoPokemonDefaultLatitude: return value as! T // AUTO_POKEMON_DEFAULT_LATITUDE
         
         case .tthRequeryFrequency: return castValue(value: value) // TTH_REQUERY_FREQUENCY
         case .tthClusterUsingKoji: return true as! T // TTH_CLUSTER_USING_KOJI
         case .tthClusteringRadius: return castValue(value: value) // TTH_CLUSTERING_RADIUS
-        case .tthHopTime: return castValue(value: value) // TTH_HOP_TIME
+        case .tthHopTime: return value as! T // TTH_HOP_TIME
         case .tthDeviceTimeout: return castValue(value: value) // TTH_DEVICES_FOR_INSTANCE
         
         case .kojiUrl: return value as! T // KOJI_URL
