@@ -765,7 +765,7 @@ public class Account: WebHookEvent {
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
-            WHERE device.uuid IS NULL 
+            WHERE device.uuid IS NULL
                   AND (
                    disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
                   ) AND (
