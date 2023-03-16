@@ -69,13 +69,13 @@ class AutoInstanceController: InstanceControllerProto {
 
     let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
     let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
-    var tthRequeryFrequency: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthRequeryFrequency) as Int)
+    var tthRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .tthRequeryFrequency
     let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthClusteringRadius) as Int)
     var tthHopTime: Double = ConfigLoader.global.getConfig(type: .tthHopTime)
     var tthDeviceTimeout: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthDeviceTimeout) as Int)
     var autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
-    var autoRequeryFrequency: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
+    var autoRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
     var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
     var autoBufferTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonBufferTime)
     var autoSleepInterval: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonSleepInterval)
