@@ -557,6 +557,12 @@ public class WebHookRequestHandler {
                 encounter.pokemon.encounterID.description == pokemonEncounterIdForEncounter {
                 // We actually encountered the target.
                 data["encounters"] = 1
+                if username != nil && rpc12Count[username!] > 0 {
+                    rpc12Lock.doWithLock {
+                        rpc12Count[username!] = 0
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
+                    }
+                }
             }
         }
 
@@ -1216,7 +1222,7 @@ public class WebHookRequestHandler {
                     var value: Int = (rpc12Count[username!] ?? 0) + 1
                     if value < maxRpc12 {
                         rpc12Count[username!] = value
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid0 ?? "?")] [\(username!)] #RPC 12 Count: \(value)")
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12: \(value)")
                     } else {
                         do {
                             guard
@@ -1229,6 +1235,7 @@ public class WebHookRequestHandler {
                             }
 
                             Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
+                            rpc12Count.removeValue(forKey: username!)
                             try Account.setDisabled(mysql: mysql, username: username)
                             response.respondWithOk()
                         } catch {
@@ -1245,6 +1252,7 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
+                rpc12Count.removeValue(forKey: device.accountUsername)
                 device.accountUsername = nil
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 response.respondWithOk()
