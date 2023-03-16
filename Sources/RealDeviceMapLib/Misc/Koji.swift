@@ -1,6 +1,10 @@
 import Foundation
 import PerfectLib
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 public class Koji
 {
     public struct jsonInput: Codable
