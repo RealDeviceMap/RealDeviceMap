@@ -1258,7 +1258,7 @@ class AutoInstanceController: InstanceControllerProto {
     {
         // cache for data
         var dataCache = Dictionary<Int, Koji.returnData>()
-        var kojiData: Koji.returnData
+        var kojiData: Koji.returnData?
         
         var cnt = -1
         
@@ -1297,7 +1297,7 @@ class AutoInstanceController: InstanceControllerProto {
             dataCache[1] = kojiData
             
             // set where we start iterating based on max cluster size
-            var countDown = kojiData.stats.best_cluster_point_count
+            var countDown = kojiData!.stats.best_cluster_point_count
 
             if cnt == 0 
             {
@@ -1309,7 +1309,7 @@ class AutoInstanceController: InstanceControllerProto {
 
                     dataCache[countDown] = kojiData
                     
-                    cnt = kojiData.stats.total_clusters
+                    cnt = kojiData!.stats.total_clusters
                     countDown -= 1
                 }
 
@@ -1328,7 +1328,7 @@ class AutoInstanceController: InstanceControllerProto {
 
                 dataCache[countDown] = kojiData
                 
-                cnt = kojiData.stats.best_cluster_point_count
+                cnt = kojiData!.stats.best_cluster_point_count
                 countDown = countDown - 1
             }
             while (countDown > 0 && cnt <= minHopsToCalc)
@@ -1341,15 +1341,15 @@ class AutoInstanceController: InstanceControllerProto {
                                              minPoints: UInt16(clusterSizeToUse), benchmarkMode: false)
 
         lastTthClusterSize = clusterSizeToUse
-        lastMaxClusterSize = kojiData.stats.best_cluster_point_count
+        lastMaxClusterSize = kojiData!.stats.best_cluster_point_count
 
-        return kojiData.data
+        return kojiData!.data
     }
 
-    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData
+    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData?
     {
         let koji = Koji()
-        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)
+        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)!
 
         return returnedData
     }

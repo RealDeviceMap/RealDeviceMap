@@ -71,35 +71,50 @@ public class Koji
     {
         return returnedStats(best_clusters: [], best_cluster_point_count: 0, cluster_time: 0.0, total_points: 0, points_covered: 0, total_clusters: 0, total_distance: 0.0, longest_distance: 0.0)
     }
-
+    
     public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
-                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData
+                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData?
     {
         let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
-
         let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
+        
+        var returnedData: Koji.returnData?
         
         let url = URL(string: kojiUrl)!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = jsonData
         
-        let (data, response, error) = URLSession.shared.synchronousDataTask(with: request)
+        let semaphore = DispatchSemaphore(value: 0)
         
-        if let error = error
-        {
-            Log.error(message: "Unable to retrieve data from Koji" + error.localizedDescription)
-            return emptyReturnData()
-        }
-        if let data = data
-        {
-            if let returnedFromKoji = try? JSONDecoder().decode(returnData.self, from: data)
+        let task = URLSession.shared.dataTask(with: request, completionHandler: {data, response, error in
+            if let error = error
             {
-                return returnedFromKoji
+                Log.error(message: "Unable to retrieve data from Koji" + error.localizedDescription)
             }
-        }
+            else if let response = response as? HTTPURLResponse, 300..<400 ~= response.statusCode
+            {
+                Log.error(message: "Unable to retrieve data from Koji" + response.debugDescription)
+            }
+            else if let data = data
+            {
+                if let kojiDataObject = try? JSONDecoder().decode(returnData.self, from: data)
+                {
+                    returnedData = kojiDataObject
+                }
+                else
+                {
+                    Log.error(message: "Unable to decode JSON data obtained from Koji")
+                }
+            }
+            
+            semaphore.signal()
+        })
         
-        return emptyReturnData()
+        task.resume()
+        _ = semaphore.wait(wallTimeout: .now() + 120)
+        
+        return returnedData
     }
 } 
