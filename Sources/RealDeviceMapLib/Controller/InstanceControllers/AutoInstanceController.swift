@@ -77,9 +77,9 @@ class AutoInstanceController: InstanceControllerProto {
     
     var autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
     var autoRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
-    var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
-    var autoBufferTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonBufferTime)
-    var autoSleepInterval: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonSleepInterval)
+    var autoMinSpawnTime: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime) as Int)
+    var autoBufferTime: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonBufferTime) as Int)
+    var autoSleepInterval: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonSleepInterval) as Int)
     var autoDefaultLongitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLongitude)
     var autoDefaultLatitude: Double = ConfigLoader.global.getConfig(type: .autoPokemonDefaultLatitude)
 
