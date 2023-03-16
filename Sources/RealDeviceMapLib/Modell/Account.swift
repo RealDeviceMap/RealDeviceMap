@@ -754,7 +754,7 @@ public class Account: WebHookEvent {
             lastUsedTimestamp: lastUsedTimestamp, disabled: disabled, lastDisabled: lastDisabled, group: group)
     }
 
-    public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {
+    public static func getAvailableCount(mysql: MySQL?=nil) throws -> Int64 {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -765,20 +765,18 @@ public class Account: WebHookEvent {
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
-            WHERE
-                first_warning_timestamp is NULL AND
-                failed_timestamp is NULL and device.uuid IS NULL AND
-                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))) AND
-                (
-                    (failed IS NULL AND first_warning_timestamp is NULL) OR
-                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
-                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
-                ) AND (
-                    last_encounter_time IS NULL OR
-                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
-                    spins < 400
-                )
+            WHERE device.uuid IS NULL 
+                  AND (
+                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                  ) AND (
+                   (failed IS NULL AND first_warning_timestamp IS NULL) OR
+                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  ) AND (
+                   last_encounter_time IS NULL OR
+                   UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
+                  )
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -999,10 +997,14 @@ public class Account: WebHookEvent {
               level,
               COUNT(level) as total,
               SUM(
-                  (failed IS NULL AND first_warning_timestamp is NULL) OR
-                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
-                   warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  (
+                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP - \(Account.disablePeriod)
+                  ) AND (
+                   (failed IS NULL AND first_warning_timestamp is NULL) OR
+                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  )
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
               SUM(first_warning_timestamp IS NOT NULL) as warning,
