@@ -577,6 +577,8 @@ public class Account: WebHookEvent {
         }
 
         Account.lockoutLock.lock()
+        defer { Account.lockoutLock.unlock() }
+
         let now = Date()
         var keepLockedOut = [(account: String, device: String, untill: Date)]()
         for lockout in Account.lockouts where (lockout.untill) >= now {
@@ -639,13 +641,11 @@ public class Account: WebHookEvent {
         }
 
         guard mysqlStmt.execute() else {
-            Account.lockoutLock.unlock()
             Log.error(message: "[ACCOUNT] Failed to execute query 'getNewAccount'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
         if results.numRows == 0 {
-            Account.lockoutLock.unlock()
             return nil
         }
 
@@ -674,7 +674,6 @@ public class Account: WebHookEvent {
         let group = (result[20] as? String)?.emptyToNil()
 
         Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
-        Account.lockoutLock.unlock()
 
         try? Account.setLastUsed(mysql: mysql, username: username)
         if disabled {
