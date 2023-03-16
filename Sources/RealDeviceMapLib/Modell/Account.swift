@@ -999,14 +999,14 @@ public class Account: WebHookEvent {
                   (
                    disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
                   ) AND (
-                   (failed IS NULL AND first_warning_timestamp is NULL) OR
+                   failed IS NULL OR
                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
                   )
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
-              SUM(first_warning_timestamp IS NOT NULL) as warning,
+              SUM(failed = 'GPR_RED_WARNING') as warning,
               SUM(
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
