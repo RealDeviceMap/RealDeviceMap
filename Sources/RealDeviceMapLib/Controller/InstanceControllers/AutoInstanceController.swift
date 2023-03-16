@@ -73,7 +73,7 @@ class AutoInstanceController: InstanceControllerProto {
     let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthClusteringRadius) as Int)
     var tthHopTime: Double = ConfigLoader.global.getConfig(type: .tthHopTime)
-    var tthDeviceTimeout: UInt16 = ConfigLoader.global.getConfig(type: .tthDeviceTimeout)
+    var tthDeviceTimeout: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthDeviceTimeout) as Int)
     var autoUseLastSeenTime: Int = ConfigLoader.global.getConfig(type: .autoPokemonUseLastSeenTime)
     var autoRequeryFrequency: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonRequeryFrequency)
     var autoMinSpawnTime: UInt16 = ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime)
