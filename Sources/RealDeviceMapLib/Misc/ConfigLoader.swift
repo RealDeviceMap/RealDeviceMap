@@ -183,8 +183,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.scanModes.tth.requeryFrequency.value()!
         case .tthClusterUsingKoji: return localConfig.application.scanModes.tth.clusterUsingKoji.value()
             ?? defaultConfig.application.scanModes.tth.clusterUsingKoji.value()!
-        case .tthClusteringRadius: return localConfig.application.scanModes.tth.clusterUsingRadius.value()
-            ?? defaultConfig.application.scanModes.tth.clusterUsingRadius.value()!
+        case .tthClusteringRadius: return localConfig.application.scanModes.tth.clusteringRadius.value()
+            ?? defaultConfig.application.scanModes.tth.clusteringRadius.value()!
         case .tthHopTime: return localConfig.application.scanModes.tth.hopTime.value()
             ?? defaultConfig.application.scanModes.tth.hopTime.value()!
         case .tthDeviceTimeout: return localConfig.application.scanModes.tth.deviceTimeout.value()
