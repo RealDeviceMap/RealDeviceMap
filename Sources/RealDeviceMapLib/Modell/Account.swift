@@ -998,7 +998,7 @@ public class Account: WebHookEvent {
               COUNT(level) as total,
               SUM(
                   (
-                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP - \(Account.disablePeriod))
+                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
                   ) AND (
                    (failed IS NULL AND first_warning_timestamp is NULL) OR
                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
