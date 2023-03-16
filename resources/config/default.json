@@ -109,8 +109,8 @@
             "minSpawnTime": 1500,
             "bufferTime": 30,
             "sleepInterval": 10,
-            "defaultLongitude": 0.00,
-            "defaultLatitude": 0.00
+            "defaultLongitude": "0.00",
+            "defaultLatitude": "0.00"
         },
         "tth":
         {
@@ -118,7 +118,7 @@
             "clusterUsingKoji": true,
             "clusteringRadius": 70,
             "deviceTimeout": 300,
-            "hopTime": 3.10
+            "hopTime": "3.10"
         }
     },
     "koji": 
