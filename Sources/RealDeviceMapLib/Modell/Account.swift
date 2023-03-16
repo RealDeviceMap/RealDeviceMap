@@ -611,7 +611,7 @@ public class Account: WebHookEvent {
                 `group` \(group != nil ? "= ?" : "IS NULL") AND
                 level >= ? AND
                 level <= ? AND
-                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
+                coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
                 \(failedSQL)
                 \(spinSQL)
                 \(cooldownSQL)
@@ -766,9 +766,9 @@ public class Account: WebHookEvent {
             LEFT JOIN device ON username = account_username
             WHERE device.uuid IS NULL
                   AND (
-                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                    coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
                   ) AND (
-                   (failed IS NULL AND first_warning_timestamp IS NULL) OR
+                   failed IS NULL OR
                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
@@ -997,16 +997,16 @@ public class Account: WebHookEvent {
               COUNT(level) as total,
               SUM(
                   (
-                   disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))
+                    coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
                   ) AND (
-                   (failed IS NULL AND first_warning_timestamp is NULL) OR
+                   failed IS NULL OR
                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
                   )
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
-              SUM(first_warning_timestamp IS NOT NULL) as warning,
+              SUM(failed = 'GPR_RED_WARNING') as warning,
               SUM(
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
