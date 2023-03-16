@@ -1265,7 +1265,7 @@ class AutoInstanceController: InstanceControllerProto {
         
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
-        let minHopsToCalc = devicesOnInstance() * tthRequeryFrequency / UInt16(ceil(tthHopTime))
+        let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
 
         // short circuit if less coords that possible for device count, no points running clustering
         if minHopsToCalc <= dataPoints.count
