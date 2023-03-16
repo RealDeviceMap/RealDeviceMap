@@ -265,7 +265,7 @@ public class ConfigLoader {
         
         case .tthRequeryFrequency: return castValue(value: value) // TTH_REQUERY_FREQUENCY
         case .tthClusterUsingKoji: return true as! T // TTH_CLUSTER_USING_KOJI
-        case .tthClusteringRadius: return value as! T // TTH_CLUSTERING_RADIUS
+        case .tthClusteringRadius: return castValue(value: value) // TTH_CLUSTERING_RADIUS
         case .tthHopTime: return value as! T // TTH_HOP_TIME
         case .tthDeviceTimeout: return castValue(value: value) // TTH_DEVICES_FOR_INSTANCE
         
