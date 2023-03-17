@@ -537,6 +537,15 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
 
     }
 
+    func updateFromMapFort(fort: GetMapFortsOutProto.FortProto) {
+        if fort.name != "" {
+            name = fort.name
+        }
+        if !fort.image.isEmpty {
+            url = fort.image[0].url
+        }
+    }
+
     public func save(mysql: MySQL?=nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
