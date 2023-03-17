@@ -577,6 +577,8 @@ public class Account: WebHookEvent {
         }
 
         Account.lockoutLock.lock()
+        defer { Account.lockoutLock.unlock() }
+
         let now = Date()
         var keepLockedOut = [(account: String, device: String, untill: Date)]()
         for lockout in Account.lockouts where (lockout.untill) >= now {
@@ -588,7 +590,6 @@ public class Account: WebHookEvent {
         }.map { (lockout) -> String in
             return lockout.account
         }
-        Account.lockoutLock.unlock()
 
         let lockoutSQL: String
         if !locked.isEmpty {
@@ -610,7 +611,7 @@ public class Account: WebHookEvent {
                 `group` \(group != nil ? "= ?" : "IS NULL") AND
                 level >= ? AND
                 level <= ? AND
-                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
+                coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
                 \(failedSQL)
                 \(spinSQL)
                 \(cooldownSQL)
@@ -672,13 +673,11 @@ public class Account: WebHookEvent {
         let lastDisabled = result[19] as? UInt32
         let group = (result[20] as? String)?.emptyToNil()
 
-        Account.lockoutLock.doWithLock {
-            Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
-        }
-        Account.lockoutLock.unlock()
+        Account.lockouts.append((account: username, device: device, untill: now.addingTimeInterval(300)))
 
         try? Account.setLastUsed(mysql: mysql, username: username)
         if disabled {
+            // if the account is stored as disabled in DB but we can again use it we should reset that column
             try? Account.setDisabled(mysql: mysql, username: username, disabled: false)
         }
         return Account(
@@ -754,7 +753,7 @@ public class Account: WebHookEvent {
             lastUsedTimestamp: lastUsedTimestamp, disabled: disabled, lastDisabled: lastDisabled, group: group)
     }
 
-    public static func getNewCount(mysql: MySQL?=nil) throws -> Int64 {
+    public static func getAvailableCount(mysql: MySQL?=nil) throws -> Int64 {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -765,20 +764,18 @@ public class Account: WebHookEvent {
             SELECT COUNT(*)
             FROM account
             LEFT JOIN device ON username = account_username
-            WHERE
-                first_warning_timestamp is NULL AND
-                failed_timestamp is NULL and device.uuid IS NULL AND
-                (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod))) AND
-                (
-                    (failed IS NULL AND first_warning_timestamp is NULL) OR
-                    (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
-                     warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                    (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
-                ) AND (
-                    last_encounter_time IS NULL OR
-                    UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200 AND
-                    spins < 400
-                )
+            WHERE device.uuid IS NULL
+                  AND (
+                    coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
+                  ) AND (
+                   failed IS NULL OR
+                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  ) AND (
+                   last_encounter_time IS NULL OR
+                   UNIX_TIMESTAMP() - CAST(last_encounter_time AS SIGNED INTEGER) >= 7200
+                  )
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -999,14 +996,17 @@ public class Account: WebHookEvent {
               level,
               COUNT(level) as total,
               SUM(
-                  (failed IS NULL AND first_warning_timestamp is NULL) OR
-                  (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
-                   warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
-                  (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod)) OR
-                  (disabled = 0 OR (disabled = 1 AND last_disabled <= UNIX_TIMESTAMP() - \(Account.disablePeriod)))
+                  (
+                    coalesce(last_disabled, 0) <= UNIX_TIMESTAMP() - \(Account.disablePeriod)
+                  ) AND (
+                   failed IS NULL OR
+                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
+                    warn_expire_timestamp != 0 AND warn_expire_timestamp <= UNIX_TIMESTAMP()) OR
+                   (failed = 'suspended' AND failed_timestamp <= UNIX_TIMESTAMP() - \(Account.suspendedPeriod))
+                  )
               ) as good,
               SUM(failed IN('banned', 'GPR_BANNED')) as banned,
-              SUM(first_warning_timestamp IS NOT NULL) as warning,
+              SUM(failed = 'GPR_RED_WARNING') as warning,
               SUM(
                   (failed = 'GPR_RED_WARNING' AND warn_expire_timestamp IS NOT NULL AND
                    warn_expire_timestamp != 0 AND warn_expire_timestamp > UNIX_TIMESTAMP())
@@ -1019,7 +1019,8 @@ public class Account: WebHookEvent {
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
               ) as cooldown,
-              SUM(spins >= 1000) as spin_limit
+              SUM(spins >= 1000) as spin_limit,
+              SUM(disabled = 1 AND last_disabled > UNIX_TIMESTAMP() - \(Account.disablePeriod)) as disabled_count
             FROM account
             GROUP BY level
             ORDER BY level DESC
@@ -1047,6 +1048,7 @@ public class Account: WebHookEvent {
             let insuspended = Int64(result[8] as? String ?? "0") ?? 0
             let cooldown = Int64(result[9] as? String ?? "0") ?? 0
             let spinLimit = Int64(result[10] as? String ?? "0") ?? 0
+            let disabledCount = Int64(result[11] as? String ?? "0") ?? 0
 
             stats.append([
                 "level": level,
@@ -1059,7 +1061,8 @@ public class Account: WebHookEvent {
                 "suspended": suspended.withCommas(),
                 "insuspended": insuspended.withCommas(),
                 "cooldown": cooldown.withCommas(),
-                "spin_limit": spinLimit.withCommas()
+                "spin_limit": spinLimit.withCommas(),
+                "disabled_count": disabledCount.withCommas()
             ])
 
         }

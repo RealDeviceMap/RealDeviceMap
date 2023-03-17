@@ -27,8 +27,8 @@
             <div class="col-md-3 p-1">
               <div class="list-group">
                 <a class="list-group-item">
-                  <h4 class="list-group-item-heading" style="color: dodgerblue;">{{new_accounts_count}}</h4>
-                  <p class="list-group-item-text">New Accounts</p>
+                  <h4 class="list-group-item-heading" style="color: dodgerblue;">{{available_accounts_count}}</h4>
+                  <p class="list-group-item-text">Available Accounts</p>
                 </a>
               </div>
             </div>
@@ -186,6 +186,7 @@
                 <th>Invalid</th>
                 <th>Cooldown</th>
                 <th>Spin Limit</th>
+                <th>Disabled</th>
             </tr>
             </thead>
             <tbody>
@@ -202,6 +203,7 @@
                     <td><span class="badge badge-warning badge-pill">{{invalid}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{cooldown}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{spin_limit}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{disabled_count}}</span></td>
                 </tr>
                 {{/stats}}
             </tbody>

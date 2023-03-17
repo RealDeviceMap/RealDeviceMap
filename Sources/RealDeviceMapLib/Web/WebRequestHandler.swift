@@ -1271,7 +1271,7 @@ public class WebRequestHandler {
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
-            data["new_accounts_count"] = (try? Account.getNewCount().withCommas()) ?? "?"
+            data["available_accounts_count"] = (try? Account.getAvailableCount().withCommas()) ?? "?"
             data["in_use_accounts_count"] = (try? Account.getInUseCount().withCommas()) ?? "?"
             data["warned_accounts_count"] = (try? Account.getWarnedCount().withCommas()) ?? "?"
             data["failed_accounts_count"] = (try? Account.getFailedCount().withCommas()) ?? "?"
