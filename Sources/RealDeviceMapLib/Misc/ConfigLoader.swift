@@ -23,12 +23,16 @@ public class ConfigLoader {
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
         "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
+<<<<<<< HEAD
         "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT",
 
         "AUTO_POKEMON_USE_LASTSEEN", "AUTO_POKEMON_REQUERY_FREQUENCY", "AUTO_POKEMON_MIN_SPAWN_TIME",
         "AUTO_POKEMON_BUFFER_TIME", "AUTO_POKEMON_SLEEP_INTERVAL", "AUTO_POKEMON_DEFAULT_LONGITUDE",
         "AUTO_POKEMON_DEFAULT_LATITUDE", "TTH_REQUERY_FREQUENCY", "TTH_CLUSTER_USING_KOJI",
         "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "TTH_DEVICE_TIMEOUT", "KOJI_URL", "KOJI_SECRET"
+=======
+        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD"
+>>>>>>> development
     ]
 
     private init() {
@@ -93,6 +97,10 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.useRwForQuest.value()!
         case .accUseRwForRaid: return localConfig.application.account.useRwForRaid.value()
             ?? defaultConfig.application.account.useRwForRaid.value()!
+        case .accMaxEncounters: return localConfig.application.account.maxEncounters.value()
+            ?? defaultConfig.application.account.maxEncounters.value()!
+        case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
+            ?? defaultConfig.application.account.disablePeriod.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -219,6 +227,8 @@ public class ConfigLoader {
         case .accRequiredInDB: return false as! T // NO_REQUIRE_ACCOUNT
         case .accUseRwForQuest: return false as! T // USE_RW_FOR_QUEST
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
+        case .accMaxEncounters: return castValue(value: value)
+        case .accDisablePeriod: return castValue(value: value)
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -312,6 +322,8 @@ public class ConfigLoader {
         case accRequiredInDB = "NO_REQUIRE_ACCOUNT"
         case accUseRwForQuest = "USE_RW_FOR_QUEST"
         case accUseRwForRaid = "USE_RW_FOR_RAID"
+        case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
+        case accDisablePeriod = "ACC_DISABLE_PERIOD"
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"

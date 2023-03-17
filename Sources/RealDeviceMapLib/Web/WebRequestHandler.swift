@@ -368,7 +368,7 @@ public class WebRequestHandler {
                     "stats_today_hundo", "stats_gyms", "stats_neutral_gyms", "stats_valor_gyms", "stats_mystic_gyms",
                     "stats_instinct_gyms", "stats_pokestops", "stats_invasions", "stats_normal_lures",
                     "stats_glacial_lures", "stats_mossy_lures", "stats_magnetic_lures", "stats_rainy_lures",
-                    "stats_field_research", "stats_spawnpoint_timers", "stats_spawnpoint_total",
+                    "stats_sparkly_lures", "stats_field_research", "stats_spawnpoint_timers", "stats_spawnpoint_total",
                     "stats_spawnpoint_found", "stats_spawnpoint_missing", "stats_spawnpoint_percentage",
                     "stats_community_day", "stats_filter_start_date", "stats_filter_end_date", "stats_filter_select",
                     "stats_scans", "stats_seen", "stats_scanned", "stats_male_spawns", "stats_female_spawns",
@@ -1271,14 +1271,14 @@ public class WebRequestHandler {
             data["locale"] = "en"
             data["page_is_dashboard"] = true
             data["page"] = "Dashboard - Accounts"
-            data["new_accounts_count"] = (try? Account.getNewCount().withCommas()) ?? "?"
+            data["available_accounts_count"] = (try? Account.getAvailableCount().withCommas()) ?? "?"
             data["in_use_accounts_count"] = (try? Account.getInUseCount().withCommas()) ?? "?"
             data["warned_accounts_count"] = (try? Account.getWarnedCount().withCommas()) ?? "?"
             data["failed_accounts_count"] = (try? Account.getFailedCount().withCommas()) ?? "?"
             data["cooldown_accounts_count"] = (try? Account.getCooldownCount().withCommas()) ?? "?"
             data["spin_limit_accounts_count"] = (try? Account.getSpinLimitCount().withCommas()) ?? "?"
+            data["disabled_accounts_count"] = (try? Account.getDisabledCount().withCommas()) ?? "?"
             data["iv_accounts_count"] = (try? Account.getLevelCount(level: 30).withCommas()) ?? "?"
-            data["iv_40_accounts_count"] = (try? Account.getLevelCount(level: 40).withCommas()) ?? "?"
             data["stats"] = (try? Account.getStats()) ?? ""
             data["ban_stats"] = (try? Account.getWarningBannedStats()) ?? ""
         case .dashboardAccountsAdd:
@@ -3914,12 +3914,10 @@ public class WebRequestHandler {
             if rowSplit.count == 2 {
                 let username = rowSplit[0].trimmingCharacters(in: .whitespaces)
                 let password = rowSplit[1].trimmingCharacters(in: .whitespaces)
-                accs.append(Account(username: username, password: password, level: level, firstWarningTimestamp: nil,
-                                    failedTimestamp: nil, failed: nil, lastEncounterLat: nil, lastEncounterLon: nil,
-                                    lastEncounterTime: nil, spins: 0, creationTimestamp: nil, warn: nil,
-                                    warnExpireTimestamp: nil, warnMessageAcknowledged: nil,
-                                    suspendedMessageAcknowledged: nil, wasSuspended: nil, banned: nil,
-                                    lastUsedTimestamp: nil, group: group))
+                if username.count > 0 && password.count > 0 {
+                    accs.append(Account(username: username, password: password, level: level, spins: 0,
+                        disabled: false, group: group))
+                }
             }
         }
 
@@ -3929,9 +3927,7 @@ public class WebRequestHandler {
             return data
         } else {
             do {
-                for acc in accs {
-                    try acc.save(update: false)
-                }
+                try Account.insertAccountBatch(accounts: accs)
             } catch {
                 data["show_error"] = true
                 data["error"] = "Failed to save accounts."

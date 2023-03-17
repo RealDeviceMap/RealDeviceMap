@@ -51,6 +51,10 @@ public class WebHookRequestHandler {
     private static let rawDebugEnabled: Bool = ConfigLoader.global.getConfig(type: .rawDebugEnabled)
     private static let rawDebugTypes: [String] = ConfigLoader.global.getConfig(type: .rawDebugTypes)
 
+    private static let encounterLock = Threading.Lock()
+    private static var encounterCount = [String: Int]()
+    private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
     private static let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
@@ -184,6 +188,7 @@ public class WebHookRequestHandler {
         var gymInfos = [GymGetInfoOutProto]()
         var quests = [(clientQuest: ClientQuestProto, hasAr: Bool)]()
         var fortSearch = [FortSearchOutProto]()
+        var mapForts = [GetMapFortsOutProto.FortProto]()
         var encounters = [EncounterOutProto]()
         var diskEncounters = [DiskEncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
@@ -222,6 +227,9 @@ public class WebHookRequestHandler {
             } else if let inv = rawData["GetHoloholoInventoryOutProto"] as? String {
                 data = Data(base64Encoded: inv) ?? Data()
                 method = 4
+            } else if let gmf = rawData["GetMapForts"] as? String {
+                data = Data(base64Encoded: gmf) ?? Data()
+                method = 1401
             } else if let dataString = rawData["data"] as? String {
                 data = Data(base64Encoded: dataString) ?? Data()
                 method = rawData["method"] as? Int ?? 106
@@ -407,6 +415,19 @@ public class WebHookRequestHandler {
                 } else {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapObjectsResponse")
                 }
+            } else if method == 1401 {
+                if let gmf = try? GetMapFortsOutProto(serializedData: data) {
+                    if gmf.status != GetMapFortsOutProto.Status.success {
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                            "GetMapFortsResponse: \(gmf.status)")
+                        continue
+                    }
+                    for fort in gmf.fort {
+                        mapForts.append(fort)
+                    }
+                } else {
+                    Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed GetMapFortsResponse")
+                }
             }
         }
 
@@ -431,6 +452,9 @@ public class WebHookRequestHandler {
             }
             if rawDebugTypes.contains("GetMapObjects_clientWeathers") && !clientWeathers.isEmpty {
                 Log.debug(message: "[WebhookRequestHandler] [\(uuid ?? "?")] clientWeathers: \(clientWeathers)")
+            }
+            if rawDebugTypes.contains("GetMapForts") && !mapForts.isEmpty {
+                Log.debug(message: "[WebhookRequestHandler] [\(uuid ?? "?")] mapForts: \(mapForts)")
             }
             if rawDebugTypes.contains("EncounterResponse") && !encounters.isEmpty {
                 Log.debug(message: "[WebhookRequestHandler] [\(uuid ?? "?")] encounters: \(encounters)")
@@ -547,6 +571,20 @@ public class WebHookRequestHandler {
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
+        }
+
+        if username != nil && maxEncounter > 0 {
+            encounterLock.doWithLock {
+                var value: Int = (encounterCount[username!] ?? 0) + encounters.count
+                if value < maxEncounter {
+                    encounterCount[username!] = value
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
+                } else {
+                    try? Account.setDisabled(mysql: mysql, username: username!)
+                    encounterCount.removeValue(forKey: username!)
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
+                }
+            }
         }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
@@ -773,16 +811,10 @@ public class WebHookRequestHandler {
             if !gymInfos.isEmpty {
                 let start = Date()
                 for gymInfo in gymInfos {
-                    let gym: Gym?
-                    do {
-                        gym = try Gym.getWithId(mysql: mysql, id: gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID,
-                            copy: true)
-                    } catch {
-                        gym = nil
-                    }
-                    if gym != nil {
-                        gym!.updateFromGymInfo(gymInfo: gymInfo)
-                        try? gym!.save(mysql: mysql)
+                    if let gym = try? Gym.getWithId(mysql: mysql, id:
+                        gymInfo.gymStatusAndDefenders.pokemonFortProto.fortID, copy: true) {
+                        gym.updateFromGymInfo(gymInfo: gymInfo)
+                        try? gym.save(mysql: mysql)
                     }
                 }
                 Log.debug(
@@ -794,20 +826,34 @@ public class WebHookRequestHandler {
             if !quests.isEmpty {
                 let start = Date()
                 for (clientQuest, hasAr) in quests {
-                    let pokestop: Pokestop?
-                    do {
-                        pokestop = try Pokestop.getWithId(mysql: mysql, id: clientQuest.quest.fortID, copy: true)
-                    } catch {
-                        pokestop = nil
-                    }
-                    if pokestop != nil {
-                        pokestop!.updatePokestopFromQuestProto(questData: clientQuest, hasARQuest: hasAr)
-                        try? pokestop!.save(mysql: mysql)
+                    if let pokestop = try? Pokestop.getWithId(mysql: mysql, id: clientQuest.quest.fortID, copy: true) {
+                        pokestop.updatePokestopFromQuestProto(questData: clientQuest, hasARQuest: hasAr)
+                        try? pokestop.save(mysql: mysql)
                     }
                 }
                 Log.debug(
                     message: "[WebHookRequestHandler] [\(uuid ?? "?")] Quest Count: \(quests.count) " +
                              "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
+                )
+            }
+
+            if !mapForts.isEmpty {
+                let start = Date()
+                for fort in mapForts {
+                    if let pokestop = try? Pokestop.getWithId(id: fort.id, copy: true) {
+                        pokestop.updateFromMapFort(fort: fort)
+                        try? pokestop.save()
+                    } else if let gym = try? Gym.getWithId(id: fort.id, copy: true) {
+                        gym.updateFromMapFort(fort: fort)
+                        try? gym.save()
+                    } else {
+                        Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Unknown Map Fort " +
+                            "'\(fort.name)' with id \(fort.id) at \(fort.latitude),\(fort.longitude)")
+                    }
+                }
+                Log.debug(
+                    message: "[WebHookRequestHandler] [\(uuid ?? "?")] Map Forts Count: \(mapForts.count) " +
+                        "parsed in \(String(format: "%.3f", Date().timeIntervalSince(start)))s"
                 )
             }
 
@@ -1158,21 +1204,20 @@ public class WebHookRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if type == "error_26" {
+        } else if type == "account_unknown_error" {
+            // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
             do {
                 guard
                     let device = try Device.getById(mysql: mysql, id: uuid),
                     let username = device.accountUsername,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
-                    else {
-                        response.respondWithError(status: .notFound)
-                        return
+                else {
+                    response.respondWithError(status: .notFound)
+                    return
                 }
-                if account.failedTimestamp == nil || account.failed == nil {
-                    account.failedTimestamp = UInt32(Date().timeIntervalSince1970)
-                    account.failed = "error_26"
-                    try account.save(mysql: mysql, update: true)
-                }
+
+                Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
+                try Account.setDisabled(mysql: mysql, username: username)
                 response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
