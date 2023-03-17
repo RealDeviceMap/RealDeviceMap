@@ -1,5 +1,7 @@
 import Foundation
 import PerfectLib
+import PerfectCURL
+import cURL
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -76,6 +78,7 @@ public class Koji
         return returnedStats(best_clusters: [], best_cluster_point_count: 0, cluster_time: 0.0, total_points: 0, points_covered: 0, total_clusters: 0, total_distance: 0.0, longest_distance: 0.0)
     }
     
+    /*
     public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true) -> Koji.returnData?
@@ -120,5 +123,65 @@ public class Koji
         _ = semaphore.wait(wallTimeout: .now() + 120)
         
         return returnedData
+    }
+    */
+    
+    public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+                                minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
+                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true,
+                                timeout: Int = 120) -> Koji.returnData?
+    {
+        Log.debug(message: "[Koji - getDataFromKoji] Started process to get data from Koji")
+        
+        var toReturn: Koji.returnData? = nil
+        
+        let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
+        let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
+        
+        Log.debug(message: "[Koji - getDataFromKoji] Encoded data to send to Koji as \(String(describing: jsonData))")
+        
+        let body = String(data: jsonData!, encoding: String.Encoding.utf8)
+        let byteArray:[UInt8] = Array(body!.utf8)
+
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: byteArray.count)
+        pointer.initialize(from: byteArray, count: byteArray.count)
+
+        let header =    """
+                        Authorization: Bearer \(kojiSecret)
+                        Content-Type: application/json
+                        Accept: application/json
+                        """
+        
+        let curlObject = CURL(url: kojiSecret)
+        curlObject.setOption(CURLOPT_POST, int: 1)
+        curlObject.setOption(CURLOPT_HTTPHEADER, s: header)
+        curlObject.setOption(CURLOPT_SSL_VERIFYPEER, int: 0)
+        curlObject.setOption(CURLOPT_POSTFIELDS, v: pointer)
+        curlObject.setOption(CURLOPT_POSTFIELDSIZE, int: byteArray.count)
+        curlObject.setOption(CURLOPT_TIMEOUT, int: timeout)
+        
+        Log.debug(message: "[Koji - getDataFromKoji] Ready to call perform")
+        
+        curlObject.perform
+        {   (code, header, body) in
+            
+            Log.debug(message: "[Koji - getDataFromKoji] Called perform, got body length of = \(body)")
+            
+            let json = curlObject.url.data(using: String.Encoding.utf8)
+            Log.debug(message: "[Koji - getDataFromKoji] Called perform, got data = \(String(describing: json))")
+
+            if let kojiDataObject = try? JSONDecoder().decode(returnData.self, from: json!)
+            {
+                toReturn = kojiDataObject
+            }
+            else
+            {
+                Log.error(message: "[Koji - getDataFromKoji] Unable to decode JSON data obtained from Koji")
+            }
+            
+            curlObject.close()
+        }
+        
+        return toReturn
     }
 } 
