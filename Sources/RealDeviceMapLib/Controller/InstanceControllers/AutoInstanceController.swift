@@ -951,7 +951,7 @@ class AutoInstanceController: InstanceControllerProto {
                 changeCluster = 0
             }
             
-            var changeRaw = lastTthRawPointsCount - currentTthRawPointsCount
+            var changeRaw = currentTthRawPointsCount - lastTthRawPointsCount 
             if changeRaw == currentTthRawPointsCount {
                 changeRaw = 0
             }
@@ -963,14 +963,14 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / +\(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: +\(changeCluster) / +\(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: +\(changeRaw) / \(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: +\(changeCluster) / \(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
                         """
                     }
                     
@@ -981,14 +981,14 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / +\(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: \(changeCluster) / +\(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Coord Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount), Delta: \(changeRaw) / \(changeRaw)\nLargest Cluster Size: \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: \(changeCluster) / \(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
                         """
                     }
                 }
@@ -1269,8 +1269,6 @@ class AutoInstanceController: InstanceControllerProto {
         var dataCache = Dictionary<Int, Koji.returnData>()
         var kojiData: Koji.returnData?
         
-        var cnt = -1
-        
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
         let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
@@ -1282,24 +1280,14 @@ class AutoInstanceController: InstanceControllerProto {
             return dataPoints
         }
         
-        var clusterSizeToUse: Int
-        
-        // do some educated guess on raw point count
-        if (currentTthRawPointsCount > lastTthRawPointsCount)
-        {
-            // found more raw points than last run, so increase size to start
-            clusterSizeToUse = lastTthClusterSize + 1
-        }
-        else
-        {
-            // same or less raw points count, so start with last
-            clusterSizeToUse = lastTthClusterSize
-        }
+        var clusterSizeToUse: Int = lastTthClusterSize + 2
 
         Log.debug(message:"[AutoInstanceController] getClusteredCoords - lastTthClusterSize = \(lastTthClusterSize)")
         // find the proper cluster size so that we have more points than will visit
         if lastTthClusterSize < 0
         {
+            var cnt = 0
+
             // handle first run of this
             // send data to koji and see what max clusters are given the data
             kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
@@ -1310,41 +1298,41 @@ class AutoInstanceController: InstanceControllerProto {
             // set where we start iterating based on max cluster size
             var countDown = kojiData!.stats.best_cluster_point_count
 
-            if cnt == 0 
+            Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
+            // since starting high, we will need to iterate down and find where we can get enough data
+            while cnt < minHopsToCalc && countDown > 1 
             {
-                // since starting high, we will need to iterate down and find where we can get enough data
-                while cnt == 0 && countDown > 0 
-                {
-                    kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                                  minPoints: UInt16(countDown), benchmarkMode: true)
+                kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                                minPoints: UInt16(countDown), benchmarkMode: true)
 
-                    dataCache[countDown] = kojiData
-                    
-                    cnt = kojiData!.stats.total_clusters
-                    countDown -= 1
-                }
-
-                clusterSizeToUse = min(1, countDown)
+                dataCache[countDown] = kojiData
+                
+                cnt = kojiData!.stats.total_clusters
+                countDown -= 1
             }
+
+            clusterSizeToUse = countDown
+            Log.debug(message:"[AutoInstanceController] getClusteredCoords - first run clusterSizeToUse=\(clusterSizeToUse)")
         }
         else
         {
             var countDown = clusterSizeToUse  // in case iteration got jacked up, safety valve to exit
             var cnt: Int = 0
             
-            repeat 
+            Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
+            while cnt < minHopsToCalc && countDown > 1 
             {
                 kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                                               minPoints: UInt16(countDown), benchmarkMode: true)
 
                 dataCache[countDown] = kojiData
                 
-                cnt = kojiData!.stats.best_cluster_point_count
-                countDown = countDown - 1
+                cnt = kojiData!.stats.total_clusters
+                countDown -= 1
             }
-            while (countDown > 0 && cnt <= minHopsToCalc)
 
-            clusterSizeToUse = min(1, countDown + 1)
+            clusterSizeToUse = countDown
+            Log.debug(message:"[AutoInstanceController] getClusteredCoords - subsequent run clusterSizeToUse=\(clusterSizeToUse)")
         }
 
         // get the actual data from koji now that have settled on appropriate cluster size
@@ -1354,12 +1342,36 @@ class AutoInstanceController: InstanceControllerProto {
         lastTthClusterSize = clusterSizeToUse
         lastMaxClusterSize = kojiData!.stats.best_cluster_point_count
 
-        return kojiData!.data
+        var retCoords:[Coord] = [Coord]()
+
+        for point in kojiData!.data!
+        {
+            var i = 0
+            var latitude = 0.0
+            var longitude = 0.0
+
+            for coord in point
+            {
+                if i == 0
+                {
+                    latitude = coord
+                }
+                else
+                {
+                    longitude = coord
+                }
+                i = 1
+            }
+
+            retCoords.append( Coord(lat: latitude, lon: longitude))
+        }
+
+        return retCoords
     }
 
     func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData?
     {
-        Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord]=\(dataPoints)")
+        Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
         let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)!
