@@ -557,10 +557,6 @@ public class WebHookRequestHandler {
                 encounter.pokemon.encounterID.description == pokemonEncounterIdForEncounter {
                 // We actually encountered the target.
                 data["encounters"] = 1
-                if username != nil && rpc12Count[username!] != nil {
-                    rpc12Count.removeValue(forKey: username!)
-                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
-                }
             }
         }
 
@@ -593,6 +589,11 @@ public class WebHookRequestHandler {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
                 }
             }
+        }
+
+        if username != nil && encounters.count > 0 && (rpc12Count[username!] ?? 0) > 0 {
+            rpc12Count[username!] = 0
+            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
         }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
@@ -1232,7 +1233,7 @@ public class WebHookRequestHandler {
                                 return
                             }
 
-                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
+                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 Limit, disabling: \(username)")
                             rpc12Count.removeValue(forKey: username)
                             try Account.setDisabled(mysql: mysql, username: username)
                             response.respondWithOk()
@@ -1250,7 +1251,9 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                rpc12Count.removeValue(forKey: device.accountUsername!)
+                if device.accountUsername != nil {
+                    rpc12Count.removeValue(forKey: device.accountUsername)
+                }
                 device.accountUsername = nil
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 response.respondWithOk()
