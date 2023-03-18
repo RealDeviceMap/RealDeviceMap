@@ -102,7 +102,7 @@ class AutoInstanceController: InstanceControllerProto {
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
     var lastTthClusterSize: Int = -1
-    var firstRun: Bool = true
+    var firstRun: Bool = false
     var pokemonCache: MemoryCache<Int>? = nil
     var tthCache: MemoryCache<Int>? = nil
     var tthDevices: MemoryCache<Int>? = nil
@@ -184,6 +184,7 @@ class AutoInstanceController: InstanceControllerProto {
                 tthHopTime = 1.0
             }
 
+            /*
             if tthRequeryFrequency < 90
             {
                 tthRequeryFrequency = 90
@@ -192,6 +193,7 @@ class AutoInstanceController: InstanceControllerProto {
             {
                 tthRequeryFrequency = 3600
             }
+            */
 
             tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4, keepTime: Double(tthDeviceTimeout), extendTtlOnHit: true)
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
@@ -1226,14 +1228,18 @@ class AutoInstanceController: InstanceControllerProto {
                 "[AutoInstanceController] initTthCoords - got ZERO points in min/max rectangle with null tth, you should switch to another mode")
         }
 
+        Log.debug(message:"[AutoInstanceController] initTthCoords - UsingKoji = \(tthClusteringUsesKoji) & kojiUrl = \(kojiUrl) & kojiSecret=\(kojiSecret) & firstRun=\(firstRun)")
+
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
         if tthClusteringUsesKoji && kojiUrl.length > 5 && kojiSecret.length > 1 && !firstRun
         {
+            Log.debug(message:"[AutoInstanceController] initTthCoords - UsingKoji for clustering")
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
         else
         {
+            Log.debug(message:"[AutoInstanceController] initTthCoords - not using Koji for clustering")
             // default to old method
             tthCoords = tmpCoords
         }
@@ -1257,6 +1263,8 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
     {
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - starting function")
+
         // cache for data
         var dataCache = Dictionary<Int, Koji.returnData>()
         var kojiData: Koji.returnData?
@@ -1266,9 +1274,10 @@ class AutoInstanceController: InstanceControllerProto {
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
         let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - minHopsToCalc=\(minHopsToCalc) & devicesOnInstance()=\(devicesOnInstance()) & tthRequreyFrequency=\(tthRequeryFrequency) & tthHopTime=\(tthHopTime)")
 
         // short circuit if less coords that possible for device count, no points running clustering
-        if minHopsToCalc <= dataPoints.count
+        if minHopsToCalc >= dataPoints.count
         {
             return dataPoints
         }
@@ -1287,6 +1296,7 @@ class AutoInstanceController: InstanceControllerProto {
             clusterSizeToUse = lastTthClusterSize
         }
 
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - lastTthClusterSize = \(lastTthClusterSize)")
         // find the proper cluster size so that we have more points than will visit
         if lastTthClusterSize < 0
         {
@@ -1349,6 +1359,8 @@ class AutoInstanceController: InstanceControllerProto {
 
     func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData?
     {
+        Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord]=\(dataPoints)")
+
         let koji = Koji()
         let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)!
 

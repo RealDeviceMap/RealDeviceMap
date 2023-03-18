@@ -136,12 +136,14 @@ public class Koji
         var toReturn: Koji.returnData? = nil
         
         let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
-        let jsonData = try? JSONSerialization.data(withJSONObject: inputData)
-        
-        Log.debug(message: "[Koji - getDataFromKoji] Encoded data to send to Koji as \(String(describing: jsonData))")
+        Log.debug(message: "[Koji - getDataFromKoji] - \(inputData)")
+        let jsonEncoder = JSONEncoder()
+        let jsonData = try? jsonEncoder.encode(inputData)
         
         let body = String(data: jsonData!, encoding: String.Encoding.utf8)
         let byteArray:[UInt8] = Array(body!.utf8)
+                
+        Log.debug(message: "[Koji - getDataFromKoji] Encoded data to send to Koji as \(body)")
 
         let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: byteArray.count)
         pointer.initialize(from: byteArray, count: byteArray.count)
@@ -160,7 +162,7 @@ public class Koji
         curlObject.setOption(CURLOPT_POSTFIELDSIZE, int: byteArray.count)
         curlObject.setOption(CURLOPT_TIMEOUT, int: timeout)
         
-        Log.debug(message: "[Koji - getDataFromKoji] Ready to call perform")
+        Log.debug(message: "[Koji - getDataFromKoji] Ready to call perform, curlObject=\(curlObject)")
         
         curlObject.perform
         {   (code, header, body) in
