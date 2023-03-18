@@ -1252,7 +1252,7 @@ public class WebHookRequestHandler {
                     return
                 }
                 if device.accountUsername != nil {
-                    rpc12Count.removeValue(forKey: device.accountUsername)
+                    rpc12Count.removeValue(forKey: device.accountUsername!)
                 }
                 device.accountUsername = nil
                 try device.save(mysql: mysql, oldUUID: device.uuid)
