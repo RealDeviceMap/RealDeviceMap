@@ -592,7 +592,9 @@ public class WebHookRequestHandler {
         }
 
         if username != nil && encounters.count > 0 && (rpc12Count[username!] ?? 0) > 0 {
-            rpc12Count[username!] = 0
+            rpc12Lock.doWithLock {
+                rpc12Count[username!] = 0
+            }
             Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
         }
 
