@@ -126,6 +126,7 @@ public class Koji
     }
     */
     
+    /*
     public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true,
@@ -183,6 +184,74 @@ public class Koji
             
             curlObject.close()
         }
+        
+        return toReturn
+    }
+     */
+    
+    public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+                                minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
+                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true,
+                                timeout: Int = 120) -> Koji.returnData?
+    {
+        Log.debug(message: "[Koji - getDataFromKoji] Started process to get data from Koji")
+        
+        var toReturn: Koji.returnData? = nil
+        
+        let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
+        Log.debug(message: "[Koji - getDataFromKoji] - \(inputData)")
+        let jsonEncoder = JSONEncoder()
+        let jsonData = try? jsonEncoder.encode(inputData)
+        
+        let body = String(data: jsonData!, encoding: String.Encoding.utf8)
+        
+        let url = URL(string: kojiUrl)
+        var request = URLRequest(url: url!)
+        request.setValue("Authorization", forHTTPHeaderField: "Bearer \(kojiSecret)")
+        request.setValue("Content-Type", forHTTPHeaderField: "application/json")
+        request.setValue("Accept", forHTTPHeaderField: "application/json")
+        request.httpMethod = "POST"
+        request.httpBody = body?.data(using: String.Encoding.utf8)
+        
+        let semaphore = DispatchSemaphore.init(value: 0)
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let data = data,
+                let response = response as? HTTPURLResponse,
+                error == nil
+            else {                                                               // check for fundamental networking error
+                print("error", error ?? URLError(.badServerResponse))
+                return
+            }
+            
+            guard (200 ... 299) ~= response.statusCode else {                    // check for http errors
+                print("statusCode should be 2xx, but is \(response.statusCode)")
+                print("response = \(response)")
+                return
+            }
+            
+            // do whatever you want with the `data`, e.g.:
+            
+            do {
+                let responseObject = try JSONDecoder().decode(returnData.self, from: data)
+                print(responseObject)
+            } catch {
+                print(error) // parsing error
+                
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("responseString = \(responseString)")
+                } else {
+                    print("unable to parse response as string")
+                }
+            }
+            
+            semaphore.signal()
+        }
+
+        task.resume()
+        
+        semaphore.wait(wallTimeout: .now() + 60)
         
         return toReturn
     }
