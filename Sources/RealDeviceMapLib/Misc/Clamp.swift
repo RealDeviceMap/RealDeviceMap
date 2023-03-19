@@ -1,9 +1,11 @@
 //
-//  File 2.swift
-//  
+//  Kojis.swift
+//  RealDeviceMapLib
 //
-//  Created by Chris Ewing on 3/18/23.
+//  Created by Beavis on Mar 18, 2023.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast large_tuple
 
 import Foundation
 

@@ -69,6 +69,7 @@ class AutoInstanceController: InstanceControllerProto {
 
     let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
     let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
+    
     var tthRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .tthRequeryFrequency)
     var tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthClusteringRadius) as Int)
@@ -80,8 +81,9 @@ class AutoInstanceController: InstanceControllerProto {
     var autoMinSpawnTime: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonMinSpawnTime) as Int)
     var autoBufferTime: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonBufferTime) as Int)
     var autoSleepInterval: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .autoPokemonSleepInterval) as Int)
-    var autoDefaultLongitude: Double = Double(ConfigLoader.global.getConfig(type: .autoPokemonDefaultLongitude) as String)!
-    var autoDefaultLatitude: Double = Double(ConfigLoader.global.getConfig(type: .autoPokemonDefaultLatitude) as String)!
+    
+    var defaultLongitude: Double = Double(ConfigLoader.global.getConfig(type: .autoPokemonDefaultLongitude) as String)!
+    var defaultLatitude: Double = Double(ConfigLoader.global.getConfig(type: .autoPokemonDefaultLatitude) as String)!
 
     struct AutoPokemonCoord {
         var id: UInt64
@@ -103,9 +105,9 @@ class AutoInstanceController: InstanceControllerProto {
     var lastMaxClusterSize: Int = 0
     var lastTthClusterSize: Int = -1
     var firstRun: Bool = true
-    var pokemonCache: MemoryCache<Int>? = nil
-    var tthCache: MemoryCache<Int>? = nil
-    var tthDevices: MemoryCache<Int>? = nil
+    var pokemonCache: MemoryCache<Int>? = nil   // cache to determine if we need to pull data from db for auto pokemon mode, see autoRequeryFrequency
+    var tthCache: MemoryCache<Int>? = nil       // cache to determine if we need to pull data from db for tth pokemon mode, see tthRequeryFrequency
+    var tthDevices: MemoryCache<Int>? = nil     // cache to track active devices on tth finding mode, see tthDeviceTimeout
     
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
          spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
@@ -134,9 +136,10 @@ class AutoInstanceController: InstanceControllerProto {
             autoBufferTime = clamp(autoBufferTime, minValue: 10, maxValue: 120)
             autoSleepInterval = clamp(autoSleepInterval, minValue: 5, maxValue: 60)
             autoUseLastSeenTime = clamp(autoUseLastSeenTime,minValue: 3600, maxValue: 86400)
-            autoDefaultLongitude = clamp(autoDefaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
-            autoDefaultLatitude = clamp(autoDefaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
+            defaultLongitude = clamp(defaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
+            defaultLatitude = clamp(defaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
 
+            // setup cache(s) we need for this mode, leave the others as nil
             pokemonCache = MemoryCache(interval: Double(autoRequeryFrequency) / 4, keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
 
             return
@@ -149,14 +152,15 @@ class AutoInstanceController: InstanceControllerProto {
             tthRequeryFrequency = clamp(tthRequeryFrequency, minValue: 60, maxValue: 3600)
             tthDeviceTimeout = clamp(tthDeviceTimeout, minValue: 30, maxValue: 3600)
 
+            // setup cache(s) we need for this mode, leave the others as nil
             tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4, keepTime: Double(tthDeviceTimeout), extendTtlOnHit: true)
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
-            // verify koji url is actually valid
+            // attempt to verify koji url is actually valid
             if tthClusteringUsesKoji
             {
                 tthClusteringUsesKoji = kojiUrl.isValidURL
-                Log.error(message: "[AutoInstanceController - Init] Unable to utilize Koji for clustering as it is not a valid URL")
+                Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL")
             }
             
             return
@@ -374,9 +378,9 @@ class AutoInstanceController: InstanceControllerProto {
             let newLoc = determineNextAutoPokemonLocation(curTime: curSecInHour, curLocation: loc)
 
             Log.debug(message:
-                "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
+                "[AutoInstanceController] getTask() - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
 
-            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: autoDefaultLatitude, lon: autoDefaultLongitude), spawnSeconds: 0)
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude, lon: defaultLongitude), spawnSeconds: 0)
             if pokemonCoords.indices.contains(newLoc) {
                 currentDevicesMaxLocation = newLoc
                 currentCoord = pokemonCoords[newLoc]
@@ -434,11 +438,11 @@ class AutoInstanceController: InstanceControllerProto {
                 newLoc = 0
             }
 
-            Log.debug(message: "getTask() tth - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count)")
+            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count)")
 
             currentDevicesMaxLocation = newLoc
 
-            var currentCoord = Coord(lat: autoDefaultLatitude, lon: autoDefaultLongitude)
+            var currentCoord = Coord(lat: defaultLatitude, lon: defaultLongitude)
             if tthCoords.indices.contains(newLoc) {
                 currentCoord = tthCoords[newLoc]
             } else {
@@ -1004,9 +1008,9 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func initAutoPokemonCoords() throws {
-        Log.debug(message: "initAutoPokemonCoords() - Starting")
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - Starting")
         guard let mysql = DBController.global.mysql else {
-            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to connect to database.")
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() - Failed to connect to database.")
             return
         }
 
@@ -1050,7 +1054,7 @@ class AutoInstanceController: InstanceControllerProto {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() Failed to execute query. " +
+            Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() - Failed to execute query. " +
                 "(\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
@@ -1092,9 +1096,9 @@ class AutoInstanceController: InstanceControllerProto {
             count += 1
         }
 
-        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - " +
             "got \(count) spawnpoints in min/max rectangle")
-        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords - " +
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - " +
             "got \(tmpCoords.count) spawnpoints in geofence")
 
         // sort the array, so 0-3600 sec in order
@@ -1119,10 +1123,12 @@ class AutoInstanceController: InstanceControllerProto {
         pokemonCache!.set(id: self.name, value: 1)
 
         autoPokemonLock.unlock()
+        
+        Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - Ended")
     }
 
     func initTthCoords() throws {
-        Log.debug(message: "initTthCoords() - Starting")
+        Log.debug(message: "[AutoInstanceController] initTthCoords() - Starting")
         guard let mysql = DBController.global.mysql else {
             Log.error(message: "[AutoInstanceController] initTthCoords() - Failed to connect to database.")
             return
@@ -1161,7 +1167,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         guard mysqlStmt.execute() else {
             Log.error(message:
-                "[AutoInstanceController] initTthCoords - Failed to execute query. (\(mysqlStmt.errorMessage())")
+                "[AutoInstanceController] initTthCoords() - Failed to execute query. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
 
@@ -1181,27 +1187,27 @@ class AutoInstanceController: InstanceControllerProto {
         currentTthRawPointsCount = tmpCoords.count
         
         Log.debug(message:
-            "[AutoInstanceController] initTthCoords - got \(count) points in min/max rectangle with null tth")
+            "[AutoInstanceController] initTthCoords() - got \(count) points in min/max rectangle with null tth")
         Log.debug(message:
-            "[AutoInstanceController] initTthCoords - got \(tmpCoords.count) points in geofence with null tth")
+            "[AutoInstanceController] initTthCoords() - got \(tmpCoords.count) points in geofence with null tth")
 
         if tmpCoords.count == 0 {
             Log.debug(message:
                 "[AutoInstanceController] initTthCoords - got ZERO points in min/max rectangle with null tth, you should switch to another mode")
         }
 
-        Log.debug(message:"[AutoInstanceController] initTthCoords - UsingKoji = \(tthClusteringUsesKoji) & kojiUrl = \(kojiUrl) & kojiSecret=\(kojiSecret) & firstRun=\(firstRun)")
+        Log.debug(message:"[AutoInstanceController] initTthCoords() - UsingKoji = \(tthClusteringUsesKoji) & kojiUrl = \(kojiUrl) & kojiSecret=\(kojiSecret) & firstRun=\(firstRun)")
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
         if tthClusteringUsesKoji && kojiSecret.length > 1
         {
-            Log.debug(message:"[AutoInstanceController] initTthCoords - Using Koji for clustering")
+            Log.debug(message:"[AutoInstanceController] initTthCoords() - Using Koji for clustering")
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
         else
         {
-            Log.debug(message:"[AutoInstanceController] initTthCoords - not using Koji for clustering")
+            Log.debug(message:"[AutoInstanceController] initTthCoords() - not using Koji for clustering")
             // default to old method
             tthCoords = tmpCoords
         }
@@ -1213,6 +1219,8 @@ class AutoInstanceController: InstanceControllerProto {
         tthCache!.set(id: self.name, value: 1)
         
         tthLock.unlock()
+        
+        Log.debug(message: "[AutoInstanceController] initTthCoords() - Ended")
     }
     
     func devicesOnInstance() -> UInt16
@@ -1225,15 +1233,16 @@ class AutoInstanceController: InstanceControllerProto {
 
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
     {
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - starting function")
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - starting function")
 
         // cache for data
         var dataCache = Dictionary<Int, Koji.returnData>()
         
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
+        // in the future, could do some math based of what was done last requery period
         let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - minHopsToCalc=\(minHopsToCalc) & devicesOnInstance()=\(devicesOnInstance()) & tthRequreyFrequency=\(tthRequeryFrequency) & tthHopTime=\(tthHopTime)")
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - minHopsToCalc=\(minHopsToCalc) & devicesOnInstance()=\(devicesOnInstance()) & tthRequreyFrequency=\(tthRequeryFrequency) & tthHopTime=\(tthHopTime)")
 
         // short circuit if less coords that possible for device count, no points running clustering
         if minHopsToCalc >= dataPoints.count
@@ -1248,13 +1257,13 @@ class AutoInstanceController: InstanceControllerProto {
         var countDown = clusterSizeToUse
         var cnt = 0
 
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - lastTthClusterSize = \(lastTthClusterSize)")
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - lastTthClusterSize = \(lastTthClusterSize)")
         // find the proper cluster size so that we have more points than will visit on the first run
         if lastTthClusterSize < 0 || !firstRun
         {            
             // handle first run of this
             // send data to koji and see what max clusters are given the data
-            if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+            if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
                                               minPoints: 1, benchmarkMode: true, fast: true)
             {
                 dataCache[1] = kojiData
@@ -1265,7 +1274,7 @@ class AutoInstanceController: InstanceControllerProto {
             else
             {
                 // something went wrong with koji, fallback to normal
-                Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+                Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
                 tthClusteringUsesKoji = false
                 return dataPoints
             }
@@ -1273,10 +1282,10 @@ class AutoInstanceController: InstanceControllerProto {
 
         // loop down towards one to find cluster size just bigger than possible hops device(s) can make in refresh period
         // will be calling with benchmarkmode and fast as true to speed things up
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
         while cnt < minHopsToCalc && countDown > 1 
         {
-            if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+            if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
                                             minPoints: UInt16(countDown), benchmarkMode: true, fast: true)
             {
                 dataCache[countDown] = kojiData
@@ -1287,20 +1296,20 @@ class AutoInstanceController: InstanceControllerProto {
             else
             {
                 // something went wrong with koji, fallback to normal
-                Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+                Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
                 tthClusteringUsesKoji = false
                 return dataPoints
             }
         }
 
         clusterSizeToUse = countDown
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - data acquire run clusterSizeToUse=\(clusterSizeToUse)")
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - data acquire run clusterSizeToUse=\(clusterSizeToUse)")
 
         // get the clusters from koji
-        // 1. run in fast mode first run, so that we can get moving, which causes clusters to be random order
+        // 1. run with fast=true for first run, so that we can get moving, which causes clusters to be random order
         // 2. on subsequent runs, we will use fast=false, so we get clusters back sorted by largest.  this will cause the
         //    workers to start with high spawnpoint count clusters and work towards smaller ones.
-        if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+        if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
                                              minPoints: UInt16(clusterSizeToUse), benchmarkMode: false, fast: !firstRun)
         {
             lastTthClusterSize = clusterSizeToUse
@@ -1321,17 +1330,17 @@ class AutoInstanceController: InstanceControllerProto {
         else 
         {                
             // something went wrong with koji, fallback to normal
-            Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+            Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
             tthClusteringUsesKoji = false
             return dataPoints
         }
     }
 
-    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnData?
+    func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnData?
     {
         // function to get the data from koji
         // may get nil back from Koji function, don't handle here but pass on to calling funciton
-        Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
+        Log.debug(message:"[AutoInstanceController] clusteredCoords() - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
         let returnedData = koji.getDataFromKojiSync(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints,

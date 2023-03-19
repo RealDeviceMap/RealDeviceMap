@@ -1,13 +1,14 @@
+//
+//  Koji.swift
+//  RealDeviceMapLib
+//
+//  Created by Beavis on Mar 15, 2023.
+//
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length function_body_length cyclomatic_complexity force_cast large_tuple
+
 import Foundation
 import PerfectLib
-import PerfectCURL
-import cURL
-
-/*
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-*/
 
 public class Koji
 {
@@ -76,15 +77,15 @@ public class Koji
     // function to get data from koji server
     //
     // 1. with the use of semaphores, the function is synchronous
-    // 2. function returns nil if there is a problem with getting data from koji,
-    //    error handling is to be managed from calling functions
+    // 2. function returns nil if there is a problem with getting data from koji
+    // 3. error handling is to be managed from calling functions, but function does utilize Log.error
     //
     public func getDataFromKojiSync(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
                                 timeout: Int = 120) -> Koji.returnData?
     {
-        Log.debug(message: "[Koji - getDataFromKoji] Started process to get data from Koji")
+        Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji")
         
         var toReturn: Koji.returnData? = nil
         
@@ -102,7 +103,7 @@ public class Koji
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("keep-alive", forHTTPHeaderField: "Connection")
         request.httpMethod = "POST"
-        request.httpBody = jsonData // body?.data(using: String.Encoding.utf8)
+        request.httpBody = jsonData
         
         let semaphore = DispatchSemaphore.init(value: 0)
         
@@ -113,14 +114,14 @@ public class Koji
                 error == nil
             else
             {   // check for fundamental networking error
-                Log.debug(message: "[Koji - getDataFromKoji] Error getting data from koji = " + String(error.debugDescription))
+                Log.error(message: "[Koji] getDataFromKojiSync() - Error getting data from koji = " + String(error.debugDescription))
                 return
             }
             
             guard (200 ... 299) ~= response.statusCode else
             {   // check for http errors
-                Log.debug(message: "[Koji - getDataFromKoji] Bad response from koji, statusCode should be 2xx, but is \(response.statusCode)")
-                Log.debug(message: "[Koji - getDataFromKoji] Bad response from koji, response = \(response)")
+                Log.error(message: "[Koji] getDataFromKojiSync() - Bad response from koji, statusCode should be 2xx, but is \(response.statusCode)")
+                Log.error(message: "[Koji] getDataFromKojiSync() - Bad response from koji, response = \(response)")
                 return
             }
             
@@ -132,16 +133,16 @@ public class Koji
             }
             catch
             {   // parsing error
-                Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, error = \(error)")
+                Log.error(message: "[Koji] getDataFromKojiSync() - Error parsing data from Koji, error = \(error)")
                 print(error) 
                 
                 if let responseString = String(data: data, encoding: .utf8)
                 {
-                    Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, responseString = \(responseString)")
+                    Log.error(message: "[Koji] getDataFromKojiSync() - Error parsing data from Koji, responseString = \(responseString)")
                 }
                 else
                 {
-                    Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, unable to parse response as string")
+                    Log.error(message: "[Koji] getDataFromKojiSync() - Error parsing data from Koji, unable to parse response as string")
                 }
             }
             
@@ -150,6 +151,7 @@ public class Koji
 
         task.resume()
 
+        // wait for 60sec for things to finish before continuing
         _ = semaphore.wait(wallTimeout: .now() + 60)
         
         return toReturn
