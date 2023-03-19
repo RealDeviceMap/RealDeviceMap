@@ -100,10 +100,10 @@ class AutoInstanceController: InstanceControllerProto {
     var autoPokemonLock = Threading.Lock()
     var tthLock = Threading.Lock()
     var lastTthCountUnknown: Int = 0
+    var tthCluseringTime: Double = 0.0
     var lastTthRawPointsCount: Int = 0
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
-    var lastTthClusterSize: Int = -1
     var firstRun: Bool = true
     var pokemonCache: MemoryCache<Int>? = nil   // cache to determine if we need to pull data from db for auto pokemon mode, see autoRequeryFrequency
     var tthCache: MemoryCache<Int>? = nil       // cache to determine if we need to pull data from db for tth pokemon mode, see tthRequeryFrequency
@@ -157,11 +157,14 @@ class AutoInstanceController: InstanceControllerProto {
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
             // attempt to verify koji url is actually valid
-            if tthClusteringUsesKoji
+            if tthClusteringUsesKoji && !kojiUrl.isValidURL
             {
-                tthClusteringUsesKoji = kojiUrl.isValidURL
-                Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL")
-            }
+                if !kojiUrl.isValidURL
+                {
+                    tthClusteringUsesKoji = false
+                    Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL=\(kojiUrl)")
+                }
+             }
             
             return
         }
@@ -927,14 +930,20 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: +\(changeCluster) / +\(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
+                        Delta: +\(changeCluster) / +\(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        </span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: +\(changeCluster) / \(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
+                        Delta: +\(changeCluster) / \(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        </span>
                         """
                     }
                     
@@ -945,14 +954,20 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: \(changeCluster) / +\(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
+                        Delta: \(changeCluster) / +\(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        </span>
                         """
                     }
                     else
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> Delta: \(changeCluster) / \(changeRaw)</br>Cluster Size (calculated/max): \(self.lastTthClusterSize) / \(self.lastMaxClusterSize)</span>
+                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
+                        Delta: \(changeCluster) / \(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        </span>
                         """
                     }
                 }
@@ -1234,9 +1249,6 @@ class AutoInstanceController: InstanceControllerProto {
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
     {
         Log.debug(message:"[AutoInstanceController] getClusteredCoords() - starting function")
-
-        // cache for data
-        var dataCache = Dictionary<Int, Koji.returnData>()
         
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
@@ -1249,71 +1261,16 @@ class AutoInstanceController: InstanceControllerProto {
         {
             return dataPoints
         }
-        
-        // increase cluster size to ensure use of bigger clusters, for example we are still finding new spawns with unknown tth
-        // for now, 2 is just arbitrary
-        var clusterSizeToUse: Int = lastTthClusterSize + 2
-
-        var countDown = clusterSizeToUse
-        var cnt = 0
-
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - lastTthClusterSize = \(lastTthClusterSize)")
-        // find the proper cluster size so that we have more points than will visit on the first run
-        if lastTthClusterSize < 0 || !firstRun
-        {            
-            // handle first run of this
-            // send data to koji and see what max clusters are given the data
-            if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                              minPoints: 1, benchmarkMode: true, fast: true)
-            {
-                dataCache[1] = kojiData
-            
-                // set where we start iterating based on max cluster size
-                countDown = kojiData.stats.best_cluster_point_count
-            }
-            else
-            {
-                // something went wrong with koji, fallback to normal
-                Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
-                tthClusteringUsesKoji = false
-                return dataPoints
-            }
-        }
-
-        // loop down towards one to find cluster size just bigger than possible hops device(s) can make in refresh period
-        // will be calling with benchmarkmode and fast as true to speed things up
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
-        while cnt < minHopsToCalc && countDown > 1 
-        {
-            if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                            minPoints: UInt16(countDown), benchmarkMode: true, fast: true)
-            {
-                dataCache[countDown] = kojiData
-                
-                cnt = kojiData.stats.total_clusters
-                countDown -= 1
-            }
-            else
-            {
-                // something went wrong with koji, fallback to normal
-                Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
-                tthClusteringUsesKoji = false
-                return dataPoints
-            }
-        }
-
-        clusterSizeToUse = countDown
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - data acquire run clusterSizeToUse=\(clusterSizeToUse)")
 
         // get the clusters from koji
         // 1. run with fast=true for first run, so that we can get moving, which causes clusters to be random order
         // 2. on subsequent runs, we will use fast=false, so we get clusters back sorted by largest.  this will cause the
         //    workers to start with high spawnpoint count clusters and work towards smaller ones.
         if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                             minPoints: UInt16(clusterSizeToUse), benchmarkMode: false, fast: !firstRun)
+                                             minPoints: UInt16(1), benchmarkMode: false, fast: firstRun)
         {
-            lastTthClusterSize = clusterSizeToUse
             lastMaxClusterSize = kojiData.stats.best_cluster_point_count
+            tthCluseringTime = kojiData.stats.cluster_time
 
             var retCoords:[Coord] = [Coord]()
         

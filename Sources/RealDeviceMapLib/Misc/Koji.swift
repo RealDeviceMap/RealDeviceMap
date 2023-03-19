@@ -9,8 +9,10 @@
 
 import Foundation
 import PerfectLib
-import PerfectCURL
-import cURL
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 public class Koji
 {

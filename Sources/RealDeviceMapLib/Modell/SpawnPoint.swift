@@ -163,7 +163,7 @@ public class SpawnPoint: JSONConvertibleObject {
         }
 
         var sql = """
-            INSERT INTO spawnpoint (id, lat, lon, updated, last_seen, despawn_sec, spawn_info, created)
+            INSERT INTO spawnpoint (id, lat, lon, updated, last_seen, despawn_sec, spawn_info)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         if update {
@@ -174,8 +174,7 @@ public class SpawnPoint: JSONConvertibleObject {
             updated=VALUES(updated),
             last_seen=VALUES(last_seen),
             despawn_sec=VALUES(despawn_sec),
-            spawn_info=VALUES(spawn_info),
-            created=VALUES(created)
+            spawn_info=VALUES(spawn_info)
             """
         }
 
@@ -187,7 +186,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(lastSeen)
         mysqlStmt.bindParam(despawnSecond)
         mysqlStmt.bindParam(spawnInfo)
-        mysqlStmt.bindParam(created)
+        // mysqlStmt.bindParam(created) // we should not update/save, let db handle this as a default value when entry made
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[SPAWNPOINT] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
