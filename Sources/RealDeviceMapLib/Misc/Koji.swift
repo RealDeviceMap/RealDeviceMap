@@ -3,9 +3,11 @@ import PerfectLib
 import PerfectCURL
 import cURL
 
+/*
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+*/
 
 public class Koji
 {
@@ -19,13 +21,6 @@ public class Koji
         var fast: Bool
         var only_unique: Bool
         var data_points: [Coord]
-        
-        /*
-        init(radius: Int, min_points: Int, becnchmark_mode: sorting, return_type: String, fast: Bool, only_unique: Bool, data_points: [Coord])
-        {
-            self.radius = radius
-        }
-         */
     }
 
     public enum sorting: String, Codable
@@ -78,9 +73,15 @@ public class Koji
         return returnedStats(best_clusters: [], best_cluster_point_count: 0, cluster_time: 0.0, total_points: 0, points_covered: 0, total_clusters: 0, total_distance: 0.0, longest_distance: 0.0)
     }
   
+    // function to get data from koji server
+    //
+    // 1. with the use of semaphores, the function is synchronous (i see 10ms calls for clustering 4k points on my server)
+    // 2. function returns nil if there is a problem with getting data from koji,
+    //    error handling is to be managed from calling functions
+    //
     public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
-                                minPoints: Int = 1, benchmarkMode: Bool = false, sortBy: String = sorting.ClusterCount.asText(),
-                                returnType: String = returnType.SingleArray.asText(), fast: Bool = true, onlyUnique: Bool = true,
+                                minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
+                                returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
                                 timeout: Int = 120) -> Koji.returnData?
     {
         Log.debug(message: "[Koji - getDataFromKoji] Started process to get data from Koji")
@@ -110,28 +111,37 @@ public class Koji
                 let data = data,
                 let response = response as? HTTPURLResponse,
                 error == nil
-            else {                                                               // check for fundamental networking error
-                print("error", error ?? URLError(.badServerResponse))
+            else
+            {   // check for fundamental networking error
+                Log.debug(message: "[Koji - getDataFromKoji] Error getting data from koji = " + error ?? URLError(.badServerResponse))
                 return
             }
             
-            guard (200 ... 299) ~= response.statusCode else {                    // check for http errors
-                print("statusCode should be 2xx, but is \(response.statusCode)")
-                print("response = \(response)")
+            guard (200 ... 299) ~= response.statusCode else
+            {   // check for http errors
+                Log.debug(message: "[Koji - getDataFromKoji] Bad response from koji, statusCode should be 2xx, but is \(response.statusCode)")
+                Log.debug(message: "[Koji - getDataFromKoji] Bad response from koji, response = \(response)")
                 return
             }
             
             // do whatever you want with the `data`, e.g.:
             
-            do {
+            do
+            {
                 toReturn = try JSONDecoder().decode(returnData.self, from: data)
-            } catch {
-                print(error) // parsing error
+            }
+            catch
+            {   // parsing error
+                Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, error = \(error)")
+                print(error) 
                 
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("responseString = \(responseString)")
-                } else {
-                    print("unable to parse response as string")
+                if let responseString = String(data: data, encoding: .utf8)
+                {
+                    Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, responseString = \(responseString)")
+                }
+                else
+                {
+                    Log.debug(message: "[Koji - getDataFromKoji] Error parsing data from Koji, unable to parse response as string")
                 }
             }
             
@@ -140,7 +150,7 @@ public class Koji
 
         task.resume()
         
-        _ = semaphore.wait(wallTimeout: .now() + 60)
+        _ = semaphore.wait(wallTimeout: .now() + 30)
         
         return toReturn
     }

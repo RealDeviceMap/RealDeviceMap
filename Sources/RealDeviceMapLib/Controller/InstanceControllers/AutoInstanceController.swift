@@ -70,7 +70,7 @@ class AutoInstanceController: InstanceControllerProto {
     let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
     let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
     var tthRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .tthRequeryFrequency)
-    let tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
+    var tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
     var tthClusteringRadius: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthClusteringRadius) as Int)
     var tthHopTime: Double = Double(ConfigLoader.global.getConfig(type: .tthHopTime) as String)!
     var tthDeviceTimeout: UInt16 = UInt16(ConfigLoader.global.getConfig(type: .tthDeviceTimeout) as Int)
@@ -102,7 +102,7 @@ class AutoInstanceController: InstanceControllerProto {
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
     var lastTthClusterSize: Int = -1
-    var firstRun: Bool = false
+    var firstRun: Bool = true
     var pokemonCache: MemoryCache<Int>? = nil
     var tthCache: MemoryCache<Int>? = nil
     var tthDevices: MemoryCache<Int>? = nil
@@ -411,7 +411,6 @@ class AutoInstanceController: InstanceControllerProto {
             let loc: Int = currentDevicesMaxLocation
 
             let newLoc = determineNextPokemonLocation(curTime: curSecInHour, curLocation: loc)
-            firstRun = false
 
             Log.debug(message:
                 "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
@@ -1153,6 +1152,8 @@ class AutoInstanceController: InstanceControllerProto {
         if oldCoord >= pokemonCoords.count {
             currentDevicesMaxLocation = 0
         }
+
+        firstRun = false
         
         pokemonCache!.set(id: self.name, value: 1)
 
@@ -1232,9 +1233,9 @@ class AutoInstanceController: InstanceControllerProto {
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
-        if tthClusteringUsesKoji && kojiUrl.length > 5 && kojiSecret.length > 1 && !firstRun
+        if tthClusteringUsesKoji && kojiUrl.length > 5 && kojiSecret.length > 1
         {
-            Log.debug(message:"[AutoInstanceController] initTthCoords - UsingKoji for clustering")
+            Log.debug(message:"[AutoInstanceController] initTthCoords - Using Koji for clustering")
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
         }
         else
@@ -1280,101 +1281,102 @@ class AutoInstanceController: InstanceControllerProto {
             return dataPoints
         }
         
+        // increase cluster size to ensure use of bigger clusters, for example we are still finding new spawns with unknown tth
         var clusterSizeToUse: Int = lastTthClusterSize + 2
 
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords - lastTthClusterSize = \(lastTthClusterSize)")
-        // find the proper cluster size so that we have more points than will visit
-        if lastTthClusterSize < 0
-        {
-            var cnt = 0
+        var countDown = clusterSizeToUse
+        var cnt = 0
 
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - lastTthClusterSize = \(lastTthClusterSize)")
+        // find the proper cluster size so that we have more points than will visit on the first run
+        if lastTthClusterSize < 0 || !firstRun
+        {            
             // handle first run of this
             // send data to koji and see what max clusters are given the data
-            kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+            if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
                 minPoints: 1, benchmarkMode: true)
-            
-            dataCache[1] = kojiData
-            
-            // set where we start iterating based on max cluster size
-            var countDown = kojiData!.stats.best_cluster_point_count
-
-            Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
-            // since starting high, we will need to iterate down and find where we can get enough data
-            while cnt < minHopsToCalc && countDown > 1 
             {
-                kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                                minPoints: UInt16(countDown), benchmarkMode: true)
+                dataCache[1] = kojiData
+            
+                // set where we start iterating based on max cluster size
+                countDown = kojiData!.stats.best_cluster_point_count
+            }
+            else
+            {
+                // something went wrong with koji, fallback to normal
+                Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+                tthClusteringUsesKoji = false
+                return dataPoints
+            }
+        }
 
+        // loop down towards one to find cluster size just bigger than possible hops device(s) can make in refresh period
+        // will be calling with benchmarkmode and fast as true to speed things up
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
+        while cnt < minHopsToCalc && countDown > 1 
+        {
+            if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                            minPoints: UInt16(countDown), benchmarkMode: true, fast: true)
+            {
                 dataCache[countDown] = kojiData
                 
                 cnt = kojiData!.stats.total_clusters
                 countDown -= 1
             }
-
-            clusterSizeToUse = countDown
-            Log.debug(message:"[AutoInstanceController] getClusteredCoords - first run clusterSizeToUse=\(clusterSizeToUse)")
-        }
-        else
-        {
-            var countDown = clusterSizeToUse  // in case iteration got jacked up, safety valve to exit
-            var cnt: Int = 0
-            
-            Log.debug(message:"[AutoInstanceController] getClusteredCoords - cnt=\(cnt) & minHopsToCalc=\(minHopsToCalc) & countdown=\(countDown)")
-            while cnt < minHopsToCalc && countDown > 1 
+            else
             {
-                kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                              minPoints: UInt16(countDown), benchmarkMode: true)
+                // something went wrong with koji, fallback to normal
+                Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+                tthClusteringUsesKoji = false
+                return dataPoints
+            }
+        }
 
-                dataCache[countDown] = kojiData
-                
-                cnt = kojiData!.stats.total_clusters
-                countDown -= 1
+        clusterSizeToUse = countDown
+        Log.debug(message:"[AutoInstanceController] getClusteredCoords - data acquire run clusterSizeToUse=\(clusterSizeToUse)")
+
+        // get the clusters from koji
+        // 1. run in fast mode first run, so that we can get moving, which causes clusters to be random order
+        // 2. on subsequent runs, we will use fast=false, so we get clusters back sorted by largest.  this will cause the
+        //    workers to start with high spawnpoint count clusters and work towards smaller ones.
+        if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
+                                             minPoints: UInt16(clusterSizeToUse), benchmarkMode: false, fast: !firstRun)
+        {
+            lastTthClusterSize = clusterSizeToUse
+            lastMaxClusterSize = kojiData!.stats.best_cluster_point_count
+
+            var retCoords:[Coord] = [Coord]()
+        
+            for point in kojiData!.data!
+            {
+                let latitude = point[0]
+                let longitude = point[1]
+
+                retCoords.append( Coord(lat: latitude, lon: longitude))
             }
 
-            clusterSizeToUse = countDown
-            Log.debug(message:"[AutoInstanceController] getClusteredCoords - subsequent run clusterSizeToUse=\(clusterSizeToUse)")
+            return retCoords
         }
-
-        // get the actual data from koji now that have settled on appropriate cluster size
-        kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                                             minPoints: UInt16(clusterSizeToUse), benchmarkMode: false)
-
-        lastTthClusterSize = clusterSizeToUse
-        lastMaxClusterSize = kojiData!.stats.best_cluster_point_count
-
-        var retCoords:[Coord] = [Coord]()
-
-        for point in kojiData!.data!
-        {
-            var i = 0
-            var latitude = 0.0
-            var longitude = 0.0
-
-            for coord in point
-            {
-                if i == 0
-                {
-                    latitude = coord
-                }
-                else
-                {
-                    longitude = coord
-                }
-                i = 1
-            }
-
-            retCoords.append( Coord(lat: latitude, lon: longitude))
+        else 
+        {                
+            // something went wrong with koji, fallback to normal
+            Log.error(message: "[AutoInstanceController] getClusteredCoords - Unable to get data from Koji, falling back to unclustered tth data")
+            tthClusteringUsesKoji = false
+            return dataPoints
         }
-
-        return retCoords
     }
 
-    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool) -> Koji.returnData?
+    func clusteredCoords(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnData?
     {
+        // function to get the data from koji
+        // may get nil back from Koji function, don't handle here but pass on to calling funciton
         Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
-        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints, radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode, sortBy: Koji.sorting.ClusterCount.asText(), returnType: Koji.returnType.SingleArray.asText(), fast: true, onlyUnique: true)!
+        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints,
+                                                radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode,
+                                                fast: fast, sortBy: Koji.sorting.ClusterCount.asText(),
+                                                returnType: Koji.returnType.SingleArray.asText(), onlyUnique: true)!
 
         return returnedData
     }
