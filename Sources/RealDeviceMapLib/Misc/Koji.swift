@@ -9,6 +9,8 @@
 
 import Foundation
 import PerfectLib
+import PerfectCURL
+import cURL
 
 public class Koji
 {
