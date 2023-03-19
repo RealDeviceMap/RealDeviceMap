@@ -106,7 +106,7 @@ class AutoInstanceController: InstanceControllerProto {
     var pokemonCache: MemoryCache<Int>? = nil
     var tthCache: MemoryCache<Int>? = nil
     var tthDevices: MemoryCache<Int>? = nil
-
+    
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
          spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
          accountGroup: String?, isEvent: Bool) {
@@ -129,75 +129,36 @@ class AutoInstanceController: InstanceControllerProto {
         if type == .pokemon
         {
             // sensibility checks for user values for mode config
-            if autoRequeryFrequency < 600
-            {
-                autoRequeryFrequency = 600
-            }
-            if autoMinSpawnTime < 600
-            {
-                // zero point to use this if going to specify less than 10min timers as acceptable
-                autoMinSpawnTime = 600
-            }
-
-            if autoBufferTime < 10
-            {
-                // need to have min value so that we don't get to close to actual spawn times and allow a little slop in system
-                autoBufferTime = 10
-            }
-            else if autoBufferTime > 120
-            {
-                autoBufferTime = 120
-            }
-
-            if autoSleepInterval < 5
-            {
-                autoSleepInterval = 5
-            }
-            else if autoSleepInterval > 60
-            {
-                autoSleepInterval = 60
-            }
-
-            if autoUseLastSeenTime > 86400
-            {
-                autoUseLastSeenTime = 86400
-            }
+            autoRequeryFrequency = clamp(autoRequeryFrequency, minValue: 600, maxValue: 86400)
+            autoMinSpawnTime = clamp(autoMinSpawnTime, minValue: 600, maxValue: 1740)
+            autoBufferTime = clamp(autoBufferTime, minValue: 10, maxValue: 120)
+            autoSleepInterval = clamp(autoSleepInterval, minValue: 5, maxValue: 60)
+            autoUseLastSeenTime = clamp(autoUseLastSeenTime,minValue: 3600, maxValue: 86400)
+            autoDefaultLongitude = clamp(autoDefaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
+            autoDefaultLatitude = clamp(autoDefaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
 
             pokemonCache = MemoryCache(interval: Double(autoRequeryFrequency) / 4, keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
 
             return
         }
-
-        if type == .tth
+        else if type == .tth
         {
-            if tthClusteringRadius < 10
-            {
-                tthClusteringRadius = 10
-            }
-            else if tthClusteringRadius > 100
-            {
-                tthClusteringRadius = 100
-            }
-
-            if tthHopTime < 1.0
-            {
-                tthHopTime = 1.0
-            }
-
-            /*
-            if tthRequeryFrequency < 90
-            {
-                tthRequeryFrequency = 90
-            }
-            else if tthRequeryFrequency > 3600
-            {
-                tthRequeryFrequency = 3600
-            }
-            */
+            // sensibility checks for user values for mode config
+            tthClusteringRadius = clamp(tthClusteringRadius, minValue: 10, maxValue: 100)
+            tthHopTime = clamp(tthHopTime, minValue: 1.0, maxValue: 60.0)
+            tthRequeryFrequency = clamp(tthRequeryFrequency, minValue: 60, maxValue: 3600)
+            tthDeviceTimeout = clamp(tthDeviceTimeout, minValue: 30, maxValue: 3600)
 
             tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4, keepTime: Double(tthDeviceTimeout), extendTtlOnHit: true)
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
+            // verify koji url is actually valid
+            if tthClusteringUsesKoji
+            {
+                tthClusteringUsesKoji = kojiUrl.isValidURL
+                Log.error(message: "[AutoInstanceController - Init] Unable to utilize Koji for clustering as it is not a valid URL")
+            }
+            
             return
         }
         
@@ -410,7 +371,7 @@ class AutoInstanceController: InstanceControllerProto {
             // increment location
             let loc: Int = currentDevicesMaxLocation
 
-            let newLoc = determineNextPokemonLocation(curTime: curSecInHour, curLocation: loc)
+            let newLoc = determineNextAutoPokemonLocation(curTime: curSecInHour, curLocation: loc)
 
             Log.debug(message:
                 "getTask() pokemon - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
@@ -1233,7 +1194,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
-        if tthClusteringUsesKoji && kojiUrl.length > 5 && kojiSecret.length > 1
+        if tthClusteringUsesKoji && kojiSecret.length > 1
         {
             Log.debug(message:"[AutoInstanceController] initTthCoords - Using Koji for clustering")
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
@@ -1268,7 +1229,6 @@ class AutoInstanceController: InstanceControllerProto {
 
         // cache for data
         var dataCache = Dictionary<Int, Koji.returnData>()
-        var kojiData: Koji.returnData?
         
         // get device count from controller, then determine how many coords we can cover in requery period
         // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
@@ -1282,6 +1242,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
         
         // increase cluster size to ensure use of bigger clusters, for example we are still finding new spawns with unknown tth
+        // for now, 2 is just arbitrary
         var clusterSizeToUse: Int = lastTthClusterSize + 2
 
         var countDown = clusterSizeToUse
@@ -1294,12 +1255,12 @@ class AutoInstanceController: InstanceControllerProto {
             // handle first run of this
             // send data to koji and see what max clusters are given the data
             if let kojiData = clusteredCoords(dataPoints: dataPoints, radius: tthClusteringRadius,
-                minPoints: 1, benchmarkMode: true)
+                                              minPoints: 1, benchmarkMode: true, fast: true)
             {
                 dataCache[1] = kojiData
             
                 // set where we start iterating based on max cluster size
-                countDown = kojiData!.stats.best_cluster_point_count
+                countDown = kojiData.stats.best_cluster_point_count
             }
             else
             {
@@ -1320,7 +1281,7 @@ class AutoInstanceController: InstanceControllerProto {
             {
                 dataCache[countDown] = kojiData
                 
-                cnt = kojiData!.stats.total_clusters
+                cnt = kojiData.stats.total_clusters
                 countDown -= 1
             }
             else
@@ -1343,11 +1304,11 @@ class AutoInstanceController: InstanceControllerProto {
                                              minPoints: UInt16(clusterSizeToUse), benchmarkMode: false, fast: !firstRun)
         {
             lastTthClusterSize = clusterSizeToUse
-            lastMaxClusterSize = kojiData!.stats.best_cluster_point_count
+            lastMaxClusterSize = kojiData.stats.best_cluster_point_count
 
             var retCoords:[Coord] = [Coord]()
         
-            for point in kojiData!.data!
+            for point in kojiData.data!
             {
                 let latitude = point[0]
                 let longitude = point[1]
@@ -1373,7 +1334,7 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message:"[AutoInstanceController] clusteredCoords - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
-        let returnedData = koji.getDataFromKoji(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints,
+        let returnedData = koji.getDataFromKojiSync(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints,
                                                 radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode,
                                                 fast: fast, sortBy: Koji.sorting.ClusterCount.asText(),
                                                 returnType: Koji.returnType.SingleArray.asText(), onlyUnique: true)!
@@ -1399,7 +1360,7 @@ class AutoInstanceController: InstanceControllerProto {
         return (minTime, maxTime)
     }
 
-    func determineNextPokemonLocation(curTime: UInt64, curLocation: Int) -> Int {
+    func determineNextAutoPokemonLocation(curTime: UInt64, curLocation: Int) -> Int {
         let cntArray = pokemonCoords.count
         let cntCoords = pokemonCoords.count / 2
 

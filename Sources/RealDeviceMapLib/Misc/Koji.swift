@@ -75,11 +75,11 @@ public class Koji
   
     // function to get data from koji server
     //
-    // 1. with the use of semaphores, the function is synchronous (i see 10ms calls for clustering 4k points on my server)
+    // 1. with the use of semaphores, the function is synchronous
     // 2. function returns nil if there is a problem with getting data from koji,
     //    error handling is to be managed from calling functions
     //
-    public func getDataFromKoji(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+    public func getDataFromKojiSync(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
                                 timeout: Int = 120) -> Koji.returnData?
@@ -92,8 +92,8 @@ public class Koji
         let jsonEncoder = JSONEncoder()
         let jsonData = try? jsonEncoder.encode(inputData)
         
-        let body = String(data: jsonData!, encoding: String.Encoding.utf8)
-        //Log.debug(message: "[Koji - getDataFromKoji] - body=\(body)")
+        // let body = String(data: jsonData!, encoding: String.Encoding.utf8)
+        // Log.debug(message: "[Koji - getDataFromKoji] - body=\(body)")
         
         let url = URL(string: kojiUrl)
         var request = URLRequest(url: url!)
@@ -113,7 +113,7 @@ public class Koji
                 error == nil
             else
             {   // check for fundamental networking error
-                Log.debug(message: "[Koji - getDataFromKoji] Error getting data from koji = " + error ?? URLError(.badServerResponse))
+                Log.debug(message: "[Koji - getDataFromKoji] Error getting data from koji = " + String(error.debugDescription))
                 return
             }
             
@@ -149,8 +149,8 @@ public class Koji
         }
 
         task.resume()
-        
-        _ = semaphore.wait(wallTimeout: .now() + 30)
+
+        _ = semaphore.wait(wallTimeout: .now() + 60)
         
         return toReturn
     }
