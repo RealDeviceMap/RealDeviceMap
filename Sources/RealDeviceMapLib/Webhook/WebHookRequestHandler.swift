@@ -1237,8 +1237,8 @@ public class WebHookRequestHandler {
                                 return
                             }
 
-                            Log.warning(message: """[WebHookRequestHandler] [\(uuid)]
-                                 Account exceeded RPC12 Limit, disabling: \(username)""")
+                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)]
+                                 Account exceeded RPC12 Limit, disabling: \(username)")
                             rpc12Count.removeValue(forKey: username)
                             try Account.setDisabled(mysql: mysql, username: username)
                             response.respondWithOk()
