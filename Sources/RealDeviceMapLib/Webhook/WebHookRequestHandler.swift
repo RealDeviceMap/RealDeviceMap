@@ -582,7 +582,6 @@ public class WebHookRequestHandler {
                 var value: Int = (encounterCount[username!] ?? 0) + encounters.count
                 if value < maxEncounter {
                     encounterCount[username!] = value
-                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
                 } else {
                     try? Account.setDisabled(mysql: mysql, username: username!)
                     encounterCount.removeValue(forKey: username!)
@@ -591,11 +590,13 @@ public class WebHookRequestHandler {
             }
         }
 
-        if username != nil && encounters.count > 0 && (rpc12Count[username!] ?? 0) > 0 {
-            rpc12Lock.doWithLock {
-                rpc12Count[username!] = 0
+        if username != nil && encounters.count > 0 {
+            if (rpc12Count[username!] ?? 0) > 0 {
+                rpc12Lock.doWithLock {
+                    rpc12Count[username!] = 0
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
+                }
             }
-            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
         }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
@@ -1106,6 +1107,7 @@ public class WebHookRequestHandler {
                 }
                 if username != account!.username {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
+                    rpc12Count.removeValue(forKey: account!.username)
                 }
 
                 device.accountUsername = account!.username
@@ -1252,9 +1254,6 @@ public class WebHookRequestHandler {
                 else {
                     response.respondWithError(status: .notFound)
                     return
-                }
-                if device.accountUsername != nil {
-                    rpc12Count.removeValue(forKey: device.accountUsername!)
                 }
                 device.accountUsername = nil
                 try device.save(mysql: mysql, oldUUID: device.uuid)
