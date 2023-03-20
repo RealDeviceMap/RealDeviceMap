@@ -582,6 +582,7 @@ public class WebHookRequestHandler {
                 var value: Int = (encounterCount[username!] ?? 0) + encounters.count
                 if value < maxEncounter {
                     encounterCount[username!] = value
+                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
                 } else {
                     try? Account.setDisabled(mysql: mysql, username: username!)
                     encounterCount.removeValue(forKey: username!)
