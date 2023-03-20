@@ -454,7 +454,7 @@ class AutoInstanceController: InstanceControllerProto {
             let loc: Int = currentDevicesMaxLocation
 
             var newLoc = loc + 1
-            if newLoc >= tthCoords.count {
+            if newLoc >= tthCoords.count || newLoc < 0 {
                 newLoc = 0
             }
 
@@ -1257,7 +1257,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
 
         tthClusterVisits = currentDevicesMaxLocation
-        currentDevicesMaxLocation = 0
+        currentDevicesMaxLocation = -1
 
         firstRun = false
         
