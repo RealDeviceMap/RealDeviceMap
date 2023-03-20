@@ -1220,7 +1220,6 @@ public class WebHookRequestHandler {
             }
         } else if type == "account_unknown_error" {
             // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
-            
             if username != nil && maxRpc12 > 0 {
                 rpc12Lock.doWithLock {
                     var value: Int = (rpc12Count[username!] ?? 0) + 1
@@ -1238,7 +1237,8 @@ public class WebHookRequestHandler {
                                 return
                             }
 
-                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 Limit, disabling: \(username)")
+                            Log.warning(message: """[WebHookRequestHandler] [\(uuid)]
+                                 Account exceeded RPC12 Limit, disabling: \(username)""")
                             rpc12Count.removeValue(forKey: username)
                             try Account.setDisabled(mysql: mysql, username: username)
                             response.respondWithOk()
@@ -1247,7 +1247,7 @@ public class WebHookRequestHandler {
                         }
                     }
                 }
-            }           
+            }
         } else if type == "logged_out" {
             do {
                 guard
