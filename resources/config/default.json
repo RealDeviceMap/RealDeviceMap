@@ -117,7 +117,7 @@
         "tth":
         {
             "requeryFrequency": 90,
-            "clusterUsingKoji": true,
+            "clusterUsingKoji": false,
             "clusteringRadius": 70,
             "deviceTimeout": 300,
             "hopTime": "3.00"

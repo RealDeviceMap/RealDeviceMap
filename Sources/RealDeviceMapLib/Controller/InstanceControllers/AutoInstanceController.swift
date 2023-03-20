@@ -105,6 +105,7 @@ class AutoInstanceController: InstanceControllerProto {
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
     var firstRun: Bool = true
+    var tthClusterVisits:Int = 0
     var pokemonCache: MemoryCache<Int>? = nil   // cache to determine if we need to pull data from db for auto pokemon mode, see autoRequeryFrequency
     var tthCache: MemoryCache<Int>? = nil       // cache to determine if we need to pull data from db for tth pokemon mode, see tthRequeryFrequency
     var tthDevices: MemoryCache<Int>? = nil     // cache to track active devices on tth finding mode, see tthDeviceTimeout
@@ -135,9 +136,25 @@ class AutoInstanceController: InstanceControllerProto {
             autoMinSpawnTime = clamp(autoMinSpawnTime, minValue: 600, maxValue: 1740)
             autoBufferTime = clamp(autoBufferTime, minValue: 10, maxValue: 120)
             autoSleepInterval = clamp(autoSleepInterval, minValue: 5, maxValue: 60)
-            autoUseLastSeenTime = clamp(autoUseLastSeenTime,minValue: 3600, maxValue: 86400)
             defaultLongitude = clamp(defaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
             defaultLatitude = clamp(defaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
+
+            if autoUseLastSeenTime == 0
+            {
+                // as set to zero, assume user meant to use all data
+                autoUseLastSeenTime = -1
+            }
+            else if autoUseLastSeenTime > 0
+            {
+                // user set positive value, no sense to refresh more than every 10min
+                // max value of 1wk in seconds
+                autoUseLastSeenTime = clamp(autoUseLastSeenTime,minValue: 600, maxValue: 604800)
+            }
+            else
+            {
+                // negative, so going to use all data, just clamp for future usage
+                autoUseLastSeenTime = clamp(autoUseLastSeenTime,minValue: -100, maxValue: -1)
+            }
 
             // setup cache(s) we need for this mode, leave the others as nil
             pokemonCache = MemoryCache(interval: Double(autoRequeryFrequency) / 4, keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
@@ -441,7 +458,7 @@ class AutoInstanceController: InstanceControllerProto {
                 newLoc = 0
             }
 
-            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count)")
+            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count) & rawCount=\(self.currentTthRawPointsCount)")
 
             currentDevicesMaxLocation = newLoc
 
@@ -923,6 +940,14 @@ class AutoInstanceController: InstanceControllerProto {
                 changeRaw = 0
             }
 
+            var avgVisitTime:Double = 0.0
+            if tthClusterVisits != 0
+            {
+                avgVisitTime = Double(self.tthRequeryFrequency) / Double(tthClusterVisits)
+            }
+
+            var deviceCount = devicesOnInstance() 
+
             if formatted {
                 if changeCluster > 0
                 {
@@ -932,7 +957,8 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: +\(changeCluster) / +\(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -942,7 +968,8 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: +\(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -956,7 +983,8 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: \(changeCluster) / +\(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -966,7 +994,8 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 3))
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -1227,6 +1256,7 @@ class AutoInstanceController: InstanceControllerProto {
             tthCoords = tmpCoords
         }
 
+        tthClusterVisits = currentDevicesMaxLocation
         currentDevicesMaxLocation = 0
 
         firstRun = false
@@ -1255,12 +1285,6 @@ class AutoInstanceController: InstanceControllerProto {
         // in the future, could do some math based of what was done last requery period
         let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
         Log.debug(message:"[AutoInstanceController] getClusteredCoords() - minHopsToCalc=\(minHopsToCalc) & devicesOnInstance()=\(devicesOnInstance()) & tthRequreyFrequency=\(tthRequeryFrequency) & tthHopTime=\(tthHopTime)")
-
-        // short circuit if less coords that possible for device count, no points running clustering
-        if minHopsToCalc >= dataPoints.count
-        {
-            return dataPoints
-        }
 
         // get the clusters from koji
         // 1. run with fast=true for first run, so that we can get moving, which causes clusters to be random order

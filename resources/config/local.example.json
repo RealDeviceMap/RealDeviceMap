@@ -56,6 +56,32 @@
       "filterLittleMinCP": 450,
       "filterGreatMinCP": 1400,
       "filterUltraMinCP": 2350
+    },
+    "scanModes": 
+    {
+        "auto" :
+        {
+            "useLastSeenTime": 7200,
+            "requeryFrequency": 3600,
+            "minSpawnTime": 1500,
+            "bufferTime": 30,
+            "sleepInterval": 10,
+            "defaultLongitude": "0.00",
+            "defaultLatitude": "0.00"
+        },
+        "tth":
+        {
+            "requeryFrequency": 90,
+            "clusterUsingKoji": true,
+            "clusteringRadius": 70,
+            "deviceTimeout": 300,
+            "hopTime": "3.00"
+        }
+    },
+    "koji": 
+    {
+      "url": "",
+      "secret": ""
     }
   }
 }

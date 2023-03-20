@@ -164,7 +164,7 @@ public class SpawnPoint: JSONConvertibleObject {
 
         var sql = """
             INSERT INTO spawnpoint (id, lat, lon, updated, last_seen, despawn_sec, spawn_info)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """
         if update {
             sql += """
