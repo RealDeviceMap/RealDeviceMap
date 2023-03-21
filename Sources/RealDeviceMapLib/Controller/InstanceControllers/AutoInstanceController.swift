@@ -66,9 +66,6 @@ class AutoInstanceController: InstanceControllerProto {
     public let skipBootstrap: Bool = ConfigLoader.global.getConfig(type: .stopAllBootstrapping)
     public let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
     public let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
-
-    let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
-    let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
     
     var tthRequeryFrequency: Int = ConfigLoader.global.getConfig(type: .tthRequeryFrequency)
     var tthClusteringUsesKoji: Bool = ConfigLoader.global.getConfig(type: .tthClusterUsingKoji)
@@ -174,12 +171,13 @@ class AutoInstanceController: InstanceControllerProto {
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4, keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
 
             // attempt to verify koji url is actually valid
-            if tthClusteringUsesKoji && !kojiUrl.isValidURL
+            let koji = Koji()
+            if tthClusteringUsesKoji && !koji.hasValidUrl()
             {
-                if !kojiUrl.isValidURL
+                if !koji.hasValidUrl()
                 {
                     tthClusteringUsesKoji = false
-                    Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL=\(kojiUrl)")
+                    Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
                 }
              }
             
@@ -946,7 +944,7 @@ class AutoInstanceController: InstanceControllerProto {
                 avgVisitTime = Double(self.tthRequeryFrequency) / Double(tthClusterVisits)
             }
 
-            var deviceCount = devicesOnInstance() 
+            let deviceCount = devicesOnInstance() 
 
             if formatted {
                 if changeCluster > 0
@@ -1240,11 +1238,11 @@ class AutoInstanceController: InstanceControllerProto {
                 "[AutoInstanceController] initTthCoords - got ZERO points in min/max rectangle with null tth, you should switch to another mode")
         }
 
-        Log.debug(message:"[AutoInstanceController] initTthCoords() - UsingKoji = \(tthClusteringUsesKoji) & kojiUrl = \(kojiUrl) & kojiSecret=\(kojiSecret) & firstRun=\(firstRun)")
+        Log.debug(message:"[AutoInstanceController] initTthCoords() - UsingKoji = \(tthClusteringUsesKoji) &  firstRun=\(firstRun)")
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
-        if tthClusteringUsesKoji && kojiSecret.length > 1
+        if tthClusteringUsesKoji
         {
             Log.debug(message:"[AutoInstanceController] initTthCoords() - Using Koji for clustering")
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
@@ -1324,7 +1322,7 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message:"[AutoInstanceController] clusteredCoords() - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
-        let returnedData = koji.getDataFromKojiSync(kojiUrl: kojiUrl, kojiSecret: kojiSecret, dataPoints: dataPoints,
+        let returnedData = koji.getDataFromKojiSync(dataPoints: dataPoints,
                                                 radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode,
                                                 fast: fast, sortBy: Koji.sorting.ClusterCount.asText(),
                                                 returnType: Koji.returnType.SingleArray.asText(), onlyUnique: true)!

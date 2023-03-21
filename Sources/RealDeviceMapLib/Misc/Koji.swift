@@ -16,6 +16,11 @@ import FoundationNetworking
 
 public class Koji
 {
+    // koji related variables from config file
+    private let kojiSecret: String = ConfigLoader.global.getConfig(type: .kojiSecret)
+    private let kojiUrl: String = ConfigLoader.global.getConfig(type: .kojiUrl)
+    
+    // endpoints for koji that can be used
     public enum kojiEndPoint: String, CaseIterable 
     {
         case clusterGym = "/api/v1/calc/cluster/gym"
@@ -25,7 +30,23 @@ public class Koji
             return String(self.rawValue)
         }
     }
-        public struct jsonInput: Codable
+    
+    // rudimentary check that the url provided in configs is ok
+    public func hasValidUrl() -> Bool
+    {
+        return kojiUrl.isValidURL
+    }
+    public func getUrl() -> String
+    {
+        return kojiUrl
+    }
+    public func getSecret() -> String
+    {
+        return kojiSecret
+    }
+    
+    // json data that is fed to koji
+    public struct jsonInput: Codable
     {
         var radius: Int
         var min_points: Int
@@ -37,6 +58,7 @@ public class Koji
         var data_points: [Coord]
     }
 
+    // sorting options on how Koji can return data
     public enum sorting: String, Codable
     {
         case Random, GeoHash, ClusterCount
@@ -47,6 +69,7 @@ public class Koji
         }
     }
 
+    // types of data that Koji can return
     public enum returnType: String, Codable
     {
         case SingleArray, MultiArray, Struct, Text, AltText
@@ -57,6 +80,7 @@ public class Koji
         }
     }
 
+    // json for main body of json data returned after Koji has done its thing
     public struct returnData: Codable
     {
         var message: String
@@ -66,6 +90,7 @@ public class Koji
         var stats: returnedStats
     }
     
+    // returned stats from Koji
     public struct returnedStats: Codable
     {
         var best_clusters: [[Double]]
@@ -93,12 +118,12 @@ public class Koji
     // 2. function returns nil if there is a problem with getting data from koji
     // 3. error handling is to be managed from calling functions, but function does utilize Log.error
     //
-    public func getDataFromKojiSync(kojiUrl: String, kojiSecret: String, dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+    public func getDataFromKojiSync(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
-                                timeout: Int = 120) -> Koji.returnData?
+                                timeout: Int = 60) -> Koji.returnData?
     {
-        Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji")
+        Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji, using url=\(kojiUrl + kojiEndPoint.clusterGym.asText())")
         
         var toReturn: Koji.returnData? = nil
         
@@ -138,8 +163,7 @@ public class Koji
                 return
             }
             
-            // do whatever you want with the `data`, e.g.:
-            
+            // do whatever you want with the data returned from koji
             do
             {
                 toReturn = try JSONDecoder().decode(returnData.self, from: data)
@@ -164,8 +188,8 @@ public class Koji
 
         task.resume()
 
-        // wait for 60sec for things to finish before continuing
-        _ = semaphore.wait(wallTimeout: .now() + 60)
+        // wait for timeout seconds for things to finish before continuing
+        _ = semaphore.wait(wallTimeout: .now() + DispatchTimeInterval.seconds(timeout))
         
         return toReturn
     }
