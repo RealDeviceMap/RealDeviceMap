@@ -1294,17 +1294,7 @@ class AutoInstanceController: InstanceControllerProto {
             lastMaxClusterSize = kojiData.stats.best_cluster_point_count
             tthCluseringTime = kojiData.stats.cluster_time
 
-            var retCoords:[Coord] = [Coord]()
-        
-            for point in kojiData.data!
-            {
-                let latitude = point[0]
-                let longitude = point[1]
-
-                retCoords.append( Coord(lat: latitude, lon: longitude))
-            }
-
-            return retCoords
+            return kojiData.data!
         }
         else 
         {                
@@ -1315,14 +1305,14 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnData?
+    func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnDataStruct?
     {
         // function to get the data from koji
         // may get nil back from Koji function, don't handle here but pass on to calling funciton
         Log.debug(message:"[AutoInstanceController] clusteredCoords() - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
-        let returnedData = koji.getDataFromKojiSync(dataPoints: dataPoints,
+        let returnedData = koji.getClusterTthFromKoji(dataPoints: dataPoints,
                                                 radius: Int(tthClusteringRadius), minPoints: Int(minPoints), benchmarkMode: benchmarkMode,
                                                 fast: fast, sortBy: Koji.sorting.ClusterCount.asText(),
                                                 returnType: Koji.returnType.SingleArray.asText(), onlyUnique: true)!

@@ -81,19 +81,19 @@ public class Koji
     }
 
     // json for main body of json data returned after Koji has done its thing
-    public struct returnData: Codable
+    public struct returnDataStruct: Codable
     {
         var message: String
         var status: String
         var status_code: Int
-        var data: [[Double]]?
+        var data: [Coord]?
         var stats: returnedStats
     }
     
     // returned stats from Koji
     public struct returnedStats: Codable
     {
-        var best_clusters: [[Double]]
+        var best_clusters: [Coord]
         var best_cluster_point_count : Int
         var cluster_time: Double
         var total_points: Int
@@ -103,9 +103,9 @@ public class Koji
         var longest_distance: Double
     }
     
-    func emptyReturnData() -> returnData
+    func emptyReturnData() -> returnDataStruct
     {
-        return returnData(message: "", status: "error", status_code: -1, data: [], stats: emptyReturnStats())
+        return returnDataStruct(message: "", status: "error", status_code: -1, data: [], stats: emptyReturnStats())
     }
     func emptyReturnStats() -> returnedStats
     {
@@ -118,14 +118,14 @@ public class Koji
     // 2. function returns nil if there is a problem with getting data from koji
     // 3. error handling is to be managed from calling functions, but function does utilize Log.error
     //
-    public func getDataFromKojiSync(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
+    public func getClusterTthFromKoji(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
-                                returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
-                                timeout: Int = 60) -> Koji.returnData?
+                                returnType: String = returnType.Struct.asText(), onlyUnique: Bool = true,
+                                timeout: Int = 60) -> Koji.returnDataStruct?
     {
         Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji, using url=\(kojiUrl + kojiEndPoint.clusterGym.asText())")
         
-        var toReturn: Koji.returnData? = nil
+        var toReturn: Koji.returnDataStruct? = nil
         
         let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
         let jsonEncoder = JSONEncoder()
@@ -166,7 +166,7 @@ public class Koji
             // do whatever you want with the data returned from koji
             do
             {
-                toReturn = try JSONDecoder().decode(returnData.self, from: data)
+                toReturn = try JSONDecoder().decode(returnDataStruct.self, from: data)
             }
             catch
             {   // parsing error
