@@ -451,14 +451,14 @@ class AutoInstanceController: InstanceControllerProto {
             }
 
             // increment location
-            let loc: Int = currentDevicesMaxLocation
+            let priorLoc: Int = currentDevicesMaxLocation
 
-            var newLoc = loc + 1
+            var newLoc = priorLoc + 1
             if newLoc >= tthCoords.count || newLoc < 0 {
                 newLoc = 0
             }
 
-            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(loc) & newLoc=\(newLoc)/\(tthCoords.count) & rawCount=\(self.currentTthRawPointsCount)")
+            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(priorLoc) & newLoc=\(newLoc)/\(tthCoords.count) & rawCount=\(self.currentTthRawPointsCount)")
 
             currentDevicesMaxLocation = newLoc
 
