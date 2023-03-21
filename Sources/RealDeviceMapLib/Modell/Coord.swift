@@ -45,4 +45,11 @@ public class Coord: JSONConvertibleObject, Hashable, Codable {
         return lhs.lat == rhs.lat && lhs.lon == rhs.lon
     }
 
+    // this is required for proper reading of data from some koji fields, not all have lat/lon labeled
+    public required init(from decoder: Decoder) throws
+    {
+        var values = try decoder.unkeyedContainer()
+        self.lat = try values.decode(Double.self)
+        self.lon = try values.decode(Double.self)
+    }
 }

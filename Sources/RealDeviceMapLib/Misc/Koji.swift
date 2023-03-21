@@ -120,7 +120,7 @@ public class Koji
     //
     public func getClusterTthFromKoji(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
-                                returnType: String = returnType.Struct.asText(), onlyUnique: Bool = true,
+                                returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
                                 timeout: Int = 60) -> Koji.returnDataStruct?
     {
         Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji, using url=\(kojiUrl + kojiEndPoint.clusterGym.asText())")
