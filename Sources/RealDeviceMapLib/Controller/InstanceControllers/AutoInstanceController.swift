@@ -1291,8 +1291,8 @@ class AutoInstanceController: InstanceControllerProto {
         if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
                                              minPoints: UInt16(1), benchmarkMode: false, fast: firstRun)
         {
-            lastMaxClusterSize = kojiData.stats.best_cluster_point_count
-            tthCluseringTime = kojiData.stats.cluster_time
+            lastMaxClusterSize = kojiData.stats.bestClusterPointCount
+            tthCluseringTime = kojiData.stats.clusterTime
 
             return kojiData.data!
         }
@@ -1305,7 +1305,7 @@ class AutoInstanceController: InstanceControllerProto {
         }
     }
 
-    func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnDataStruct?
+    func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16, benchmarkMode: Bool, fast: Bool) -> Koji.returnedDataOfSingleArray?
     {
         // function to get the data from koji
         // may get nil back from Koji function, don't handle here but pass on to calling funciton

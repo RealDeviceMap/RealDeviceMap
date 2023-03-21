@@ -81,35 +81,47 @@ public class Koji
     }
 
     // json for main body of json data returned after Koji has done its thing
-    public struct returnDataStruct: Codable
+    public struct returnedDataOfSingleArray: Codable
     {
         var message: String
         var status: String
-        var status_code: Int
+        var statusCode: Int
         var data: [Coord]?
         var stats: returnedStats
+        
+        enum CodingKeys: String, CodingKey
+        {
+            case message
+            case status
+            case statusCode = "status_code"
+            case data
+            case stats
+        }
     }
     
     // returned stats from Koji
     public struct returnedStats: Codable
     {
-        var best_clusters: [Coord]
-        var best_cluster_point_count : Int
-        var cluster_time: Double
-        var total_points: Int
-        var points_covered: Int
-        var total_clusters: Int
-        var total_distance: Double
-        var longest_distance: Double
-    }
-    
-    func emptyReturnData() -> returnDataStruct
-    {
-        return returnDataStruct(message: "", status: "error", status_code: -1, data: [], stats: emptyReturnStats())
-    }
-    func emptyReturnStats() -> returnedStats
-    {
-        return returnedStats(best_clusters: [], best_cluster_point_count: 0, cluster_time: 0.0, total_points: 0, points_covered: 0, total_clusters: 0, total_distance: 0.0, longest_distance: 0.0)
+        var bestClusters: [Coord]
+        var bestClusterPointCount : Int
+        var clusterTime: Double
+        var totalPoints: Int
+        var pointsCovered: Int
+        var totalClusters: Int
+        var totalDistance: Double
+        var longestDistance: Double
+        
+        enum CodingKeys: String, CodingKey
+        {
+            case bestClusters = "best_clusters"
+            case bestClusterPointCount = "best_cluster_point_count"
+            case clusterTime = "cluster_time"
+            case totalPoints = "total_points"
+            case pointsCovered = "points_covered"
+            case totalClusters = "total_clusters"
+            case totalDistance = "total_distance"
+            case longestDistance = "longest_distance"
+        }
     }
   
     // function to get data from koji server
@@ -121,11 +133,11 @@ public class Koji
     public func getClusterTthFromKoji(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                 minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true, sortBy: String = sorting.ClusterCount.asText(),
                                 returnType: String = returnType.SingleArray.asText(), onlyUnique: Bool = true,
-                                timeout: Int = 60) -> Koji.returnDataStruct?
+                                timeout: Int = 60) -> Koji.returnedDataOfSingleArray?
     {
         Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji, using url=\(kojiUrl + kojiEndPoint.clusterGym.asText())")
         
-        var toReturn: Koji.returnDataStruct? = nil
+        var toReturn: Koji.returnedDataOfSingleArray? = nil
         
         let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
         let jsonEncoder = JSONEncoder()
@@ -166,7 +178,7 @@ public class Koji
             // do whatever you want with the data returned from koji
             do
             {
-                toReturn = try JSONDecoder().decode(returnDataStruct.self, from: data)
+                toReturn = try JSONDecoder().decode(returnedDataOfSingleArray.self, from: data)
             }
             catch
             {   // parsing error
