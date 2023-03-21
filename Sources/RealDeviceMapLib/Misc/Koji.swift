@@ -16,7 +16,16 @@ import FoundationNetworking
 
 public class Koji
 {
-    public struct jsonInput: Codable
+    public enum kojiEndPoint: String, CaseIterable 
+    {
+        case clusterGym = "/api/v1/calc/cluster/gym"
+
+        public func asText() -> String
+        {
+            return String(self.rawValue)
+        }
+    }
+        public struct jsonInput: Codable
     {
         var radius: Int
         var min_points: Int
@@ -92,7 +101,6 @@ public class Koji
         Log.debug(message: "[Koji] getDataFromKojiSync() - Started process to get data from Koji")
         
         var toReturn: Koji.returnData? = nil
-        let fullKojiUrl = kojiUrl + "/api/v1/calc/cluster/gym"
         
         let inputData: jsonInput = jsonInput(radius: radius, min_points: minPoints, benchmark_mode: benchmarkMode, sort_by: sortBy, return_type: returnType, fast: fast, only_unique: onlyUnique, data_points: dataPoints)
         let jsonEncoder = JSONEncoder()
@@ -101,7 +109,7 @@ public class Koji
         // let body = String(data: jsonData!, encoding: String.Encoding.utf8)
         // Log.debug(message: "[Koji - getDataFromKoji] - body=\(body)")
         
-        let url = URL(string: fullKojiUrl)
+        let url = URL(string: kojiUrl + kojiEndPoint.clusterGym.asText())
         var request = URLRequest(url: url!)
         request.setValue("Bearer \(kojiSecret)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
