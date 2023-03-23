@@ -162,7 +162,7 @@ class AutoInstanceController: InstanceControllerProto {
         {
             // sensibility checks for user values for mode config
             tthClusteringRadius = clamp(tthClusteringRadius, minValue: 10, maxValue: 100)
-            tthHopTime = clamp(tthHopTime, minValue: 1.0, maxValue: 60.0)
+            tthHopTime = clamp(tthHopTime, minValue: 0.0, maxValue: 60.0)
             tthRequeryFrequency = clamp(tthRequeryFrequency, minValue: 60, maxValue: 3600)
             tthDeviceTimeout = clamp(tthDeviceTimeout, minValue: 30, maxValue: 3600)
 
@@ -446,6 +446,17 @@ class AutoInstanceController: InstanceControllerProto {
                     try? self.initTthCoords()
                 }
                 
+            }
+            
+            // test for behavior if hoptime is set
+            if tthHopTime > 0.0
+            {
+                let possibleHopsInRequeryFrequency = Int( Double((tthDevices?.keyCount())!) * Double(tthRequeryFrequency) / tthHopTime )
+                
+                if currentDevicesMaxLocation > possibleHopsInRequeryFrequency
+                {
+                    currentDevicesMaxLocation = -1
+                }
             }
 
             // increment location
@@ -1250,8 +1261,17 @@ class AutoInstanceController: InstanceControllerProto {
         else
         {
             Log.debug(message:"[AutoInstanceController] initTthCoords() - not using Koji for clustering")
-            // default to old method
-            tthCoords = tmpCoords
+            
+            // setup and do some poor boy clustering
+            var precision:UInt16 = 8
+            
+            // for more points, use less precision so we get less clusters and hopefully bigger ones
+            if count > 1000
+            {
+                precision = 7
+            }
+            
+            tthCoords = poorBoyClusteringUsingGeohash(dataPoints: tmpCoords, geohashPrecision: precision)
         }
 
         tthClusterVisits = currentDevicesMaxLocation
@@ -1318,6 +1338,36 @@ class AutoInstanceController: InstanceControllerProto {
                                                 returnType: Koji.returnType.SingleArray.asText(), onlyUnique: true)!
 
         return returnedData
+    }
+    
+    func poorBoyClusteringUsingGeohash(dataPoints: [Coord], geohashPrecision: UInt16 = 7) -> [Coord]
+    {
+        var geohashSet = Set<String>()
+        
+        // loop through points and convert to geohash
+        // insert into a swift set, so that there are no duplicates
+        for point in dataPoints
+        {
+            let hashedCoord = Geohash.encode(latitude: point.lat, longitude: point.lon, length: Int(geohashPrecision))
+            
+            geohashSet.insert(hashedCoord)
+        }
+        
+        // convert back to lat/lon for our use
+        var returnPoints = [Coord]()
+        
+        for hashedPoint in geohashSet
+        {
+            if let (lat, lon) = Geohash.decode(hash: hashedPoint)
+            {
+                let latitudeMidpoint = (lat.min + lat.max) / 2
+                let longitudeMidpoint = (lon.min + lon.max) / 2
+                
+                returnPoints.append( Coord(lat: latitudeMidpoint, lon: longitudeMidpoint) )
+            }
+        }
+        
+        return returnPoints
     }
 
     func secondsFromTopOfHour(seconds: UInt64 ) -> UInt64 {
