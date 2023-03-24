@@ -964,6 +964,7 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
+                        Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: +\(changeCluster) / +\(changeRaw)</br>
                         Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
@@ -975,6 +976,7 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
+                        Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: +\(changeCluster) / \(changeRaw)</br>
                         Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
@@ -990,6 +992,7 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
+                        Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: \(changeCluster) / +\(changeRaw)</br>
                         Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
@@ -1001,6 +1004,7 @@ class AutoInstanceController: InstanceControllerProto {
                     {
                         return """
                         <span title=\"Current count and change in count from last query\">
+                        Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br> 
                         Delta: \(changeCluster) / \(changeRaw)</br>
                         Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
@@ -1215,6 +1219,17 @@ class AutoInstanceController: InstanceControllerProto {
         sql.append("(lat<" + String(maxLat) + " AND lon <" + String(maxLon) + ")")
         sql.append(" AND despawn_sec is null")
 
+        // if koji not available, order the data by last seen adding a random amount to make devices bounce around a bit
+        // we will keep working over set of found points.  if find one, setup will just expand
+        if firstRun && !tthClusteringUsesKoji
+        {
+            sql.append(" ORDER BY RAND() ")
+        }
+        else if !tthClusteringUsesKoji
+        {
+            sql.append(" ORDER BY (last_seen + RAND() * 1000) DESC ")
+        }
+
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
 
@@ -1263,13 +1278,22 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message:"[AutoInstanceController] initTthCoords() - not using Koji for clustering")
             
             // setup and do some poor boy clustering
-            var precision:UInt16 = 8
+            var precision:UInt16 = 7
+            var latitude:Double = 0.0
+
+            if tmpCoords.count > 0
+            {
+                latitude = tmpCoords[0].lat
+            }
+
             
             // for more points, use less precision so we get less clusters and hopefully bigger ones
-            if count > 1000
+            if count < 1000
             {
-                precision = 7
+                precision = 8
             }
+
+            lastMaxClusterSize = Int(precision)
             
             tthCoords = poorBoyClusteringUsingGeohash(dataPoints: tmpCoords, geohashPrecision: precision)
         }
@@ -1297,12 +1321,6 @@ class AutoInstanceController: InstanceControllerProto {
     func getClusteredCoords(dataPoints: [Coord]) -> [Coord]
     {
         Log.debug(message:"[AutoInstanceController] getClusteredCoords() - starting function")
-        
-        // get device count from controller, then determine how many coords we can cover in requery period
-        // for example, 1 atv with 3sec hop time & 90sec requery.  1*180/3 = 60 hops between requeries, so we need 60+ coords
-        // in the future, could do some math based of what was done last requery period
-        let minHopsToCalc = devicesOnInstance() * UInt16(tthRequeryFrequency) / UInt16(ceil(tthHopTime))
-        Log.debug(message:"[AutoInstanceController] getClusteredCoords() - minHopsToCalc=\(minHopsToCalc) & devicesOnInstance()=\(devicesOnInstance()) & tthRequreyFrequency=\(tthRequeryFrequency) & tthHopTime=\(tthHopTime)")
 
         // get the clusters from koji
         // 1. run with fast=true for first run, so that we can get moving, which causes clusters to be random order
@@ -1319,9 +1337,14 @@ class AutoInstanceController: InstanceControllerProto {
         else 
         {                
             // something went wrong with koji, fallback to normal
-            Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to unclustered tth data")
+            Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to geohash clustering")
             tthClusteringUsesKoji = false
-            return dataPoints
+            firstRun = true  // reset flag so we know to do a rand() on data to get a shotgun pattern
+
+            lastMaxClusterSize = 0
+            tthCluseringTime = 0
+
+            return poorBoyClusteringUsingGeohash(dataPoints: dataPoints, geohashPrecision: 8)
         }
     }
 
@@ -1340,8 +1363,10 @@ class AutoInstanceController: InstanceControllerProto {
         return returnedData
     }
     
-    func poorBoyClusteringUsingGeohash(dataPoints: [Coord], geohashPrecision: UInt16 = 7) -> [Coord]
+    func poorBoyClusteringUsingGeohash(dataPoints: [Coord], geohashPrecision: UInt16 = 8) -> [Coord]
     {
+        let start = Date()
+
         var geohashSet = Set<String>()
         
         // loop through points and convert to geohash
@@ -1366,6 +1391,10 @@ class AutoInstanceController: InstanceControllerProto {
                 returnPoints.append( Coord(lat: latitudeMidpoint, lon: longitudeMidpoint) )
             }
         }
+
+        let diff = -1 * start.timeIntervalSinceNow
+        tthCluseringTime = diff
+        Log.debug(message: "[AutoInstanceController] PoorBoyClustering() - process time = \(diff)")
         
         return returnPoints
     }
