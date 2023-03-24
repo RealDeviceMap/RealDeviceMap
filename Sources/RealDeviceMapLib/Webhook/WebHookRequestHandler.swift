@@ -302,14 +302,23 @@ public class WebHookRequestHandler {
                 } else {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortSearchResponse")
                 }
-            } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
+            } else if method == 102 {
                 if let enr = try? EncounterOutProto(serializedData: data) {
                     if enr.status != EncounterOutProto.Status.encounterSuccess {
                         Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
                             "EncounterOutProto: \(enr.status)")
                         continue
                     }
-                    encounters.append(enr)
+                    if username != nil && (rpc12Count[username!] ?? 0) > 0 {
+                        rpc12Lock.doWithLock {
+                            rpc12Count[username!] = 0
+                        }
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 " +
+                            "Count Reset")
+                    }
+                    if trainerLevel >= 30 || isMadData == true {
+                        encounters.append(enr)
+                    }
                 } else {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                 }
@@ -587,15 +596,6 @@ public class WebHookRequestHandler {
                     try? Account.setDisabled(mysql: mysql, username: username!)
                     encounterCount.removeValue(forKey: username!)
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
-                }
-            }
-        }
-
-        if username != nil && encounters.count > 0 {
-            if (rpc12Count[username!] ?? 0) > 0 {
-                rpc12Lock.doWithLock {
-                    rpc12Count[username!] = 0
-                    Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Reset")
                 }
             }
         }
@@ -1061,6 +1061,7 @@ public class WebHookRequestHandler {
                     if InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
                         account = oldAccount
                     } else {
+                        rpc12Count.removeValue(forKey: oldAccount.username)
                         Log.debug(
                             message: "[WebHookRequestHandler] [\(uuid)] Previously Assigned Account " +
                                      "\(oldAccount.username) not valid for Instance " +
@@ -1108,7 +1109,6 @@ public class WebHookRequestHandler {
                 }
                 if username != account!.username {
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid)] New account: \(account!.username)")
-                    rpc12Count.removeValue(forKey: account!.username)
                 }
 
                 device.accountUsername = account!.username
@@ -1236,9 +1236,8 @@ public class WebHookRequestHandler {
                                 response.respondWithError(status: .notFound)
                                 return
                             }
-
-                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] " +
-                                "Account exceeded RPC12 Limit, disabling: \(username)")
+                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
+                                "Limit, disabling: \(username)")
                             rpc12Count.removeValue(forKey: username)
                             try Account.setDisabled(mysql: mysql, username: username)
                             response.respondWithOk()
@@ -1256,9 +1255,11 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                device.accountUsername = nil
-                try device.save(mysql: mysql, oldUUID: device.uuid)
-                response.respondWithOk()
+                if (rpc12Count[device.accountUsername!] ?? 0) == 0 {
+                    device.accountUsername = nil
+                    try device.save(mysql: mysql, oldUUID: device.uuid)
+                    response.respondWithOk()
+                }
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
