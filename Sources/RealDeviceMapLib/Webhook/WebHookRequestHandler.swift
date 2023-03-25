@@ -585,7 +585,7 @@ public class WebHookRequestHandler {
 
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
-                var value: Int = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
+                let value = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
                 if value < maxEncounter {
                     encounterCount[username!] = value
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
@@ -1237,12 +1237,12 @@ public class WebHookRequestHandler {
                     let value = (rpc12Count[username] ?? 0) + 1
                     if value < maxRpc12 {
                         rpc12Count[username] = value
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #RPC12: \(value)")
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username)] #RPC12: \(value)")
                     } else {
                         Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
                             "Limit, disabling: \(username)")
                         rpc12Count.removeValue(forKey: username)
-                        try Account.setDisabled(mysql: mysql, username: username)
+                        try? Account.setDisabled(mysql: mysql, username: username)
                     }
                 }
                 response.respondWithOk()
