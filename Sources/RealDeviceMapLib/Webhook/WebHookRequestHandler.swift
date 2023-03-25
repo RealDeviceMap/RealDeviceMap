@@ -194,6 +194,7 @@ public class WebHookRequestHandler {
         var fortSearch = [FortSearchOutProto]()
         var mapForts = [GetMapFortsOutProto.FortProto]()
         var encounters = [EncounterOutProto]()
+        var encountersBelowLevelThirty = 0
         var diskEncounters = [DiskEncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
         var cells = [UInt64]()
@@ -303,25 +304,21 @@ public class WebHookRequestHandler {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortSearchResponse")
                 }
             } else if method == 102 {
-                if let enr = try? EncounterOutProto(serializedData: data) {
-                    if enr.status != EncounterOutProto.Status.encounterSuccess {
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
-                            "EncounterOutProto: \(enr.status)")
-                        continue
-                    }
-                    if username != nil && (rpc12Count[username!] ?? 0) > 0 {
-                        rpc12Lock.doWithLock {
-                            rpc12Count[username!] = 0
+                if trainerLevel >= 30 || isMadData == true {
+                    if let enr = try? EncounterOutProto(serializedData: data) {
+                        if enr.status != EncounterOutProto.Status.encounterSuccess {
+                            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                                "EncounterOutProto: \(enr.status)")
+                            continue
                         }
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 " +
-                            "Count Reset")
-                    }
-                    if trainerLevel >= 30 || isMadData == true {
                         encounters.append(enr)
+                    } else {
+                        Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                     }
                 } else {
-                    Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
+                    encountersBelowLevelThirty += 1
                 }
+
             } else if method == 145 && trainerLevel >= 30 || method == 145 && isMadData == true {
                 if processMapPokemon, let denr = try? DiskEncounterOutProto(serializedData: data) {
                     if denr.result != DiskEncounterOutProto.Result.success {
@@ -588,7 +585,7 @@ public class WebHookRequestHandler {
 
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
-                var value: Int = (encounterCount[username!] ?? 0) + encounters.count
+                var value: Int = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
                 if value < maxEncounter {
                     encounterCount[username!] = value
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
@@ -597,6 +594,12 @@ public class WebHookRequestHandler {
                     encounterCount.removeValue(forKey: username!)
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] Account disabled.")
                 }
+            }
+        }
+        if username != nil && maxRpc12 > 0 {
+            if encounters.count > 0 || encountersBelowLevelThirty > 0 {
+                rpc12Lock.doWithLock { rpc12Count.removeValue(forKey: username!) }
+                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Count Reset")
             }
         }
 
@@ -1220,32 +1223,31 @@ public class WebHookRequestHandler {
             }
         } else if type == "account_unknown_error" {
             // accounts are stuck in e.g. blue maintenance screen, make them invalid for at least one day
-            if username != nil && maxRpc12 > 0 {
+            do {
+                guard
+                    let device = try Device.getById(mysql: mysql, id: uuid),
+                    let username = device.accountUsername,
+                    let account = try Account.getWithUsername(mysql: mysql, username: username)
+                else {
+                    response.respondWithError(status: .notFound)
+                    return
+                }
+
                 rpc12Lock.doWithLock {
-                    var value: Int = (rpc12Count[username!] ?? 0) + 1
+                    let value = (rpc12Count[username] ?? 0) + 1
                     if value < maxRpc12 {
-                        rpc12Count[username!] = value
+                        rpc12Count[username] = value
                         Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username!)] #RPC12: \(value)")
                     } else {
-                        do {
-                            guard
-                                let device = try Device.getById(mysql: mysql, id: uuid),
-                                let username = device.accountUsername,
-                                let account = try Account.getWithUsername(mysql: mysql, username: username)
-                            else {
-                                response.respondWithError(status: .notFound)
-                                return
-                            }
-                            Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
-                                "Limit, disabling: \(username)")
-                            rpc12Count.removeValue(forKey: username)
-                            try Account.setDisabled(mysql: mysql, username: username)
-                            response.respondWithOk()
-                        } catch {
-                            response.respondWithError(status: .internalServerError)
-                        }
+                        Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
+                            "Limit, disabling: \(username)")
+                        rpc12Count.removeValue(forKey: username)
+                        try Account.setDisabled(mysql: mysql, username: username)
                     }
                 }
+                response.respondWithOk()
+            } catch {
+                response.respondWithError(status: .internalServerError)
             }
         } else if type == "logged_out" {
             do {
