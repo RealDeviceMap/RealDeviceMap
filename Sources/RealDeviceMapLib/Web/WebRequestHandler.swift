@@ -3915,8 +3915,7 @@ public class WebRequestHandler {
                 let username = rowSplit[0].trimmingCharacters(in: .whitespaces)
                 let password = rowSplit[1].trimmingCharacters(in: .whitespaces)
                 if username.count > 0 && password.count > 0 {
-                    accs.append(Account(username: username, password: password, level: level, spins: 0,
-                        disabled: false, group: group))
+                    accs.append(Account(username: username, password: password, level: level, spins: 0, group: group))
                 }
             }
         }
