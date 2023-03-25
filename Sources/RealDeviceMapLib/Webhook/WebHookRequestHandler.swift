@@ -1064,7 +1064,7 @@ public class WebHookRequestHandler {
                     if InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
                         account = oldAccount
                     } else {
-                        rpc12Count.removeValue(forKey: oldAccount.username)
+                        rpc12Lock.doWithLock { rpc12Count.removeValue(forKey: oldAccount.username) }
                         Log.debug(
                             message: "[WebHookRequestHandler] [\(uuid)] Previously Assigned Account " +
                                      "\(oldAccount.username) not valid for Instance " +
