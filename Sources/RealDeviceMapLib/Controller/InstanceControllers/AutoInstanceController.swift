@@ -1279,17 +1279,10 @@ class AutoInstanceController: InstanceControllerProto {
             
             // setup and do some poor boy clustering
             var precision:UInt16 = 7
-            var latitude:Double = 0.0
 
-            if tmpCoords.count > 0
+            if tmpCoords.count < 1000
             {
-                latitude = tmpCoords[0].lat
-            }
-
-            
-            // for more points, use less precision so we get less clusters and hopefully bigger ones
-            if count < 1000
-            {
+                // drop down in precision, likely to be on nearly all clusters being singular points anyways
                 precision = 8
             }
 
