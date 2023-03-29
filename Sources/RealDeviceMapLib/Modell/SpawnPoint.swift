@@ -34,7 +34,7 @@ public class SpawnPoint: JSONConvertibleObject {
     var updated: UInt32?
     var lastSeen: UInt32?
     var despawnSecond: UInt16?
-    var spawnInfo: UInt32? //only first 4 bits used to track if spawn 30 or 60min.
+    var spawnInfo: UInt32? // only first 4 bits used to track if spawn 30 or 60min.
     var created: UInt32?
 
     public static var cache: MemoryCache<SpawnPoint>?
@@ -93,8 +93,8 @@ public class SpawnPoint: JSONConvertibleObject {
         // 1. if the spawn has been seen in all quarter hours, it is a 60min spawn
         // 2. if the spawn has been seen in 3 or less quarter hours, it is considered a 30min spawn
         // 3. one will want to run the area on laps, as by definition, findy will not likely visit the spawnpoint in enough quarter hours to determine if the spawn is a 60min one.  it will likely be considered a 30min spawn forever if just running jumpy.
-        var curMinute:UInt64 = minute
-        var quarterHourValue:UInt32 = 0
+        var curMinute: UInt64 = minute
+        var quarterHourValue: UInt32 = 0
         if minute == UInt64.max { // if got a default value, just grab the current minute
             (_, curMinute, _) = secondsToHoursMinutesSeconds()
         }
@@ -115,14 +115,12 @@ public class SpawnPoint: JSONConvertibleObject {
 
         if oldSpawnpoint != nil {
             // check if we found tth for spawnpoint
-            if oldSpawnpoint!.despawnSecond == nil && self.despawnSecond != nil              
-            {
+            if oldSpawnpoint!.despawnSecond == nil && self.despawnSecond != nil {
                 Log.debug(message: "[Spawnpoint] - TTH found for spawnpoint with id=\(self.id)")
             }
 
             // check if TTH changed spawnpoint
-            if oldSpawnpoint!.despawnSecond != nil && oldSpawnpoint!.despawnSecond != self.despawnSecond               
-            {
+            if oldSpawnpoint!.despawnSecond != nil && oldSpawnpoint!.despawnSecond != self.despawnSecond {
                 Log.debug(message: "[Spawnpoint] - TTH changed for spawnpoint with id=\(self.id)")
             }
 
@@ -131,8 +129,7 @@ public class SpawnPoint: JSONConvertibleObject {
             }
 
             // see if there is an update to spawn info
-            if oldSpawnpoint != nil
-            {
+            if oldSpawnpoint != nil {
                 self.spawnInfo = quarterHourValue | oldSpawnpoint!.spawnInfo!
             }
 
@@ -371,7 +368,7 @@ public class SpawnPoint: JSONConvertibleObject {
             created: created
         )
         cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
-        
+
         return spawnpoint
     }
 
