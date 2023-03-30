@@ -64,19 +64,19 @@ public class Koji {
 
     // sorting options on how Koji can return data
     public enum Sorting: String, Codable {
-        case random, geoHash, clusterCount
+        case Random, GeoHash, ClusterCount
 
         public func asText() -> String {
-            return String(self.rawValue.capitalized)
+            return String(self.rawValue)
         }
     }
 
     // types of data that Koji can return
     public enum ReturnType: String, Codable {
-        case singleArray, multiArray, `struct`, text, altText
+        case SingleArray, MultiArray, Struct, Text, AltText
 
         public func asText() -> String {
-            return String(self.rawValue.capitalized)
+            return String(self.rawValue)
         }
     }
 
@@ -128,8 +128,8 @@ public class Koji {
     //
     public func getClusterTthFromKoji(dataPoints: [Coord], statsOnly: Bool = false, radius: Int = 70,
                                       minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true,
-                                      sortBy: String = Sorting.clusterCount.asText(),
-                                      returnType: String = ReturnType.singleArray.asText(), onlyUnique: Bool = true,
+                                      sortBy: String = Sorting.ClusterCount.asText(),
+                                      returnType: String = ReturnType.SingleArray.asText(), onlyUnique: Bool = true,
                                       timeout: Int = 60) -> Koji.ReturnedDataOfSingleArray? {
         Log.debug(message: "[Koji] getDataFromKojiSync() - " +
                   "Started process to get data from Koji, " +

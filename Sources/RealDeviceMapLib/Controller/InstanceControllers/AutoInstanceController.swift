@@ -1330,8 +1330,8 @@ class AutoInstanceController: InstanceControllerProto {
         let returnedData = koji.getClusterTthFromKoji(dataPoints: dataPoints,
                                                 radius: Int(tthClusteringRadius), minPoints: Int(minPoints),
                                                 benchmarkMode: benchmarkMode, fast: fast,
-                                                sortBy: Koji.Sorting.clusterCount.asText(),
-                                                returnType: Koji.ReturnType.singleArray.asText(),
+                                                sortBy: Koji.Sorting.ClusterCount.asText(),
+                                                returnType: Koji.ReturnType.SingleArray.asText(),
                                                 onlyUnique: true)!
 
         return returnedData
