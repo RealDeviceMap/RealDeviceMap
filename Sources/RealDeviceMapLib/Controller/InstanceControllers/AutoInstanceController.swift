@@ -170,7 +170,8 @@ class AutoInstanceController: InstanceControllerProto {
             if tthClusteringUsesKoji && !koji.hasValidUrl() {
                 if !koji.hasValidUrl() {
                     tthClusteringUsesKoji = false
-                    Log.error(message: "[AutoInstanceController] Init() - Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
+                    Log.error(message: "[AutoInstanceController] Init() - " +
+                              "Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
                 }
              }
 
@@ -388,10 +389,11 @@ class AutoInstanceController: InstanceControllerProto {
 
             let newLoc = determineNextAutoPokemonLocation(curTime: curSecInHour, curLocation: loc)
 
-            Log.debug(message:
-                "[AutoInstanceController] getTask() - Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
+            Log.debug(message: "[AutoInstanceController] getTask() - " +
+                      "Instance: \(name) - oldLoc=\(loc) & newLoc=\(newLoc)/\(pokemonCoords.count / 2)")
 
-            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude, lon: defaultLongitude), spawnSeconds: 0)
+            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude,
+                                                                    lon: defaultLongitude), spawnSeconds: 0)
             if pokemonCoords.indices.contains(newLoc) {
                 currentDevicesMaxLocation = newLoc
                 currentCoord = pokemonCoords[newLoc]
@@ -431,7 +433,8 @@ class AutoInstanceController: InstanceControllerProto {
                 // don't run as async as we will just grab unclustered coords on first run to get thing moving
                 try? initTthCoords()
             } else if hit == 0 {
-                // run async.  intent is to fire off the clustering, but keep running on old coords until we get data back from koji
+                // run async.  intent is to fire off the clustering,
+                //  but keep running on old coords until we get data back from koji
                 DispatchQueue.global(qos: .background).async {
                     try? self.initTthCoords()
                 }
@@ -439,7 +442,8 @@ class AutoInstanceController: InstanceControllerProto {
 
             // test for behavior if hoptime is set
             if tthHopTime > 0.0 {
-                let possibleHopsInRequeryFrequency = Int( Double((tthDevices?.keyCount())!) * Double(tthRequeryFrequency) / tthHopTime )
+                let possibleHopsInRequeryFrequency =
+                    Int( Double((tthDevices?.keyCount())!) * Double(tthRequeryFrequency) / tthHopTime )
 
                 if currentDevicesMaxLocation > possibleHopsInRequeryFrequency {
                     currentDevicesMaxLocation = -1
@@ -454,7 +458,9 @@ class AutoInstanceController: InstanceControllerProto {
                 newLoc = 0
             }
 
-            Log.debug(message: "[AutoInstanceController] getTask() - oldLoc=\(priorLoc) & newLoc=\(newLoc)/\(tthCoords.count) & rawCount=\(self.currentTthRawPointsCount)")
+            Log.debug(message: "[AutoInstanceController] getTask() - " +
+                      "oldLoc=\(priorLoc) & newLoc=\(newLoc)/\(tthCoords.count) & " +
+                      "rawCount=\(self.currentTthRawPointsCount)")
 
             currentDevicesMaxLocation = newLoc
 
@@ -937,7 +943,7 @@ class AutoInstanceController: InstanceControllerProto {
             }
 
             var avgVisitTime: Double = 0.0
-            if tthClusterVisits != 0
+            if tthClusterVisits != 0 {
                 avgVisitTime = Double(self.tthRequeryFrequency) / Double(tthClusterVisits)
             }
 
@@ -950,9 +956,11 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: +\(changeCluster) / +\(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                        Delta: \(changeCluster) / \(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
+                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
+                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     } else {
@@ -960,9 +968,11 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: +\(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                        Delta: \(changeCluster) / \(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
+                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
+                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -972,9 +982,11 @@ class AutoInstanceController: InstanceControllerProto {
                         <span title=\"Current count and change in count from last query\">
                         Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: \(changeCluster) / +\(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                        Delta: \(changeCluster) / \(changeRaw)</br>
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
+                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
+                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     } else {
@@ -983,8 +995,10 @@ class AutoInstanceController: InstanceControllerProto {
                         Using Koji: \(tthClusteringUsesKoji)</br>
                         Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
                         Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
+                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
+                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                         </span>
                         """
                     }
@@ -1103,7 +1117,8 @@ class AutoInstanceController: InstanceControllerProto {
             var spawnSeconds: Int = Int(despawnSeconds)
 
             // determine if 60 or 30min spawns, will default to 30min spawns
-            // first 4 bits of spawnInfo are quarter hours of if mon seen there, all 4, it is 60.  less than 4, it is 30.
+            // first 4 bits of spawnInfo are quarter hours of if mon seen there,
+            //   all 4, it is 60.  less than 4, it is 30.
             let testValue: UInt32 = 15
             if spawnInfo & testValue == testValue {
                 spawnSeconds -= 3600
@@ -1228,11 +1243,12 @@ class AutoInstanceController: InstanceControllerProto {
             "[AutoInstanceController] initTthCoords() - got \(tmpCoords.count) points in geofence with null tth")
 
         if tmpCoords.count == 0 {
-            Log.debug(message:
-                "[AutoInstanceController] initTthCoords - got ZERO points in min/max rectangle with null tth, you should switch to another mode")
+            Log.debug(message: "[AutoInstanceController] initTthCoords - " +
+                      "got ZERO points in min/max rectangle with null tth, you should switch to another mode")
         }
 
-        Log.debug(message: "[AutoInstanceController] initTthCoords() - UsingKoji = \(tthClusteringUsesKoji) &  firstRun=\(firstRun)")
+        Log.debug(message: "[AutoInstanceController] initTthCoords() - " +
+                  "UsingKoji = \(tthClusteringUsesKoji) &  firstRun=\(firstRun)")
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
@@ -1279,8 +1295,9 @@ class AutoInstanceController: InstanceControllerProto {
 
         // get the clusters from koji
         // 1. run with fast=true for first run, so that we can get moving, which causes clusters to be random order
-        // 2. on subsequent runs, we will use fast=false, so we get clusters back sorted by largest.  this will cause the
-        //    workers to start with high spawnpoint count clusters and work towards smaller ones.
+        // 2. on subsequent runs, we will use fast=false, so we get clusters back sorted by largest.
+        //      this will cause the workers to start with high spawnpoint count clusters and work
+        //      towards smaller ones.
         if let kojiData = getClusteredCoordsFromKoji(dataPoints: dataPoints, radius: tthClusteringRadius,
                                              minPoints: UInt16(1), benchmarkMode: false, fast: firstRun) {
             lastMaxClusterSize = kojiData.stats.bestClusterPointCount
@@ -1289,7 +1306,8 @@ class AutoInstanceController: InstanceControllerProto {
             return kojiData.data!
         } else {
             // something went wrong with koji, fallback to normal
-            Log.error(message: "[AutoInstanceController] getClusteredCoords() - Unable to get data from Koji, falling back to geohash clustering")
+            Log.error(message: "[AutoInstanceController] getClusteredCoords() - " +
+                      "Unable to get data from Koji, falling back to geohash clustering")
             tthClusteringUsesKoji = false
             firstRun = true  // reset flag so we know to do a rand() on data to get a shotgun pattern
 
@@ -1301,17 +1319,19 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func getClusteredCoordsFromKoji(dataPoints: [Coord], radius: UInt16, minPoints: UInt16,
-                                    benchmarkMode: Bool, fast: Bool) -> Koji.returnedDataOfSingleArray? {
+                                    benchmarkMode: Bool, fast: Bool) -> Koji.ReturnedDataOfSingleArray? {
         // function to get the data from koji
         // may get nil back from Koji function, don't handle here but pass on to calling funciton
-        Log.debug(message: "[AutoInstanceController] clusteredCoords() - started function with radius=\(radius) & minPoints=\(minPoints) & benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
+        Log.debug(message: "[AutoInstanceController] clusteredCoords() - " +
+                  "started function with radius=\(radius) & minPoints=\(minPoints) " +
+                  "& benchmarkMode=\(benchmarkMode) & [Coord].count=\(dataPoints.count)")
 
         let koji = Koji()
         let returnedData = koji.getClusterTthFromKoji(dataPoints: dataPoints,
                                                 radius: Int(tthClusteringRadius), minPoints: Int(minPoints),
                                                 benchmarkMode: benchmarkMode, fast: fast,
-                                                sortBy: Koji.sorting.ClusterCount.asText(),
-                                                returnType: Koji.returnType.SingleArray.asText(),
+                                                sortBy: Koji.Sorting.clusterCount.asText(),
+                                                returnType: Koji.ReturnType.singleArray.asText(),
                                                 onlyUnique: true)!
 
         return returnedData
@@ -1381,8 +1401,8 @@ class AutoInstanceController: InstanceControllerProto {
         // increment position
         loc = curLocation + 1
         if loc > cntCoords {
-            Log.debug(message:
-                "[AutoInstanceController] determineNextLocation() - reached end of data, going back to zero")
+            Log.debug(message: "[AutoInstanceController] determineNextLocation() - " +
+                      "reached end of data, going back to zero")
 
             lastLastCompletedTime = lastCompletedTime
             lastCompletedTime = Date()
@@ -1398,7 +1418,8 @@ class AutoInstanceController: InstanceControllerProto {
                 loc = 0
             } else {
                 // wtf
-                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation - no zero location, wtf...")
+                Log.debug(message: "[AutoInstanceController] " +
+                          "determineNextPokemonLocation - no zero location, wtf...")
             }
         }
         var nextCoord = pokemonCoords[loc]
@@ -1421,9 +1442,8 @@ class AutoInstanceController: InstanceControllerProto {
         // do the shit
         if (curTime >= minTime) && (curTime <= maxTime) {
             // good to jump as between to key points for current time
-            Log.debug(message:
-                "[AutoInstanceController] determineNextPokemonLocation a1 - curtime between min and max, " +
-                "moving standard 1 forward")
+            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation a1 - " +
+                      "curtime between min and max, moving standard 1 forward")
 
             // test if we are getting too close to the mintime
             if  Double(curTime) - Double(minTime) < Double(autoBufferTime) {
