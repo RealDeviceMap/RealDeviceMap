@@ -1044,6 +1044,9 @@ public class WebHookRequestHandler {
                         mysql: mysql, uuid: uuid, username: username,
                         account: account, timestamp: timestamp
                     )
+                    if task.isEmpty {
+                        response.respondWithError(event: .noTaskLeft)
+                    }
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
                         " at \((task["lat"] as? Double)?.description ?? "?")," +
@@ -1054,12 +1057,12 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .internalServerError)
                 }
             } else {
-                response.respondWithError(status: .notFound)
+                response.respondWithError(event: .instanceNotFound)
             }
         } else if type == "get_account" {
             do {
                 guard let device = try Device.getById(mysql: mysql, id: uuid) else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .deviceNotFound)
                     return
                 }
                 var account: Account?
@@ -1080,7 +1083,7 @@ public class WebHookRequestHandler {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
                         Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .noAccountLeft)
                         return
                     }
                     account = newAccount
@@ -1185,7 +1188,7 @@ public class WebHookRequestHandler {
                     let username = username,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .accountNotFound)
                         return
                 }
                 let now = UInt32(Date().timeIntervalSince1970)
@@ -1210,7 +1213,7 @@ public class WebHookRequestHandler {
                     let username = device.accountUsername,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .accountNotFound)
                         return
                 }
                 if account.failedTimestamp == nil || account.failed == nil {
@@ -1233,7 +1236,7 @@ public class WebHookRequestHandler {
                     let username = device.accountUsername,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                 else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .accountNotFound)
                     return
                 }
                 var accountShouldBeDisabled = false
@@ -1271,7 +1274,7 @@ public class WebHookRequestHandler {
                 guard
                     let device = try Device.getById(mysql: mysql, id: uuid)
                 else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .deviceNotFound)
                     return
                 }
                 device.accountUsername = nil
@@ -1312,5 +1315,13 @@ public class WebHookRequestHandler {
 
     static func getLoginLimitConfig() -> String {
         return "\(loginLimitEnabled) - \(loginLimit)/\(loginLimitIntervall)"
+    }
+
+    public enum Event: String {
+        case accountNotFound
+        case noAccountLeft
+        case deviceNotFound
+        case instanceNotFound
+        case noTaskLeft
     }
 }
