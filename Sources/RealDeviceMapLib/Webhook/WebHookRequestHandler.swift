@@ -1232,7 +1232,7 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-
+                var accountShouldBeDisabled = false
                 rpc12Lock.doWithLock {
                     let value = (rpc12Count[username] ?? 0) + 1
                     if value < maxRpc12 {
@@ -1242,8 +1242,21 @@ public class WebHookRequestHandler {
                         Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
                             "Limit, disabling: \(username)")
                         rpc12Count.removeValue(forKey: username)
-                        try? Account.setDisabled(mysql: mysql, username: username)
+                        accountShouldBeDisabled = true
                     }
+                }
+                if accountShouldBeDisabled {
+                    try? Account.setDisabled(mysql: mysql, username: username)
+                    guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
+                        response.respondWithError(status: .internalServerError)
+                        return
+                    }
+                    try response.respondWithData(data: [
+                        "action": "switch_account",
+                        "min_level": controller!.minLevel,
+                        "max_level": controller!.maxLevel
+                    ])
+                    return
                 }
                 response.respondWithOk()
             } catch {
