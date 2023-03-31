@@ -598,8 +598,12 @@ public class WebHookRequestHandler {
         }
         if username != nil && maxRpc12 > 0 {
             if encounters.count > 0 || encountersBelowLevelThirty > 0 {
-                rpc12Lock.doWithLock { rpc12Count.removeValue(forKey: username!) }
-                Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Count Reset")
+                rpc12Lock.doWithLock {
+                    if rpc12Count[username!] ?? 0 > 0 {
+                        rpc12Count.removeValue(forKey: username!)
+                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Count Reset")
+                    }
+                }
             }
         }
 
@@ -1232,7 +1236,7 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-
+                var accountShouldBeDisabled = false
                 rpc12Lock.doWithLock {
                     let value = (rpc12Count[username] ?? 0) + 1
                     if value < maxRpc12 {
@@ -1242,8 +1246,21 @@ public class WebHookRequestHandler {
                         Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
                             "Limit, disabling: \(username)")
                         rpc12Count.removeValue(forKey: username)
-                        try? Account.setDisabled(mysql: mysql, username: username)
+                        accountShouldBeDisabled = true
                     }
+                }
+                if accountShouldBeDisabled {
+                    try Account.setDisabled(mysql: mysql, username: username)
+                    guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
+                        response.respondWithError(status: .internalServerError)
+                        return
+                    }
+                    try response.respondWithData(data: [
+                        "action": "switch_account",
+                        "min_level": controller.minLevel,
+                        "max_level": controller.maxLevel
+                    ])
+                    return
                 }
                 response.respondWithOk()
             } catch {
