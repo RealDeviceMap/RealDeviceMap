@@ -1257,11 +1257,9 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .notFound)
                     return
                 }
-                if (rpc12Count[device.accountUsername!] ?? 0) == 0 {
-                    device.accountUsername = nil
-                    try device.save(mysql: mysql, oldUUID: device.uuid)
-                    response.respondWithOk()
-                }
+                device.accountUsername = nil
+                try device.save(mysql: mysql, oldUUID: device.uuid)
+                response.respondWithOk()
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
