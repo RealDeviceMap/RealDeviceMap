@@ -23,8 +23,7 @@ public class ConfigLoader {
         "USE_RW_FOR_QUEST", "USE_RW_FOR_RAID", "NO_GENERATE_IMAGES", "NO_PVP", "NO_IV_WEATHER_CLEARING",
         "NO_CELL_POKEMON", "SAVE_SPAWNPOINT_LASTSEEN", "NO_MEMORY_CACHE", "NO_BACKUP", "NO_REQUIRE_ACCOUNT",
         "SCAN_LURE_ENCOUNTER", "QUEST_RETRY_LIMIT", "SPIN_DISTANCE", "ALLOW_AR_QUESTS", "STOP_ALL_BOOTSTRAPPING",
-        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD",
-        "ACC_MAX_RPC12"
+        "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD"
     ]
 
     private init() {
@@ -93,8 +92,6 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
-        case .accMaxRpc12: return localConfig.application.account.maxRpc12.value()
-            ?? defaultConfig.application.account.maxRpc12.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -192,7 +189,6 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
-        case .accMaxRpc12: return castValue(value: value)
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -271,7 +267,6 @@ public class ConfigLoader {
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
-        case accMaxRpc12 = "ACC_MAX_RPC12"
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"
