@@ -55,10 +55,6 @@ public class WebHookRequestHandler {
     private static var encounterCount = [String: Int]()
     private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
 
-    private static let rpc12Lock = Threading.Lock()
-    private static var rpc12Count = [String: Int]()
-    private static let maxRpc12: Int = ConfigLoader.global.getConfig(type: .accMaxRpc12)
-
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
     private static let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
@@ -596,16 +592,6 @@ public class WebHookRequestHandler {
                 }
             }
         }
-        if username != nil && maxRpc12 > 0 {
-            if encounters.count > 0 || encountersBelowLevelThirty > 0 {
-                rpc12Lock.doWithLock {
-                    if rpc12Count[username!] ?? 0 > 0 {
-                        rpc12Count.removeValue(forKey: username!)
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #RPC12 Count Reset")
-                    }
-                }
-            }
-        }
 
         let queue = Threading.getQueue(name: Foundation.UUID().uuidString, type: .serial)
         queue.dispatch {
@@ -1071,7 +1057,6 @@ public class WebHookRequestHandler {
                     if InstanceController.global.accountValid(deviceUUID: uuid, account: oldAccount) {
                         account = oldAccount
                     } else {
-                        rpc12Lock.doWithLock { rpc12Count.removeValue(forKey: oldAccount.username) }
                         Log.debug(
                             message: "[WebHookRequestHandler] [\(uuid)] Previously Assigned Account " +
                                      "\(oldAccount.username) not valid for Instance " +
@@ -1239,33 +1224,17 @@ public class WebHookRequestHandler {
                     response.respondWithError(event: .accountNotFound)
                     return
                 }
-                var accountShouldBeDisabled = false
-                rpc12Lock.doWithLock {
-                    let value = (rpc12Count[username] ?? 0) + 1
-                    if value < maxRpc12 {
-                        rpc12Count[username] = value
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid)] [\(username)] #RPC12: \(value)")
-                    } else {
-                        Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account exceeded RPC12 " +
-                            "Limit, disabling: \(username)")
-                        rpc12Count.removeValue(forKey: username)
-                        accountShouldBeDisabled = true
-                    }
-                }
-                if accountShouldBeDisabled {
-                    try Account.setDisabled(mysql: mysql, username: username)
-                    guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
-                        response.respondWithError(status: .internalServerError)
-                        return
-                    }
-                    try response.respondWithData(data: [
-                        "action": "switch_account",
-                        "min_level": controller.minLevel,
-                        "max_level": controller.maxLevel
-                    ])
+
+                try Account.setDisabled(mysql: mysql, username: username)
+                guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
+                    response.respondWithError(status: .internalServerError)
                     return
                 }
-                response.respondWithOk()
+                try response.respondWithData(data: [
+                    "action": "switch_account",
+                    "min_level": controller.minLevel,
+                    "max_level": controller.maxLevel
+                ])
             } catch {
                 response.respondWithError(status: .internalServerError)
             }

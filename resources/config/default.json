@@ -45,8 +45,7 @@
       "useRwForRaid": false,
       "useRwForPokes": false,
       "maxEncounters": 0,
-      "disablePeriod": 86400,
-      "maxRpc12": 5
+      "disablePeriod": 86400
     },
     "loginLimit": {
       "enabled": false,
