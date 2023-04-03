@@ -292,7 +292,7 @@ public class Account: WebHookEvent {
             throw DBController.DBError()
         }
         for chunks in accounts.chunked(into: 200) {
-            let placeholders = [String].init(repeating: "(?,?,?,?,?,?)", count: chunks.count).joined(separator: ", ")
+            let placeholders = [String].init(repeating: "(?,?,?,?,?)", count: chunks.count).joined(separator: ", ")
             let sql =
                 """
                   INSERT IGNORE INTO account (username, password, level, spins, `group`)
