@@ -1180,7 +1180,7 @@ public class WebHookRequestHandler {
                 if account.firstWarningTimestamp == nil {
                     account.firstWarningTimestamp = now
                 }
-                if account.warnExpireTimestamp == nil {
+                if account.warnExpireTimestamp == nil || account.warnExpireTimestamp! < now {
                     account.warnExpireTimestamp = now + Account.warnedPeriod
                 }
                 account.failedTimestamp = now
