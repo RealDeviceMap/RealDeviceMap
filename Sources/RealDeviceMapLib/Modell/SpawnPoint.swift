@@ -24,7 +24,7 @@ public class SpawnPoint: JSONConvertibleObject {
             "last_seen": lastSeen ?? 0,
             "despawn_second": despawnSecond as Any,
             "spawnInfo": spawnInfo ?? 0,
-            "created": created ?? 0
+            "first_seen_timestamp": first_seen_timestamp ?? 0
         ]
     }
 
@@ -35,7 +35,7 @@ public class SpawnPoint: JSONConvertibleObject {
     var lastSeen: UInt32?
     var despawnSecond: UInt16?
     var spawnInfo: UInt32? // only first 4 bits used to track if spawn 30 or 60min.
-    var created: UInt32?
+    var first_seen_timestamp: UInt32?
 
     public static var cache: MemoryCache<SpawnPoint>?
 
@@ -45,7 +45,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lon = lon
         self.despawnSecond = despawnSecond
         self.spawnInfo = 0
-        self.created = UInt32(Date().timeIntervalSince1970)
+        self.first_seen_timestamp = UInt32(Date().timeIntervalSince1970)
     }
 
     init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?) {
@@ -56,10 +56,10 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lastSeen = lastSeen
         self.despawnSecond = despawnSecond
         self.spawnInfo = 0
-        self.created = UInt32(Date().timeIntervalSince1970)
+        self.first_seen_timestamp = UInt32(Date().timeIntervalSince1970)
     }
 
-    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?, spawnInfo: UInt32?, created: UInt32?) {
+    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?, spawnInfo: UInt32?, first_seen_timestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -67,7 +67,7 @@ public class SpawnPoint: JSONConvertibleObject {
         self.lastSeen = lastSeen
         self.despawnSecond = despawnSecond
         self.spawnInfo = spawnInfo
-        self.created = created
+        self.first_seen_timestamp = first_seen_timestamp
     }
 
     public func save(mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true, minute: UInt64 = UInt64.max) throws {
@@ -156,7 +156,7 @@ public class SpawnPoint: JSONConvertibleObject {
         else // oldSpawnpoint == nil
         {
             // we have new spawnpoint, so need to set created
-            self.created = now
+            self.first_seen_timestamp = now
         }
 
         var sql = """
@@ -183,7 +183,7 @@ public class SpawnPoint: JSONConvertibleObject {
         mysqlStmt.bindParam(lastSeen)
         mysqlStmt.bindParam(despawnSecond)
         mysqlStmt.bindParam(spawnInfo)
-        // mysqlStmt.bindParam(created) // we should not update/save, let db handle this as a default value when entry made
+        // mysqlStmt.bindParam(first_seen_timestamp) // we should not update/save, let db handle this as a default value when entry made
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[SPAWNPOINT] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
@@ -296,7 +296,7 @@ public class SpawnPoint: JSONConvertibleObject {
             let lastSeen = result[4] as! UInt32
             let despawnSecond = result[5] as? UInt16
             let spawnInfo = result[6] as! UInt32
-            let created = result[7] as! UInt32
+            let first_seen_timestamp = result[7] as! UInt32
 
             spawnpoints.append(
                 SpawnPoint(
@@ -307,7 +307,7 @@ public class SpawnPoint: JSONConvertibleObject {
                     lastSeen: lastSeen,
                     despawnSecond: despawnSecond,
                     spawnInfo: spawnInfo,
-                    created: created
+                    first_seen_timestamp: first_seen_timestamp
                 )
             )
 
@@ -328,7 +328,7 @@ public class SpawnPoint: JSONConvertibleObject {
         }
 
         let sql = """
-            SELECT id, lat, lon, updated, last_seen, despawn_sec, spawn_info, created
+            SELECT id, lat, lon, updated, last_seen, despawn_sec, spawn_info, first_seen_timestamp
             FROM spawnpoint
             WHERE id = ?
         """
@@ -355,7 +355,7 @@ public class SpawnPoint: JSONConvertibleObject {
         let lastSeen = result[4] as! UInt32
         let despawnSecond = result[5] as? UInt16
         let spawnInfo = result[6] as! UInt32
-        let created = result[7] as! UInt32
+        let first_seen_timestamp = result[7] as! UInt32
 
         let spawnpoint = SpawnPoint(
             id: id,
@@ -365,7 +365,7 @@ public class SpawnPoint: JSONConvertibleObject {
             lastSeen: lastSeen,
             despawnSecond: despawnSecond,
             spawnInfo: spawnInfo,
-            created: created
+            first_seen_timestamp: first_seen_timestamp
         )
         cache?.set(id: spawnpoint.id.toString(), value: spawnpoint)
 
