@@ -158,7 +158,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         smartRaidLock.unlock()
 
         if coord == nil {
-            return [String: Any]()
+            return [:]
         } else {
             self.statsLock.lock()
             if self.startDate == nil {

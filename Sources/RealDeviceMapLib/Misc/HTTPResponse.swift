@@ -17,6 +17,12 @@ extension HTTPResponse {
         completed(status: status)
     }
 
+    public func respondWithError(event: WebHookRequestHandler.Event) {
+        _ = try? setBody(json: ["status": "error", "error": event.rawValue])
+        setHeader(.contentType, value: "application/json")
+        completed()
+    }
+
     func respondWithData(data: JSONConvertible) throws {
         try setBody(json: ["status": "ok", "data": data])
         setHeader(.contentType, value: "application/json")

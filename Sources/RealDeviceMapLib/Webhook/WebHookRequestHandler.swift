@@ -190,6 +190,7 @@ public class WebHookRequestHandler {
         var fortSearch = [FortSearchOutProto]()
         var mapForts = [GetMapFortsOutProto.FortProto]()
         var encounters = [EncounterOutProto]()
+        var encountersBelowLevelThirty = 0
         var diskEncounters = [DiskEncounterOutProto]()
         var playerdatas = [GetPlayerOutProto]()
         var cells = [UInt64]()
@@ -298,17 +299,22 @@ public class WebHookRequestHandler {
                 } else {
                     Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed FortSearchResponse")
                 }
-            } else if method == 102 && trainerLevel >= 30 || method == 102 && isMadData == true {
-                if let enr = try? EncounterOutProto(serializedData: data) {
-                    if enr.status != EncounterOutProto.Status.encounterSuccess {
-                        Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
-                            "EncounterOutProto: \(enr.status)")
-                        continue
+            } else if method == 102 {
+                if trainerLevel >= 30 || isMadData == true {
+                    if let enr = try? EncounterOutProto(serializedData: data) {
+                        if enr.status != EncounterOutProto.Status.encounterSuccess {
+                            Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Ignored non-success " +
+                                "EncounterOutProto: \(enr.status)")
+                            continue
+                        }
+                        encounters.append(enr)
+                    } else {
+                        Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
                     }
-                    encounters.append(enr)
                 } else {
-                    Log.warning(message: "[WebHookRequestHandler] [\(uuid ?? "?")] Malformed EncounterResponse")
+                    encountersBelowLevelThirty += 1
                 }
+
             } else if method == 145 && trainerLevel >= 30 || method == 145 && isMadData == true {
                 if processMapPokemon, let denr = try? DiskEncounterOutProto(serializedData: data) {
                     if denr.result != DiskEncounterOutProto.Result.success {
@@ -575,7 +581,7 @@ public class WebHookRequestHandler {
 
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
-                var value: Int = (encounterCount[username!] ?? 0) + encounters.count
+                let value = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
                 if value < maxEncounter {
                     encounterCount[username!] = value
                     Log.debug(message: "[WebHookRequestHandler] [\(uuid ?? "?")] [\(username!)] #Encounter: \(value)")
@@ -1024,6 +1030,9 @@ public class WebHookRequestHandler {
                         mysql: mysql, uuid: uuid, username: username,
                         account: account, timestamp: timestamp
                     )
+                    if task.isEmpty {
+                        response.respondWithError(event: .noTaskLeft)
+                    }
                     Log.info(
                         message: "[WebHookRequestHandler] [\(uuid)] Sending task: \(task["action"] as? String ?? "?")" +
                         " at \((task["lat"] as? Double)?.description ?? "?")," +
@@ -1034,12 +1043,12 @@ public class WebHookRequestHandler {
                     response.respondWithError(status: .internalServerError)
                 }
             } else {
-                response.respondWithError(status: .notFound)
+                response.respondWithError(event: .instanceNotFound)
             }
         } else if type == "get_account" {
             do {
                 guard let device = try Device.getById(mysql: mysql, id: uuid) else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .deviceNotFound)
                     return
                 }
                 var account: Account?
@@ -1059,7 +1068,7 @@ public class WebHookRequestHandler {
                     guard let newAccount = try InstanceController.global.getAccount(mysql: mysql, deviceUUID: uuid)
                     else {
                         Log.error(message: "[WebHookRequestHandler] [\(uuid)] Failed to get account for \(uuid)")
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .noAccountLeft)
                         return
                     }
                     account = newAccount
@@ -1164,14 +1173,14 @@ public class WebHookRequestHandler {
                     let username = username,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .accountNotFound)
                         return
                 }
                 let now = UInt32(Date().timeIntervalSince1970)
                 if account.firstWarningTimestamp == nil {
                     account.firstWarningTimestamp = now
                 }
-                if account.warnExpireTimestamp == nil {
+                if account.warnExpireTimestamp == nil || account.warnExpireTimestamp! < now {
                     account.warnExpireTimestamp = now + Account.warnedPeriod
                 }
                 account.failedTimestamp = now
@@ -1189,7 +1198,7 @@ public class WebHookRequestHandler {
                     let username = device.accountUsername,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                     else {
-                        response.respondWithError(status: .notFound)
+                        response.respondWithError(event: .accountNotFound)
                         return
                 }
                 if account.failedTimestamp == nil || account.failed == nil {
@@ -1212,13 +1221,20 @@ public class WebHookRequestHandler {
                     let username = device.accountUsername,
                     let account = try Account.getWithUsername(mysql: mysql, username: username)
                 else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .accountNotFound)
                     return
                 }
 
-                Log.warning(message: "[WebHookRequestHandler] [\(uuid)] Account stuck in blue screen: \(username)")
                 try Account.setDisabled(mysql: mysql, username: username)
-                response.respondWithOk()
+                guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
+                    response.respondWithError(status: .internalServerError)
+                    return
+                }
+                try response.respondWithData(data: [
+                    "action": "switch_account",
+                    "min_level": controller.minLevel,
+                    "max_level": controller.maxLevel
+                ])
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
@@ -1227,7 +1243,7 @@ public class WebHookRequestHandler {
                 guard
                     let device = try Device.getById(mysql: mysql, id: uuid)
                 else {
-                    response.respondWithError(status: .notFound)
+                    response.respondWithError(event: .deviceNotFound)
                     return
                 }
                 device.accountUsername = nil
@@ -1268,5 +1284,13 @@ public class WebHookRequestHandler {
 
     static func getLoginLimitConfig() -> String {
         return "\(loginLimitEnabled) - \(loginLimit)/\(loginLimitIntervall)"
+    }
+
+    public enum Event: String {
+        case accountNotFound
+        case noAccountLeft
+        case deviceNotFound
+        case instanceNotFound
+        case noTaskLeft
     }
 }
