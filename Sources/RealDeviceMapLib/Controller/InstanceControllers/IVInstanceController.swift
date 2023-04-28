@@ -142,7 +142,7 @@ class IVInstanceController: InstanceControllerProto {
         pokemonLock.lock()
         if pokemonQueue.isEmpty {
             pokemonLock.unlock()
-            return [String: Any]()
+            return [:]
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
