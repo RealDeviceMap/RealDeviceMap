@@ -105,11 +105,11 @@ class LevelingInstanceController: InstanceControllerProto {
             return [:]
         }
 
+        let destination: Coord
+        unspunPokestopsPerUsernameLock.lock()
         if lastPokestopsPerUsername[username] == nil {
             lastPokestopsPerUsername[username] = []
         }
-        let destination: Coord
-        unspunPokestopsPerUsernameLock.lock()
         if let unspunPokestops = unspunPokestopsPerUsername[username]?.values.reversed(),
             let closestPokestop = findClosest(
                 unspunPokestops: unspunPokestops,
