@@ -41,6 +41,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             "ex_raid_eligible": exRaidEligible as Any,
             "in_battle": inBattle as Any,
             "raid_pokemon_form": raidPokemonForm as Any,
+            "raid_pokemon_alignment": raidPokemonAlignment as Any,
             "raid_pokemon_costume": raidPokemonCostume as Any,
             "raid_pokemon_move_1": raidPokemonMove1 as Any,
             "raid_pokemon_move_2": raidPokemonMove2 as Any,
@@ -103,6 +104,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 "cp": raidPokemonCp ?? 0,
                 "gender": raidPokemonGender ?? 0,
                 "form": raidPokemonForm ?? 0,
+                "alignment": raidPokemonAlignment ?? 0,
                 "costume": raidPokemonCostume ?? 0,
                 "evolution": raidPokemonEvolution ?? 0,
                 "move_1": raidPokemonMove1 ?? 0,
@@ -145,6 +147,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
     var raidPokemonMove1: UInt16?
     var raidPokemonMove2: UInt16?
     var raidPokemonForm: UInt16?
+    var raidPokemonAlignment: UInt16?
     var raidPokemonCostume: UInt16?
     var raidPokemonCp: UInt32?
     var raidPokemonGender: UInt8?
@@ -174,10 +177,10 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
          guardPokemonId: UInt16?, enabled: Bool?, lastModifiedTimestamp: UInt32?, teamId: UInt8?,
          raidEndTimestamp: UInt32?, raidSpawnTimestamp: UInt32?, raidBattleTimestamp: UInt32?, raidPokemonId: UInt16?,
          raidLevel: UInt8?, availableSlots: UInt16?, updated: UInt32?, exRaidEligible: Bool?, inBattle: Bool?,
-         raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?, raidPokemonForm: UInt16?, raidPokemonCostume: UInt16?,
-         raidPokemonCp: UInt32?, raidPokemonGender: UInt8?, raidPokemonEvolution: UInt8?, raidIsExclusive: Bool?,
-         cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?, partnerId: String?, arScanEligible: Bool?,
-         powerUpPoints: UInt32?, powerUpLevel: UInt16?, powerUpEndTimestamp: UInt32?) {
+         raidPokemonMove1: UInt16?, raidPokemonMove2: UInt16?, raidPokemonForm: UInt16?, raidPokemonAlignment: UInt16?,
+         raidPokemonCostume: UInt16?, raidPokemonCp: UInt32?, raidPokemonGender: UInt8?, raidPokemonEvolution: UInt8?,
+         raidIsExclusive: Bool?, cellId: UInt64?, totalCp: UInt32?, sponsorId: UInt16?, partnerId: String?,
+         arScanEligible: Bool?, powerUpPoints: UInt32?, powerUpLevel: UInt16?, powerUpEndTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -200,6 +203,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         self.raidPokemonMove1 = raidPokemonMove1
         self.raidPokemonMove2 = raidPokemonMove2
         self.raidPokemonForm = raidPokemonForm
+        self.raidPokemonAlignment = raidPokemonAlignment
         self.raidPokemonCostume = raidPokemonCostume
         self.raidPokemonCp = raidPokemonCp
         self.raidPokemonGender = raidPokemonGender
@@ -261,6 +265,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             self.raidPokemonMove1 = UInt16(fortData.raidInfo.raidPokemon.move1.rawValue)
             self.raidPokemonMove2 = UInt16(fortData.raidInfo.raidPokemon.move2.rawValue)
             self.raidPokemonForm = UInt16(fortData.raidInfo.raidPokemon.pokemonDisplay.form.rawValue)
+            self.raidPokemonAlignment = UInt16(fortData.raidInfo.raidPokemon.pokemonDisplay.alignment.rawValue)
             self.raidPokemonCp = UInt32(fortData.raidInfo.raidPokemon.cp)
             self.raidPokemonGender = UInt8(fortData.raidInfo.raidPokemon.pokemonDisplay.gender.rawValue)
             self.raidPokemonCostume = UInt16(fortData.raidInfo.raidPokemon.pokemonDisplay.costume.rawValue)
@@ -336,12 +341,13 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                     id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                     raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
                     available_slots, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1, raid_pokemon_move_2,
-                    raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive,
-                    cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible,
-                    power_up_points, power_up_level, power_up_end_timestamp, updated, first_seen_timestamp)
+                    raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume, raid_pokemon_cp,
+                    raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+                    raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp,
+                    updated, first_seen_timestamp)
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP()
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP()
                 )
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -353,10 +359,11 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                     last_modified_timestamp = ?, team_id = ?, raid_end_timestamp = ?, raid_spawn_timestamp = ?,
                     raid_battle_timestamp = ?, raid_pokemon_id = ?, enabled = ?, available_slots = ?,
                     updated = UNIX_TIMESTAMP(), raid_level = ?, ex_raid_eligible = ?, in_battle = ?,
-                    raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?, raid_pokemon_form = ?, raid_pokemon_costume = ?,
-                    raid_pokemon_cp = ?, raid_pokemon_gender = ?, raid_is_exclusive = ?, cell_id = ?, deleted = false,
-                    total_cp = ?, sponsor_id = ?, partner_id = ?, raid_pokemon_evolution = ?, ar_scan_eligible = ?,
-                    power_up_points = ?, power_up_level = ?, power_up_end_timestamp = ?, updated = ?
+                    raid_pokemon_move_1 = ?, raid_pokemon_move_2 = ?, raid_pokemon_form = ?, raid_pokemon_alignment = ?,
+                    raid_pokemon_costume = ?, raid_pokemon_cp = ?, raid_pokemon_gender = ?, raid_is_exclusive = ?,
+                    cell_id = ?, deleted = false, total_cp = ?, sponsor_id = ?, partner_id = ?,
+                    raid_pokemon_evolution = ?, ar_scan_eligible = ?, power_up_points = ?, power_up_level = ?,
+                    power_up_end_timestamp = ?, updated = ?
                 WHERE id = ?
             """
             _ = mysqlStmt.prepare(statement: sql)
@@ -382,6 +389,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         mysqlStmt.bindParam(raidPokemonMove1)
         mysqlStmt.bindParam(raidPokemonMove2)
         mysqlStmt.bindParam(raidPokemonForm)
+        mysqlStmt.bindParam(raidPokemonAlignment)
         mysqlStmt.bindParam(raidPokemonCostume)
         mysqlStmt.bindParam(raidPokemonCp)
         mysqlStmt.bindParam(raidPokemonGender)
@@ -556,9 +564,9 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                    raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
                    available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
-                   raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution,
-                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume,
+                   raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+                   raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
@@ -933,19 +941,20 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             let raidPokemonMove1 = result[19] as? UInt16
             let raidPokemonMove2 = result[20] as? UInt16
             let raidPokemonForm = result[21] as? UInt16
-            let raidPokemonCostume = result[22] as? UInt16
-            let raidPokemonCp = result[23] as? UInt32
-            let raidPokemonGender = result[24] as? UInt8
-            let raidIsExclusive = (result[25] as? UInt8)?.toBool()
-            let cellId = result[26] as? UInt64
-            let totalCp = result[27] as? UInt32
-            let sponsorId = result[28] as? UInt16
-            let partnerId = result[29] as? String
-            let raidPokemonEvolution = result[30] as? UInt8
-            let arScanEligible = (result[31] as? UInt8)?.toBool()
-            let powerUpPoints = result[32] as? UInt32
-            let powerUpLevel = result[33] as? UInt16
-            let powerUpEndTimestamp = result[34] as? UInt32
+            let raidPokemonAlignment = result[22] as? UInt16
+            let raidPokemonCostume = result[23] as? UInt16
+            let raidPokemonCp = result[24] as? UInt32
+            let raidPokemonGender = result[25] as? UInt8
+            let raidIsExclusive = (result[26] as? UInt8)?.toBool()
+            let cellId = result[27] as? UInt64
+            let totalCp = result[28] as? UInt32
+            let sponsorId = result[29] as? UInt16
+            let partnerId = result[30] as? String
+            let raidPokemonEvolution = result[31] as? UInt8
+            let arScanEligible = (result[32] as? UInt8)?.toBool()
+            let powerUpPoints = result[33] as? UInt32
+            let powerUpLevel = result[34] as? UInt16
+            let powerUpEndTimestamp = result[35] as? UInt32
 
             gyms.append(Gym(
                 id: id, lat: lat, lon: lon, name: name, description: description, url: url,
@@ -954,7 +963,8 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
                 raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel,
                 availableSlots: availableSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle,
                 raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2,
-                raidPokemonForm: raidPokemonForm, raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
+                raidPokemonForm: raidPokemonForm, raidPokemonAlignment: raidPokemonAlignment,
+                raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp,
                 raidPokemonGender: raidPokemonGender, raidPokemonEvolution: raidPokemonEvolution,
                 raidIsExclusive: raidIsExclusive, cellId: cellId, totalCp: totalCp, sponsorId: sponsorId,
                 partnerId: partnerId, arScanEligible: arScanEligible, powerUpPoints: powerUpPoints,
