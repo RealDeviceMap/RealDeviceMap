@@ -847,7 +847,8 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             raidBattleTimestamp: raidBattleTimestamp, raidPokemonId: raidPokemonId, raidLevel: raidLevel,
             availableSlots: availableSlots, updated: updated, exRaidEligible: exRaidEligible, inBattle: inBattle,
             raidPokemonMove1: raidPokemonMove1, raidPokemonMove2: raidPokemonMove2, raidPokemonForm: raidPokemonForm,
-            raidPokemonCostume: raidPokemonCostume, raidPokemonCp: raidPokemonCp, raidPokemonGender: raidPokemonGender,
+            raidPokemonAlignment: raidPokemonAlignment, raidPokemonCostume: raidPokemonCostume,
+            raidPokemonCp: raidPokemonCp, raidPokemonGender: raidPokemonGender,
             raidPokemonEvolution: raidPokemonEvolution, raidIsExclusive: raidIsExclusive, cellId: cellId,
             totalCp: totalCp, sponsorId: sponsorId, partnerId: partnerId, arScanEligible: arScanEligible,
             powerUpPoints: powerUpPoints, powerUpLevel: powerUpLevel, powerUpEndTimestamp: powerUpEndTimestamp)
