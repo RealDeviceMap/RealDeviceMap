@@ -128,6 +128,17 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         hasher.combine(id)
     }
 
+    // to be consistent over all places where this params are used (easier to add new params - adapt extractResults too)
+    public static let sqlSelectParams =
+        """
+        id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
+        raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
+        available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
+        raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume, raid_pokemon_cp,
+        raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+        raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+        """
+
     var id: String
     var lat: Double
     var lon: Double
@@ -561,12 +572,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         }
 
         var sql = """
-            SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
-                   raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
-                   available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume,
-                   raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
-                   raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+            SELECT \(Gym.sqlSelectParams)
             FROM gym
             WHERE lat >= ? AND lat <= ? AND lon >= ? AND lon <= ? AND updated > ? AND deleted = false
                   \(excludeLevelSQL) \(excludePokemonSQL) \(excludeTeamSQL) \(excludeAvailableSlotsSQL)
@@ -633,12 +639,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             withDeletedSQL = "AND deleted = false"
         }
         let sql = """
-            SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
-                   raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
-                   available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume,
-                   raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
-                   raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+            SELECT \(Gym.sqlSelectParams)
             FROM gym
             WHERE id = ? \(withDeletedSQL)
         """
@@ -691,12 +692,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         inSQL += "?)"
 
         let sql = """
-        SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
-               raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
-               available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-               raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume, raid_pokemon_cp,
-               raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
-               raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+        SELECT \(Gym.sqlSelectParams)
         FROM gym
         WHERE id IN \(inSQL) AND deleted = false
         """
