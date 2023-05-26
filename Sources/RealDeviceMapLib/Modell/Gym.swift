@@ -636,9 +636,9 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                    raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
                    available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
-                   raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution,
-                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume,
+                   raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+                   raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
             FROM gym
             WHERE id = ? \(withDeletedSQL)
         """
@@ -694,9 +694,9 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
         SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
                available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-               raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
-               raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution, ar_scan_eligible,
-               power_up_points, power_up_level, power_up_end_timestamp
+               raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume, raid_pokemon_cp,
+               raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+               raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
         FROM gym
         WHERE id IN \(inSQL) AND deleted = false
         """
@@ -749,9 +749,9 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             SELECT id, lat, lon, name, description, url, guarding_pokemon_id, last_modified_timestamp, team_id,
                    raid_end_timestamp, raid_spawn_timestamp, raid_battle_timestamp, raid_pokemon_id, enabled,
                    available_slots, updated, raid_level, ex_raid_eligible, in_battle, raid_pokemon_move_1,
-                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_costume, raid_pokemon_cp, raid_pokemon_gender,
-                   raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id, raid_pokemon_evolution,
-                   ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
+                   raid_pokemon_move_2, raid_pokemon_form, raid_pokemon_alignment, raid_pokemon_costume,
+                   raid_pokemon_cp, raid_pokemon_gender, raid_is_exclusive, cell_id, total_cp, sponsor_id, partner_id,
+                   raid_pokemon_evolution, ar_scan_eligible, power_up_points, power_up_level, power_up_end_timestamp
             FROM gym
             WHERE cell_id IN \(inSQL) AND deleted = false
         """
