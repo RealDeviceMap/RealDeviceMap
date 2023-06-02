@@ -345,6 +345,7 @@ public func setupRealDeviceMap() {
     } else {
         WebRequestHandler.isSetup = false
         WebRequestHandler.accessToken = URandom().secureToken
+        WebHookRequestHandler.loginSecret = WebHookRequestHandler.loginSecret ?? WebRequestHandler.accessToken
         Log.info(message: "[MAIN] Use this access-token to create the admin user: \(WebRequestHandler.accessToken!)")
     }
 

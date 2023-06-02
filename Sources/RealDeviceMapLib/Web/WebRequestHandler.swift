@@ -1969,6 +1969,9 @@ public class WebRequestHandler {
                 }
                 if useAccessToken {
                     try DBController.global.setValueForKey(key: "IS_SETUP", value: "true")
+                    try DBController.global.setValueForKey(
+                        key: "DEVICEAPI_SECRET",
+                        value: WebHookRequestHandler.loginSecret!)
                     WebRequestHandler.isSetup = true
                     WebRequestHandler.accessToken = nil
                     response.redirect(path: "/")
