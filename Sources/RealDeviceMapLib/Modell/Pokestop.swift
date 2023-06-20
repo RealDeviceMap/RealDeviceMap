@@ -439,6 +439,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withPokemonCostume: break
             case .withAppliedItem: break
             case .withPokemonSize: break
+            case .withTotalDays: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
