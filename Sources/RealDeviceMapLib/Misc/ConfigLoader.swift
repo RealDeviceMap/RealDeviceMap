@@ -351,7 +351,6 @@ public class ConfigLoader {
         case accUseRwForPokes = "USE_RW_FOR_POKES"
         case questRetryLimit = "QUEST_RETRY_LIMIT"
         case spinDistance = "SPIN_DISTANCE"
-
         case autoPokemonUseLastSeenTime = "AUTO_POKEMON_USE_LASTSEEN"
         case autoPokemonRequeryFrequency = "AUTO_POKEMON_REQUERY_FREQUENCY"
         case autoPokemonMinSpawnTime = "AUTO_POKEMON_MIN_SPAWN_TIME"
