@@ -4,5 +4,5 @@ ALTER TABLE `spawnpoint`
 	ADD INDEX `first_seen_timestamp` (`first_seen_timestamp`),
 	ADD INDEX `spawn_info` (`spawn_info`);
 	
-UPDATE spawnpoint SET first_seen_timestamp=null;
-UPDATE spawnpoint SET spawn_info=0;
+UPDATE spawnpoint SET first_seen_timestamp = null;
+UPDATE spawnpoint SET spawn_info = 0;

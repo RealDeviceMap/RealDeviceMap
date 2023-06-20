@@ -102,10 +102,8 @@
         "questRetryLimit": 10,
         "spinDistance": 80
     },
-    "scanModes": 
-    {
-        "auto" :
-        {
+    "scanModes": {
+        "auto" : {
             "useLastSeenTime": 7200,
             "requeryFrequency": 3600,
             "minSpawnTime": 1500,
@@ -114,8 +112,7 @@
             "defaultLongitude": "0.00",
             "defaultLatitude": "0.00"
         },
-        "tth":
-        {
+        "tth": {
             "requeryFrequency": 90,
             "clusterUsingKoji": false,
             "clusteringRadius": 70,
@@ -123,8 +120,7 @@
             "hopTime": "3.00"
         }
     },
-    "koji": 
-    {
+    "koji": {
       "url": "",
       "secret": ""
     },
