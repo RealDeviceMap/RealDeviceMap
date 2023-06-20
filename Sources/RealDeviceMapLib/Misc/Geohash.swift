@@ -20,10 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// swiftlint:disable identifier_name large_tuple
+
 import Foundation
 
 public enum Geohash {
-    public static func decode(hash: String) -> (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double))? {
+    public static func decode(hash: String) -> (
+        latitude: (min: Double, max: Double),
+        longitude: (min: Double, max: Double)
+    )? {
         // For example: hash = u4pruydqqvj
 
         let bits = hash
@@ -59,7 +64,9 @@ public enum Geohash {
     public static func encode(latitude: Double, longitude: Double, length: Int) -> String {
         // For example: (latitude, longitude) = (57.6491106301546, 10.4074396938086)
 
-        func combiner(array a: (min: Double, max: Double, array: [String]), value: Double) -> (Double, Double, [String]) {
+        func combiner(
+            array a: (min: Double, max: Double, array: [String]), value: Double
+        ) -> (Double, Double, [String]) {
             let mean = (a.min + a.max) / 2
             if value < mean {
                 return (a.min, mean, a.array + "0")
@@ -69,10 +76,12 @@ public enum Geohash {
         }
 
         let lat = Array(repeating: latitude, count: length * 5).reduce((-90.0, 90.0, [String]()), combiner)
-        // lat = (57.64911063015461, 57.649110630154766, [1,1,0,1,0,0,0,1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,0,...])
+        // lat = (57.64911063015461, 57.649110630154766,
+        //   [1,1,0,1,0,0,0,1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,0,...])
 
         let lon = Array(repeating: longitude, count: length * 5).reduce((-180.0, 180.0, [String]()), combiner)
-        // lon = (10.407439693808236, 10.407439693808556, [1,0,0,0,0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,1,1,1,0,1,1,1,0,1,0,1,..])
+        // lon = (10.407439693808236, 10.407439693808556,
+        //   [1,0,0,0,0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,1,1,1,0,1,1,1,0,1,0,1,..])
 
         let latlon = lon.2.enumerated().flatMap { [$1, lat.2[$0]] }
         // latlon - [1,1,0,1,0,0,0,1,0,0,1,0,1,0,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,...]
