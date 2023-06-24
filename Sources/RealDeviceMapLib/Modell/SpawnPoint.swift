@@ -302,8 +302,8 @@ public class SpawnPoint: JSONConvertibleObject {
             let updated = result[3] as! UInt32
             let lastSeen = result[4] as! UInt32
             let despawnSecond = result[5] as? UInt16
-            let spawnInfo = result[6] as! UInt32
-            let firstSeenTimestamp = result[7] as! UInt32
+            let spawnInfo = result[6] as? UInt32
+            let firstSeenTimestamp = result[7] as? UInt32
 
             spawnpoints.append(
                 SpawnPoint(
