@@ -1226,6 +1226,7 @@ public class WebHookRequestHandler {
                 }
 
                 try Account.setDisabled(mysql: mysql, username: username)
+                encounterLock.doWithLock { encounterCount.removeValue(forKey: username) }
                 guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
                     response.respondWithError(status: .internalServerError)
                     return
