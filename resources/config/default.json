@@ -102,6 +102,10 @@
         "questRetryLimit": 10,
         "spinDistance": 80
     },
-    "stopAllBootstrapping": false
+    "stopAllBootstrapping": false,
+    "process": {
+      "pokemon": true,
+      "incident": true
+    }
   }
 }
