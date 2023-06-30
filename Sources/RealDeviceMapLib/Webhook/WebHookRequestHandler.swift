@@ -579,6 +579,14 @@ public class WebHookRequestHandler {
             response.respondWithError(status: .internalServerError)
         }
 
+        if let processPokemon: Bool = ConfigLoader.global.getConfig(type: .processPokemon), !processPokemon {
+            wildPokemons = [:]
+            nearbyPokemons = [:]
+            mapPokemons = [:]
+            encouters = [:]
+            diskEncounters = [:]
+        }
+
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
                 let value = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
@@ -751,6 +759,7 @@ public class WebHookRequestHandler {
                 )
             }
 
+            let processIncident: Bool = ConfigLoader.global.getConfig(type: .processIncident)
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
@@ -769,7 +778,9 @@ public class WebHookRequestHandler {
                         ?? Pokestop()
                     pokestop.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
-                    pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
+                    if processIncident {
+                        pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
+                    }
                     if stopsIdsPerCell[fort.cell] == nil {
                         stopsIdsPerCell[fort.cell] = [String]()
                     }
