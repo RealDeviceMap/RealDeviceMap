@@ -580,11 +580,11 @@ public class WebHookRequestHandler {
         }
 
         if let processPokemon: Bool = ConfigLoader.global.getConfig(type: .processPokemon), !processPokemon {
-            wildPokemons = [:]
-            nearbyPokemons = [:]
-            mapPokemons = [:]
-            encouters = [:]
-            diskEncounters = [:]
+            wildPokemons = []
+            nearbyPokemons = []
+            mapPokemons = []
+            encounters = []
+            diskEncounters = []
         }
 
         if username != nil && maxEncounter > 0 {
