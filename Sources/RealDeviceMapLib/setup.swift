@@ -220,7 +220,7 @@ public func setupRealDeviceMap() {
     Pokemon.timingStatsEnabled = ConfigLoader.global.getConfig(type: .statsPokemonTimingEnabled)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
-    Account.disablePeriod = UInt32(exactly: ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!
+    Account.disablePeriod = (ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!.toUInt32()
 
     if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
