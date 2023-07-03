@@ -263,8 +263,8 @@ public func setupRealDeviceMap() {
     let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
     Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
 
-    if let accMaxEncounters = WebHookRequestHandler.maxEncounter, accMaxEncounters > 0 {
-        Log.info(message: "[MAIN] Account switching after \(accMaxEncounters) encounters enabled.")
+    if WebHookRequestHandler.maxEncounter > 0 {
+        Log.info(message: "[MAIN] Account switching after \(WebHookRequestHandler.maxEncounter) encounters enabled.")
         do {
             // to keep track of the right count all previously used accounts has to be disabled on startup
             try Account.setDisabledOnUsed()
