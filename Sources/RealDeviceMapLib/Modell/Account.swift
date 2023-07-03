@@ -22,6 +22,8 @@ public class Account: WebHookEvent {
     static let warnedPeriod: UInt32 = 604800
     static var disablePeriod: UInt32 = 86400
 
+    static var reverseSortOrder: Bool = true
+
     func getWebhookValues(type: String) -> [String: Any] {
 
         let message: [String: Any] = [
