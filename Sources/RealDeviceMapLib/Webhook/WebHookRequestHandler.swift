@@ -53,7 +53,7 @@ public class WebHookRequestHandler {
 
     private static let encounterLock = Threading.Lock()
     private static var encounterCount = [String: Int]()
-    private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+    static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
 
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
