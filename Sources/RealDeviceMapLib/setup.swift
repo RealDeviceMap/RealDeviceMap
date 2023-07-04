@@ -264,7 +264,7 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Spin distance: \(spinDistance)")
     let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
     Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
-    Log.info(message: "[Main] Accounts are used in last recently used order: \(String(describing: Account.lastRecentlyUsed))")
+    Log.info(message: "[Main] Accounts are used in last recently used order: \(Account.lastRecentlyUsed)")
 
     Log.info(message: "[MAIN] Account Disable Period (BSOD) set to: \(Account.disablePeriod / 3600)h")
     if WebHookRequestHandler.maxEncounter > 0 {
