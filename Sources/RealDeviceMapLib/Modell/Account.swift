@@ -22,6 +22,8 @@ public class Account: WebHookEvent {
     static let warnedPeriod: UInt32 = 604800
     static var disablePeriod: UInt32 = 86400
 
+    static var lastRecentlyUsed: Bool = true
+
     func getWebhookValues(type: String) -> [String: Any] {
 
         let message: [String: Any] = [
@@ -609,7 +611,7 @@ public class Account: WebHookEvent {
                 \(spinSQL)
                 \(cooldownSQL)
                 \(lockoutSQL)
-            ORDER BY level DESC, last_used_timestamp DESC
+            ORDER BY last_used_timestamp \(Account.lastRecentlyUsed ? "DESC" : "ASC")
             LIMIT 1
         """
 

@@ -221,6 +221,7 @@ public func setupRealDeviceMap() {
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
     Account.disablePeriod = UInt32(exactly: ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!
+    Account.lastRecentlyUsed = ConfigLoader.global.getConfig(type: .accLastRecentlyUsed)
 
     if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
@@ -263,6 +264,7 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Spin distance: \(spinDistance)")
     let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
     Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
+    Log.info(message: "[Main] Accounts are used in last recently used order: \(Account.lastRecentlyUsed)")
 
     Log.info(message: "[MAIN] Account Disable Period (BSOD) set to: \(Account.disablePeriod / 3600)h")
     if WebHookRequestHandler.maxEncounter > 0 {
