@@ -195,7 +195,7 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
-        case .accLastRecentlyUsed: return castValue(value: value)
+        case .accLastRecentlyUsed: return castValue(value: value) // not used in env
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
