@@ -221,7 +221,7 @@ public func setupRealDeviceMap() {
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
     Account.disablePeriod = UInt32(exactly: ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!
-    Account.reverseSortOrder = ConfigLoader.global.getConfig(type: .accReverseSortOrder)
+    Account.lastRecentlyUsed = ConfigLoader.global.getConfig(type: .accLastRecentlyUsed)
 
     if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
