@@ -611,7 +611,7 @@ public class Account: WebHookEvent {
                 \(spinSQL)
                 \(cooldownSQL)
                 \(lockoutSQL)
-            ORDER BY level \(Account.lastRecentlyUsed ? "DESC" : "ASC"), 
+            ORDER BY level \(Account.lastRecentlyUsed ? "DESC" : "ASC"),
             last_used_timestamp \(Account.lastRecentlyUsed ? "DESC" : "ASC")
             LIMIT 1
         """
