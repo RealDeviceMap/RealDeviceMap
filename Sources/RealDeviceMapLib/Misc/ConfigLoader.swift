@@ -92,8 +92,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
-        case .accReverseSortOrder: return localConfig.application.account.reverseSortOrder.value()
-            ?? defaultConfig.application.account.reverseSortOrder.value()!
+        case .accLastRecentlyUsed: return localConfig.application.account.lastRecentlyUsed.value()
+            ?? defaultConfig.application.account.lastRecentlyUsed.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -195,7 +195,7 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
-        case .accReverseSortOrder: return false as! T
+        case .accLastRecentlyUsed: return true as! T
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -276,7 +276,7 @@ public class ConfigLoader {
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
-        case accReverseSortOrder = "ACC_REVERSE_SORT_ORDER"
+        case accLastRecentlyUsed = "ACC_LAST_RECENTLY_USED"
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"
