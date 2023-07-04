@@ -46,7 +46,7 @@
       "useRwForPokes": false,
       "maxEncounters": 0,
       "disablePeriod": 86400,
-      "lastRecentlyUsed": true
+      "lastRecentlyUsed": false
     },
     "loginLimit": {
       "enabled": false,
