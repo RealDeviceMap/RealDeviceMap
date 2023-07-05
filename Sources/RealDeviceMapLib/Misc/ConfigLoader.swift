@@ -26,9 +26,10 @@ public class ConfigLoader {
         "USE_RW_FOR_POKES", "NO_DB_CLEARER", "NO_DB_CLEARER_INCIDENT", "ACC_MAX_ENCOUNTERS", "ACC_DISABLE_PERIOD",
 
         "AUTO_POKEMON_USE_LASTSEEN", "AUTO_POKEMON_REQUERY_FREQUENCY", "AUTO_POKEMON_MIN_SPAWN_TIME",
-        "AUTO_POKEMON_BUFFER_TIME", "AUTO_POKEMON_SLEEP_INTERVAL", "AUTO_POKEMON_DEFAULT_LONGITUDE",
+        "AUTO_POKEMON_BUFFER_TIME", "AUTO_POKEMON_DEFAULT_LONGITUDE", "AUTO_POKEMON_SLEEP_INTERVAL",
         "AUTO_POKEMON_DEFAULT_LATITUDE", "TTH_REQUERY_FREQUENCY", "TTH_CLUSTER_USING_KOJI",
-        "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "TTH_DEVICE_TIMEOUT", "KOJI_URL", "KOJI_SECRET"
+        "TTH_CLUSTERING_RADIUS", "TTH_HOP_TIME", "TTH_DEVICE_TIMEOUT", "KOJI_URL", "KOJI_SECRET",
+        "ACCOUNT_SORTING", "ACCOUNT_SORTING_LEVEL"
         ]
 
     private init() {
@@ -97,6 +98,10 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
+        case .accQuerySortingUsed: return localConfig.application.account.sortingUsed.value()
+            ?? defaultConfig.application.account.sortingUsed.value()!
+        case .accQuerySortingLevel: return localConfig.application.account.sortingLevel.value()
+            ?? defaultConfig.application.account.sortingLevel.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -223,6 +228,8 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
+        case .accQuerySortingUsed: return value as! T
+        case .accQuerySortingLevel: return value as! T
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -263,7 +270,7 @@ public class ConfigLoader {
         case .autoPokemonRequeryFrequency: return castValue(value: value) // AUTO_POKEMON_REQUERY_FREQUENCY
         case .autoPokemonMinSpawnTime: return castValue(value: value) // AUTO_POKEMON_MIN_SPAWN_TIME
         case .autoPokemonBufferTime: return castValue(value: value)  // AUTO_POKEMON_BUFFER_TIME
-        case .autoPokemonSleepInterval: return castValue(value: value) // AUTO_POKEMON_SLEEP_INTERVAL
+        case .autoPokemonSleepInterval: return castValue(value: value)  // AUTO_POKEMON_SLEEP_INTERVAL
         case .autoPokemonDefaultLongitude: return value as! T // AUTO_POKEMON_DEFAULT_LONGITUDE
         case .autoPokemonDefaultLatitude: return value as! T // AUTO_POKEMON_DEFAULT_LATITUDE
         case .tthRequeryFrequency: return castValue(value: value) // TTH_REQUERY_FREQUENCY
@@ -316,6 +323,8 @@ public class ConfigLoader {
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
+        case accQuerySortingUsed = "ACCOUNT_SORTING"
+        case accQuerySortingLevel = "ACCOUNT_SORTING_LEVEL"
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"

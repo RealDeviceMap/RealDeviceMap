@@ -63,7 +63,6 @@
             "requeryFrequency": 3600,
             "minSpawnTime": 1500,
             "bufferTime": 30,
-            "sleepInterval": 10,
             "defaultLongitude": "0.00",
             "defaultLatitude": "0.00"
         },

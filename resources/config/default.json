@@ -45,7 +45,9 @@
       "useRwForRaid": false,
       "useRwForPokes": false,
       "maxEncounters": 0,
-      "disablePeriod": 86400
+      "disablePeriod": 86400,
+      "sortingUsed": "asc",
+      "sortingLevel": ""
     },
     "loginLimit": {
       "enabled": false,
@@ -108,7 +110,7 @@
             "requeryFrequency": 3600,
             "minSpawnTime": 1500,
             "bufferTime": 30,
-            "sleepInterval": 10,
+            "sleepInterval": 5,
             "defaultLongitude": "0.00",
             "defaultLatitude": "0.00"
         },

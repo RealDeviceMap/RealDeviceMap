@@ -59,10 +59,8 @@ public class SpawnPoint: JSONConvertibleObject {
         self.firstSeenTimestamp = UInt32(Date().timeIntervalSince1970)
     }
 
-    init(
-        id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?, despawnSecond: UInt16?,
-        spawnInfo: UInt32?, firstSeenTimestamp: UInt32?
-    ) {
+    init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?,
+        despawnSecond: UInt16?, spawnInfo: UInt32?, firstSeenTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -73,10 +71,8 @@ public class SpawnPoint: JSONConvertibleObject {
         self.firstSeenTimestamp = firstSeenTimestamp
     }
 
-    public func save(
-        mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true,
-        minute: UInt64 = UInt64.max
-    ) throws {
+    public func save(mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true,
+                    minute: UInt64 = UInt64.max) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
@@ -295,7 +291,6 @@ public class SpawnPoint: JSONConvertibleObject {
 
         var spawnpoints = [SpawnPoint]()
         while let result = results.next() {
-
             let id = result[0] as! UInt64
             let lat = result[1] as! Double
             let lon = result[2] as! Double
@@ -361,8 +356,8 @@ public class SpawnPoint: JSONConvertibleObject {
         let updated = result[3] as! UInt32
         let lastSeen = result[4] as! UInt32
         let despawnSecond = result[5] as? UInt16
-        let spawnInfo = result[6] as! UInt32
-        let firstSeenTimestamp = result[7] as! UInt32
+        let spawnInfo = result[6] as? UInt32
+        let firstSeenTimestamp = result[7] as? UInt32
 
         let spawnpoint = SpawnPoint(
             id: id,
