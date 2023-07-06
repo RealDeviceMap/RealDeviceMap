@@ -133,7 +133,7 @@ class AutoInstanceController: InstanceControllerProto {
             autoRequeryFrequency = clamp(autoRequeryFrequency, minValue: 600, maxValue: 86400)
             autoMinSpawnTime = clamp(autoMinSpawnTime, minValue: 600, maxValue: 1740)
             autoBufferTime = clamp(autoBufferTime, minValue: 10, maxValue: 120)
-            autoSleepInterval = clamp(autoSleepInterval, minValue: 2, maxValue: 10)
+            autoSleepInterval = clamp(autoSleepInterval, minValue: 1, maxValue: 5)
             defaultLongitude = clamp(defaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
             defaultLatitude = clamp(defaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
 
@@ -1456,35 +1456,26 @@ class AutoInstanceController: InstanceControllerProto {
 
         // do the shit
         if (curTime >= minTime) && (curTime <= maxTime) {
-            // good to jump as between to key points for current time
+            // normal entry if things are going as designed,
+            // good to jump as to next spot
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation a1 - " +
                       "curtime between min and max, moving standard 1 forward")
 
             // test if we are getting too close to the mintime
-            let howClose = Double(curTime) - (Double(minTime) + Double(autoSleepInterval))
-            if howClose < 0 {
-                // determine sleep interval
-
-                let sleepTime = clamp(abs(howClose) + Double(autoSleepInterval), 
-                                    minValue: Double(autoSleepInterval), maxValue: 10.0)
-
+            if Double(curTime) < Double(minTime) + Double(autoSleepInterval) {
                 Log.debug(message:
                     "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
-                    "pausing for \(sleepTime) second(s) as too close to minTime")
+                    "pausing for \(autoSleepInterval) second(s) as too close to minTime")
 
-                Threading.sleep(seconds: sleepTime)
+                // too close, so sleep for a few seconds
+                Threading.sleep(seconds: Double(autoSleepInterval))
             }
         } else if curTime < minTime {
-            // spawn is past time to visit, need to find a good one to jump to
+            // spawn is before legit time to visit, need to find a good one to jump to
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
                 "curTime \(curTime) > maxTime, iterate")
 
-            var found: Bool = false
             for idx in 0..<cntArray {
-                if !pokemonCoords.indices.contains(idx) {
-                    return 0
-                }
-
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
@@ -1495,12 +1486,10 @@ class AutoInstanceController: InstanceControllerProto {
                     originalTime += 3600
                 }
 
-                if  (originalTime >= mnTime + 10) && (originalTime <= mxTime - 10) {
+                if  (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b2 - " +
-                        "iterate solution=\(found)")
-                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b3 - " +
-                        "mnTime=\(mnTime) & curTime=\(originalTime) & & mxTime=\(mxTime)")
-                    found = true
+                        "mnTime=\(mnTime) & curTime=\(originalTime) & mxTime=\(mxTime)")
+
                     locIndex = idx
                     break
                 }
@@ -1515,8 +1504,6 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d1 - " +
                 "curTime=\(curTime) > maxTime=\(maxTime), iterate.  Devices falling behind, consider more devices!")
 
-            var found: Bool = false
-
             for idx in 0..<cntArray {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
@@ -1528,13 +1515,9 @@ class AutoInstanceController: InstanceControllerProto {
                     originalTime += 3600
                 }
 
-                if (originalTime >= mnTime + 10) && (originalTime <= mxTime - 10) {
-                //if curTime >= mnTime + 30 && curTime <= mnTime + 120 {
-                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d5 - " +
-                        "iterate solution=\(found)")
-                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d6 -  " +
-                        "mnTime=\(mnTime) & curTime=\(originalTime) &mxTime=\(mxTime)")
-                    found = true
+                if (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 -  " +
+                        "mnTime=\(mnTime) & curTime=\(originalTime) & mxTime=\(mxTime)")
                     locIndex = idx
                     break
                 }
