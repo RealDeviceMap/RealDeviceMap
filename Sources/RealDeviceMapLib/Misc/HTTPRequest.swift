@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PerfectCURL
 import PerfectHTTP
 
 internal extension HTTPRequest {
@@ -26,5 +27,25 @@ internal extension HTTPRequest {
             return hexParts[0...3].joined(separator: ":")
         }
         return hostString
+    }
+}
+
+internal extension HTTPRequest {
+    func forwardRawRequest() {
+        if WebHookRequestHandler.rawForwardUrl.isEmpty {
+            return
+        }
+        Task {
+            let request = CURLRequest(
+                WebHookRequestHandler.rawForwardUrl,
+                .httpMethod(.post),
+                .postData(self.postBodyBytes!),
+                .addHeader(.contentType, "application/json"),
+                .addHeader(.accept, "application/json"),
+                .addHeader(.cacheControl, "no-cache"),
+                .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+            )
+            request.perform { (_) in }
+        }
     }
 }
