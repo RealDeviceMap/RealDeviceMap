@@ -60,7 +60,7 @@ public class SpawnPoint: JSONConvertibleObject {
     }
 
     init(id: UInt64, lat: Double, lon: Double, updated: UInt32?, lastSeen: UInt32?,
-        despawnSecond: UInt16?, spawnInfo: UInt32?, firstSeenTimestamp: UInt32?) {
+         despawnSecond: UInt16?, spawnInfo: UInt32?, firstSeenTimestamp: UInt32?) {
         self.id = id
         self.lat = lat
         self.lon = lon
@@ -72,8 +72,7 @@ public class SpawnPoint: JSONConvertibleObject {
     }
 
     public func save(mysql: MySQL?=nil, update: Bool=false, timestampAccurate: Bool=true,
-                    minute: UInt64 = UInt64.max) throws {
-
+                     minute: UInt64 = UInt64.max) throws {
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[SPAWNPOINT] Failed to connect to database.")
             throw DBController.DBError()

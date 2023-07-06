@@ -382,10 +382,10 @@ class AutoInstanceController: InstanceControllerProto {
                 try? initAutoPokemonCoords()
             }
 
-            //wait for changes to data after requery of db, as do not want to ask it during update ops
-            autoPokemonDbLock.lock() 
-            //wait for other devices asking for next location in array
-            autoPokemonLock.lock() 
+            // wait for changes to data after requery of db, as do not want to ask it during update ops
+            autoPokemonDbLock.lock()
+            // wait for other devices asking for next location in array
+            autoPokemonLock.lock()
 
             // increment location
             let locIndex: Int = currentDevicesMaxLocation
@@ -1153,7 +1153,6 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - " +
             "got \(tmpCoords.count) spawnpoints in geofence")
 
-
         autoPokemonDbLock.lock()
 
         pokemonCoords.removeAll()
@@ -1263,7 +1262,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         // lock the data for location array so that we can write to it
         tthDbLock.lock()
-        
+
         tthCoords.removeAll(keepingCapacity: true)
 
         // determine if end user is utilizing koji, if so cluster some shit
@@ -1470,7 +1469,7 @@ class AutoInstanceController: InstanceControllerProto {
                 // too close, so sleep for a few seconds
                 Threading.sleep(seconds: Double(autoSleepInterval))
             }
-        } else if curTime < minTime {
+        } else if curTime < minTime && !firstRun{
             // spawn is before legit time to visit, need to find a good one to jump to
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
                 "curTime \(curTime) > maxTime, iterate")
@@ -1494,9 +1493,9 @@ class AutoInstanceController: InstanceControllerProto {
                     break
                 }
             }
-        } else if curTime < minTime && !firstRun {
+        } else if curTime < minTime && firstRun {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() c1 - sleeping 10sec")
-            Threading.sleep(seconds: 10)
+            Threading.sleep(seconds: 5)
 
             locIndex -= 1
         } else if curTime > maxTime {
@@ -1534,7 +1533,7 @@ class AutoInstanceController: InstanceControllerProto {
             lastLastCompletedTime = lastCompletedTime
             lastCompletedTime = Date()
         }
-        
+
         // sanity checks
         if locIndex > cntCoords { // check if we went past half
             locIndex -= cntCoords

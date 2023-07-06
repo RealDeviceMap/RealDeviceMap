@@ -44,8 +44,6 @@ public enum Geohash {
                 $0.0.append($1.1)
             }
         }
-        // lat = [1,1,0,1,0,0,0,1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,1,0,1,0,0]
-        // lon = [1,0,0,0,0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,1,1,1,0,1,1,1,0,1]
 
         func combiner(array a: (min: Double, max: Double), value: Character) -> (Double, Double) {
             let mean = (a.min + a.max) / 2
@@ -76,21 +74,14 @@ public enum Geohash {
         }
 
         let lat = Array(repeating: latitude, count: length * 5).reduce((-90.0, 90.0, [String]()), combiner)
-        // lat = (57.64911063015461, 57.649110630154766,
-        //   [1,1,0,1,0,0,0,1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,0,...])
 
         let lon = Array(repeating: longitude, count: length * 5).reduce((-180.0, 180.0, [String]()), combiner)
-        // lon = (10.407439693808236, 10.407439693808556,
-        //   [1,0,0,0,0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,1,1,1,0,1,1,1,0,1,0,1,..])
 
         let latlon = lon.2.enumerated().flatMap { [$1, lat.2[$0]] }
-        // latlon - [1,1,0,1,0,0,0,1,0,0,1,0,1,0,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,...]
 
         let bits = latlon.enumerated().reduce([String]()) { $1.0 % 5 > 0 ? $0 << $1.1 : $0 + $1.1 }
-        //  bits: [11010,00100,10101,10111,11010,11110,01100,10110,10110,11011,10001,10010,10101,...]
 
         let arr = bits.compactMap { charmap[$0] }
-        // arr: [u,4,p,r,u,y,d,q,q,v,j,k,p,b,...]
 
         return String(arr.prefix(length))
     }
