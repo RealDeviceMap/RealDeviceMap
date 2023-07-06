@@ -46,8 +46,7 @@
       "useRwForPokes": false,
       "maxEncounters": 0,
       "disablePeriod": 86400,
-      "sortingUsed": "asc",
-      "sortingLevel": ""
+      "lastRecentlyUsed": false
     },
     "loginLimit": {
       "enabled": false,
@@ -126,6 +125,10 @@
       "url": "",
       "secret": ""
     },
-    "stopAllBootstrapping": false
+    "stopAllBootstrapping": false,
+    "process": {
+      "pokemon": true,
+      "incident": true
+    }
   }
 }

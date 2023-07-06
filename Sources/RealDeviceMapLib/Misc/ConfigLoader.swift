@@ -98,10 +98,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
-        case .accQuerySortingUsed: return localConfig.application.account.sortingUsed.value()
-            ?? defaultConfig.application.account.sortingUsed.value()!
-        case .accQuerySortingLevel: return localConfig.application.account.sortingLevel.value()
-            ?? defaultConfig.application.account.sortingLevel.value()!
+        case .accLastRecentlyUsed: return localConfig.application.account.lastRecentlyUsed.value()
+            ?? defaultConfig.application.account.lastRecentlyUsed.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -172,7 +170,10 @@ public class ConfigLoader {
             ?? defaultConfig.application.quest.questRetryLimit.value()!
         case .spinDistance: return localConfig.application.quest.spinDistance.value()
             ?? defaultConfig.application.quest.spinDistance.value()!
-
+		case .processPokemon: return localConfig.application.process.pokemon.value()
+            ?? defaultConfig.application.process.pokemon.value()!
+        case .processIncident: return localConfig.application.process.incident.value()
+            ?? defaultConfig.application.process.incident.value()!
         case .autoPokemonUseLastSeenTime: return localConfig.application.scanModes.auto.useLastSeenTime.value()
             ?? defaultConfig.application.scanModes.auto.useLastSeenTime.value()!
         case .autoPokemonRequeryFrequency: return localConfig.application.scanModes.auto.requeryFrequency.value()
@@ -228,8 +229,7 @@ public class ConfigLoader {
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
-        case .accQuerySortingUsed: return value as! T
-        case .accQuerySortingLevel: return value as! T
+        case .accLastRecentlyUsed: return false as! T
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -265,7 +265,8 @@ public class ConfigLoader {
         case .accUseRwForPokes: return false as! T // USE_RW_FOR_POKES
         case .questRetryLimit: return castValue(value: value) // QUEST_RETRY_LIMIT
         case .spinDistance: return castValue(value: value) // SPIN_DISTANCE
-
+		case .processPokemon: return true as! T
+        case .processIncident: return true as! T
         case .autoPokemonUseLastSeenTime: return castValue(value: value) // AUTO_POKEMON_USE_LASTSEEN
         case .autoPokemonRequeryFrequency: return castValue(value: value) // AUTO_POKEMON_REQUERY_FREQUENCY
         case .autoPokemonMinSpawnTime: return castValue(value: value) // AUTO_POKEMON_MIN_SPAWN_TIME
@@ -323,8 +324,7 @@ public class ConfigLoader {
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
-        case accQuerySortingUsed = "ACCOUNT_SORTING"
-        case accQuerySortingLevel = "ACCOUNT_SORTING_LEVEL"
+        case accLastRecentlyUsed = "ACC_LAST_RECENTLY_USED" // not used in env
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"
@@ -360,6 +360,8 @@ public class ConfigLoader {
         case accUseRwForPokes = "USE_RW_FOR_POKES"
         case questRetryLimit = "QUEST_RETRY_LIMIT"
         case spinDistance = "SPIN_DISTANCE"
+        case processPokemon = "PROCESS_POKEMON" // not used in env
+        case processIncident = "PROCESS_INCIDENT" // not used in env
         case autoPokemonUseLastSeenTime = "AUTO_POKEMON_USE_LASTSEEN"
         case autoPokemonRequeryFrequency = "AUTO_POKEMON_REQUERY_FREQUENCY"
         case autoPokemonMinSpawnTime = "AUTO_POKEMON_MIN_SPAWN_TIME"
