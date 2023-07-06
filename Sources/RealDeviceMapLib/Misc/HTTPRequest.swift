@@ -44,6 +44,9 @@ internal extension HTTPRequest {
             .addHeader(.cacheControl, "no-cache"),
             .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
         )
+        if !WebHookRequestHandler.rawForwardBearer.isEmpty {
+            request.addHeader(.authorization, value: "Bearer " + WebHookRequestHandler.rawForwardBearer)
+        }
         request.perform { (_) in }
     }
 }
