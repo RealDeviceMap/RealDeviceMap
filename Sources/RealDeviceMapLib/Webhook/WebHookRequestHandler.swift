@@ -34,6 +34,9 @@ public class WebHookRequestHandler {
     private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
+    static let rawForwardUrl: String = ConfigLoader.global.getConfig(type: .rawForwardUrl)
+    static let rawForwardBearer: String = ConfigLoader.global.getConfig(type: .rawForwardBearer)
+
     static let threadLimitMax = UInt32(exactly: ConfigLoader.global.getConfig(type: .rawThreadLimit) as Int)!
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
@@ -113,6 +116,8 @@ public class WebHookRequestHandler {
     }
 
     static func rawHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
+
+        request.forwardRawRequest()
 
         let json: [String: Any]
         let isMadData = request.header(.origin) != nil

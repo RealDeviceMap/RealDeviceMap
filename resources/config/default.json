@@ -39,6 +39,10 @@
   },
   "application": {
     "rawThreadLimit": 100,
+    "rawForward": {
+      "url": "",
+      "bearer": ""
+    },
     "account": {
       "requireInDB": true,
       "useRwForQuest": false,
