@@ -1469,7 +1469,7 @@ class AutoInstanceController: InstanceControllerProto {
                 // too close, so sleep for a few seconds
                 Threading.sleep(seconds: Double(autoSleepInterval))
             }
-        } else if curTime < minTime && !firstRun{
+        } else if curTime < minTime && !firstRun {
             // spawn is before legit time to visit, need to find a good one to jump to
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
                 "curTime \(curTime) > maxTime, iterate")

@@ -170,7 +170,7 @@ public class ConfigLoader {
             ?? defaultConfig.application.quest.questRetryLimit.value()!
         case .spinDistance: return localConfig.application.quest.spinDistance.value()
             ?? defaultConfig.application.quest.spinDistance.value()!
-		case .processPokemon: return localConfig.application.process.pokemon.value()
+        case .processPokemon: return localConfig.application.process.pokemon.value()
             ?? defaultConfig.application.process.pokemon.value()!
         case .processIncident: return localConfig.application.process.incident.value()
             ?? defaultConfig.application.process.incident.value()!
@@ -265,7 +265,7 @@ public class ConfigLoader {
         case .accUseRwForPokes: return false as! T // USE_RW_FOR_POKES
         case .questRetryLimit: return castValue(value: value) // QUEST_RETRY_LIMIT
         case .spinDistance: return castValue(value: value) // SPIN_DISTANCE
-		case .processPokemon: return true as! T
+        case .processPokemon: return true as! T
         case .processIncident: return true as! T
         case .autoPokemonUseLastSeenTime: return castValue(value: value) // AUTO_POKEMON_USE_LASTSEEN
         case .autoPokemonRequeryFrequency: return castValue(value: value) // AUTO_POKEMON_REQUERY_FREQUENCY
