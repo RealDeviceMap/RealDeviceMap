@@ -35,17 +35,15 @@ internal extension HTTPRequest {
         if WebHookRequestHandler.rawForwardUrl.isEmpty {
             return
         }
-        Task {
-            let request = CURLRequest(
-                WebHookRequestHandler.rawForwardUrl,
-                .httpMethod(.post),
-                .postData(self.postBodyBytes!),
-                .addHeader(.contentType, "application/json"),
-                .addHeader(.accept, "application/json"),
-                .addHeader(.cacheControl, "no-cache"),
-                .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
-            )
-            request.perform { (_) in }
-        }
+        let request = CURLRequest(
+            WebHookRequestHandler.rawForwardUrl,
+            .httpMethod(.post),
+            .postData(self.postBodyBytes!),
+            .addHeader(.contentType, "application/json"),
+            .addHeader(.accept, "application/json"),
+            .addHeader(.cacheControl, "no-cache"),
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+        )
+        request.perform { (_) in }
     }
 }
