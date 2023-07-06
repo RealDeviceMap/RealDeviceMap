@@ -42,11 +42,9 @@ internal extension HTTPRequest {
             .addHeader(.contentType, "application/json"),
             .addHeader(.accept, "application/json"),
             .addHeader(.cacheControl, "no-cache"),
+            .addHeader(.authorization, "Bearer " + WebHookRequestHandler.rawForwardBearer),
             .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
         )
-        if !WebHookRequestHandler.rawForwardBearer.isEmpty {
-            request.addHeader(.authorization, value: "Bearer " + WebHookRequestHandler.rawForwardBearer)
-        }
         request.perform { (_) in }
     }
 }
