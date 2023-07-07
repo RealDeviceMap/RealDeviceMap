@@ -42,7 +42,7 @@ RUN swift build -c release -Xswiftc -g
 # ================================
 # Run image
 # ================================
-FROM swift:5.4-focal
+FROM swift:5.4-focal-slim
 WORKDIR /app
 
 # Perfect-COpenSSL
