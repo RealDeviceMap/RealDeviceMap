@@ -398,7 +398,13 @@ class AutoInstanceController: InstanceControllerProto {
             var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude,
                                                                     lon: defaultLongitude), spawnSeconds: 0)
             
-            if !hasOverRan {
+            if hasOverRan {
+                // too many devices on instance, going to overrun,
+                // so pick a random coord to stall for time
+                let randomIdx = Int.random(in: 0..<pokemonCoords.count)
+                currentCoord = pokemonCoords[randomIdx]
+            } else {
+                // normal operation
                 if pokemonCoords.indices.contains(newLocIndex) {
                     currentDevicesMaxLocation = newLocIndex
                     currentCoord = pokemonCoords[newLocIndex]
@@ -1177,10 +1183,8 @@ class AutoInstanceController: InstanceControllerProto {
         firstRun = false
 
         pokemonCache!.set(id: self.name, value: 1)
-        
-        // rationality check for default coords of 0,0
-        // this is to avoid empty GMO if sent to 0,0
-        if pokemonCoords.indices.contains(0) {
+
+        if pokemonCoords.count > 0 {
             if defaultLatitude == 0.0 && defaultLongitude == 0.0 {
                 defaultLatitude = pokemonCoords[0].coord.lat
                 defaultLongitude = pokemonCoords[0].coord.lon
@@ -1304,6 +1308,13 @@ class AutoInstanceController: InstanceControllerProto {
         firstRun = false
 
         tthCache!.set(id: self.name, value: 1)
+
+        if tthCoords.count > 0 {
+            if defaultLatitude == 0.0 && defaultLongitude == 0.0 {
+                defaultLatitude = tthCoords[0].lat
+                defaultLongitude = tthCoords[0].lon
+            }
+        }
 
         // done messing with location array, so unlock it
         tthDbLock.unlock()
