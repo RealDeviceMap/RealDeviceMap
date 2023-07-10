@@ -134,8 +134,8 @@ class AutoInstanceController: InstanceControllerProto {
             autoMinSpawnTime = clamp(autoMinSpawnTime, minValue: 600, maxValue: 1740)
             autoBufferTime = clamp(autoBufferTime, minValue: 10, maxValue: 120)
             autoSleepInterval = clamp(autoSleepInterval, minValue: 1, maxValue: 5)
-            defaultLongitude = clamp(defaultLongitude, minValue: -89.99999999, maxValue: 89.99999999)
-            defaultLatitude = clamp(defaultLatitude, minValue: -179.99999999, maxValue: 179.99999999)
+            defaultLongitude = clamp(defaultLongitude, minValue: -179.99999999, maxValue: 179.99999999)
+            defaultLatitude = clamp(defaultLatitude, minValue: -89.99999999, maxValue: 89.99999999)
 
             if autoUseLastSeenTime == 0 {
                 // as set to zero, assume user meant to use all data
@@ -390,22 +390,25 @@ class AutoInstanceController: InstanceControllerProto {
             // increment location
             let locIndex: Int = currentDevicesMaxLocation
 
-            let newLocIndex = determineNextAutoPokemonLocation(curLocationIndex: locIndex)
+            let (newLocIndex, hasOverRan) = determineNextAutoPokemonLocation(curLocationIndex: locIndex)
 
             Log.debug(message: "[AutoInstanceController] getTask() - " +
                       "Instance: \(name) - oldLoc=\(locIndex) & newLoc=\(newLocIndex)/\(pokemonCoords.count / 2)")
 
             var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude,
                                                                     lon: defaultLongitude), spawnSeconds: 0)
-            if pokemonCoords.indices.contains(newLocIndex) {
-                currentDevicesMaxLocation = newLocIndex
-                currentCoord = pokemonCoords[newLocIndex]
-            } else {
-                if pokemonCoords.indices.contains(0) {
-                    currentDevicesMaxLocation = 0
-                    currentCoord = pokemonCoords[0]
+            
+            if !hasOverRan {
+                if pokemonCoords.indices.contains(newLocIndex) {
+                    currentDevicesMaxLocation = newLocIndex
+                    currentCoord = pokemonCoords[newLocIndex]
                 } else {
-                    currentDevicesMaxLocation = -1
+                    if pokemonCoords.indices.contains(0) {
+                        currentDevicesMaxLocation = 0
+                        currentCoord = pokemonCoords[0]
+                    } else {
+                        currentDevicesMaxLocation = -1
+                    }
                 }
             }
 
@@ -1174,6 +1177,15 @@ class AutoInstanceController: InstanceControllerProto {
         firstRun = false
 
         pokemonCache!.set(id: self.name, value: 1)
+        
+        // rationality check for default coords of 0,0
+        // this is to avoid empty GMO if sent to 0,0
+        if pokemonCoords.indices.contains(0) {
+            if defaultLatitude == 0.0 && defaultLongitude == 0.0 {
+                defaultLatitude = pokemonCoords[0].coord.lat
+                defaultLongitude = pokemonCoords[0].coord.lon
+            }
+        }
 
         autoPokemonDbLock.unlock()
 
@@ -1402,13 +1414,15 @@ class AutoInstanceController: InstanceControllerProto {
         return (minTime, maxTime)
     }
 
-    func determineNextAutoPokemonLocation(curLocationIndex: Int) -> Int {
+    func determineNextAutoPokemonLocation(curLocationIndex: Int) -> (Int, Bool) {
         let cntArray = pokemonCoords.count
         let cntCoords = pokemonCoords.count / 2
 
+        var hasOverRan = false
+
         if cntArray <= 0 {
             try? initAutoPokemonCoords()
-            return 0
+            return (0, false)
         }
 
         let (_, min, sec) = secondsToHoursMinutesSeconds()
@@ -1424,7 +1438,7 @@ class AutoInstanceController: InstanceControllerProto {
             lastLastCompletedTime = lastCompletedTime
             lastCompletedTime = Date()
 
-            return 0
+            return (0, hasOverRan)
         } else if locIndex < 0 {
             locIndex = 0
         }
@@ -1455,19 +1469,19 @@ class AutoInstanceController: InstanceControllerProto {
 
         // do the shit
         if (curTime >= minTime) && (curTime <= maxTime) {
-            // normal entry if things are going as designed,
-            // good to jump as to next spot
-            Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation a1 - " +
-                      "curtime between min and max, moving standard 1 forward")
-
-            // test if we are getting too close to the mintime
             if Double(curTime) < Double(minTime) + Double(autoSleepInterval) {
+                // test if we are getting too close to the mintime
                 Log.debug(message:
                     "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
-                    "pausing for \(autoSleepInterval) second(s) as too close to minTime")
+                    "sending worker to default coords as too many devices on instance")
 
-                // too close, so sleep for a few seconds
-                Threading.sleep(seconds: Double(autoSleepInterval))
+                hasOverRan = true
+                locIndex -= 1
+            } else {
+                // normal entry if things are going as designed,
+                // good to jump as to next spot
+                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation a1 - " +
+                        "curtime between min and max, moving standard 1 forward")
             }
         } else if curTime < minTime && !firstRun {
             // spawn is before legit time to visit, need to find a good one to jump to
@@ -1541,7 +1555,7 @@ class AutoInstanceController: InstanceControllerProto {
             locIndex = 0
         }
 
-        return locIndex
+        return (locIndex, hasOverRan)
     }
 
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool {
