@@ -506,7 +506,8 @@ public class Account: WebHookEvent {
     public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
                                      ignoringWarning: Bool=false, spins: Int?=1000,
                                      noCooldown: Bool=true, encounterTarget: Coord?=nil,
-                                     device: String, group: String?=nil, orderByHighestLevel: Bool=false) throws -> Account? {
+                                     device: String, group: String?=nil,
+                                     orderByHighestLevel: Bool=false) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -570,10 +571,11 @@ public class Account: WebHookEvent {
         } else {
             cooldownSQL = ""
         }
-        
+
         let orderBySql: String
         if orderByHighestLevel {
-            // For now, this will only be true on leveling instance and, We dont need to Order by lastRecentlyUsed if we are leveling.
+            // For now, this will only be true on leveling instance and,
+            // We dont need to Order by lastRecentlyUsed if we are leveling.
             orderBySql = """
             ORDER BY level DESC
             """
