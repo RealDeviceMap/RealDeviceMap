@@ -1447,10 +1447,10 @@ class AutoInstanceController: InstanceControllerProto {
             "[AutoInstanceController] determineNextPokemonLocation - minTime=\(minTime) & " +
                 "curTime=\(curTime) & maxTime=\(maxTime)")
 
-        if minTime < 0 {
+        // are we around top of the hour, ie curtime is just past zero,
+        // but still working with minTime nearing 3600 and maxtime > 3600
+        if maxTime >= 3600 && curTime < minTime {
             curTime += 3600
-            minTime += 3600
-            maxTime += 3600
         }
 
         // do the shit

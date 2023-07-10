@@ -109,7 +109,7 @@
     },
     "scanModes": {
         "auto" : {
-            "useLastSeenTime": 7200,
+            "useLastSeenTime": -1,
             "requeryFrequency": 3600,
             "minSpawnTime": 1500,
             "bufferTime": 30,
