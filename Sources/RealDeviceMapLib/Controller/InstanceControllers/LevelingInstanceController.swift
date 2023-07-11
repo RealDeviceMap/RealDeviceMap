@@ -342,7 +342,8 @@ class LevelingInstanceController: InstanceControllerProto {
             spins: nil, // 7000
             noCooldown: true,
             device: uuid,
-            group: accountGroup
+            group: accountGroup,
+            orderByHighestLevel: true
         )
     }
 
