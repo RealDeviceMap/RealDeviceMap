@@ -395,9 +395,12 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message: "[AutoInstanceController] getTask() - " +
                       "Instance: \(name) - oldLoc=\(locIndex) & newLoc=\(newLocIndex)/\(pokemonCoords.count / 2)")
 
-            var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude,
-                                                                    lon: defaultLongitude), spawnSeconds: 0)
-            
+            var currentCoord = AutoPokemonCoord(
+                id: 1,
+                coord: Coord(lat: defaultLatitude, lon: defaultLongitude),
+                spawnSeconds: 0
+            )
+
             if hasOverRan {
                 // too many devices on instance, going to overrun,
                 // so pick a random coord to stall for time
