@@ -82,6 +82,10 @@ public class ConfigLoader {
             ?? defaultConfig.database.backup.value()!
         case .rawThreadLimit: return localConfig.application.rawThreadLimit.value()
             ?? defaultConfig.application.rawThreadLimit.value()!
+        case .rawForwardUrl: return localConfig.application.rawForward.url.value()
+            ?? defaultConfig.application.rawForward.url.value()!
+        case .rawForwardBearer: return localConfig.application.rawForward.bearer.value()
+            ?? defaultConfig.application.rawForward.bearer.value()!
         case .accRequiredInDB: return localConfig.application.account.requireInDB.value()
             ?? defaultConfig.application.account.requireInDB.value()!
         case .accUseRwForQuest: return localConfig.application.account.useRwForQuest.value()
@@ -92,6 +96,8 @@ public class ConfigLoader {
             ?? defaultConfig.application.account.maxEncounters.value()!
         case .accDisablePeriod: return localConfig.application.account.disablePeriod.value()
             ?? defaultConfig.application.account.disablePeriod.value()!
+        case .accLastRecentlyUsed: return localConfig.application.account.lastRecentlyUsed.value()
+            ?? defaultConfig.application.account.lastRecentlyUsed.value()!
         case .loginLimit: return localConfig.application.loginLimit.enabled.value()
             ?? defaultConfig.application.loginLimit.enabled.value()!
         case .loginLimitCount: return localConfig.application.loginLimit.count.value()
@@ -162,6 +168,10 @@ public class ConfigLoader {
             ?? defaultConfig.application.quest.questRetryLimit.value()!
         case .spinDistance: return localConfig.application.quest.spinDistance.value()
             ?? defaultConfig.application.quest.spinDistance.value()!
+        case .processPokemon: return localConfig.application.process.pokemon.value()
+            ?? defaultConfig.application.process.pokemon.value()!
+        case .processIncident: return localConfig.application.process.incident.value()
+            ?? defaultConfig.application.process.incident.value()!
         }
     }
 
@@ -184,11 +194,14 @@ public class ConfigLoader {
         case .dbRootPassword: return value as! T
         case .dbBackup: return false as! T // NO_BACKUP
         case .rawThreadLimit: return castValue(value: value)
+        case .rawForwardUrl: return value as! T
+        case .rawForwardBearer: return value as! T
         case .accRequiredInDB: return false as! T // NO_REQUIRE_ACCOUNT
         case .accUseRwForQuest: return false as! T // USE_RW_FOR_QUEST
         case .accUseRwForRaid: return false as! T // USE_RW_FOR_RAID
         case .accMaxEncounters: return castValue(value: value)
         case .accDisablePeriod: return castValue(value: value)
+        case .accLastRecentlyUsed: return false as! T
         case .loginLimit: return false as! T
         case .loginLimitCount: return castValue(value: value)
         case .loginLimitInterval: return castValue(value: value)
@@ -224,6 +237,8 @@ public class ConfigLoader {
         case .accUseRwForPokes: return false as! T // USE_RW_FOR_POKES
         case .questRetryLimit: return castValue(value: value) // QUEST_RETRY_LIMIT
         case .spinDistance: return castValue(value: value) // SPIN_DISTANCE
+        case .processPokemon: return true as! T
+        case .processIncident: return true as! T
         }
     }
 
@@ -262,11 +277,14 @@ public class ConfigLoader {
         case dbRootPassword = "DB_ROOT_PASSWORD"
         case dbBackup = "NO_BACKUP"
         case rawThreadLimit = "RAW_THREAD_LIMIT"
+        case rawForwardUrl = "RAW_FORWARD_URL" // not used in env
+        case rawForwardBearer = "RAW_FORWARD_BEARER" // not used in env
         case accRequiredInDB = "NO_REQUIRE_ACCOUNT"
         case accUseRwForQuest = "USE_RW_FOR_QUEST"
         case accUseRwForRaid = "USE_RW_FOR_RAID"
         case accMaxEncounters = "ACC_MAX_ENCOUNTERS"
         case accDisablePeriod = "ACC_DISABLE_PERIOD"
+        case accLastRecentlyUsed = "ACC_LAST_RECENTLY_USED" // not used in env
         case loginLimit = "LOGIN_LIMIT" // not used in env
         case loginLimitCount = "LOGINLIMIT_COUNT"
         case loginLimitInterval = "LOGINLIMIT_INTERVALL"
@@ -302,6 +320,8 @@ public class ConfigLoader {
         case accUseRwForPokes = "USE_RW_FOR_POKES"
         case questRetryLimit = "QUEST_RETRY_LIMIT"
         case spinDistance = "SPIN_DISTANCE"
+        case processPokemon = "PROCESS_POKEMON" // not used in env
+        case processIncident = "PROCESS_INCIDENT" // not used in env
     }
 
 }

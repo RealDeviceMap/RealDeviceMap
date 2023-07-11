@@ -20,7 +20,9 @@ public class Account: WebHookEvent {
 
     static let suspendedPeriod: UInt32 = 2592000
     static let warnedPeriod: UInt32 = 604800
-    static var disablePeriod: UInt32 = (ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int).toUInt32()
+    static var disablePeriod: UInt32 = 86400
+
+    static var lastRecentlyUsed: Bool = true
 
     func getWebhookValues(type: String) -> [String: Any] {
 
@@ -504,7 +506,8 @@ public class Account: WebHookEvent {
     public static func getNewAccount(mysql: MySQL?=nil, minLevel: UInt8, maxLevel: UInt8,
                                      ignoringWarning: Bool=false, spins: Int?=1000,
                                      noCooldown: Bool=true, encounterTarget: Coord?=nil,
-                                     device: String, group: String?=nil) throws -> Account? {
+                                     device: String, group: String?=nil,
+                                     orderByHighestLevel: Bool=false) throws -> Account? {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[ACCOUNT] Failed to connect to database.")
@@ -569,6 +572,19 @@ public class Account: WebHookEvent {
             cooldownSQL = ""
         }
 
+        let orderBySql: String
+        if orderByHighestLevel {
+            // For now, this will only be true on leveling instance and,
+            // We dont need to Order by lastRecentlyUsed if we are leveling.
+            orderBySql = """
+            ORDER BY level DESC
+            """
+        } else {
+            orderBySql = """
+            ORDER BY last_used_timestamp \(Account.lastRecentlyUsed ? "DESC" : "ASC")
+            """
+        }
+
         Account.lockoutLock.lock()
         defer { Account.lockoutLock.unlock() }
 
@@ -609,7 +625,7 @@ public class Account: WebHookEvent {
                 \(spinSQL)
                 \(cooldownSQL)
                 \(lockoutSQL)
-            ORDER BY level DESC, last_used_timestamp DESC
+                \(orderBySql)
             LIMIT 1
         """
 

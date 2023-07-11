@@ -39,13 +39,18 @@
   },
   "application": {
     "rawThreadLimit": 100,
+    "rawForward": {
+      "url": "",
+      "bearer": ""
+    },
     "account": {
       "requireInDB": true,
       "useRwForQuest": false,
       "useRwForRaid": false,
       "useRwForPokes": false,
       "maxEncounters": 0,
-      "disablePeriod": 86400
+      "disablePeriod": 86400,
+      "lastRecentlyUsed": false
     },
     "loginLimit": {
       "enabled": false,
@@ -102,6 +107,10 @@
         "questRetryLimit": 10,
         "spinDistance": 80
     },
-    "stopAllBootstrapping": false
+    "stopAllBootstrapping": false,
+    "process": {
+      "pokemon": true,
+      "incident": true
+    }
   }
 }

@@ -50,17 +50,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Database Controller")
     _ = DBController.global
 
-    let accMaxEncounters: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
-    if accMaxEncounters > 0 {
-        Log.info(message: "[MAIN] Account switching after \(accMaxEncounters) encounters enabled.")
-        do {
-            // to keep track of the right count all previously used accounts has to be disabled on startup
-            try Account.setDisabledOnUsed()
-        } catch {
-            Log.warning(message: "[MAIN] Failed to disable used accounts on startup.")
-        }
-    }
-
     // Init MemoryCache
     let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
     let memoryCacheClearInterval = (ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int).toDouble()
@@ -231,6 +220,8 @@ public func setupRealDeviceMap() {
     Pokemon.timingStatsEnabled = ConfigLoader.global.getConfig(type: .statsPokemonTimingEnabled)
     InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
     InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
+    Account.disablePeriod = UInt32(exactly: ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!
+    Account.lastRecentlyUsed = ConfigLoader.global.getConfig(type: .accLastRecentlyUsed)
 
     if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
@@ -273,6 +264,20 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Spin distance: \(spinDistance)")
     let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
     Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
+    Log.info(message: "[Main] Accounts are used in last recently used order: \(Account.lastRecentlyUsed)")
+
+    Log.info(message: "[MAIN] Account Disable Period (BSOD) set to: \(Account.disablePeriod / 3600)h")
+    if WebHookRequestHandler.maxEncounter > 0 {
+        Log.info(message: "[MAIN] Account switching after \(WebHookRequestHandler.maxEncounter) encounters enabled.")
+        do {
+            // to keep track of the right count all previously used accounts has to be disabled on startup
+            try Account.setDisabledOnUsed()
+        } catch {
+            Log.warning(message: "[MAIN] Failed to disable used accounts on startup.")
+        }
+    } else {
+        Log.info(message: "[MAIN] Account switching after a certain limit of encounters disabled.")
+    }
 
     // Load Icon styles
     Log.info(message: "[MAIN] Load Icon Styles")

@@ -34,6 +34,9 @@ public class WebHookRequestHandler {
     private static let emptyCellsLock = Threading.Lock()
     private static var emptyCells = [UInt64: Int]()
 
+    static let rawForwardUrl: String = ConfigLoader.global.getConfig(type: .rawForwardUrl)
+    static let rawForwardBearer: String = ConfigLoader.global.getConfig(type: .rawForwardBearer)
+
     static let threadLimitMax = UInt32(exactly: ConfigLoader.global.getConfig(type: .rawThreadLimit) as Int)!
     private static let threadLimitLock = Threading.Lock()
     private static var threadLimitCount: UInt32 = 0
@@ -53,7 +56,7 @@ public class WebHookRequestHandler {
 
     private static let encounterLock = Threading.Lock()
     private static var encounterCount = [String: Int]()
-    private static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
+    static let maxEncounter: Int = ConfigLoader.global.getConfig(type: .accMaxEncounters)
 
     private static let questArTargetMap = TimedMap<String, Bool>(length: 100)
     private static let questArActualMap = TimedMap<String, Bool>(length: 100)
@@ -113,6 +116,8 @@ public class WebHookRequestHandler {
     }
 
     static func rawHandler(request: HTTPRequest, response: HTTPResponse, host: String) {
+
+        request.forwardRawRequest()
 
         let json: [String: Any]
         let isMadData = request.header(.origin) != nil
@@ -579,6 +584,14 @@ public class WebHookRequestHandler {
             response.respondWithError(status: .internalServerError)
         }
 
+        if let processPokemon: Bool = ConfigLoader.global.getConfig(type: .processPokemon), !processPokemon {
+            wildPokemons.removeAll()
+            nearbyPokemons.removeAll()
+            mapPokemons.removeAll()
+            encounters.removeAll()
+            diskEncounters.removeAll()
+        }
+
         if username != nil && maxEncounter > 0 {
             encounterLock.doWithLock {
                 let value = (encounterCount[username!] ?? 0) + encounters.count + encountersBelowLevelThirty
@@ -751,6 +764,7 @@ public class WebHookRequestHandler {
                 )
             }
 
+            let processIncident: Bool = ConfigLoader.global.getConfig(type: .processIncident)
             let startForts = Date()
             for fort in forts {
                 if fort.data.fortType == .gym {
@@ -769,7 +783,9 @@ public class WebHookRequestHandler {
                         ?? Pokestop()
                     pokestop.updateFromFort(fortData: fort.data, cellId: fort.cell)
                     try? pokestop.save(mysql: mysql)
-                    pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
+                    if processIncident {
+                        pokestop.incidents.forEach({ incident in try? incident.save(mysql: mysql) })
+                    }
                     if stopsIdsPerCell[fort.cell] == nil {
                         stopsIdsPerCell[fort.cell] = [String]()
                     }
@@ -1226,6 +1242,7 @@ public class WebHookRequestHandler {
                 }
 
                 try Account.setDisabled(mysql: mysql, username: username)
+                encounterLock.doWithLock { encounterCount.removeValue(forKey: username) }
                 guard let controller = InstanceController.global.getInstanceController(deviceUUID: uuid) else {
                     response.respondWithError(status: .internalServerError)
                     return
