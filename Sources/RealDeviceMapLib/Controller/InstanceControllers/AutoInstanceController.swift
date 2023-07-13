@@ -330,8 +330,10 @@ class AutoInstanceController: InstanceControllerProto {
     private func update() {
         switch type {
         case .pokemon:
+            pokemonCache!.set(id: self.name, value: 1)
             try? initAutoPokemonCoords()
         case .tth:
+            tthCache!.set(id: self.name, value: 1)
             try? initTthCoords()
         case .quest:
             stopsLock.lock()
@@ -379,6 +381,7 @@ class AutoInstanceController: InstanceControllerProto {
         case .pokemon:
             let hit = pokemonCache!.get(id: self.name) ?? 0
             if hit == 0 {
+                pokemonCache!.set(id: self.name, value: 1)
                 try? initAutoPokemonCoords()
             }
 
@@ -400,8 +403,12 @@ class AutoInstanceController: InstanceControllerProto {
             
             if hasOverRan {
                 // too many devices on instance, going to overrun,
-                // so pick a random coord to stall for time
-                let randomIdx = Int.random(in: 0..<pokemonCoords.count)
+                // send to a prior coord to stall for time
+                var randomIdx = newLocIndex - Int.random(in: 0..<20)
+                if randomIdx < 0 {
+                    randomIdx += pokemonCoords.count / 2
+                }
+
                 currentCoord = pokemonCoords[randomIdx]
             } else {
                 // normal operation
@@ -446,8 +453,11 @@ class AutoInstanceController: InstanceControllerProto {
             if hit == 0 && firstRun {
                 // not run before, so must get some coords to start
                 // don't run as async as we will just grab unclustered coords on first run to get thing moving
+                tthCache!.set(id: self.name, value: 1)
                 try? initTthCoords()
             } else if hit == 0 {
+                tthCache!.set(id: self.name, value: 1)
+
                 // run async.  intent is to fire off the clustering,
                 //  but keep running on old coords until we get data back from koji
                 DispatchQueue.global(qos: .background).async {
@@ -1167,7 +1177,6 @@ class AutoInstanceController: InstanceControllerProto {
         pokemonCoords.removeAll()
         pokemonCoords.reserveCapacity(2 * tmpCoords.count)
 
-        // sort the array, so 0-3600 sec in order
         pokemonCoords = tmpCoords
 
         // take lazy man's approach, probably not ideal
@@ -1180,9 +1189,12 @@ class AutoInstanceController: InstanceControllerProto {
         // set to start, algorithm will iterate to find right spot to start work
         currentDevicesMaxLocation = -1
 
-        firstRun = false
+        // sort the times in array, necessary as added in 60min spawns to v2
+        pokemonCoords.sort {
+            $0.spawnSeconds < $1.spawnSeconds
+        }
 
-        pokemonCache!.set(id: self.name, value: 1)
+        firstRun = false
 
         if pokemonCoords.count > 0 {
             if defaultLatitude == 0.0 && defaultLongitude == 0.0 {
@@ -1432,6 +1444,7 @@ class AutoInstanceController: InstanceControllerProto {
         var hasOverRan = false
 
         if cntArray <= 0 {
+            pokemonCache!.set(id: self.name, value: 1)
             try? initAutoPokemonCoords()
             return (0, false)
         }
@@ -1468,14 +1481,25 @@ class AutoInstanceController: InstanceControllerProto {
         var spawnSeconds: UInt16 = nextCoord.spawnSeconds
 
         var (minTime, maxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+        if maxTime > 3599 && curTime < minTime {
+            curTime += 3600
+
+            if (curTime >= minTime) && (curTime <= maxTime) {
+                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() z1")
+            }
+        }
+        
         Log.debug(message:
             "[AutoInstanceController] determineNextPokemonLocation - minTime=\(minTime) & " +
                 "curTime=\(curTime) & maxTime=\(maxTime)")
 
-        // are we around top of the hour, ie curtime is just past zero,
-        // but still working with minTime nearing 3600 and maxtime > 3600
-        if maxTime >= 3600 && curTime < minTime {
+        // are we around the top of the hosue
+        if maxTime > 3599 && curTime < minTime {
             curTime += 3600
+
+            if (curTime >= minTime) && (curTime <= maxTime) {
+                Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() z1")
+            }
         }
 
         // do the shit
@@ -1484,7 +1508,7 @@ class AutoInstanceController: InstanceControllerProto {
                 // test if we are getting too close to the mintime
                 Log.debug(message:
                     "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
-                    "sending worker to default coords as too many devices on instance")
+                    "sending worker to random coords as too many devices on instance")
 
                 hasOverRan = true
                 locIndex -= 1
@@ -1497,26 +1521,30 @@ class AutoInstanceController: InstanceControllerProto {
         } else if curTime < minTime && !firstRun {
             // spawn is before legit time to visit, need to find a good one to jump to
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
-                "curTime \(curTime) > maxTime, iterate")
+                "curTime \(curTime) < minTime \(minTime), iterate")
 
             for idx in 0..<cntArray {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
                 var (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
-                if mnTime < 0 {
-                    mnTime += 3600
-                    mxTime += 3600
-                    originalTime += 3600
-                }
 
                 if  (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b2 - " +
-                        "mnTime=\(mnTime) & curTime=\(originalTime) & mxTime=\(mxTime)")
+                        "mnTime=\(mnTime) & originalTime=\(originalTime) & mxTime=\(mxTime)")
 
                     locIndex = idx
                     break
                 }
+                /*
+                if  (workingTime >= mnTime + 10) && (workingTime <= mxTime - 30) {
+                    Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b3 - " +
+                        "mnTime=\(mnTime) & workingTime=\(workingTime) & mxTime=\(mxTime)")
+
+                    locIndex = idx
+                    break
+                }
+                */
             }
         } else if curTime < minTime && firstRun {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() c1 - sleeping 10sec")
@@ -1528,20 +1556,16 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d1 - " +
                 "curTime=\(curTime) > maxTime=\(maxTime), iterate.  Devices falling behind, consider more devices!")
 
-            for idx in 0..<cntArray {
+            for idx in (0..<cntArray).reversed() {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
                 var (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
-                if mnTime < 0 {
-                    mnTime += 3600
-                    mxTime += 3600
-                    originalTime += 3600
-                }
-
+                
                 if (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 -  " +
-                        "mnTime=\(mnTime) & curTime=\(originalTime) & mxTime=\(mxTime)")
+                        "mnTime=\(mnTime) & originalTime=\(originalTime) & mxTime=\(mxTime). " +
+                        "resetting to new working time window")
                     locIndex = idx
                     break
                 }
