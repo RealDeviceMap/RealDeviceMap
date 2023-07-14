@@ -154,7 +154,8 @@ class AutoInstanceController: InstanceControllerProto {
                                        keepTime: Double(autoRequeryFrequency), extendTtlOnHit: false)
 
             return
-        } else if type == .tth {
+        }
+        if type == .tth {
             // sensibility checks for user values for mode config
             tthClusteringRadius = clamp(tthClusteringRadius, minValue: 10, maxValue: 100)
             tthHopTime = clamp(tthHopTime, minValue: 0.0, maxValue: 60.0)
@@ -169,14 +170,11 @@ class AutoInstanceController: InstanceControllerProto {
 
             // attempt to verify koji url is actually valid
             let koji = Koji()
-            if tthClusteringUsesKoji && !koji.hasValidUrl() {
-                if !koji.hasValidUrl() {
+            if tthClusteringUsesKoji && !koji.hasValidUrl {
                     tthClusteringUsesKoji = false
                     Log.error(message: "[AutoInstanceController] Init() - " +
-                              "Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
-                }
-             }
-
+                        "Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
+            }
             return
         }
 
@@ -247,10 +245,8 @@ class AutoInstanceController: InstanceControllerProto {
                         self.update()
                     }
                 }
-
             }
         }
-
     }
 
     private func bootstrap() throws {
@@ -400,7 +396,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             var currentCoord = AutoPokemonCoord(id: 1, coord: Coord(lat: defaultLatitude,
                                                                     lon: defaultLongitude), spawnSeconds: 0)
-            
+
             if hasOverRan {
                 // too many devices on instance, going to overrun,
                 // send to a prior coord to stall for time
@@ -1488,7 +1484,7 @@ class AutoInstanceController: InstanceControllerProto {
                 Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() z1")
             }
         }
-        
+
         Log.debug(message:
             "[AutoInstanceController] determineNextPokemonLocation - minTime=\(minTime) & " +
                 "curTime=\(curTime) & maxTime=\(maxTime)")
@@ -1561,7 +1557,7 @@ class AutoInstanceController: InstanceControllerProto {
                 spawnSeconds = nextCoord.spawnSeconds
 
                 var (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
-                
+
                 if (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 -  " +
                         "mnTime=\(mnTime) & originalTime=\(originalTime) & mxTime=\(mxTime). " +
