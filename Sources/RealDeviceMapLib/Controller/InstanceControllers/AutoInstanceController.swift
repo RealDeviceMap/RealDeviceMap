@@ -404,7 +404,7 @@ class AutoInstanceController: InstanceControllerProto {
             if hasOverRan {
                 // too many devices on instance, going to overrun,
                 // send to a prior coord to stall for time
-                var randomIdx = newLocIndex - Int.random(in: 0..<20)
+                var randomIdx = newLocIndex - Int.random(in: 0..<50)
                 if randomIdx < 0 {
                     randomIdx += pokemonCoords.count / 2
                 }
