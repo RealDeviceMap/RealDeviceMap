@@ -108,6 +108,10 @@ class AutoInstanceController: InstanceControllerProto {
     var pokemonCache: MemoryCache<Int>?
     var tthCache: MemoryCache<Int>?
     var tthDevices: MemoryCache<Int>?
+    var autoCountTooFast: Int = 0
+    var autoCountTooSlow: Int = 0
+    var autoSkippedCount: Int = 0
+    var autoFirstPass: Bool = true
 
     init(name: String, multiPolygon: MultiPolygon, type: AutoType, minLevel: UInt8, maxLevel: UInt8,
          spinLimit: Int = 1000, delayLogout: Int = 900, timezoneOffset: Int = 0, questMode: QuestMode = .normal,
@@ -170,7 +174,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             // attempt to verify koji url is actually valid
             let koji = Koji()
-            if tthClusteringUsesKoji && !koji.hasValidUrl {
+            if tthClusteringUsesKoji && !koji.hasValidUrl() {
                     tthClusteringUsesKoji = false
                     Log.error(message: "[AutoInstanceController] Init() - " +
                         "Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
@@ -949,9 +953,13 @@ class AutoInstanceController: InstanceControllerProto {
             let cnt = self.pokemonCoords.count/2
 
             if formatted {
-                return "Coord Count: \(cnt)"
+                return """
+                    Coord Count: \(cnt)</br>
+                    Coord Resets (fast/slow): \(autoCountTooFast)x / \(autoCountTooSlow)x (\(autoSkippedCount)skipped)
+                """
             } else {
-                return ["coord_count": cnt]
+                return ["coord_count": cnt, "reset_too_fast": autoCountTooFast,
+                    "reset_too_slow": autoCountTooSlow, "skipped_count": autoSkippedCount]
             }
         case .tth:
             var changeCluster = tthCoords.count - lastTthCountUnknown
@@ -975,53 +983,53 @@ class AutoInstanceController: InstanceControllerProto {
                 if changeCluster > 0 {
                     if changeRaw > 0 {
                         return """
-                        <span title=\"Current count and change in count from last query\">
-                        Using Koji: \(tthClusteringUsesKoji)</br>
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
-                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
-                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
-                        </span>
+                            <span title=\"Current count and change in count from last query\">
+                            Using Koji: \(tthClusteringUsesKoji)</br>
+                            Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
+                            Delta: \(changeCluster) / \(changeRaw)</br>
+                            Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
+                            \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                            </span>
                         """
                     } else {
                         return """
-                        <span title=\"Current count and change in count from last query\">
-                        Using Koji: \(tthClusteringUsesKoji)</br>
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
-                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
-                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
-                        </span>
+                            <span title=\"Current count and change in count from last query\">
+                            Using Koji: \(tthClusteringUsesKoji)</br>
+                            Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
+                            Delta: \(changeCluster) / \(changeRaw)</br>
+                            Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
+                            \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                            </span>
                         """
                     }
                 } else {
                     if changeRaw > 0 {
                         return """
-                        <span title=\"Current count and change in count from last query\">
-                        Using Koji: \(tthClusteringUsesKoji)</br>
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
-                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
-                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
-                        </span>
+                            <span title=\"Current count and change in count from last query\">
+                            Using Koji: \(tthClusteringUsesKoji)</br>
+                            Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
+                            Delta: \(changeCluster) / \(changeRaw)</br>
+                            Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
+                            \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                            </span>
                         """
                     } else {
                         return """
-                        <span title=\"Current count and change in count from last query\">
-                        Using Koji: \(tthClusteringUsesKoji)</br>
-                        Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
-                        Delta: \(changeCluster) / \(changeRaw)</br>
-                        Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) / " +
-                         "\(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                        Performance (clusters visited / devices / avg time): \(tthClusterVisits) / " +
-                         "\(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
-                        </span>
+                            <span title=\"Current count and change in count from last query\">
+                            Using Koji: \(tthClusteringUsesKoji)</br>
+                            Count (clusters/raw): \(self.tthCoords.count) / \(self.currentTthRawPointsCount)</br>
+                            Delta: \(changeCluster) / \(changeRaw)</br>
+                            Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
+                            \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
+                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
+                            </span>
                         """
                     }
                 }
@@ -1082,6 +1090,12 @@ class AutoInstanceController: InstanceControllerProto {
             Log.error(message: "[AutoInstanceController] initAutoPokemonCoords() - Failed to connect to database.")
             return
         }
+
+        // reset status variables
+        autoCountTooFast = 0
+        autoCountTooSlow = 0
+        autoSkippedCount = 0
+        autoFirstPass = true
 
         var tmpCoords: [AutoPokemonCoord] = [AutoPokemonCoord]()
 
@@ -1506,6 +1520,10 @@ class AutoInstanceController: InstanceControllerProto {
                     "[AutoInstanceController] determineNextPokemonLocation() a2 - " +
                     "sending worker to random coords as too many devices on instance")
 
+                if !autoFirstPass {
+                    autoCountTooFast += 1
+                }
+
                 hasOverRan = true
                 locIndex -= 1
             } else {
@@ -1518,6 +1536,10 @@ class AutoInstanceController: InstanceControllerProto {
             // spawn is before legit time to visit, need to find a good one to jump to
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b1 - " +
                 "curTime \(curTime) < minTime \(minTime), iterate")
+
+            if !autoFirstPass {
+                autoCountTooFast += 1
+            }
 
             for idx in 0..<cntArray {
                 nextCoord = pokemonCoords[idx]
@@ -1552,6 +1574,8 @@ class AutoInstanceController: InstanceControllerProto {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d1 - " +
                 "curTime=\(curTime) > maxTime=\(maxTime), iterate.  Devices falling behind, consider more devices!")
 
+            let originalIdx = curLocationIndex
+
             for idx in (0..<cntArray).reversed() {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
@@ -1565,6 +1589,11 @@ class AutoInstanceController: InstanceControllerProto {
                     locIndex = idx
                     break
                 }
+            }
+
+            if !autoFirstPass {
+                autoCountTooSlow += 1
+                autoSkippedCount += abs(locIndex-originalIdx)
             }
         } else {
             Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() e1 - " +
@@ -1585,6 +1614,8 @@ class AutoInstanceController: InstanceControllerProto {
         } else if locIndex < 0 { // we before first point
             locIndex = 0
         }
+
+        autoFirstPass = false
 
         return (locIndex, hasOverRan)
     }
