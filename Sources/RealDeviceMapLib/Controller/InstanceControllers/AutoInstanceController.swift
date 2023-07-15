@@ -170,7 +170,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             // attempt to verify koji url is actually valid
             let koji = Koji()
-            if tthClusteringUsesKoji && !koji.hasValidUrl {
+            if tthClusteringUsesKoji && !koji.hasValidUrl() {
                     tthClusteringUsesKoji = false
                     Log.error(message: "[AutoInstanceController] Init() - " +
                         "Unable to utilize Koji for clustering as it is not a valid URL=\(koji.getUrl())")
