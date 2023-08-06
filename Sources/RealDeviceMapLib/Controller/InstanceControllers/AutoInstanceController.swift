@@ -104,10 +104,10 @@ class AutoInstanceController: InstanceControllerProto {
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
     var firstRun: Bool = true
-    var tthClusterVisits: Int = 0
+    internal static var tthClusterVisits: Int = 0
     var pokemonCache: MemoryCache<Int>?
     var tthCache: MemoryCache<Int>?
-    var tthDevices: MemoryCache<Int>?
+    internal static var tthDevices: MemoryCache<Int>?
     var autoCountTooFast: Int = 0
     var autoCountTooSlow: Int = 0
     var autoSkippedCount: Int = 0
@@ -167,7 +167,7 @@ class AutoInstanceController: InstanceControllerProto {
             tthDeviceTimeout = clamp(tthDeviceTimeout, minValue: 30, maxValue: 3600)
 
             // setup cache(s) we need for this mode, leave the others as nil
-            tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4,
+            AutoInstanceController.tthDevices = MemoryCache(interval: Double(tthDeviceTimeout) / 4,
                                      keepTime: Double(tthDeviceTimeout), extendTtlOnHit: true)
             tthCache = MemoryCache(interval: Double(tthRequeryFrequency) / 4,
                                    keepTime: Double(tthRequeryFrequency), extendTtlOnHit: false)
@@ -382,7 +382,10 @@ class AutoInstanceController: InstanceControllerProto {
             let hit = pokemonCache!.get(id: self.name) ?? 0
             if hit == 0 {
                 pokemonCache!.set(id: self.name, value: 1)
-                try? initAutoPokemonCoords()
+                
+                DispatchQueue.global(qos: .background).async {
+                    try? self.initAutoPokemonCoords()
+                }
             }
 
             // wait for changes to data after requery of db, as do not want to ask it during update ops
@@ -447,7 +450,7 @@ class AutoInstanceController: InstanceControllerProto {
             tthLock.lock()
 
             // update cache for active devices
-            tthDevices?.set(id: uuid, value: 1)
+            AutoInstanceController.tthDevices?.set(id: uuid, value: 1)
 
             let hit = tthCache!.get(id: self.name) ?? 0
             if hit == 0 && firstRun {
@@ -468,7 +471,7 @@ class AutoInstanceController: InstanceControllerProto {
             // test for behavior if hoptime is set
             if tthHopTime > 0.0 {
                 let possibleHopsInRequeryFrequency =
-                    Int( Double((tthDevices?.keyCount())!) * Double(tthRequeryFrequency) / tthHopTime )
+                    Int( Double((AutoInstanceController.tthDevices?.keyCount())!) * Double(tthRequeryFrequency) / tthHopTime )
 
                 if currentDevicesMaxLocation > possibleHopsInRequeryFrequency {
                     currentDevicesMaxLocation = -1
@@ -500,6 +503,8 @@ class AutoInstanceController: InstanceControllerProto {
                     currentDevicesMaxLocation = -1
                 }
             }
+
+            AutoInstanceController.tthClusterVisits += 1
 
             tthLock.unlock()
             tthDbLock.unlock()
@@ -971,13 +976,13 @@ class AutoInstanceController: InstanceControllerProto {
             if changeRaw == currentTthRawPointsCount {
                 changeRaw = 0
             }
+            
+            let deviceCount = devicesOnInstance()
 
             var avgVisitTime: Double = 0.0
-            if tthClusterVisits != 0 {
-                avgVisitTime = Double(self.tthRequeryFrequency) / Double(tthClusterVisits)
+            if AutoInstanceController.tthClusterVisits != 0 {
+                avgVisitTime = Double(deviceCount) * Double(self.tthRequeryFrequency) / Double(AutoInstanceController.tthClusterVisits)
             }
-
-            let deviceCount = devicesOnInstance()
 
             if formatted {
                 if changeCluster > 0 {
@@ -989,7 +994,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Delta: \(changeCluster) / \(changeRaw)</br>
                             Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
                             \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            Performance (clusters visited / devices / avg time): \(AutoInstanceController.tthClusterVisits) /
                             \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                             </span>
                         """
@@ -1001,7 +1006,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Delta: \(changeCluster) / \(changeRaw)</br>
                             Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
                             \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            Performance (clusters visited / devices / avg time): \(AutoInstanceController.tthClusterVisits) /
                             \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                             </span>
                         """
@@ -1015,7 +1020,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Delta: \(changeCluster) / \(changeRaw)</br>
                             Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
                             \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            Performance (clusters visited / devices / avg time): \(AutoInstanceController.tthClusterVisits) /
                             \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                             </span>
                         """
@@ -1027,7 +1032,7 @@ class AutoInstanceController: InstanceControllerProto {
                             Delta: \(changeCluster) / \(changeRaw)</br>
                             Clustering Date (max cluster size / time): \(self.lastMaxClusterSize) /
                             \(self.tthCluseringTime.rounded(decimals: 2))sec</br>
-                            Performance (clusters visited / devices / avg time): \(tthClusterVisits) /
+                            Performance (clusters visited / devices / avg time): \(AutoInstanceController.tthClusterVisits) /
                             \(deviceCount) / \(avgVisitTime.rounded(decimals: 2))sec
                             </span>
                         """
@@ -1324,7 +1329,7 @@ class AutoInstanceController: InstanceControllerProto {
             tthCoords = poorBoyClusteringUsingGeohash(dataPoints: tmpCoords, geohashPrecision: precision)
         }
 
-        tthClusterVisits = currentDevicesMaxLocation
+        AutoInstanceController.tthClusterVisits = 0
         currentDevicesMaxLocation = -1
 
         firstRun = false
@@ -1338,6 +1343,9 @@ class AutoInstanceController: InstanceControllerProto {
             }
         }
 
+        // hit the cache so that get full period of data for refresh
+        tthCache!.set(id: self.name, value: 1)
+
         // done messing with location array, so unlock it
         tthDbLock.unlock()
 
@@ -1345,8 +1353,8 @@ class AutoInstanceController: InstanceControllerProto {
     }
 
     func devicesOnInstance() -> UInt16 {
-        var cnt = tthDevices?.keyCount() ?? 1
-        cnt  = min(1, cnt)  // really shouldn't be capable of happening
+        var cnt = AutoInstanceController.tthDevices?.keyCount() ?? 1
+        cnt  = max(1, cnt)  // really shouldn't be capable of happening
 
         return UInt16(cnt)
     }
@@ -1461,7 +1469,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         let (_, min, sec) = secondsToHoursMinutesSeconds()
         var curTime: UInt64 = min*60 + sec
-        var originalTime = curTime
+        let originalTime = curTime
 
         // increment position
         var locIndex = curLocationIndex + 1
@@ -1490,7 +1498,7 @@ class AutoInstanceController: InstanceControllerProto {
 
         var spawnSeconds: UInt16 = nextCoord.spawnSeconds
 
-        var (minTime, maxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+        let (minTime, maxTime) = offsetsForSpawnTimer(time: spawnSeconds)
         if maxTime > 3599 && curTime < minTime {
             curTime += 3600
 
@@ -1545,7 +1553,7 @@ class AutoInstanceController: InstanceControllerProto {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
-                var (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+                let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                 if  (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() b2 - " +
@@ -1580,7 +1588,7 @@ class AutoInstanceController: InstanceControllerProto {
                 nextCoord = pokemonCoords[idx]
                 spawnSeconds = nextCoord.spawnSeconds
 
-                var (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
+                let (mnTime, mxTime) = offsetsForSpawnTimer(time: spawnSeconds)
 
                 if (originalTime >= mnTime + 10) && (originalTime <= mxTime - 30) {
                     Log.debug(message: "[AutoInstanceController] determineNextPokemonLocation() d2 -  " +

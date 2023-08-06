@@ -49,6 +49,7 @@ public class Koji {
         var fast: Bool
         var onlyUnique: Bool
         var dataPoints: [Coord]
+        var clusterMode: String
 
         enum CodingKeys: String, CodingKey {
             case radius
@@ -59,6 +60,7 @@ public class Koji {
             case fast
             case onlyUnique = "only_unique"
             case dataPoints = "data_points"
+            case clusterMode = "cluster_mode"
         }
     }
 
@@ -67,7 +69,8 @@ public class Koji {
         case random, geoHash, clusterCount
 
         public func asText() -> String {
-            return String(self.rawValue)
+            // need to capitalize stuff properly for koji
+            return String(self.rawValue.prefix(1).capitalized + self.rawValue.dropFirst())
         }
     }
 
@@ -76,7 +79,7 @@ public class Koji {
         case singleArray, multiArray, `struct`, text, altText
 
         public func asText() -> String {
-            return String(self.rawValue)
+            return String(self.rawValue.prefix(1).capitalized + self.rawValue.dropFirst())
         }
     }
 
@@ -130,6 +133,7 @@ public class Koji {
                                       minPoints: Int = 1, benchmarkMode: Bool = false, fast: Bool = true,
                                       sortBy: String = Sorting.clusterCount.asText(),
                                       returnType: String = ReturnType.singleArray.asText(), onlyUnique: Bool = true,
+                                      clusterMode: String = "Balanced",
                                       timeout: Int = 60) -> Koji.ReturnedDataOfSingleArray? {
         Log.debug(message: "[Koji] getDataFromKojiSync() - " +
                   "Started process to get data from Koji, " +
@@ -140,7 +144,8 @@ public class Koji {
         let inputData: JsonInput = JsonInput(radius: radius, minPoints: minPoints,
                                              benchmarkMode: benchmarkMode, sortBy: sortBy,
                                              returnType: returnType, fast: fast,
-                                             onlyUnique: onlyUnique, dataPoints: dataPoints)
+                                             onlyUnique: onlyUnique, dataPoints: dataPoints,
+                                             clusterMode: clusterMode)
         let jsonEncoder = JSONEncoder()
         let jsonData = try? jsonEncoder.encode(inputData)
 
