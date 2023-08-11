@@ -385,7 +385,7 @@ class AutoInstanceController: InstanceControllerProto {
             let hit = pokemonCache!.get(id: self.name) ?? 0
             if hit == 0 {
                 pokemonCache!.set(id: self.name, value: 1)
-                
+
                 DispatchQueue.global(qos: .userInitiated).async {
                     try? self.initAutoPokemonCoords()
                 }
@@ -979,7 +979,7 @@ class AutoInstanceController: InstanceControllerProto {
             if changeRaw == currentTthRawPointsCount {
                 changeRaw = 0
             }
-            
+
             let deviceCount = devicesOnInstance()
 
             var avgVisitTime: Double = 0.0
