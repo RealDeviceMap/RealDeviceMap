@@ -99,10 +99,12 @@ class AutoInstanceController: InstanceControllerProto {
     var tthLock = Threading.Lock()
     var tthDbLock = Threading.Lock()
     var lastTthCountUnknown: Int = 0
+    var currentTthCountUnknown: Int = 0
     var tthCluseringTime: Double = 0.0
     var lastTthRawPointsCount: Int = 0
     var currentTthRawPointsCount: Int = 0
     var lastMaxClusterSize: Int = 0
+    var lastClusterCount: Int = 0
     var firstRun: Bool = true
     var tthClusterVisits: Int = 0
     var tthClusterVisitsStat: Int = 0
@@ -384,7 +386,7 @@ class AutoInstanceController: InstanceControllerProto {
             if hit == 0 {
                 pokemonCache!.set(id: self.name, value: 1)
                 
-                DispatchQueue.global(qos: .background).async {
+                DispatchQueue.global(qos: .userInitiated).async {
                     try? self.initAutoPokemonCoords()
                 }
             }
@@ -464,7 +466,7 @@ class AutoInstanceController: InstanceControllerProto {
 
                 // run async.  intent is to fire off the clustering,
                 //  but keep running on old coords until we get data back from koji
-                DispatchQueue.global(qos: .background).async {
+                DispatchQueue.global(qos: .userInitiated).async {
                     try? self.initTthCoords()
                 }
             }
@@ -968,8 +970,8 @@ class AutoInstanceController: InstanceControllerProto {
                     "reset_too_slow": autoCountTooSlow, "skipped_count": autoSkippedCount]
             }
         case .tth:
-            var changeCluster = tthCoords.count - lastTthCountUnknown
-            if changeCluster == tthCoords.count {
+            var changeCluster = currentTthCountUnknown - lastTthCountUnknown
+            if changeCluster == currentTthCountUnknown {
                 changeCluster = 0
             }
 
@@ -1188,29 +1190,34 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - " +
             "got \(tmpCoords.count) spawnpoints in geofence")
 
-        autoPokemonDbLock.lock()
 
-        pokemonCoords.removeAll()
-        pokemonCoords.reserveCapacity(2 * tmpCoords.count)
-
-        pokemonCoords = tmpCoords
+        // temporary array, costs more memory usage, but will speed things up and lower
+        // chance of holding up workers
+        var newCoords = tmpCoords
 
         // take lazy man's approach, probably not ideal
         // add elements to end, so 3600-7199 sec
         for coord in tmpCoords {
-            pokemonCoords.append(
+            newCoords.append(
                 AutoPokemonCoord(id: coord.id, coord: coord.coord, spawnSeconds: coord.spawnSeconds + 3600 ))
         }
 
-        // set to start, algorithm will iterate to find right spot to start work
-        currentDevicesMaxLocation = -1
-
         // sort the times in array, necessary as added in 60min spawns to v2
-        pokemonCoords.sort {
+        newCoords.sort {
             $0.spawnSeconds < $1.spawnSeconds
         }
 
         firstRun = false
+
+        autoPokemonDbLock.lock()
+
+        // set to start, algorithm will iterate to find right spot to start work
+        currentDevicesMaxLocation = -1
+
+        pokemonCoords.removeAll()
+        pokemonCoords.reserveCapacity(2 * tmpCoords.count)
+
+        pokemonCoords = newCoords
 
         if pokemonCoords.count > 0 {
             if defaultLatitude == 0.0 && defaultLongitude == 0.0 {
@@ -1304,16 +1311,18 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message: "[AutoInstanceController] initTthCoords() - " +
                   "UsingKoji = \(tthClusteringUsesKoji) &  firstRun=\(firstRun)")
 
-        // lock the data for location array so that we can write to it
-        tthDbLock.lock()
-
         tthCoords.removeAll(keepingCapacity: true)
 
         // determine if end user is utilizing koji, if so cluster some shit
         // for the first run, we will just do all data without any clusters to get things moving
         if tthClusteringUsesKoji {
             Log.debug(message: "[AutoInstanceController] initTthCoords() - Using Koji for clustering")
+            
+            // lock the data for location array so that we can write to it
+            tthDbLock.lock()
+        
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
+            lastClusterCount = tthCoords.count
         } else {
             Log.debug(message: "[AutoInstanceController] initTthCoords() - not using Koji for clustering")
 
@@ -1327,11 +1336,15 @@ class AutoInstanceController: InstanceControllerProto {
 
             lastMaxClusterSize = Int(precision)
 
+            // lock the data for location array so that we can write to it
+            tthDbLock.lock()
+
             tthCoords = poorBoyClusteringUsingGeohash(dataPoints: tmpCoords, geohashPrecision: precision)
         }
 
         // stats for visits
         tthClusterVisitsStat = tthClusterVisits
+        currentTthCountUnknown = tthCoords.count
         tthClusterVisits = 0
 
         // set before zero so next increment lands at zero
