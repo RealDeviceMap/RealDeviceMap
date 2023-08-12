@@ -1190,7 +1190,6 @@ class AutoInstanceController: InstanceControllerProto {
         Log.debug(message: "[AutoInstanceController] initAutoPokemonCoords() - " +
             "got \(tmpCoords.count) spawnpoints in geofence")
 
-
         // temporary array, costs more memory usage, but will speed things up and lower
         // chance of holding up workers
         var newCoords = tmpCoords
@@ -1215,7 +1214,6 @@ class AutoInstanceController: InstanceControllerProto {
         currentDevicesMaxLocation = -1
 
         pokemonCoords.removeAll()
-        pokemonCoords.reserveCapacity(2 * tmpCoords.count)
 
         pokemonCoords = newCoords
 
@@ -1317,10 +1315,10 @@ class AutoInstanceController: InstanceControllerProto {
         // for the first run, we will just do all data without any clusters to get things moving
         if tthClusteringUsesKoji {
             Log.debug(message: "[AutoInstanceController] initTthCoords() - Using Koji for clustering")
-            
+
             // lock the data for location array so that we can write to it
             tthDbLock.lock()
-        
+
             tthCoords = getClusteredCoords(dataPoints: tmpCoords)
             lastClusterCount = tthCoords.count
         } else {
