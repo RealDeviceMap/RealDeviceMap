@@ -962,7 +962,7 @@ class AutoInstanceController: InstanceControllerProto {
 
             if formatted {
                 return """
-                    Coord Count: \(cnt)</br>
+                    Coord Count (current/total): \(currentDevicesMaxLocation) / \(cnt)</br>
                     Coord Resets (fast/slow): \(autoCountTooFast)x / \(autoCountTooSlow)x (\(autoSkippedCount)skipped)
                 """
             } else {
