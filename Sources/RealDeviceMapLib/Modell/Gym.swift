@@ -271,7 +271,7 @@ public class Gym: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable {
             self.raidSpawnTimestamp = UInt32(fortData.raidInfo.raidSpawnMs / 1000)
             self.raidBattleTimestamp = UInt32(fortData.raidInfo.raidBattleMs / 1000)
             self.raidLevel = UInt8(fortData.raidInfo.raidLevel.rawValue)
-            self.raidIsExclusive = fortData.raidInfo.isExclusive
+            self.raidIsExclusive = false
             self.raidPokemonId = UInt16(fortData.raidInfo.raidPokemon.pokemonID.rawValue)
             self.raidPokemonMove1 = UInt16(fortData.raidInfo.raidPokemon.move1.rawValue)
             self.raidPokemonMove2 = UInt16(fortData.raidInfo.raidPokemon.move2.rawValue)
