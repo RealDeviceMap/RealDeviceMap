@@ -6,22 +6,11 @@ jobs:
   Test:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: YOCKOW/Action-setup-swift@main
     - name: Install Requirements
-      run: export DEBIAN_FRONTEND=noninteractive &&
-           sudo apt-get -y update &&
-           sudo apt-get install -y libssl-dev libcurl4-openssl-dev uuid-dev imagemagick lsb-release &&
-           wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb &&
-           echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | sudo debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | sudo debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | sudo debconf-set-selections &&
-           echo mysql-apt-config    mysql-apt-config/select-product select  Ok | sudo debconf-set-selections &&
-           sudo dpkg -i mysql-apt-config_0.8.16-1_all.deb &&
-           sudo apt-get purge -y mysql-client mysql-common mysql-server &&
-           sudo apt-get autoremove -y &&
-           sudo apt-get -y update &&
-           sudo apt-get install -y -f mysql-client=5.7* mysql-community-client=5.7* libmysqlclient-dev=5.7* &&   
+      run: sudo apt-get -y update &&
+           sudo apt-get install -y libcurl4-openssl-dev libmysqlclient-dev &&   
            sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc &&
            sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve
@@ -33,7 +22,7 @@ jobs:
   Deploy:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set .gitsha
       if: github.event_name == 'push'
       run: "echo ${{github.sha}} > .gitsha"

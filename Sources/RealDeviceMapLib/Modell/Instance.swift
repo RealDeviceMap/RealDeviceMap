@@ -20,6 +20,8 @@ public class Instance: Hashable {
     enum InstanceType: String {
         case circlePokemon = "circle_pokemon"
         case circleSmartPokemon = "circle_smart_pokemon"
+        case autoPokemon = "auto_pokemon" // jumps with respecting tth of spawnpoin
+        case autoTth = "auto_tth" // to find tth of every spawnpoint
         case circleRaid = "circle_raid"
         case circleSmartRaid = "circle_smart_raid"
         case autoQuest = "auto_quest"
@@ -37,6 +39,10 @@ public class Instance: Hashable {
                 return .circleSmartRaid
             } else if value.lowercased() == "auto_quest" || value.lowercased() == "autoquest" {
                 return .autoQuest
+            } else if value.lowercased() == "auto_pokemon" || value.lowercased() == "autopokemon" {
+                return .autoPokemon
+            } else if value.lowercased() == "auto_tth" || value.lowercased() == "autotth" {
+                return .autoTth
             } else if value.lowercased() == "pokemon_iv" || value.lowercased() == "pokemoniv" {
                 return .pokemonIV
             } else if value.lowercased() == "leveling" {
@@ -132,7 +138,6 @@ public class Instance: Hashable {
     }
 
     public static func getAll(mysql: MySQL?=nil, getData: Bool=true) throws -> [Instance] {
-
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[INSTANCE] Failed to connect to database.")
             throw DBController.DBError()
@@ -146,6 +151,7 @@ public class Instance: Hashable {
               FROM device
               GROUP BY instance_name
             ) devices ON (inst.name = devices.instance_name)
+            ORDER BY name
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -201,10 +207,33 @@ public class Instance: Hashable {
         }
 
         let result = results.next()!
-            let type = InstanceType.fromString(result[0] as! String)!
-            let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
+        let type = InstanceType.fromString(result[0] as! String)!
+        let data = (result[1] as! String).jsonDecodeForceTry() as? [String: Any] ?? [:]
         return Instance(name: name, type: type, data: data, count: 0)
 
+    }
+
+    public static func getCount(mysql: MySQL?=nil) throws -> Int {
+        guard let mysql = mysql ?? DBController.global.mysql else {
+            Log.error(message: "[INSTANCE] Failed to connect to database.")
+            throw DBController.DBError()
+        }
+
+        let sql = "SELECT COUNT(*) FROM instance"
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[INSTANCE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            throw DBController.DBError()
+        }
+        let results = mysqlStmt.results()
+        if results.numRows != 1 {
+            return 0
+        }
+        let result = results.next()!
+        return Int(result[0] as? Int64 ?? 0)
     }
 
     public static func == (lhs: Instance, rhs: Instance) -> Bool {

@@ -27,8 +27,8 @@
             <div class="col-md-3 p-1">
               <div class="list-group">
                 <a class="list-group-item">
-                  <h4 class="list-group-item-heading" style="color: dodgerblue;">{{new_accounts_count}}</h4>
-                  <p class="list-group-item-text">New Accounts</p>
+                  <h4 class="list-group-item-heading" style="color: dodgerblue;">{{available_accounts_count}}</h4>
+                  <p class="list-group-item-text">Available Accounts</p>
                 </a>
               </div>
             </div>
@@ -43,21 +43,29 @@
             <div class="col-md-3 p-1">
               <div class="list-group">
                 <a class="list-group-item">
-                  <h4 class="list-group-item-heading" style="color: red;">{{failed_accounts_count}}</h4>
-                  <p class="list-group-item-text">Failed Accounts</p>
+                  <h4 class="list-group-item-heading" style="color: teal;">{{iv_accounts_count}}</h4>
+                  <p class="list-group-item-text">Total over Level 30</p>
                 </a>
               </div>
             </div>
             <div class="col-md-3 p-1">
               <div class="list-group">
                 <a class="list-group-item">
-                  <h4 class="list-group-item-heading" style="color: teal;">{{iv_accounts_count}}</h4>
-                  <p class="list-group-item-text">Total over Level 30</p>
+                  <h4 class="list-group-item-heading" style="color: orange;">{{disabled_accounts_count}}</h4>
+                  <p class="list-group-item-text">Disabled Accounts</p>
                 </a>
               </div>
             </div>
           </div>
           <div class="row justify-content-center">
+            <div class="col-md-3 p-1">
+              <div class="list-group">
+                <a class="list-group-item">
+                  <h4 class="list-group-item-heading" style="color: red;">{{failed_accounts_count}}</h4>
+                  <p class="list-group-item-text">Failed Accounts</p>
+                </a>
+              </div>
+            </div>
             <div class="col-md-3 p-1">
               <div class="list-group">
                 <a class="list-group-item">
@@ -171,11 +179,14 @@
                 <th>Total</th>
                 <th>Good</th>
                 <th>Banned</th>
-                <th>Warning</th>
+                <th>Warned</th>
+                <th>In Warning</th>
+                <th>Suspended</th>
+                <th>In Suspension</th>
                 <th>Invalid</th>
-                <th>Other</th>
                 <th>Cooldown</th>
                 <th>Spin Limit</th>
+                <th>Disabled</th>
             </tr>
             </thead>
             <tbody>
@@ -186,10 +197,13 @@
                     <td><span class="badge badge-success badge-pill">{{good}}</span></td>
                     <td><span class="badge badge-danger badge-pill">{{banned}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{warning}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{inwarning}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{suspended}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{insuspended}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{invalid}}</span></td>
-                    <td><span class="badge badge-warning badge-pill">{{other}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{cooldown}}</span></td>
                     <td><span class="badge badge-warning badge-pill">{{spin_limit}}</span></td>
+                    <td><span class="badge badge-warning badge-pill">{{disabled_count}}</span></td>
                 </tr>
                 {{/stats}}
             </tbody>

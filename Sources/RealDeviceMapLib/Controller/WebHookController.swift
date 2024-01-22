@@ -16,14 +16,18 @@ import Turf
 public class WebHookController {
 
     private init() {
-        let environment = ProcessInfo.processInfo.environment
-        timeout = environment["WEBHOOK_ENDPOINT_TIMEOUT"]?.toInt() ?? 30
-        connectTimeout = environment["WEBHOOK_ENDPOINT_CONNECT_TIMEOUT"]?.toInt() ?? 30
+        timeout = ConfigLoader.global.getConfig(type: .webhookTimeout)
+        connectTimeout = ConfigLoader.global.getConfig(type: .webhookConnectTimeout)
+        Log.info(message: "[WebHookController] Webhook Endpoint Timeout: \(timeout)")
+        Log.info(message: "[WebHookController] Webhook Connection Timeout: \(connectTimeout)")
     }
 
     public private(set) static var global = WebHookController()
 
-    public var webhooks = [Webhook]()
+    private var webhooks = [Webhook]()
+    private var lock = Threading.Lock()
+    private var types = [WebhookType]()
+    private var queue: ThreadQueue?
 
     private let timeout: Int
     private let connectTimeout: Int
@@ -35,15 +39,13 @@ public class WebHookController {
     private var lureEventLock = Threading.Lock()
     private var lureEvents = [String: Pokestop]()
     private var invasionEventLock = Threading.Lock()
-    private var invasionEvents = [String: Pokestop]()
+    private var invasionEvents = [String: (Pokestop, Incident)]()
     private var questEventLock = Threading.Lock()
     private var questEvents = [String: Pokestop]()
     private var alternativeQuestEventsLock = Threading.Lock()
     private var alternativeQuestEvents = [String: Pokestop]()
     private var gymEventLock = Threading.Lock()
     private var gymEvents = [String: Gym]()
-    private var gymInfoEventLock = Threading.Lock()
-    private var gymInfoEvents = [String: Gym]()
     private var eggEventLock = Threading.Lock()
     private var eggEvents = [String: Gym]()
     private var raidEventLock = Threading.Lock()
@@ -53,109 +55,78 @@ public class WebHookController {
     private var accountEventLock = Threading.Lock()
     private var accountEvents = [String: Account]()
 
-    private var types = [WebhookType]()
-    private var queue: ThreadQueue?
-
     public func addPokemonEvent(pokemon: Pokemon) {
         if !self.webhooks.isEmpty && self.types.contains(.pokemon) {
-            pokemonEventLock.lock()
-            pokemonEvents[pokemon.id] = pokemon
-            pokemonEventLock.unlock()
+            pokemonEventLock.doWithLock { pokemonEvents[pokemon.id] = pokemon }
         }
     }
 
     public func addPokestopEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.pokestop) {
-            pokestopEventLock.lock()
-            pokestopEvents[pokestop.id] = pokestop
-            pokestopEventLock.unlock()
+            pokestopEventLock.doWithLock { pokestopEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addLureEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.lure) {
-            lureEventLock.lock()
-            lureEvents[pokestop.id] = pokestop
-            lureEventLock.unlock()
+            lureEventLock.doWithLock { lureEvents[pokestop.id] = pokestop }
         }
     }
 
-    public func addInvasionEvent(pokestop: Pokestop) {
+    public func addInvasionEvent(pokestop: Pokestop, incident: Incident) {
         if !self.webhooks.isEmpty && self.types.contains(.invasion) {
-            invasionEventLock.lock()
-            invasionEvents[pokestop.id] = pokestop
-            invasionEventLock.unlock()
+            invasionEventLock.doWithLock { invasionEvents[incident.id] = (pokestop, incident) }
         }
     }
 
     public func addQuestEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.quest) {
-            questEventLock.lock()
-            questEvents[pokestop.id] = pokestop
-            questEventLock.unlock()
+            questEventLock.doWithLock { questEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addAlternativeQuestEvent(pokestop: Pokestop) {
         if !self.webhooks.isEmpty && self.types.contains(.quest) {
-            alternativeQuestEventsLock.lock()
-            alternativeQuestEvents[pokestop.id] = pokestop
-            alternativeQuestEventsLock.unlock()
+            alternativeQuestEventsLock.doWithLock { alternativeQuestEvents[pokestop.id] = pokestop }
         }
     }
 
     public func addGymEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymEventLock.lock()
-            gymEvents[gym.id] = gym
-            gymEventLock.unlock()
-        }
-    }
-
-    public func addGymInfoEvent(gym: Gym) {
-        if !self.webhooks.isEmpty && self.types.contains(.gym) {
-            gymInfoEventLock.lock()
-            gymInfoEvents[gym.id] = gym
-            gymInfoEventLock.unlock()
+            gymEventLock.doWithLock { gymEvents[gym.id] = gym }
         }
     }
 
     public func addEggEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.egg) {
-            eggEventLock.lock()
-            eggEvents[gym.id] = gym
-            eggEventLock.unlock()
+            eggEventLock.doWithLock { eggEvents[gym.id] = gym }
         }
     }
 
     public func addRaidEvent(gym: Gym) {
         if !self.webhooks.isEmpty && self.types.contains(.raid) {
-            raidEventLock.lock()
-            raidEvents[gym.id] = gym
-            raidEventLock.unlock()
+            raidEventLock.doWithLock { raidEvents[gym.id] = gym }
         }
     }
 
     public func addWeatherEvent(weather: Weather) {
         if !self.webhooks.isEmpty && self.types.contains(.weather) {
-            weatherEventLock.lock()
-            weatherEvents[weather.id] = weather
-            weatherEventLock.unlock()
+            weatherEventLock.doWithLock { weatherEvents[weather.id] = weather }
         }
     }
 
     public func addAccountEvent(account: Account) {
         if !self.webhooks.isEmpty && self.types.contains(.account) {
-            accountEventLock.lock()
-            accountEvents[account.username] = account
-            accountEventLock.unlock()
+            accountEventLock.doWithLock { accountEvents[account.username] = account }
         }
     }
 
     public func reload() {
         do {
-            webhooks = try Webhook.getAll()
-            types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            try lock.doWithLock {
+                webhooks = try Webhook.getAll()
+                types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            }
         } catch {
             Log.error(message: "[WebHookController] Failed to reload webhooks from DB")
         }
@@ -164,21 +135,24 @@ public class WebHookController {
     public func start() {
 
         do {
-            webhooks = try Webhook.getAll()
-            types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+            try lock.doWithLock {
+                webhooks = try Webhook.getAll()
+                types = Array(Set(webhooks.flatMap({ webhook in webhook.types })))
+                Log.debug(message: "[WebHookController] loaded \(webhooks.count) webhooks")
+                Log.debug(message: "[WebHookController] loaded \(types.count) types")
+            }
         } catch {
             Log.error(message: "[WebHookController] Failed to load webhooks from DB")
             return
         }
-        Log.debug(message: "[WebHookController] loaded \(webhooks.count) webhooks")
-        Log.debug(message: "[WebHookController] loaded \(types.count) types")
         if queue == nil {
             queue = Threading.getQueue(name: "WebHookControllerQueue", type: .serial)
             queue!.dispatch {
 
                 while true {
-                    if !self.webhooks.isEmpty {
-                        let countEnabled = self.webhooks.filter({ webhook in webhook.enabled == true }).count
+                    let webhooks = self.lock.doWithLock { self.webhooks }
+                    if !webhooks.isEmpty {
+                        let countEnabled = webhooks.filter({ webhook in webhook.enabled == true }).count
                         if countEnabled == 0 {
                             Threading.sleep(seconds: 30.0)
                             continue
@@ -187,78 +161,72 @@ public class WebHookController {
                         var pokemonEvents = [String: Pokemon]()
                         var pokestopEvents = [String: Pokestop]()
                         var lureEvents = [String: Pokestop]()
-                        var invasionEvents = [String: Pokestop]()
+                        var invasionEvents = [String: (Pokestop, Incident)]()
                         var questEvents = [String: Pokestop]()
                         var alternativeQuestEvents = [String: Pokestop]()
                         var gymEvents = [String: Gym]()
-                        var gymInfoEvents = [String: Gym]()
                         var eggEvents = [String: Gym]()
                         var raidEvents = [String: Gym]()
                         var weatherEvents = [Int64: Weather]()
                         var accountEvents = [String: Account]()
 
-                        self.pokemonEventLock.lock()
-                        pokemonEvents = self.pokemonEvents
-                        self.pokemonEvents = [String: Pokemon]()
-                        self.pokemonEventLock.unlock()
+                        self.pokemonEventLock.doWithLock {
+                            pokemonEvents = self.pokemonEvents
+                            self.pokemonEvents = [String: Pokemon]()
+                        }
 
-                        self.pokestopEventLock.lock()
-                        pokestopEvents = self.pokestopEvents
-                        self.pokestopEvents = [String: Pokestop]()
-                        self.pokestopEventLock.unlock()
+                        self.pokestopEventLock.doWithLock {
+                            pokestopEvents = self.pokestopEvents
+                            self.pokestopEvents = [String: Pokestop]()
+                        }
 
-                        self.lureEventLock.lock()
-                        lureEvents = self.lureEvents
-                        self.lureEvents = [String: Pokestop]()
-                        self.lureEventLock.unlock()
+                        self.lureEventLock.doWithLock {
+                            lureEvents = self.lureEvents
+                            self.lureEvents = [String: Pokestop]()
+                        }
 
-                        self.invasionEventLock.lock()
-                        invasionEvents = self.invasionEvents
-                        self.invasionEvents = [String: Pokestop]()
-                        self.invasionEventLock.unlock()
+                        self.invasionEventLock.doWithLock {
+                            invasionEvents = self.invasionEvents
+                            self.invasionEvents = [String: (Pokestop, Incident)]()
+                        }
 
-                        self.questEventLock.lock()
-                        questEvents = self.questEvents
-                        self.questEvents = [String: Pokestop]()
-                        self.questEventLock.unlock()
+                        self.questEventLock.doWithLock {
+                            questEvents = self.questEvents
+                            self.questEvents = [String: Pokestop]()
+                        }
 
-                        self.alternativeQuestEventsLock.lock()
-                        alternativeQuestEvents = self.alternativeQuestEvents
-                        self.alternativeQuestEvents = [String: Pokestop]()
-                        self.alternativeQuestEventsLock.unlock()
+                        self.alternativeQuestEventsLock.doWithLock {
+                            alternativeQuestEvents = self.alternativeQuestEvents
+                            self.alternativeQuestEvents = [String: Pokestop]()
+                        }
 
-                        self.gymEventLock.lock()
-                        gymEvents = self.gymEvents
-                        self.gymEvents = [String: Gym]()
-                        self.gymEventLock.unlock()
+                        self.gymEventLock.doWithLock {
+                            gymEvents = self.gymEvents
+                            self.gymEvents = [String: Gym]()
+                        }
 
-                        self.gymInfoEventLock.lock()
-                        gymInfoEvents = self.gymInfoEvents
-                        self.gymInfoEvents = [String: Gym]()
-                        self.gymInfoEventLock.unlock()
+                        self.raidEventLock.doWithLock {
+                            raidEvents = self.raidEvents
+                            self.raidEvents = [String: Gym]()
+                        }
 
-                        self.raidEventLock.lock()
-                        raidEvents = self.raidEvents
-                        self.raidEvents = [String: Gym]()
-                        self.raidEventLock.unlock()
+                        self.eggEventLock.doWithLock {
+                            eggEvents = self.eggEvents
+                            self.eggEvents = [String: Gym]()
+                        }
 
-                        self.eggEventLock.lock()
-                        eggEvents = self.eggEvents
-                        self.eggEvents = [String: Gym]()
-                        self.eggEventLock.unlock()
+                        self.weatherEventLock.doWithLock {
+                            weatherEvents = self.weatherEvents
+                            self.weatherEvents = [Int64: Weather]()
+                        }
 
-                        self.weatherEventLock.lock()
-                        weatherEvents = self.weatherEvents
-                        self.weatherEvents = [Int64: Weather]()
-                        self.weatherEventLock.unlock()
+                        self.accountEventLock.doWithLock {
+                            accountEvents = self.accountEvents
+                            self.accountEvents = [String: Account]()
+                        }
 
-                        self.accountEventLock.lock()
-                        accountEvents = self.accountEvents
-                        self.accountEvents = [String: Account]()
-                        self.accountEventLock.unlock()
-
-                        let minDelay = self.webhooks.map({ $0.delay }).min()
-                        for webhook in self.webhooks {
+                        let minDelay = webhooks.map({ $0.delay }).min()
+                        for webhook in webhooks {
                             if !webhook.enabled {
                                 continue
                             }
@@ -267,11 +235,11 @@ public class WebHookController {
                             var events = [[String: Any]]()
 
                             if webhook.types.contains(.pokemon) {
-                                let pokemonIDs = webhook.data["pokemon_ids"] as? [UInt16] ?? [UInt16]()
+                                let pokemonIDs = webhook.data["pokemon_ids"] as? [Int] ?? [Int]()
                                 for (_, pokemon) in pokemonEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: pokemon.lat, lon: pokemon.lon, multiPolygon: polygon) {
-                                        if pokemonIDs.contains(pokemon.pokemonId) {
+                                        if pokemonIDs.contains(Int(pokemon.pokemonId)) {
                                             continue
                                         }
                                         events.append(pokemon.getWebhookValues(type: WebhookType.pokemon.rawValue))
@@ -282,8 +250,7 @@ public class WebHookController {
                             if webhook.types.contains(.pokestop) {
                                 for (_, pokestop) in pokestopEvents {
                                     if area.isEmpty ||
-                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon,
-                                               multiPolygon: polygon) {
+                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon, multiPolygon: polygon) {
                                         events.append(pokestop.getWebhookValues(
                                             type: WebhookType.pokestop.rawValue
                                         ))
@@ -292,11 +259,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.lure) {
-                                let lureIDs = webhook.data["lure_ids"] as? [UInt16] ?? [UInt16]()
+                                let lureIDs = webhook.data["lure_ids"] as? [Int] ?? [Int]()
                                 for (_, lure) in lureEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: lure.lat, lon: lure.lon, multiPolygon: polygon) {
-                                        if lureIDs.contains(UInt16(lure.lureId ?? 0)) {
+                                        if lureIDs.contains(Int(lure.lureId ?? 0)) {
                                             continue
                                         }
                                         events.append(lure.getWebhookValues(type: WebhookType.lure.rawValue))
@@ -305,25 +272,27 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.invasion) {
-                                let invasionIDs = webhook.data["invasion_ids"] as? [UInt16] ?? [UInt16]()
-                                for (_, invasion) in invasionEvents {
+                                let invasionIDs = webhook.data["invasion_ids"] as? [Int] ?? [Int]()
+                                for (_, (pokestop, invasion)) in invasionEvents {
                                     if area.isEmpty ||
-                                           self.inPolygon(lat: invasion.lat, lon: invasion.lon,
-                                               multiPolygon: polygon) {
-                                        if invasionIDs.contains(invasion.gruntType ?? 0) {
+                                           self.inPolygon(lat: pokestop.lat, lon: pokestop.lon, multiPolygon: polygon) {
+                                        if invasionIDs.contains(Int(invasion.character)) {
                                             continue
                                         }
-                                        events.append(invasion.getWebhookValues(type: WebhookType.invasion.rawValue))
+                                        events.append(invasion.getWebhookValues(
+                                            type: WebhookType.invasion.rawValue,
+                                            pokestop: pokestop)
+                                        )
                                     }
                                 }
                             }
 
                             if webhook.types.contains(.quest) {
-                                let questIDs = webhook.data["quest_ids"] as? [UInt16] ?? [UInt16]()
+                                let questIDs = webhook.data["quest_ids"] as? [Int] ?? [Int]()
                                 for (_, quest) in questEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon) {
-                                        if questIDs.contains(UInt16(quest.questType ?? 0)) {
+                                        if questIDs.contains(Int(quest.questType ?? 0)) {
                                             continue
                                         }
                                         events.append(quest.getWebhookValues(type: WebhookType.quest.rawValue))
@@ -332,8 +301,7 @@ public class WebHookController {
                                 for (_, quest) in alternativeQuestEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: quest.lat, lon: quest.lon, multiPolygon: polygon) {
-                                        if webhook.data["quest_ids"] != nil && (webhook.data["quest_ids"] as! [UInt16])
-                                            .contains(UInt16(quest.questType ?? 0)) {
+                                        if questIDs.contains(Int(quest.questType ?? 0)) {
                                             continue
                                         }
                                         events.append(quest.getWebhookValues(type: "alternative_quest"))
@@ -342,33 +310,24 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.gym) {
-                                let gymIDs = webhook.data["gym_ids"] as? [UInt8] ?? [UInt8]()
+                                let gymIDs = webhook.data["gym_ids"] as? [Int] ?? [Int]()
                                 for (_, gym) in gymEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: gym.lat, lon: gym.lon, multiPolygon: polygon) {
-                                        if gym.teamId ?? 0 > 0 && gymIDs.contains(gym.teamId ?? 0) {
+                                        if gym.teamId ?? 0 > 0 && gymIDs.contains(Int(gym.teamId ?? 0)) {
                                             continue
                                         }
                                         events.append(gym.getWebhookValues(type: WebhookType.gym.rawValue))
                                     }
                                 }
-                                for (_, gymInfo) in gymInfoEvents {
-                                    if area.isEmpty ||
-                                           self.inPolygon(lat: gymInfo.lat, lon: gymInfo.lon, multiPolygon: polygon) {
-                                        if gymInfo.teamId ?? 0 > 0 && gymIDs.contains(gymInfo.teamId ?? 0) {
-                                            continue
-                                        }
-                                        events.append(gymInfo.getWebhookValues(type: "gym-info"))
-                                    }
-                                }
                             }
 
                             if webhook.types.contains(.raid) {
-                                let raidIDs = webhook.data["raid_ids"] as? [UInt16] ?? [UInt16]()
+                                let raidIDs = webhook.data["raid_ids"] as? [Int] ?? [Int]()
                                 for (_, raid) in raidEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: raid.lat, lon: raid.lon, multiPolygon: polygon) {
-                                        if raid.raidPokemonId ?? 0 > 0 && raidIDs.contains(raid.raidPokemonId!) {
+                                        if raidIDs.contains(Int(raid.raidPokemonId ?? 0)) {
                                             continue
                                         }
                                         events.append(raid.getWebhookValues(type: WebhookType.raid.rawValue))
@@ -377,11 +336,11 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.egg) {
-                                let eggIDs = webhook.data["egg_ids"] as? [UInt8] ?? [UInt8]()
+                                let eggIDs = webhook.data["egg_ids"] as? [Int] ?? [Int]()
                                 for (_, egg) in eggEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: egg.lat, lon: egg.lon, multiPolygon: polygon) {
-                                        if egg.raidLevel ?? 0 > 0 && eggIDs.contains(egg.raidLevel ?? 0) {
+                                        if eggIDs.contains(Int(egg.raidLevel ?? 0)) {
                                             continue
                                         }
                                         events.append(egg.getWebhookValues(type: WebhookType.egg.rawValue))
@@ -390,13 +349,13 @@ public class WebHookController {
                             }
 
                             if webhook.types.contains(.weather) {
-                                let weatherIDs = webhook.data["weather_ids"] as? [UInt8] ?? [UInt8]()
+                                let weatherIDs = webhook.data["weather_ids"] as? [Int] ?? [Int]()
                                 for (_, weather) in weatherEvents {
                                     if area.isEmpty ||
                                            self.inPolygon(lat: weather.latitude, lon: weather.longitude,
                                                multiPolygon: polygon) {
                                         if weather.gameplayCondition > 0 && weatherIDs.contains(
-                                                   weather.gameplayCondition) {
+                                                   Int(weather.gameplayCondition)) {
                                             continue
                                         }
                                         events.append(weather.getWebhookValues(type: WebhookType.weather.rawValue))
@@ -415,6 +374,9 @@ public class WebHookController {
                             }
                         }
                         Threading.sleep(seconds: minDelay != nil ? minDelay! : 5.0)
+                    } else {
+                        // Sleep if no webhooks are set
+                        Threading.sleep(seconds: 30.0)
                     }
                 }
             }
@@ -422,7 +384,7 @@ public class WebHookController {
     }
 
     private func sendEvents(events: [[String: Any]], url: String) {
-        Log.debug(message: "[WebHookController] Sending \(events.count) events to" +
+        Log.debug(message: "[WebHookController] Sending \(events.count) event(s) to " +
             "\(webhooks.count) endpoints")
         guard let body = try? events.jsonEncodedString() else {
             Log.error(message: "[WebHookController] Failed to parse events into json string")
@@ -465,11 +427,11 @@ public class WebHookController {
     }
 
     private func createMultiPolygon(areaArray: [[Coord]]) -> MultiPolygon {
-        var geofences = [[[CLLocationCoordinate2D]]]()
+        var geofences = [[[LocationCoordinate2D]]]()
         for coord in areaArray {
-            var geofence = [CLLocationCoordinate2D]()
+            var geofence = [LocationCoordinate2D]()
             for crd in coord {
-                geofence.append(CLLocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
+                geofence.append(LocationCoordinate2D.init(latitude: crd.lat, longitude: crd.lon))
             }
             geofences.append([geofence])
         }
@@ -478,7 +440,7 @@ public class WebHookController {
 
     private func inPolygon(lat: Double, lon: Double, multiPolygon: MultiPolygon) -> Bool {
         for polygon in multiPolygon.polygons {
-            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            let coord = LocationCoordinate2D(latitude: lat, longitude: lon)
             if polygon.contains(coord, ignoreBoundary: false) {
                 return true
             }

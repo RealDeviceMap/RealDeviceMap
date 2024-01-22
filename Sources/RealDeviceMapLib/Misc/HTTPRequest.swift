@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PerfectCURL
 import PerfectHTTP
 
 internal extension HTTPRequest {
@@ -15,12 +16,35 @@ internal extension HTTPRequest {
         if forwardedForHeader.isEmpty || !WebHookRequestHandler.hostWhitelistUsesProxy {
             hostString = self.remoteAddress.host
         } else {
-            hostString = forwardedForHeader
+            if forwardedForHeader.contains(",") {
+                hostString = forwardedForHeader.components(separatedBy: ",").first!.trimmingCharacters(in: .whitespaces)
+            } else {
+                hostString = forwardedForHeader
+            }
         }
         let hexParts = hostString.components(separatedBy: ":")
         if hexParts.count == 8 {
             return hexParts[0...3].joined(separator: ":")
         }
         return hostString
+    }
+}
+
+internal extension HTTPRequest {
+    func forwardRawRequest() {
+        if WebHookRequestHandler.rawForwardUrl.isEmpty {
+            return
+        }
+        let request = CURLRequest(
+            WebHookRequestHandler.rawForwardUrl,
+            .httpMethod(.post),
+            .postData(self.postBodyBytes!),
+            .addHeader(.contentType, "application/json"),
+            .addHeader(.accept, "application/json"),
+            .addHeader(.cacheControl, "no-cache"),
+            .addHeader(.authorization, "Bearer " + WebHookRequestHandler.rawForwardBearer),
+            .addHeader(.userAgent, "RealDeviceMap \(VersionManager.global.version)")
+        )
+        request.perform { (_) in }
     }
 }

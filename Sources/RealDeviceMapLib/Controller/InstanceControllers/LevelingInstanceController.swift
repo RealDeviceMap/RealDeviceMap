@@ -20,6 +20,8 @@ class LevelingInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var lock = Threading.Lock() // unused
+    internal var scanNextCoords: [[Coord]] = [] // unused
     public weak var delegate: InstanceControllerDelegate?
 
     private static let levelXP = [
@@ -103,11 +105,11 @@ class LevelingInstanceController: InstanceControllerProto {
             return [:]
         }
 
+        let destination: Coord
+        unspunPokestopsPerUsernameLock.lock()
         if lastPokestopsPerUsername[username] == nil {
             lastPokestopsPerUsername[username] = []
         }
-        let destination: Coord
-        unspunPokestopsPerUsernameLock.lock()
         if let unspunPokestops = unspunPokestopsPerUsername[username]?.values.reversed(),
             let closestPokestop = findClosest(
                 unspunPokestops: unspunPokestops,
@@ -138,7 +140,7 @@ class LevelingInstanceController: InstanceControllerProto {
             encounterTime = result.encounterTime
         } catch {
             Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to calculate cooldown.")
-            return [String: Any]()
+            return [:]
         }
 
         do {
@@ -151,7 +153,7 @@ class LevelingInstanceController: InstanceControllerProto {
           )
         } catch {
             Log.error(message: "[LevelingInstanceController] [\(name)] [\(uuid)] Failed to store cooldown.")
-            return [String: Any]()
+            return [:]
         }
 
         playerLock.lock()
@@ -182,8 +184,8 @@ class LevelingInstanceController: InstanceControllerProto {
         unspunLoop: for stop in unspunPokestops {
             let coord = Coord(lat: stop.latitude, lon: stop.longitude)
             for last in exclude {
-                // MARK: Revert back to 40m once reverted ingame
-                if coord.distance(to: last) <= 80 {
+                let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
+                if coord.distance(to: last) <= spinDistance {
                     continue unspunLoop
                 }
             }
@@ -265,7 +267,7 @@ class LevelingInstanceController: InstanceControllerProto {
                     startTime.timeIntervalSince1970
             )
             let xpPerHour = Int(Double(xpDelta) / timeDelta * 3600)
-            let timeLeft = Double(xpTarget - xpCurrent) / Double(xpPerHour)
+            let timeLeft = xpPerHour == 0 ? 999.0 : Double(xpTarget - xpCurrent) / Double(xpPerHour)
 
             data.append([
                 "xp_target": xpTarget,
@@ -340,7 +342,8 @@ class LevelingInstanceController: InstanceControllerProto {
             spins: nil, // 7000
             noCooldown: true,
             device: uuid,
-            group: accountGroup
+            group: accountGroup,
+            orderByHighestLevel: true
         )
     }
 

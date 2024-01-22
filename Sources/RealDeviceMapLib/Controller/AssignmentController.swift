@@ -154,16 +154,26 @@ public class AssignmentController: InstanceControllerDelegate {
     }
 
     func resolveAssignmentChain(assignment: Assignment) -> [String] {
-        var toVisit = [assignment]
+        let assignments = assignments.filter({ $0.enabled == true})
         var result = [Assignment]()
-        let assignments = assignments
+        var toVisit = [assignment]
         while !toVisit.isEmpty {
+            var found = false
             for source in toVisit {
                 for target in assignments.filter({ $0.sourceInstanceName == source.instanceName}) {
-                    toVisit.append(target)
+                    if !toVisit.contains(target) {
+                        toVisit.append(target)
+                    }
                 }
-                result.append(source)
+                if !result.contains(source) {
+                    found = true
+                    result.append(source)
+                }
                 toVisit.remove(at: toVisit.firstIndex(of: source)!)
+            }
+            if !found {
+                // no new source found for result - finished
+                break
             }
         }
         return result.map({ $0.instanceName}) // instances names
@@ -176,6 +186,8 @@ public class AssignmentController: InstanceControllerDelegate {
         }
     }
 
+    // swiftlint:disable:next superfluous_disable_command
+    // swiftlint:disable cyclomatic_complexity
     internal func reQuestAssignmentGroup(assignmentGroup: AssignmentGroup) throws {
         let assignmentsInGroup = assignments.filter({ assignmentGroup.assignmentIDs.contains($0.id!) })
         let instances = try Instance.getAll().filter({ $0.type == .autoQuest})
@@ -215,14 +227,15 @@ public class AssignmentController: InstanceControllerDelegate {
                     }
                 }
             }
-            let bbox: [Coord] = [Coord(lat: minLat, lon: minLon), Coord(lat: minLat, lon: maxLon),
-                                 Coord(lat: maxLat, lon: maxLon), Coord(lat: maxLat, lon: minLon),
-                                 Coord(lat: minLat, lon: minLon)]
+            let bbox: Bbox = Bbox(minLat: minLat, maxLat: maxLat, minLon: minLon, maxLon: maxLon)
             try Pokestop.clearQuests(area: bbox)
         } catch {
             Log.error(message: "[AssignmentController] Failed to clear quests of \(clearQuests.count) instances")
         }
 
+        for instance in clearQuests {
+            InstanceController.global.getInstanceController(instanceName: instance.name)?.reload()
+        }
         for assignment in assignmentsInGroup {
             try AssignmentController.global.triggerAssignment(assignment: assignment, force: true)
         }

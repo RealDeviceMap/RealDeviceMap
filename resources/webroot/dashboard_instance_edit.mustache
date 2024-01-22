@@ -45,6 +45,7 @@
                 $('.quest_mode').addClass('d-none');
             }
         });
+
     })
 </script>
 
@@ -62,7 +63,7 @@
         <form action="" method="post">
             <div class="form-group">
                 Name
-                <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="30">
+                <input type="text" class="form-control" name="name" value="{{name}}" required minlength="1" maxlength="255">
             </div>
             <div class="form-group">
                 Scheduler Type
@@ -70,6 +71,8 @@
                     <option value="" {{#nothing_selected}}selected{{/nothing_selected}} disabled hidden>Choose Scheduler Type</option>
                     <option value="circle_pokemon" {{#circle_pokemon_selected}}selected{{/circle_pokemon_selected}}>Circle Pokemon</option>
                     <option value="circle_smart_pokemon" {{#circle_smart_pokemon_selected}}selected{{/circle_smart_pokemon_selected}}>Circle Smart Pokemon</option>
+                    <option value="auto_pokemon" {{#auto_pokemon_selected}}selected{{/auto_pokemon_selected}}>Auto Pokemon</option>
+                    <option value="auto_tth" {{#auto_tth_selected}}selected{{/auto_tth_selected}}>Auto TTH</option>
                     <option value="circle_raid" {{#circle_raid_selected}}selected{{/circle_raid_selected}}>Circle Raid</option>
                     <option value="circle_smart_raid" {{#circle_smart_raid_selected}}selected{{/circle_smart_raid_selected}}>Circle Smart Raid</option>
                     <option value="auto_quest" {{#auto_quest_selected}}selected{{/auto_quest_selected}}>Auto Quest</option>
@@ -128,7 +131,12 @@
             </div>
             <div class="form-group">
                 Account Group
-                <input type="text" class="form-control" name="account_group" value="{{account_group}}" maxlength="50">
+                <select class="form-control account-group-select" name="account_group">
+                    <option value="" {{#group_nothing_selected}}selected{{/group_nothing_selected}}></option>
+                    {{#account_groups}}
+                        <option value="{{name}}" {{#group_selected}}selected{{/group_selected}}>{{name}}</option>
+                    {{/account_groups}}
+                </select>
             </div>
             <div class="checkbox">
                 <label><input type="checkbox" name="is_event" value="true" {{#is_event}}checked{{/is_event}}> Is Unique Event</label>

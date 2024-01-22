@@ -96,12 +96,12 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.getData) else {
             return
         }
-
         let minLat = request.param(name: "min_lat")?.toDouble()
         let maxLat = request.param(name: "max_lat")?.toDouble()
         let minLon = request.param(name: "min_lon")?.toDouble()
         let maxLon = request.param(name: "max_lon")?.toDouble()
         let instance = request.param(name: "instance")
+        let iconStyle = request.param(name: "icon_style") ?? "Default"
         let showGyms = request.param(name: "show_gyms")?.toBool() ?? false
         let showRaids = request.param(name: "show_raids")?.toBool() ?? false
         let showPokestops = request.param(name: "show_pokestops")?.toBool() ?? false
@@ -121,6 +121,7 @@ public class ApiRequestHandler {
             .jsonDecodeForceTry() as? [String]
         let pokestopShowOnlyAr = request.param(name: "pokestop_show_only_ar")?.toBool() ?? false
         let pokestopShowOnlySponsored = request.param(name: "pokestop_show_only_sponsored")?.toBool() ?? false
+        let pokestopShowOnlyEvent = request.param(name: "pokestop_show_only_event")?.toBool() ?? false
         let questShowOnlyAr = request.param(name: "quest_show_only_ar")?.toBool() ?? false
         let gymShowOnlyAr = request.param(name: "gym_show_only_ar")?.toBool() ?? false
         let gymShowOnlySponsored = request.param(name: "gym_show_only_sponsored")?.toBool() ?? false
@@ -160,8 +161,10 @@ public class ApiRequestHandler {
         let date = request.param(name: "date") ?? ""
         let showCommdayStats = request.param(name: "show_commday_stats")?.toBool() ?? false
         let pokemonId = request.param(name: "pokemon_id")?.toUInt16() ?? 0
-        let start = request.param(name: "start") ?? ""
-        let end = request.param(name: "end") ?? ""
+        let startTimestamp = request.param(name: "start_timestamp") ?? ""
+        let endTimestamp = request.param(name: "end_timestamp") ?? ""
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let queueSize = request.param(name: "queue_size")?.toBool() ?? false
 
         if (showGyms || showRaids || showPokestops || showPokemon || showSpawnpoints ||
             showCells || showSubmissionTypeCells || showSubmissionPlacementCells || showWeathers) &&
@@ -203,7 +206,7 @@ public class ApiRequestHandler {
                 showPokestops: showPokestops, showQuests: showQuests && permShowQuests, showLures: permShowLures,
                 showInvasions: showInvasions && permShowInvasions, questFilterExclude: questFilterExclude,
                 pokestopFilterExclude: pokestopFilterExclude, pokestopShowOnlyAr: pokestopShowOnlyAr,
-                pokestopShowOnlySponsored: pokestopShowOnlySponsored,
+                pokestopShowOnlySponsored: pokestopShowOnlySponsored, pokestopShowOnlyEvent: pokestopShowOnlyEvent,
                 invasionFilterExclude: invasionFilterExclude, showAlternativeQuests: questShowOnlyAr
             )
         }
@@ -302,7 +305,7 @@ public class ApiRequestHandler {
                     "type": miscString
                 ])
             }
-            if !Pokemon.noCellPokemon {
+            if Pokemon.cellPokemonEnabled {
                 let filter = """
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-sm btn-off select-button-new" data-id="show_cell"
@@ -321,7 +324,7 @@ public class ApiRequestHandler {
                         "sort": -1
                     ],
                     "name": includeCellString,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/grass.png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=grass\" " +
                             "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": "",
@@ -431,7 +434,7 @@ public class ApiRequestHandler {
                         "sort": i+1
                     ],
                     "name": Localizer.global.get(value: "poke_\(i)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\"" +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokemon?style=\(iconStyle)&id=\(i)\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -460,200 +463,191 @@ public class ApiRequestHandler {
 
             var questData = [[String: Any]]()
 
-            let filter = """
+            let filter =
+                """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
                     <label class="btn btn-sm btn-off select-button-new" data-id="ar"
-                     data-type="quest-ar" data-info="hide">
+                        data-type="quest-ar" data-info="hide">
                         <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                     </label>
                     <label class="btn btn-sm btn-on select-button-new" data-id="ar"
-                     data-type="quest-ar" data-info="show">
+                        data-type="quest-ar" data-info="show">
                         <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                     </label>
                 </div>
-            """
+                """
             questData.append([
                 "id": [
                     "formatted": "",
                     "sort": -1
                 ],
                 "name": showArQuestsString,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\"" +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=ar\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": "",
                 "type": generalString
             ])
 
-            // Misc
-            for i in 1...6 {
+            // reward types:
+            for rewardType in QuestRewardProto.TypeEnum.allAvailable {
+                let rewardTypeName = Localizer.global.get(value: "quest_reward_\(rewardType.rawValue)")
+                if rewardType == .pokemonEncounter {
+                    for i in 1...WebRequestHandler.maxPokemonId {
+                        let filter =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                </label>
+                                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                </label>
+                            </div>
+                            """
+                        let size =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="small">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="normal">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="large">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                                    data-type="quest-pokemon" data-info="huge">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                </label>
+                            </div>
+                            """
 
-                let itemName: String
-                switch i {
-                case 1:
-                    itemName = Localizer.global.get(value: "filter_stardust")
-                case 2:
-                    itemName = Localizer.global.get(value: "filter_xp")
-                case 3:
-                    itemName = Localizer.global.get(value: "filter_candy")
-                case 4:
-                    itemName = Localizer.global.get(value: "filter_pokecoin")
-                case 5:
-                    itemName = Localizer.global.get(value: "filter_sticker")
-                default:
-                    itemName = Localizer.global.get(value: "filter_mega_energy")
-                }
+                        questData.append([
+                            "id": [
+                                "formatted": String(format: "%03d", i),
+                                "sort": 200+i
+                            ],
+                            "name": Localizer.global.get(value: "poke_\(i)") ,
+                            "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokemon?style=\(iconStyle)" +
+                                "&id=\(i)\" style=\"height:50px; width:50px;\">",
+                            "filter": filter,
+                            "size": size,
+                            "type": pokemonTypeString
+                        ])
+                    }
+                } else if rewardType == .item {
+                    // Items
+                    var itemI = 1
+                    for item in Item.allAvailable {
+                        let filter =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-off select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="hide">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                                </label>
+                                <label class="btn btn-sm btn-on select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="show">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                                </label>
+                            </div>
+                            """
+                        let size =
+                            """
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="small">
+                                    <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="normal">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="large">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                                </label>
+                                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
+                                    data-type="quest-item" data-info="huge">
+                                    <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                                </label>
+                            </div>
+                            """
 
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
+                        questData.append([
+                            "id": [
+                                "formatted": String(format: "%03d", itemI),
+                                "sort": 100+itemI
+                            ],
+                            "name": Localizer.global.get(value: "item_\(item.rawValue)") ,
+                            "image": "<img class=\"lazy_load\" " +
+                                "data-src=\"/image-api/reward?style=\(iconStyle)&" +
+                                "id=\(item.rawValue)&type=\(rewardType.rawValue)\" " +
+                                "style=\"height:50px; width:50px;\">",
+                            "filter": filter,
+                            "size": size,
+                            "type": itemsTypeString
+                        ])
+                        itemI += 1
+                    }
+                } else {
+                    // Misc
+                    let filter =
+                        """
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-sm btn-off select-button-new" data-id="\(rewardType.rawValue)"
+                                  data-type="quest-misc" data-info="hide">
+                                  <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                            </label>
+                            <label class="btn btn-sm btn-on select-button-new" data-id="\(rewardType.rawValue)"
+                                  data-type="quest-misc" data-info="show">
+                                  <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                            </label>
+                        </div>
+                        """
+                    let size =
+                        """
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="small">
+                                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="normal">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="large">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                            </label>
+                            <label class="btn btn-sm btn-size select-button-new" data-id="\(rewardType.rawValue)"
+                                data-type="quest-misc" data-info="huge">
+                                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                            </label>
+                        </div>
+                        """
 
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-misc" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", i),
-                        "sort": i
-                    ],
-                    "name": itemName,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(-i).png\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": miscTypeString
-                ])
-            }
-
-            // Items
-            var itemI = 1
-            for item in Item.allAvilable {
-
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
-
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(item.rawValue)"
-                 data-type="quest-item" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", itemI),
-                        "sort": itemI+100
-                    ],
-                    "name": Localizer.global.get(value: "item_\(item.rawValue)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/\(item.rawValue).png\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": itemsTypeString
-                ])
-                itemI += 1
-            }
-
-            // Pokemon
-            for i in 1...WebRequestHandler.maxPokemonId {
-
-                let filter = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="hide">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
-                </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="show">
-                <input type="radio" name="options" id="show" autocomplete="off">\(showString)
-                </label>
-                </div>
-                """
-
-                let size = """
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="small">
-                <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="normal">
-                <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="large">
-                <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
-                </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
-                 data-type="quest-pokemon" data-info="huge">
-                <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
-                </label>
-                </div>
-                """
-
-                questData.append([
-                    "id": [
-                        "formatted": String(format: "%03d", i),
-                        "sort": i+200
-                    ],
-                    "name": Localizer.global.get(value: "poke_\(i)") ,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" " +
-                             "style=\"height:50px; width:50px;\">",
-                    "filter": filter,
-                    "size": size,
-                    "type": pokemonTypeString
+                    questData.append([
+                        "id": [
+                            "formatted": String(format: "%03d", rewardType.rawValue),
+                            "sort": rewardType.rawValue
+                        ],
+                        "name": rewardTypeName,
+                        "image": "<img class=\"lazy_load\" " +
+                            "data-src=\"/image-api/reward?style=\(iconStyle)&id=\(0)&type=\(rewardType.rawValue)\" " +
+                            "style=\"height:50px; width:50px;\">",
+                        "filter": filter,
+                        "size": size,
+                        "type": miscTypeString
                     ])
+                }
             }
             data["quest_filters"] = questData
         }
@@ -715,7 +709,7 @@ public class ApiRequestHandler {
                     "sort": 0
                 ],
                 "name": raidTimers,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/timer.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/static/misc/timer.png\" " +
                          "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
@@ -723,7 +717,7 @@ public class ApiRequestHandler {
                 ])
 
             // Level
-            for i in 1...6 {
+            for i in [1, 3, 4, 5, 6, 7, 8, 9, 10] {
 
                 let raidLevel = Localizer.global.get(value: "filter_raid_level_\(i)")
 
@@ -767,7 +761,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": raidLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/egg/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/raid-egg?style=\(iconStyle)&id=\(i)\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -817,7 +811,7 @@ public class ApiRequestHandler {
                         "sort": i+200
                     ],
                     "name": Localizer.global.get(value: "poke_\(i)"),
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokemon/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokemon?style=\(iconStyle)&id=\(i)\" " +
                              "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -888,8 +882,8 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": gymTeam,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i)_\(i).png\" " +
-                             "style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/gym?style=\(iconStyle)" +
+                        "&id=\(i)&level=\(i)\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
                     "type": gymTeamString
@@ -931,7 +925,7 @@ public class ApiRequestHandler {
                     "sort": 5
                 ],
                 "name": Localizer.global.get(value: "filter_raid_ex") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/item/1403.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/reward?style=\(iconStyle)&id=1403&type=2\" " +
                          "style=\"height:50px; width:50px;\">",
                 "filter": exFilter,
                 "size": exSize,
@@ -973,7 +967,7 @@ public class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": Localizer.global.get(value: "filter_gym_ar_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=ar\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
@@ -1021,7 +1015,7 @@ public class ApiRequestHandler {
                     "sort": 7
                 ],
                 "name": Localizer.global.get(value: "filter_gym_sponsored_only") ,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=sponsor\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
@@ -1073,8 +1067,9 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 0 ? 0 : team)_\(i).png\"" +
-                        " style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" " +
+                        "data-src=\"/image-api/gym?style=\(iconStyle)&id=\(i == 0 ? 0 : team)&level=\(i)\" " +
+                        "style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
                     "type": powerUpLevelString
@@ -1127,8 +1122,9 @@ public class ApiRequestHandler {
                         "sort": i+100
                     ],
                     "name": availableSlots,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/gym/\(i == 6 ? 0 : team)_\(6 - i).png\"" +
-                             " style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" " +
+                        "data-src=\"/image-api/gym?style=\(iconStyle)&id=\(i == 6 ? 0 : team)&level=\(6 - i)\" " +
+                        "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
                     "type": availableSlotsString
@@ -1194,7 +1190,7 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": grunt,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/grunt/\(i).png\" " +
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/invasion?style=\(iconStyle)&id=\(i)\" " +
                         "style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
@@ -1221,6 +1217,7 @@ public class ApiRequestHandler {
             let pokestopNormal = Localizer.global.get(value: "filter_pokestop_normal")
             let arOnly = Localizer.global.get(value: "filter_pokestop_ar_only")
             let sponsoredOnly = Localizer.global.get(value: "filter_pokestop_sponsored_only")
+            let eventOnly = Localizer.global.get(value: "filter_pokestop_event_only")
             let powerUpLevelString = Localizer.global.get(value: "filter_poi_power_up_level")
 
             let filter = """
@@ -1263,23 +1260,25 @@ public class ApiRequestHandler {
                     "sort": 0
                 ],
                 "name": pokestopNormal,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokestop?style=\(iconStyle)&id=0\" " +
                          "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
                 "type": pokestopOptionsString
             ])
 
-            for i in 1...5 {
+            for i in 1...6 {
                 let pokestopLure = Localizer.global.get(value: "filter_pokestop_lure_\(i)")
+
+                let lureId = 500 + i
 
                 let filter = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-off select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-off select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="hide">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
                 </label>
-                <label class="btn btn-sm btn-on select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-on select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="show">
                 <input type="radio" name="options" id="show" autocomplete="off">\(showString)
                 </label>
@@ -1288,19 +1287,19 @@ public class ApiRequestHandler {
 
                 let size = """
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="small">
                 <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="normal">
                 <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="large">
                 <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
                 </label>
-                <label class="btn btn-sm btn-size select-button-new" data-id="\(i)"
+                <label class="btn btn-sm btn-size select-button-new" data-id="\(lureId)"
                  data-type="pokestop-lure" data-info="huge">
                 <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
                 </label>
@@ -1313,8 +1312,8 @@ public class ApiRequestHandler {
                         "sort": i
                     ],
                     "name": pokestopLure,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/\(i).png\" " +
-                             "style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokestop?style=\(iconStyle)" +
+                        "&id=\(lureId)\" style=\"height:50px; width:50px;\">",
                     "filter": filter,
                     "size": size,
                     "type": pokestopOptionsString
@@ -1364,8 +1363,9 @@ public class ApiRequestHandler {
                         "sort": i+10
                     ],
                     "name": powerUpLevel,
-                    "image": "<img class=\"lazy_load\" data-src=\"/static/img/pokestop/0.png\"" +
-                        " style=\"height:50px; width:50px;\">",
+                    "image": "<img class=\"lazy_load\" data-src=\"/image-api/pokestop?style=\(iconStyle)&id=0" +
+                        "&ar=true&power_up_level=\(i)\" " +
+                        "style=\"height:50px; width:50px;\">",
                     "filter": powerUpFilter,
                     "size": powerUpSize,
                     "type": powerUpLevelString
@@ -1413,7 +1413,7 @@ public class ApiRequestHandler {
                     "sort": 6
                 ],
                 "name": arOnly,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/ar.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=ar\" " +
                         "style=\"height:50px; width:50px;\">",
                 "filter": arFilter,
                 "size": arSize,
@@ -1461,10 +1461,58 @@ public class ApiRequestHandler {
                     "sort": 7
                 ],
                 "name": sponsoredOnly,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/misc/sponsor.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=sponsor\" " +
                     "style=\"height:50px; width:50px;\">",
                 "filter": sponsoredFilter,
                 "size": sponsoredSize,
+                "type": pokestopOptionsString
+            ])
+
+            // event pokestop e.g. golden
+            let eventFilter = """
+                           <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                           <label class="btn btn-sm btn-off select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="hide">
+                           <input type="radio" name="options" id="hide" autocomplete="off">\(hideString)
+                           </label>
+                           <label class="btn btn-sm btn-on select-button-new" data-id="event"
+                            data-type="pokestop-event" data-info="show">
+                           <input type="radio" name="options" id="show" autocomplete="off">\(showString)
+                           </label>
+                           </div>
+                           """
+
+            let eventSize = """
+                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="small">
+                         <input type="radio" name="options" id="hide" autocomplete="off">\(smallString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="normal">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(normalString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="large">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(largeString)
+                         </label>
+                         <label class="btn btn-sm btn-size select-button-new" data-id="event"
+                          data-type="pokestop-event" data-info="huge">
+                         <input type="radio" name="options" id="show" autocomplete="off">\(hugeString)
+                         </label>
+                         </div>
+                         """
+
+            pokestopData.append([
+                "id": [
+                    "formatted": String(format: "%03d", 8),
+                    "sort": 8
+                ],
+                "name": eventOnly,
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/misc?style=\(iconStyle)&id=sparkles\" " +
+                    "style=\"height:50px; width:50px;\">",
+                "filter": eventFilter,
+                "size": eventSize,
                 "type": pokestopOptionsString
             ])
 
@@ -1526,7 +1574,7 @@ public class ApiRequestHandler {
                     "sort": 0
                 ],
                 "name": spawnpointWithoutTimerString,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/0.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/spawnpoint?id=0&style=\(iconStyle)\" " +
                          "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
@@ -1573,7 +1621,7 @@ public class ApiRequestHandler {
                     "sort": 1
                 ],
                 "name": spawnpointWithTimerString,
-                "image": "<img class=\"lazy_load\" data-src=\"/static/img/spawnpoint/1.png\" " +
+                "image": "<img class=\"lazy_load\" data-src=\"/image-api/spawnpoint?id=1&style=\(iconStyle)\" " +
                          "style=\"height:50px; width:50px;\">",
                 "filter": filter,
                 "size": size,
@@ -1623,6 +1671,7 @@ public class ApiRequestHandler {
 
         if showInstances && perms.contains(.admin) {
 
+            var totalInstancesCount = 0
             let instances = try? Instance.getAll(mysql: mysql, getData: false)
             var jsonArray = [[String: Any]]()
 
@@ -1640,6 +1689,10 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Circle Pokemon"
                     case .circleSmartPokemon:
                         instanceData["type"] = "Circle Smart Pokemon"
+                    case .autoPokemon:
+                        instanceData["type"] = "Auto Pokemon"
+                    case .autoTth:
+                        instanceData["type"] = "Auto TTH"
                     case .autoQuest:
                         instanceData["type"] = "Auto Quest"
                     case .pokemonIV:
@@ -1648,27 +1701,21 @@ public class ApiRequestHandler {
                         instanceData["type"] = "Leveling"
                     }
 
-                    if skipInstanceStatus {
-                        instanceData["status"] = nil
-                    } else if formatted {
-                        let status = InstanceController.global.getInstanceStatus(
-                            mysql: mysql,
-                            instance: instance,
-                            formatted: true
-                        )
-                        if let status = status as? String {
-                            instanceData["status"] = status
-                        } else {
-                            instanceData["status"] = "?"
-                        }
-                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
-                                                  " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
+                    let status = skipInstanceStatus ? nil : InstanceController.global.getInstanceStatus(
+                        mysql: mysql,
+                        instance: instance,
+                        formatted: formatted
+                    )
+
+                    if status == nil {
+                        instanceData["status"] = formatted ? "?" : nil
                     } else {
-                        instanceData["status"] = InstanceController.global.getInstanceStatus(
-                            mysql: mysql,
-                            instance: instance,
-                            formatted: false
-                        ) as Any
+                        instanceData["status"] = status
+                    }
+
+                    if formatted {
+                        instanceData["buttons"] = "<a href=\"/dashboard/instance/edit/\(instance.name.encodeUrl()!)\"" +
+                            " role=\"button\" class=\"btn btn-primary\">Edit Instance</a>"
                     }
                     jsonArray.append(instanceData)
                 }
@@ -1703,7 +1750,10 @@ public class ApiRequestHandler {
                             "<a href=\"/dashboard/devicegroup/edit/\(id)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
                             "<a href=\"/dashboard/devicegroup/delete/\(id)\" " +
-                            "role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
+                            "role=\"button\" class=\"btn btn-danger\" onclick=\"return " +
+                            "confirm('Are you sure you want to delete this device " +
+                            "group? This action is irreversible and cannot be " +
+                            "undone without backups.')\">Delete</a></div>"
                     } else {
                         deviceGroupData["instances"] = instances
                         deviceGroupData["devices"] = deviceGroup.deviceUUIDs
@@ -1760,7 +1810,10 @@ public class ApiRequestHandler {
                             "<a href=\"/dashboard/assignment/edit/\(assignment.id!)\" " +
                             "role=\"button\" class=\"btn btn-primary\">Edit</a>" +
                             "<a href=\"/dashboard/assignment/delete/\(assignment.id!)\" " +
-                            "role=\"button\" class=\"btn btn-danger\">Delete</a></div>"
+                            "role=\"button\" class=\"btn btn-danger\" onclick=\"return " +
+                            "confirm('Are you sure you want to delete this assignment? " +
+                            "This action is irreversible and cannot be " +
+                            "undone without backups.')\">Delete</a></div>"
                     } else {
                         assignmentData["time"] = assignment.time as Any
                     }
@@ -1843,7 +1896,10 @@ public class ApiRequestHandler {
                         "<a href=\"/dashboard/webhook/edit/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
                         "class=\"btn btn-primary\">Edit</a>" +
                         "<a href=\"/dashboard/webhook/delete/\(webhook.name.encodeUrl()!)\" role=\"button\" " +
-                        "class=\"btn btn-danger\">Delete</a></div>"
+                        "class=\"btn btn-danger\" onclick=\"return " +
+                        "confirm('Are you sure you want to delete this webhook? " +
+                        "This action is irreversible and cannot be " +
+                        "undone without backups.')\">Delete</a></div>"
                     }
                     jsonArray.append(webhookData)
                 }
@@ -1865,8 +1921,11 @@ public class ApiRequestHandler {
                     "pokemon_name": Localizer.global.get(value: "poke_\(pokemon.pokemonId)")
                 ]
                 if formatted {
+                    let defaultIconStyle = ImageApiRequestHandler.styles.sorted { (rhs, lhs) -> Bool in
+                                rhs.key == "Default" || rhs.key < lhs.key }.first?.key ?? "Default"
                     json["pokemon_image"] =
-                        "<img src=\"/static/img/pokemon/\(pokemon.pokemonId).png\" style=\"height:50px; width:50px;\">"
+                        "<img src=\"/image-api/pokemon?style=\(defaultIconStyle)&id=\(pokemon.pokemonId)" +
+                        (pokemon.form != nil ? "&form=\(pokemon.form!)" : "") + "\" style=\"height:50px; width:50px;\">"
                     json["pokemon_spawn_id"] =
                         "<a target=\"_blank\" href=\"/@pokemon/\(pokemon.id)\">\(pokemon.id)</a>"
                     json["location"] =
@@ -2029,15 +2088,20 @@ public class ApiRequestHandler {
 
         let permViewStats = perms.contains(.viewStats)
         if permViewStats && showDashboardStats {
-            let stats = Stats().getJSONValues()
+            let stats = Stats.global.getJSONValues()
             data["pokemon_total"] = stats["pokemon_total"]
-            data["pokemon_active"] = stats["pokemon_active"]
             data["pokemon_iv_total"] = stats["pokemon_iv_total"]
+            data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
+            data["pokemon_total_hundo"] = stats["pokemon_total_hundo"]
+            data["pokemon_today"] = stats["pokemon_today"]
+            data["pokemon_iv_today"] = stats["pokemon_iv_today"]
+            data["pokemon_today_shiny"] = stats["pokemon_today_shiny"]
+            data["pokemon_today_hundo"] = stats["pokemon_today_hundo"]
+            data["pokemon_active"] = stats["pokemon_active"]
             data["pokemon_iv_active"] = stats["pokemon_iv_active"]
             data["pokemon_active_100iv"] = stats["pokemon_active_100iv"]
             data["pokemon_active_90iv"] = stats["pokemon_active_90iv"]
             data["pokemon_active_0iv"] = stats["pokemon_active_0iv"]
-            data["pokemon_total_shiny"] = stats["pokemon_total_shiny"]
             data["pokemon_active_shiny"] = stats["pokemon_active_shiny"]
             data["pokestops_total"] = stats["pokestops_total"]
             data["pokestops_lures_normal"] = stats["pokestops_lures_normal"]
@@ -2112,8 +2176,9 @@ public class ApiRequestHandler {
         }
 
         if permViewStats && permShowPokemon && showCommdayStats {
-            if pokemonId > 0 && !start.isEmpty && !end.isEmpty {
-                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId, start: start, end: end)
+            if pokemonId > 0 && !startTimestamp.isEmpty && !endTimestamp.isEmpty {
+                let stats = try? Stats.getCommDayStats(mysql: mysql, pokemonId: pokemonId,
+                    start: startTimestamp, end: endTimestamp)
                 let evo1Name = Localizer.global.get(value: "poke_\(pokemonId)")
                 let evo2Name = Localizer.global.get(value: "poke_\(pokemonId + 1)")
                 let evo3Name = Localizer.global.get(value: "poke_\(pokemonId + 2)")
@@ -2121,8 +2186,8 @@ public class ApiRequestHandler {
                 data["evo1_name"] = "\(evo1Name) (#\(pokemonId))"
                 data["evo2_name"] = "\(evo2Name) (#\(pokemonId + 1))"
                 data["evo3_name"] = "\(evo3Name) (#\(pokemonId + 2))"
-                data["start"] = start
-                data["end"] = end
+                data["start"] = startTimestamp
+                data["end"] = endTimestamp
                 data["stats"] = stats
             }
         }
@@ -2170,9 +2235,25 @@ public class ApiRequestHandler {
             }
         }
 
-        data["timestamp"] = Int(Date().timeIntervalSince1970)
+        if scanNext && queueSize && perms.contains(.admin), let name = instance {
+            guard let instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name.decodeUrl() ?? "")' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
+            }
+            let size = instance.getNextCoordsSize()
+            data["size"] = size
+        }
 
         do {
+            if data.isEmpty {
+                response.respondWithError(status: .badRequest)
+                return
+            }
+            data["timestamp"] = Int(Date().timeIntervalSince1970)
             try response.respondWithData(data: data)
         } catch {
             response.respondWithError(status: .internalServerError)
@@ -2186,7 +2267,7 @@ public class ApiRequestHandler {
         guard let perms = getPerms(request: request, response: response, route: WebServer.APIPage.setData) else {
             return
         }
-
+        let jsonDecoder = JSONDecoder()
         let setGymName = request.param(name: "set_gym_name")?.toBool() ?? false
         let gymId = request.param(name: "gym_id")
         let gymName = request.param(name: "gym_name")
@@ -2199,18 +2280,23 @@ public class ApiRequestHandler {
         let deviceGroupName = request.param(name: "devicegroup_name")
         let assignDevice = request.param(name: "assign_device")?.toBool() ?? false
         let deviceName = request.param(name: "device_name")
-        let instanceName = request.param(name: "instance_name")
+        let instanceName = request.param(name: "instance_name") // MARK: remove this later, use 'instance' instead
+        let instance = request.param(name: "instance") ?? instanceName
         let assignmentGroupReQuest = request.param(name: "assignmentgroup_re_quest")?.toBool() ?? false
         let assignmentGroupStart = request.param(name: "assignmentgroup_start")?.toBool() ?? false
         let assignmentGroupName = request.param(name: "assignmentgroup_name")
+        let clearMemCache = request.param(name: "clear_memcache")?.toBool() ?? false
+
+        let scanNext = request.param(name: "scan_next")?.toBool() ?? false
+        let coords = try? jsonDecoder.decode([Coord].self,
+            from: request.param(name: "coords")?.data(using: .utf8) ?? Data())
 
         if setGymName, perms.contains(.admin), let id = gymId, let name = gymName {
             do {
-                guard let oldGym = try Gym.getWithId(id: id) else {
+                guard let oldGym = try Gym.getWithId(id: id, copy: true) else {
                     return response.respondWithError(status: .custom(code: 404, message: "Gym not found"))
                 }
                 oldGym.name = name
-                oldGym.hasChanges = true
                 try oldGym.save()
                 response.respondWithOk()
             } catch {
@@ -2218,11 +2304,10 @@ public class ApiRequestHandler {
             }
         } else if setPokestopName, perms.contains(.admin), let id = pokestopId, let name = pokestopName {
            do {
-               guard let oldPokestop = try Pokestop.getWithId(id: id) else {
+               guard let oldPokestop = try Pokestop.getWithId(id: id, copy: true) else {
                    return response.respondWithError(status: .custom(code: 404, message: "Pokestop not found"))
                }
                oldPokestop.name = name
-               oldPokestop.hasChanges = true
                try oldPokestop.save()
                response.respondWithOk()
            } catch {
@@ -2244,7 +2329,7 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instanceName {
+        } else if assignDeviceGroup && perms.contains(.admin), let name = deviceGroupName, let goal = instance {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to assign devicegroup \(name) to instance \(goal)")
                 guard let deviceGroup = try DeviceGroup.getByName(name: name),
@@ -2261,7 +2346,7 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
-        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instanceName {
+        } else if assignDevice && perms.contains(.admin), let name = deviceName, let goal = instance {
             do {
                 Log.info(message: "[ApiRequestHandler] API request to assign device \(name) to instance \(goal)")
                 guard let device = try Device.getById(id: name),
@@ -2284,6 +2369,7 @@ public class ApiRequestHandler {
                 try AssignmentController.global.reQuestAssignmentGroup(assignmentGroup: assignmentGroup)
                 response.respondWithOk()
             } catch {
+                Log.error(message: "[ApiRequestHandler] API request to reQuest was not successful")
                 response.respondWithError(status: .internalServerError)
             }
         } else if assignmentGroupStart && perms.contains(.admin), let name = assignmentGroupName {
@@ -2297,6 +2383,44 @@ public class ApiRequestHandler {
             } catch {
                 response.respondWithError(status: .internalServerError)
             }
+        } else if scanNext && perms.contains(.admin), let name = instance, let coords = coords {
+            Log.info(message: "[ApiRequestHandler] API request to scan next coordinates with instance '\(name)'")
+            guard var instance = InstanceController.global.getInstanceController(instanceName: name.decodeUrl() ?? ""),
+                  instance is CircleInstanceController || instance is IVInstanceController
+            else {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' not found " +
+                    "or it's no Circle or IV Instance")
+                return response.respondWithError(status: .custom(code: 404,
+                    message: "Instance not found or of wrong type"))
+            }
+            if InstanceController.global.getDeviceUUIDsInInstance(instanceName: name.decodeUrl() ?? "").isEmpty {
+                Log.error(message: "[ApiRequestHandler] Instance '\(name)' without devices")
+                return response.respondWithError(status: .custom(code: 416, message: "Instance without devices"))
+            }
+            if !coords.isEmpty {
+                let chunkSize = coords.count > 7 ? 5 : 1
+                for chunk in coords.chunked(into: chunkSize) {
+                    instance.addToScanNextCoords(coords: chunk)
+                }
+            }
+            do {
+                try response.respondWithData(data: [
+                    "action": "next_scan",
+                    "size": instance.getNextCoordsSize(),
+                    "timestamp": Int(Date().timeIntervalSince1970)
+                ])
+            } catch {
+                response.respondWithError(status: .internalServerError)
+            }
+        } else if clearMemCache && perms.contains(.admin) {
+            Pokemon.cache?.clear()
+            Pokestop.cache?.clear()
+            Incident.cache?.clear()
+            Gym.cache?.clear()
+            SpawnPoint.cache?.clear()
+            Weather.cache?.clear()
+            ImageManager.global.clearCaches()
+            response.respondWithOk()
         } else {
             response.respondWithError(status: .badRequest)
         }

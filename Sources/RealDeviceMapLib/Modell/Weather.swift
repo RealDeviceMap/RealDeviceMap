@@ -12,6 +12,7 @@ import PerfectLib
 import PerfectMySQL
 import POGOProtos
 import S2Geometry
+import Turf
 
 public class Weather: JSONConvertibleObject, WebHookEvent {
 
@@ -220,6 +221,12 @@ public class Weather: JSONConvertibleObject, WebHookEvent {
                   oldWeather!.warnWeather != self.warnWeather {
             WebHookController.global.addWeatherEvent(weather: self)
         }
+    }
+
+    public static func findByLatLon(lat: Double, lon: Double) throws -> Weather? {
+        let centerCoord = LocationCoordinate2D(latitude: lat, longitude: lon)
+        let cellID = S2CellId(latlng: S2LatLng(coord: centerCoord)).parent(level: 10)
+        return try Weather.getWithId(id: cellID.id)
     }
 
     public static func getWithId(mysql: MySQL?=nil, id: Int64) throws -> Weather? {

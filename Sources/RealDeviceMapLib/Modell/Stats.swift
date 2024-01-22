@@ -10,10 +10,308 @@
 import Foundation
 import PerfectLib
 import PerfectMySQL
+import PerfectThread
 
-class Stats: JSONConvertibleObject {
+class Stats {
 
-    override func getJSONValues() -> [String: Any] {
+    public static let global = Stats()
+
+    public static var pokemonCountStats = true
+    public static var pokemonArchiveEnabled = false
+    public static var cleanupPokemon = true
+    public static var cleanupIncident = true
+
+    private static var maxPokemon = 1000
+    private var pokemonStatsLock = Threading.Lock()
+    private var pokemonCount = PokemonCountDetail()
+
+    private init() {
+        if Stats.cleanupPokemon {
+            if Stats.pokemonArchiveEnabled {
+                Log.info(message: "[STATS] Enabled pokemon history for stats")
+            } else {
+                Log.info(message: "[STATS] Cleanup of Pokemon enabled, pokemon history for stats disabled")
+            }
+            startDatabaseArchiver()
+        } else {
+            Log.info(message: "[STATS] Cleanup and pokemon history for pokemon disabled")
+        }
+        if Stats.cleanupIncident {
+            Log.info(message: "[STATS] Cleanup of incidents enabled")
+            startIncidentExpiry()
+        } else {
+            Log.info(message: "[STATS] Cleanup of incidents disabled")
+        }
+
+        if Stats.pokemonCountStats {
+            Log.info(message: "[STATS] Enabled pokemon count for stats")
+            startPokemonCountStatsLogger()
+        } else {
+            Log.info(message: "[STATS] Disabled pokemon count for stats")
+        }
+    }
+
+    // =================================================================================================================
+    // Database Archiver, Stats Logger and Clearer Utilities
+    // ================================================================================================================
+
+    private func startDatabaseArchiver() {
+        let interval = (ConfigLoader.global.getConfig(type: .dbClearerPokemonInterval) as Int).toDouble()
+        let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerPokemonKeepTime) as Int).toDouble()
+        let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerPokemonBatchSize) as Int).toUInt()
+        if !Stats.pokemonArchiveEnabled {
+            Log.info(message: "[STATS] Pokemon config: " +
+                "keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
+        }
+        Threading.getQueue(name: "DatabaseArchiver", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: interval)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [DatabaseArchiver] Failed to connect to database.")
+                    continue
+                }
+                let start = Date()
+                let affectedRows: UInt?
+                if Stats.pokemonArchiveEnabled {
+                    affectedRows = self.createStatsAndArchive(mysql: mysql)
+                } else {
+                    affectedRows = self.clearPokemon(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                }
+                Log.info(message: "[STATS] [DatabaseArchiver] Archive of pokemon table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s " +
+                    "(\(affectedRows != nil ? affectedRows!.toString() : "?") rows)")
+            }
+        }
+    }
+
+    private func startIncidentExpiry() {
+        let interval = (ConfigLoader.global.getConfig(type: .dbClearerIncidentInterval) as Int).toDouble()
+        let keepTime = (ConfigLoader.global.getConfig(type: .dbClearerIncidentKeepTime) as Int).toDouble()
+        let batchSize = (ConfigLoader.global.getConfig(type: .dbClearerIncidentBatchSize) as Int).toUInt()
+        Log.info(message: "[STATS] Incident config: keep \(keepTime)s, batches of \(batchSize) every \(interval)s")
+        Threading.getQueue(name: "IncidentExpiry", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: interval)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [IncidentExpiry] Failed to connect to database.")
+                    continue
+                }
+                let start = Date()
+                let affectedRows = self.clearIncident(mysql: mysql, keepTime: keepTime, batchSize: batchSize)
+                Log.info(message: "[STATS] [IncidentExpiry] Cleanup of incident table took " +
+                    "\(String(format: "%.3f", Date().timeIntervalSince(start)))s (\(affectedRows) rows)")
+            }
+        }
+    }
+
+    private func startPokemonCountStatsLogger() {
+        Threading.getQueue(name: "StatsLogger", type: .serial).dispatch {
+            while true {
+                Threading.sleep(seconds: 600)
+                guard let mysql = DBController.global.mysql else {
+                    Log.error(message: "[STATS] [StatsLogger] Failed to connect to database.")
+                    continue
+                }
+                self.logPokemonCount(mysql: mysql)
+            }
+        }
+    }
+
+    public func updatePokemonCountStats(old: Pokemon?, new: Pokemon) {
+        if Stats.pokemonCountStats {
+            if old == nil || old!.cp != new.cp {
+                // pokemon is new or cp has changed (eg encountered, or re-encountered)
+                pokemonStatsLock.lock()
+                let pokemonId = new.pokemonId.toInt()
+                if old == nil || old!.pokemonId != new.pokemonId { // pokemon is new or type has changed
+                    pokemonCount.count[pokemonId] += 1
+                }
+                if new.cp != nil {
+                    pokemonCount.ivCount[pokemonId] += 1
+                    if let shiny = new.shiny, shiny == true {
+                        pokemonCount.shiny[pokemonId] += 1
+                    }
+                    if let atk = new.atkIv, atk == 15, let def = new.defIv, def == 15, let sta = new.staIv, sta == 15 {
+                        pokemonCount.hundos[pokemonId] += 1
+                    }
+                }
+                pokemonStatsLock.unlock()
+            }
+        }
+    }
+
+    // =================================================================================================================
+    // HELPER METHODS
+    // =================================================================================================================
+
+    private func clearPokemon(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+        var affectedRows: UInt = 0
+        var totalRows: UInt = 0
+        let sql = """
+                  DELETE FROM pokemon
+                  WHERE expire_timestamp <= UNIX_TIMESTAMP() - ?
+                  LIMIT ?;
+                  """
+
+        repeat {
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            mysqlStmt.bindParam(keepTime)
+            mysqlStmt.bindParam(batchSize)
+
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[STATS] Failed to execute query 'DELETE LIMIT pokemon'. " +
+                    mysqlStmt.errorMessage())
+                break
+            }
+            affectedRows = mysqlStmt.affectedRows()
+            totalRows &+= affectedRows
+            // wait between batches
+            Threading.sleep(seconds: 0.2)
+        } while affectedRows == batchSize
+        return totalRows
+    }
+
+    private func createStatsAndArchive(mysql: MySQL) -> UInt? {
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: "CALL createStatsAndArchive();")
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query 'createStatsAndArchive'. " +
+                mysqlStmt.errorMessage())
+            return 0
+        }
+        let totalRows = mysqlStmt.affectedRows()
+        if totalRows == 0 {
+            // mysql does not return affectedRows, actually only mariadb
+            return nil
+        }
+        return totalRows
+    }
+
+    private func clearIncident(mysql: MySQL, keepTime: Double, batchSize: UInt) -> UInt {
+        var affectedRows: UInt = 0
+        var totalRows: UInt = 0
+        let sql = """
+                  DELETE FROM incident
+                  WHERE expiration <= UNIX_TIMESTAMP() - ?
+                  LIMIT ?;
+                  """
+
+        repeat {
+            let mysqlStmt = MySQLStmt(mysql)
+            _ = mysqlStmt.prepare(statement: sql)
+            mysqlStmt.bindParam(keepTime)
+            mysqlStmt.bindParam(batchSize)
+
+            guard mysqlStmt.execute() else {
+                Log.error(message: "[STATS] Failed to execute query 'DELETE LIMIT incident'. " +
+                    mysqlStmt.errorMessage())
+                break
+            }
+            affectedRows = mysqlStmt.affectedRows()
+            totalRows &+= affectedRows
+            // wait between batches
+            Threading.sleep(seconds: 0.2)
+        } while affectedRows == batchSize
+        return totalRows
+    }
+
+    private func logPokemonCount(mysql: MySQL) {
+        var currentStats = PokemonCountDetail()
+        pokemonStatsLock.doWithLock {
+            currentStats = self.pokemonCount
+            pokemonCount = PokemonCountDetail()
+        }
+
+        Log.info(message: "[STATS] Update pokemon count tables")
+
+        var hundoRows = [PokemonCountDbRow]()
+        var shinyRows = [PokemonCountDbRow]()
+        var ivRows = [PokemonCountDbRow]()
+        var allRows = [PokemonCountDbRow]()
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = Localizer.global.timeZone
+        let midnight = formatter.string(from: Date())
+
+        for (pokemonId, count) in currentStats.count.enumerated() where count > 0 {
+            allRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.ivCount.enumerated() where count > 0 {
+            ivRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.hundos.enumerated() where count > 0 {
+            hundoRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        for (pokemonId, count) in currentStats.shiny.enumerated() where count > 0 {
+            shinyRows.append(PokemonCountDbRow(date: midnight, pokemonId: pokemonId, count: count))
+        }
+
+        updateStatsCount(mysql: mysql, table: "pokemon_stats", rows: allRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_iv_stats", rows: ivRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_hundo_stats", rows: hundoRows)
+        updateStatsCount(mysql: mysql, table: "pokemon_shiny_stats", rows: shinyRows)
+    }
+
+    private func updateStatsCount(mysql: MySQL, table: String, rows: [PokemonCountDbRow]) {
+        if rows.count == 0 {
+            return
+        }
+        var values = ""
+        for _ in 1..<rows.count {
+            values += "(?,?,?), "
+        }
+        values += "(?,?,?) "
+
+        let sql = """
+                  INSERT INTO \(table) (date, pokemon_id, `count`) VALUES \(values)
+                  ON DUPLICATE KEY UPDATE `count` = `count` + VALUES(`count`)
+                  """
+
+        let mysqlStmt = MySQLStmt(mysql)
+        _ = mysqlStmt.prepare(statement: sql)
+        for row in rows {
+            mysqlStmt.bindParam(row.date)
+            mysqlStmt.bindParam(row.pokemonId)
+            mysqlStmt.bindParam(row.count)
+        }
+
+        guard mysqlStmt.execute() else {
+            Log.error(message: "[STATS] Failed to execute query 'INSERT INTO \(table)'. " +
+                mysqlStmt.errorMessage())
+            return
+        }
+    }
+
+    struct PokemonCountDetail {
+        var hundos: [Int]
+        var shiny: [Int]
+        var count: [Int]
+        var ivCount: [Int]
+
+        init() {
+            hundos = [Int](repeating: 0, count: Stats.maxPokemon)
+            shiny = [Int](repeating: 0, count: Stats.maxPokemon)
+            count = [Int](repeating: 0, count: Stats.maxPokemon)
+            ivCount = [Int](repeating: 0, count: Stats.maxPokemon)
+        }
+    }
+
+    struct PokemonCountDbRow {
+        var date: String
+        var pokemonId: Int
+        var count: Int
+    }
+
+    // =================================================================================================================
+    // Stats related to triggers, stats page
+    // =================================================================================================================
+
+    func getJSONValues() -> [String: Any] {
         let pokemonStats = try? Stats.getPokemonStats()
         let pokemonIVStats = try? Stats.getPokemonIVStats()
         let raidStats = try? Stats.getRaidStats()
@@ -26,21 +324,28 @@ class Stats: JSONConvertibleObject {
         let spawnpointStats = try? Stats.getSpawnpointStats()
         return [
             "pokemon_total": pokemonStats?[0] ?? 0,
-            "pokemon_active": pokemonStats?[1] ?? 0,
+            "pokemon_today": pokemonStats?[1] ?? 0,
             "pokemon_iv_total": pokemonStats?[2] ?? 0,
-            "pokemon_iv_active": pokemonStats?[3] ?? 0,
-            "pokemon_active_100iv": pokemonStats?[4] ?? 0,
-            "pokemon_active_90iv": pokemonStats?[5] ?? 0,
-            "pokemon_active_0iv": pokemonStats?[6] ?? 0,
-            "pokemon_total_shiny": pokemonStats?[7] ?? 0,
-            "pokemon_active_shiny": pokemonStats?[8] ?? 0,
+            "pokemon_iv_today": pokemonStats?[3] ?? 0,
+            "pokemon_total_shiny": pokemonStats?[4] ?? 0,
+            "pokemon_today_shiny": pokemonStats?[5] ?? 0,
+            "pokemon_total_hundo": pokemonStats?[6] ?? 0,
+            "pokemon_today_hundo": pokemonStats?[7] ?? 0,
+            "pokemon_active": pokemonStats?[8] ?? 0,
+            "pokemon_iv_active": pokemonStats?[9] ?? 0,
+            "pokemon_active_100iv": pokemonStats?[10] ?? 0,
+            "pokemon_active_90iv": pokemonStats?[11] ?? 0,
+            "pokemon_active_0iv": pokemonStats?[12] ?? 0,
+            "pokemon_active_shiny": pokemonStats?[13] ?? 0,
             "pokestops_total": pokestopStats?[0] ?? 0,
             "pokestops_lures_normal": pokestopStats?[1] ?? 0,
             "pokestops_lures_glacial": pokestopStats?[2] ?? 0,
             "pokestops_lures_mossy": pokestopStats?[3] ?? 0,
             "pokestops_lures_magnetic": pokestopStats?[4] ?? 0,
-            "pokestops_invasions": pokestopStats?[5] ?? 0,
-            "pokestops_quests": pokestopStats?[6] ?? 0,
+            "pokestops_lures_rainy": pokestopStats?[5] ?? 0,
+            "pokestops_lures_sparkly": pokestopStats?[6] ?? 0,
+            "pokestops_invasions": pokestopStats?[7] ?? 0,
+            "pokestops_quests": pokestopStats?[8] ?? 0,
             "gyms_total": gymStats?[0] ?? 0,
             "gyms_neutral": gymStats?[1] ?? 0,
             "gyms_mystic": gymStats?[2] ?? 0,
@@ -95,7 +400,7 @@ class Stats: JSONConvertibleObject {
                   FROM pokemon_iv_stats iv
                     LEFT JOIN pokemon_shiny_stats shiny
                     ON iv.date = shiny.date AND iv.pokemon_id = shiny.pokemon_id
-                  WHERE iv.date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+                  WHERE iv.date = CURDATE()
                   GROUP BY iv.pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
@@ -104,7 +409,7 @@ class Stats: JSONConvertibleObject {
             sql = """
                   SELECT pokemon_id, SUM(count) as count
                   FROM pokemon_hundo_stats
-                  WHERE date = FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')
+                  WHERE date = CURDATE()
                   GROUP BY pokemon_id
                   ORDER BY count DESC
                   LIMIT \(limit ?? 10)
@@ -305,7 +610,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT x.date, x.pokemon_id, shiny.count as shiny, iv.count
                   FROM pokemon_stats x
@@ -358,27 +663,23 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        // Thanks Flo
         let sql = """
-                  SELECT * FROM (
-                      SELECT SUM(count) AS total
-                      FROM pokemon_stats
-                  ) AS A
-                  JOIN (
-                      SELECT SUM(count) AS iv_total
-                      FROM pokemon_iv_stats
-                  ) AS B
-                  JOIN (
-                      SELECT SUM(count) AS total_shiny
-                      FROM pokemon_shiny_stats
-                  ) AS C
-                  JOIN (
+                  SELECT
+                  (SELECT SUM(count) FROM pokemon_stats) AS total,
+                  (SELECT SUM(count) FROM pokemon_stats WHERE date = CURDATE()) AS pokemon_today,
+                  (SELECT SUM(count) FROM pokemon_iv_stats) AS iv_total,
+                  (SELECT SUM(count) FROM pokemon_iv_stats WHERE date = CURDATE()) AS pokemon_iv_today,
+                  (SELECT SUM(count) FROM pokemon_shiny_stats) AS total_shiny,
+                  (SELECT SUM(count) FROM pokemon_shiny_stats WHERE date = CURDATE()) AS pokemon_shiny_today,
+                  (SELECT SUM(count) FROM pokemon_hundo_stats) AS hundo_total,
+                  (SELECT SUM(count) FROM pokemon_hundo_stats WHERE date = CURDATE()) AS pokemon_hundo_today,
+                  A.* FROM (
                       SELECT COUNT(id) AS active, COUNT(iv) AS iv_active, SUM(iv = 100) AS active_100iv,
-                             SUM(iv >= 90 AND iv < 100) AS active_90iv, SUM(iv = 0) AS active_0iv,
-                             SUM(shiny = 1) AS active_shiny
+                           SUM(iv >= 90 AND iv < 100) AS active_90iv, SUM(iv = 0) AS active_0iv,
+                           SUM(shiny = 1) AS active_shiny
                       FROM pokemon
                       WHERE expire_timestamp >= UNIX_TIMESTAMP()
-                  ) AS D
+                  ) AS A
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -393,24 +694,34 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = Int64(result[0] as? String ?? "0") ?? 0
-            let ivTotal = Int64(result[1] as? String ?? "0") ?? 0
-            let totalShiny = Int64(result[2] as? String ?? "0") ?? 0
-            let active = result[3] as? Int64 ?? 0
-            let ivActive = result[4] as? Int64 ?? 0
-            let active100iv = Int64(result[5] as? String ?? "0") ?? 0
-            let active90iv = Int64(result[6] as? String ?? "0") ?? 0
-            let active0iv = Int64(result[7] as? String ?? "0") ?? 0
-            let activeShiny = Int64(result[8] as? String ?? "0") ?? 0
+            let pokemonTotal = Int64(result[0] as? String ?? "0") ?? 0
+            let pokemonToday = Int64(result[1] as? String ?? "0") ?? 0
+            let ivTotal = Int64(result[2] as? String ?? "0") ?? 0
+            let ivToday = Int64(result[3] as? String ?? "0") ?? 0
+            let shinyTotal = Int64(result[4] as? String ?? "0") ?? 0
+            let shinyToday = Int64(result[5] as? String ?? "0") ?? 0
+            let hundoTotal = Int64(result[6] as? String ?? "0") ?? 0
+            let hundoToday = Int64(result[7] as? String ?? "0") ?? 0
+            let active = result[8] as? Int64 ?? 0
+            let ivActive = result[9] as? Int64 ?? 0
+            let active100iv = Int64(result[10] as? String ?? "0") ?? 0
+            let active90iv = Int64(result[11] as? String ?? "0") ?? 0
+            let active0iv = Int64(result[12] as? String ?? "0") ?? 0
+            let activeShiny = Int64(result[13] as? String ?? "0") ?? 0
 
-            stats.append(total)
-            stats.append(active)
+            stats.append(pokemonTotal)
+            stats.append(pokemonToday)
             stats.append(ivTotal)
+            stats.append(ivToday)
+            stats.append(shinyTotal)
+            stats.append(shinyToday)
+            stats.append(hundoTotal)
+            stats.append(hundoToday)
+            stats.append(active)
             stats.append(ivActive)
             stats.append(active100iv)
             stats.append(active90iv)
             stats.append(active0iv)
-            stats.append(totalShiny)
             stats.append(activeShiny)
 
         }
@@ -425,7 +736,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT pokemon_id, count, level
                   FROM raid_stats
@@ -472,12 +783,13 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT level, SUM(count) as count
                   FROM raid_stats
                   WHERE date = \(when)
                   GROUP BY level
+                  ORDER BY level
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -523,9 +835,11 @@ class Stats: JSONConvertibleObject {
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=502) AS glacial_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=503) AS mossy_lures,
                     SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=504) AS magnetic_lures,
-                    SUM(incident_expire_timestamp > UNIX_TIMESTAMP()) invasions,
-                    SUM(quest_reward_type IS NOT NULL) quests
-                  FROM pokestop
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=505) AS rainy_lures,
+                    SUM(lure_expire_timestamp > UNIX_TIMESTAMP() AND lure_id=506) AS sparkly_lures,
+                    (SELECT COUNT(id) FROM incident WHERE expiration > UNIX_TIMESTAMP()) AS invasions,
+                    (COUNT(alternative_quest_reward_type) + COUNT(quest_reward_type)) AS quests
+                  FROM pokestop;
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -540,19 +854,23 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
-            let normalLures = Int64(result[1] as! String)!
-            let glacialLures = Int64(result[2] as! String)!
-            let mossyLures = Int64(result[3] as! String)!
-            let magneticLures = Int64(result[4] as! String)!
-            let invasions = Int64(result[5] as! String)!
-            let quests = Int64(result[6] as! String)!
+            let total = result[0] as? Int64 ?? 0
+            let normalLures = Int64(result[1] as? String ?? "0")!
+            let glacialLures = Int64(result[2] as? String ?? "0")!
+            let mossyLures = Int64(result[3] as? String ?? "0")!
+            let magneticLures = Int64(result[4] as? String ?? "0")!
+            let rainyLures = Int64(result[5] as? String ?? "0")!
+            let sparklyLures = Int64(result[6] as? String ?? "0")!
+            let invasions = result[7] as? Int64 ?? 0
+            let quests = result[8] as? Int64 ?? 0
 
             stats.append(total)
             stats.append(normalLures)
             stats.append(glacialLures)
             stats.append(mossyLures)
             stats.append(magneticLures)
+            stats.append(rainyLures)
+            stats.append(sparklyLures)
             stats.append(invasions)
             stats.append(quests)
 
@@ -568,7 +886,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT reward_type, item_id, SUM(count) AS count
                   FROM quest_stats
@@ -618,7 +936,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT pokemon_id, SUM(count) AS count
                   FROM quest_stats
@@ -664,7 +982,7 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
-        let when = date == nil ? "FROM_UNIXTIME(UNIX_TIMESTAMP(), '%Y-%m-%d')" : "?"
+        let when = date == nil ? "CURDATE()" : "?"
         let sql = """
                   SELECT date, grunt_type, count
                   FROM invasion_stats
@@ -733,11 +1051,11 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
-            let found = Int64(result[1] as! String) ?? 0
-            let missing = Int64(result[2] as! String) ?? 0
-            let min30 = Int64(result[3] as! String) ?? 0
-            let min60 = Int64(result[4] as! String) ?? 0
+            let total = result[0] as? Int64 ?? 0
+            let found = Int64(result[1] as? String ?? "0") ?? 0
+            let missing = Int64(result[2] as? String ?? "0") ?? 0
+            let min30 = Int64(result[3] as? String ?? "0") ?? 0
+            let min60 = Int64(result[4] as? String ?? "0") ?? 0
 
             stats.append(total)
             stats.append(found)
@@ -780,12 +1098,12 @@ class Stats: JSONConvertibleObject {
         var stats = [Int64]()
         while let result = results.next() {
 
-            let total = result[0] as! Int64
-            let neutral = Int64(result[1] as! String) ?? 0
-            let mystic = Int64(result[2] as! String) ?? 0
-            let valor = Int64(result[3] as! String) ?? 0
-            let instinct = Int64(result[4] as! String) ?? 0
-            let raids = Int64(result[5] as! String) ?? 0
+            let total = result[0] as? Int64 ?? 0
+            let neutral = Int64(result[1] as? String ?? "0") ?? 0
+            let mystic = Int64(result[2] as? String ?? "0") ?? 0
+            let valor = Int64(result[3] as? String ?? "0") ?? 0
+            let instinct = Int64(result[4] as? String ?? "0") ?? 0
+            let raids = Int64(result[5] as? String ?? "0") ?? 0
 
             stats.append(total)
             stats.append(neutral)
@@ -903,6 +1221,15 @@ class Stats: JSONConvertibleObject {
             throw DBController.DBError()
         }
 
+        let usePokemonHistory = Stats.pokemonArchiveEnabled && Stats.cleanupPokemon
+
+        let gender = usePokemonHistory ? ""
+            : ", SUM(gender = 1) AS male, SUM(gender = 2) AS female, SUM(gender = 3) AS genderless"
+        let firstSeenTimestamp = usePokemonHistory
+            ? "least(ifnull(first_encounter,seen_wild),seen_wild)"
+            : "first_seen_timestamp"
+        let fromTable = usePokemonHistory ? "pokemon_history" : "pokemon"
+
         let sql = """
                   SELECT
                     COUNT(id) AS total,
@@ -920,19 +1247,17 @@ class Stats: JSONConvertibleObject {
                     SUM(iv >= 80 AND iv < 90) AS iv_80_89,
                     SUM(iv >= 90 AND iv < 100) AS iv_90_99,
                     SUM(iv = 100) AS iv_100,
-                    SUM(gender = 1) AS male,
-                    SUM(gender = 2) AS female,
-                    SUM(gender = 3) AS genderless,
                     SUM(level >= 1 AND level <= 9) AS level_1_9,
                     SUM(level >= 10 AND level <= 19) AS level_10_19,
                     SUM(level >= 20 AND level <= 29) AS level_20_29,
                     SUM(level >= 30 AND level <= 35) AS level_30_35
+                    \(gender)
                   FROM
-                    pokemon
+                    \(fromTable)
                   WHERE
                     pokemon_id = ?
-                    AND first_seen_timestamp >= ?
-                    AND first_seen_timestamp <= ?
+                    AND \(firstSeenTimestamp) >= ?
+                    AND \(firstSeenTimestamp) <= ?
                   """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -968,15 +1293,16 @@ class Stats: JSONConvertibleObject {
             stats["iv_90_99"] = Int64(result[13] as? String ?? "0") ?? 0
             stats["iv_100"] = Int64(result[14] as? String ?? "0") ?? 0
 
-            stats["male"] = Int64(result[15] as? String ?? "0") ?? 0
-            stats["female"] = Int64(result[16] as? String ?? "0") ?? 0
-            stats["genderless"] = Int64(result[17] as? String ?? "0") ?? 0
+            stats["level_1_9"] = Int64(result[15] as? String ?? "0") ?? 0
+            stats["level_10_19"] = Int64(result[16] as? String ?? "0") ?? 0
+            stats["level_20_29"] = Int64(result[17] as? String ?? "0") ?? 0
+            stats["level_30_35"] = Int64(result[18] as? String ?? "0") ?? 0
 
-            stats["level_1_9"] = Int64(result[18] as? String ?? "0") ?? 0
-            stats["level_10_19"] = Int64(result[19] as? String ?? "0") ?? 0
-            stats["level_20_29"] = Int64(result[20] as? String ?? "0") ?? 0
-            stats["level_30_35"] = Int64(result[21] as? String ?? "0") ?? 0
-
+            if !Stats.pokemonArchiveEnabled {
+                stats["male"] = Int64(result[19] as? String ?? "0") ?? 0
+                stats["female"] = Int64(result[20] as? String ?? "0") ?? 0
+                stats["genderless"] = Int64(result[21] as? String ?? "0") ?? 0
+            }
         }
         return stats
 

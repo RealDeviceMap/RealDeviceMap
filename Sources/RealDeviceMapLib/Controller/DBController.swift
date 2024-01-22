@@ -49,9 +49,9 @@ public class DBController {
     private let host: String
     private let port: UInt32
     private let username: String
-    private let password: String?
+    private let password: String
     private let rootUsername: String
-    private let rootPassword: String?
+    private let rootPassword: String
 
     private var newestDBVersion: Int {
         let fileManager = FileManager.default
@@ -124,26 +124,28 @@ public class DBController {
     private init() {
 
         Log.info(message: "[DBController] Initializing database")
-
-        let environment = ProcessInfo.processInfo.environment
-        database = environment["DB_DATABASE"] ?? "rdmdb"
-        host = environment["DB_HOST"] ?? "127.0.0.1"
-        port = UInt32(environment["DB_PORT"] ?? "") ?? 3306
-        username = environment["DB_USERNAME"] ?? "rdmuser"
-        password = environment["DB_PASSWORD"]
-        rootUsername = environment["DB_ROOT_USERNAME"] ?? "root"
-        rootPassword = environment["DB_ROOT_PASSWORD"]
+        database = ConfigLoader.global.getConfig(type: .dbDatabase)
+        host = ConfigLoader.global.getConfig(type: .dbHost)
+        let dbPort: Int = ConfigLoader.global.getConfig(type: .dbPort)
+        port = UInt32(exactly: dbPort)!
+        username = ConfigLoader.global.getConfig(type: .dbUser)
+        password = ConfigLoader.global.getConfig(type: .dbPassword)
+        rootUsername = ConfigLoader.global.getConfig(type: .dbRootUser)
+        rootPassword = ConfigLoader.global.getConfig(type: .dbRootPassword)
 
         MySQLSessionConnector.host = host
-        MySQLSessionConnector.port = Int(port)
+        MySQLSessionConnector.port = dbPort
         MySQLSessionConnector.username = username
-        MySQLSessionConnector.password = password ?? ""
+        MySQLSessionConnector.password = password
         MySQLSessionConnector.database = database
         MySQLSessionConnector.table = "web_session"
 
         setup()
 
-        Log.info(message: "[DBController] Done")
+        Log.info(message: "[DBController] Done initializing")
+        Log.info(message: "[DBController] DB Name: \(database)")
+        Log.info(message: "[DBController] DB Host: \(host)")
+        Log.info(message: "[DBController] DB Port: \(dbPort)")
     }
 
     private func setup() {
@@ -248,138 +250,160 @@ public class DBController {
                 version = Int(String(element![0]!))!
             }
         }
-
+        backup(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
         migrate(mysql: mysql, fromVersion: version, toVersion: newestDBVersion)
         multiStatement = false
         asRoot = false
 
     }
 
-    private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
-        if fromVersion < toVersion {
-            Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
-
+    private func backup(mysql: MySQL, fromVersion: Int, toVersion: Int) {
+        let backupEnabled: Bool = ConfigLoader.global.getConfig(type: .dbBackup)
+        Log.info(message: "[DBController] DB backups enabled: \(backupEnabled)")
+        if fromVersion < toVersion && backupEnabled {
+            Log.info(message: "[DBController] Creating Backup of database for version \(fromVersion)")
             let uuidString = Foundation.UUID().uuidString
             let backupsDir = Dir("\(Dir.projectroot)/backups")
             let backupFileSchema = File(backupsDir.path + uuidString + ".schema.sql")
             let backupFileTrigger = File(backupsDir.path + uuidString + ".trigger.sql")
+            let backupFileRoutine = File(backupsDir.path + uuidString + ".routine.sql")
             let backupFileData = File(backupsDir.path + uuidString + ".data.sql")
 
-            if ProcessInfo.processInfo.environment["NO_BACKUP"] == nil {
+            let allTables = [
+                "account": true,
+                "assignment": true,
+                "device": true,
+                "device_group": true,
+                "discord_rule": true,
+                "group": true,
+                "gym": true,
+                "incident": true,
+                "instance": true,
+                "metadata": true,
+                "pokemon": true,
+                "pokemon_iv_stats": false,
+                "pokemon_stats": false,
+                "pokemon_shiny_stats": false,
+                "pokemon_hundo_stats": false,
+                "pokestop": true,
+                "quest_stats": false,
+                "raid_stats": false,
+                "invasion_stats": false,
+                "s2cell": true,
+                "spawnpoint": true,
+                "token": true,
+                "user": true,
+                "weather": true,
+                "web_session": true,
+                "webhook": true
+            ]
 
-                let allTables = [
-                    "account": true,
-                    "assignment": true,
-                    "device": true,
-                    "device_group": true,
-                    "discord_rule": true,
-                    "group": true,
-                    "gym": true,
-                    "instance": true,
-                    "metadata": true,
-                    "pokemon": true,
-                    "pokemon_stats": false,
-                    "pokemon_shiny_stats": false,
-                    "pokemon_hundo_stats": false,
-                    "pokestop": true,
-                    "quest_stats": false,
-                    "raid_stats": false,
-                    "invasion_stats": false,
-                    "s2cell": true,
-                    "spawnpoint": true,
-                    "token": true,
-                    "user": true,
-                    "weather": true,
-                    "web_session": true
-                ]
+            var tablesSchema = ""
+            var tablesData = ""
 
-                var tablesShema = ""
-                var tablesData = ""
+            let allTablesSQL = """
+                                   SHOW TABLES
+                               """
 
-                let allTablesSQL = """
-                    SHOW TABLES
-                """
+            let mysqlStmtTables = MySQLStmt(mysql)
+            _ = mysqlStmtTables.prepare(statement: allTablesSQL)
 
-                let mysqlStmtTables = MySQLStmt(mysql)
-                _ = mysqlStmtTables.prepare(statement: allTablesSQL)
-
-                guard mysqlStmtTables.execute() else {
-                    let message = "Failed to execute query. (\(mysqlStmtTables.errorMessage())"
-                    Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
-                    Threading.sleep(seconds: Double(UInt32.max))
-                    fatalError(message)
-                }
-                let results = mysqlStmtTables.results()
-                while let result = results.next() {
-                    if let name = result[0] as? String {
-                        if let withData = allTables[name] {
-                            tablesShema += " \(name)"
-                            if withData {
-                                tablesData += " \(name)"
-                            }
+            guard mysqlStmtTables.execute() else {
+                let message = "Failed to execute query. (\(mysqlStmtTables.errorMessage())"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+            let results = mysqlStmtTables.results()
+            while let result = results.next() {
+                if let name = result[0] as? String {
+                    if let withData = allTables[name] {
+                        tablesSchema += " \(name)"
+                        if withData {
+                            tablesData += " \(name)"
                         }
                     }
                 }
-
-                Log.info(message: "[DBController] Creating backup \(uuidString)")
-                #if os(macOS)
-                let mysqldumpCommand = "/usr/local/opt/mysql@5.7/bin/mysqldump"
-                #else
-                let mysqldumpCommand = "/usr/bin/mysqldump"
-                #endif
-
-                // Schema
-                //  swiftlint:disable:next line_length
-                let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesShema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileSchema.path)")
-                let resultSchema = commandSchema.runError()
-                if resultSchema == nil ||
-                   resultSchema!.stringByReplacing(
-                    string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
-                    withString: ""
-                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    let message = "Failed to create Command Backup: \(resultSchema as Any)"
-                    Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
-                    Threading.sleep(seconds: Double(UInt32.max))
-                    fatalError(message)
-                }
-
-                // Trigger
-                //  swiftlint:disable:next line_length
-                let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesShema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileTrigger.path)")
-                let resultTrigger = commandTrigger.runError()
-                if resultTrigger == nil ||
-                   resultTrigger!.stringByReplacing(
-                    string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
-                    withString: ""
-                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    let message = "Failed to create Command Backup \(resultTrigger as Any)"
-                    Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
-                    Threading.sleep(seconds: Double(UInt32.max))
-                    fatalError(message)
-                }
-
-                // Data
-                //  swiftlint:disable:next line_length
-                let commandData = Shell("bash", "-c", mysqldumpCommand + " --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword?.stringByReplacing(string: "\"", withString: "\\\"") ?? "") > \(backupFileData.path)")
-                let resultData = commandData.runError()
-                if resultData == nil ||
-                   resultData!.stringByReplacing(
-                    string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
-                    withString: ""
-                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    let message = "Failed to create Data Backup \(resultData as Any)"
-                    Log.critical(message: "[DBController] " + message)
-                    Log.info(message: "[DBController] Threading.sleeping indefinitely")
-                    Threading.sleep(seconds: Double(UInt32.max))
-                    fatalError(message)
-                }
-
             }
 
-            Log.info(message: "[DBController] Migrating...")
+            Log.info(message: "[DBController] Creating backup \(uuidString)")
+            #if os(macOS)
+            let mysqldumpCommand = "/usr/local/opt/mysql@5.7/bin/mysqldump"
+            #else
+            let mysqldumpCommand = "/usr/bin/mysqldump"
+            #endif
+
+            // Schema
+            //  swiftlint:disable:next line_length
+            let commandSchema = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --add-drop-table --skip-routines --no-data \(self.database) \(tablesSchema) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileSchema.path)")
+            let resultSchema = commandSchema.runError()
+            if resultSchema == nil ||
+                   resultSchema!.stringByReplacing(
+                       string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
+                       withString: ""
+                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                let message = "Failed to create Command Backup: \(resultSchema as Any)"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+
+            // Routines
+            //  swiftlint:disable:next line_length
+            let commandRoutine = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --no-create-info --no-data --routines \(self.database) -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileRoutine.path)")
+            let resultRoutine = commandRoutine.runError()
+            if resultRoutine == nil ||
+                   resultRoutine!.stringByReplacing(
+                       string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
+                       withString: ""
+                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                let message = "Failed to create Command Backup \(resultRoutine as Any)"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+
+            // Trigger
+            //  swiftlint:disable:next line_length
+            let commandTrigger = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --triggers --no-create-info --no-data --skip-routines \(self.database) \(tablesSchema)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileTrigger.path)")
+            let resultTrigger = commandTrigger.runError()
+            if resultTrigger == nil ||
+                   resultTrigger!.stringByReplacing(
+                       string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
+                       withString: ""
+                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                let message = "Failed to create Command Backup \(resultTrigger as Any)"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+
+            // Data
+            //  swiftlint:disable:next line_length
+            let commandData = Shell("bash", "-c", mysqldumpCommand + " --column-statistics=0 --set-gtid-purged=OFF --skip-triggers --skip-routines --no-create-info --skip-routines \(self.database) \(tablesData)  -h \(self.host) -P \(self.port) -u \(self.rootUsername) -p\(self.rootPassword.stringByReplacing(string: "\"", withString: "\\\"")) > \(backupFileData.path)")
+            let resultData = commandData.runError()
+            if resultData == nil ||
+                   resultData!.stringByReplacing(
+                       string: "mysqldump: [Warning] Using a password on the command line interface can be insecure.",
+                       withString: ""
+                   ).trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                let message = "Failed to create Data Backup \(resultData as Any)"
+                Log.critical(message: "[DBController] " + message)
+                Log.info(message: "[DBController] Threading.sleeping indefinitely")
+                Threading.sleep(seconds: Double(UInt32.max))
+                fatalError(message)
+            }
+            Log.info(message: "[DBController] Finished backup \(uuidString)")
+        }
+    }
+
+    private func migrate(mysql: MySQL, fromVersion: Int, toVersion: Int) {
+        if fromVersion < toVersion {
+            Log.info(message: "[DBController] Migrating database to version \(fromVersion + 1)")
 
             var migrateSQL: String
             let sqlFile = File("\(Dir.projectroot)/resources/migrations/\(fromVersion + 1).sql")

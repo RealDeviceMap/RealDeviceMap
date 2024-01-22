@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   rdm:
-    image: docker.pkg.github.com/realdevicemap/realdevicemap/realdevicemap:master
+    image: ghcr.io/realdevicemap/realdevicemap/realdevicemap:master
     container_name: realdevicemap
     restart: unless-stopped
     tty: true
@@ -10,11 +10,18 @@ services:
     volumes:
       - images:/app/resources/webroot/static/img
       - backups:/app/backups
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+#     - ./local.json:/app/resources/config/local.json # local.json usage
 #     - favicons:/app/resources/webroot/static/favicons
-#     - /etc/localtime:/etc/localtime:ro
     ports:
       - 9000:9000
       - 9001:9001
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100MB"
+        max-file: "10"
     environment:
       DB_DATABASE: rdmdb
       DB_HOST: db
@@ -32,27 +39,46 @@ services:
       MEMORY_CACHE_CLEAR_INTERVAL: 900
       MEMORY_CACHE_KEEP_TIME: 3600
       RAW_THREAD_LIMIT: 100
-      LOG_LEVEL: debug
+      LOG_LEVEL: debug #debug, info, warning
 #     LOGINLIMIT_COUNT: 15
 #     LOGINLIMIT_INTERVALL: 300
+#     PVP_DEFAULT_RANK: dense #dense,competition,ordinal
+#     PVP_LITTLE_FILTER: 450
+#     PVP_GREAT_FILTER: 1400
+#     PVP_ULTRA_FILTER: 2350
+#     PVP_LEVEL_CAPS: 40,50,51 #default only 50
+#     QUEST_RETRY_LIMIT: 10
+#     SPIN_DISTANCE: 80
+#     ACC_MAX_ENCOUNTERS: 0
+#     ACC_DISABLE_PERIOD: 86400
 ### Uncommenting the following lines will set these values to TRUE (regardless of their value)
 #     USE_RW_FOR_QUEST: 1
 #     USE_RW_FOR_RAID: 1
+#     USE_RW_FOR_POKES: 1
 #     NO_GENERATE_IMAGES: 1
 #     NO_PVP: 1
 #     NO_IV_WEATHER_CLEARING: 1
 #     NO_CELL_POKEMON: 1
+#     SCAN_LURE_ENCOUNTER: 1
+#     SAVE_SPAWNPOINT_LASTSEEN: 1
 #     NO_MEMORY_CACHE: 1
 #     NO_BACKUP: 1
+#     NO_DB_CLEARER: 1
+#     STOP_ALL_BOOTSTRAPPING: 1
 #     NO_REQUIRE_ACCOUNT: 1
-### Uncommenting The following lines will start RDM in lldb and store crash reports in the backups folder
-### Running in lldb will use a bit more resources. (Running RDM works like usual)
-#   entrypoint: ["/bin/sh", "-c", "lldb -b -o \"file ./RealDeviceMapApp\" -o \"breakpoint set --file main.swift --line 17\" -o \"run\" -o \"process handle SIGPIPE -n true -p true -s false\" -o \"continue\" -k \"bugreport unwind --outfile ./backups/crash-$$(date +%s).log\" -k \"exit\""]
+### Uncommenting The following lines will start RDM in lldb and show crash reports in logs
+### Running in lldb will use more resources, but RDM will run as usual.
+#   entrypoint: ["./Scripts/run-lldb.bash"]
 #   cap_add:
 #     - SYS_ADMIN
 #   security_opt:
 #     - seccomp=unconfined
 #     - apparmor=unconfined
+### END - Running in lldb
+### If you want to use a non docker database enable following lines and
+### change the DB_HOST environment variable to 'host.docker.internal'
+#   extra_hosts:
+#     - "host.docker.internal:host-gateway"
   db:
     image: mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password --binlog-expire-logs-seconds=86400

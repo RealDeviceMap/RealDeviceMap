@@ -20,17 +20,8 @@ RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /
 RUN apt-get -y update && apt-get install -y wget
 
 # MySQL Client
-RUN export DEBIAN_FRONTEND=noninteractive && \
-	apt-get -y update && \
-	apt-get install -y lsb-release && \
-	wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
-	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
-	dpkg -i mysql-apt-config_0.8.16-1_all.deb && \
-	apt-get -y update && \
-	apt-get install -y -f mysql-client=5.7* libmysqlclient-dev=5.7* && \
+RUN apt-get -y update && \
+	apt-get install -y lsb-release mysql-client libmysqlclient-dev && \
 	sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
 
 # Pre-Build
@@ -51,42 +42,37 @@ RUN swift build -c release -Xswiftc -g
 # ================================
 # Run image
 # ================================
-FROM swift:5.4-focal
+FROM swift:5.4-focal-slim
 WORKDIR /app
 
+# Install dependencies for
 # Perfect-COpenSSL
-RUN apt-get -y update && apt-get install -y libssl-dev
-
 # Perfect-libcurl
-RUN apt-get -y update && apt-get install -y libcurl4-openssl-dev
-
 # Perfect-LinuxBridge
-RUN apt-get -y update && apt-get install -y uuid-dev && rm -rf /var/lib/apt/lists/*
-
 # ImageMagick for creating raid images
-RUN apt-get -y update && apt-get install -y imagemagick && cp /usr/bin/convert /usr/local/bin
-
 # WGet
-RUN apt-get -y update && apt-get install -y wget
-
 # MySQL Client
+
 RUN export DEBIAN_FRONTEND=noninteractive && \
 	apt-get -y update && \
-	apt-get install -y lsb-release && \
-	wget http://repo.mysql.com/mysql-apt-config_0.8.16-1_all.deb && \
-	echo mysql-apt-config    mysql-apt-config/repo-codename  select  bionic | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/repo-distro    select  ubuntu | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-server  select  mysql-5.7 | debconf-set-selections && \
-	echo mysql-apt-config    mysql-apt-config/select-product select  Ok | debconf-set-selections && \
-	dpkg -i mysql-apt-config_0.8.16-1_all.deb && \
-	apt-get -y update && \
-	apt-get install -y -f mysql-client=5.7* libmysqlclient-dev=5.7* && \
-	sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
+	apt-get install -y \
+	libssl-dev \
+	libcurl4-openssl-dev \
+	uuid-dev \
+	imagemagick \
+	wget \
+	lsb-release mysql-client libmysqlclient-dev && \
+	cp /usr/bin/convert /usr/local/bin && \
+	sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc && \
+	rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
 # Copy build artifacts
 COPY --from=build /build/.build/release .
 COPY resources resources
+COPY Scripts Scripts
 COPY .gitsha .
 COPY .gitref .
+
+RUN chmod +x ./Scripts/*
 
 ENTRYPOINT ["./RealDeviceMapApp"]

@@ -15,11 +15,16 @@ import POGOProtos
 import Backtrace
 
 public func setupRealDeviceMap() {
-    Backtrace.install()
-
-    let logDebug = (ProcessInfo.processInfo.environment["LOG_LEVEL"]?.lowercased() ?? "debug") == "debug"
-    Log.logDebug = logDebug
+    _ = ConfigLoader.global
+    let logLevel: String = ConfigLoader.global.getConfig(type: .logLevel)
     Log.even = true
+    Log.setThreshold(value: logLevel)
+    Log.info(message: "[MAIN] Log level set to: \(logLevel)")
+
+    if ProcessInfo.processInfo.environment["NO_INSTALL_BACKTRACE"] == nil {
+        Log.info(message: "[MAIN] Installing Backtrace")
+        Backtrace.install(signals: [SIGILL])
+    }
 
     Log.info(message: "[MAIN] Getting Version")
     _ = VersionManager.global
@@ -28,9 +33,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Startup Webserver")
     var startupServer: HTTPServer.Server? = WebServer.startupServer
     var startupServerContext: HTTPServer.LaunchContext? = try! HTTPServer.launch(wait: false, startupServer!)[0]
-
-    Log.info(message: "[MAIN] Getting Version")
-    _ = VersionManager.global
 
     // Check if /backups exists
     let backups = Dir("\(Dir.projectroot)/backups")
@@ -49,19 +51,22 @@ public func setupRealDeviceMap() {
     _ = DBController.global
 
     // Init MemoryCache
-    if ProcessInfo.processInfo.environment["NO_MEMORY_CACHE"] == nil {
-        let memoryCacheClearInterval = ProcessInfo.processInfo
-            .environment["MEMORY_CACHE_CLEAR_INTERVAL"]?.toDouble() ?? 900
-        let memoryCacheKeepTime = ProcessInfo.processInfo.environment["MEMORY_CACHE_KEEP_TIME"]?.toDouble() ?? 3600
+    let memoryCacheEnabled: Bool = ConfigLoader.global.getConfig(type: .memoryCacheEnabled)
+    let memoryCacheClearInterval = (ConfigLoader.global.getConfig(type: .memoryCacheClearInterval) as Int).toDouble()
+    let memoryCacheKeepTime = (ConfigLoader.global.getConfig(type: .memoryCacheKeepTime) as Int).toDouble()
+    if memoryCacheEnabled {
         Log.info(message:
             "[MAIN] Starting Memory Cache with interval \(memoryCacheClearInterval) " +
             "and keep time \(memoryCacheKeepTime)"
         )
+        Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime,
+            extendTtlOnHit: false)
         Pokestop.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
-        Pokemon.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Gym.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         SpawnPoint.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
         Weather.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        Incident.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        Cell.cache = MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
     } else {
         Log.info(message: "[MAIN] Memory Cache deactivated")
     }
@@ -105,7 +110,8 @@ public func setupRealDeviceMap() {
     WebRequestHandler.startZoom = try! DBController.global.getValueForKey(key: "MAP_START_ZOOM")!.toInt()!
     WebRequestHandler.minZoom = try! DBController.global.getValueForKey(key: "MAP_MIN_ZOOM")?.toInt() ?? 10
     WebRequestHandler.maxZoom = try! DBController.global.getValueForKey(key: "MAP_MAX_ZOOM")?.toInt() ?? 18
-    WebRequestHandler.maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
+    let maxPokemonId = try! DBController.global.getValueForKey(key: "MAP_MAX_POKEMON_ID")!.toInt()!
+    WebRequestHandler.maxPokemonId = (maxPokemonId <= 649 ? 905 : maxPokemonId) // 649 is default in DB
     WebRequestHandler.title = try! DBController.global.getValueForKey(key: "TITLE") ?? "RealDeviceMap"
     WebRequestHandler.enableRegister = try! DBController.global.getValueForKey(key: "ENABLE_REGISTER")?.toBool() ?? true
     WebRequestHandler.cities = try! DBController.global.getValueForKey(key: "CITIES")?
@@ -128,7 +134,7 @@ public func setupRealDeviceMap() {
     WebHookRequestHandler.dittoDisguises = try! DBController.global.getValueForKey(key: "DITTO_DISGUISES")?
         .components(separatedBy: ",").map({ (string) -> UInt16 in
         return string.toUInt16() ?? 0
-    }) ?? [13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399] // Default ditto disguises
+    }) ?? [23, 92, 177, 283, 456, 506, 557, 684] // Default ditto disguises
     WebRequestHandler.buttonsLeft = try! DBController.global.getValueForKey(key: "BUTTONS_LEFT")?
         .jsonDecode() as? [[String: String]] ?? []
     WebRequestHandler.buttonsRight = try! DBController.global.getValueForKey(key: "BUTTONS_RIGHT")?
@@ -195,45 +201,119 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Webhook Controller")
     WebHookController.global.start()
 
-    // Load Forms
-    Log.info(message: "[MAIN] Loading Available Forms")
-    var availableForms = [String]()
-    do {
-        try Dir("\(Dir.projectroot)/resources/webroot/static/img/pokemon").forEachEntry { (file) in
-            let split = file.replacingOccurrences(of: ".png", with: "").components(separatedBy: "-")
-            if split.count == 2, let pokemonID = Int(split[0]), let formID = Int(split[1]) {
-                availableForms.append("\(pokemonID)-\(formID)")
-            } else if split.count == 3, let pokemonID = Int(split[0]),
-                      let formID = Int(split[1]), let evoId = Int(split[2]) {
-                availableForms.append("\(pokemonID)-\(formID)-\(evoId)")
-            }
-        }
-        WebRequestHandler.availableFormsJson = try availableForms.jsonEncodedString()
-    } catch {
-        Log.error(
-            message: "Failed to load forms. Frontend will only display default forms. " +
-                     "Error: \(error.localizedDescription)"
-        )
-    }
-
     Log.info(message: "[MAIN] Loading Available Items")
-    var availableItems = [-6, -5, -4, -3, -2, -1]
-    for itemId in Item.allAvilable {
+    var availableItems: [Int] = []
+    for rewardType in QuestRewardProto.TypeEnum.allAvailable {
+        if rewardType != .pokemonEncounter && rewardType != .item {
+            availableItems.append(rewardType.rawValue * -1)
+        }
+    }
+    for itemId in Item.allAvailable {
         availableItems.append(itemId.rawValue)
     }
     WebRequestHandler.availableItemJson = try! availableItems.jsonEncodedString()
 
-    Pokemon.noPVP = ProcessInfo.processInfo.environment["NO_PVP"] != nil
-    Pokemon.noWeatherIVClearing = ProcessInfo.processInfo.environment["NO_IV_WEATHER_CLEARING"] != nil
-    Pokemon.noCellPokemon = ProcessInfo.processInfo.environment["NO_CELL_POKEMON"] != nil
-    InstanceController.noRequireAccount = ProcessInfo.processInfo.environment["NO_REQUIRE_ACCOUNT"] != nil
+    Pokemon.pvpEnabled = ConfigLoader.global.getConfig(type: .pvpEnabled)
+    Pokemon.weatherIVClearingEnabled = ConfigLoader.global.getConfig(type: .ivWeatherClearing)
+    Pokemon.cellPokemonEnabled = ConfigLoader.global.getConfig(type: .saveCellPokemon)
+    Pokemon.saveSpawnpointLastSeen = ConfigLoader.global.getConfig(type: .saveSpawnPointLastSeen)
+    Pokemon.timingStatsEnabled = ConfigLoader.global.getConfig(type: .statsPokemonTimingEnabled)
+    InstanceController.requireAccountEnabled = ConfigLoader.global.getConfig(type: .accRequiredInDB)
+    InstanceController.sendTaskForLureEncounter = ConfigLoader.global.getConfig(type: .scanLureEncounter)
+    Account.disablePeriod = UInt32(exactly: ConfigLoader.global.getConfig(type: .accDisablePeriod) as Int)!
+    Account.lastRecentlyUsed = ConfigLoader.global.getConfig(type: .accLastRecentlyUsed)
 
-    if !Pokemon.noPVP {
+    if Pokemon.pvpEnabled {
         Log.info(message: "[MAIN] Getting PVP Stats")
+        let pvpRank: String = ConfigLoader.global.getConfig(type: .pvpDefaultRank)
+        PVPStatsManager.defaultPVPRank = PVPStatsManager.RankType(rawValue: pvpRank) ?? .dense
+        let pvpLittleFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterLittleMinCP)
+        PVPStatsManager.leagueFilter[500] = pvpLittleFilter
+        let pvpGreatFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterGreatMinCP)
+        PVPStatsManager.leagueFilter[1500] = pvpGreatFilter
+        let pvpUltraFilter: Int = ConfigLoader.global.getConfig(type: .pvpFilterUltraMinCP)
+        PVPStatsManager.leagueFilter[2500] = pvpUltraFilter
+        PVPStatsManager.lvlCaps = ConfigLoader.global.getConfig(type: .pvpLevelCaps)
+        Log.info(message: "[MAIN] PVP Stats for Level Caps \(String(describing: PVPStatsManager.lvlCaps))")
+        Log.info(message: "[MAIN] PVP Stats defaults to rank type \(pvpRank)")
         _ = PVPStatsManager.global
     } else {
         Log.info(message: "[MAIN] PVP Stats deactivated")
     }
+    if InstanceController.sendTaskForLureEncounter {
+        Pokemon.diskEncounterCache = MemoryCache(interval: 300, keepTime: 300)
+    }
+    Log.info(message: "[MAIN] Pokemon weather IV clearing enabled: \(Pokemon.weatherIVClearingEnabled)")
+    Log.info(message: "[MAIN] Pokemon cell spawns enabled: \(Pokemon.cellPokemonEnabled)")
+    Log.info(message: "[MAIN] Pokemon update spanwpoint last seen: \(Pokemon.saveSpawnpointLastSeen)")
+    Log.info(message: "[MAIN] InstanceController require account in DB: \(InstanceController.requireAccountEnabled)")
+    Log.info(message: "[MAIN] InstanceController Scan Lure Encounter: \(InstanceController.sendTaskForLureEncounter)")
+    Log.info(message: "[MAIN] Login Limit enabled: \(WebHookRequestHandler.getLoginLimitConfig())")
+    Log.info(message: "[MAIN] Thread Limit Max: \(WebHookRequestHandler.threadLimitMax)")
+    let useRwForQuest: Bool = ConfigLoader.global.getConfig(type: .accUseRwForQuest)
+    Log.info(message: "[MAIN] Use RW Accounts for Quests: \(useRwForQuest)")
+    let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
+    Log.info(message: "[MAIN] Use RW Accounts for Raids: \(useRwForRaid)")
+    let useRwForPokes: Bool = ConfigLoader.global.getConfig(type: .accUseRwForPokes)
+    Log.info(message: "[MAIN] Use RW Accounts for Pokemon: \(useRwForPokes)")
+    let skipBootstrap: Bool = ConfigLoader.global.getConfig(type: .stopAllBootstrapping)
+    Log.info(message: "[MAIN] Skip all bootstrapping: \(skipBootstrap)")
+    let limit = UInt8(exactly: ConfigLoader.global.getConfig(type: .questRetryLimit) as Int)!
+    Log.info(message: "[MAIN] Quest retry limit: \(limit)")
+    let spinDistance = Double(ConfigLoader.global.getConfig(type: .spinDistance) as Int)
+    Log.info(message: "[MAIN] Spin distance: \(spinDistance)")
+    let allowARQuests: Bool = ConfigLoader.global.getConfig(type: .allowARQuests)
+    Log.info(message: "[MAIN] Allow AR Quests: \(allowARQuests)")
+    Log.info(message: "[Main] Accounts are used in last recently used order: \(Account.lastRecentlyUsed)")
+
+    Log.info(message: "[MAIN] Account Disable Period (BSOD) set to: \(Account.disablePeriod / 3600)h")
+    if WebHookRequestHandler.maxEncounter > 0 {
+        Log.info(message: "[MAIN] Account switching after \(WebHookRequestHandler.maxEncounter) encounters enabled.")
+        do {
+            // to keep track of the right count all previously used accounts has to be disabled on startup
+            try Account.setDisabledOnUsed()
+        } catch {
+            Log.warning(message: "[MAIN] Failed to disable used accounts on startup.")
+        }
+    } else {
+        Log.info(message: "[MAIN] Account switching after a certain limit of encounters disabled.")
+    }
+
+    // Load Icon styles
+    Log.info(message: "[MAIN] Load Icon Styles")
+    ImageApiRequestHandler.styles = try! DBController.global.getValueForKey(key: "ICON_STYLES")?
+            .jsonDecodeForceTry() as? [String: String] ?? ["Default": "default"]
+
+    ImageManager.imageGenerationEnabled = ConfigLoader.global.getConfig(type: .generateImages)
+
+    if memoryCacheEnabled {
+        // this will use the same cache values like the pokemon cache
+        ImageManager.devicePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.gymPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.invasionPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.miscPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.pokemonPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.pokestopPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.raidPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.rewardPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.spawnpointPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.teamPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.typePathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+        ImageManager.weatherPathCache =
+            MemoryCache(interval: memoryCacheClearInterval, keepTime: memoryCacheKeepTime)
+    }
+    _ = ImageManager.global
 
     Log.info(message: "[MAIN] Starting Account Controller")
     AccountController.global.setup()
@@ -246,6 +326,13 @@ public func setupRealDeviceMap() {
         Log.critical(message: message)
         fatalError(message)
     }
+
+    // Config for history stats and cleanup
+    Stats.pokemonArchiveEnabled = ConfigLoader.global.getConfig(type: .statsPokemonArchiveEnabled)
+    Stats.pokemonCountStats = ConfigLoader.global.getConfig(type: .statsPokemonCountEnabled)
+    Stats.cleanupPokemon = ConfigLoader.global.getConfig(type: .dbClearerPokemonEnabled)
+    Stats.cleanupIncident = ConfigLoader.global.getConfig(type: .dbClearerIncidentEnabled)
+    _ = Stats.global
 
     // Check if is setup
     Log.info(message: "[MAIN] Checking if setup is completed")
@@ -263,6 +350,7 @@ public func setupRealDeviceMap() {
     } else {
         WebRequestHandler.isSetup = false
         WebRequestHandler.accessToken = URandom().secureToken
+        WebHookRequestHandler.loginSecret = WebHookRequestHandler.loginSecret ?? WebRequestHandler.accessToken
         Log.info(message: "[MAIN] Use this access-token to create the admin user: \(WebRequestHandler.accessToken!)")
     }
 
@@ -274,16 +362,6 @@ public func setupRealDeviceMap() {
     Log.info(message: "[MAIN] Starting Discord Controller")
     try! DiscordController.global.setup()
 
-    // Create Raid images
-    let noGenerateImages =
-      ProcessInfo.processInfo.environment["NO_GENERATE_IMAGES"] != nil
-    if !noGenerateImages {
-      Log.info(message: "[MAIN] Starting Images Generator")
-      ImageGenerator.generate()
-    } else {
-      Log.info(message: "[MAIN] Image generation disabled - skipping")
-    }
-
     // Stopping Startup Webserver
     Log.info(message: "[MAIN] Stopping Startup Webserver")
     startupServerContext!.terminate()
@@ -291,7 +369,7 @@ public func setupRealDeviceMap() {
     startupServerContext = nil
 
     ApiRequestHandler.start = Date()
-
+    Log.info(message: "[MAIN] Setup during startup finished ...")
     Log.info(message: "[MAIN] Starting Webservers")
     do {
         try HTTPServer.launch(

@@ -20,6 +20,11 @@ class Cell: JSONConvertibleObject {
     var centerLon: Double
     var updated: UInt32?
 
+    var stopCount: Int = 0
+    var gymCount: Int = 0
+
+    public static var cache: MemoryCache<Cell>?
+
     override func getJSONValues() -> [String: Any] {
 
         let s2cell = S2Cell(cellId: S2CellId(uid: id))
@@ -48,26 +53,33 @@ class Cell: JSONConvertibleObject {
         self.updated = updated
     }
 
-    public func save(mysql: MySQL?=nil, update: Bool!=true) throws {
+    public func save(mysql: MySQL? = nil) throws {
 
         guard let mysql = mysql ?? DBController.global.mysql else {
             Log.error(message: "[CELL] Failed to connect to database.")
             throw DBController.DBError()
         }
-
-        var sql = """
-        INSERT INTO `s2cell` (id, level, center_lat, center_lon, updated)
-        VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())
-        """
-        if update {
-            sql += """
-            ON DUPLICATE KEY UPDATE
-            level=VALUES(level),
-            center_lat=VALUES(center_lat),
-            center_lon=VALUES(center_lon),
-            updated=VALUES(updated)
-            """
+        let oldCell = Cell.cache?.get(id: id.toString())
+        let now = UInt32(Date().timeIntervalSince1970)
+        if oldCell != nil && oldCell!.updated ?? 0 > now - 900 {
+            // save only every 15 minutes
+            return
         }
+
+        self.updated = now
+        // stop and gym count is only stored in cache
+        self.stopCount = oldCell?.stopCount ?? 0
+        self.gymCount = oldCell?.gymCount ?? 0
+
+        let sql = """
+        INSERT INTO `s2cell` (id, level, center_lat, center_lon, updated)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        level=VALUES(level),
+        center_lat=VALUES(center_lat),
+        center_lon=VALUES(center_lon),
+        updated=VALUES(updated)
+        """
 
         let mysqlStmt = MySQLStmt(mysql)
         _ = mysqlStmt.prepare(statement: sql)
@@ -75,12 +87,13 @@ class Cell: JSONConvertibleObject {
         mysqlStmt.bindParam(level)
         mysqlStmt.bindParam(centerLat)
         mysqlStmt.bindParam(centerLon)
+        mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in save(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
-
+        Cell.cache?.set(id: id.toString(), value: self)
     }
 
     public static func getAll(mysql: MySQL?=nil, minLat: Double, maxLat: Double,
@@ -111,7 +124,7 @@ class Cell: JSONConvertibleObject {
         mysqlStmt.bindParam(updated)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in getAll(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -174,7 +187,7 @@ class Cell: JSONConvertibleObject {
         }
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[CELL] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[CELL] Failed to execute query in getInIDs(). (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -193,5 +206,4 @@ class Cell: JSONConvertibleObject {
         return cells
 
     }
-
 }

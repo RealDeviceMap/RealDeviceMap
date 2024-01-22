@@ -1,0 +1,61 @@
+{
+  "logger": {
+    "logLevel": "info"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 9000
+  },
+  "webhookServer": {
+    "host": "0.0.0.0",
+    "port": 9001
+  },
+  "database": {
+    "host": "db",
+    "port": 3306,
+    "database": "rdmdb",
+    "user": "rdmuser",
+    "password": "YourStrongPassw0rd!",
+    "rootUser": "root",
+    "rootPassword": "YourStrongRootPassw0rd!",
+    "backup": true
+  },
+  "application": {
+    "rawThreadLimit": 100,
+    "loginLimit": {
+      "enabled": false,
+      "count": 15,
+      "interval": 300
+    },
+    "map": {
+      "generateImages": true,
+      "ivWeatherClearing": true,
+      "saveCellPokemon": true,
+      "scanLureEncounter": false,
+      "saveSpawnPointLastSeen": false
+    },
+    "clearer": {
+      "pokemon": {
+        "enabled": true
+      },
+      "incident": {
+        "enabled": true
+      }
+    },
+    "stats": {
+      "pokemon": {
+        "archive": false,
+        "timing": false,
+        "count": true
+      }
+    },
+    "pvp": {
+      "enabled": true,
+      "levelCaps": [50],
+      "defaultRank": "ordinal",
+      "filterLittleMinCP": 450,
+      "filterGreatMinCP": 1400,
+      "filterUltraMinCP": 2350
+    }
+  }
+}

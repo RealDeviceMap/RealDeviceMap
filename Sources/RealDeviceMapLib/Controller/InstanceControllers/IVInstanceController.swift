@@ -4,11 +4,14 @@
 //
 //  Created by Florian Kostenzer on 06.11.18.
 //
+//  swiftlint:disable:next superfluous_disable_command
+//  swiftlint:disable file_length type_body_length
 
 import Foundation
 import PerfectLib
 import PerfectThread
 import PerfectMySQL
+import S2Geometry
 import Turf
 
 class IVInstanceController: InstanceControllerProto {
@@ -18,12 +21,15 @@ class IVInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var lock = Threading.Lock()
+    internal var scanNextCoords: [[Coord]] = []
+    private var scanNextLookup: [String: Int] = [:]
     public private(set) var scatterPokemon: [UInt16]
 
     public weak var delegate: InstanceControllerDelegate?
 
     private var multiPolygon: MultiPolygon
-    private var pokemonList: [UInt16]
+    private var pokemonList: [String]
     private var pokemonQueue = [Pokemon]()
     private var pokemonLock = Threading.Lock()
     private var scannedPokemon = [(Date, Pokemon)]()
@@ -36,7 +42,7 @@ class IVInstanceController: InstanceControllerProto {
     private var ivQueueLimit = 100
 
     // swiftlint:disable:next function_body_length
-    init(name: String, multiPolygon: MultiPolygon, pokemonList: [UInt16], minLevel: UInt8,
+    init(name: String, multiPolygon: MultiPolygon, pokemonList: [String], minLevel: UInt8,
          maxLevel: UInt8, ivQueueLimit: Int, scatterPokemon: [UInt16], accountGroup: String?,
          isEvent: Bool) {
         self.name = name
@@ -92,11 +98,8 @@ class IVInstanceController: InstanceControllerProto {
                             Log.debug(message: "[IVInstanceController] [\(name)] Checked Pokemon has IV")
                         }
                     }
-
                 }
-
             }
-
         }
     }
 
@@ -106,15 +109,45 @@ class IVInstanceController: InstanceControllerProto {
 
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
 
+        lock.lock()
+        if !scanNextCoords.isEmpty {
+            var scanNextCoord: Coord?
+            if let index = scanNextLookup[uuid] {
+                scanNextCoord = scanNextCoords[index].removeFirst()
+                if scanNextCoords[index].isEmpty {
+                    scanNextCoords.remove(at: index)
+                    scanNextLookup.removeValue(forKey: uuid)
+                }
+            } else {
+                if scanNextCoords.count > scanNextLookup.count {
+                    let lookup = scanNextLookup.values.max() ?? 0
+                    scanNextLookup[uuid] = lookup
+                    scanNextCoord = scanNextCoords[lookup].removeFirst()
+                    if scanNextCoords[lookup].isEmpty {
+                        scanNextCoords.remove(at: lookup)
+                        scanNextLookup.removeValue(forKey: uuid)
+                    }
+                }
+            }
+            lock.unlock()
+            if scanNextCoord != nil {
+                var task: [String: Any] = ["action": "scan_pokemon", "lat": scanNextCoord!.lat,
+                                           "lon": scanNextCoord!.lon, "min_level": minLevel, "max_level": maxLevel]
+                if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+                return task
+            }
+        } else {
+            lock.unlock()
+        }
         pokemonLock.lock()
         if pokemonQueue.isEmpty {
             pokemonLock.unlock()
-            return [String: Any]()
+            return [:]
         }
         let pokemon = pokemonQueue.removeFirst()
         pokemonLock.unlock()
 
-        if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp ?? 1) >= 600 {
+        if UInt32(Date().timeIntervalSince1970) - (pokemon.firstSeenTimestamp) >= 600 {
             return getTask(mysql: mysql, uuid: uuid, username: username, account: account, timestamp: timestamp)
         }
 
@@ -122,8 +155,10 @@ class IVInstanceController: InstanceControllerProto {
         scannedPokemon.append((Date(), pokemon))
         scannedPokemonLock.unlock()
 
-        return ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
+        var task: [String: Any] = ["action": "scan_iv", "lat": pokemon.lat, "lon": pokemon.lon, "id": pokemon.id,
                 "is_spawnpoint": pokemon.spawnId != nil, "min_level": minLevel, "max_level": maxLevel]
+        if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+        return task
     }
 
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
@@ -167,18 +202,31 @@ class IVInstanceController: InstanceControllerProto {
     }
 
     func gotPokemon(pokemon: Pokemon) {
-        if (pokemon.pokestopId != nil || pokemon.spawnId != nil) &&
+        if (pokemon.seenType != .nearbyCell || scatterPokemon.contains(pokemon.pokemonId)) &&
            pokemon.isEvent == isEvent &&
-           pokemonList.contains(pokemon.pokemonId) &&
-           multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
-            pokemonLock.lock()
+           containedInList(pokemon: pokemon) &&
+           multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
 
+            if pokemon.seenType == .nearbyCell {
+                let cell = S2Cell(cellId: S2CellId(uid: pokemon.cellId!))
+                let coords = cell.subdivide().map { (cell) -> Coord in
+                    Coord(lat: cell.capBound.rectBound.center.lat.degrees,
+                        lon: cell.capBound.rectBound.center.lng.degrees)
+                }
+                // somehow scan next needs a rework to prevent device clustering on a request with 4 coords
+                lock.lock()
+                scanNextCoords.append(coords)
+                lock.unlock()
+                Log.info(message: "[IVInstanceController] [\(name)] Scan Next nearby cell Pokemon \(pokemon.pokemonId)")
+            }
+
+            pokemonLock.lock()
             if pokemonQueue.contains(pokemon) {
                 pokemonLock.unlock()
                 return
             }
 
-            let index = lastIndexOf(pokemonId: pokemon.pokemonId)
+            let index = lastIndexOf(pokemonId: pokemon.pokemonId, pokemonForm: pokemon.form ?? 0)
 
             if pokemonQueue.count >= ivQueueLimit && index == nil {
                 Log.debug(message: "[IVInstanceController] [\(name)] Queue is full!")
@@ -197,7 +245,7 @@ class IVInstanceController: InstanceControllerProto {
 
     func gotIV(pokemon: Pokemon) {
 
-        if multiPolygon.contains(CLLocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
+        if multiPolygon.contains(LocationCoordinate2D(latitude: pokemon.lat, longitude: pokemon.lon)) {
 
             pokemonLock.lock()
             if let index = pokemonQueue.firstIndex(of: pokemon) {
@@ -227,15 +275,40 @@ class IVInstanceController: InstanceControllerProto {
         }
     }
 
-    private func lastIndexOf(pokemonId: UInt16) -> Int? {
+    private func containedInList(pokemon: Pokemon) -> Bool {
+        if pokemonList.contains("\(pokemon.pokemonId)") {
+            return true
+        } else {
+            if pokemon.form != nil && pokemon.form! != 0 {
+                let pokemonHash = "\(pokemon.pokemonId)_f\(pokemon.form!)"
+                return pokemonList.contains(pokemonHash)
+            }
+            return false
+        }
+    }
 
-        guard let targetPriority = pokemonList.firstIndex(of: pokemonId) else {
+    private func firstIndexInList(pokemonId: UInt16, pokemonForm: UInt16) -> Int? {
+        guard let priority = pokemonList.firstIndex(
+            of: (pokemonForm != 0 ? "\(pokemonId)_f\(pokemonForm)" : "\(pokemonId)")) else {
+           if pokemonForm != 0 {
+               return pokemonList.firstIndex(of: "\(pokemonId)")
+           } else {
+               return nil
+           }
+        }
+        return priority
+    }
+
+    private func lastIndexOf(pokemonId: UInt16, pokemonForm: UInt16) -> Int? {
+
+        guard let targetPriority = firstIndexInList(pokemonId: pokemonId, pokemonForm: pokemonForm) else {
             return nil
         }
 
         var i = 0
         for pokemon in pokemonQueue {
-            if let priority = pokemonList.firstIndex(of: pokemon.pokemonId), targetPriority < priority {
+            if let priority = firstIndexInList(pokemonId: pokemon.pokemonId, pokemonForm: pokemon.form ?? 0),
+               targetPriority < priority {
                 return i
             }
             i += 1

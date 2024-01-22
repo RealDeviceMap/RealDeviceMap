@@ -15,12 +15,17 @@ import POGOProtos
 public class PVPStatsManager {
 
     public static let global = PVPStatsManager()
+    internal static var defaultPVPRank: RankType = .dense
+    internal static var lvlCaps: [Int] = [50]
+    internal static var leagueFilter: [Int: Int] = [ 500: 450, 1500: 1400, 2500: 2350 ]
 
-    private var stats = [PokemonWithFormAndGender: Stats]()
+    private var stats = [PokemonInfo: Stats]()
+    private let rankingLittleLock = Threading.Lock()
+    private var rankingLittle = [PokemonInfo: ResponsesOrEvent]()
     private let rankingGreatLock = Threading.Lock()
-    private var rankingGreat = [PokemonWithFormAndGender: ResponsesOrEvent]()
+    private var rankingGreat = [PokemonInfo: ResponsesOrEvent]()
     private let rankingUltraLock = Threading.Lock()
-    private var rankingUltra = [PokemonWithFormAndGender: ResponsesOrEvent]()
+    private var rankingUltra = [PokemonInfo: ResponsesOrEvent]()
     private var eTag: String?
     private let updaterThread: ThreadQueue
 
@@ -52,6 +57,7 @@ public class PVPStatsManager {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func loadMasterFile() {
         Log.debug(message: "[PVPStatsManager] Loading game master file")
         let request = CURLRequest("https://raw.githubusercontent.com/PokeMiners/" +
@@ -67,7 +73,7 @@ public class PVPStatsManager {
             Log.error(message: "[PVPStatsManager] Failed to parse game master file")
             return
         }
-        var stats = [PokemonWithFormAndGender: Stats]()
+        var stats = [PokemonInfo: Stats]()
         templates.forEach { (template) in
             guard let data = template["data"] as? [String: Any] else { return }
             guard let templateId = data["templateId"] as? String else { return }
@@ -95,8 +101,9 @@ public class PVPStatsManager {
                 } else {
                     form = nil
                 }
-                var evolutions = [PokemonWithFormAndGender]()
+                var evolutions = [PokemonInfo]()
                 let evolutionsInfo = pokemonInfo["evolutionBranch"] as? [[String: Any]] ?? []
+                let temporaryEvolutionsInfo = pokemonInfo["tempEvoOverrides"] as? [[String: Any]] ?? []
                 for info in evolutionsInfo {
                     if let pokemonName = info["evolution"] as? String, let pokemon = pokemonFrom(name: pokemonName) {
                         let formName = info["form"] as? String
@@ -106,84 +113,189 @@ public class PVPStatsManager {
                         evolutions.append(.init(pokemon: pokemon, form: form, gender: gender))
                     }
                 }
+                for temporaryInfo in temporaryEvolutionsInfo {
+                    if let temporaryEvolutionName = temporaryInfo["tempEvoId"] as? String,
+                       let temporaryEvolution = temporaryEvolutionFrom(name: temporaryEvolutionName),
+                       let temporaryStats = temporaryInfo["stats"] as? [String: Any],
+                       let tempBaseStamina = temporaryStats["baseStamina"] as? Int,
+                       let tempBaseAttack = temporaryStats["baseAttack"] as? Int,
+                       let tempBaseDefense = temporaryStats["baseDefense"] as? Int,
+                       let avgHeight = temporaryInfo["averageHeightM"] as? Double,
+                       let avgWeight = temporaryInfo["averageWeightKg"] as? Double {
+                        // add stats for temporary evolution mon
+                        let stat = Stats(baseAttack: tempBaseAttack, baseDefense: tempBaseDefense,
+                            baseStamina: tempBaseStamina, evolutions: [],
+                            baseHeight: avgHeight, baseWeight: avgWeight, costumeEvolutionOverride: nil)
+                        stats[.init(pokemon: pokemon, form: nil, temporaryEvolution: temporaryEvolution)] = stat
+                        evolutions.append(
+                            .init(pokemon: pokemon, form: nil, gender: nil, temporaryEvolution: temporaryEvolution))
+                    }
+                }
+                let costumeEvolutionRaw = pokemonInfo["obCostumeEvolution"] as? [String]
+                let costumeEvolution = costumeEvolutionRaw?.compactMap({ costumeName -> PokemonDisplayProto.Costume in
+                    let costume = costumeFrom(name: costumeName)
+                    if costume == nil {
+                        Log.warning(message: "[PVPStatsManager] Failed to get costume for: \(costumeName)")
+                    }
+                    return costume!
+                })
+
                 let stat = Stats(baseAttack: baseAttack, baseDefense: baseDefense,
                                   baseStamina: baseStamina, evolutions: evolutions,
-                                  baseHeight: pokedexHeightM, baseWeight: pokedexWeightKg)
+                                  baseHeight: pokedexHeightM, baseWeight: pokedexWeightKg,
+                                  costumeEvolutionOverride: costumeEvolution)
                 stats[.init(pokemon: pokemon, form: form)] = stat
             }
         }
+        rankingLittleLock.lock()
         rankingGreatLock.lock()
         rankingUltraLock.lock()
         self.stats = stats
+        self.rankingLittle = [:]
         self.rankingGreat = [:]
         self.rankingUltra = [:]
+        rankingLittleLock.unlock()
         rankingGreatLock.unlock()
         rankingUltraLock.unlock()
         Log.debug(message: "[PVPStatsManager] Done parsing game master file")
     }
 
     internal func getPVPStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                              iv: IV, level: Double, league: League) -> Response? {
-        guard let stats = getTopPVP(pokemon: pokemon, form: form, league: league) else {
-            return nil
+                              temporaryEvolution: HoloTemporaryEvolutionId?, iv: IV, level: Double, league: League
+    ) -> [Response] {
+        guard let stats = getTopPVP(pokemon: pokemon, form: form,
+            temporaryEvolution: temporaryEvolution, league: league) else {
+            return [Response]()
         }
 
-        var competitionIndex: Int = 0
-        var denseIndex: Int = 0
-        var ordinalIndex: Int = 0
-        var foundMatch: Bool = false
-
-        statLoop: for stat in stats {
-            competitionIndex = ordinalIndex
-            for ivlevel in stat.ivs {
-                if ivlevel.iv == iv && ivlevel.level >= level {
-                    foundMatch = true
-                    break statLoop
+        var rankings = [Response]()
+        var lastRank: Response?
+        for lvlCap in PVPStatsManager.lvlCaps {
+            var competitionIndex: Int = 0
+            var denseIndex: Int = 0
+            var ordinalIndex: Int = 0
+            var foundMatch: Bool = false
+            var rank: Response?
+            let filteredStats = stats.filter({ $0.cap == lvlCap })
+            statLoop: for stat in filteredStats {
+                competitionIndex = ordinalIndex
+                for ivlevel in stat.ivs {
+                    if ivlevel.iv == iv && ivlevel.level >= level {
+                        foundMatch = true
+                        rank = stat
+                        break statLoop
+                    }
+                    ordinalIndex += 1
                 }
-                ordinalIndex += 1
+                denseIndex += 1
             }
-            denseIndex += 1
-        }
+            if foundMatch == false {
+                continue
+            }
 
-        if foundMatch == false {
-            return nil
-        }
+            let max = Double(filteredStats[0].competitionRank)
+            let value = Double(rank!.competitionRank)
+            let ivs: [Response.IVWithCP]
+            if let currentIV = rank!.ivs.first(where: { $0.iv == iv }) {
+                ivs = [currentIV]
+            } else {
+                ivs = []
+            }
 
-        let max = Double(stats[0].competitionRank)
-        let result = stats[denseIndex]
-        let value = Double(result.competitionRank)
-        let ivs: [Response.IVWithCP]
-        if let currentIV = result.ivs.first(where: { return $0.iv == iv }) {
-            ivs = [currentIV]
-        } else {
-            ivs = []
+            if lastRank != nil, let lastStat = lastRank!.ivs.first, let stat = ivs.first,
+               lastStat.level == stat.level && lastRank!.competitionRank == competitionIndex + 1 &&
+               lastStat.iv.attack == stat.iv.attack && lastStat.iv.defense == stat.iv.defense &&
+               lastStat.iv.stamina == stat.iv.stamina {
+                if let index = rankings.firstIndex(where: { $0.competitionRank == lastRank!.competitionRank }) {
+                    lastRank!.capped = true
+                    rankings[index] = lastRank!
+                }
+            } else {
+                lastRank = Response(competitionRank: competitionIndex + 1,
+                    denseRank: denseIndex + 1,
+                    ordinalRank: ordinalIndex + 1,
+                    percentage: value/max,
+                    cap: rank!.cap,
+                    capped: false,
+                    ivs: ivs)
+                rankings.append(lastRank!)
+            }
         }
-        return .init(competitionRank: competitionIndex + 1,
-                     denseRank: denseIndex + 1,
-                     ordinalRank: ordinalIndex + 1,
-                     percentage: value/max,
-                     ivs: ivs)
+        return rankings
+    }
+
+    internal func getPVPAllLeagues(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
+                                   gender: PokemonDisplayProto.Gender?, costume: PokemonDisplayProto.Costume, iv: IV,
+                                   level: Double) -> [String: Any]? {
+        var pvp: [String: Any] = [:]
+        League.allCases.forEach({ (league)  in
+            let stats = getPVPStatsWithEvolutions(pokemon: pokemon, form: form, gender: gender,
+                costume: costume, iv: iv, level: level, league: league)
+                    .map({ (ranking) -> [String: Any] in
+                        let rank: Any
+                        switch PVPStatsManager.defaultPVPRank {
+                        case .dense: rank = ranking.response.denseRank as Any
+                        case .competition: rank = ranking.response.competitionRank as Any
+                        case .ordinal: rank = ranking.response.ordinalRank as Any
+                        }
+                        var json = [
+                            "pokemon": ranking.pokemon.pokemon.rawValue,
+                            "gender": ranking.pokemon.gender?.rawValue ?? 0,
+                            "rank": rank,
+                            "percentage": ranking.response.percentage as Any,
+                            "cp": ranking.response.ivs.first?.cp as Any,
+                            "level": ranking.response.ivs.first?.level as Any,
+                            "competition_rank": ranking.response.competitionRank as Any,
+                            "dense_rank": ranking.response.denseRank as Any,
+                            "ordinal_rank": ranking.response.ordinalRank as Any,
+                            "cap": ranking.response.cap as Any
+                        ]
+                        if let form = ranking.pokemon.form?.rawValue, form != 0 {
+                            json["form"] = form
+                        }
+                        if let evolution = ranking.pokemon.temporaryEvolution?.rawValue, evolution != 0 {
+                            json["evolution"] = evolution
+                        }
+                        if ranking.response.capped {
+                            json["capped"] = true
+                        }
+                        return json
+                    })
+            if !stats.isEmpty {
+                // only add stats if not empty to prevent empty list in JSON result
+                pvp[league.toString()] = stats
+            }
+        })
+        return (pvp.isEmpty ? nil : pvp)
     }
 
     internal func getPVPStatsWithEvolutions(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
                                             gender: PokemonDisplayProto.Gender?,
+                                            temporaryEvolution: HoloTemporaryEvolutionId? = nil,
                                             costume: PokemonDisplayProto.Costume, iv: IV, level: Double, league: League)
-                                            -> [(pokemon: PokemonWithFormAndGender, response: Response?)] {
-        let current = getPVPStats(pokemon: pokemon, form: form, iv: iv, level: level, league: league)
-        var result = [(
-                pokemon: PokemonWithFormAndGender(pokemon: pokemon, form: form, gender: gender),
+                                            -> [(pokemon: PokemonInfo, response: Response)] {
+        let rankings = getPVPStats(pokemon: pokemon, form: form, temporaryEvolution: temporaryEvolution,
+            iv: iv, level: level, league: league)
+        var result = [(pokemon: PokemonInfo, response: Response)]()
+        for current in rankings {
+            result.append((
+                pokemon: PokemonInfo(pokemon: pokemon, form: form, gender: gender,
+                    temporaryEvolution: temporaryEvolution),
                 response: current
-        )]
-        guard !String(describing: costume).lowercased().contains(string: "noevolve"),
-              let stat = stats[.init(pokemon: pokemon, form: form)],
-              !stat.evolutions.isEmpty else {
+            ))
+        }
+        guard let stat: Stats = stats[.init(pokemon: pokemon, form: form, temporaryEvolution: temporaryEvolution)],
+              !stat.evolutions.isEmpty,
+              (!String(describing: costume).lowercased().contains(string: "noevolve")
+                  || (stat.costumeEvolutionOverride != nil && stat.costumeEvolutionOverride!.contains(costume))) else {
             return result
         }
         for evolution in stat.evolutions {
             if evolution.gender == nil || evolution.gender == gender {
                 let pvpStats = getPVPStatsWithEvolutions(
-                        pokemon: evolution.pokemon, form: evolution.form,
-                        gender: gender, costume: costume, iv: iv, level: level, league: league
+                        pokemon: evolution.pokemon, form: evolution.form, gender: gender,
+                        temporaryEvolution: evolution.temporaryEvolution, costume: costume, iv: iv, level: level,
+                        league: league
                 )
                 result += pvpStats
             }
@@ -193,22 +305,22 @@ public class PVPStatsManager {
 
     // swiftlint:disable:next cyclomatic_complexity
     internal func getTopPVP(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?,
-                            league: League) -> [Response]? {
-        let info = PokemonWithFormAndGender(pokemon: pokemon, form: form)
+                            temporaryEvolution: HoloTemporaryEvolutionId?, league: League) -> [Response]? {
+        let info = PokemonInfo(pokemon: pokemon, form: form, temporaryEvolution: temporaryEvolution)
         let cached: ResponsesOrEvent?
         switch league {
+        case .little:
+            cached = rankingLittleLock.doWithLock { rankingLittle[info] }
         case .great:
-            rankingGreatLock.lock()
-            cached = rankingGreat[info]
-            rankingGreatLock.unlock()
+            cached = rankingGreatLock.doWithLock { rankingGreat[info] }
         case .ultra:
-            rankingUltraLock.lock()
-            cached = rankingUltra[info]
-            rankingUltraLock.unlock()
+            cached = rankingUltraLock.doWithLock { rankingUltra[info] }
         }
 
         if cached == nil {
             switch league {
+            case .little:
+                rankingLittleLock.lock()
             case .great:
                 rankingGreatLock.lock()
             case .ultra:
@@ -216,6 +328,8 @@ public class PVPStatsManager {
             }
             guard let stats = stats[info] else {
                 switch league {
+                case .little:
+                    rankingLittleLock.unlock()
                 case .great:
                     rankingGreatLock.unlock()
                 case .ultra:
@@ -225,6 +339,9 @@ public class PVPStatsManager {
             }
             let event = Threading.Event()
             switch league {
+            case .little:
+                rankingLittle[info] = .event(event: event)
+                rankingLittleLock.unlock()
             case .great:
                 rankingGreat[info] = .event(event: event)
                 rankingGreatLock.unlock()
@@ -232,16 +349,14 @@ public class PVPStatsManager {
                 rankingUltra[info] = .event(event: event)
                 rankingUltraLock.unlock()
             }
-            let values = getPVPValuesOrdered(stats: stats, cap: league.rawValue)
+            let values = calculateAllRanks(stats: stats, cpCap: league.rawValue)
             switch league {
+            case .little:
+                rankingLittleLock.doWithLock { rankingLittle[info] = .responses(responses: values) }
             case .great:
-                rankingGreatLock.lock()
-                rankingGreat[info] = .responses(responses: values)
-                rankingGreatLock.unlock()
+                rankingGreatLock.doWithLock { rankingGreat[info] = .responses(responses: values) }
             case .ultra:
-                rankingUltraLock.lock()
-                rankingUltra[info] = .responses(responses: values)
-                rankingUltraLock.unlock()
+                rankingUltraLock.doWithLock { rankingUltra[info] = .responses(responses: values) }
             }
             event.lock()
             event.broadcast()
@@ -255,58 +370,77 @@ public class PVPStatsManager {
             event.lock()
             _ = event.wait(seconds: 10)
             event.unlock()
-            return getTopPVP(pokemon: pokemon, form: form, league: league)
+            return getTopPVP(pokemon: pokemon, form: form, temporaryEvolution: temporaryEvolution, league: league)
         }
     }
 
-    private func getPVPValuesOrdered(stats: Stats, cap: Int?) -> [Response] {
+    func calculateAllRanks(stats: Stats, cpCap: Int) -> [Response] {
+        var ranking = [Response]()
+        for lvlCap in PVPStatsManager.lvlCaps {
+            if calculateCP(stats: stats, iv: IV.hundo, level: Double(lvlCap)) <= PVPStatsManager.leagueFilter[cpCap]! {
+                continue
+            }
+            ranking += calculatePvPStat(stats: stats, cpCap: cpCap, lvlCap: lvlCap)
+                    .sorted { (lhs, rhs) -> Bool in
+                        lhs.key >= rhs.key }
+                    .map { (value) -> Response in
+                        value.value }
+        }
+        return ranking
+    }
+
+    private func calculatePvPStat(stats: Stats, cpCap: Int, lvlCap: Int) -> [Int: Response] {
         var ranking = [Int: Response]()
         for iv in IV.all {
-            var maxLevel: Double = 0
-            var maxCP: Int = 0
-            for level in stride(from: 0.0, through: 50.0, by: 0.5).reversed() {
-                let cp = (cap == nil ? 0 : getCPValue(iv: iv, level: level, stats: stats))
-                if cp <= (cap ?? 0) {
-                    maxLevel = level
-                    maxCP = cp
-                    break
+            var lowest = 1.0, highest = Double(lvlCap)
+            var bestCP: Int = 0
+            while lowest < highest {
+                let mid = ceil(lowest + highest) / 2
+                let cp = calculateCP(stats: stats, iv: iv, level: mid)
+                if cp <= cpCap {
+                    lowest = mid
+                    bestCP = cp
+                } else {
+                    highest = mid - 0.5
                 }
             }
-            if maxLevel != 0 {
-                let value = getPVPValue(iv: iv, level: maxLevel, stats: stats)
+            if lowest != 0 {
+                let value = calculateStatProduct(stats: stats, iv: iv, level: lowest)
                 if ranking[value] == nil {
-                    ranking[value] = Response(competitionRank: value,
-                                              denseRank: value,
-                                              ordinalRank: value,
-                                              percentage: 0.0,
-                                              ivs: [])
+                    ranking[value] = Response(
+                        competitionRank: value,
+                        denseRank: value,
+                        ordinalRank: value,
+                        percentage: 0.0,
+                        cap: lvlCap,
+                        capped: false,
+                        ivs: []
+                    )
                 }
-                ranking[value]!.ivs.append(.init(iv: iv, level: maxLevel, cp: maxCP))
+                if let index = ranking[value]!.ivs.firstIndex(where: { bestCP >= $0.cp }) {
+                    ranking[value]!.ivs.insert(.init(iv: iv, level: lowest, cp: bestCP), at: index)
+                } else {
+                    ranking[value]!.ivs.append(.init(iv: iv, level: lowest, cp: bestCP))
+                }
             }
         }
-        return ranking.sorted { (lhs, rhs) -> Bool in
-            return lhs.key >= rhs.key
-        }.map { (value) -> Response in
-            return value.value
-        }
+        return ranking
     }
 
-    internal func getStats(
-        pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?
-    ) -> Stats? {
-        return stats[PokemonWithFormAndGender(pokemon: pokemon, form: form)]
-
+    internal func getStats(pokemon: HoloPokemonId, form: PokemonDisplayProto.Form?) -> Stats? {
+        stats[PokemonInfo(pokemon: pokemon, form: form, temporaryEvolution: nil)]
     }
 
-    private func getPVPValue(iv: IV, level: Double, stats: Stats) -> Int {
+    private func calculateStatProduct(stats: Stats, iv: IV, level: Double) -> Int {
         let multiplier = (PVPStatsManager.cpMultiplier[level] ?? 0)
+        var hp = floor(Double(iv.stamina + stats.baseStamina) * multiplier)
+        if hp < 10 { hp = 10 }
         let attack = Double(iv.attack + stats.baseAttack) * multiplier
         let defense = Double(iv.defense + stats.baseDefense) * multiplier
-        let stamina = Double(iv.stamina + stats.baseStamina) * multiplier
-        return Int(round(attack * defense * floor(stamina)))
+        return Int(round(attack * defense * hp))
     }
 
-    private func getCPValue(iv: IV, level: Double, stats: Stats) -> Int {
+    private func calculateCP(stats: Stats, iv: IV, level: Double) -> Int {
         let attack = Double(stats.baseAttack + iv.attack)
         let defense = pow(Double(stats.baseDefense + iv.defense), 0.5)
         let stamina =  pow(Double(stats.baseStamina + iv.stamina), 0.5)
@@ -315,20 +449,32 @@ public class PVPStatsManager {
     }
 
     private func formFrom(name: String) -> PokemonDisplayProto.Form? {
-        return PokemonDisplayProto.Form.allCases.first { (form) -> Bool in
-            return String(describing: form).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        PokemonDisplayProto.Form.allCases.first { (form) -> Bool in
+            String(describing: form).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
     private func pokemonFrom(name: String) -> HoloPokemonId? {
-        return HoloPokemonId.allCases.first { (pokemon) -> Bool in
-            return String(describing: pokemon).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        HoloPokemonId.allCases.first { (pokemon) -> Bool in
+            String(describing: pokemon).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
     private func genderFrom(name: String) -> PokemonDisplayProto.Gender? {
-        return PokemonDisplayProto.Gender.allCases.first { (gender) -> Bool in
-            return String(describing: gender).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        PokemonDisplayProto.Gender.allCases.first { (gender) -> Bool in
+            String(describing: gender).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        }
+    }
+
+    private func costumeFrom(name: String) -> PokemonDisplayProto.Costume? {
+        PokemonDisplayProto.Costume.allCases.first { (costume) -> Bool in
+            String(describing: costume).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
+        }
+    }
+
+    private func temporaryEvolutionFrom(name: String) -> HoloTemporaryEvolutionId? {
+        HoloTemporaryEvolutionId.allCases.first { (evolution) -> Bool in
+            String(describing: evolution).lowercased() == name.replacingOccurrences(of: "_", with: "").lowercased()
         }
     }
 
@@ -336,19 +482,21 @@ public class PVPStatsManager {
 
 extension PVPStatsManager {
 
-    struct PokemonWithFormAndGender: Hashable {
+    struct PokemonInfo: Hashable {
         var pokemon: HoloPokemonId
         var form: PokemonDisplayProto.Form?
         var gender: PokemonDisplayProto.Gender?
+        var temporaryEvolution: HoloTemporaryEvolutionId?
     }
 
     struct Stats {
         var baseAttack: Int
         var baseDefense: Int
         var baseStamina: Int
-        var evolutions: [PokemonWithFormAndGender]
+        var evolutions: [PokemonInfo]
         var baseHeight: Double
         var baseWeight: Double
+        var costumeEvolutionOverride: [PokemonDisplayProto.Costume]?
     }
 
     struct IV: Equatable {
@@ -371,6 +519,10 @@ extension PVPStatsManager {
             }
             return all
         }
+
+        static var hundo: IV {
+            IV(attack: 15, defense: 15, stamina: 15)
+        }
     }
 
     enum ResponsesOrEvent {
@@ -388,12 +540,29 @@ extension PVPStatsManager {
         var denseRank: Int
         var ordinalRank: Int
         var percentage: Double
+        var cap: Int
+        var capped: Bool
         var ivs: [IVWithCP]
     }
 
-    enum League: Int {
+    enum League: Int, CaseIterable {
+        case little = 500
         case great = 1500
         case ultra = 2500
+
+        func toString() -> String {
+            switch self {
+            case .little: return "little"
+            case .great: return "great"
+            case .ultra: return "ultra"
+            }
+        }
+    }
+
+    enum RankType: String {
+        case dense
+        case ordinal
+        case competition
     }
 
     private static let cpMultiplier = [

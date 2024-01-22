@@ -66,7 +66,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(uuid)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'touch'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -96,7 +96,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(oldUUID)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'save'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -124,7 +124,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(lastLon)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'create'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }
@@ -145,7 +145,7 @@ public class Device: JSONConvertibleObject, Hashable {
         _ = mysqlStmt.prepare(statement: sql)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'getAll'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -178,7 +178,7 @@ public class Device: JSONConvertibleObject, Hashable {
             SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon
             FROM device
             JOIN device_group_device dgd on uuid = dgd.device_uuid
-            WHERe dgd.device_group_name = ?
+            WHERE dgd.device_group_name = ?
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -186,7 +186,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(deviceGroupName)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'getAllInGroup'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -227,7 +227,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(id)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'getById'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
         let results = mysqlStmt.results()
@@ -266,7 +266,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(uuid)
 
         guard mysqlStmt.execute() else {
-            Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
+            Log.error(message: "[DEVICE] Failed to execute query 'setLastLocation'. (\(mysqlStmt.errorMessage())")
             throw DBController.DBError()
         }
     }

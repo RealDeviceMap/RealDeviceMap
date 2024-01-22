@@ -38,7 +38,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
 
         for point in coords {
 
-            let coord = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
+            let coord = LocationCoordinate2D(latitude: point.lat, longitude: point.lon)
             let cellIDs = S2LatLng(coord: coord).getLoadedS2CellIds().map { (cell) -> UInt64 in
                 return cell.uid
             }
@@ -158,7 +158,7 @@ class CircleSmartRaidInstanceController: CircleInstanceController {
         smartRaidLock.unlock()
 
         if coord == nil {
-            return [String: Any]()
+            return [:]
         } else {
             self.statsLock.lock()
             if self.startDate == nil {

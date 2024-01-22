@@ -1,0 +1,116 @@
+{
+  "logger": {
+    "logLevel": "info",
+    "rawDebug": {
+      "enabled": false,
+      "types": [
+        "GetPlayerResponse",
+        "GetMapObjects_wildMons",
+        "GetMapObjects_nearbyMons",
+        "GetMapObjects_mapMons",
+        "GetMapObjects_forts",
+        "GetMapObjects_cells",
+        "GetMapObjects_clientWeathers",
+        "EncounterResponse",
+        "DiskEncounterResponse",
+        "FortDetailsResponse",
+        "FortSearchResponse",
+        "GymGetInfoResponse"
+      ]
+    }
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 9000
+  },
+  "webhookServer": {
+    "host": "0.0.0.0",
+    "port": 9001
+  },
+  "database": {
+    "host": "db",
+    "port": 3306,
+    "database": "rdmdb",
+    "user": "rdmuser",
+    "password": "",
+    "rootUser": "root",
+    "rootPassword": "",
+    "backup": true
+  },
+  "application": {
+    "rawThreadLimit": 100,
+    "rawForward": {
+      "url": "",
+      "bearer": ""
+    },
+    "account": {
+      "requireInDB": true,
+      "useRwForQuest": false,
+      "useRwForRaid": false,
+      "useRwForPokes": false,
+      "maxEncounters": 0,
+      "disablePeriod": 86400,
+      "lastRecentlyUsed": false
+    },
+    "loginLimit": {
+      "enabled": false,
+      "count": 15,
+      "interval": 300
+    },
+    "map": {
+      "generateImages": true,
+      "ivWeatherClearing": true,
+      "saveCellPokemon": true,
+      "scanLureEncounter": false,
+      "saveSpawnPointLastSeen": false
+    },
+    "memoryCache": {
+      "enabled": true,
+      "clearInterval": 900,
+      "keepTime": 3600
+    },
+    "clearer": {
+      "pokemon": {
+        "enabled": true,
+        "interval": 300,
+        "keepTime": 3600,
+        "batchSize": 250
+      },
+      "incident": {
+        "enabled": true,
+        "interval": 900,
+        "keepTime": 3600,
+        "batchSize": 250
+      }
+    },
+    "stats": {
+      "pokemon": {
+        "archive": false,
+        "timing": false,
+        "count": true
+      }
+    },
+    "pvp": {
+      "enabled": true,
+      "levelCaps": [50],
+      "defaultRank": "ordinal",
+      "filterLittleMinCP": 450,
+      "filterGreatMinCP": 1400,
+      "filterUltraMinCP": 2350
+    },
+    "webhook": {
+      "endpointTimeout": 30,
+      "endpointConnectTimeout": 30
+    },
+    "quest": {
+        "allowARQuests": true,
+        "questRetryLimit": 10,
+        "spinDistance": 80
+    },
+    "stopAllBootstrapping": false,
+    "process": {
+      "pokemon": true,
+      "incident": true
+    }
+  }
+}

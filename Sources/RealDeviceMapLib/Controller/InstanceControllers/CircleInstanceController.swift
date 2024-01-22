@@ -23,18 +23,20 @@ class CircleInstanceController: InstanceControllerProto {
     public private(set) var maxLevel: UInt8
     public private(set) var accountGroup: String?
     public private(set) var isEvent: Bool
+    internal var scanNextCoords: [[Coord]] = []
+    private var scanNextLookup: [String: Int] = [:]
     public weak var delegate: InstanceControllerDelegate?
 
     private let type: CircleType
     private let coords: [Coord]
     private var lastIndex: Int = 0
-    private var lock = Threading.Lock()
+    internal var lock = Threading.Lock()
     private var lastLastCompletedTime: Date?
     private var lastCompletedTime: Date?
     private var currentUuidIndexes: [String: Int]
     private var currentUuidSeenTime: [String: Date]
-    public let useRwForRaid =
-        ProcessInfo.processInfo.environment["USE_RW_FOR_RAID"] != nil
+    public let useRwForRaid: Bool = ConfigLoader.global.getConfig(type: .accUseRwForRaid)
+    public let useRwForPokes: Bool = ConfigLoader.global.getConfig(type: .accUseRwForPokes)
 
     init(name: String, coords: [Coord], type: CircleType, minLevel: UInt8, maxLevel: UInt8,
          accountGroup: String?, isEvent: Bool) {
@@ -94,13 +96,40 @@ class CircleInstanceController: InstanceControllerProto {
         return ["numliveDevices": nbliveDevices, "distanceToNext": distanceToNext]
     }
 
-    // swiftlint:disable function_body_length
+    // swiftlint:disable function_body_length cyclomatic_complexity
     func getTask(mysql: MySQL, uuid: String, username: String?, account: Account?, timestamp: UInt64) -> [String: Any] {
         var currentIndex = 0
         var currentUuidIndex = 0
+        lock.lock()
+        if !scanNextCoords.isEmpty {
+            var scanNextCoord: Coord?
+            if let index = scanNextLookup[uuid] {
+                scanNextCoord = scanNextCoords[index].removeFirst()
+                if scanNextCoords[index].isEmpty {
+                    scanNextCoords.remove(at: index)
+                    scanNextLookup.removeValue(forKey: uuid)
+                }
+            } else {
+                if scanNextCoords.count > scanNextLookup.count {
+                    let lookup = scanNextLookup.values.max() ?? 0
+                    scanNextLookup[uuid] = lookup
+                    scanNextCoord = scanNextCoords[lookup].removeFirst()
+                    if scanNextCoords[lookup].isEmpty {
+                        scanNextCoords.remove(at: lookup)
+                        scanNextLookup.removeValue(forKey: uuid)
+                    }
+                }
+            }
+            lock.unlock()
+            if scanNextCoord != nil {
+                var task: [String: Any] = ["action": "scan_pokemon", "lat": scanNextCoord!.lat,
+                                           "lon": scanNextCoord!.lon, "min_level": minLevel, "max_level": maxLevel]
+                if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+                return task
+            }
+        }
         var currentCoord = coords[currentIndex]
         if type == .smartPokemon {
-            lock.lock()
             currentUuidIndex = currentUuidIndexes[uuid] ?? Int.random(in: 0..<coords.count)
             currentUuidIndexes[uuid] = currentUuidIndex
             currentUuidSeenTime[uuid] = Date()
@@ -117,7 +146,7 @@ class CircleInstanceController: InstanceControllerProto {
                     jumpDistance = live["distanceToNext"]! - coords.count / live["numliveDevices"]! - 1
                 }
             }
-            if currentUuidIndex == 0 {
+            if currentUuidIndex == 0 && coords.count > 1 {
                 shouldAdvance = true
             }
             if shouldAdvance {
@@ -134,12 +163,13 @@ class CircleInstanceController: InstanceControllerProto {
                 }
             }
             currentUuidIndexes[uuid] = currentUuidIndex
-            lock.unlock()
             currentCoord = coords[currentUuidIndex]
-            return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+            lock.unlock()
+            var task: [String: Any] = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                     "min_level": minLevel, "max_level": maxLevel]
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         } else {
-            lock.lock()
             currentIndex = self.lastIndex
             if lastIndex + 1 == coords.count {
                 lastLastCompletedTime = lastCompletedTime
@@ -148,19 +178,22 @@ class CircleInstanceController: InstanceControllerProto {
             } else {
                 lastIndex += 1
             }
-            lock.unlock()
             currentCoord = coords[currentIndex]
+            lock.unlock()
+            var task: [String: Any]
             if type == .pokemon {
-                return ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_pokemon", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             } else {
-                return ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
+                task = ["action": "scan_raid", "lat": currentCoord.lat, "lon": currentCoord.lon,
                         "min_level": minLevel, "max_level": maxLevel]
             }
+            if InstanceController.sendTaskForLureEncounter { task["lure_encounter"] = true }
+            return task
         }
     }
-    // swiftlint:enable function_body_length
 
+    // swiftlint:enable function_body_length
     func getStatus(mysql: MySQL, formatted: Bool) -> JSONConvertible? {
         if let lastLast = lastLastCompletedTime, let last = lastCompletedTime {
             let time = Int(last.timeIntervalSince(lastLast))
@@ -193,7 +226,7 @@ class CircleInstanceController: InstanceControllerProto {
                 mysql: mysql,
                 minLevel: minLevel,
                 maxLevel: maxLevel,
-                ignoringWarning: false,
+                ignoringWarning: useRwForPokes,
                 spins: nil,
                 noCooldown: false,
                 device: uuid,
@@ -218,12 +251,11 @@ class CircleInstanceController: InstanceControllerProto {
         case .pokemon, .smartPokemon:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
-                account.isValid(group: accountGroup)
+                account.isValid(ignoringWarning: useRwForPokes, group: accountGroup)
         case .raid:
             return account.level >= minLevel &&
                 account.level <= maxLevel &&
                 account.isValid(ignoringWarning: useRwForRaid, group: accountGroup)
         }
     }
-
 }
