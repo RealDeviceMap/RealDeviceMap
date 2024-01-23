@@ -23,6 +23,7 @@ let package = Package(
         .package(name: "Regex", url: "https://github.com/crossroadlabs/Regex.git", from: "1.2.0"),
         .package(name: "swift-backtrace", url: "https://github.com/swift-server/swift-backtrace.git", from: "1.3.3"),
         .package(name: "POGOProtos", url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "2.34.0"))
+        .package(name: "POGOProtos", url: "https://github.com/123FLO321/POGOProtos-Swift.git", .upToNextMinor(from: "2.33.0"))
     ],
     targets: [
         .target(
