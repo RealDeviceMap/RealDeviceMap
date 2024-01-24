@@ -445,6 +445,12 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withUniqueRouteTravel: break
             case .withTappableType: break
             case .withInParty: break
+            case .withShinyPokemon: break
+            case .withAbilityPartyPowerDamageDealt: break
+            case .withAuthProviderType: break
+            case .withOpponentPokemonBattleStatus: break
+            case .withFortID: break
+            case .withPokemonMove: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -511,6 +517,7 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
                 infoData["level_cap"] = info
             case .incident: break
             case .playerAttribute: break
+            case .eventBadge: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
