@@ -6,6 +6,7 @@
 //
 //  swiftlint:disable:next superfluous_disable_command
 //  swiftlint:disable file_length type_body_length
+//
 
 import Foundation
 import PerfectLib
