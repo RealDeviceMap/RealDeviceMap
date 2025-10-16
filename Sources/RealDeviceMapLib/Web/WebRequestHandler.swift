@@ -739,7 +739,7 @@ public class WebRequestHandler {
                 }
             } else {
                 data["min_level"] = 30
-                data["max_level"] = 40
+                data["max_level"] = 80
                 data["timezone_offset"] = 0
                 data["iv_queue_limit"] = 30
                 data["spin_limit"] = 1000
@@ -2637,7 +2637,7 @@ public class WebRequestHandler {
             data["name"] = oldInstance!.name
             data["area"] = areaString
             data["min_level"] = (oldInstance!.data["min_level"] as? Int)?.toInt8() ?? 30
-            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 40
+            data["max_level"] = (oldInstance!.data["max_level"] as? Int)?.toInt8() ?? 80
             data["timezone_offset"] = oldInstance!.data["timezone_offset"] as? Int ?? 0
             data["iv_queue_limit"] = oldInstance!.data["iv_queue_limit"] as? Int ?? 100
             data["spin_limit"] = oldInstance!.data["spin_limit"] as? Int ?? 1000
