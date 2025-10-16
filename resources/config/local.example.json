@@ -51,7 +51,7 @@
     },
     "pvp": {
       "enabled": true,
-      "levelCaps": [80],
+      "levelCaps": [50],
       "defaultRank": "ordinal",
       "filterLittleMinCP": 450,
       "filterGreatMinCP": 1400,
