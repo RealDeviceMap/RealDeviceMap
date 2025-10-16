@@ -95,17 +95,7 @@ class LevelingInstanceController: InstanceControllerProto {
         65603000,
         71853000,
         78603000,
-        85853000,
-        93853000,
-        102603000,
-        112103000,
-        122353000,
-        133353000,
-        145353000,
-        158353000,
-        172353000,
-        187353000,
-        203353000
+        85853000
     ]
 
     private let start: Coord
@@ -283,8 +273,8 @@ class LevelingInstanceController: InstanceControllerProto {
 
         var data = [[String: Any]]()
         for player in players {
-            let xpTarget = LevelingInstanceController.levelXP[min(max(Int(maxLevel) + 1, 0), 80)]
-            let xpStart = LevelingInstanceController.levelXP[min(max(Int(minLevel), 0), 80)]
+            let xpTarget = LevelingInstanceController.levelXP[min(max(Int(maxLevel) + 1, 0), 70)]
+            let xpStart = LevelingInstanceController.levelXP[min(max(Int(minLevel), 0), 70)]
             let xpCurrent = playerXP[player] ?? 0
             let xpPercentage = Double(xpCurrent - xpStart) / Double(xpTarget - xpStart) * 100
             var startXP = 0
