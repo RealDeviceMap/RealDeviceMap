@@ -4,17 +4,17 @@ on: [push, pull_request]
 
 jobs:
   SwiftLint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: GitHub Action for SwiftLint with --strict
-        uses: norio-nomura/action-swiftlint@3.0.1
+        uses: norio-nomura/action-swiftlint@3.2.1
         with:
           args: --strict
   ESLint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: RUN ESLint
         uses: 123FLO321/action-eslint-standalone@0.4.0
         with:
