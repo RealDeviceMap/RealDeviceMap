@@ -31,7 +31,11 @@ jobs:
       run: swift package resolve
     - name: Patch PerfectLib for Swift 5.4
       run: |
+        # Fix PerfectLib
         find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+          sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+        # Fix PerfectCURL
+        find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
           sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
     - name: Build
       run: swift build --enable-test-discovery -Xswiftc -g -c debug
@@ -69,7 +73,11 @@ jobs:
       run: swift package resolve
     - name: Patch PerfectLib for Swift 5.4
       run: |
+        # Fix PerfectLib
         find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+          sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+        # Fix PerfectCURL
+        find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
           sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
     - name: Build (release)
       run: swift build -c release
