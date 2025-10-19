@@ -4,63 +4,162 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup Swift (pin to Swift 5.x)
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '5.10.1'  # Do you work with Swift 6? Idk, keep latest from ubuntu 20.04 which would be 5.x
+    # Manually install OpenSSL 1.1
+    - name: Install OpenSSL 1.1
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
+        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+        tar xzf openssl-1.1.1u.tar.gz
+        cd openssl-1.1.1u
+        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
+        make -j"$(nproc)"
+        sudo make install
 
-      - name: Install system requirements
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libcurl4-openssl-dev libmysqlclient-dev pkg-config imagemagick
-          if [ -f /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc ]; then
-            sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc || true
-          fi
-          sudo ln -sf /usr/bin/convert /usr/local/bin/convert
+    # PATCH: configure OpenSSL 1.1 for build & runtime (adds LD paths + ldconfig)
+    - name: Configure OpenSSL 1.1 for build & runtime
+      run: |
+        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
+        echo "/usr/local/openssl-1.1/lib" | sudo tee /etc/ld.so.conf.d/openssl-1.1.conf
+        sudo ldconfig
 
-      - name: Swift version
-        run: swift --version
+    # Manually install Swift 5.4 (Ubuntu 20.04 toolchain)
+    - name: Install Swift 5.4
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang libicu-dev libcurl4-openssl-dev libssl-dev \
+          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
 
-      - name: Resolve
-        run: swift package resolve
+        wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
 
-      - name: Build
-        run: swift build --enable-test-discovery -Xswiftc -g -c debug
+        # Prepend Swift 5.4 to PATH for *all subsequent steps*
+        echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
+        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
 
-      - name: Test
-        run: swift test --enable-test-discovery -Xswiftc -g -c debug
+    - name: Verify Swift version
+      run: swift --version
+
+    - name: Install Additional Requirements
+      run: |
+        sudo apt-get install -y libmysqlclient-dev imagemagick
+        sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
+        sudo cp /usr/bin/convert /usr/local/bin
+
+    - name: Resolve
+      run: swift package resolve
+
+    # - name: Patch PerfectLib for Swift 5.4
+    #   run: |
+    #     find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+    #     find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
+    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+
+    # PATCH: add -L and -rpath so linker & runtime pick OpenSSL 1.1
+    - name: Build
+      run: |
+        swift build --enable-test-discovery -Xswiftc -g -c debug \
+          -Xlinker -L/usr/local/openssl-1.1/lib \
+          -Xlinker -Wl,-rpath,/usr/local/openssl-1.1/lib
+
+    - name: Test
+      run: |
+        swift test --enable-test-discovery -Xswiftc -g -c debug \
+          -Xlinker -L/usr/local/openssl-1.1/lib \
+          -Xlinker -Wl,-rpath,/usr/local/openssl-1.1/lib
 
   deploy:
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set .gitsha
-        run: echo "${{ github.sha }}" > .gitsha
+    - name: Set .gitsha
+      run: "echo ${{ github.sha }} > .gitsha"
 
-      - name: Set .gitref
-        run: echo "${{ github.ref }}" > .gitref
+    - name: Set .gitref
+      run: "echo ${{ github.ref }} > .gitref"
 
-      - name: Setup Swift (same as tests)
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '5.10.1' # Same logic as tests
+    # Manually install OpenSSL 1.1
+    - name: Install OpenSSL 1.1
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
+        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+        tar xzf openssl-1.1.1u.tar.gz
+        cd openssl-1.1.1u
+        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
+        make -j"$(nproc)"
+        sudo make install
 
-      - name: Build (release)
-        run: swift build -c release
+    # PATCH: configure OpenSSL 1.1 for build & runtime (adds LD paths + ldconfig)
+    - name: Configure OpenSSL 1.1 for build & runtime
+      run: |
+        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
+        echo "/usr/local/openssl-1.1/lib" | sudo tee /etc/ld.so.conf.d/openssl-1.1.conf
+        sudo ldconfig
 
-      - name: Publish Version
-        uses: 123FLO321/github-docker-temp@0.5.0
-        with:
-          accessToken: ${{ secrets.GITHUB_TOKEN }}
+    # Manually install Swift 5.4 (Ubuntu 20.04 toolchain)
+    - name: Install Swift 5.4
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang libicu-dev libcurl4-openssl-dev libssl-dev \
+          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
 
-      - name: Publish Commit
-        uses: 123FLO321/github-docker-temp@0.5.0
-        with:
-          imageTag: ${{ github.sha }}
-          accessToken: ${{ secrets.GITHUB_TOKEN }}
+        wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
+
+        echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
+        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
+
+    - name: Verify Swift version
+      run: swift --version
+
+    - name: Install Additional Requirements
+      run: |
+        sudo apt-get install -y libmysqlclient-dev imagemagick
+        sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
+        sudo cp /usr/bin/convert /usr/local/bin
+
+    - name: Resolve
+      run: swift package resolve
+
+    # - name: Patch PerfectLib for Swift 5.4
+    #   run: |
+    #     find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+    #     find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
+    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
+
+    # PATCH: add -L and -rpath so linker & runtime pick OpenSSL 1.1
+    - name: Build (release)
+      run: |
+        swift build -c release \
+          -Xlinker -L/usr/local/openssl-1.1/lib \
+          -Xlinker -Wl,-rpath,/usr/local/openssl-1.1/lib
+
+    - name: Publish Version
+      uses: 123FLO321/github-docker-temp@0.5.0
+      with:
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish Commit
+      uses: 123FLO321/github-docker-temp@0.5.0
+      with:
+        imageTag: ${{ github.sha }}
+        accessToken: ${{ secrets.GITHUB_TOKEN }}
