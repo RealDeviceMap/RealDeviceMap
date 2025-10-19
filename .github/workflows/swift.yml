@@ -20,11 +20,11 @@ jobs:
         tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
         sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift
 
-        # Make Swift 5.4 take precedence over the system Swift 6.x
+        # Prepend Swift 5.4 to PATH for *all subsequent steps*
         echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
-        echo "export PATH=/usr/share/swift-5.4/usr/bin:\$PATH" >> $GITHUB_ENV
-
-        swift --version
+        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
+    - name: Verify Swift version
+      run: swift --version
     - name: Install Additional Requirements
       run: |
         sudo apt-get install -y libmysqlclient-dev imagemagick
@@ -65,11 +65,11 @@ jobs:
         tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
         sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift
         
-        # Make Swift 5.4 take precedence over the system Swift 6.x
+        # Prepend Swift 5.4 to PATH for *all subsequent steps*
         echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
-        echo "export PATH=/usr/share/swift-5.4/usr/bin:\$PATH" >> $GITHUB_ENV
-
-        swift --version
+        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
+    - name: Verify Swift version
+      run: swift --version
     - name: Install Additional Requirements
       run: |
         sudo apt-get install -y libmysqlclient-dev imagemagick
