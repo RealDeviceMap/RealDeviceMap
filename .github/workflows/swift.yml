@@ -5,38 +5,10 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-22.04
+    container:
+      image: swift:5.4
     steps:
     - uses: actions/checkout@v4
-    # Manually install Swift 5.4 on Ubuntu 22.04
-    - name: Install OpenSSL 1.1
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
-        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
-        tar xzf openssl-1.1.1u.tar.gz
-        cd openssl-1.1.1u
-        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
-        make -j$(nproc)
-        sudo make install
-    - name: Configure OpenSSL 1.1 for build
-      run: |
-        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
-        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
-        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
-    - name: Install Swift 5.4
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          clang libicu-dev libcurl4-openssl-dev libssl-dev \
-          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
-
-        wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
-
-        # Prepend Swift 5.4 to PATH for *all subsequent steps*
-        echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
-        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
     - name: Verify Swift version
       run: swift --version
     - name: Install Additional Requirements
@@ -46,14 +18,6 @@ jobs:
         sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve
       run: swift package resolve
-    # - name: Patch PerfectLib for Swift 5.4
-    #   run: |
-    #     # Fix PerfectLib
-    #     find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
-    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
-    #     # Fix PerfectCURL
-    #     find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
-    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
     - name: Build
       run: swift build --enable-test-discovery -Xswiftc -g -c debug
     - name: Test
@@ -61,41 +25,14 @@ jobs:
   deploy:
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04
+    container:
+      image: swift:5.4
     steps:
     - uses: actions/checkout@v4
     - name: Set .gitsha
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
       run: "echo ${{github.ref}} > .gitref"
-    - name: Install OpenSSL 1.1
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
-        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
-        tar xzf openssl-1.1.1u.tar.gz
-        cd openssl-1.1.1u
-        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
-        make -j$(nproc)
-        sudo make install
-    - name: Configure OpenSSL 1.1 for build
-      run: |
-        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
-        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
-        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
-    - name: Install Swift 5.4
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          clang libicu-dev libcurl4-openssl-dev libssl-dev \
-          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
-
-        wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
-
-        # Prepend Swift 5.4 to PATH for *all subsequent steps*
-        echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
-        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
     - name: Verify Swift version
       run: swift --version
     - name: Install Additional Requirements
@@ -105,15 +42,6 @@ jobs:
         sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve
       run: swift package resolve
-    # - name: Patch PerfectLib for Swift 5.4
-    #   run: |
-    #     # Fix PerfectLib
-    #     find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
-    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
-    #     # Fix PerfectCURL
-    #     find .build/checkouts/Perfect-CURL/Sources/PerfectCURL -name '*.swift' -exec \
-    #       sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
-    - name: Build (release)
       run: swift build -c release
     - name: Publish Version
       uses: 123FLO321/github-docker-temp@0.5.0
