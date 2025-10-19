@@ -26,9 +26,13 @@ jobs:
       run: swift --version
     - name: Install Additional Requirements
       run: |
-        sudo apt-get install -y libmysqlclient-dev imagemagick
+        sudo apt-get install -y libmysqlclient-dev imagemagick libssl1.1 libssl-dev=1.1*
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
+        # set environment for openssl 1.1
+        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+        export C_INCLUDE_PATH=/usr/include/openssl
+        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
     - name: Resolve
       run: swift package resolve
     # - name: Patch PerfectLib for Swift 5.4
@@ -70,9 +74,13 @@ jobs:
       run: swift --version
     - name: Install Additional Requirements
       run: |
-        sudo apt-get install -y libmysqlclient-dev imagemagick
+        sudo apt-get install -y libmysqlclient-dev imagemagick libssl1.1 libssl-dev=1.1*
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
+        # set environment for openssl 1.1
+        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+        export C_INCLUDE_PATH=/usr/include/openssl
+        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
     - name: Resolve
       run: swift package resolve
     # - name: Patch PerfectLib for Swift 5.4
