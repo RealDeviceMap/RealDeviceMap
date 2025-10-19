@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: YOCKOW/Action-setup-swift@main
+    - uses: swift-actions/setup-swift@v2
     - name: Install Requirements
       run: sudo apt-get -y update &&
            sudo apt-get install -y libcurl4-openssl-dev libmysqlclient-dev &&   
@@ -28,7 +28,7 @@ jobs:
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
       run: "echo ${{github.ref}} > .gitref"
-    - uses: YOCKOW/Action-setup-swift@main
+    - uses: swift-actions/setup-swift@v2
     - name: Build (release)
       run: swift build -c release
     - name: Publish Version
