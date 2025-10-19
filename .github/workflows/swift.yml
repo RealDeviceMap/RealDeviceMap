@@ -8,6 +8,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     # Manually install Swift 5.4 on Ubuntu 22.04
+    - name: Install OpenSSL 1.1
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
+        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+        tar xzf openssl-1.1.1u.tar.gz
+        cd openssl-1.1.1u
+        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
+        make -j$(nproc)
+        sudo make install
+    - name: Configure OpenSSL 1.1 for build
+      run: |
+        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
     - name: Install Swift 5.4
       run: |
         sudo apt-get update
@@ -26,13 +41,9 @@ jobs:
       run: swift --version
     - name: Install Additional Requirements
       run: |
-        sudo apt-get install -y libmysqlclient-dev imagemagick libssl1.1 libssl-dev=1.1*
+        sudo apt-get install -y libmysqlclient-dev imagemagick
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
-        # set environment for openssl 1.1
-        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
-        export C_INCLUDE_PATH=/usr/include/openssl
-        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
     - name: Resolve
       run: swift package resolve
     # - name: Patch PerfectLib for Swift 5.4
@@ -56,6 +67,21 @@ jobs:
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
       run: "echo ${{github.ref}} > .gitref"
+    - name: Install OpenSSL 1.1
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential checkinstall zlib1g-dev wget
+        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+        tar xzf openssl-1.1.1u.tar.gz
+        cd openssl-1.1.1u
+        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
+        make -j$(nproc)
+        sudo make install
+    - name: Configure OpenSSL 1.1 for build
+      run: |
+        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
     - name: Install Swift 5.4
       run: |
         sudo apt-get update
@@ -74,13 +100,9 @@ jobs:
       run: swift --version
     - name: Install Additional Requirements
       run: |
-        sudo apt-get install -y libmysqlclient-dev imagemagick libssl1.1 libssl-dev=1.1*
+        sudo apt-get install -y libmysqlclient-dev imagemagick
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
-        # set environment for openssl 1.1
-        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
-        export C_INCLUDE_PATH=/usr/include/openssl
-        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
     - name: Resolve
       run: swift package resolve
     # - name: Patch PerfectLib for Swift 5.4
