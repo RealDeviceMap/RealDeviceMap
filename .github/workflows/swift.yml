@@ -13,12 +13,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           clang libicu-dev libcurl4-openssl-dev libssl-dev \
-          libxml2-dev libz3-dev libsqlite3-dev uuid-dev
+          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
 
-        # Download Swift 5.4 toolchain for Ubuntu 20.04 (works fine on 22.04)
         wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
         tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift
+        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
 
         # Prepend Swift 5.4 to PATH for *all subsequent steps*
         echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
@@ -58,13 +57,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           clang libicu-dev libcurl4-openssl-dev libssl-dev \
-          libxml2-dev libz3-dev libsqlite3-dev uuid-dev
+          libxml2-dev libz3-dev libsqlite3-dev uuid-dev wget tar
 
-        # Download Swift 5.4 toolchain for Ubuntu 20.04 (works fine on 22.04)
         wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
         tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
-        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift
-        
+        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
+
         # Prepend Swift 5.4 to PATH for *all subsequent steps*
         echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
         echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
