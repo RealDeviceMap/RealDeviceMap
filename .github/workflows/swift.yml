@@ -8,7 +8,7 @@ jobs:
     container:
       image: swift:5.4
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     - name: Verify Swift version
       run: swift --version
     - name: Install Additional Requirements
@@ -28,7 +28,7 @@ jobs:
     container:
       image: swift:5.4
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     - name: Set .gitsha
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
