@@ -29,6 +29,10 @@ jobs:
         sudo cp /usr/bin/convert /usr/local/bin
     - name: Resolve
       run: swift package resolve
+    - name: Patch PerfectLib for Swift 5.4
+      run: |
+        find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+          sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
     - name: Build
       run: swift build --enable-test-discovery -Xswiftc -g -c debug
     - name: Test
@@ -61,6 +65,12 @@ jobs:
         sudo apt-get install -y libmysqlclient-dev imagemagick
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
+    - name: Resolve
+      run: swift package resolve
+    - name: Patch PerfectLib for Swift 5.4
+      run: |
+        find .build/checkouts/Perfect/Sources/PerfectLib -name '*.swift' -exec \
+          sed -i '1i#if os(Linux)\nimport Glibc\n#endif\n' {} +
     - name: Build (release)
       run: swift build -c release
     - name: Publish Version
