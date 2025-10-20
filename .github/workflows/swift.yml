@@ -5,28 +5,70 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-22.04
-    container:
-      image: swift:5.4
     steps:
-    - uses: actions/checkout@v3
-    - name: Verify Swift version
-      run: swift --version
-    - name: Install Additional Requirements
+    - uses: actions/checkout@v4
+
+    # Manually install Dependencies, OpenSSL 1.1 and Swift 5.4 on Ubuntu 22.04
+    - name: Install Dependencies
       run: |
-        sudo apt-get install -y libmysqlclient-dev imagemagick
+        sudo apt-get update
+        sudo apt-get install -y \
+          libmysqlclient-dev imagemagick uuid-dev libcurl4-openssl-dev \
+          build-essential wget zlib1g-dev checkinstall tar pkg-config \
+          clang libicu-dev libxml2-dev libz3-dev libsqlite3-dev libssl-dev
+
+    - name: Install OpenSSL 1.1
+      run: |
+        wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz
+        tar xzf openssl-1.1.1u.tar.gz
+        cd openssl-1.1.1u
+        ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib
+        make -j$(nproc)
+        sudo make install
+        cd ..
+
+        # Configure OpenSSL 1.1 for build
+        echo "PKG_CONFIG_PATH=/usr/local/openssl-1.1/lib/pkgconfig" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=/usr/local/openssl-1.1/include" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/usr/local/openssl-1.1/lib" >> $GITHUB_ENV
+
+        # Create symbolic links for the linker to find OpenSSL 1.1
+        sudo ln -sf /usr/local/openssl-1.1/lib/libssl.so /usr/lib/x86_64-linux-gnu/libssl.so
+        sudo ln -sf /usr/local/openssl-1.1/lib/libcrypto.so /usr/lib/x86_64-linux-gnu/libcrypto.so
+        sudo ln -sf /usr/local/openssl-1.1/lib/libssl.so.1.1 /usr/lib/x86_64-linux-gnu/libssl.so.1.1
+        sudo ln -sf /usr/local/openssl-1.1/lib/libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
+
+    - name: Install Swift 5.4
+      run: |
+        wget https://download.swift.org/swift-5.4-release/ubuntu2004/swift-5.4-RELEASE/swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        tar xzf swift-5.4-RELEASE-ubuntu20.04.tar.gz
+        sudo mv swift-5.4-RELEASE-ubuntu20.04 /usr/share/swift-5.4
+
+        # Prepend Swift 5.4 to PATH for *all subsequent steps*
+        echo "/usr/share/swift-5.4/usr/bin" | sudo tee /etc/profile.d/swift-path.sh
+        echo "/usr/share/swift-5.4/usr/bin" >> $GITHUB_PATH
+
+    - name: Verify Swift Version
+      run: swift --version
+
+    - name: Additional Steps
+      run: |
         sudo sed -i -e 's/-fabi-version=2 -fno-omit-frame-pointer//g' /usr/lib/x86_64-linux-gnu/pkgconfig/mysqlclient.pc
         sudo cp /usr/bin/convert /usr/local/bin
+
     - name: Resolve
       run: swift package resolve
+
     - name: Build
       run: swift build --enable-test-discovery -Xswiftc -g -c debug
+
     - name: Test
       run: swift test --enable-test-discovery -Xswiftc -g -c debug
   deploy:
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set .gitsha
       run: "echo ${{github.sha}} > .gitsha"
     - name: Set .gitref
