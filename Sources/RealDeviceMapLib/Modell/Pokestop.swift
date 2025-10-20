@@ -451,6 +451,19 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .withOpponentPokemonBattleStatus: break
             case .withFortID: break
             case .withPokemonMove: break
+            case .withPokemonForm: break
+            case .withBreadPokemon: break
+            case .withBreadDoughPokemon: break
+            case .withWinBreadBattle: break
+            case .withBreadMoveType: break
+            case .withStrongPokemon: break
+            case .withPoiSponsorID: break
+            case .withWinBreadDoughBattle: break
+            case .withPageType: break
+            case .withMaxPokemon: break
+            case .withTraineePokemonAttributes: break
+            case .withBattleOpponentPokemon: break
+            case .withPokemonTypeMove: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
@@ -518,6 +531,10 @@ public class Pokestop: JSONConvertibleObject, NSCopying, WebHookEvent, Hashable 
             case .incident: break
             case .playerAttribute: break
             case .eventBadge: break
+            case .pokemonEgg: break
+            case .pokemonIndividualStat: break
+            case .lootTable: break
+            case .friendshipPoints: break
             case .unset: break
             case .UNRECOGNIZED: break
             }
